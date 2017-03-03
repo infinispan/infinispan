@@ -24,7 +24,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Optional;
 
-import org.infinispan.rest.NettyRestServer;
+import org.infinispan.rest.embedded.netty4.NettyRestServer;
 import org.infinispan.rest.Server;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.router.MultiTenantRouter;

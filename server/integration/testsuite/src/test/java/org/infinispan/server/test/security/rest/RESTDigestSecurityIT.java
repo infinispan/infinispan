@@ -40,13 +40,7 @@ public class RESTDigestSecurityIT extends AbstractBasicSecurity {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-digest-wr.xml")})
-    public void testSecuredWriteOperations() throws Exception {
-        securedWriteOperations();
-    }
-
-    @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-digest-rw.xml")})
+    @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-digest.xml")})
     public void testSecuredReadWriteOperations() throws Exception {
         securedReadWriteOperations();
     }

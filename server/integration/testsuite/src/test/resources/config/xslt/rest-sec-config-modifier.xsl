@@ -7,29 +7,56 @@
     <xsl:variable name="nsE">urn:infinispan:server:endpoint:</xsl:variable>
     <xsl:variable name="nsW">urn:jboss:domain:web:</xsl:variable>
 
-    <xsl:param name="security.domain" select="'other'"/>
-    <xsl:param name="security.mode" select="'WRITE'"/>
+    <xsl:param name="security.realm" select="'ApplicationRealm'"/>
     <xsl:param name="auth.method" select="'BASIC'"/>
     <xsl:param name="cache.container" select="'${connector.cache.container}'"/>
-    <xsl:param name="modifyCertSecDomain" select="false"/>
-    <xsl:param name="modifyDigestSecDomain" select="false"/>
+    <xsl:param name="modifyCertSecRealm" select="false"/>
+    <xsl:param name="modifyDigestSecRealm" select="false"/>
 
     <!-- New rest-connector definition -->
     <xsl:variable name="newRESTEndpointDefinition">
-        <rest-connector socket-binding="rest" virtual-server="default-host">
-            <xsl:attribute name="cache-container">
-                <xsl:value-of select="$cache.container"/>
-            </xsl:attribute>
-            <xsl:attribute name="security-domain">
-                <xsl:value-of select="$security.domain"/>
-            </xsl:attribute>
-            <xsl:attribute name="auth-method">
-                <xsl:value-of select="$auth.method"/>
-            </xsl:attribute>
-            <xsl:attribute name="security-mode">
-                <xsl:value-of select="$security.mode"/>
-            </xsl:attribute>
-        </rest-connector>
+        <xsl:choose>
+            <xsl:when test="$auth.method != 'CLIENT_CERT'">
+                <rest-connector socket-binding="rest">
+                    <xsl:attribute name="cache-container">
+                        <xsl:value-of select="$cache.container"/>
+                    </xsl:attribute>
+                    <authentication>
+                        <xsl:attribute name="security-realm">
+                            <xsl:value-of select="$security.realm"/>
+                        </xsl:attribute>
+                        <xsl:attribute name="auth-method">
+                            <xsl:value-of select="$auth.method"/>
+                        </xsl:attribute>
+                    </authentication>
+                </rest-connector>
+            </xsl:when>
+            <xsl:otherwise>
+                <rest-connector socket-binding="rest">
+                    <xsl:attribute name="cache-container">
+                        <xsl:value-of select="$cache.container"/>
+                    </xsl:attribute>
+                </rest-connector>
+                <rest-connector socket-binding="rest-ssl" name="rest-ssl">
+                    <xsl:attribute name="cache-container">
+                        <xsl:value-of select="$cache.container"/>
+                    </xsl:attribute>
+                    <authentication>
+                        <xsl:attribute name="security-realm">
+                            <xsl:value-of select="$security.realm"/>
+                        </xsl:attribute>
+                        <xsl:attribute name="auth-method">
+                            <xsl:value-of select="$auth.method"/>
+                        </xsl:attribute>
+                    </authentication>
+                    <encryption require-ssl-client-auth="true">
+                        <xsl:attribute name="security-realm">
+                            <xsl:value-of select="$security.realm"/>
+                        </xsl:attribute>
+                    </encryption>
+                </rest-connector>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:variable>
 
     <!-- Replace rest-connector element with new one - secured -->
@@ -44,18 +71,6 @@
         </xsl:attribute>
     </xsl:template>
 
-    <!-- New CERT security-domain definition -->
-    <xsl:variable name="newClientCertSecurityDomainDefinition">
-        <security-domain name="client_cert_auth" cache-type="infinispan">
-            <authentication>
-                <login-module code="CertificateRoles" flag="required">
-                    <module-option name="securityDomain" value="client_cert_auth"/>
-                    <module-option name="rolesProperties" value="${{jboss.server.config.dir}}/roles.properties"/>
-                </login-module>
-            </authentication>
-            <jsse truststore-password="changeit" client-auth="true" truststore-url="${{jboss.server.config.dir}}/jsse.keystore"/>
-        </security-domain>
-    </xsl:variable>
 
     <!-- New DIGEST security-domain definition -->
     <xsl:variable name="newDigestSecurityDomainDefinition">
@@ -79,10 +94,7 @@
     <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsS)]
         /*[local-name()='security-domains' and starts-with(namespace-uri(), $nsS)]">
         <xsl:copy>
-            <xsl:if test="$modifyCertSecDomain != 'false'">
-                <xsl:copy-of select="$newClientCertSecurityDomainDefinition"/>
-            </xsl:if>
-            <xsl:if test="$modifyDigestSecDomain != 'false'">
+            <xsl:if test="$modifyDigestSecRealm != 'false'">
                 <xsl:copy-of select="$newDigestSecurityDomainDefinition"/>
             </xsl:if>
             <xsl:apply-templates select="@*|node()"/>
@@ -106,7 +118,7 @@
 
     <!-- Add another connector -->
     <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsW)]/*[local-name()='connector'][position()=last()]">
-        <xsl:if test="$modifyCertSecDomain != 'false'">
+        <xsl:if test="$modifyCertSecRealm != 'false'">
             <xsl:copy>
                 <xsl:apply-templates select="@*|node()"/>
             </xsl:copy>

@@ -115,6 +115,7 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
       for (SimpleAttributeDefinition attribute : RestConnectorResource.REST_ATTRIBUTES) {
          attribute.marshallAsAttribute(connector, true, writer);
       }
+      writeRestAuthentication(writer, connector);
       writeEncryption(writer, connector);
       writer.writeEndElement();
    }
@@ -260,6 +261,18 @@ class EndpointSubsystemWriter implements XMLStreamConstants, XMLElementWriter<Su
          SaslPolicyResource.NO_DICTIONARY.marshallAsElement(policy, writer);
          SaslPolicyResource.NO_PLAIN_TEXT.marshallAsElement(policy, writer);
          SaslPolicyResource.PASS_CREDENTIALS.marshallAsElement(policy, writer);
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeRestAuthentication(final XMLExtendedStreamWriter writer, final ModelNode connector)
+         throws XMLStreamException {
+      if (connector.hasDefined(ModelKeys.AUTHENTICATION)) {
+         ModelNode authentication = connector.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
+         writer.writeStartElement(Element.AUTHENTICATION.getLocalName());
+         for (SimpleAttributeDefinition attribute : RestAuthenticationResource.AUTHENTICATION_ATTRIBUTES) {
+            attribute.marshallAsAttribute(authentication, true, writer);
+         }
          writer.writeEndElement();
       }
    }

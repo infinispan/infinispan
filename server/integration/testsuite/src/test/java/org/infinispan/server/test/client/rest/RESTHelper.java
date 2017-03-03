@@ -32,6 +32,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
@@ -229,12 +230,11 @@ public class RESTHelper {
 
     public static void setCredentials(String username, String password) {
         Credentials credentials = new UsernamePasswordCredentials(username, password);
-        credsProvider.setCredentials(
-                new AuthScope(servers.get(0).getHostname(), port), credentials);
+        credsProvider.setCredentials(AuthScope.ANY, credentials);
     }
 
     public static void setSni(SSLContext sslContext, java.util.Optional<String> sniHostName) {
-        client = HttpClients.custom().setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER) {
+        client = HttpClients.custom().setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE) {
             @Override
             protected void prepareSocket(SSLSocket socket) throws IOException {
                 if(sniHostName.isPresent()) {

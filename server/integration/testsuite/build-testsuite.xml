@@ -135,7 +135,7 @@
                 <move file="${server.old.dist}-tmp/${dir.in.zip}" tofile="${server.old.dist}" />
                 <delete dir="${server.old.dist}-tmp" />
                 <transform transformDir="${server.old.dist}/standalone/configuration" in="standalone.xml" out="standalone.xml"
-                           removeRestSecurity="true"/>
+                           removeRestSecurity="true" />
                 <transform transformDir="${server.old.dist}/standalone/configuration" in="clustered.xml" out="clustered.xml"
                            removeRestSecurity="true"/>
 
@@ -198,39 +198,23 @@
                    filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-transport-stack.xml" modifyStack="${other.parts}/jgroups-stack.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-l1.xml" modifyInfinispan="${infinispan.parts}/l1.xml"/>
-        <transform in="standalone.xml" out="testsuite/rest-sec-basic-wr.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-basic.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
-                <transform-rest-sec securityMode="WRITE" cacheContainer="security" in="@{in}" />
+                <transform-rest-sec cacheContainer="security" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-basic-rw.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-cert.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" addSecRealm="${other.parts}/client-cert-realm.xml" addVault="${other.parts}/vault.xml" filtering="true">
             <rest-sec>
-                <transform-rest-sec securityMode="READ_WRITE" cacheContainer="security" in="@{in}"/>
+                <transform-rest-sec authMethod="CLIENT_CERT" cacheContainer="security" securityRealm="ClientCertRealm" modifyCertSecRealm="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-cert-wr.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-digest.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
-                <transform-rest-sec securityMode="WRITE" authMethod="CLIENT-CERT" cacheContainer="security" securityDomain="client_cert_auth" modifyCertSecDomain="true" in="@{in}"/>
-            </rest-sec>
-        </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-cert-rw.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
-            <rest-sec>
-                <transform-rest-sec securityMode="READ_WRITE" authMethod="CLIENT-CERT" cacheContainer="security" securityDomain="client_cert_auth" modifyCertSecDomain="true" in="@{in}"/>
-            </rest-sec>
-        </transform>
-
-        <transform in="standalone.xml" out="testsuite/rest-sec-digest-wr.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
-            <rest-sec>
-                <transform-rest-sec securityMode="WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
-            </rest-sec>
-        </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-digest-rw.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
-            <rest-sec>
-                <transform-rest-sec securityMode="READ_WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
+                <transform-rest-sec authMethod="DIGEST" cacheContainer="security" securityRealm="digest_auth" modifyDigestSecRealm="true" in="@{in}"/>
             </rest-sec>
         </transform>
         <transform in="clustered.xml" out="testsuite/clustered-with-sym-encrypt.xml"
-            modifyInfinispan="${infinispan.parts}/default-repl.xml" 
+            modifyInfinispan="${infinispan.parts}/default-repl.xml"
             addEncrypt="${other.parts}/jgroups-encrypt.xml"
             addVault="${other.parts}/vault.xml"
             filtering="true"/>
@@ -303,7 +287,7 @@
                    hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
                    addKrbSecDomain="${other.parts}/kerberos-security-domain.xml" />
-        <transform in="clustered.xml" out="testsuite/hotrod-authz-ldap.xml" 
+        <transform in="clustered.xml" out="testsuite/hotrod-authz-ldap.xml"
                    modifyInfinispan="${infinispan.parts}/clustered-secured-ldap-roles.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth-krb-authz-ldap.xml"
                    addSecRealm="${other.parts}/ldap-authz-security-realm.xml"
@@ -314,24 +298,24 @@
                    modifyInfinispan="${infinispan.parts}/clustered-secured-external.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth-external.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-external-realm.xml"
-                   addSecRealm="${other.parts}/sasl-external-realm.xml"
+                   addSecRealm="${other.parts}/client-cert-realm.xml"
                    addVault="${other.parts}/vault.xml" />
-        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-0.xml"  
+        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-0.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml"
                   addVault="${other.parts}/vault.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-1.xml"  
+        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-1.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-md5-1.xml"
                   addVault="${other.parts}/vault.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-0.xml"  
+        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-0.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                   addJGroupsSasl="${other.parts}/jgroups-sasl-krb-0.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
                    addKrbSecDomain="${other.parts}/kerberos-sec-domain-node0.xml" />
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-1.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
-                  addJGroupsSasl="${other.parts}/jgroups-sasl-krb-1.xml"		
+                  addJGroupsSasl="${other.parts}/jgroups-sasl-krb-1.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
                    addKrbSecDomain="${other.parts}/kerberos-sec-domain-node1.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-no-auth.xml"
@@ -433,22 +417,20 @@
         <attribute name="transformDir" default="${server1.configs}"/>
         <attribute name="in" />
         <attribute name="restTemplateFile" default="${default.transform.rest}" />
-        <attribute name="securityDomain" default="other"/>
-        <attribute name="securityMode" default="WRITE"/>
+        <attribute name="securityRealm" default="ApplicationRealm"/>
         <attribute name="authMethod" default="BASIC" />
         <attribute name="cacheContainer" default="local"/>
-        <attribute name="modifyCertSecDomain" default="false" />
-        <attribute name="modifyDigestSecDomain" default="false" />
+        <attribute name="modifyCertSecRealm" default="false" />
+        <attribute name="modifyDigestSecRealm" default="false" />
 
         <sequential>
             <xslt in="@{transformDir}/@{in}-transformed" out="@{transformDir}/@{in}-transformed-rest"
                   style="@{restTemplateFile}">
-                <param name="security.domain" expression="@{securityDomain}" />
-                <param name="security.mode" expression="@{securityMode}"/>
+                <param name="security.realm" expression="@{securityRealm}" />
                 <param name="cache.container" expression="@{cacheContainer}"/>
                 <param name="auth.method" expression="@{authMethod}"/>
-                <param name="modifyCertSecDomain" expression="@{modifyCertSecDomain}"/>
-                <param name="modifyDigestSecDomain" expression="@{modifyDigestSecDomain}"/>
+                <param name="modifyCertSecRealm" expression="@{modifyCertSecRealm}"/>
+                <param name="modifyDigestSecRealm" expression="@{modifyDigestSecRealm}"/>
 
             </xslt>
             <move file="@{transformDir}/@{in}-transformed-rest" tofile="@{transformDir}/@{in}-transformed"

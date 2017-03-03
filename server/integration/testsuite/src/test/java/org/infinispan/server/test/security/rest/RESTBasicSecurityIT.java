@@ -8,7 +8,6 @@ import org.infinispan.server.test.client.rest.RESTHelper;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -20,7 +19,6 @@ import org.junit.runner.RunWith;
  * @author <a href="mailto:vchepeli@redhat.com">Vitalii Chepeliuk</a>
  */
 @RunWith(Arquillian.class)
-@Ignore
 public class RESTBasicSecurityIT extends AbstractBasicSecurity {
 
     private static final String CONTAINER = "rest-security-basic";
@@ -39,13 +37,7 @@ public class RESTBasicSecurityIT extends AbstractBasicSecurity {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-basic-wr.xml")})
-    public void testSecuredWriteOperations() throws Exception {
-        securedWriteOperations();
-    }
-
-    @Test
-    @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-basic-rw.xml")})
+    @WithRunningServer({@RunningServer(name = CONTAINER, config = "testsuite/rest-sec-basic.xml")})
     public void testSecuredReadWriteOperations() throws Exception {
         securedReadWriteOperations();
     }

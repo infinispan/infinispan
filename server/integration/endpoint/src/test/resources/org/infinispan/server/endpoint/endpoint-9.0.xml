@@ -26,7 +26,8 @@
         </encryption>
     </hotrod-connector>
     <memcached-connector cache="memcachedCache" socket-binding="memcached" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000" />
-    <rest-connector name="rest1" socket-binding="rest" cache-container="default" ignored-caches="cache1 cache2 cache3" context-path="/" security-domain="other" auth-method="BASIC" security-mode="READ_WRITE" extended-headers="ON_DEMAND">
+    <rest-connector name="rest1" socket-binding="rest" cache-container="default" ignored-caches="cache1 cache2 cache3" context-path="/" extended-headers="ON_DEMAND">
+        <authentication security-realm="other" auth-method="BASIC"/>
         <encryption security-realm="other">
             <sni host-name="sni" security-realm="other" />
             <sni host-name="sni2" security-realm="other2" />

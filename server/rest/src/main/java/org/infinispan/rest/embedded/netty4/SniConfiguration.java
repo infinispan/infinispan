@@ -21,6 +21,12 @@ import io.netty.util.DomainNameMappingBuilder;
 public class SniConfiguration {
 
    protected final DomainNameMappingBuilder<SslContext> mapping;
+   protected final ClientAuth clientAuth;
+
+   public SniConfiguration(SSLContext defaultServerKeystore, ClientAuth clientAuth) {
+      this.clientAuth = clientAuth;
+      this.mapping = new DomainNameMappingBuilder<>(createContext(defaultServerKeystore, clientAuth));
+   }
 
    /**
     * Constructs new {@link SniConfiguration}.
@@ -28,7 +34,7 @@ public class SniConfiguration {
     * @param defaultServerKeystore default keystore to be used when no SNI is specified by the client.
     */
    public SniConfiguration(SSLContext defaultServerKeystore) {
-      mapping = new DomainNameMappingBuilder<>(createContext(defaultServerKeystore));
+      this(defaultServerKeystore, ClientAuth.NONE);
    }
 
    /**
@@ -39,7 +45,7 @@ public class SniConfiguration {
     * @return <code>this</code> configuration.
     */
    public SniConfiguration addSniMapping(String sniHostName, SSLContext sslContext) {
-      mapping.add(sniHostName, createContext(sslContext));
+      mapping.add(sniHostName, createContext(sslContext, clientAuth));
       return this;
    }
 
@@ -47,13 +53,12 @@ public class SniConfiguration {
       return mapping.build();
    }
 
-   private SslContext createContext(SSLContext sslContext) {
+   private static SslContext createContext(SSLContext sslContext, ClientAuth clientAuth) {
       //Unfortunately we need to grap a list of available ciphers from the engine.
       //If we won't, JdkSslContext will use common ciphers from DEFAULT and SUPPORTED, which gives us 5 out of ~50 available ciphers
       //Of course, we don't need to any specific engine configuration here... just a list of ciphers
       String[] ciphers = sslContext.createSSLEngine().getSupportedCipherSuites();
-      return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, null,
-            ClientAuth.OPTIONAL);
+      return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, null, clientAuth);
    }
 
 }

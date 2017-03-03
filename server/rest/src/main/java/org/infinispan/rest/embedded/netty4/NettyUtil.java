@@ -17,7 +17,6 @@ import org.jboss.resteasy.util.CookieParser;
 import org.jboss.resteasy.util.HttpHeaderNames;
 import org.jboss.resteasy.util.MediaTypeHelper;
 
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 
 /**
@@ -27,8 +26,8 @@ import io.netty.handler.codec.http.HttpRequest;
  */
 public class NettyUtil {
    public static ResteasyUriInfo extractUriInfo(HttpRequest request, String contextPath, String protocol) {
-      String host = HttpHeaders.getHost(request, "unknown");
-      String uri = request.getUri();
+      String host = request.headers().get(HttpHeaderNames.HOST, "unknown");
+      String uri = request.uri();
 
       String uriString;
 

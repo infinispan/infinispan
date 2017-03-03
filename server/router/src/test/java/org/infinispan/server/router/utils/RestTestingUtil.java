@@ -3,7 +3,7 @@ package org.infinispan.server.router.utils;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.rest.NettyRestServer;
+import org.infinispan.rest.embedded.netty4.NettyRestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 
 public class RestTestingUtil {

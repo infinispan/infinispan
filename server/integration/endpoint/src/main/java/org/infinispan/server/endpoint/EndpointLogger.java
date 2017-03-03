@@ -194,4 +194,29 @@ public interface EndpointLogger extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(id = 10034, value = "Multi tenant router started (HotRod listening on %s, REST listening on %s")
    void routerStarted(String hotrodAddress, String restAddress);
+
+   @LogMessage(level = WARN)
+   @Message(id = 10035, value = "The security-domain attribute on the REST connector is ignored")
+   void restSecurityDomainIgnored();
+
+   @Message(id = 10036, value = "The '%s' auth-method for the REST connector is currently unsupported")
+   StartException restAuthMethodUnsupported(String method);
+
+   @LogMessage(level = WARN)
+   @Message(id = 10037, value = "The security-mode attribute on the REST connector is ignored")
+   void restSecurityModeIgnored();
+
+   @LogMessage(level = WARN)
+   @Message(id = 10038, value = "The security-realm attribute on the REST connector is ignored. Use the authentication sub-element instead")
+   void restSecurityRealmIgnored();
+
+   @LogMessage(level = WARN)
+   @Message(id = 10039, value = "The auth-mehtod attribute on the REST connector is ignored. Use the authentication sub-element instead")
+   void restAuthMethodIgnored();
+
+   @Message(id = 10040, value = "Client certificate authentication cannot be used on an unencrypted endpoint")
+   StartException cannotUseCertificateAuthenticationWithoutEncryption();
+
+   @Message(id = 10041, value = "Authentication error: %s")
+   SecurityException authenticationError(Throwable reason);
 }
