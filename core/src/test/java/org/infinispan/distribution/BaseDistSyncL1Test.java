@@ -76,7 +76,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
                                          Class<? extends VisitableCommand> commandClass,
          Class<? extends AsyncInterceptor> interceptorPosition,
                                          boolean blockAfterCommand) {
-      BlockingInterceptor bi = new BlockingInterceptor(barrier, commandClass, blockAfterCommand, false);
+      BlockingInterceptor bi = new BlockingInterceptor<>(barrier, commandClass, blockAfterCommand, false);
       AsyncInterceptorChain interceptorChain = cache.getAdvancedCache().getAsyncInterceptorChain();
       assertTrue(interceptorChain.addInterceptorBefore(bi, interceptorPosition));
       return bi;

@@ -83,10 +83,10 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       cache0.addListener(clusterListener);
 
       CyclicBarrier barrier = new CyclicBarrier(3);
-      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
+      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor<>(barrier, PutKeyValueCommand.class,
             true, false);
       cache0.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
-      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
+      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor<>(barrier, PutKeyValueCommand.class,
             true, false);
       cache2.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor2, EntryWrappingInterceptor.class);
 
