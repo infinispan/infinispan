@@ -726,8 +726,8 @@ public interface Log extends BasicLogger {
    void failedLoadingKeysFromCacheStore(@Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error during rebalance for cache %s on node %s", id = 195)
-   void rebalanceError(String cacheName, Address node, @Cause Throwable cause);
+   @Message(value = "Error during topology change for cache %s on node %s", id = 195)
+   void topologyChangeError(String cacheName, Address node, @Cause Throwable cause);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed to recover cluster state after the current node became the coordinator (or after merge)", id = 196)

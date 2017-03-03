@@ -70,7 +70,7 @@ public class VersionedReplStateTransferTest extends MultipleCacheManagersTest {
 
       cacheManagers.get(0).stop();
       cacheManagers.remove(0);
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForRebalanceToComplete(caches());
 
       // Cause a write skew
       cache2.put("hello", "new world");

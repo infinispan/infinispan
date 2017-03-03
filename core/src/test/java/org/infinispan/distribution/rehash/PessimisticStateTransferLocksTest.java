@@ -155,7 +155,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
    }
 
    private void startRebalance() throws Exception {
-      InvocationMatcher rebalanceCompletedMatcher = matchMethodCall("handleRebalanceCompleted")
+      InvocationMatcher rebalanceCompletedMatcher = matchMethodCall("handleTopologyConfirm")
             .withParam(1, address(2)).build();
       advanceOnGlobalComponentMethod(sequencer, manager(0), ClusterTopologyManager.class,
             rebalanceCompletedMatcher).before("rebalance:before_confirm");
@@ -169,7 +169,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
 
    private void waitRebalanceEnd() throws Exception {
       sequencer.advance("rebalance:end");
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForRebalanceToComplete(caches());
    }
 
    private void endTx() throws Exception {

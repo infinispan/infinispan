@@ -71,7 +71,7 @@ public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
       manager(1).stop();
       TestingUtil.blockUntilViewsReceived(60000, false, c0, c2);
       // Cache 2 should not be in the CH yet
-      TestingUtil.waitForRehashToComplete(c0);
+      TestingUtil.waitForRebalanceToComplete(c0);
 
       assertEquals(Arrays.asList(address(0)), c0.getAdvancedCache().getDistributionManager().getConsistentHash().getMembers());
       eventually(new Condition() {
