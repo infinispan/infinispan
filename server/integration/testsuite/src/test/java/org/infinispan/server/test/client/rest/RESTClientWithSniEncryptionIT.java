@@ -1,26 +1,23 @@
 package org.infinispan.server.test.client.rest;
 
-import static org.infinispan.server.test.client.rest.RESTHelper.*;
-import static org.jboss.aesh.terminal.Key.e;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.infinispan.server.test.client.rest.RESTHelper.addServer;
+import static org.infinispan.server.test.client.rest.RESTHelper.clearServers;
+import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
+import static org.infinispan.server.test.client.rest.RESTHelper.put;
+import static org.infinispan.server.test.client.rest.RESTHelper.setSni;
+import static org.infinispan.server.test.client.rest.RESTHelper.toSsl;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.Optional;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
 
 import org.apache.http.HttpResponse;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.util.ITestUtils;
@@ -28,12 +25,9 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-
-import sun.security.validator.ValidatorException;
 
 @RunWith(Arquillian.class)
 @Category({Security.class})

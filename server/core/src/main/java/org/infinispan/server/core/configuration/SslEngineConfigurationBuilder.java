@@ -23,7 +23,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
    private String trustStoreFileName;
    private char[] trustStorePassword;
    private char[] keyStoreCertificatePassword;
-   private String domain = "*";
+   private String domain = SslConfiguration.DEFAULT_SNI_DOMAIN;
 
    SslEngineConfigurationBuilder(SslConfigurationBuilder parentSslConfigurationBuilder) {
       this.parentSslConfigurationBuilder = parentSslConfigurationBuilder;

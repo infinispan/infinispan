@@ -24,24 +24,6 @@ public abstract class AbstractBasicSecurity {
     private static final String TEST_USER_PASSWORD = "testpassword";
     private static final String KEY_D = "d";
 
-    protected void securedWriteOperations() throws Exception {
-        RESTHelper.setCredentials(TEST_USER_NAME, TEST_USER_PASSWORD);
-        put(fullPathKey(KEY_A), "data", "application/text", HttpStatus.SC_OK);
-        RESTHelper.clearCredentials();
-        put(fullPathKey(KEY_B), "data", "application/text", HttpStatus.SC_UNAUTHORIZED);
-        RESTHelper.setCredentials(TEST_USER_NAME, TEST_USER_PASSWORD);
-        post(fullPathKey(KEY_C), "data", "application/text", HttpStatus.SC_OK);
-        RESTHelper.clearCredentials();
-        post(fullPathKey(KEY_D), "data", "application/text", HttpStatus.SC_UNAUTHORIZED);
-        get(fullPathKey(KEY_A), "data");
-        head(fullPathKey(KEY_A), HttpStatus.SC_OK);
-        delete(fullPathKey(KEY_A), HttpStatus.SC_UNAUTHORIZED);
-        RESTHelper.setCredentials(TEST_USER_NAME, TEST_USER_PASSWORD);
-        delete(fullPathKey(KEY_A), HttpStatus.SC_OK);
-        delete(fullPathKey(KEY_C), HttpStatus.SC_OK);
-        RESTHelper.clearCredentials();
-    }
-
     protected void securedReadWriteOperations() throws Exception {
         RESTHelper.setCredentials(TEST_USER_NAME, TEST_USER_PASSWORD);
         put(fullPathKey(KEY_A), "data", "application/text", HttpStatus.SC_OK);

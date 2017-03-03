@@ -271,7 +271,11 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             break;
          }
          case AUTH_METHOD: {
-            RestConnectorResource.AUTH_METHOD.parseAndSetParameter(value, connector, reader);
+            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            } else {
+               ROOT_LOGGER.restAuthMethodIgnored();
+            }
             break;
          }
          case CACHE_CONTAINER: {
@@ -292,15 +296,34 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             break;
          }
          case SECURITY_DOMAIN: {
-            RestConnectorResource.SECURITY_DOMAIN.parseAndSetParameter(value, connector, reader);
-            break;
+            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            } else {
+               ROOT_LOGGER.restSecurityDomainIgnored();
+            }
          }
          case SECURITY_MODE: {
-            RestConnectorResource.SECURITY_MODE.parseAndSetParameter(value, connector, reader);
+            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            } else {
+               ROOT_LOGGER.restSecurityModeIgnored();
+            }
+            break;
+         }
+         case SECURITY_REALM: {
+            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            } else {
+               ROOT_LOGGER.restSecurityRealmIgnored();
+            }
             break;
          }
          case VIRTUAL_HOST: {
-            ROOT_LOGGER.virtualHostNotInUse();
+            if (namespace.since(Namespace.INFINISPAN_ENDPOINT_9_0)) {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            } else {
+               ROOT_LOGGER.virtualHostNotInUse();
+            }
             break;
          }
          case IGNORED_CACHES: {
@@ -325,6 +348,10 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
+            case AUTHENTICATION: {
+               parseRestAuthentication(reader, connector, operations);
+               break;
+            }
             case ENCRYPTION: {
                parseEncryption(reader, connector, operations);
                break;
@@ -334,6 +361,36 @@ class EndpointSubsystemReader implements XMLStreamConstants, XMLElementReader<Li
             }
          }
       }
+   }
+
+   private void parseRestAuthentication(XMLExtendedStreamReader reader, ModelNode connector, List<ModelNode> operations)
+         throws XMLStreamException {
+      PathAddress address = PathAddress.pathAddress(connector.get(OP_ADDR)).append(
+            PathElement.pathElement(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME));
+      ModelNode authentication = Util.createAddOperation(address);
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case SECURITY_REALM: {
+               RestAuthenticationResource.SECURITY_REALM.parseAndSetParameter(value, authentication, reader);
+               break;
+            }
+            case AUTH_METHOD: {
+               RestAuthenticationResource.AUTH_METHOD.parseAndSetParameter(value, authentication, reader);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+
+      ParseUtils.requireNoContent(reader);
+
+      operations.add(authentication);
    }
 
    private void parseWebSocketConnector(XMLExtendedStreamReader reader, PathAddress subsystemAddress,

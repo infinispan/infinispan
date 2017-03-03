@@ -9,6 +9,7 @@ import javax.ws.rs.container.ContainerResponseFilter;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.rest.Server;
+import org.infinispan.rest.embedded.netty4.NettyJaxrsServer;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.RestRouterConfiguration;
@@ -16,7 +17,6 @@ import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.router.Router;
 import org.infinispan.server.router.routes.PrefixedRouteSource;
 import org.infinispan.server.router.routes.rest.NettyRestServerRouteDestination;
-import org.jboss.resteasy.plugins.server.netty.NettyJaxrsServer;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
 /**

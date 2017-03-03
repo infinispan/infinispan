@@ -12,7 +12,9 @@
             <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
          </hotrod-connector>
          <memcached-connector socket-binding="memcached" cache-container="local" />
-         <rest-connector socket-binding="rest" cache-container="local" security-domain="other" auth-method="BASIC" />
+         <rest-connector socket-binding="rest" cache-container="local">
+            <authentication security-realm="ApplicationRealm" auth-method="BASIC" />
+         </rest-connector>
          <websocket-connector socket-binding="websocket" cache-container="local" />
       </replacement>
    </supplement>
@@ -23,7 +25,9 @@
             <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
          </hotrod-connector>
          <memcached-connector socket-binding="memcached" cache-container="clustered" />
-         <rest-connector socket-binding="rest" cache-container="clustered" security-domain="other" auth-method="BASIC" />
+         <rest-connector socket-binding="rest" cache-container="clustered">
+            <authentication security-realm="ApplicationRealm" auth-method="BASIC" />
+         </rest-connector>
          <websocket-connector socket-binding="websocket" cache-container="clustered" />
       </replacement>
    </supplement>
@@ -38,7 +42,9 @@
    <supplement name="rest-auth">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CONNECTORS">
-         <rest-connector socket-binding="rest" cache-container="local" security-domain="other" auth-method="BASIC" />
+         <rest-connector socket-binding="rest" cache-container="local">
+            <authentication security-realm="ApplicationRealm" auth-method="BASIC" />
+         </rest-connector>
       </replacement>
    </supplement>
    <supplement name="rest-rolling-upgrade">
@@ -135,5 +141,6 @@
    <socket-binding name="memcached" port="11211" />
    <socket-binding name="websocket" port="8181" />
    <socket-binding name="rest" port="8080" />
+   <socket-binding name="rest-ssl" port="8443" />
    <socket-binding name="rest-multi-tenancy" port="8081" />
 </config>

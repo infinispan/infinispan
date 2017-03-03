@@ -45,8 +45,15 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       // Read the full model
       ModelNode config = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
 
+      RestAuthMethod restAuthMethod = RestAuthMethod.NONE;
+      ModelNode authConfig = null;
+      if (config.hasDefined(ModelKeys.AUTHENTICATION) && config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME).isDefined()) {
+         authConfig = config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
+         restAuthMethod = RestAuthMethod.valueOf(RestAuthenticationResource.AUTH_METHOD.resolveModelAttribute(context, authConfig).asString());
+      }
+
       // Create the service
-      final RestService service = new RestService(getServiceName(config), config);
+      final RestService service = new RestService(getServiceName(config), config, restAuthMethod);
 
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "rest"), service);
@@ -56,9 +63,13 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
 
       builder.addDependency(PathManagerService.SERVICE_NAME, PathManager.class, service.getPathManagerInjector());
-      if (config.hasDefined(ModelKeys.SECURITY_DOMAIN)) {
-         EndpointUtils.addSecurityDomainDependency(builder, RestConnectorResource.SECURITY_DOMAIN.resolveModelAttribute(context, config).asString(), service.getSecurityDomainContextInjector());
+
+      if (authConfig != null) {
+         if(authConfig.hasDefined(ModelKeys.SECURITY_REALM)) {
+            EndpointUtils.addSecurityRealmDependency(builder, RestAuthenticationResource.SECURITY_REALM.resolveModelAttribute(context, authConfig).asString(), service.getAuthenticationSecurityRealm());
+         }
       }
+
       EncryptableSubsystemHelper.processEncryption(context, config, service, builder);
       builder.setInitialMode(ServiceController.Mode.ACTIVE);
       builder.install();

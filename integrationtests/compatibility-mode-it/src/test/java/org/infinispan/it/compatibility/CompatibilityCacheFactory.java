@@ -23,7 +23,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.NettyRestServer;
+import org.infinispan.rest.embedded.netty4.NettyRestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;

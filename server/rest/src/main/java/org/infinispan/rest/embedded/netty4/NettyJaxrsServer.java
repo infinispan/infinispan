@@ -27,6 +27,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -69,6 +70,7 @@ public class NettyJaxrsServer implements EmbeddedJaxrsServer {
    private Map<ChannelOption, Object> channelOptions = Collections.emptyMap();
    private Map<ChannelOption, Object> childChannelOptions = Collections.emptyMap();
    private List<ChannelHandler> httpChannelHandlers = Collections.emptyList();
+   private ClientAuth clientAuth = ClientAuth.NONE;
 
    public void setSSLContext(SSLContext sslContext) {
       this.sslContext = sslContext;
@@ -80,6 +82,14 @@ public class NettyJaxrsServer implements EmbeddedJaxrsServer {
 
    public void setSniConfiguration(SniConfiguration sniConfiguration) {
       this.sniConfiguration = sniConfiguration;
+   }
+
+   public ClientAuth getClientAuth() {
+      return clientAuth;
+   }
+
+   public void setClientAuth(ClientAuth clientAuth) {
+      this.clientAuth = clientAuth;
    }
 
    /**
@@ -229,7 +239,7 @@ public class NettyJaxrsServer implements EmbeddedJaxrsServer {
       this.authenticator = authenticator;
    }
 
-   protected RequestDispatcher createRequestDispatcher(boolean secure) {
+   protected RequestDispatcher createRequestDispatcher() {
       return new RequestDispatcher((SynchronousDispatcher) deployment.getDispatcher(), deployment.getProviderFactory(), authenticator);
    }
 
@@ -270,7 +280,7 @@ public class NettyJaxrsServer implements EmbeddedJaxrsServer {
          return new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
-               setupHandlers(ch, createRequestDispatcher(false), RestEasyHttpRequestDecoder.Protocol.HTTP);
+               setupHandlers(ch, createRequestDispatcher(), RestEasyHttpRequestDecoder.Protocol.HTTP);
             }
          };
       } else if (sniConfiguration == null) {
@@ -279,8 +289,16 @@ public class NettyJaxrsServer implements EmbeddedJaxrsServer {
             public void initChannel(SocketChannel ch) throws Exception {
                SSLEngine engine = sslContext.createSSLEngine();
                engine.setUseClientMode(false);
+               switch (clientAuth) {
+                  case OPTIONAL:
+                     engine.setWantClientAuth(true);
+                     break;
+                  case REQUIRE:
+                     engine.setNeedClientAuth(true);
+                     break;
+               }
                ch.pipeline().addFirst(new SslHandler(engine));
-               setupHandlers(ch, createRequestDispatcher(true), RestEasyHttpRequestDecoder.Protocol.HTTPS);
+               setupHandlers(ch, createRequestDispatcher(), RestEasyHttpRequestDecoder.Protocol.HTTPS);
             }
          };
       } else {
@@ -288,7 +306,7 @@ public class NettyJaxrsServer implements EmbeddedJaxrsServer {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
                ch.pipeline().addFirst(new SniHandler(sniConfiguration.buildMapping()));
-               setupHandlers(ch, createRequestDispatcher(true), RestEasyHttpRequestDecoder.Protocol.HTTPS);
+               setupHandlers(ch, createRequestDispatcher(), RestEasyHttpRequestDecoder.Protocol.HTTPS);
             }
          };
       }

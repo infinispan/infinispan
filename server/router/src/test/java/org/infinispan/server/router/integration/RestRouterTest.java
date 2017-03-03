@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.InetAddress;
 
-import org.infinispan.rest.NettyRestServer;
+import org.infinispan.rest.embedded.netty4.NettyRestServer;
 import org.infinispan.server.router.MultiTenantRouter;
 import org.infinispan.server.router.configuration.builder.MultiTenantRouterConfigurationBuilder;
 import org.infinispan.server.router.routes.Route;

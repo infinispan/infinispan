@@ -18,12 +18,6 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-public enum AuthMethod {
-   BASIC, DIGEST, CLIENT_CERT, SPNEGO;
-
-   @Override
-   public String toString() {
-      return super.toString().replace('_', '-');
-   }
-
+public enum RestAuthMethod {
+   NONE, BASIC, DIGEST, CLIENT_CERT, SPNEGO;
 }

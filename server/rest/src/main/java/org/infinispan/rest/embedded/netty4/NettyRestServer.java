@@ -53,7 +53,8 @@ public final class NettyRestServer extends AbstractCacheIgnoreAware implements L
    private static void addEncryption(RestServerConfiguration config, NettyJaxrsServer netty) {
       if (config.ssl() != null && config.ssl().enabled()) {
          SslConfiguration sslConfig = config.ssl();
-         SniConfiguration nettySniConfiguration = new SniConfiguration(SslUtils.createJdkSslContext(sslConfig, sslConfig.sniDomainsConfiguration().get("*")));
+         ClientAuth clientAuth = sslConfig.requireClientAuth() ? ClientAuth.OPTIONAL : ClientAuth.NONE;
+         SniConfiguration nettySniConfiguration = new SniConfiguration(SslUtils.createJdkSslContext(sslConfig, sslConfig.sniDomainsConfiguration().get("*")), clientAuth);
 
          sslConfig.sniDomainsConfiguration().forEach((domainName, domainConfiguration) -> {
             nettySniConfiguration.addSniMapping(domainName, SslUtils.createJdkSslContext(sslConfig, domainConfiguration));
@@ -61,6 +62,7 @@ public final class NettyRestServer extends AbstractCacheIgnoreAware implements L
 
          netty.setSSLContext(sslConfig.sslContext());
          netty.setSniConfiguration(nettySniConfiguration);
+         netty.setClientAuth(clientAuth);
       }
    }
 

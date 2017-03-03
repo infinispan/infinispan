@@ -47,14 +47,6 @@ public class RestConnectorResource extends CommonConnectorResource {
          .setRestartAllServices()
          .build();
 
-   static final SimpleAttributeDefinition AUTH_METHOD =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.AUTH_METHOD, ModelType.STRING, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.AUTH_METHOD)
-                 .setValidator(new EnumValidator<AuthMethod>(AuthMethod.class, true, false))
-                 .setRestartAllServices()
-                 .build();
-
    static final SimpleAttributeDefinition CONTEXT_PATH =
          new SimpleAttributeDefinitionBuilder(ModelKeys.CONTEXT_PATH, ModelType.STRING, true)
                  .setAllowExpression(true)
@@ -66,43 +58,12 @@ public class RestConnectorResource extends CommonConnectorResource {
          new SimpleAttributeDefinitionBuilder(ModelKeys.EXTENDED_HEADERS, ModelType.STRING, true)
                  .setAllowExpression(true)
                  .setXmlName(ModelKeys.EXTENDED_HEADERS)
-                 .setValidator(new EnumValidator<ExtendedHeaders>(ExtendedHeaders.class, true, false))
+                 .setValidator(new EnumValidator<>(ExtendedHeaders.class, true, false))
                  .setDefaultValue(new ModelNode().set(ExtendedHeaders.ON_DEMAND.name()))
                  .setRestartAllServices()
                  .build();
 
-   static final SimpleAttributeDefinition SECURITY_DOMAIN =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.SECURITY_DOMAIN, ModelType.STRING, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.SECURITY_DOMAIN)
-                 .setRestartAllServices()
-                 .build();
-
-   static final SimpleAttributeDefinition SECURITY_MODE =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.SECURITY_MODE, ModelType.STRING, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.SECURITY_MODE)
-                 .setValidator(new EnumValidator<SecurityMode>(SecurityMode.class, true, false))
-                 .setDefaultValue(new ModelNode().set(SecurityMode.READ_WRITE.name()))
-                 .setRestartAllServices()
-                 .build();
-
-   static final SimpleAttributeDefinition VIRTUAL_HOST =
-      new SimpleAttributeDefinitionBuilder(ModelKeys.VIRTUAL_HOST, ModelType.STRING, true)
-         .setAllowExpression(true)
-         .setXmlName(ModelKeys.VIRTUAL_HOST)
-         .setRestartAllServices()
-         .build();
-
-   @Deprecated
-   static final SimpleAttributeDefinition VIRTUAL_SERVER =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.VIRTUAL_SERVER, ModelType.STRING, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.VIRTUAL_SERVER)
-                 .setRestartAllServices()
-                 .build();
-
-   static final SimpleAttributeDefinition[] REST_ATTRIBUTES = { SOCKET_BINDING, AUTH_METHOD, CONTEXT_PATH, EXTENDED_HEADERS, SECURITY_DOMAIN, SECURITY_MODE, VIRTUAL_SERVER, VIRTUAL_HOST };
+   static final SimpleAttributeDefinition[] REST_ATTRIBUTES = { SOCKET_BINDING, CONTEXT_PATH, EXTENDED_HEADERS };
 
    public RestConnectorResource(boolean isRuntimeRegistration) {
       super(REST_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.REST_CONNECTOR), RestSubsystemAdd.INSTANCE, RestSubsystemRemove.INSTANCE, isRuntimeRegistration);
@@ -110,6 +71,7 @@ public class RestConnectorResource extends CommonConnectorResource {
 
    @Override
    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
+      resourceRegistration.registerSubModel(new RestAuthenticationResource());
       resourceRegistration.registerSubModel(new EncryptionResource());
    }
 

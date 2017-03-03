@@ -138,6 +138,7 @@
 
     <xs:complexType name="rest-connector">
         <xs:all>
+            <xs:element name="authentication" type="tns:rest-authentication" minOccurs="0" maxOccurs="1" />
             <xs:element name="encryption" type="tns:encryption" minOccurs="0" maxOccurs="1" />
         </xs:all>
         <xs:attribute name="name" type="xs:string" use="optional">
@@ -155,32 +156,12 @@
                 <xs:documentation>The socket on which this connector will bind itself. If missing, the server will not listen to TCP connections</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="virtual-host" type="xs:string" use="optional">
-            <xs:annotation>
-                <xs:documentation>This setting has been deprecated and will be ignored.</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="context-path" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>The context path on which to register the REST connector. Defaults to '' (the root context)</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="security-domain" type="xs:string" use="optional">
-            <xs:annotation>
-                <xs:documentation>The security domain to use for authentication/authorization purposes. Defaults to none (no authentication)</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="auth-method" type="xs:string" use="optional">
-            <xs:annotation>
-                <xs:documentation>The authentication method to require. Can be BASIC, DIGEST, CLIENT_CERT, SPNEGO. Defaults to BASIC</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="security-mode" type="tns:security-mode" use="optional">
-            <xs:annotation>
-                <xs:documentation>Determines whether authentication is required only for writing (WRITE) or for both reads and writes (READ_WRITE). Defaults to READ_WRITE</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional">
+        <xs:attribute name="extended-headers" type="tns:extended-headers" use="optional" default="ON_DEMAND">
             <xs:annotation>
                 <xs:documentation>Whether to enable extended headers. Can be NEVER or ON_DEMAND. Defaults to ON_DEMAND</xs:documentation>
             </xs:annotation>
@@ -449,6 +430,19 @@
         </xs:list>
     </xs:simpleType>
 
+    <xs:complexType name="rest-authentication">
+        <xs:attribute name="security-realm" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>The security realm to use for authentication/authorization purposes. Defaults to none (no authentication)</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="auth-method" type="tns:auth-method" use="optional" default="NONE">
+            <xs:annotation>
+                <xs:documentation>The authentication method to require. Can be NONE, BASIC, DIGEST, CLIENT_CERT, SPNEGO. Defaults to NONE. Setting it to a different value requires enabling a security-realm.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
     <xs:complexType name="encryption">
         <xs:sequence>
             <xs:element name="sni" type="tns:sni" minOccurs="0" maxOccurs="unbounded"/>
@@ -500,16 +494,31 @@
         </xs:attribute>
     </xs:complexType>
 
-    <xs:simpleType name="security-mode">
+    <xs:simpleType name="auth-method">
         <xs:restriction base="xs:token">
-            <xs:enumeration value="WRITE">
+            <xs:enumeration value="NONE">
                 <xs:annotation>
-                    <xs:documentation>Specifies that authentication against the specified security domain should apply only to write methods (PUT, POST, DELETE)</xs:documentation>
+                    <xs:documentation>Client authentication is disabled</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
-            <xs:enumeration value="READ_WRITE">
+            <xs:enumeration value="BASIC">
                 <xs:annotation>
-                    <xs:documentation>Specifies that authentication against the specified security domain should apply to all methods (PUT, POST, DELETE, GET, HEAD)</xs:documentation>
+                    <xs:documentation>Client authentication will be performed using the Basic scheme</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="DIGEST">
+                <xs:annotation>
+                    <xs:documentation>Client authentication will be performed using the Digest scheme</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="CLIENT_CERT">
+                <xs:annotation>
+                    <xs:documentation>Client authentication will be use the peer's certificate</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="SPNEGO">
+                <xs:annotation>
+                    <xs:documentation>Client authentication will be use the SPNEGO scheme</xs:documentation>
                 </xs:annotation>
             </xs:enumeration>
         </xs:restriction>

@@ -27,19 +27,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.NettyRestServer;
+import org.infinispan.rest.embedded.netty4.NettyRestServer;
 import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
+import org.infinispan.rest.embedded.netty4.security.Authenticator;
+import org.infinispan.rest.embedded.netty4.security.BasicAuthenticator;
+import org.infinispan.rest.embedded.netty4.security.ClientCertAuthenticator;
+import org.infinispan.server.endpoint.subsystem.security.BasicRestSecurityDomain;
+import org.infinispan.server.endpoint.subsystem.security.ClientCertRestSecurityDomain;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.SocketBinding;
-import org.jboss.as.security.plugins.SecurityDomainContext;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+import org.jboss.resteasy.plugins.server.embedded.SecurityDomain;
 
 
 /**
@@ -50,21 +55,23 @@ import org.jboss.msc.value.InjectedValue;
  */
 public class RestService implements Service<NettyRestServer>, EncryptableService {
    private static final String DEFAULT_CONTEXT_PATH = "";
-   private final InjectedValue<PathManager> pathManagerInjector = new InjectedValue<PathManager>();
-   private final InjectedValue<EmbeddedCacheManager> cacheManagerInjector = new InjectedValue<EmbeddedCacheManager>();
-   private final InjectedValue<SecurityDomainContext> securityDomainContextInjector = new InjectedValue<SecurityDomainContext>();
-   private final InjectedValue<SocketBinding> socketBinding = new InjectedValue<SocketBinding>();
-   private final InjectedValue<SecurityRealm> encryptionSecurityRealm = new InjectedValue<SecurityRealm>();
+   private final InjectedValue<PathManager> pathManagerInjector = new InjectedValue<>();
+   private final InjectedValue<EmbeddedCacheManager> cacheManagerInjector = new InjectedValue<>();
+   private final InjectedValue<SocketBinding> socketBinding = new InjectedValue<>();
+   private final InjectedValue<SecurityRealm> encryptionSecurityRealm = new InjectedValue<>();
+   private final InjectedValue<SecurityRealm> authenticationSecurityRealm = new InjectedValue<>();
    private final Map<String, InjectedValue<SecurityRealm>> sniDomains = new HashMap<>();
 
+   private final RestAuthMethod authMethod;
    private final ModelNode config;
    private final String serverName;
    private NettyRestServer restServer;
    private boolean clientAuth;
 
-   public RestService(String serverName, ModelNode config) {
+   public RestService(String serverName, ModelNode config, RestAuthMethod authMethod) {
       this.serverName = serverName;
       this.config = config.clone();
+      this.authMethod = authMethod;
    }
 
    private String cleanContextPath(String s) {
@@ -106,7 +113,33 @@ public class RestService implements Service<NettyRestServer>, EncryptableService
             builder.host(socketAddress.getAddress().getHostAddress());
             builder.port(socketAddress.getPort());
          }
-         restServer = NettyRestServer.createServer(builder.build(), cacheManagerInjector.getValue());
+
+         Authenticator authenticator;
+         switch (authMethod) {
+            case BASIC: {
+               SecurityRealm authenticationRealm = authenticationSecurityRealm.getOptionalValue();
+               SecurityDomain restSecurityDomain = new BasicRestSecurityDomain(authenticationRealm);
+               authenticator = new BasicAuthenticator(restSecurityDomain, EncryptableServiceHelper.isSecurityEnabled(this), authenticationRealm.getName());
+               break;
+            }
+            case CLIENT_CERT: {
+               if (!EncryptableServiceHelper.isSecurityEnabled(this)) {
+                  throw ROOT_LOGGER.cannotUseCertificateAuthenticationWithoutEncryption();
+               }
+               SecurityRealm authenticationRealm = authenticationSecurityRealm.getOptionalValue();
+               SecurityDomain restSecurityDomain = new ClientCertRestSecurityDomain(authenticationRealm);
+               authenticator = new ClientCertAuthenticator(restSecurityDomain);
+               break;
+            }
+            case NONE: {
+               authenticator = null;
+               break;
+            }
+            default:
+               throw ROOT_LOGGER.restAuthMethodUnsupported(authMethod.toString());
+         }
+
+         restServer = NettyRestServer.createServer(builder.build(), cacheManagerInjector.getValue(), authenticator);
       } catch (Exception e) {
          throw ROOT_LOGGER.restContextCreationFailed(e);
       }
@@ -147,8 +180,8 @@ public class RestService implements Service<NettyRestServer>, EncryptableService
       return cacheManagerInjector;
    }
 
-   public InjectedValue<SecurityDomainContext> getSecurityDomainContextInjector() {
-      return securityDomainContextInjector;
+   public InjectedValue<SecurityRealm> getAuthenticationSecurityRealm() {
+      return authenticationSecurityRealm;
    }
 
    public InjectedValue<SocketBinding> getSocketBinding() {
@@ -162,7 +195,7 @@ public class RestService implements Service<NettyRestServer>, EncryptableService
 
    @Override
    public InjectedValue<SecurityRealm> getSniSecurityRealm(String sniHostName) {
-      return sniDomains.computeIfAbsent(sniHostName, v -> new InjectedValue<SecurityRealm>());
+      return sniDomains.computeIfAbsent(sniHostName, v -> new InjectedValue<>());
    }
 
    @Override
@@ -184,5 +217,4 @@ public class RestService implements Service<NettyRestServer>, EncryptableService
    public boolean getClientAuth() {
       return clientAuth;
    }
-
 }

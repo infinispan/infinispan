@@ -2,6 +2,7 @@ package org.infinispan.rest;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.embedded.netty4.NettyRestServer;
 
 public class EmbeddedRestServer {
 

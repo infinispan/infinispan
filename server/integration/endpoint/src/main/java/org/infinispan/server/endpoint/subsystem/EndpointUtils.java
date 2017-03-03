@@ -20,7 +20,7 @@ package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.NettyRestServer;
+import org.infinispan.rest.embedded.netty4.NettyRestServer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;

@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -65,6 +66,8 @@ import com.thoughtworks.xstream.XStream;
  */
 @Path("/")
 public class Server {
+   public static final String READERS_ROLE = "_infinispan_rest_readers";
+   public static final String WRITERS_ROLE = "_infinispan_rest_writers";
    private final RestServerConfiguration configuration;
    private final RestCacheManager manager;
 
@@ -116,6 +119,7 @@ public class Server {
 
    @GET
    @Path("/{cacheName}")
+   @RolesAllowed({READERS_ROLE, WRITERS_ROLE})
    public Response getKeys(@Context Request request, @HeaderParam("performAsync") boolean useAsync,
                            @PathParam("cacheName") String cacheName, @QueryParam("global") String globalKeySet) {
       return protectCacheNotFound(() -> {
@@ -170,6 +174,7 @@ public class Server {
 
    @GET
    @Path("/{cacheName}/{cacheKey}")
+   @RolesAllowed({READERS_ROLE, WRITERS_ROLE})
    public <V> Response getEntry(@Context Request request, @HeaderParam("performAsync") boolean useAsync,
                                 @PathParam("cacheName") String cacheName, @PathParam("cacheKey") String key,
                                 @QueryParam("extended") String extended,
@@ -405,6 +410,7 @@ public class Server {
 
    @HEAD
    @Path("/{cacheName}/{cacheKey}")
+   @RolesAllowed({READERS_ROLE, WRITERS_ROLE})
    public <V> Response headEntry(@Context Request request, @HeaderParam("performAsync") boolean useAsync,
                                  @PathParam("cacheName") String cacheName, @PathParam("cacheKey") String key,
                                  @QueryParam("extended") String extended,
@@ -452,6 +458,7 @@ public class Server {
    @PUT
    @POST
    @Path("/{cacheName}/{cacheKey}")
+   @RolesAllowed(WRITERS_ROLE)
    public <V> Response putEntry(@Context Request request, @HeaderParam("performAsync") boolean useAsync,
                                 @PathParam("cacheName") String cacheName, @PathParam("cacheKey") String key,
                                 @HeaderParam("Content-Type") String mediaType, byte[] data,
@@ -541,6 +548,7 @@ public class Server {
 
    @DELETE
    @Path("/{cacheName}/{cacheKey}")
+   @RolesAllowed(WRITERS_ROLE)
    public <V> Response removeEntry(@Context Request request, @HeaderParam("performAsync") boolean useAsync,
                                    @PathParam("cacheName") String cacheName, @PathParam("cacheKey") String key) {
       return protectCacheNotFound(() -> {
@@ -583,6 +591,7 @@ public class Server {
 
    @DELETE
    @Path("/{cacheName}")
+   @RolesAllowed(WRITERS_ROLE)
    public Response killCache(@PathParam("cacheName") String cacheName,
                              @DefaultValue("") @HeaderParam("If-Match") String ifMatch,
                              @DefaultValue("") @HeaderParam("If-None-Match") String ifNoneMatch,

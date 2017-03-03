@@ -34,10 +34,10 @@ public class SslUtils {
    }
 
    public static JdkSslContext createSslContext(SSLContext sslContext, ClientAuth clientAuth) {
-      //Unfortunately we need to grap a list of available ciphers from the engine.
+      //Unfortunately we need to grab a list of available ciphers from the engine.
       //If we won't, JdkSslContext will use common ciphers from DEFAULT and SUPPORTED, which gives us 5 out of ~50 available ciphers
       //Of course, we don't need to any specific engine configuration here... just a list of ciphers
-      String[] ciphers = SslContextFactory.getEngine(sslContext, false, false).getSupportedCipherSuites();
+      String[] ciphers = SslContextFactory.getEngine(sslContext, false, clientAuth == ClientAuth.REQUIRE).getSupportedCipherSuites();
       return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, null, clientAuth);
    }
 

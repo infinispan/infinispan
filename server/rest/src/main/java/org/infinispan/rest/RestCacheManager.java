@@ -18,7 +18,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
-class RestCacheManager {
+public class RestCacheManager {
    private final EmbeddedCacheManager instance;
    private final Predicate<? super String> isCacheIgnored;
    private final boolean allowInternalCacheAccess;
