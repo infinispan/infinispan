@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -38,7 +37,6 @@ import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.impl.MultiSubCommandInvoker;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -59,7 +57,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    protected CommandsFactory commandsFactory;
    protected DataContainer dataContainer;
    protected StateTransferLock stateTransferLock;
-   private CommandAckCollector commandAckCollector;
 
    private long l1Lifespan;
    private long replicationTimeout;
@@ -92,14 +89,13 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Inject
    public void init(L1Manager l1Manager, ClusteringDependentLogic cdl, EntryFactory entryFactory,
                     DataContainer dataContainer, StateTransferLock stateTransferLock,
-                    CommandsFactory commandsFactory, CommandAckCollector commandAckCollector) {
+                    CommandsFactory commandsFactory) {
       this.l1Manager = l1Manager;
       this.cdl = cdl;
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.stateTransferLock = stateTransferLock;
       this.commandsFactory = commandsFactory;
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Start
@@ -303,15 +299,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private Object removeFromLocalL1(InvocationContext ctx, DataWriteCommand command, Object returnValue) {
       if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
-         CompletableFuture<?> pendingAcks = commandAckCollector.getCollectorCompletableFuture(
-               command.getCommandInvocationId().getId());
          VisitableCommand removeFromL1Command = removeFromL1Command(ctx, command.getKey());
-         if (pendingAcks == null) {
-            return invokeNextThenApply(ctx, removeFromL1Command, (rCtx, rCommand, rv) -> returnValue);
-         } else {
-            return asyncValue(pendingAcks).thenApply(ctx, removeFromL1Command, (rCtx, rCommand, rv) ->
-                  invokeNextThenApply(rCtx, rCommand, (rCtx1, rCommand1, rv1) -> returnValue));
-         }
+         return invokeNextThenApply(ctx, removeFromL1Command, (rCtx, rCommand, rv) -> returnValue);
       } else if (trace) {
          log.trace("Allowing entry to commit as local node is owner");
       }

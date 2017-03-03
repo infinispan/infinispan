@@ -17,7 +17,7 @@ import org.infinispan.remoting.responses.Response;
 public class DefaultTopologyRunnable extends BaseBlockingRunnable {
 
    private final TopologyMode topologyMode;
-   private final int commandTopologyId;
+   protected final int commandTopologyId;
 
    public DefaultTopologyRunnable(BasePerCacheInboundInvocationHandler handler, CacheRpcCommand command, Reply reply,
                                   TopologyMode topologyMode, int commandTopologyId, boolean sync) {

@@ -67,8 +67,6 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
-import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -456,18 +454,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public PrimaryAckCommand buildPrimaryAckCommand() {
-      return actual.buildPrimaryAckCommand();
-   }
-
-   @Override
    public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(long id, int segment, int topologyId) {
       return actual.buildBackupMultiKeyAckCommand(id, segment, topologyId);
-   }
-
-   @Override
-   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(long id, int topologyId) {
-      return actual.buildPrimaryMultiKeyAckCommand(id, topologyId);
    }
 
    @Override

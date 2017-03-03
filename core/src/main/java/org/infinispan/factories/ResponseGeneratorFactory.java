@@ -3,6 +3,7 @@ package org.infinispan.factories;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.responses.DefaultResponseGenerator;
 import org.infinispan.remoting.responses.ResponseGenerator;
+import org.infinispan.remoting.responses.TriangleResponseGenerator;
 
 /**
  * Creates a ResponseGenerator
@@ -14,8 +15,12 @@ import org.infinispan.remoting.responses.ResponseGenerator;
 public class ResponseGeneratorFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
-   @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      return (T) new DefaultResponseGenerator();
+      if (configuration.clustering().cacheMode().isDistributed() &&
+            !configuration.transaction().transactionMode().isTransactional()) {
+         return componentType.cast(new TriangleResponseGenerator());
+      } else {
+         return componentType.cast(new DefaultResponseGenerator());
+      }
    }
 }

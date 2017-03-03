@@ -216,18 +216,6 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       command.setRemove(commandInvocationId, key, getFlagsBitSet(), getTopologyId());
    }
 
-   @Override
-   public void initPrimaryAck(PrimaryAckCommand command, Object localReturnValue) {
-      command.initCommandInvocationIdAndTopologyId(commandInvocationId.getId(), getTopologyId());
-      if (isConditional()) {
-         command.initWithBoolReturnValue(successful);
-      } else if (isReturnValueExpected()) {
-         command.initWithReturnValue(successful, localReturnValue);
-      } else {
-         command.initWithoutReturnValue(successful);
-      }
-   }
-
    protected Object performRemove(MVCCEntry e, Object prevValue, InvocationContext ctx) {
       notify(ctx, prevValue, e.getMetadata(), true);
 
