@@ -206,6 +206,13 @@ public class ExtendedByteBuf {
       return readMaybeVInt(bf).map(SignedNumeric::decode);
    }
 
+   /**
+    * Read a range of bytes prefixed by its length (encoded as a signed VInt).
+    *
+    * @return {@code Optional(Optional(byte[])} if it could read the range,
+    * {@code Optional(Optional.empty())} if the length was negative,
+    * or {@code Optional.empty()} if the input buffer didn't contain the entire range.
+    */
    public static Optional<Optional<byte[]>> readMaybeOptRangedBytes(ByteBuf bf) {
       Optional<Integer> l = readMaybeSignedInt(bf);
       if (l.isPresent()) {
@@ -217,7 +224,7 @@ public class ExtendedByteBuf {
             if (rb.isPresent()) {
                return Optional.of(rb);
             } else {
-               return Optional.of(Optional.empty());
+               return Optional.empty();
             }
          }
       } else {

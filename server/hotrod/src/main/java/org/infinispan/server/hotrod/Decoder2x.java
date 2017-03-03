@@ -472,6 +472,7 @@ class Decoder2x implements VersionedDecoder {
                      out.add(hrCtx);
                      return null;
                   }));
+            break;
          case ITERATION_NEXT:
          case ITERATION_END:
             ExtendedByteBuf.readMaybeString(buffer).ifPresent(iterationId -> {
@@ -500,7 +501,6 @@ class Decoder2x implements VersionedDecoder {
             while (params.size() < p) {
                if (!ExtendedByteBuf.readMaybeRangedBytes(buffer).map(param -> {
                   params.add(param);
-                  buffer.markReaderIndex();
                   return param;
                }).isPresent()) {
                   readAll = false;
