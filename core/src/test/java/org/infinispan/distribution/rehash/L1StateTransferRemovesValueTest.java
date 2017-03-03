@@ -139,7 +139,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
 
       CyclicBarrier barrier = new CyclicBarrier(2);
       c3.getAdvancedCache().getAsyncInterceptorChain()
-            .addInterceptorAfter(new BlockingInterceptor(barrier, InvalidateL1Command.class, true, false),
+            .addInterceptorAfter(new BlockingInterceptor<>(barrier, InvalidateL1Command.class, true, false),
                   EntryWrappingInterceptor.class);
 
       Future<String> future = c1.putAsync(key, newValue);

@@ -16,9 +16,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.manager.CacheContainer;
@@ -138,14 +141,15 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
 
       // Every operation command will be blocked before reaching the distribution interceptor on cache1
       CyclicBarrier beforeCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCache1Barrier,
+      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCache1Barrier,
             op.getCommandClass(), false, false);
       cache1.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor1, TriangleDistributionInterceptor.class);
 
       // Every operation command will be blocked after returning to the distribution interceptor on cache2
       CyclicBarrier afterCache2Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(afterCache2Barrier,
-            op.getCommandClass(), true, false);
+      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor<>(afterCache2Barrier,
+            op.getCommandClass(), true, false,
+            cmd -> !(cmd instanceof FlagAffectedCommand) || !((FlagAffectedCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER));
       cache2.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
 
       // Put from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry

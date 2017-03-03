@@ -59,7 +59,7 @@ public class NonTxOriginatorBecomingPrimaryOwnerTest extends MultipleCacheManage
 
       // Every PutKeyValueCommand will be blocked before reaching the distribution interceptor
       CyclicBarrier distInterceptorBarrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor = new BlockingInterceptor(distInterceptorBarrier, PutKeyValueCommand.class, false, false);
+      BlockingInterceptor blockingInterceptor = new BlockingInterceptor<>(distInterceptorBarrier, PutKeyValueCommand.class, false, false);
       cache0.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor, TriangleDistributionInterceptor.class);
 
       for (int i = 0; i < NUM_KEYS; i++) {
