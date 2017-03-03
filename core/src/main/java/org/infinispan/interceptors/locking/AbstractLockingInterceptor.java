@@ -30,7 +30,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
@@ -50,7 +49,6 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
    protected LockManager lockManager;
-   protected DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
 
    protected final InvocationFinallyAction unlockAllReturnHandler = new InvocationFinallyAction() {
@@ -64,10 +62,8 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    protected abstract Log getLog();
 
    @Inject
-   public void setDependencies(LockManager lockManager, DataContainer<Object, Object> dataContainer,
-                               ClusteringDependentLogic cdl) {
+   public void setDependencies(LockManager lockManager, ClusteringDependentLogic cdl) {
       this.lockManager = lockManager;
-      this.dataContainer = dataContainer;
       this.cdl = cdl;
    }
 

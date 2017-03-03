@@ -4,18 +4,29 @@ import static org.infinispan.commons.util.Util.toStr;
 
 import java.util.Collection;
 
+import org.infinispan.commands.DataCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -43,6 +54,8 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
    private ClusteringDependentLogic clusteringDependentLogic;
    private BlockingTaskAwareExecutorService executorService;
 
+   private boolean writeSkewCheck;
+
    @Inject
    public void inject(TransactionTable transactionTable, TotalOrderManager totalOrderManager,
                       ClusteringDependentLogic clusteringDependentLogic,
@@ -54,14 +67,19 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
       this.executorService = executorService;
    }
 
+   @Start
+   public void start() {
+      writeSkewCheck = cacheConfiguration.locking().writeSkewCheck();
+   }
+
    @Override
    public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
          throws Throwable {
       if (log.isDebugEnabled()) {
          log.debugf("Prepare received. Transaction=%s, Affected keys=%s, Local=%s",
-                    command.getGlobalTransaction().globalId(),
-                    toStr(command.getAffectedKeys()),
-                    ctx.isOriginLocal());
+               command.getGlobalTransaction().globalId(),
+               toStr(command.getAffectedKeys()),
+               ctx.isOriginLocal());
       }
       if (!(command instanceof TotalOrderPrepareCommand)) {
          throw new IllegalStateException("TotalOrderInterceptor can only handle TotalOrderPrepareCommand");
@@ -221,5 +239,81 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
             context.addLockedKey(k);
          }
       }
+   }
+
+   // Total order does not use OptimisticLockingInterceptor, therefore we can't record the key being read in there
+   // TODO ISPN-7528 This should be removed when the entry is marked through EntryFactory
+   private void markKeyAsRead(InvocationContext ctx, DataCommand command) {
+      if (writeSkewCheck && ctx.isInTxScope() && command.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
+         // If the key is already in the context, we may have inserted the value
+         // through write-only command and then we don't have to test for write skew
+         if (ctx.lookupEntry(command.getKey()) == null) {
+            TxInvocationContext tctx = (TxInvocationContext) ctx;
+            tctx.getCacheTransaction().addReadKey(command.getKey());
+         }
+      }
+   }
+
+   private void markAllKeysAsRead(InvocationContext ctx, Collection<?> keys) {
+      if (writeSkewCheck && ctx.isInTxScope()) {
+         TxInvocationContext tctx = (TxInvocationContext) ctx;
+         for (Object key : keys) {
+            // If the key is already in the context, we may have inserted the value
+            // through write-only command and then we don't have to test for write skew
+            if (ctx.lookupEntry(key) == null) {
+               tctx.getCacheTransaction().addReadKey(key);
+            }
+         }
+      }
+   }
+
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      markKeyAsRead(ctx, command);
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      markKeyAsRead(ctx, command);
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      markKeyAsRead(ctx, command);
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      if (command.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
+         markAllKeysAsRead(ctx, command.getAffectedKeys());
+      }
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+      markKeyAsRead(ctx, command);
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      markKeyAsRead(ctx, command);
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      markKeyAsRead(ctx, command);
+      return invokeNext(ctx, command);
+   }
+
+   @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      markAllKeysAsRead(ctx, command.getKeys());
+      return invokeNext(ctx, command);
    }
 }

@@ -51,7 +51,9 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    @Override
    protected void wrapRemoteEntry(InvocationContext ctx, Object key, CacheEntry ice, boolean isWrite) {
       if (ctx.isInTxScope()) {
-         EntryVersion seenVersion = ((TxInvocationContext) ctx).getCacheTransaction().getVersionsRead().get(key);
+         AbstractCacheTransaction cacheTransaction = ((TxInvocationContext) ctx).getCacheTransaction();
+         cacheTransaction.addReadKey(key);
+         EntryVersion seenVersion = cacheTransaction.getVersionsRead().get(key);
          if (seenVersion != null) {
             EntryVersion newVersion = null;
             if (ice != null && ice.getMetadata() != null) {
@@ -61,7 +63,16 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
                throw new IllegalStateException("Wrapping entry without version");
             }
             if (seenVersion.compareTo(newVersion) != InequalVersionComparisonResult.EQUAL) {
-               throw log.writeSkewOnRead(key, key, seenVersion, newVersion);
+               if (ctx.lookupEntry(key) == null) {
+                  // We have read the entry using functional command on remote node and now we want
+                  // the full entry, but we cannot provide the same version as the already read one.
+                  throw log.writeSkewOnRead(key, key, seenVersion, newVersion);
+               } else {
+                  // We have retrieved remote entry despite being already wrapped: that can happen
+                  // for GetKeysInGroupCommand which does not know what entries will it fetch.
+                  // We can safely ignore the newly fetched value.
+                  return;
+               }
             }
          }
       }
