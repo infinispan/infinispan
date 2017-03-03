@@ -138,7 +138,7 @@ public class HotRodTestingUtils {
       return startHotRodServer(manager, host, port, delay, false, builder);
    }
 
-   public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String host, int port, long delay, Boolean perf, HotRodServerConfigurationBuilder builder) {
+   public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String host, int port, long delay, boolean perf, HotRodServerConfigurationBuilder builder) {
       log.infof("Start server in port %d", port);
       HotRodServer server = new HotRodServer() {
          @Override
