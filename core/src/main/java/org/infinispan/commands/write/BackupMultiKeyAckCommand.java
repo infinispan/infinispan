@@ -3,12 +3,8 @@ package org.infinispan.commands.write;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commands.ReplicableCommand;
 
 /**
  * A command that represents an acknowledge sent by a backup owner to the originator.
@@ -19,34 +15,20 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupMultiKeyAckCommand extends BaseRpcCommand {
+public class BackupMultiKeyAckCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 41;
-   private CommandAckCollector commandAckCollector;
    private int segment;
    private long id;
    private int topologyId;
 
    public BackupMultiKeyAckCommand() {
-      super(null);
    }
 
-   public BackupMultiKeyAckCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
-   public BackupMultiKeyAckCommand(ByteString cacheName, long id, int segment,
-         int topologyId) {
-      super(cacheName);
+   public BackupMultiKeyAckCommand(long id, int segment, int topologyId) {
       this.id = id;
       this.segment = segment;
       this.topologyId = topologyId;
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.multiKeyBackupAck(id, getOrigin(), segment, topologyId);
-      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -78,8 +60,16 @@ public class BackupMultiKeyAckCommand extends BaseRpcCommand {
       topologyId = input.readInt();
    }
 
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
+   public int getSegment() {
+      return segment;
+   }
+
+   public long getId() {
+      return id;
+   }
+
+   public int getTopologyId() {
+      return topologyId;
    }
 
    @Override

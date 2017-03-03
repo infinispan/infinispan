@@ -147,7 +147,7 @@ public class StateConsumerImpl implements StateConsumer {
     * transfersBySegment so they always need to be kept in sync and updates to both of them need to be atomic.
     */
    @GuardedBy("transferMapsLock")
-   private final Map<Address, List<InboundTransferTask>> transfersBySource = new HashMap<Address, List<InboundTransferTask>>();
+   private final Map<Address, List<InboundTransferTask>> transfersBySource = new HashMap<>();
 
    /**
     * A map that keeps track of current inbound state transfers by segment id. There is at most one transfers per segment.
@@ -155,7 +155,7 @@ public class StateConsumerImpl implements StateConsumer {
     * need to be atomic.
     */
    @GuardedBy("transferMapsLock")
-   private final Map<Integer, InboundTransferTask> transfersBySegment = new HashMap<Integer, InboundTransferTask>();
+   private final Map<Integer, InboundTransferTask> transfersBySegment = new HashMap<>();
 
    /**
     * Push RPCs on a background thread
@@ -349,12 +349,12 @@ public class StateConsumerImpl implements StateConsumer {
                   // Optimization for replicated caches
                   removedSegments = Collections.emptySet();
                } else {
-                  removedSegments = new HashSet<Integer>(previousSegments);
+                  removedSegments = new HashSet<>(previousSegments);
                   removedSegments.removeAll(newSegments);
                }
 
                // This is a rebalance, we need to request the segments we own in the new CH.
-               addedSegments = new HashSet<Integer>(newSegments);
+               addedSegments = new HashSet<>(newSegments);
                addedSegments.removeAll(previousSegments);
 
                if (trace) {
@@ -428,7 +428,7 @@ public class StateConsumerImpl implements StateConsumer {
             transactionTable.cleanupLeaverTransactions(rpcManager.getTransport().getMembers());
          }
 
-         commandAckCollector.onMembersChange(newWriteCh.getMembers());
+         commandAckCollector.onMembersChange(cacheName, newWriteCh.getMembers());
 
          // Any data for segments we do not own should be removed from data container and cache store
          // We need to discard data from all segments we don't own, not just those we previously owned,
@@ -696,10 +696,10 @@ public class StateConsumerImpl implements StateConsumer {
       log.debugf("Adding inbound state transfer for segments %s", segments);
 
       // the set of nodes that reported errors when fetching data from them - these will not be retried in this topology
-      Set<Address> excludedSources = new HashSet<Address>();
+      Set<Address> excludedSources = new HashSet<>();
 
       // the sources and segments we are going to get from each source
-      Map<Address, Set<Integer>> sources = new HashMap<Address, Set<Integer>>();
+      Map<Address, Set<Integer>> sources = new HashMap<>();
 
       if (isTransactional && !isTotalOrder) {
          requestTransactions(segments, sources, excludedSources);
@@ -723,7 +723,7 @@ public class StateConsumerImpl implements StateConsumer {
          if (source != null) {
             Set<Integer> segmentsFromSource = sources.get(source);
             if (segmentsFromSource == null) {
-               segmentsFromSource = new HashSet<Integer>();
+               segmentsFromSource = new HashSet<>();
                sources.put(source, segmentsFromSource);
             }
             segmentsFromSource.add(segmentId);
@@ -737,8 +737,7 @@ public class StateConsumerImpl implements StateConsumer {
          // We prefer that transactions are sourced from primary owners.
          // Needed in pessimistic mode, if the originator is the primary owner of the key than the lock
          // command is not replicated to the backup owners. See PessimisticDistributionInterceptor.acquireRemoteIfNeeded.
-         for (int i = 0; i < owners.size(); i++) {
-            Address o = owners.get(i);
+         for (Address o : owners) {
             if (!o.equals(rpcManager.getAddress()) && !excludedSources.contains(o)) {
                return o;
             }
@@ -753,7 +752,7 @@ public class StateConsumerImpl implements StateConsumer {
 
       boolean seenFailures = false;
       while (true) {
-         Set<Integer> failedSegments = new HashSet<Integer>();
+         Set<Integer> failedSegments = new HashSet<>();
          int topologyId = cacheTopology.getTopologyId();
          for (Map.Entry<Address, Set<Integer>> sourceEntry : sources.entrySet()) {
             Address source = sourceEntry.getKey();
@@ -869,12 +868,12 @@ public class StateConsumerImpl implements StateConsumer {
     */
    private void cancelTransfers(Set<Integer> removedSegments) {
       synchronized (transferMapsLock) {
-         List<Integer> segmentsToCancel = new ArrayList<Integer>(removedSegments);
+         List<Integer> segmentsToCancel = new ArrayList<>(removedSegments);
          while (!segmentsToCancel.isEmpty()) {
             int segmentId = segmentsToCancel.remove(0);
             InboundTransferTask inboundTransfer = transfersBySegment.get(segmentId);
             if (inboundTransfer != null) { // we need to check the transfer was not already completed
-               Set<Integer> cancelledSegments = new HashSet<Integer>(removedSegments);
+               Set<Integer> cancelledSegments = new HashSet<>(removedSegments);
                cancelledSegments.retainAll(inboundTransfer.getSegments());
                segmentsToCancel.removeAll(cancelledSegments);
                transfersBySegment.keySet().removeAll(cancelledSegments);
@@ -898,7 +897,7 @@ public class StateConsumerImpl implements StateConsumer {
          return;
 
       // Keys that we used to own, and need to be removed from the data container AND the cache stores
-      final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<Object>();
+      final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<>();
 
       dataContainer.executeTask(KeyFilter.ACCEPT_ALL_FILTER, (o, ice) -> {
          Object key = ice.getKey();
@@ -997,7 +996,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
          List<InboundTransferTask> inboundTransfers = transfersBySource.get(inboundTransfer.getSource());
          if (inboundTransfers == null) {
-            inboundTransfers = new ArrayList<InboundTransferTask>();
+            inboundTransfers = new ArrayList<>();
             transfersBySource.put(inboundTransfer.getSource(), inboundTransfers);
          }
          inboundTransfers.add(inboundTransfer);

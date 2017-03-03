@@ -7,15 +7,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
-import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.util.ByteString;
 
 /**
  * Externalizer for the triangle acknowledges.
@@ -26,34 +23,28 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCommand> {
+public class TriangleAckExternalizer implements AdvancedExternalizer<ReplicableCommand> {
 
-   public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
+   public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
       //noinspection unchecked
-      return Util.asSet(PrimaryAckCommand.class, BackupAckCommand.class, ExceptionAckCommand.class,
-            PrimaryMultiKeyAckCommand.class, BackupMultiKeyAckCommand.class);
+      return Util.asSet(BackupAckCommand.class, ExceptionAckCommand.class, BackupMultiKeyAckCommand.class);
    }
 
    public Integer getId() {
       return TRIANGLE_ACK_EXTERNALIZER;
    }
 
-   public void writeObject(ObjectOutput output, CacheRpcCommand object) throws IOException {
+   public void writeObject(ObjectOutput output, ReplicableCommand object) throws IOException {
       output.writeByte(object.getCommandId());
-      ByteString.writeObject(output, object.getCacheName());
       object.writeTo(output);
    }
 
-   public CacheRpcCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public ReplicableCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       switch (input.readByte()) {
-         case PrimaryAckCommand.COMMAND_ID:
-            return primaryAckCommand(input);
          case BackupAckCommand.COMMAND_ID:
             return backupAckCommand(input);
          case ExceptionAckCommand.COMMAND_ID:
             return exceptionAckCommand(input);
-         case PrimaryMultiKeyAckCommand.COMMAND_ID:
-            return primaryMultiKeyAckCommand(input);
          case BackupMultiKeyAckCommand.COMMAND_ID:
             return backupMultiKeyAckCommand(input);
          default:
@@ -61,32 +52,21 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCom
       }
    }
 
-   private BackupMultiKeyAckCommand backupMultiKeyAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      BackupMultiKeyAckCommand command = new BackupMultiKeyAckCommand(ByteString.readObject(input));
-      command.readFrom(input);
-      return command;
-   }
-
-   private PrimaryMultiKeyAckCommand primaryMultiKeyAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      PrimaryMultiKeyAckCommand command = new PrimaryMultiKeyAckCommand(ByteString.readObject(input));
+   private BackupMultiKeyAckCommand backupMultiKeyAckCommand(ObjectInput input)
+         throws IOException, ClassNotFoundException {
+      BackupMultiKeyAckCommand command = new BackupMultiKeyAckCommand();
       command.readFrom(input);
       return command;
    }
 
    private ExceptionAckCommand exceptionAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      ExceptionAckCommand command = new ExceptionAckCommand(ByteString.readObject(input));
+      ExceptionAckCommand command = new ExceptionAckCommand();
       command.readFrom(input);
       return command;
    }
 
    private BackupAckCommand backupAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      BackupAckCommand command = new BackupAckCommand(ByteString.readObject(input));
-      command.readFrom(input);
-      return command;
-   }
-
-   private PrimaryAckCommand primaryAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      PrimaryAckCommand command = new PrimaryAckCommand(ByteString.readObject(input));
+      BackupAckCommand command = new BackupAckCommand();
       command.readFrom(input);
       return command;
    }

@@ -66,8 +66,6 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PrimaryAckCommand;
-import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -119,7 +117,6 @@ import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -175,7 +172,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private ClusterStreamManager clusterStreamManager;
    @SuppressWarnings("deprecation")
    private ClusteringDependentLogic clusteringDependentLogic;
-   private CommandAckCollector commandAckCollector;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
    private StreamingMarshaller marshaller;
@@ -192,8 +188,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  XSiteStateTransferManager xSiteStateTransferManager,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
-                                 CommandAckCollector commandAckCollector) {
+                                 @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -219,7 +214,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.clusterStreamManager = clusterStreamManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.marshaller = marshaller;
-      this.commandAckCollector = commandAckCollector;
    }
 
    @Start(priority = 1)
@@ -523,25 +517,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
             removeExpiredCommand.init(notifier);
             break;
-         case BackupAckCommand.COMMAND_ID:
-            BackupAckCommand command = (BackupAckCommand) c;
-            command.setCommandAckCollector(commandAckCollector);
-            break;
          case BackupWriteRcpCommand.COMMAND_ID:
             BackupWriteRcpCommand bwc = (BackupWriteRcpCommand) c;
             bwc.init(icf, interceptorChain, notifier);
-            break;
-         case PrimaryAckCommand.COMMAND_ID:
-            ((PrimaryAckCommand) c).setCommandAckCollector(commandAckCollector);
-            break;
-         case BackupMultiKeyAckCommand.COMMAND_ID:
-            ((BackupMultiKeyAckCommand) c).setCommandAckCollector(commandAckCollector);
-            break;
-         case PrimaryMultiKeyAckCommand.COMMAND_ID:
-            ((PrimaryMultiKeyAckCommand) c).setCommandAckCollector(commandAckCollector);
-            break;
-         case ExceptionAckCommand.COMMAND_ID:
-            ((ExceptionAckCommand) c).setCommandAckCollector(commandAckCollector);
             break;
          case BackupPutMapRcpCommand.COMMAND_ID:
             ((BackupPutMapRcpCommand) c).init(icf, interceptorChain, notifier);
@@ -760,27 +738,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public BackupAckCommand buildBackupAckCommand(long id, int topologyId) {
-      return new BackupAckCommand(cacheName, id, topologyId);
-   }
-
-   @Override
-   public PrimaryAckCommand buildPrimaryAckCommand() {
-      return new PrimaryAckCommand(cacheName);
+      return new BackupAckCommand(id, topologyId);
    }
 
    @Override
    public BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(long id, int segment, int topologyId) {
-      return new BackupMultiKeyAckCommand(cacheName, id, segment, topologyId);
-   }
-
-   @Override
-   public PrimaryMultiKeyAckCommand buildPrimaryMultiKeyAckCommand(long id, int topologyId) {
-      return new PrimaryMultiKeyAckCommand(cacheName, id, topologyId);
+      return new BackupMultiKeyAckCommand(id, segment, topologyId);
    }
 
    @Override
    public ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId) {
-      return new ExceptionAckCommand(cacheName, id, throwable, topologyId);
+      return new ExceptionAckCommand(id, throwable, topologyId);
    }
 
    @Override

@@ -3,12 +3,8 @@ package org.infinispan.commands.write;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.commands.ReplicableCommand;
 
 /**
  * A command that represents an acknowledge sent by a backup owner to the originator.
@@ -18,31 +14,18 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupAckCommand extends BaseRpcCommand {
+public class BackupAckCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 2;
-   private CommandAckCollector commandAckCollector;
    private long id;
    private int topologyId;
 
    public BackupAckCommand() {
-      super(null);
    }
 
-   public BackupAckCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
-   public BackupAckCommand(ByteString cacheName, long id, int topologyId) {
-      super(cacheName);
+   public BackupAckCommand(long id, int topologyId) {
       this.id = id;
       this.topologyId = topologyId;
-   }
-
-   @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      commandAckCollector.backupAck(id, getOrigin(), topologyId);
-      return CompletableFutures.completedNull();
    }
 
    @Override
@@ -72,8 +55,12 @@ public class BackupAckCommand extends BaseRpcCommand {
       topologyId = input.readInt();
    }
 
-   public void setCommandAckCollector(CommandAckCollector commandAckCollector) {
-      this.commandAckCollector = commandAckCollector;
+   public long getId() {
+      return id;
+   }
+
+   public int getTopologyId() {
+      return topologyId;
    }
 
    @Override

@@ -5,6 +5,7 @@ import static org.infinispan.commands.VisitableCommand.LoadType.PRIMARY;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -26,12 +28,11 @@ import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.BackupPutMapRcpCommand;
 import org.infinispan.commands.write.BackupWriteRcpCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.PrimaryAckCommand;
-import org.infinispan.commands.write.PrimaryMultiKeyAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -40,10 +41,10 @@ import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.InvocationExceptionFunction;
-import org.infinispan.interceptors.InvocationFinallyAction;
-import org.infinispan.interceptors.TriangleAckInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.WriteResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferInterceptor;
@@ -59,24 +60,16 @@ import org.infinispan.util.logging.LogFactory;
  * It is implemented based on the Triangle algorithm.
  * <p>
  * The {@link GetKeyValueCommand} reads the value locally if it is available (the node is an owner or the value is
- * stored in L1). If it isn't available, a remote request is made.
- * The {@link DataWriteCommand} is performed as follow:
- * <ul>
- * <li>The command if forwarded to the primary owner of the key.</li>
- * <li>The primary owner locks the key and executes the operation; sends the {@link BackupWriteRcpCommand} to the backup
- * owners; releases the lock; sends the {@link PrimaryAckCommand} back to the originator.</li>
- * <li>The backup owner applies the update and sends a {@link BackupAckCommand} back to the originator.</li>
- * <li>The originator collects the ack from all the owners and returns.</li>
- * </ul>
- * The {@link PutMapCommand} is performed in a similar way:
- * <ul>
- * <li>The subset of the map is split by primary owner.</li>
- * <li>The primary owner locks the key and executes the command; splits the keys by backup owner and send them;
- * releases the locks and sends the {@link PrimaryMultiKeyAckCommand} back to the originator.</li>
- * <li>The backup owner applies the update and sends back the {@link BackupMultiKeyAckCommand} to the originator.</li>
- * <li>The originator collects all the acknowledges from all owners and returns.</li>
- * </ul>
- * The acknowledges management is done in the {@link TriangleAckInterceptor} by the {@link CommandAckCollector}.
+ * stored in L1). If it isn't available, a remote request is made. The {@link DataWriteCommand} is performed as follow:
+ * <ul> <li>The command if forwarded to the primary owner of the key.</li> <li>The primary owner locks the key and
+ * executes the operation; sends the {@link BackupWriteRcpCommand} to the backup owners; releases the lock; sends the
+ * {@link WriteResponse} back to the originator.</li> <li>The backup owner applies the update and sends a {@link
+ * BackupAckCommand} back to the originator.</li> <li>The originator collects the ack from all the owners and
+ * returns.</li> </ul> The {@link PutMapCommand} is performed in a similar way: <ul> <li>The subset of the map is split
+ * by primary owner.</li> <li>The primary owner locks the key and executes the command; splits the keys by backup owner
+ * and send them; and replies to the originator.</li> <li>The backup owner applies the update and sends back the {@link
+ * BackupMultiKeyAckCommand} to the originator.</li> <li>The originator collects all the acknowledges from all owners
+ * and returns.</li> </ul> The acknowledges management is done by the {@link CommandAckCollector}.
  * <p>
  * If a topology changes while a command is executed, an {@link OutdatedTopologyException} is thrown. The {@link
  * StateTransferInterceptor} will catch it and retries the command.
@@ -94,16 +87,22 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private CommandsFactory commandsFactory;
    private TriangleOrderManager triangleOrderManager;
    private Address localAddress;
+   private String cacheName;
 
-   private final InvocationFinallyAction onPutMapWithLocalEntries = this::afterPutMapCommand;
-   private final InvocationExceptionFunction onPutMapNoLocalEntriesException = this::onPutMapNoLocalEntriesException;
+   private static Map<Object, Object> mergeMaps(Map<Address, Response> responses, Map<Object, Object> resultMap) {
+      //noinspection unchecked
+      Map<Object, Object> remoteMap = (Map<Object, Object>) ((SuccessfulResponse) responses.values().iterator().next())
+            .getResponseValue();
+      return InfinispanCollections.mergeMaps(resultMap, remoteMap);
+   }
 
    @Inject
    public void inject(CommandAckCollector commandAckCollector, CommandsFactory commandsFactory,
-         TriangleOrderManager triangleOrderManager) {
+         TriangleOrderManager triangleOrderManager, Cache cache) {
       this.commandAckCollector = commandAckCollector;
       this.commandsFactory = commandsFactory;
       this.triangleOrderManager = triangleOrderManager;
+      this.cacheName = cache.getName();
    }
 
    @Start
@@ -188,19 +187,39 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       command.getMap().entrySet().forEach(filter::add);
 
       if (sync) {
-         commandAckCollector
-               .createMultiKeyCollector(command.getCommandInvocationId().getId(), filter.primaries.keySet(),
-                     filter.backups, command.getTopologyId());
+         Collector<Map<Object, Object>> collector = commandAckCollector
+               .createMultiKeyCollector(cacheName, command.getCommandInvocationId().getId(), command.getTopologyId(),
+                     defaultSyncOptions.timeout(), defaultSyncOptions.timeUnit(), filter.primaries.keySet(),
+                     filter.backups);
+         CompletableFuture<Map<Object, Object>> localResult = new CompletableFuture<>();
          final Map<Object, Object> localEntries = filter.primaries.remove(localAddress);
-         forwardToPrimaryOwners(command, filter);
+         forwardToPrimaryOwners(command, filter, localResult).handle((map, throwable) -> {
+            if (throwable != null) {
+               collector.primaryException(throwable);
+            } else {
+               collector.primaryResult(map, true);
+            }
+            return null;
+         });
          if (localEntries != null) {
             sendToBackups(command, localEntries, consistentHash);
             CompletableFuture<?> remoteGet = checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), consistentHash,
                   loadType == PRIMARY || loadType == OWNER);
+
             return makeStage(asyncInvokeNext(ctx, command, remoteGet))
-                  .andFinally(ctx, command, onPutMapWithLocalEntries);
+                  .andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+                     if (throwable != null) {
+                        localResult.completeExceptionally(CompletableFutures.extractException(throwable));
+                     } else {
+                        //noinspection unchecked
+                        localResult.complete((Map<Object, Object>) rv);
+                     }
+                     return asyncValue(collector.getFuture());
+                  });
+         } else {
+            localResult.complete(new HashMap<>());
+            return asyncValue(collector.getFuture());
          }
-         return invokeNextAndExceptionally(ctx, command, onPutMapNoLocalEntriesException);
       }
 
       final Map<Object, Object> localEntries = filter.primaries.remove(localAddress);
@@ -211,28 +230,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
                checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), consistentHash,
                      loadType == PRIMARY || loadType == OWNER));
       }
-      return invokeNext(ctx, command);
-   }
-
-   private void afterPutMapCommand(@SuppressWarnings("unused") InvocationContext ignored, VisitableCommand rCommand,
-         Object rv, Throwable t) {
-      PutMapCommand cmd = (PutMapCommand) rCommand;
-      if (t != null) {
-         commandAckCollector.completeExceptionally(cmd.getCommandInvocationId().getId(), t, cmd.getTopologyId());
-      } else {
-         //noinspection unchecked
-         commandAckCollector.multiKeyPrimaryAck(cmd.getCommandInvocationId().getId(), localAddress,
-               (Map<Object, Object>) rv, cmd.getTopologyId());
-      }
-   }
-
-   private Object onPutMapNoLocalEntriesException(@SuppressWarnings("unused") InvocationContext ignored,
-         VisitableCommand rCommand, Throwable t)
-         throws Throwable {
-      PutMapCommand cmd = (PutMapCommand) rCommand;
-      commandAckCollector.completeExceptionally(cmd.getCommandInvocationId().getId(), t, cmd.getTopologyId());
-      assert t != null;
-      throw t;
+      return null;
    }
 
    private <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<?> checkRemoteGetIfNeeded(
@@ -282,6 +280,19 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       }
    }
 
+   private CompletableFuture<Map<Object, Object>> forwardToPrimaryOwners(PutMapCommand command,
+         PrimaryOwnerClassifier splitter, CompletableFuture<Map<Object, Object>> localResult) {
+      CompletableFuture<Map<Object, Object>> future = localResult;
+      for (Map.Entry<Address, Map<Object, Object>> entry : splitter.primaries.entrySet()) {
+         PutMapCommand copy = new PutMapCommand(command, false);
+         copy.setMap(entry.getValue());
+         CompletableFuture<Map<Address, Response>> remoteFuture = rpcManager
+               .invokeRemotelyAsync(Collections.singleton(entry.getKey()), copy, defaultSyncOptions);
+         future = remoteFuture.thenCombine(future, TriangleDistributionInterceptor::mergeMaps);
+      }
+      return future;
+   }
+
    // TODO: this should just override handleNonTxWriteCommand when functional commands will be triangelized
    private Object handleDataWriteCommand(InvocationContext context, AbstractDataWriteCommand command) {
       assert !context.isInTxScope();
@@ -296,83 +307,150 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       switch (distributionInfo.ownership()) {
          case PRIMARY:
             assert context.lookupEntry(command.getKey()) != null;
-            return primaryOwnerWrite(context, command, distributionInfo);
+            return context.isOriginLocal() ?
+                  localPrimaryOwnerWrite(context, command, distributionInfo) :
+                  remotePrimaryOwnerWrite(context, command, distributionInfo);
          case BACKUP:
-            if (context.isOriginLocal()) {
-               localWriteInvocation(context, command, distributionInfo);
-               return null;
-            } else {
-               CacheEntry entry = context.lookupEntry(command.getKey());
-               if (entry == null) {
-                  if (command.loadType() == OWNER) {
-                     return asyncInvokeNext(context, command, remoteGet(context, command, command.getKey(), true));
-                  }
-                  entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
-               }
-               return invokeNext(context, command);
-            }
+            return context.isOriginLocal() ?
+                  localWriteInvocation(context, command, distributionInfo) :
+                  remoteBackupOwnerWrite(context, command);
          case NON_OWNER:
             //always local!
             assert context.isOriginLocal();
-            localWriteInvocation(context, command, distributionInfo);
-            return null;
+            return localWriteInvocation(context, command, distributionInfo);
       }
       throw new IllegalStateException();
    }
 
-   private Object primaryOwnerWrite(InvocationContext context, DataWriteCommand command,
+   private Object remoteBackupOwnerWrite(InvocationContext context, DataWriteCommand command) {
+      CacheEntry entry = context.lookupEntry(command.getKey());
+      if (entry == null) {
+         if (command.loadType() == OWNER) {
+            return asyncInvokeNext(context, command, remoteGet(context, command, command.getKey(), true));
+         }
+         entryFactory.wrapExternalEntry(context, command.getKey(), null, true);
+      }
+      return invokeNext(context, command);
+   }
+
+   private Object localPrimaryOwnerWrite(InvocationContext context, DataWriteCommand command,
+         DistributionInfo distributionInfo) {
+      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+         command.setValueMatcher(command.getValueMatcher().matcherForRetry());
+      }
+
+      return invokeNextThenApply(context, command, (rCtx, rCommand, rv) -> {
+         final DataWriteCommand dwCommand = (DataWriteCommand) rCommand;
+         final CommandInvocationId id = dwCommand.getCommandInvocationId();
+         Collection<Address> backupOwners = distributionInfo.backups();
+         if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
+            if (trace) {
+               log.tracef("Command %s not successful in primary owner.", id);
+            }
+            return rv;
+         }
+         final int topologyId = dwCommand.getTopologyId();
+         if (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected()) {
+            Collector<Object> collector = commandAckCollector
+                  .create(cacheName, id.getId(), topologyId, defaultSyncOptions.timeout(),
+                        defaultSyncOptions.timeUnit(), backupOwners);
+            //check the topology after registering the collector.
+            //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
+            checkTopologyId(topologyId, collector);
+            collector.primaryResult(rv, true);
+            sendToBackups(distributionInfo, dwCommand, backupOwners);
+            return asyncValue(collector.getFuture());
+         } else {
+            sendToBackups(distributionInfo, dwCommand, backupOwners);
+            return rv;
+         }
+      });
+   }
+
+   private Object remotePrimaryOwnerWrite(InvocationContext context, DataWriteCommand command,
          final DistributionInfo distributionInfo) {
       //we are the primary owner. we need to execute the command, check if successful, send to backups and reply to originator is needed.
       if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.setValueMatcher(command.getValueMatcher().matcherForRetry());
       }
 
-      return invokeNextThenAccept(context, command, (rCtx, rCommand, rv) -> {
+      return invokeNextThenApply(context, command, (rCtx, rCommand, rv) -> {
          final DataWriteCommand dwCommand = (DataWriteCommand) rCommand;
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
-         if (!dwCommand.isSuccessful()) {
+         Collection<Address> backupOwners = distributionInfo.backups();
+         if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
             if (trace) {
                log.tracef("Command %s not successful in primary owner.", id);
             }
-            return;
+            return rv;
          }
-         Collection<Address> backupOwners = distributionInfo.backups();
-         if (!backupOwners.isEmpty()) {
-            if (rCtx.isOriginLocal() && (isSynchronous(dwCommand) || dwCommand.isReturnValueExpected())) {
-               commandAckCollector.create(id.getId(), rv, localAddress, backupOwners, dwCommand.getTopologyId());
-               //check the topology after registering the collector.
-               //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
-               checkTopologyId(dwCommand);
-            }
-            if (trace) {
-               log.tracef("Command %s send to backup owner %s.", dwCommand.getCommandInvocationId(), backupOwners);
-            }
-            long sequenceNumber = triangleOrderManager.next(distributionInfo.getSegmentId(), dwCommand.getTopologyId());
-            BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(dwCommand);
-            backupWriteRcpCommand.setSequence(sequenceNumber);
-            if (trace) {
-               log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber,
-                     distributionInfo.getSegmentId());
-            }
-            // we must send the message only after the collector is registered in the map
-            rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
-         }
+         sendToBackups(distributionInfo, dwCommand, backupOwners);
+         return rv;
       });
    }
 
-   private void localWriteInvocation(InvocationContext context, DataWriteCommand command,
+   private void sendToBackups(DistributionInfo distributionInfo, DataWriteCommand command,
+         Collection<Address> backupOwners) {
+      CommandInvocationId id = command.getCommandInvocationId();
+      int segmentId = distributionInfo.getSegmentId();
+      if (trace) {
+         log.tracef("Command %s send to backup owner %s.", id, backupOwners);
+      }
+      long sequenceNumber = triangleOrderManager.next(segmentId, command.getTopologyId());
+      BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(command);
+      backupWriteRcpCommand.setSequence(sequenceNumber);
+      if (trace) {
+         log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
+      }
+      // we must send the message only after the collector is registered in the map
+      rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
+   }
+
+   private Object localWriteInvocation(InvocationContext context, DataWriteCommand command,
          DistributionInfo distributionInfo) {
       assert context.isOriginLocal();
       final CommandInvocationId invocationId = command.getCommandInvocationId();
-      if ((isSynchronous(command) || command.isReturnValueExpected()) &&
-            !command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
-         commandAckCollector.create(invocationId.getId(), distributionInfo.owners(), command.getTopologyId());
+      if (isSynchronous(command) || command.isReturnValueExpected() && !command
+            .hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
+         final int topologyId = command.getTopologyId();
+         Collector<Object> collector = commandAckCollector
+               .create(cacheName, invocationId.getId(), topologyId, defaultSyncOptions.timeout(),
+                     defaultSyncOptions.timeUnit(), distributionInfo.backups());
+         //check the topology after registering the collector.
+         //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
+         checkTopologyId(topologyId, collector);
+         forwardToPrimary(command, distributionInfo, collector);
+         return asyncValue(collector.getFuture());
+      } else {
+         rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
+         return null;
       }
-      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
-         command.setValueMatcher(command.getValueMatcher().matcherForRetry());
-      }
-      rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
    }
+
+   private void forwardToPrimary(DataWriteCommand command, DistributionInfo distributionInfo,
+         Collector<Object> collector) {
+      CompletableFuture<Map<Address, Response>> remoteInvocation = rpcManager
+            .invokeRemotelyAsync(Collections.singletonList(distributionInfo.primary()), command, defaultSyncOptions);
+      remoteInvocation.handle((responses, throwable) -> {
+         if (throwable != null) {
+            collector.primaryException(CompletableFutures.extractException(throwable));
+         } else {
+            WriteResponse response = (WriteResponse) responses.values().iterator().next();
+            command.updateStatusFromRemoteResponse(response.getReturnValue());
+            collector.primaryResult(response.getReturnValue(), response.isCommandSuccessful());
+         }
+         return null;
+      });
+   }
+
+   private void checkTopologyId(int topologyId, Collector<?> collector) {
+      int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+      if (currentTopologyId != topologyId && topologyId != -1) {
+         collector.primaryException(OutdatedTopologyException.getCachedInstance());
+         throw OutdatedTopologyException.getCachedInstance();
+      }
+   }
+
 
    /**
     * Classifies the keys by primary owner (address => keys & segments) and backup owners (address => segments).
