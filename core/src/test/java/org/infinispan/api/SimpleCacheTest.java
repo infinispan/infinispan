@@ -76,6 +76,12 @@ public class SimpleCacheTest extends APINonTxTest {
       new ConfigurationBuilder().simpleCache(true).compatibility().enabled(true).build();
    }
 
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testForEachWithLock() throws Throwable {
+      super.testForEachWithLock();
+   }
+
    public void testStatistics() {
       Configuration cfg = new ConfigurationBuilder().simpleCache(true).jmxStatistics().enabled(true).build();
       String name = "statsCache";

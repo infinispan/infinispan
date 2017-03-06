@@ -732,4 +732,13 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
       }
       return returned;
    }
+
+   @Override
+   public AdvancedCache<K, V> lockAs(Object lockOwner) {
+      AdvancedCache<K, V> returned = super.lockAs(lockOwner);
+      if (returned != this && returned instanceof TypeConverterDelegatingAdvancedCache) {
+         ((TypeConverterDelegatingAdvancedCache) returned).entryFactory = this.entryFactory;
+      }
+      return returned;
+   }
 }

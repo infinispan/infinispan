@@ -103,12 +103,13 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    // We need this method in here because of putForExternalRead
    protected final Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      if (hasSkipLocking(command) || !shouldLockKey(command.getKey())) {
+      Object key;
+      if (hasSkipLocking(command) || ((key = command.getKey()) == ctx.getLockOwner()) || !shouldLockKey(key)) {
          return invokeNext(ctx, command);
       }
 
       try {
-         lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
+         lockAndRecord(ctx, key, getLockTimeoutMillis(command));
       } catch (Throwable t) {
          lockManager.unlockAll(ctx);
          throw t;

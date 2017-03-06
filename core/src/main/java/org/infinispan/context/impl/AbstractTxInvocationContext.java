@@ -23,6 +23,7 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
       implements TxInvocationContext<T> {
 
    private final T cacheTransaction;
+   private Object lockOwnerOverride;
 
    protected AbstractTxInvocationContext(T cacheTransaction, Address origin) {
       super(origin);
@@ -34,13 +35,16 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
 
    @Override
    public Object getLockOwner() {
+      if (lockOwnerOverride != null) {
+         return lockOwnerOverride;
+      }
       //not final because the test suite overwrite it...
       return cacheTransaction.getGlobalTransaction();
    }
 
    @Override
    public void setLockOwner(Object lockOwner) {
-      /*no-op. the global transaction is the lock owner and it can't be changed*/
+      lockOwnerOverride = lockOwner;
    }
 
    @Override

@@ -169,6 +169,16 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    AuthorizationManager getAuthorizationManager();
 
    /**
+    * Whenever this cache acquires a lock it will do so using the given Object as the owner of said lock.
+    * <p>
+    * This method provides no guarantees as to how this affect locking and should not be used for general usage.
+    * @param lockOwner the lock owner to lock any keys as
+    * @return an {@link AdvancedCache} instance on which a real operation is to be invoked that will use lock owner
+    * object to acquire any locks
+    */
+   AdvancedCache<K, V> lockAs(Object lockOwner);
+
+   /**
     * Locks a given key or keys eagerly across cache nodes in a cluster.
     * <p>
     * Keys can be locked eagerly in the context of a transaction only.
@@ -547,6 +557,24 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the entry set containing all of the CacheEntries
     */
    CacheSet<CacheEntry<K, V>> cacheEntrySet();
+
+   /**
+    * Returns a sequential stream using this Cache as the source. This stream is very similar to using the
+    * {@link CacheStream} returned from the {@link CacheSet#stream()} method of the collection
+    * returned via {@link AdvancedCache#cacheEntrySet()}. The use of this locked stream is that when an entry is
+    * being processed by the user the entry is locked for the invocation preventing a different thread from modifying
+    * it.
+    * <p>
+    * Note that this stream is not supported when using a optimistic transactional cache. Both non transactional and
+    * pessimistc transactions are supported.
+    * <p>
+    * Also this is not currently supported when using a simple cache,
+    * {@link org.infinispan.configuration.cache.ConfigurationBuilder#simpleCache(boolean)} was set to true. This
+    * restriction may be removed in a future version
+    * @return the locked stream
+    * @since 9.1
+    */
+   LockedStream<K, V> lockedStream() throws UnsupportedOperationException;
 
    /**
     * Attempts to remove the entry if it is expired.  Due to expired entries not being consistent across nodes, this

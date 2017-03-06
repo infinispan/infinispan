@@ -3,6 +3,7 @@ package org.infinispan.stream.impl.intops.object;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
@@ -22,5 +23,10 @@ public class PeekOperation<S> implements IntermediateOperation<S, Stream<S>, S, 
 
    public Consumer<? super S> getConsumer() {
       return consumer;
+   }
+
+   @Override
+   public void handleInjection(ComponentRegistry registry) {
+      registry.wireDependencies(consumer);
    }
 }

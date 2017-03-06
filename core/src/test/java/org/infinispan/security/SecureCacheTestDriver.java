@@ -676,4 +676,13 @@ public class SecureCacheTestDriver {
       cache.addFilteredListener(listener, keyValueFilter, converter, Collections.emptySet());
    }
 
+   @TestCachePermission(AuthorizationPermission.BULK_WRITE)
+   public void testLockedStream(SecureCache<String, String> cache) {
+      cache.lockedStream();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testLockAs_Object(SecureCache<String, String> cache) {
+      cache.lockAs(new Object());
+   }
 }

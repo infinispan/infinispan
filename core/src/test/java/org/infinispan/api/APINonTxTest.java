@@ -7,6 +7,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,10 +16,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.infinispan.LockedStream;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -661,4 +668,47 @@ public class APINonTxTest extends SingleCacheManagerTest {
       }
    }
 
+   public void testForEachWithLock() throws Throwable {
+      for (int i = 0; i < 10; i++) {
+         cache.put(i, "value" + i);
+      }
+
+      CyclicBarrier barrier = new CyclicBarrier(2);
+
+      int key = 4;
+
+      LockedStream<Object, Object> stream = cache.getAdvancedCache().lockedStream();
+      Future<?> forEachFuture = fork(() -> stream.forEach((c, e) -> {
+         if (e.getKey().equals(key)) {
+            try {
+               barrier.await(10, TimeUnit.SECONDS);
+               assertEquals("value" + key, c.put(e.getKey(), String.valueOf(e.getValue() + "-other")));
+
+               barrier.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException | BrokenBarrierException | TimeoutException e1) {
+               throw new RuntimeException(e1);
+            }
+         }
+      }));
+
+      barrier.await(10, TimeUnit.SECONDS);
+
+      Future<Object> putFuture = fork(() -> cache.put(key, "value" + key + "-new"));
+      try {
+         putFuture.get(50, TimeUnit.MILLISECONDS);
+         fail("Test should have thrown TimeoutException");
+      } catch (TimeoutException e) {
+
+      }
+
+      // Let the forEach with lock complete
+      barrier.await(10, TimeUnit.SECONDS);
+
+      forEachFuture.get(10, TimeUnit.SECONDS);
+
+      // The put should replace the value that forEach inserted
+      assertEquals("value" + key + "-other", putFuture.get(10, TimeUnit.SECONDS));
+      // The put should be last since it had to wait until lock was released on forEachWithLock
+      assertEquals("value" + key + "-new", cache.get(key));
+   }
 }

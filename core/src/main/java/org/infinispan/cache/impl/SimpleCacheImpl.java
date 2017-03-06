@@ -25,9 +25,11 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
+import org.infinispan.LockedStream;
 import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
@@ -89,6 +91,7 @@ import org.infinispan.util.DataContainerRemoveIterator;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -437,6 +440,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
       return new CacheEntrySet();
+   }
+
+   @Override
+   public LockedStream<K, V> lockedStream() {
+      throw new UnsupportedOperationException("Simple cache doesn't support lock stream!");
    }
 
    @Override
@@ -1008,6 +1016,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public AuthorizationManager getAuthorizationManager() {
       return getComponentRegistry().getComponent(AuthorizationManager.class);
+   }
+
+   @Override
+   public AdvancedCache<K, V> lockAs(Object lockOwner) {
+      throw new UnsupportedOperationException("lockAs method not supported with Simple Cache!");
    }
 
    @Override
