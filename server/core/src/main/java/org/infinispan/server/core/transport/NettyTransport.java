@@ -49,7 +49,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Log4JLoggerFactory;
+import io.netty.util.internal.logging.Log4J2LoggerFactory;
 
 /**
  * A Netty based transport.
@@ -66,7 +66,7 @@ public class NettyTransport implements Transport {
    static {
       boolean exception;
       try {
-         Util.loadClassStrict("org.apache.log4j.Logger", Thread.currentThread().getContextClassLoader());
+         Util.loadClassStrict("org.apache.logging.log4j.Logger", Thread.currentThread().getContextClassLoader());
          exception = false;
       } catch (ClassNotFoundException e) {
          exception = true;
@@ -118,7 +118,7 @@ public class NettyTransport implements Transport {
    public void start() {
       // Make netty use log4j, otherwise it goes to JDK logging.
       if (isLog4jAvailable)
-         InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
+         InternalLoggerFactory.setDefaultFactory(Log4J2LoggerFactory.INSTANCE);
 
       ServerBootstrap bootstrap = new ServerBootstrap();
       bootstrap.group(masterGroup, workerGroup);
