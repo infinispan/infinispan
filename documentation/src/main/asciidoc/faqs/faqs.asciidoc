@@ -108,13 +108,19 @@ Have a look at link:../user_guide/user_guide.html#using_infinispan_as_a_jsr107_j
 === Can I use Infinispan with Hibernate?
 Yes, you can combine one or more of these integrations in the same application:
 
-*  _Caching database access_ : Hibernate can cache frequently loaded entities and queries in Infinispan, taking advantage of state of the art eviction algorithms, and clustering if needed but it provides a good performance boost in non-clustered deployments too. See link:../user_guide/user_guide.html#using_infinispan_as_jpa_hibernate_second_level_cache_provider[Using Infinispan as JPA/Hibernate Second Level Cache Provider] for details on how to do this.
+*  _Using Infinispan as a database replacement_: using Hibernate OGM you can replace the RDBMS and store your entities and relations directly in Infinispan, interacting with it through the well known JPA 2.1 interface, with some limitations in the query capabilities. Hibernate OGM also automates mapping, encoding and decoding of JPA entities to Protobuf.
+For more details see link:http://hibernate.org/ogm/[Hibernate OGM] .
 
-*  _Storing Lucene indexes_ : When using Hibernate Search to provide full-text capabilities to your Hibernate/JPA enabled application, you need to store an Apache Lucene index separately from the database. You can store the index in Infinispan: this is ideal for clustered applications since it's otherwise tricky to share the index with correct locking on shared file systems, but is an interesting option for non-clustered deployments too as it can combine the benefits of in-memory performance with reliability and write-through to cloud storage backends like S3, or the Hibernate database itself. See link:http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/#infinispan-directories[Infinispan Directory Configuration] in the Hibernate Search reference documentation for the integration details.
+*  _Caching database access_: Hibernate can cache frequently loaded entities and queries in Infinispan, taking advantage of state of the art eviction algorithms, and clustering if needed but it provides a good performance boost in non-clustered deployments too. See link:../user_guide/user_guide.html#using_infinispan_as_jpa_hibernate_second_level_cache_provider[Using Infinispan as JPA/Hibernate Second Level Cache Provider] for details on how to do this.
 
-*  _Using Infinispan as a database replacement_ : using the experimental Hibernate Object/Grid Mapper (OGM) you can remove the database and store your entities and relations in the grid directly, interacting with it through the well known JPA(2) interface, with some limitations in the query capabilities. For more details see link:http://hibernate.org/ogm/[Hibernate Object/Grid Mapper (OGM)] .
+*  _Storing Lucene indexes_: When using Hibernate Search to provide full-text capabilities to your Hibernate/JPA enabled application, you need to store an Apache Lucene index separately from the database. You can store the index in Infinispan: this is ideal for clustered applications since it's otherwise tricky to share the index with correct locking on shared file systems, but is an interesting option for non-clustered deployments as well as it can combine the benefits of in-memory performance with reliability and write-through to any CacheStore supported by Infinispan.
 
-*  _Using full-text queries on Infinispan_ : If you liked the powerful full-text and data mining capabilities of Hibernate Search, but don't need JPA or a database, you can use the indexing and query engine only: the Infinispan Query module reuses Hibernate Search internally, depending on some Hibernate libraries but exposing the Search capabilities only. See link:../user_guide/user_guide.html#querying_infinispan[Querying Infinispan] .
+*  _Using full-text queries on Infinispan_: If you liked the powerful full-text and data mining capabilities of Hibernate Search, but don't need JPA or a database, you can use the indexing and query engine only: the Infinispan Query module reuses Hibernate Search internally, depending on some Hibernate libraries but exposing the Search capabilities only. See link:../user_guide/user_guide.html#querying_infinispan[Querying Infinispan] .
+
+* A _combination of multiple such integrations_: you can use Hibernate OGM as an
+interface to perform CRUD operations on some Infinispan caches configured for resiliency, while also activating Hibernate 2nd level caching using some different
+caches configured for high performance read mostly access, and also use Hibernate
+Search to index your domain model while storing the indexes in Infinispan itself.
 
 ==  Technical questions
 
