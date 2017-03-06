@@ -34,7 +34,7 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
       return initServerAndClient(Collections.emptyMap());
    }
 
-   protected ConfigurationBuilder initServerAndClient(Map<String, String> mechProperties) {
+   ConfigurationBuilder initServerAndClient(Map<String, String> mechProperties) {
       hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
       serverBuilder.authentication()
@@ -52,6 +52,7 @@ public abstract class AbstractAuthenticationTest extends SingleCacheManagerTest 
          .host("127.0.0.1")
          .port(hotrodServer.getPort())
          .socketTimeout(3000)
+         .maxRetries(3)
          .connectionPool()
          .maxActive(1)
          .security()

@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -200,23 +201,27 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    public static class HitCountInterceptor extends CommandInterceptor{
       private static final Log log = LogFactory.getLog(HitCountInterceptor.class);
 
-      private volatile int invocationCount;
+      private final AtomicInteger invocationCount = new AtomicInteger(0);
 
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          if (ctx.isOriginLocal()) {
-            log.infof("Increment hit count after being visited by %s", command);
-            invocationCount ++;
+            if (Thread.currentThread().getName().contains("NodeB")) {
+               System.out.println("Hit on " + Thread.currentThread().getName());
+            }
+            int count = invocationCount.incrementAndGet();
+            log.infof("Hit %d for %s", count, command);
          }
          return super.handleDefault(ctx, command);
       }
 
       public int getHits() {
-         return invocationCount;
+         return invocationCount.get();
       }
 
       public void reset() {
-         invocationCount = 0;
+         invocationCount.set(0);
+         log.infof("Hit count cleared");
       }
    }
 }

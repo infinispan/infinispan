@@ -34,7 +34,7 @@ class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
   @AfterMethod
   def afterMethod(): Unit = {
     //HotRodSingleNodeTest assumes that we start/shutdown server once instead of per-test. We need to perform our own cleanup.
-    killClient(hotRodClient).get()
+    killClient(hotRodClient)
     killServer(hotRodServer)
   }
 
@@ -103,23 +103,23 @@ class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
 
   class HotrodClientBuilder(hotRodServer: HotRodServer) {
 
-    var sslContext: SSLContext = null
-    var sslEngine: SSLEngine = null
+    var sslContext: SSLContext = _
+    var sslEngine: SSLEngine = _
 
     def useSslConfiguration(keystoreFileName: String, keystorePassoword: String, truststoreFileName: String, truststorePassword: String): HotrodClientBuilder = {
       sslContext = SslContextFactory.getContext(keystoreFileName, keystorePassoword.toCharArray, truststoreFileName, truststorePassword.toCharArray)
       sslEngine = SslContextFactory.getEngine(sslContext, true, false)
-      return this
+      this
     }
 
     def addSniDomain(sniNames: String*): HotrodClientBuilder = {
-      if (sniNames.size > 0) {
-        val sslParameters = sslEngine.getSSLParameters()
+      if (sniNames.nonEmpty) {
+        val sslParameters = sslEngine.getSSLParameters
         val hosts: List[SNIServerName] = sniNames.map(s => new SNIHostName(s)).toList
         sslParameters.setServerNames(hosts.asJava)
         sslEngine.setSSLParameters(sslParameters)
       }
-      return this
+      this
     }
 
     def build(): HotRodClient = {
@@ -130,9 +130,9 @@ class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
   class HotrodServerBuilder {
 
     val ip = "127.0.0.1"
-    val builder = new HotRodServerConfigurationBuilder()
+    val builder: HotRodServerConfigurationBuilder = new HotRodServerConfigurationBuilder()
       .proxyHost("127.0.0.1")
-      .proxyPort(UniquePortThreadLocal.get.intValue)
+      .proxyPort(serverPort)
       .idleTimeout(0)
 
     def addSniDomain(domain: String, keystoreFileName: String, keystorePassoword: String, truststoreFileName: String, truststorePassword: String): HotrodServerBuilder = {
@@ -142,11 +142,11 @@ class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
         .keyStorePassword(keystorePassoword.toCharArray)
         .trustStoreFileName(truststoreFileName)
         .trustStorePassword(truststorePassword.toCharArray)
-      return this
+      this
     }
 
     def build(): HotRodServer = {
-      startHotRodServer(cacheManager, UniquePortThreadLocal.get.intValue, -1, builder)
+      startHotRodServer(cacheManager, serverPort, -1, builder)
     }
   }
 

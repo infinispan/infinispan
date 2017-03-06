@@ -8,7 +8,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.testng.annotations.{AfterClass, Test}
-import io.netty.channel.ChannelFuture
 import org.infinispan.configuration.global.GlobalConfigurationBuilder
 
 /**
@@ -42,7 +41,7 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
          new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName(cacheName),
          hotRodCacheConfiguration())
 
-   protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager) = startHotRodServer(cacheManager)
+   protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = startHotRodServer(cacheManager)
 
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass() {
@@ -52,13 +51,13 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       killServer(hotRodServer)
    }
 
-   protected def server = hotRodServer
+   protected def server: HotRodServer = hotRodServer
 
-   protected def client = hotRodClient
+   protected def client: HotRodClient = hotRodClient
 
-   protected def jmxDomain = hotRodJmxDomain
+   protected def jmxDomain: String = hotRodJmxDomain
 
-   protected def shutdownClient: ChannelFuture = killClient(hotRodClient)
+   protected def shutdownClient(): Unit = killClient(hotRodClient)
 
    protected def connectClient: HotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60, 21)
 }

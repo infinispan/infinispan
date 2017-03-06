@@ -2,7 +2,6 @@ package org.infinispan.server.hotrod
 
 import java.util.function.Consumer
 
-import test.UniquePortThreadLocal
 import test.HotRodTestingUtil._
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.testng.Assert._
@@ -11,7 +10,6 @@ import org.infinispan.server.core.test.Stoppable
 import org.infinispan.configuration.cache.{Configuration, ConfigurationBuilder}
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.util.concurrent.IsolationLevel
 import org.infinispan.commons.CacheConfigurationException
 import org.infinispan.configuration.cache.VersioningScheme
@@ -69,9 +67,9 @@ class HotRodConfigurationTest extends AbstractInfinispanTest {
 
       Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration()), new Consumer[EmbeddedCacheManager] {
          override def accept(cm: EmbeddedCacheManager): Unit = {
-            Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, builder), new Consumer[HotRodServer] {
+            Stoppable.useServer(startHotRodServer(cm, serverPort, builder), new Consumer[HotRodServer] {
                override def accept(server: HotRodServer): Unit = {
-                  val cfg = cm.getCache(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX).getCacheConfiguration
+                  val cfg = cm.getCacheConfiguration(server.getConfiguration.topologyCacheName)
                   assert(cfg, cm.getCacheManagerConfiguration.transport().distributedSyncTimeout())
                }
             })
@@ -89,7 +87,7 @@ class HotRodConfigurationTest extends AbstractInfinispanTest {
 
       Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration(builder)), new Consumer[EmbeddedCacheManager] {
          override def accept(cm: EmbeddedCacheManager): Unit = {
-            Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, hotRodBuilder), new Consumer[HotRodServer] {
+            Stoppable.useServer(startHotRodServer(cm, serverPort, hotRodBuilder), new Consumer[HotRodServer] {
                override def accept(server: HotRodServer): Unit = {
                }
             })

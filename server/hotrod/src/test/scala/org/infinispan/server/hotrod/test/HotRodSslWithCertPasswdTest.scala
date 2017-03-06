@@ -26,7 +26,7 @@ class HotRodSslWithCertPasswdTest extends AbstractInfinispanTest {
 
    def testServerStartWithSslAndCertPasswd() {
       val builder = new HotRodServerConfigurationBuilder
-      builder.host(host).port(UniquePortThreadLocal.get.intValue).idleTimeout(0)
+      builder.host(host).port(serverPort).idleTimeout(0)
       builder.ssl.enable().keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray).keyStoreCertificatePassword("secret2".toCharArray).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray)
       Stoppable.useCacheManager(createCacheManager(hotRodCacheConfiguration()), new Consumer[EmbeddedCacheManager] {
          override def accept(cm: EmbeddedCacheManager): Unit = {

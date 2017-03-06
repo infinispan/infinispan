@@ -728,9 +728,14 @@ public final class Util {
       return sb.toString();
    }
 
-   private static void addHexByte(StringBuilder buf, byte b) {
-      buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
-         .append(HEX_VALUES.charAt((b & 0x0F)));
+   public static void addHexByte(StringBuilder buf, byte b) {
+      if (0x20 <= b && b <= 0x7e) {
+         buf.append('\\');
+         buf.append((char) b);
+      } else {
+         buf.append(HEX_VALUES.charAt((b & 0xF0) >> 4))
+            .append(HEX_VALUES.charAt((b & 0x0F)));
+      }
    }
 
    private static void addSingleHexByte(StringBuilder buf, byte b) {

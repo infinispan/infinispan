@@ -15,6 +15,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import io.netty.channel.ChannelFuture;
+import io.netty.util.concurrent.Future;
 
 public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    public static final String cacheName = "HotRodCache";
@@ -51,7 +52,7 @@ public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    public void destroyAfterClass() {
       log.debug("Test finished, close cache, client and Hot Rod server");
       super.destroyAfterClass();
-      shutdownClient();
+      shutdownClient().awaitUninterruptibly();
       killServer(hotRodServer);
    }
 
@@ -67,7 +68,7 @@ public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       return hotRodJmxDomain;
    }
 
-   protected ChannelFuture shutdownClient() {
+   protected Future<?> shutdownClient() {
       return killClient(hotRodClient);
    }
 

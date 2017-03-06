@@ -25,14 +25,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.net.ssl.SSLEngine;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
@@ -47,6 +46,7 @@ import org.infinispan.server.hotrod.ServerAddress;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.KeyValuePair;
 
 import io.netty.bootstrap.Bootstrap;
@@ -63,6 +63,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.ReplayingDecoder;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.Future;
 
 /**
  * A very simple Hot Rod client for testing purposes. It's a quick and dirty client implementation. As a result, it
@@ -108,7 +110,8 @@ public class HotRodClient {
 
    Map<Long, Op> idToOp = new ConcurrentHashMap<>();
    SaslClient saslClient = null;
-   private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(1);
+   private EventLoopGroup eventLoopGroup =
+         new NioEventLoopGroup(1, new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName() + "-Client"));
    private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
 
    private Channel initializeChannel() {
@@ -126,9 +129,8 @@ public class HotRodClient {
       return ch;
    }
 
-   public ChannelFuture stop() {
-      eventLoopGroup.shutdownGracefully();
-      return ch.disconnect();
+   public Future<?> stop() {
+      return eventLoopGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
    }
 
    public TestResponse put(byte[] k, int lifespan, int maxIdle, byte[] v) {
@@ -975,7 +977,7 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
    TestResponse getResponse(long messageId) {
       // Very TODO very primitive way of waiting for a response. Convert to a Future
       int i = 0;
-      TestResponse v = null;
+      TestResponse v;
       do {
          v = responses.get(messageId);
          if (v == null) {

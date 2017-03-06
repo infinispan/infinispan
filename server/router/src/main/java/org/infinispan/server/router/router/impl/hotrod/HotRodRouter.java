@@ -33,8 +33,8 @@ public class HotRodRouter implements Router {
 
     private static final String THREAD_NAME_PREFIX = "MultiTenantRouter";
 
-    private final NioEventLoopGroup masterGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(THREAD_NAME_PREFIX + "ServerMaster"));
-    private final NioEventLoopGroup workerGroup = new NioEventLoopGroup(0, new DefaultThreadFactory(THREAD_NAME_PREFIX + "ServerWorker"));
+    private final NioEventLoopGroup masterGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(THREAD_NAME_PREFIX + "-ServerMaster"));
+    private final NioEventLoopGroup workerGroup = new NioEventLoopGroup(0, new DefaultThreadFactory(THREAD_NAME_PREFIX + "-ServerWorker"));
     private final HotRodRouterConfiguration configuration;
     private Optional<Integer> port = Optional.empty();
     private Optional<InetAddress> ip = Optional.empty();

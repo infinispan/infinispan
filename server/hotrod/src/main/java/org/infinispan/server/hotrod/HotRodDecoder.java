@@ -74,7 +74,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
       try {
          if (CacheDecodeContext.isTrace) {
-            log.tracef("Decode using instance @%x", System.identityHashCode(this));
+            log.tracef("Decode buffer %s using instance @%x", dumpHexByteBuf(in), System.identityHashCode(this));
          }
 
          if (resetRequested) {
@@ -129,6 +129,23 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          // Faster than throwing exception
          ctx.pipeline().fireExceptionCaught(new HotRodException(decodeCtx.createExceptionResponse(t), t.getMessage(), t));
       }
+   }
+
+   private static String dumpHexByteBuf(ByteBuf in) {
+      int maxLength = 32;
+      StringBuilder sb = new StringBuilder(maxLength * 2 + 20);
+      sb.append('(').append(in.readableBytes()).append(')');
+      int startIndex;
+      if (in.readableBytes() < maxLength) {
+         startIndex = in.readerIndex();
+      } else {
+         startIndex = in.writerIndex() - maxLength;
+         sb.append("...");
+      }
+      for (int i = startIndex; i < in.writerIndex(); i++) {
+         Util.addHexByte(sb, in.getByte(i));
+      }
+      return sb.toString();
    }
 
    boolean decodeHeader(boolean isLoopBack, ByteBuf in, List<Object> out) throws Exception {
@@ -262,11 +279,11 @@ public class HotRodDecoder extends ByteToMessageDecoder {
       // If we want a single key read that - else we do try for custom read
       if (op.requiresKey()) {
          byte[] bytes = ExtendedByteBufJava.readMaybeRangedBytes(in);
-         if (CacheDecodeContext.isTrace) {
-            log.tracef("Body key: %s", Util.toHexString(bytes));
-         }
          // If the bytes don't exist then we need to reread
          if (bytes != null) {
+            if (CacheDecodeContext.isTrace) {
+               log.tracef("Body key: %s", Util.toHexString(bytes));
+            }
             decodeCtx.key = bytes;
          } else {
             return false;

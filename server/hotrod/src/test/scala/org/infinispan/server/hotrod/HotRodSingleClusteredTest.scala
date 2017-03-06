@@ -56,7 +56,7 @@ class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
    }
 
    def testPutOnPrivateCache(m: Method) {
-      val resp = hotRodClient.execute(0xA0, 0x01, HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX, k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[TestErrorResponse]
+      val resp = hotRodClient.execute(0xA0, 0x01, hotRodServer.getConfiguration.topologyCacheName(), k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[TestErrorResponse]
       assertTrue(resp.msg.contains("Remote requests are not allowed to private caches."))
       assertEquals(resp.status, ParseError, "Status should have been 'ParseError' but instead was: " + resp.status)
       hotRodClient.assertPut(m)

@@ -47,6 +47,7 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.Log4J2LoggerFactory;
@@ -83,8 +84,8 @@ public class NettyTransport implements Transport {
       this.useNativeEpoll = useNativeEpoll;
 
       // Need to initialize these in constructor since they require configuration
-      masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "ServerMaster"));
-      workerGroup = buildEventLoop(0, new DefaultThreadFactory(threadNamePrefix + "ServerWorker"));
+      masterGroup = buildEventLoop(1, new DefaultThreadFactory(threadNamePrefix + "-ServerMaster"));
+      workerGroup = buildEventLoop(0, new DefaultThreadFactory(threadNamePrefix + "-ServerWorker"));
 
       isGlobalStatsEnabled = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().enabled();
       serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels", ImmediateEventExecutor.INSTANCE);
@@ -143,8 +144,17 @@ public class NettyTransport implements Transport {
 
    @Override
    public void stop() {
-      // We *pause* the acceptor so no new connections are made
-      ChannelGroupFuture future = serverChannels.close().awaitUninterruptibly();
+      Future<?> masterTerminationFuture = masterGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+      Future<?> workerTerminationFuture = workerGroup.shutdownGracefully(100, 1000, TimeUnit.MILLISECONDS);
+
+      masterTerminationFuture.awaitUninterruptibly();
+      workerTerminationFuture.awaitUninterruptibly();
+
+      // This is probably not necessary, all Netty resources should have been freed already
+      ChannelGroupFuture serverChannelsTerminationFuture = serverChannels.close();
+      ChannelGroupFuture acceptedChannelsTerminationFuture = acceptedChannels.close();
+
+      ChannelGroupFuture future = serverChannelsTerminationFuture.awaitUninterruptibly();
       if (!future.isSuccess()) {
          log.serverDidNotUnbind();
 
@@ -156,7 +166,7 @@ public class NettyTransport implements Transport {
          });
       }
 
-      future = acceptedChannels.close().awaitUninterruptibly();
+      future = acceptedChannelsTerminationFuture.awaitUninterruptibly();
       if (!future.isSuccess()) {
          log.serverDidNotClose();
          future.forEach(fut -> {
@@ -167,9 +177,7 @@ public class NettyTransport implements Transport {
          });
       }
       if (log.isDebugEnabled())
-         log.debug("Channel group completely closed, release external resources");
-      masterGroup.shutdownGracefully();
-      workerGroup.shutdownGracefully();
+         log.debug("Channel group completely closed, external resources released");
       nettyPort = Optional.empty();
    }
 

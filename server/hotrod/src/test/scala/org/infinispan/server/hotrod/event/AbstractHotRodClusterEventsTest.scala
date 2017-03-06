@@ -312,7 +312,8 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
            (fn: () => Unit): Unit = {
       filters.foreach(_.staticKey = staticKey)
       converters.foreach(_.staticKey = staticKey)
-      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory, true), Success)
+      val response = client.addClientListener(listener, includeState, filterFactory, converterFactory, true)
+      assertStatus(response, Success)
       try {
          fn()
       } finally {

@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.configuration.cache.CacheMode
 import org.infinispan.test.MultipleCacheManagersTest
-import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.test.fwk.{TestCacheManagerFactory, TestResourceTracker}
 import org.testng.annotations.Test
 
 import scala.concurrent.duration._
@@ -12,7 +12,6 @@ import scala.util.{Failure, Success, Try}
 // Do not remove, otherwise getDefaultClusteredConfig is not found
 import org.infinispan.server.core.test.ServerTestingUtil._
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
-import org.infinispan.server.hotrod.test.UniquePortThreadLocal
 import org.infinispan.test.AbstractCacheTest._
 
 /**
@@ -38,15 +37,18 @@ class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
    }
 
    def testConcurrentStartup() {
-      val initialPort = UniquePortThreadLocal.get.intValue
+      val initialPort = serverPort
 
       implicit val forExecutionContext = new ExecutionContext {
-         override def execute(runnable: Runnable): Unit = fork(runnable)
+         override def execute(runnable: Runnable): Unit = fork(() => {
+            TestResourceTracker.testThreadStarted(HotRodConcurrentStartTest.this)
+            runnable.run()
+         })
          override def reportFailure(cause: Throwable): Unit = throw cause
       }
 
       val futures: Seq[Future[HotRodServer]] = (1 to numberOfServers).map {
-         case 1 =>  Future(startHotRodServerWithDelay(getCacheManagers.get(0), initialPort, 10000))
+         case 1 =>  Future(startHotRodServerWithDelay(getCacheManagers.get(0), initialPort, 2000))
          case i =>  Future(startHotRodServer(getCacheManagers.get(i - 1), initialPort + (i * 10)))
       }
 

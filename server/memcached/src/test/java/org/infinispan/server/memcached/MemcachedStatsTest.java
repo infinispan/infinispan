@@ -31,6 +31,7 @@ import javax.management.ReflectionException;
 import org.infinispan.Version;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.jgroups.util.Triple;
 import org.testng.annotations.Test;
 
@@ -54,7 +55,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       return TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain);
    }
 
-   public void testUnsupportedStats(Method m) {
+   public void testUnsupportedStats() {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
       assertEquals(stats.getVal1().get("pid"), "0");
       assertEquals(stats.getVal1().get("pointer_size"), "0");
@@ -69,7 +70,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertEquals(stats.getVal1().get("reclaimed"), "0");
    }
 
-   public void testUncomparableStats(Method m) {
+   public void testUncomparableStats() {
       sleepThread(TimeUnit.SECONDS.toMillis(1));
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
       assertNotSame(stats.getVal1().get("uptime"), "0");
@@ -77,7 +78,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertNotSame(stats.getVal1().get("uptime"), stats.getVal1().get("time"));
    }
 
-   public void testStaticStats(Method m) {
+   public void testStaticStats() {
        Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
        assertEquals(stats.getVal1().get("version"), Version.getVersion());
     }
@@ -222,11 +223,12 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       // Send any command
       getStats(-1, -1);
 
-      testSingleLocalConnection(jmxDomain, "Memcached");
+      String serverName = "Memcached-" + TestResourceTracker.getCurrentTestShortName();
+      testSingleLocalConnection(jmxDomain, serverName);
       List<MemcachedClient> clients = new ArrayList<>();
       try {
          clients = createMultipleClients(clients, 10, 0);
-         testMultipleLocalConnections(jmxDomain, "Memcached", clients.size() + 1);
+         testMultipleLocalConnections(jmxDomain, serverName, clients.size() + 1);
       } finally {
          clients.forEach(client -> {
             try {

@@ -41,7 +41,7 @@ class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersTest {
       super.createBeforeClass()
       val iface = findNetworkInterfaces(false).next
       val address = iface.getInetAddresses.nextElement.getHostAddress
-      hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort, 0, getDefaultHotRodConfiguration())
+      hotRodServer = startHotRodServer(cacheManagers.get(0), address, serverPort, 0, getDefaultHotRodConfiguration)
       hotRodClient = new HotRodClient(address, hotRodServer.getPort, cacheName, 60, 20)
    }
 
