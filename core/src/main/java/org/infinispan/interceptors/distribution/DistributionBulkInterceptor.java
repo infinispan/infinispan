@@ -41,6 +41,7 @@ import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.object.MapOperation;
 import org.infinispan.stream.impl.tx.TxClusterStreamManager;
 import org.infinispan.stream.impl.tx.TxDistributedCacheStream;
+import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.function.RemovableFunction;
 
 /**
@@ -214,32 +215,6 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
    private static <C> CacheStream<C> applyTimeOut(CacheStream<C> stream, Cache<?, ?> cache) {
       return stream.timeout(cache.getCacheConfiguration().clustering().remoteTimeout(),
               TimeUnit.MILLISECONDS);
-   }
-
-   /**
-    * Wrapper for CacheEntry(s) that can be used to update the cache when it's value is set.
-    * @param <K> The key type
-    * @param <V> The value type
-    */
-   private static class EntryWrapper<K, V> extends ForwardingCacheEntry<K, V> {
-      private final Cache<K, V> cache;
-      private final CacheEntry<K, V> entry;
-
-      public EntryWrapper(Cache<K, V> cache, CacheEntry<K, V> entry) {
-         this.cache = cache;
-         this.entry = entry;
-      }
-
-      @Override
-      protected CacheEntry<K, V> delegate() {
-         return entry;
-      }
-
-      @Override
-      public V setValue(V value) {
-         cache.put(entry.getKey(), value);
-         return super.setValue(value);
-      }
    }
 
    @Override

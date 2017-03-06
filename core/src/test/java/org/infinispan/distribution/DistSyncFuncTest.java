@@ -22,6 +22,7 @@ import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.context.Flag;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "distribution.DistSyncFuncTest")
@@ -253,6 +254,50 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          }
          assertTrue(expKeyEntries.isEmpty(), "Did not see keys " + expKeyEntries + " in iterator!");
          assertTrue(expValueEntries.isEmpty(), "Did not see keys " + expValueEntries + " in iterator!");
+      }
+   }
+
+   public void testLockedStreamSetValue() {
+      int size = 5;
+      for (int i = 0; i < size; i++) {
+         getOwners("k" + i)[0].put("k" + i, "value" + i);
+         // There will be no caches to invalidate as this is the first command of the test
+         asyncWait("k" + i, PutKeyValueCommand.class);
+         assertOnAllCachesAndOwnership("k" + i, "value" + i);
+      }
+
+      c1.getAdvancedCache().lockedStream().forEach((c, e) -> e.setValue(e.getValue() + "-changed"));
+
+      for (int i = 0; i < size; i++) {
+         int offset = i;
+         String key = "k" + i;
+         Cache<Object, String>[] caches = getOwners(key);
+         for (Cache<Object, String> cache : caches) {
+            eventuallyEquals("value" + offset + "-changed",
+                  () -> cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get("k" + offset));
+         }
+      }
+   }
+
+   public void testLockedStreamPutValue() {
+      int size = 5;
+      for (int i = 0; i < size; i++) {
+         getOwners("k" + i)[0].put("k" + i, "value" + i);
+         // There will be no caches to invalidate as this is the first command of the test
+         asyncWait("k" + i, PutKeyValueCommand.class);
+         assertOnAllCachesAndOwnership("k" + i, "value" + i);
+      }
+
+      c1.getAdvancedCache().lockedStream().forEach((c, e) -> c.put(e.getKey(), e.getValue() + "-changed"));
+
+      for (int i = 0; i < size; i++) {
+         int offset = i;
+         String key = "k" + i;
+         Cache<Object, String>[] caches = getOwners(key);
+         for (Cache<Object, String> cache : caches) {
+            eventuallyEquals("value" + offset + "-changed",
+                  () -> cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get("k" + offset));
+         }
       }
    }
 }

@@ -152,7 +152,11 @@ public class DefaultLockManager implements LockManager {
 
    @Override
    public void unlockAll(InvocationContext context) {
-      unlockAll(context.getLockedKeys(), context.getLockOwner());
+      Set<Object> keysToUnlock = context.getLockedKeys();
+      // We remove lock owner from locked keys - we don't unlock this key it is special
+      Object lockOwner = context.getLockOwner();
+      keysToUnlock.remove(lockOwner);
+      unlockAll(keysToUnlock, lockOwner);
       context.clearLockedKeys();
    }
 

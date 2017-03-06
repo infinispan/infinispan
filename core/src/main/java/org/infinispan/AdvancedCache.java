@@ -179,6 +179,18 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    AuthorizationManager getAuthorizationManager();
 
    /**
+    * Whenever this cache acquires a lock it will do so using the given Object as the owner of said lock.
+    * <p>
+    * This can be useful when a lock may have been manually acquired and you wish to reuse that lock across invocations.
+    * <p>
+    * Great care should be taken with this command as misuse can very easily lead to deadlocks.
+    * @param lockOwner the lock owner to lock any keys as
+    * @return an {@link AdvancedCache} instance on which when an operation is invoked it will use lock owner
+    * object to acquire any locks
+    */
+   AdvancedCache<K, V> lockAs(Object lockOwner);
+
+   /**
     * Locks a given key or keys eagerly across cache nodes in a cluster.
     * <p>
     * Keys can be locked eagerly in the context of a transaction only.
@@ -557,6 +569,27 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the entry set containing all of the CacheEntries
     */
    CacheSet<CacheEntry<K, V>> cacheEntrySet();
+
+   /**
+    * Returns a sequential stream using this Cache as the source. This stream is very similar to using the
+    * {@link CacheStream} returned from the {@link CacheSet#stream()} method of the collection
+    * returned via {@link AdvancedCache#cacheEntrySet()}. The use of this locked stream is that when an entry is
+    * being processed by the user the entry is locked for the invocation preventing a different thread from modifying
+    * it.
+    * <p>
+    * Note that this stream is not supported when using a optimistic transactional or simple cache. Both non transactional and
+    * pessimistc transactions are supported.
+    * <p>
+    * The stream will not share any ongoing transaction the user may have. Code executed by the stream should be treated
+    * as completely independent. That is any operation performed via the stream will require the user to start their
+    * own transaction or will be done intrinsically on the invocation. Note this means that if you lock a key from
+    * the cache it could cause the stream operation to deadlock.
+    * {@link org.infinispan.configuration.cache.ConfigurationBuilder#simpleCache(boolean)} was set to true. This
+    * restriction may be removed in a future version
+    * @return the locked stream
+    * @since 9.1
+    */
+   LockedStream<K, V> lockedStream() throws UnsupportedOperationException;
 
    /**
     * Attempts to remove the entry if it is expired.  Due to expired entries not being consistent across nodes, this

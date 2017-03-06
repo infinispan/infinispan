@@ -71,6 +71,7 @@ public abstract class AbstractLocalCacheStream<T, S extends BaseStream<T, S>, S2
          stream = stream.parallel();
       }
       for (IntermediateOperation intOp : intermediateOperations) {
+         intOp.handleInjection(registry);
          stream = intOp.perform(stream);
       }
       return (S) stream;

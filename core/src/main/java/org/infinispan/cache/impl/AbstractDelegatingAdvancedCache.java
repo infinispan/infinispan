@@ -6,13 +6,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.LockedStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
@@ -52,12 +55,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    private final AdvancedCacheWrapper<K, V> wrapper;
 
    public AbstractDelegatingAdvancedCache(final AdvancedCache<K, V> cache) {
-      this(cache, new AdvancedCacheWrapper<K, V>() {
-         @Override
-         public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-            return new AbstractDelegatingAdvancedCache<K, V>(cache);
-         }
-      });
+      this(cache, AbstractDelegatingAdvancedCache::new);
    }
 
    protected AbstractDelegatingAdvancedCache(AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
@@ -131,6 +129,16 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public AuthorizationManager getAuthorizationManager() {
       return cache.getAuthorizationManager();
+   }
+
+   @Override
+   public AdvancedCache<K, V> lockAs(Object lockOwner) {
+      AdvancedCache<K, V> lockCache = this.cache.lockAs(lockOwner);
+      if (lockCache != cache) {
+         return this.wrapper.wrap(lockCache);
+      } else {
+         return this;
+      }
    }
 
    @Override
@@ -335,6 +343,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
       return cache.cacheEntrySet();
+   }
+
+   @Override
+   public LockedStream<K, V> lockedStream() {
+      return cache.lockedStream();
    }
 
    @Override

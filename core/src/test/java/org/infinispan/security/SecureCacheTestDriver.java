@@ -662,4 +662,13 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.NONE)
    public void testWithSubject_Subject(SecureCache<String, String> cache) {}
 
+   @TestCachePermission(AuthorizationPermission.BULK_WRITE)
+   public void testLockedStream(SecureCache<String, String> cache) {
+      cache.lockedStream();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testLockAs_Object(SecureCache<String, String> cache) {
+      cache.lockAs(new Object());
+   }
 }
