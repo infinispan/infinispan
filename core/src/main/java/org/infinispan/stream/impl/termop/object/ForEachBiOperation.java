@@ -43,6 +43,7 @@ public class ForEachBiOperation<K, V> extends AbstractForEachOperation<K, V, Str
    @Override
    public void handleInjection(ComponentRegistry registry) {
       super.handleInjection(registry);
+      registry.wireDependencies(consumer);
       cache = registry.getComponent(Cache.class);
    }
 }

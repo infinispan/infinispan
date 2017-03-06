@@ -10,8 +10,12 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.Ids;
 
 /**
@@ -65,6 +69,19 @@ public class StreamMarshalling {
     */
    public static <K, V> Function<Map.Entry<K, V>, V> entryToValueFunction() {
       return EntryToValueFunction.getInstance();
+   }
+
+   /**
+    * Provides a function that given a key will return the {@link CacheEntry} that maps to this
+    * key. This function only works when used with a {@link org.infinispan.CacheStream} returned
+    * from the desired {@link Cache}. The entry will be read from the <b>Cache</b> of which the
+    * <b>CacheStream</b> was created from.
+    * @param <K> the key type
+    * @param <V> the expected value type of the entry
+    * @return a function that when applied returns the entry for the given key
+    */
+   public static <K, V> Function<K, CacheEntry<K, V>> keyToEntryFunction() {
+      return new KeyToEntryFunction<>();
    }
 
    private static final class EqualityPredicate implements Predicate<Object> {
@@ -131,13 +148,28 @@ public class StreamMarshalling {
       }
    }
 
+   private static final class KeyToEntryFunction<K, V> implements Function<K, CacheEntry<K, V>> {
+      private AdvancedCache<K, V> advancedCache;
+
+      @Override
+      public CacheEntry<K, V> apply(K k) {
+         return advancedCache.getCacheEntry(k);
+      }
+
+      @Inject
+      public void inject(Cache<K, V> cache) {
+         this.advancedCache = cache.getAdvancedCache();
+      }
+   }
+
    public static final class StreamMarshallingExternalizer implements AdvancedExternalizer<Object> {
       enum ExternalizerId {
          EQUALITY_PREDICATE(EqualityPredicate.class),
          ENTRY_KEY_FUNCTION(EntryToKeyFunction.class),
          ENTRY_VALUE_FUNCTION(EntryToValueFunction.class),
          NON_NULL_PREDICATE(NonNullPredicate.class),
-         ALWAYS_TRUE_PREDICATE(AlwaysTruePredicate.class);
+         ALWAYS_TRUE_PREDICATE(AlwaysTruePredicate.class),
+         KEY_ENTRY_FUNCTION(KeyToEntryFunction.class);
 
          private final Class<? extends Object> marshalledClass;
 
@@ -157,7 +189,8 @@ public class StreamMarshalling {
       @Override
       public Set<Class<?>> getTypeClasses() {
          return Util.<Class<? extends Object>>asSet(EqualityPredicate.class, EntryToKeyFunction.class,
-                 EntryToValueFunction.class, NonNullPredicate.class, AlwaysTruePredicate.class);
+               EntryToValueFunction.class, NonNullPredicate.class, AlwaysTruePredicate.class,
+               KeyToEntryFunction.class);
       }
 
       @Override
@@ -198,6 +231,8 @@ public class StreamMarshalling {
                return NonNullPredicate.getInstance();
             case ALWAYS_TRUE_PREDICATE:
                return AlwaysTruePredicate.getInstance();
+            case KEY_ENTRY_FUNCTION:
+               return new KeyToEntryFunction<>();
             default:
                throw new IllegalArgumentException("ExternalizerId not supported: " + id);
          }

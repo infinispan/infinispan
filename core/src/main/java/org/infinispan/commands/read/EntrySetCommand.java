@@ -57,6 +57,10 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
    @Override
    public Set<CacheEntry<K, V>> perform(InvocationContext ctx) throws Throwable {
+      Object lockOwner = ctx.getLockOwner();
+      if (ctx.getLockOwner() != null) {
+         return new BackingEntrySet<>(cache.getAdvancedCache().lockAs(lockOwner));
+      }
       return new BackingEntrySet<>(cache);
    }
 
@@ -77,7 +81,7 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          Iterator<CacheEntry<K, V>> iterator = new DataContainerRemoveIterator<>(cache);
-         return new EntryWrapperIterator<>(cache, iterator);
+         return Closeables.iterator(iterator);
       }
 
       @Override
@@ -142,69 +146,6 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       public CacheStream<CacheEntry<K, V>> parallelStream() {
          return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, getConsistentHash(cache),
                  () -> super.stream()), true, cache.getAdvancedCache().getComponentRegistry());
-      }
-   }
-
-   /**
-    * Wrapper for iterator that produces CacheEntry instances that allow for updating the cache when
-    * the cache entry's value is updated
-    * @param <K> The key type
-    * @param <V> The value type
-    */
-   private static class EntryWrapperIterator<K, V> implements CloseableIterator<CacheEntry<K, V>> {
-      private final Cache<K, V> cache;
-      private final Iterator<CacheEntry<K, V>> iterator;
-
-      public EntryWrapperIterator(Cache<K, V> cache, Iterator<CacheEntry<K, V>> iterator) {
-         this.cache = cache;
-         this.iterator = iterator;
-      }
-
-      @Override
-      public void close() {
-         // Does nothing because data container iterator doesn't need to be closed
-      }
-
-      @Override
-      public boolean hasNext() {
-         return iterator.hasNext();
-      }
-
-      @Override
-      public CacheEntry<K, V> next() {
-         CacheEntry<K, V> entry = iterator.next();
-         return new EntryWrapper<>(cache, entry);
-      }
-
-      @Override
-      public void remove() {
-         iterator.remove();
-      }
-   }
-
-   /**
-    * Wrapper for CacheEntry(s) that can be used to update the cache when it's value is set.
-    * @param <K> The key type
-    * @param <V> The value type
-    */
-   private static class EntryWrapper<K, V> extends ForwardingCacheEntry<K, V> {
-      private final Cache<K, V> cache;
-      private final CacheEntry<K, V> entry;
-
-      public EntryWrapper(Cache<K, V> cache, CacheEntry<K, V> entry) {
-         this.cache = cache;
-         this.entry = entry;
-      }
-
-      @Override
-      protected CacheEntry<K, V> delegate() {
-         return entry;
-      }
-
-      @Override
-      public V setValue(V value) {
-         cache.put(entry.getKey(), value);
-         return super.setValue(value);
       }
    }
 }

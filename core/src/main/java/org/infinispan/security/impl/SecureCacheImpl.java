@@ -7,14 +7,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.LockedStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.configuration.cache.Configuration;
@@ -396,6 +399,11 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public AdvancedCache<K, V> lockAs(Object lockOwner) {
+      return new SecureCacheImpl<>(delegate.lockAs(lockOwner));
+   }
+
+   @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
          TimeUnit maxIdleUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
@@ -548,6 +556,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
       authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
       return delegate.cacheEntrySet();
+   }
+
+   @Override
+   public LockedStream<K, V> lockedStream() {
+      authzManager.checkPermission(subject, AuthorizationPermission.BULK_WRITE);
+      return delegate.lockedStream();
    }
 
    @Override

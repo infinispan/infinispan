@@ -31,6 +31,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -563,6 +564,16 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       cache1.put("1", v1);
       Pojo previous = (Pojo) cache1.put("1", new Pojo(2));
       assertEquals(v1, previous);
+   }
+
+   public void testGetCacheEntryWithFlag() {
+      Cache<Object, Object> cache1 = cache(0, "replSync");
+      cache(1, "replSync");
+
+      Pojo key1 = new Pojo();
+      cache1.put(key1, "1");
+
+      assertEquals("1", cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).getCacheEntry(key1).getValue());
    }
 
    @Listener

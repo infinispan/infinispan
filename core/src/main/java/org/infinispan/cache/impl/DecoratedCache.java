@@ -1,9 +1,11 @@
 package org.infinispan.cache.impl;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -13,16 +15,23 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.local.ValueCacheCollection;
-
-import javax.security.auth.Subject;
 
 /**
  * A decorator to a cache, which can be built with a specific set of {@link Flag}s.  This
@@ -42,6 +51,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    private static final Flag[] EMPTY_FLAGS = new Flag[0];
    private final long flags;
+   private final Object lockOwner;
    private final CacheImpl<K, V> cacheImplementation;
 
    public DecoratedCache(AdvancedCache<K, V> delegate) {
@@ -49,25 +59,28 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    public DecoratedCache(AdvancedCache<K, V> delegate, Flag... flags) {
+      this(delegate, null, flags);
+   }
+
+   public DecoratedCache(AdvancedCache<K, V> delegate, Object lockOwner, Flag... flags) {
       super(delegate);
-
-      if (flags == null)
-         throw new IllegalArgumentException("There is no point in using a DecoratedCache without specifying any Flags.");
-
       if (flags.length == 0)
          this.flags = EnumUtil.EMPTY_BIT_SET;
       else {
          this.flags = EnumUtil.bitSetOf(flags);
       }
 
+      this.lockOwner = lockOwner;
+
       // Yuk
       cacheImplementation = (CacheImpl<K, V>) delegate;
    }
 
-   private DecoratedCache(CacheImpl<K, V> delegate, long newFlags) {
+   private DecoratedCache(CacheImpl<K, V> delegate, Object lockOwner, long newFlags) {
       //this constructor is private so we already checked for argument validity
       super(delegate);
       this.flags = newFlags;
+      this.lockOwner = lockOwner;
       this.cacheImplementation = delegate;
    }
 
@@ -87,9 +100,18 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             //we already have all specified flags
             return this;
          } else {
-            return new DecoratedCache<>(cacheImplementation, EnumUtil.mergeBitSets(this.flags, newFlags));
+            return new DecoratedCache<>(this.cacheImplementation, lockOwner, EnumUtil.mergeBitSets(this.flags, newFlags));
          }
       }
+   }
+
+   @Override
+   public AdvancedCache<K, V> lockAs(Object lockOwner) {
+      Objects.nonNull(lockOwner);
+      if (lockOwner != this.lockOwner) {
+         return new DecoratedCache<>(cacheImplementation, lockOwner, flags);
+      }
+      return this;
    }
 
    @Override
@@ -104,21 +126,24 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean lock(K... keys) {
+      assertNoLockOwner("lock");
       return cacheImplementation.lock(Arrays.asList(keys), flags);
    }
 
    @Override
    public boolean lock(Collection<? extends K> keys) {
+      assertNoLockOwner("lock");
       return cacheImplementation.lock(keys, flags);
    }
 
    @Override
    public void putForExternalRead(K key, V value) {
-      cacheImplementation.putForExternalRead(key, value, flags);
+      putForExternalRead(key, value, cacheImplementation.defaultMetadata);
    }
 
    @Override
    public void putForExternalRead(K key, V value, Metadata metadata) {
+      assertNoLockOwner("putForExternalRead");
       cacheImplementation.putForExternalRead(key, value, metadata, flags);
    }
 
@@ -129,7 +154,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
        .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
        .build();
 
-      cacheImplementation.putForExternalRead(key, value, metadata, flags);
+      putForExternalRead(key, value, metadata);
    }
 
    @Override
@@ -139,7 +164,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
        .maxIdle(maxIdle, maxIdleUnit)
        .build();
 
-      cacheImplementation.putForExternalRead(key, value, metadata, flags);
+      putForExternalRead(key, value, metadata);
    }
 
    @Override
@@ -154,7 +179,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.put(key, value, metadata, flags);
+      return put(key, value, metadata);
    }
 
    @Override
@@ -164,7 +189,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.putIfAbsent(key, value, metadata, flags);
+      return putIfAbsent(key, value, metadata);
    }
 
    @Override
@@ -173,7 +198,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
-      cacheImplementation.putAll(map, metadata, flags);
+      putAll(map, metadata);
    }
 
    @Override
@@ -183,7 +208,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.replace(key, value, metadata, flags);
+      return replace(key, value, metadata);
    }
 
    @Override
@@ -193,7 +218,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.replace(key, oldValue, value, metadata, flags);
+      return replace(key, oldValue, value, metadata);
    }
 
    @Override
@@ -203,7 +228,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
 
-      return cacheImplementation.put(key, value, metadata, flags);
+      return put(key, value, metadata);
    }
 
    @Override
@@ -213,7 +238,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
 
-      return cacheImplementation.putIfAbsent(key, value, metadata, flags);
+      return putIfAbsent(key, value, metadata);
    }
 
    @Override
@@ -222,7 +247,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
-      cacheImplementation.putAll(map, metadata, flags);
+      putAll(map, metadata);
    }
 
    @Override
@@ -232,7 +257,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
 
-      return cacheImplementation.replace(key, value, metadata, flags);
+      return replace(key, value, metadata);
    }
 
    @Override
@@ -242,12 +267,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdleTime, maxIdleTimeUnit)
             .build();
 
-      return cacheImplementation.replace(key, oldValue, value, metadata, flags);
+      return replace(key, oldValue, value, metadata);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value) {
-      return cacheImplementation.putAsync(key, value, cacheImplementation.defaultMetadata, flags);
+      return putAsync(key, value, cacheImplementation.defaultMetadata);
    }
 
    @Override
@@ -257,7 +282,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.putAsync(key, value, metadata, flags);
+      return putAsync(key, value, metadata);
    }
 
    @Override
@@ -267,16 +292,24 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
 
-      return cacheImplementation.putAsync(key, value, metadata, flags);
+      return putAsync(key, value, metadata);
+   }
+
+   private void assertNoLockOwner(String name) {
+      if (lockOwner != null) {
+         throw new IllegalStateException(name + " method cannot be used when a lock owner is configured");
+      }
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+      assertNoLockOwner("putAllAsync");
       return cacheImplementation.putAllAsync(data, cacheImplementation.defaultMetadata, flags);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+      assertNoLockOwner("putAllAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
@@ -286,6 +319,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      assertNoLockOwner("putAllAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
@@ -295,16 +329,19 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<Void> clearAsync() {
+      assertNoLockOwner("clearAsync");
       return cacheImplementation.clearAsync(flags);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
+      assertNoLockOwner("putIfAbsentAsync");
       return cacheImplementation.putIfAbsentAsync(key, value, cacheImplementation.defaultMetadata, flags);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+      assertNoLockOwner("putIfAbsentAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
@@ -315,6 +352,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      assertNoLockOwner("putIfAbsentAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
@@ -325,21 +363,25 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
+      assertNoLockOwner("removeAsync");
       return cacheImplementation.removeAsync(key, flags);
    }
 
    @Override
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
+      assertNoLockOwner("removeAsync");
       return cacheImplementation.removeAsync(key, value, flags);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
+      assertNoLockOwner("replaceAsync");
       return cacheImplementation.replaceAsync(key, value, cacheImplementation.defaultMetadata, flags);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      assertNoLockOwner("replaceAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
@@ -350,6 +392,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      assertNoLockOwner("replaceAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
@@ -360,11 +403,13 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      assertNoLockOwner("replaceAsync");
       return cacheImplementation.replaceAsync(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags);
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      assertNoLockOwner("replaceAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
@@ -375,6 +420,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      assertNoLockOwner("replaceAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
@@ -385,6 +431,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<V> getAsync(K key) {
+      assertNoLockOwner("getAsync");
       return cacheImplementation.getAsync(key, flags);
    }
 
@@ -400,7 +447,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean containsKey(Object key) {
-      return cacheImplementation.containsKey(key, flags);
+      return cacheImplementation.containsKey(key, flags, readContext(1));
    }
 
    @Override
@@ -411,32 +458,37 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V get(Object key) {
-      return cacheImplementation.get(key, flags);
+      return cacheImplementation.get(key, flags, readContext(1));
    }
 
    @Override
    public Map<K, V> getAll(Set<?> keys) {
-      return cacheImplementation.getAll(keys, flags);
+      return cacheImplementation.getAll(keys, flags, readContext(keys.size()));
+   }
+
+   @Override
+   public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
+      return cacheImplementation.getAllCacheEntries(keys, flags, readContext(keys.size()));
    }
 
    @Override
    public V put(K key, V value) {
-      return cacheImplementation.put(key, value, cacheImplementation.defaultMetadata, flags);
+      return put(key, value, cacheImplementation.defaultMetadata);
    }
 
    @Override
    public V remove(Object key) {
-      return cacheImplementation.remove(key, flags);
+      return cacheImplementation.remove(key, flags, writeContext(1));
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
-      cacheImplementation.putAll(map, metadata, flags);
+      cacheImplementation.putAll(map, metadata, flags, writeContext(map.size()));
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> m) {
-      cacheImplementation.putAll(m, cacheImplementation.defaultMetadata, flags);
+      putAll(m, cacheImplementation.defaultMetadata);
    }
 
    @Override
@@ -456,6 +508,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public void removeGroup(String groupName) {
+      assertNoLockOwner("removeGroup");
       cacheImplementation.removeGroup(groupName, flags);
    }
 
@@ -471,27 +524,27 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
-      return cacheImplementation.cacheEntrySet(flags);
+      return cacheImplementation.cacheEntrySet(flags, readContext(-1));
    }
 
    @Override
    public V putIfAbsent(K key, V value) {
-      return cacheImplementation.putIfAbsent(key, value, cacheImplementation.defaultMetadata, flags);
+      return putIfAbsent(key, value, cacheImplementation.defaultMetadata);
    }
 
    @Override
    public boolean remove(Object key, Object value) {
-      return cacheImplementation.remove(key, value, flags);
+      return cacheImplementation.remove(key, value, flags, writeContext(1));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return cacheImplementation.replace(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags);
+      return replace(key, oldValue, newValue, cacheImplementation.defaultMetadata);
    }
 
    @Override
    public V replace(K key, V value) {
-      return cacheImplementation.replace(key, value, cacheImplementation.defaultMetadata, flags);
+      return replace(key, value, cacheImplementation.defaultMetadata);
    }
 
    //Not exposed on interface
@@ -511,31 +564,48 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V put(K key, V value, Metadata metadata) {
-      return cacheImplementation.put(key, value, metadata, flags);
+      return cacheImplementation.put(key, value, metadata, flags, writeContext(1));
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
+      assertNoLockOwner("putAsync");
       return cacheImplementation.putAsync(key, value, metadata, flags);
    }
 
    @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
-      return cacheImplementation.putIfAbsent(key, value, metadata, flags);
+      return cacheImplementation.putIfAbsent(key, value, metadata, flags, writeContext(1));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      return cacheImplementation.replace(key, oldValue, value, metadata, flags);
+      return cacheImplementation.replace(key, oldValue, value, metadata, flags, writeContext(1));
    }
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
-      return cacheImplementation.replace(key, value, metadata, flags);
+      return cacheImplementation.replace(key, value, metadata, flags, writeContext(1));
    }
 
    @Override
    public CacheEntry getCacheEntry(Object key) {
-      return cacheImplementation.getCacheEntry(key, flags);
+      return cacheImplementation.getCacheEntry(key, flags, readContext(1));
+   }
+
+   InvocationContext readContext(int size) {
+      InvocationContext ctx = cacheImplementation.invocationContextFactory.createInvocationContext(false, size);
+      if (lockOwner != null) {
+         ctx.setLockOwner(lockOwner);
+      }
+      return ctx;
+   }
+
+   InvocationContext writeContext(int size) {
+      InvocationContext ctx = cacheImplementation.getInvocationContextWithImplicitTransaction(false, size);
+      if (lockOwner != null) {
+         ctx.setLockOwner(lockOwner);
+      }
+      return ctx;
    }
 }

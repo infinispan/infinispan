@@ -46,7 +46,9 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       log.tracef("Invoked eval(k=%s, %s)", key, params);
       WriteOnlyKeyCommand cmd = fmap.commandsFactory.buildWriteOnlyKeyCommand(key, f, params);
       InvocationContext ctx = getInvocationContext(true, 1);
-      ctx.setLockOwner(cmd.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(cmd.getKeyLockOwner());
+      }
       return invokeAsync(ctx, cmd);
    }
 
@@ -55,7 +57,9 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
       WriteOnlyKeyValueCommand cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(key, value, f, params);
       InvocationContext ctx = getInvocationContext(true, 1);
-      ctx.setLockOwner(cmd.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(cmd.getKeyLockOwner());
+      }
       return invokeAsync(ctx, cmd);
    }
 
@@ -64,7 +68,9 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
       WriteOnlyManyEntriesCommand cmd = fmap.commandsFactory.buildWriteOnlyManyEntriesCommand(entries, f, params);
       InvocationContext ctx = getInvocationContext(true, entries.size());
-      ctx.setLockOwner(cmd.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(cmd.getKeyLockOwner());
+      }
       return invokeAsync(ctx, cmd);
    }
 
@@ -73,7 +79,9 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
       WriteOnlyManyCommand cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(keys, f, params);
       InvocationContext ctx = getInvocationContext(true, keys.size());
-      ctx.setLockOwner(cmd.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(cmd.getKeyLockOwner());
+      }
       return invokeAsync(ctx, cmd);
    }
 
@@ -85,7 +93,9 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       Set<K> keys = new HashSet<>(fmap.cache.keySet());
       WriteOnlyManyCommand cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(keys, f, params);
       InvocationContext ctx = getInvocationContext(true, keys.size());
-      ctx.setLockOwner(cmd.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(cmd.getKeyLockOwner());
+      }
       return invokeAsync(ctx, cmd);
    }
 
