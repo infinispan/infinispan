@@ -40,7 +40,7 @@ public class AuthenticationTest extends AbstractAuthenticationTest {
    @Override
    protected SimpleServerAuthenticationProvider createAuthenticationProvider() {
       SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
-      sap.addUser("user", "realm", "password".toCharArray(), null);
+      sap.addUser("user", "realm", "password".toCharArray());
       return sap;
    }
 

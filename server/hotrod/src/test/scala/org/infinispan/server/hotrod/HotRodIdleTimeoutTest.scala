@@ -4,7 +4,7 @@ import org.testng.annotations.Test
 import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.testng.Assert._
-import test.{HotRodClient, UniquePortThreadLocal}
+import test.HotRodClient
 import org.infinispan.manager.EmbeddedCacheManager
 
 /**
@@ -17,7 +17,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 class HotRodIdleTimeoutTest extends HotRodSingleNodeTest {
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager) =
-      startHotRodServer(cacheManager, UniquePortThreadLocal.get.intValue, 5)
+      startHotRodServer(cacheManager, serverPort, 5)
 
    override protected def connectClient = new HotRodClient("127.0.0.1", server.getPort, cacheName, 10, 20)
 

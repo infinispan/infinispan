@@ -1,7 +1,9 @@
 package org.infinispan.server.hotrod
 
 import java.lang.reflect.Method
-import java.util.concurrent.{Callable, Future, CyclicBarrier}
+import java.util.concurrent.{Callable, CyclicBarrier, Future}
+
+import org.infinispan.test.fwk.TestResourceTracker
 import test.HotRodClient
 import org.testng.annotations.Test
 
@@ -43,6 +45,7 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
       private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName, 60, 20)
 
       override def call {
+         TestResourceTracker.testThreadStarted(HotRodConcurrentTest.this)
          log.debug("Wait for all executions paths to be ready to perform calls")
          barrier.await
          try {
@@ -55,6 +58,6 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
          }
       }
 
-      def stop = client.stop
+      def stop: Future[_] = client.stop
    }
 }

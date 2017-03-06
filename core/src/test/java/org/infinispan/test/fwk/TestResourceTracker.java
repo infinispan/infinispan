@@ -58,6 +58,11 @@ public class TestResourceTracker {
       }
    }
 
+   public static String getCurrentTestShortName() {
+      String currentTestName = TestResourceTracker.getCurrentTestName();
+      return currentTestName.substring(currentTestName.lastIndexOf(".") + 1);
+   }
+
    public static String getCurrentTestName() {
       String testName = threadTestName.get();
       if (testName == null) {
@@ -113,7 +118,7 @@ public class TestResourceTracker {
       Thread.currentThread().setName(getNextTestThreadName());
    }
 
-   public static void setThreadTestName(String testName) {
+   private static void setThreadTestName(String testName) {
       threadTestName.set(testName);
    }
 
@@ -203,15 +208,12 @@ public class TestResourceTracker {
 
       @Override
       public void close() {
-         PrivilegedAction<Object> action = new PrivilegedAction<Object>() {
-            @Override
-            public Object run() {
-               if (!ref.getStatus().isTerminated()) {
-                  log.debugf("Stopping cache manager %s", ref);
-                  ref.stop();
-               }
-               return null;
+         PrivilegedAction<Object> action = () -> {
+            if (!ref.getStatus().isTerminated()) {
+               log.debugf("Stopping cache manager %s", ref);
+               ref.stop();
             }
+            return null;
          };
          if (System.getSecurityManager() != null) {
             AccessController.doPrivileged(action);

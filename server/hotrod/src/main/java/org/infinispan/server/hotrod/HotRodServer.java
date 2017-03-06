@@ -183,7 +183,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    public ExecutorService getExecutor(String threadPrefix) {
       if (this.executor == null || this.executor.isShutdown()) {
-         DefaultThreadFactory factory = new DefaultThreadFactory(threadPrefix + "ServerHandler");
+         DefaultThreadFactory factory = new DefaultThreadFactory(threadPrefix + "-ServerHandler");
          this.executor = new ThreadPoolExecutor(
                getConfiguration().workerThreads(),
                getConfiguration().workerThreads(),

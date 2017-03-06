@@ -21,9 +21,9 @@ class HotRodSslFunctionalTest extends HotRodFunctionalTest {
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager) = {
       val builder = new HotRodServerConfigurationBuilder
-      builder.proxyHost(host).proxyPort(UniquePortThreadLocal.get.intValue).idleTimeout(0)
+      builder.proxyHost(host).proxyPort(serverPort).idleTimeout(0)
       builder.ssl.enable().keyStoreFileName(keyStoreFileName).keyStorePassword("secret".toCharArray).trustStoreFileName(trustStoreFileName).trustStorePassword("secret".toCharArray)
-      startHotRodServer(cacheManager, UniquePortThreadLocal.get.intValue, -1, builder)
+      startHotRodServer(cacheManager, serverPort, -1, builder)
    }
 
    override protected def connectClient: HotRodClient = {

@@ -32,8 +32,8 @@ public class StreamingOpsTest extends SingleCacheManagerTest {
    private static final Log log = LogFactory.getLog(StreamingOpsTest.class);
 
    private static final String CACHE_NAME = "theCache";
-   private static final int V1_SIZE = 1_000_000;
-   private static final int V2_SIZE = 500_000;
+   private static final int V1_SIZE = 2_000;
+   private static final int V2_SIZE = 1_000;
 
    RemoteCache<String, byte[]> remoteCache;
    StreamingRemoteCache<String> streamingRemoteCache;

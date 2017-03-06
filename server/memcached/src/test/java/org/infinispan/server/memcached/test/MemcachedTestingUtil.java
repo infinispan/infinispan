@@ -12,6 +12,7 @@ import org.infinispan.server.memcached.MemcachedDecoder;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.server.memcached.logging.JavaLog;
+import org.infinispan.test.fwk.TestResourceTracker;
 
 import io.netty.channel.ChannelInboundHandler;
 import net.spy.memcached.DefaultConnectionFactory;
@@ -44,7 +45,9 @@ public class MemcachedTestingUtil {
 
    public static MemcachedServer startMemcachedTextServer(EmbeddedCacheManager cacheManager, int port) {
       MemcachedServer server = new MemcachedServer();
-      server.start(new MemcachedServerConfigurationBuilder().host(host).port(port).build(), cacheManager);
+      String serverName = TestResourceTracker.getCurrentTestShortName();
+      server.start(new MemcachedServerConfigurationBuilder().name(serverName).host(host).port(port).build(),
+                   cacheManager);
       return server;
    }
 
@@ -66,7 +69,9 @@ public class MemcachedTestingUtil {
          }
 
       };
-      server.start(new MemcachedServerConfigurationBuilder().host(host).port(port).build(), cacheManager);
+      String serverName = TestResourceTracker.getCurrentTestShortName();
+      server.start(new MemcachedServerConfigurationBuilder().name(serverName).host(host).port(port).build(),
+                   cacheManager);
       return server;
    }
 
@@ -88,11 +93,11 @@ public class MemcachedTestingUtil {
 class UniquePortThreadLocal extends ThreadLocal<Integer> {
    private UniquePortThreadLocal() { }
 
-   public static UniquePortThreadLocal INSTANCE = new UniquePortThreadLocal();
+   static UniquePortThreadLocal INSTANCE = new UniquePortThreadLocal();
 
-   private static final AtomicInteger uniqeAddr = new AtomicInteger(16211);
+   private static final AtomicInteger uniqueAddr = new AtomicInteger(16211);
    @Override
    protected Integer initialValue() {
-      return uniqeAddr.getAndAdd(100);
+      return uniqueAddr.getAndAdd(100);
    }
 }

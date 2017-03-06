@@ -2,36 +2,16 @@ package org.infinispan.server.hotrod.test
 
 import java.lang.reflect.Method
 import java.net.NetworkInterface
-import java.util.{Arrays, Collections, Optional, List => JList, Map => JMap}
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.TimeUnit
+import java.util.{Optional, List => JList, Map => JMap}
 
-import io.netty.channel.{Channel, ChannelFuture, ChannelInitializer}
 import org.infinispan.commons.api.BasicCacheContainer
-import org.infinispan.commons.logging.LogFactory
-import org.infinispan.commons.marshall.WrappedByteArray
-import org.infinispan.commons.util.Util
 import org.infinispan.configuration.cache.ConfigurationBuilder
-import org.infinispan.configuration.global.GlobalConfigurationBuilder
-import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
-import org.infinispan.marshall.core.JBossMarshaller
-import org.infinispan.notifications.Listener
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent
-import org.infinispan.remoting.transport.Address
-import org.infinispan.server.core.transport.NettyInitializers
-import org.infinispan.server.hotrod.OperationStatus._
+import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.hotrod._
-import org.infinispan.server.hotrod.configuration.{HotRodServerConfiguration, HotRodServerConfigurationBuilder}
-import org.infinispan.server.hotrod.logging.Log
-import org.infinispan.server.hotrod.transport.{HotRodChannelInitializer, SingleByteFrameDecoderChannelInitializer, TimeoutEnabledChannelInitializer}
-import org.infinispan.statetransfer.StateTransferManager
-import org.infinispan.test.TestingUtil
-import org.testng.Assert.{assertNull, assertTrue}
-import org.testng.AssertJUnit.assertEquals
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 
 /**
  * Test utils for Hot Rod tests.
@@ -41,451 +21,178 @@ import scala.collection.JavaConverters._
  */
 object HotRodTestingUtil {
 
-   val EXPECTED_HASH_FUNCTION_VERSION: Byte = 2
-   val log = LogFactory.getLog(getClass, classOf[Log])
+   val EXPECTED_HASH_FUNCTION_VERSION: Byte = HotRodTestingUtils.EXPECTED_HASH_FUNCTION_VERSION
 
-   def host = "127.0.0.1"
+   def host: String = HotRodTestingUtils.host
 
-   def serverPort: Int = UniquePortThreadLocal.get.intValue
+   def serverPort: Int = HotRodTestingUtils.serverPort()
 
    def startHotRodServer(manager: EmbeddedCacheManager): HotRodServer =
-      startHotRodServer(manager, serverPort)
+      HotRodTestingUtils.startHotRodServer(manager)
 
    def startHotRodServer(manager: EmbeddedCacheManager, defaultCacheName: String): HotRodServer =
-      startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, host, UniquePortThreadLocal.get.intValue, 0, defaultCacheName)
+      HotRodTestingUtils.startHotRodServer(manager, defaultCacheName)
 
    def startHotRodServer(manager: EmbeddedCacheManager, proxyHost: String, proxyPort: Int): HotRodServer =
-      startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, proxyHost, proxyPort)
+      HotRodTestingUtils.startHotRodServer(manager, proxyHost, proxyPort)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer =
-      startHotRodServer(manager, port, 0)
+      HotRodTestingUtils.startHotRodServer(manager, port)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port:Int, proxyHost: String, proxyPort: Int): HotRodServer =
-      startHotRodServer(manager, port, 0, proxyHost, proxyPort)
+      HotRodTestingUtils.startHotRodServer(manager, port, proxyHost, proxyPort)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int): HotRodServer =
-      startHotRodServer(manager, port, idleTimeout, host, port)
+      HotRodTestingUtils.startHotRodServer(manager, port, idleTimeout)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int, proxyHost: String, proxyPort: Int): HotRodServer =
-      startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, -1)
+      HotRodTestingUtils.startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort)
 
    def startHotRodServerWithDelay(manager: EmbeddedCacheManager, port: Int, delay: Long): HotRodServer =
-      startHotRodServer(manager, port, 0, host, port, delay)
+      HotRodTestingUtils.startHotRodServerWithDelay(manager, port, delay)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int,
-                         proxyHost: String, proxyPort: Int, delay: Long, defaultCacheName: String = BasicCacheContainer.DEFAULT_CACHE_NAME): HotRodServer = {
-      val builder = new HotRodServerConfigurationBuilder
-      builder.proxyHost(proxyHost).proxyPort(proxyPort).idleTimeout(idleTimeout).defaultCacheName(defaultCacheName)
-      startHotRodServer(manager, port, delay, builder)
-   }
+                         proxyHost: String, proxyPort: Int, delay: Long, defaultCacheName: String = BasicCacheContainer.DEFAULT_CACHE_NAME): HotRodServer =
+      HotRodTestingUtils.startHotRodServer(manager, port, idleTimeout, proxyHost, proxyPort, delay, defaultCacheName)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, builder: HotRodServerConfigurationBuilder): HotRodServer =
-      startHotRodServer(manager, host, port, 0, false, builder)
+      HotRodTestingUtils.startHotRodServer(manager, port, builder)
 
    def startHotRodServer(manager: EmbeddedCacheManager, builder: HotRodServerConfigurationBuilder): HotRodServer =
-      startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, builder)
+      HotRodTestingUtils.startHotRodServer(manager, builder)
 
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int, delay: Long, builder: HotRodServerConfigurationBuilder): HotRodServer =
-      startHotRodServer(manager, host, port, delay, false, builder)
+      HotRodTestingUtils.startHotRodServer(manager, port, delay, builder)
 
    def startHotRodServer(manager: EmbeddedCacheManager, host: String, port: Int, delay: Long, builder: HotRodServerConfigurationBuilder): HotRodServer =
-      startHotRodServer(manager, host, port, delay, false, builder)
+      HotRodTestingUtils.startHotRodServer(manager, host, port, delay, builder)
 
-   def startHotRodServerWithoutTransport(): HotRodServer = {
-      startHotRodServerWithoutTransport(new HotRodServerConfigurationBuilder)
-   }
+   def startHotRodServerWithoutTransport(): HotRodServer =
+      HotRodTestingUtils.startHotRodServerWithoutTransport()
 
-   def startHotRodServerWithoutTransport(builder: HotRodServerConfigurationBuilder): HotRodServer = {
-      val globalConfiguration: GlobalConfigurationBuilder = new GlobalConfigurationBuilder()
-      globalConfiguration.globalJmxStatistics().allowDuplicateDomains(true)
+   def startHotRodServerWithoutTransport(builder: HotRodServerConfigurationBuilder): HotRodServer =
+      HotRodTestingUtils.startHotRodServerWithoutTransport(builder)
 
-      val cacheConfiguration: ConfigurationBuilder = new ConfigurationBuilder()
-      cacheConfiguration.compatibility().enable()
+   def startHotRodServer(manager: EmbeddedCacheManager, host: String, port: Int, delay: Long, perf: Boolean, builder: HotRodServerConfigurationBuilder): HotRodServer =
+      HotRodTestingUtils.startHotRodServer(manager, host, port, delay, perf, builder)
 
-      builder.startTransport(false)
+   def getDefaultHotRodConfiguration: HotRodServerConfigurationBuilder =
+      HotRodTestingUtils.getDefaultHotRodConfiguration
 
-      startHotRodServer(new DefaultCacheManager(globalConfiguration.build(), cacheConfiguration.build()), builder)
-   }
+   def findNetworkInterfaces(loopback: Boolean): Iterator[NetworkInterface] =
+      HotRodTestingUtils.findNetworkInterfaces(loopback)
 
-   def startHotRodServer(manager: EmbeddedCacheManager, host: String, port: Int, delay: Long, perf: Boolean, builder: HotRodServerConfigurationBuilder): HotRodServer = {
-      log.infof("Start server in port %d", port)
-      val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
-            if (delay > 0)
-               Thread.sleep(delay)
+   def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer =
+      startHotRodServer(manager, port)
 
-            val cfg = super.createTopologyCacheConfig(distSyncTimeout)
-            cfg
-         }
+   def k(m: Method, prefix: String): Array[Byte] =
+      HotRodTestingUtils.k(m, prefix)
 
-         override def getInitializer: ChannelInitializer[Channel] = {
-            // Pass by name since we have circular dependency
-            def getTransport() = {
-               transport
-            }
-            val inits =
+   def v(m: Method, prefix: String): Array[Byte] =
+      HotRodTestingUtils.v(m, prefix)
 
-            if (perf) {
-               if (configuration.idleTimeout > 0)
-                  Arrays.asList(
-                     new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test")),
-                     new TimeoutEnabledChannelInitializer[HotRodServerConfiguration](this), new SingleByteFrameDecoderChannelInitializer());
-               else // Idle timeout logic is disabled with -1 or 0 values
-                  Arrays.asList(
-                     new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test")),
-                     new SingleByteFrameDecoderChannelInitializer());
-            } else {
-               if (configuration.idleTimeout > 0)
-                  Arrays.asList(
-                     new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test")),
-                     new TimeoutEnabledChannelInitializer[HotRodServerConfiguration](this));
-               else // Idle timeout logic is disabled with -1 or 0 values
-                  Collections.singletonList(new HotRodChannelInitializer(this, getTransport(), getEncoder, getExecutor("test")));
-            }
-            new NettyInitializers(inits);
-         }
-      }
-      builder.host(host).port(port)
-      server.start(builder.build(), manager)
+   def k(m: Method): Array[Byte] =
+      HotRodTestingUtils.k(m)
 
-      server
-   }
+   def v(m: Method): Array[Byte] =
+      HotRodTestingUtils.v(m)
 
-   def getDefaultHotRodConfiguration(): HotRodServerConfigurationBuilder = {
-      val builder = new HotRodServerConfigurationBuilder
-      val port = UniquePortThreadLocal.get.intValue
-      builder.host(host).port(port).proxyHost(host).proxyPort(port)
-      builder
-   }
+   def assertStatus(resp: TestResponse, expected: OperationStatus): Boolean =
+      HotRodTestingUtils.assertStatus(resp, expected)
 
-   def findNetworkInterfaces(loopback: Boolean): Iterator[NetworkInterface] = {
-      NetworkInterface.getNetworkInterfaces.asScala.filter(ni => ni.isUp && ni.isLoopback==loopback && ni.getInetAddresses.hasMoreElements)
-   }
+   def assertSuccess(resp: TestGetResponse, expected: Array[Byte]): Boolean =
+      HotRodTestingUtils.assertSuccess(resp, expected)
 
-   def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
-      val server = new HotRodServer {
-         override protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
-            val cfg = super.createTopologyCacheConfig(distSyncTimeout)
-            cfg
-         }
-      }
-      server.start(new HotRodServerConfigurationBuilder().proxyHost(host).proxyPort(port).host(host).port(port).idleTimeout(0).build(), manager)
-      server
-   }
+   def assertByteArrayEquals(expected: Bytes, actual: Bytes): Unit =
+      HotRodTestingUtils.assertByteArrayEquals(expected, actual)
 
-   def k(m: Method, prefix: String): Array[Byte] = {
-      val bytes: Array[Byte] = (prefix + m.getName).getBytes
-      log.tracef("String %s is converted to %s bytes", Array(prefix + m.getName, Util.printArray(bytes, true)).map(_.asInstanceOf[AnyRef]) : _*)
-      bytes
-   }
+   def assertSuccess(resp: TestGetWithVersionResponse, expected: Array[Byte], expectedVersion: Int): Boolean =
+      HotRodTestingUtils.assertSuccess(resp, expected, expectedVersion)
 
-   def v(m: Method, prefix: String): Array[Byte] = k(m, prefix)
+   def assertSuccess(resp: TestGetWithMetadataResponse, expected: Array[Byte], expectedLifespan: Int, expectedMaxIdle: Int): Boolean =
+      HotRodTestingUtils.assertSuccess(resp, expected, expectedLifespan, expectedMaxIdle)
 
-   def k(m: Method): Array[Byte] = k(m, "k-")
-
-   def v(m: Method): Array[Byte] = v(m, "v-")
-
-   def assertStatus(resp: TestResponse, expected: OperationStatus): Boolean = {
-      val status = resp.getStatus();
-      val isSuccess = status == expected
-      resp match {
-         case e: TestErrorResponse =>
-            assertTrue(isSuccess,
-               "Status should have been '%s' but instead was: '%s', and the error message was: %s"
-               .format(expected, status, e.msg))
-         case _ => assertTrue(isSuccess,
-               "Status should have been '%s' but instead was: '%s'"
-               .format(expected, status))
-      }
-      isSuccess
-   }
-
-   def assertSuccess(resp: TestGetResponse, expected: Array[Byte]): Boolean = {
-      assertStatus(resp, Success)
-      val isArrayEquals = Arrays.equals(expected, resp.data.get)
-      assertTrue(isArrayEquals, "Retrieved data should have contained " + Util.printArray(expected, true)
-            + " (" + new String(expected) + "), but instead we received " + Util.printArray(resp.data.get, true) + " (" +  new String(resp.data.get) +")")
-      isArrayEquals
-   }
-
-   def assertByteArrayEquals(expected: Bytes, actual: Bytes): Unit = {
-      val isArrayEquals = Arrays.equals(expected, actual)
-      assertTrue(isArrayEquals, "Retrieved data should have contained " + Util.printArray(expected, true)
-      + " (" + new String(expected) + "), but instead we received " + Util.printArray(actual, true) + " (" +  new String(actual) +")")
-   }
-
-   def assertSuccess(resp: TestGetWithVersionResponse, expected: Array[Byte], expectedVersion: Int): Boolean = {
-      assertTrue(resp.getVersion() != expectedVersion)
-      assertSuccess(resp, expected)
-   }
-
-   def assertSuccess(resp: TestGetWithMetadataResponse, expected: Array[Byte], expectedLifespan: Int, expectedMaxIdle: Int): Boolean = {
-      assertEquals(resp.lifespan, expectedLifespan)
-      assertEquals(resp.maxIdle, expectedMaxIdle)
-      assertSuccess(resp, expected)
-   }
-
-   def assertKeyDoesNotExist(resp: TestGetResponse): Boolean = {
-      val status = resp.getStatus()
-      assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
-      assertEquals(resp.data, Optional.empty())
-      status == KeyDoesNotExist
-   }
+   def assertKeyDoesNotExist(resp: TestGetResponse): Boolean =
+      HotRodTestingUtils.assertKeyDoesNotExist(resp)
 
    def assertTopologyReceived(resp: AbstractTestTopologyAwareResponse, servers: List[HotRodServer],
-                              expectedTopologyId : Int) {
-      assertEquals(resp.topologyId, expectedTopologyId)
-      resp match {
-         case h10: TestHashDistAware10Response =>
-            assertEquals(h10.members.size, servers.size)
-            assertEquals(h10.members.toSet, servers.map(_.getAddress).toSet)
-         case h11: TestHashDistAware11Response =>
-            assertEquals(h11.membersToHash.size, servers.size)
-            assertEquals(h11.membersToHash.keySet.toSet, servers.map(_.getAddress).toSet)
-         case t: TestTopologyAwareResponse =>
-            assertEquals(t.members.size, servers.size)
-            assertEquals(t.members.toSet, servers.map(_.getAddress).toSet)
-      }
-   }
+                              expectedTopologyId : Int): Unit =
+      HotRodTestingUtils.assertTopologyReceived(resp, servers, expectedTopologyId)
 
    def assertHashTopology20Received(topoResp: AbstractTestTopologyAwareResponse,
-           servers: List[HotRodServer], cacheName: String, expectedTopologyId : Int) {
-      val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware20Response]
-      assertEquals(hashTopologyResp.topologyId, expectedTopologyId)
-      assertEquals(hashTopologyResp.members.size, servers.size)
-      val serverAddresses = servers.map(_.getAddress)
-      hashTopologyResp.members.foreach(member => assertTrue(serverAddresses.exists(_ == member)))
-      assertEquals(hashTopologyResp.hashFunction, 3)
-      // Assert segments
-      val cache = servers.head.getCacheManager.getCache(cacheName)
-      val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
-      val ch = stateTransferManager.getCacheTopology.getCurrentCH
-      val numSegments = ch.getNumSegments
-      val numOwners = ch.getNumOwners
-      assertEquals(hashTopologyResp.segments.size, numSegments)
-      for (i <- 0 until numSegments) {
-         val segment = ch.locateOwnersForSegment(i)
-         val members = hashTopologyResp.segments(i)
-         assertEquals(numOwners, members.size)
-         assertEquals(segment.size(), members.size)
-         members.foreach(member =>
-            assertTrue(servers.map(_.getAddress).exists(_ == member)))
-      }
-   }
+           servers: List[HotRodServer], cacheName: String, expectedTopologyId : Int): Unit =
+      HotRodTestingUtils.assertHashTopology20Received(topoResp, servers, cacheName, expectedTopologyId)
 
    def assertHashTopology10Received(topoResp: AbstractTestTopologyAwareResponse, servers: List[HotRodServer],
-                                    cacheName: String, expectedTopologyId : Int) {
-      assertHashTopology10Received(topoResp, servers, cacheName, 2,
-            EXPECTED_HASH_FUNCTION_VERSION, Integer.MAX_VALUE, expectedTopologyId)
-   }
+                                    cacheName: String, expectedTopologyId : Int): Unit =
+      HotRodTestingUtils.assertHashTopology10Received(topoResp, servers, cacheName, expectedTopologyId)
 
    def assertNoHashTopologyReceived(topoResp: AbstractTestTopologyAwareResponse, servers: List[HotRodServer],
-                                    cacheName: String, expectedTopologyId : Int) {
-      topoResp match {
-         case t: TestHashDistAware10Response =>
-            assertHashTopology10Received(topoResp, servers, cacheName, 0, 0, 0, expectedTopologyId)
-         case t: TestHashDistAware20Response =>
-            assertEquals(t.topologyId, expectedTopologyId)
-            assertEquals(t.members.size, servers.size)
-            val serverAddresses = servers.map(_.getAddress)
-            t.members.foreach(member => assertTrue(serverAddresses.exists(_ == member)))
-            assertEquals(t.hashFunction, 0)
-            assertEquals(t.segments.size, 0)
-      }
-   }
+                                    cacheName: String, expectedTopologyId : Int): Unit =
+      HotRodTestingUtils.assertNoHashTopologyReceived(topoResp, servers, cacheName, expectedTopologyId)
 
    def assertHashTopology10Received(topoResp: AbstractTestTopologyAwareResponse,
                                     servers: List[HotRodServer], cacheName: String,
                                     expectedNumOwners: Int, expectedHashFct: Int, expectedHashSpace: Int,
-                                    expectedTopologyId : Int) {
-      val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware10Response]
-      assertEquals(hashTopologyResp.topologyId, expectedTopologyId)
-      assertEquals(hashTopologyResp.members.size, servers.size)
-      hashTopologyResp.members.foreach(member => servers.map(_.getAddress).exists(_ == member))
-      assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
-      assertEquals(hashTopologyResp.hashFunction, expectedHashFct)
-      assertEquals(hashTopologyResp.hashSpace, expectedHashSpace)
-      if (expectedNumOwners != 0) // Hash ids worth comparing
-         assertHashIds(hashTopologyResp.hashIds, servers, cacheName)
-   }
+                                    expectedTopologyId : Int): Unit =
+      HotRodTestingUtils.assertHashTopology10Received(topoResp, servers, cacheName, expectedNumOwners, expectedHashFct,
+         expectedHashSpace, expectedTopologyId)
 
 
    def assertHashTopologyReceived(topoResp: AbstractTestTopologyAwareResponse,
                                   servers: List[HotRodServer], cacheName : String,
                                   expectedNumOwners: Int, expectedVirtualNodes: Int,
-                                  expectedTopologyId : Int) {
-      val hashTopologyResp = topoResp.asInstanceOf[TestHashDistAware11Response]
-      assertEquals(hashTopologyResp.topologyId, expectedTopologyId)
-      assertEquals(hashTopologyResp.membersToHash.size, servers.size)
-      hashTopologyResp.membersToHash.foreach(member => servers.map(_.getAddress).exists(_ == member))
-      assertEquals(hashTopologyResp.numOwners, expectedNumOwners)
-      assertEquals(hashTopologyResp.hashFunction,
-         if (expectedNumOwners != 0) EXPECTED_HASH_FUNCTION_VERSION else 0)
-      assertEquals(hashTopologyResp.hashSpace,
-         if (expectedNumOwners != 0) Integer.MAX_VALUE else 0)
-      assertEquals(hashTopologyResp.numVirtualNodes, expectedVirtualNodes)
-   }
+                                  expectedTopologyId : Int): Unit =
+      HotRodTestingUtils.assertHashTopologyReceived(topoResp, servers, cacheName, expectedNumOwners,
+         expectedVirtualNodes, expectedTopologyId)
 
-   def assertHashIds(hashIds: JMap[ServerAddress, JList[Integer]], servers: List[HotRodServer], cacheName: String) {
-      val cache = servers.head.getCacheManager.getCache(cacheName)
-      val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
-      val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
-      val numSegments = consistentHash.getNumSegments
-      val numOwners = consistentHash.getNumOwners
-      assertEquals(hashIds.size, servers.size)
+   def assertHashIds(hashIds: JMap[ServerAddress, JList[Integer]], servers: List[HotRodServer], cacheName: String): Unit =
+      HotRodTestingUtils.assertHashIds(hashIds, servers, cacheName)
 
-      val segmentSize = math.ceil(Int.MaxValue.toDouble / numSegments).toInt
-      val owners = new Array[collection.mutable.Map[Int, ServerAddress]](numSegments)
+   def assertReplicatedHashIds(hashIds: Map[ServerAddress, JList[Integer]], servers: List[HotRodServer], cacheName: String): Unit =
+      HotRodTestingUtils.assertReplicatedHashIds(hashIds, servers, cacheName)
 
-      for ((serverAddress, serverHashIds) <- hashIds) {
-         for (hashId <- serverHashIds) {
-            val segmentIdx = (hashId / segmentSize + numSegments - 1) % numSegments
-            val ownerIdx = hashId % segmentSize;
-            if (owners(segmentIdx) == null) {
-               owners(segmentIdx) = collection.mutable.Map[Int, ServerAddress]()
-            }
-            owners(segmentIdx) += (ownerIdx -> serverAddress)
-         }
-      }
+   def getServerTopologyId(cm: EmbeddedCacheManager, cacheName: String): Int =
+      HotRodTestingUtils.getServerTopologyId(cm, cacheName)
 
-      for (i <- 0 until numSegments) {
-         val segmentOwners = owners(i).toList.sortBy(_._1).map(_._2)
-         assertEquals(segmentOwners.size, numOwners)
-         val chOwners = consistentHash.locateOwnersForSegment(i)
-               .map(a => clusterAddressToServerAddress(servers, a))
-         assertEquals(segmentOwners, chOwners)
-      }
-   }
-
-   def assertReplicatedHashIds(hashIds: Map[ServerAddress, Seq[Int]], servers: List[HotRodServer], cacheName: String) {
-      val cache = servers.head.getCacheManager.getCache(cacheName)
-      val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
-      val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
-      val numSegments = consistentHash.getNumSegments
-      val numOwners = consistentHash.getNumOwners
-
-      // replicated responses have just one segment, and each server should have only one hash id: 0
-      assertEquals(hashIds.size, servers.size)
-      assertEquals(numSegments, 1)
-
-      for ((serverAddress, serverHashIds) <- hashIds) {
-         assertEquals(serverHashIds.size, 1)
-         assertEquals(serverHashIds(0), 0)
-      }
-   }
-
-   def clusterAddressToServerAddress(servers : List[HotRodServer], clusterAddress : Address) : ServerAddress = {
-      return servers.find(_.getCacheManager.getAddress == clusterAddress).get.getAddress
-   }
-
-   def getServerTopologyId(cm: EmbeddedCacheManager, cacheName: String): Int = {
-      cm.getCache(cacheName).getAdvancedCache.getRpcManager.getTopologyId
-   }
-
-   def killClient(client: HotRodClient): ChannelFuture = {
-      try {
-         if (client != null) client.stop
-         else null
-      }
-      catch {
-         case t: Throwable => {
-            log.error("Error stopping client", t)
-            null
-         }
-      }
-   }
+   def killClient(client: HotRodClient): Unit =
+      HotRodTestingUtils.killClient(client).await(10, TimeUnit.SECONDS)
 
    def hotRodCacheConfiguration(): ConfigurationBuilder =
-      hotRodCacheConfiguration(new ConfigurationBuilder())
+      HotRodTestingUtils.hotRodCacheConfiguration()
 
-   def hotRodCacheConfiguration(base: ConfigurationBuilder): ConfigurationBuilder = {
-      base
-   }
+   def hotRodCacheConfiguration(base: ConfigurationBuilder): ConfigurationBuilder =
+      HotRodTestingUtils.hotRodCacheConfiguration(base)
 
    def assertHotRodEquals(cm: EmbeddedCacheManager, key: Bytes, expectedValue: Bytes): InternalCacheEntry =
-      assertHotRodEquals(cm, cm.getCache[Bytes, Bytes]().getAdvancedCache, key, expectedValue)
+      HotRodTestingUtils.assertHotRodEquals(cm, key, expectedValue).asInstanceOf[InternalCacheEntry]
 
    def assertHotRodEquals(cm: EmbeddedCacheManager, cacheName: String,
            key: Bytes, expectedValue: Bytes): InternalCacheEntry =
-      assertHotRodEquals(cm, cm.getCache[Bytes, Bytes](cacheName).getAdvancedCache, key, expectedValue)
+      HotRodTestingUtils.assertHotRodEquals(cm, cacheName, key, expectedValue).asInstanceOf[InternalCacheEntry]
 
    def assertHotRodEquals(cm: EmbeddedCacheManager, key: String, expectedValue: String): InternalCacheEntry =
-      assertHotRodEquals(cm, cm.getCache[Bytes, Bytes]().getAdvancedCache,
-         marshall(key), marshall(expectedValue))
+      HotRodTestingUtils.assertHotRodEquals(cm, key, expectedValue).asInstanceOf[InternalCacheEntry]
 
    def assertHotRodEquals(cm: EmbeddedCacheManager, cacheName: String,
            key: String, expectedValue: String): InternalCacheEntry =
-      assertHotRodEquals(cm, cm.getCache[Bytes, Bytes](cacheName).getAdvancedCache,
-         marshall(key), marshall(expectedValue))
-
-   private def assertHotRodEquals(cm: EmbeddedCacheManager, cache: Cache,
-           key: Bytes, expectedValue: Bytes): InternalCacheEntry = {
-      val entry = cache.getAdvancedCache.getDataContainer.get(new WrappedByteArray(key))
-      // Assert based on passed parameters
-      if (expectedValue == null) {
-         assertNull(entry)
-      } else {
-         val value =
-            if (entry == null) cache.get(key)
-            else entry.getValue.asInstanceOf[WrappedByteArray].getBytes
-
-         assertEquals(expectedValue, value)
-      }
-
-      entry
-   }
+      HotRodTestingUtils.assertHotRodEquals(cm, cacheName, key, expectedValue).asInstanceOf[InternalCacheEntry]
 
    def marshall(obj: Any): Array[Byte] =
-      if (obj == null) null else new JBossMarshaller().objectToByteBuffer(obj, 64)
+      HotRodTestingUtils.marshall(obj)
 
    def unmarshall[T](key: Array[Byte]): T =
-      new JBossMarshaller().objectFromByteBuffer(key).asInstanceOf[T]
+      HotRodTestingUtils.unmarshall(key)
 
    def withClientListener(filterFactory: NamedFactory = Optional.empty(), converterFactory: NamedFactory = Optional.empty(),
                           includeState: Boolean = false, useRawData: Boolean = true)(fn: () => Unit)
-           (implicit listener: TestClientListener, client: HotRodClient): Unit = {
-      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory, useRawData), Success)
-      try {
-         fn()
-      } finally {
-         assertStatus(client.removeClientListener(listener.getId), Success)
-      }
-   }
+           (implicit listener: TestClientListener, client: HotRodClient): Unit =
+      HotRodTestingUtils.withClientListener(client, listener, filterFactory, converterFactory, includeState, useRawData, fn)
 
    def withClientListener(client: HotRodClient, listener: TestClientListener,
            includeState: Boolean, filterFactory: NamedFactory, converterFactory: NamedFactory,
            useRawData: Boolean)
            (fn: () => Unit): Unit = {
-      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory, useRawData), Success)
-      try {
-         fn()
-      } finally {
-         assertStatus(client.removeClientListener(listener.getId), Success)
-      }
+      HotRodTestingUtils.withClientListener(client, listener, filterFactory, converterFactory, includeState, useRawData, fn)
    }
-
-   @Listener
-   private class AddressRemovalListener(latch: CountDownLatch) {
-
-      @CacheEntryRemoved
-      def addressRemoved(event: CacheEntryRemovedEvent[Address, ServerAddress]) {
-         if (!event.isPre) // Only count down latch after address has been removed
-            latch.countDown()
-      }
-
-   }
-
-}
-
-object UniquePortThreadLocal extends ThreadLocal[Int] {
-
-   private val uniqueAddr = new AtomicInteger(12311)
-
-   override def initialValue: Int = {
-      HotRodTestingUtil.log.debugf("Before incrementing, server port is: %d", uniqueAddr.get())
-      val port = uniqueAddr.getAndAdd(110)
-      HotRodTestingUtil.log.debugf("For next thread, server port will be: %d", uniqueAddr.get())
-      port
-   }
-
 }

@@ -457,12 +457,14 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPutBigSizeKey(m: Method) {
-      val key = generateRandomString(1024 * 1024).getBytes
+      // Not really necessary, SingleByteFrameDecoderChannelInitializer forces the server to retry even for small keys
+      val key = generateRandomString(1024).getBytes
       assertStatus(client.put(key, 0, 0, v(m)), Success)
    }
 
    def testPutBigSizeValue(m: Method) {
-      val value = generateRandomString(1024 * 1024).getBytes
+      // Not really necessary, SingleByteFrameDecoderChannelInitializer forces the server to retry even for small keys
+      val value = generateRandomString(1024).getBytes
       assertStatus(client.put(k(m), 0, 0, value), Success)
    }
 

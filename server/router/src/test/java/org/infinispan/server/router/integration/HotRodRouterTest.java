@@ -15,6 +15,9 @@ import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.hotrod.NettyHandlerRouteDestination;
 import org.infinispan.server.router.routes.hotrod.SniNettyRouteSource;
 import org.infinispan.server.router.utils.HotRodClientTestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class HotRodRouterTest {
@@ -25,6 +28,15 @@ public class HotRodRouterTest {
     private final String KEYSTORE_LOCATION_FOR_HOTROD_2 = getClass().getClassLoader().getResource("default_server_keystore.jks").getPath();
     private final String TRUSTSTORE_LOCATION_FOR_HOTROD_2 = getClass().getClassLoader().getResource("default_client_truststore.jks").getPath();
 
+    @BeforeClass
+    public static void beforeClass() {
+        TestResourceTracker.testStarted(HotRodRouterTest.class.getName());
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        TestResourceTracker.testFinished(HotRodRouterTest.class.getName());
+    }
     /**
      * In this scenario we create 2 HotRod servers, each one with different credentials and SNI name. We also create a
      * new client for each server. The clients use proper TrustStores as well as SNI names.
