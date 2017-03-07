@@ -602,8 +602,8 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(500, c.expiration().wakeUpInterval());
 
       c = cm.getCacheConfiguration("withDeadlockDetection");
-      assertTrue(c.deadlockDetection().enabled());
-      assertEquals(1221, c.deadlockDetection().spinDuration());
+      assertFalse(c.deadlockDetection().enabled());
+      assertEquals(-1, c.deadlockDetection().spinDuration());
       assertEquals(CacheMode.DIST_SYNC, c.clustering().cacheMode());
 
       c = cm.getCacheConfiguration("storeKeyValueBinary");

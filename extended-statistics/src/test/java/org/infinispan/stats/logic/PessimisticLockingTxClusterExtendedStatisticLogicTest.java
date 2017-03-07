@@ -23,13 +23,10 @@ import static org.infinispan.test.TestingUtil.extractLockManager;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.replaceField;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.util.EnumSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import javax.transaction.SystemException;
@@ -54,7 +51,6 @@ import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
@@ -120,24 +116,6 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       doTimeoutTest(false, true);
    }
 
-   public void testDeadlockOnOwnerWithLocalTx() throws Exception {
-      doLocalDeadlockTest(true);
-   }
-
-   @Test (groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-3342")
-   public void testDeadlockOnOwnerWithRemoteTx() throws Exception {
-      doLocalDeadlockTest(false);
-   }
-
-   public void testDeadlockOnNonOwnerWithLocalTx() throws Exception {
-      doRemoteDeadlockTest(true);
-   }
-
-   @Test (groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-3342")
-   public void testDeadlockOnNonOwnerWithRemoteTx() throws Exception {
-      doRemoteDeadlockTest(false);
-   }
-
    @Override
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; ++i) {
@@ -147,7 +125,6 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
                .lockAcquisitionTimeout(60000); //the timeout are triggered by the TimeService!
          builder.transaction().recovery().disable();
          builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
-         builder.deadlockDetection().enable();
          //builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
          extendedStatisticInterceptors[i] = new ExtendedStatisticInterceptor();
          builder.customInterceptors().addInterceptor().interceptor(extendedStatisticInterceptors[i])
@@ -173,8 +150,8 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
          replaceComponent(cache(i), RpcManager.class, controlledRpcManager[i], true);
          transactionTrackInterceptors[i] = TransactionTrackInterceptor.injectInCache(cache(i));
          if (i == 0) {
-            DeadlockDetectingLockManager dldLockManager = (DeadlockDetectingLockManager) lockManager.getActual();
-            LockContainer container = extractField(dldLockManager, "lockContainer");
+            LockManager actualLockManager = lockManager.getActual();
+            LockContainer container = extractField(actualLockManager, "lockContainer");
             if (container instanceof PerKeyLockContainer) {
                ((PerKeyLockContainer) container).inject(lockManagerTimeService);
             } else if (container instanceof StripedLockContainer) {
@@ -195,18 +172,9 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
             transactionTrackInterceptors[i].reset();
          }
       }
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (LockManager lockManager : lockManagers) {
-               if (lockManager.getNumberOfLocksHeld() != 0) {
-                  return false;
-               }
-            }
-            return true;
-         }
-      });
-      //sleepThread(1000);
+      for (LockManager lockManager : lockManagers) {
+         eventuallyEquals(0, lockManager::getNumberOfLocksHeld);
+      }
    }
 
    private void doTimeoutTest(boolean executeOnOwner, boolean remoteContention) throws Exception {
@@ -254,172 +222,6 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       }
       EnumSet<ExtendedStatistic> statsToValidate = getStatsToValidate();
       assertLockingValues(statsToValidate, remoteContention ? 0 : 1, 0, remoteContention ? 1 : 0, remoteContention ? 0 : 1, executeOnOwner ? 2 : 0, remoteContention ? 1 : 0, 0, remoteContention ? 0 : 2, remoteContention ? 2 : 0, 0, 0, 2, executeOnOwner);
-      assertWriteSkewValues(statsToValidate, 0, 0, txExecutor);
-      assertAllStatsValidated(statsToValidate);
-      resetStats();
-   }
-
-   private void doLocalDeadlockTest(boolean deadlockWithLocal) throws Exception {
-      final int txExecutor = deadlockWithLocal ? 0 : 1;
-      cache(0).put(KEY_1, VALUE_1);
-      cache(0).put(KEY_2, VALUE_1);
-      assertTxSeen(0, 2, 2, true);
-      resetStats();
-
-      tm(0).begin();
-      //lock on key 1 acquired
-      cache(0).put(KEY_1, VALUE_2);
-      final Transaction tx1 = tm(txExecutor).suspend();
-
-
-      tm(txExecutor).begin();
-      //lock on key 2 acquired
-      cache(txExecutor).put(KEY_2, VALUE_2);
-      final Transaction tx2 = tm(txExecutor).suspend();
-
-
-      Future<Boolean> futureTx1 = fork(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            tm(0).resume(tx1);
-            try {
-               cache(0).put(KEY_2, VALUE_3);
-               tm(0).commit();
-               return Boolean.TRUE;
-            } catch (Exception e) {
-               safeRollback(0);
-            }
-            return Boolean.FALSE;
-         }
-      });
-
-      Future<Boolean> futureTx2 = fork(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            tm(txExecutor).resume(tx2);
-            try {
-               cache(txExecutor).put(KEY_1, VALUE_3);
-               tm(txExecutor).commit();
-               return Boolean.TRUE;
-            } catch (Exception e) {
-               safeRollback(txExecutor);
-            }
-            return Boolean.FALSE;
-         }
-      });
-
-      boolean tx1Outcome = futureTx1.get();
-      boolean tx2Outcome = futureTx2.get();
-
-      assertFalse(tx1Outcome && tx2Outcome, "Deadlock expected but both transactions has been committed.");
-      assertFalse(!tx1Outcome && !tx2Outcome, "Deadlock expected but both transaction has been aborted.");
-      assertTrue(tx1Outcome || tx2Outcome, "Expected one transaction to be committed.");
-
-      if (txExecutor == 0) {
-         assertTxSeen(0, 2, 1, true);
-      } else {
-         assertTxSeen(0, 1, tx1Outcome ? 1 : 0, false);
-         assertTxSeen(1, 1, tx2Outcome ? 1 : 0, true);
-      }
-
-      EnumSet<ExtendedStatistic> statsToValidate = getStatsToValidate();
-      assertLockingValues(statsToValidate,
-                          deadlockWithLocal || tx1Outcome ? 2 : 0, //local locks from committed tx
-                          deadlockWithLocal || !tx1Outcome ? 1 : 0, //local locks from failed tx
-                          !deadlockWithLocal ? (tx2Outcome ? 2 : 1) : 0,//remote locks (commit or failed)
-                          deadlockWithLocal || tx1Outcome ? 1 : 0, //success local tx
-                          deadlockWithLocal || !tx1Outcome ? 1 : 0, //failed local tx
-                          !deadlockWithLocal && tx2Outcome ? 1 : 0, //success remote tx
-                          0, //failed remote tx (if tx2 aborts, no rollback will be sent)
-                          0, //ignored by this test
-                          0, //ignored by this test
-                          deadlockWithLocal || !tx1Outcome ? 1 : 0, //deadlocks
-                          !deadlockWithLocal && !tx2Outcome ? 1 : 0,
-                          2, //waiting for two locks, because both transaction must try to acquire the locks before the deadlock
-                          true);
-      assertWriteSkewValues(statsToValidate, 0, 0, txExecutor);
-      assertAllStatsValidated(statsToValidate);
-      resetStats();
-   }
-
-   private void doRemoteDeadlockTest(boolean deadlockWithLocal) throws Exception {
-      final int txExecutor = deadlockWithLocal ? 1 : 0;
-      cache(0).put(KEY_1, VALUE_1);
-      cache(0).put(KEY_2, VALUE_1);
-      assertTxSeen(0, 2, 2, true);
-      resetStats();
-
-      tm(1).begin();
-      //lock on key 1 acquired
-      cache(1).put(KEY_1, VALUE_2);
-      final Transaction tx1 = tm(txExecutor).suspend();
-
-
-      tm(txExecutor).begin();
-      //lock on key 2 acquired
-      cache(txExecutor).put(KEY_2, VALUE_2);
-      final Transaction tx2 = tm(txExecutor).suspend();
-
-
-      Future<Boolean> futureTx1 = fork(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            tm(1).resume(tx1);
-            try {
-               cache(1).put(KEY_2, VALUE_3);
-               tm(1).commit();
-               return Boolean.TRUE;
-            } catch (Exception e) {
-               safeRollback(1);
-            }
-            return Boolean.FALSE;
-         }
-      });
-
-      Future<Boolean> futureTx2 = fork(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            tm(txExecutor).resume(tx2);
-            try {
-               cache(txExecutor).put(KEY_1, VALUE_3);
-               tm(txExecutor).commit();
-               return Boolean.TRUE;
-            } catch (Exception e) {
-               safeRollback(txExecutor);
-            }
-            return Boolean.FALSE;
-         }
-      });
-
-      boolean tx1Outcome = futureTx1.get();
-      boolean tx2Outcome = futureTx2.get();
-
-      assertFalse(tx1Outcome && tx2Outcome, "Deadlock expected but both transactions has been committed.");
-      assertFalse(!tx1Outcome && !tx2Outcome, "Deadlock expected but both transaction has been aborted.");
-      assertTrue(tx1Outcome || tx2Outcome, "Expected one transaction to be committed.");
-
-      if (txExecutor == 1) {
-         assertTxSeen(1, 2, 1, true);
-      } else {
-         assertTxSeen(1, 1, tx1Outcome ? 1 : 0, false);
-         assertTxSeen(0, 1, tx2Outcome ? 1 : 0, true);
-      }
-
-      EnumSet<ExtendedStatistic> statsToValidate = getStatsToValidate();
-      assertLockingValues(statsToValidate,
-                          !deadlockWithLocal && tx2Outcome ? 2 : 0, //local locks from committed tx
-                          !deadlockWithLocal && !tx2Outcome ? 1 : 0, //local locks from failed tx (the other is never acquired)
-                          deadlockWithLocal ? 3 : tx1Outcome ? 2 : 1,//remote locks (commit or failed)
-                          !deadlockWithLocal && tx2Outcome ? 1 : 0, //success local tx
-                          !deadlockWithLocal && !tx2Outcome ? 1 : 0, //failed local tx
-                          deadlockWithLocal || tx1Outcome ? 1 : 0, //success remote tx
-                          0, //failed remote tx
-                          0, //ignored by this test
-                          0, //ignored by this test
-                          !deadlockWithLocal && !tx2Outcome ? 1 : 0, //deadlocks
-                          deadlockWithLocal || !tx1Outcome ? 1 : 0,
-                          2, //waiting for two locks, because both transaction must try to acquire the locks before the deadlock
-                          true);
       assertWriteSkewValues(statsToValidate, 0, 0, txExecutor);
       assertAllStatsValidated(statsToValidate);
       resetStats();

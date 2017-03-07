@@ -748,7 +748,7 @@
     <xs:attribute name="deadlock-detection-spin" type="xs:long" default="${DeadlockDetection.spinDuration}">
       <xs:annotation>
         <xs:documentation>
-          Time period that determines how often is lock acquisition attempted within maximum time allowed to acquire a particular lock. Defaults to 100ms.
+          Deprecated since 9.0, deadlock detection is always disabled.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

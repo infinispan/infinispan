@@ -120,6 +120,7 @@ public enum Attribute {
     SINGLETON("singleton"),
     SITE("site"),
     SIZE("size"),
+    @Deprecated
     SPIN_DURATION("deadlock-detection-spin"),
     STATISTICS("statistics"),
     STATISTICS_AVAILABLE("statistics-available"),

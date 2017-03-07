@@ -106,13 +106,15 @@ public class Configuration {
       return dataContainerConfiguration;
    }
 
+   /**
+    * @deprecated Since 9.0, will be ignored.
+    */
+   @Deprecated
    public DeadlockDetectionConfiguration deadlockDetection() {
       return deadlockDetectionConfiguration;
    }
 
    /**
-    *
-    * @return
     * @deprecated please use {@link Configuration#memory()}
     */
    @Deprecated

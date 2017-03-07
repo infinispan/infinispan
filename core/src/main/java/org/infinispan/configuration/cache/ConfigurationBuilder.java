@@ -92,14 +92,16 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return dataContainer;
    }
 
+   /**
+    * @deprecated Since 9.0, deadlock detection is always disabled.
+    */
+   @Deprecated
    @Override
    public DeadlockDetectionConfigurationBuilder deadlockDetection() {
       return deadlockDetection;
    }
 
    /**
-    *
-    * @return
     * @deprecated Use {@link ConfigurationBuilder#memory()} instead
     */
    @Deprecated

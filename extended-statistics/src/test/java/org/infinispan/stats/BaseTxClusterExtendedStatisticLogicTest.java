@@ -434,14 +434,9 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
             assertTrue(transactionTrackInterceptors[i].awaitForRemoteCompletion(remoteTx, TX_TIMEOUT, TimeUnit.SECONDS));
          }
       }
-      eventually(() -> {
-         for (LockManager lockManager : lockManagers) {
-            if (lockManager.getNumberOfLocksHeld() != 0) {
-               return false;
-            }
-         }
-         return true;
-      });
+      for (LockManager lockManager : lockManagers) {
+         eventuallyEquals(0, lockManager::getNumberOfLocksHeld);
+      }
    }
 
    private void resetTxCounters() {

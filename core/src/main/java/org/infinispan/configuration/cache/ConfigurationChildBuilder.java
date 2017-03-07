@@ -14,8 +14,16 @@ public interface ConfigurationChildBuilder {
 
    DataContainerConfigurationBuilder dataContainer();
 
+   /**
+    * @deprecated Since 9.0, deadlock detection is always disabled.
+    */
+   @Deprecated
    DeadlockDetectionConfigurationBuilder deadlockDetection();
 
+   /**
+    * @deprecated Use {@link ConfigurationBuilder#memory()} instead
+    */
+   @Deprecated
    EvictionConfigurationBuilder eviction();
 
    ExpirationConfigurationBuilder expiration();

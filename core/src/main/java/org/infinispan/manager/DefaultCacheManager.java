@@ -411,7 +411,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       if (defaultCacheName == null) {
          throw log.noDefaultCache();
       }
-      return getCache(defaultCacheName);
+      return internalGetCache(defaultCacheName, defaultCacheName);
    }
 
    /**
@@ -434,7 +434,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName, String configurationName) {
-      assertIsNotTerminated();
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
       if (DEFAULT_CACHE_NAME.equals(cacheName)) {
@@ -445,6 +444,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          log.deprecatedDefaultCache();
       }
 
+      return internalGetCache(cacheName, configurationName);
+   }
+
+   public <K, V> Cache<K, V> internalGetCache(String cacheName, String configurationName) {
+      assertIsNotTerminated();
       CacheWrapper cw = caches.get(cacheName);
       if (cw != null) {
          return cw.getCache();
