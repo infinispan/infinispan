@@ -5,9 +5,9 @@ import java.lang.reflect.Method
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
 import org.infinispan.server.hotrod.OperationStatus._
-import org.infinispan.server.hotrod.test.{HotRodMagicKeyGenerator, HotRodClient}
+import org.infinispan.server.hotrod.test.{HotRodClient, HotRodMagicKeyGenerator}
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
-import org.infinispan.stats.impl.ClusterCacheStatsImpl
+import org.infinispan.stats.impl.{AbstractClusterStats, ClusterCacheStatsImpl}
 import org.infinispan.test.AbstractCacheTest._
 import org.infinispan.test.TestingUtil
 import org.testng.Assert._
@@ -65,7 +65,7 @@ class HotRodStatsClusterTest extends HotRodMultiNodeTest {
       assertEquals(stats2.get("globalRetrievals"), "1")
       assertEquals(stats2.get("globalRemoveMisses"), "1")
 
-      TestingUtil.sleepThread(ClusterCacheStatsImpl.DEFAULT_STALE_STATS_THRESHOLD + 2000)
+      TestingUtil.sleepThread(AbstractClusterStats.DEFAULT_STALE_STATS_THRESHOLD + 2000)
 
       client1.remove(key1)
       assertKeyDoesNotExist(client1.get(key1, 0))

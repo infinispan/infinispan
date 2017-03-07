@@ -36,6 +36,7 @@ import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.impl.InternalCacheRegistryImpl;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.stats.ClusterContainerStats;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
@@ -134,7 +135,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          // These two should not be necessary, but they are here as a workaround for ISPN-2371
          getOrCreateComponent(LocalTopologyManager.class);
          getOrCreateComponent(ClusterTopologyManager.class);
-
+         getOrCreateComponent(ClusterContainerStats.class);
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }

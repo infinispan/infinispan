@@ -7,7 +7,7 @@ package org.infinispan.stats;
  * @since 7.1
  *
  */
-public interface ClusterCacheStats extends Stats {
+public interface ClusterCacheStats extends Stats, ClusterStats {
 
    /**
     * @return cluster wide read/writes ratio for the cache
