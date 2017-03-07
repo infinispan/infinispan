@@ -744,9 +744,16 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          }
          return;
       }
-      dispatcher.sendMessage(
+      CommandAwareRpcDispatcher rpcDispatcher = dispatcher;
+      if (rpcDispatcher == null) {
+         if (trace) {
+            log.trace("Don't send message. Transport is stopped.");
+         }
+         return;
+      }
+      rpcDispatcher.sendMessage(
             toJGroupsAddress(destination),
-            dispatcher.marshallCall(rpcCommand),
+            rpcDispatcher.marshallCall(rpcCommand),
             asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder));
    }
 
@@ -770,15 +777,23 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       final List<org.jgroups.Address> jgrpAddrList = toJGroupsAddressListExcludingSelf(destinations, deliverOrder == DeliverOrder.TOTAL);
 
-      final Buffer buffer = dispatcher.marshallCall(rpcCommand);
+      CommandAwareRpcDispatcher rpcDispatcher = dispatcher;
+      if (rpcDispatcher == null) {
+         if (trace) {
+            log.trace("Don't send message. Transport is stopped.");
+         }
+         return;
+      }
+
+      final Buffer buffer = rpcDispatcher.marshallCall(rpcCommand);
       final RequestOptions options = asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder);
       if (deliverOrder == DeliverOrder.TOTAL) {
          AnycastAddress anycastAddress = new AnycastAddress(jgrpAddrList);
-         dispatcher.sendMessage(anycastAddress, buffer, options);
+         rpcDispatcher.sendMessage(anycastAddress, buffer, options);
       } else if (jgrpAddrList.size() == 1) {
-         dispatcher.sendMessage(jgrpAddrList.get(0), buffer, options);
+         rpcDispatcher.sendMessage(jgrpAddrList.get(0), buffer, options);
       } else {
-         dispatcher.castMessage(jgrpAddrList, buffer, options.anycasting(true).useAnycastAddresses(false));
+         rpcDispatcher.castMessage(jgrpAddrList, buffer, options.anycasting(true).useAnycastAddresses(false));
       }
    }
 
@@ -790,12 +805,21 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (trace) {
          log.tracef("sendToAll: command=%s, order=%s", rpcCommand, deliverOrder);
       }
-      final Buffer buffer = dispatcher.marshallCall(rpcCommand);
+
+      CommandAwareRpcDispatcher rpcDispatcher = dispatcher;
+      if (rpcDispatcher == null) {
+         if (trace) {
+            log.trace("Don't send message. Transport is stopped.");
+         }
+         return;
+      }
+
+      final Buffer buffer = rpcDispatcher.marshallCall(rpcCommand);
       final RequestOptions options = asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder);
       if (deliverOrder == DeliverOrder.TOTAL) {
-         dispatcher.sendMessage(new AnycastAddress(), buffer, options);
+         rpcDispatcher.sendMessage(new AnycastAddress(), buffer, options);
       } else {
-         dispatcher.castMessage(null, buffer, options.anycasting(false));
+         rpcDispatcher.castMessage(null, buffer, options.anycasting(false));
       }
    }
 
