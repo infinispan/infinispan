@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.locking;
 
-import static org.infinispan.commons.util.Util.toStr;
-
 import java.util.Collection;
 
 import org.infinispan.InvalidCacheUsageException;
@@ -11,14 +9,8 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -31,24 +23,9 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private static final Log log = LogFactory.getLog(OptimisticLockingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private DataContainer dataContainer;
-
-   private boolean isLocalWriteSkew;
-
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void inject(DataContainer dataContainer) {
-      this.dataContainer = dataContainer;
-   }
-
-   @Start
-   public void start() {
-      isLocalWriteSkew = cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL
-            && cacheConfiguration.locking().writeSkewCheck();
    }
 
    @Override
@@ -61,13 +38,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
             ctx.getCacheTransaction().cleanupBackupLocks();
             keysToLock.removeAll(ctx.getLockedKeys()); //already locked!
          }
-         Collection<Object> lockedKeys = lockAllOrRegisterBackupLock(ctx, keysToLock,
-                                                                     cacheConfiguration.locking().lockAcquisitionTimeout());
-         if (isLocalWriteSkew && !lockedKeys.isEmpty()) {
-            for (Object key : lockedKeys) {
-               performLocalWriteSkewCheck(ctx, key);
-            }
-         }
+         lockAllOrRegisterBackupLock(ctx, keysToLock, cacheConfiguration.locking().lockAcquisitionTimeout());
       }
 
       if (!command.isOnePhaseCommit()) {
@@ -103,19 +74,4 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       throw new InvalidCacheUsageException("Explicit locking is not allowed with optimistic caches!");
    }
-
-   private void performLocalWriteSkewCheck(TxInvocationContext ctx, Object key) {
-      CacheEntry ce = ctx.lookupEntry(key);
-      if (ce instanceof RepeatableReadEntry && ((RepeatableReadEntry) ce).isRead()) {
-         if (trace) {
-            log.tracef("Performing local write skew check for key %s", toStr(key));
-         }
-         ((RepeatableReadEntry) ce).performLocalWriteSkewCheck(dataContainer);
-      } else {
-         if (trace) {
-            log.tracef("*Not* performing local write skew check for key %s", toStr(key));
-         }
-      }
-   }
-
 }
