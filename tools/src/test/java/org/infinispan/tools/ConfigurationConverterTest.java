@@ -441,12 +441,12 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertTrue(config.clustering().cacheMode().isDistributed());
       assertTrue(config.clustering().cacheMode().isSynchronous());
       assertEquals(20000, config.clustering().remoteTimeout());
-      assertTrue(config.deadlockDetection().enabled());
-      assertEquals(1221, config.deadlockDetection().spinDuration());
+      assertFalse(config.deadlockDetection().enabled());
+      assertEquals(-1, config.deadlockDetection().spinDuration());
 
       config = cm.getCacheConfiguration("lockingWithJDBCLoader");
-      assertTrue(config.deadlockDetection().enabled());
-      assertEquals(1221, config.deadlockDetection().spinDuration());
+      assertFalse(config.deadlockDetection().enabled());
+      assertEquals(-1, config.deadlockDetection().spinDuration());
 
       config = cm.getCacheConfiguration("withDeadlockDetectionDisabled");
       assertFalse(config.jmxStatistics().enabled());

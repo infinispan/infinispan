@@ -8,10 +8,15 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
  * Configures deadlock detection.
+ *
+ * @deprecated Since 9.0, deadlock detection is always disabled.
  */
+@Deprecated
 public class DeadlockDetectionConfiguration {
+   @Deprecated
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public static final AttributeDefinition<Long> SPIN_DURATION = AttributeDefinition.builder("spinDuration", TimeUnit.MILLISECONDS.toMillis(100)).immutable().build();
+   @Deprecated
+   public static final AttributeDefinition<Long> SPIN_DURATION = AttributeDefinition.builder("spinDuration", TimeUnit.MILLISECONDS.toMillis(-1)).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(DeadlockDetectionConfiguration.class, ENABLED, SPIN_DURATION);
@@ -30,14 +35,20 @@ public class DeadlockDetectionConfiguration {
    /**
     * Time period that determines how often is lock acquisition attempted within maximum time
     * allowed to acquire a particular lock
+    *
+    * @deprecated Since 9.0, always returns {@code -1}.
     */
+   @Deprecated
    public long spinDuration() {
-      return attributes.attribute(SPIN_DURATION).get();
+      return spinDuration.get();
    }
 
    /**
     * Whether deadlock detection is enabled or disabled
+    *
+    * @deprecated Since 9.0, always returns {@code false}.
     */
+   @Deprecated
    public boolean enabled() {
       return enabled.get();
    }

@@ -1201,12 +1201,7 @@ public class Parser implements ConfigurationParser {
             break;
          }
          case SPIN_DURATION: {
-            long spin = Long.parseLong(value);
-            if (spin > 0)
-               builder.deadlockDetection().enable().spinDuration(spin);
-            else
-               builder.deadlockDetection().disable();
-
+            log.ignoreXmlAttribute(attribute);
             break;
          }
          case UNRELIABLE_RETURN_VALUES: {

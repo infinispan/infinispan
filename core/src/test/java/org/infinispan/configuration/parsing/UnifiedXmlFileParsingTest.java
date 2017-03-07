@@ -497,8 +497,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("compatibility");
       assertTrue(c.compatibility().enabled());
       assertTrue(c.compatibility().marshaller() instanceof GenericJBossMarshaller);
-      assertTrue(c.deadlockDetection().enabled());
-      assertEquals(200, c.deadlockDetection().spinDuration());
+      assertFalse(c.deadlockDetection().enabled());
+      assertEquals(-1, c.deadlockDetection().spinDuration());
 
       c = cm.getCacheConfiguration("custom-container");
       assertTrue(c.dataContainer().dataContainer() instanceof QueryableDataContainer);

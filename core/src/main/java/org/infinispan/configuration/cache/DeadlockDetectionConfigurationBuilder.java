@@ -1,8 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.DeadlockDetectionConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.DeadlockDetectionConfiguration.SPIN_DURATION;
-
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
@@ -10,7 +7,10 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 /**
  * Configures deadlock detection.
+ *
+ * @deprecated Since 9.0, deadlock detection is always disabled.
  */
+@Deprecated
 public class DeadlockDetectionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DeadlockDetectionConfiguration> {
 
    private final AttributeSet attributes;
@@ -23,41 +23,52 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
    /**
     * Time period that determines how often is lock acquisition attempted within maximum time
     * allowed to acquire a particular lock
+    *
+    * @deprecated Since 9.0, deadlock detection is always disabled.
     */
+   @Deprecated
    public DeadlockDetectionConfigurationBuilder spinDuration(long l) {
-      attributes.attribute(SPIN_DURATION).set(l);
       return this;
    }
 
    /**
     * Time period that determines how often is lock acquisition attempted within maximum time
     * allowed to acquire a particular lock
+    *
+    * @deprecated Since 9.0, deadlock detection is always disabled.
     */
+   @Deprecated
    public DeadlockDetectionConfigurationBuilder spinDuration(long l, TimeUnit unit) {
       return spinDuration(unit.toMillis(l));
    }
 
    /**
     * Enable deadlock detection
+    *
+    * @deprecated Since 9.0, deadlock detection is always disabled.
     */
+   @Deprecated
    public DeadlockDetectionConfigurationBuilder enable() {
-      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
    /**
     * Disable deadlock detection
+    *
+    * @deprecated Since 9.0, deadlock detection is always disabled.
     */
+   @Deprecated
    public DeadlockDetectionConfigurationBuilder disable() {
-      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
    /**
     * Enable or disable deadlock detection
+    *
+    * @deprecated Since 9.0, deadlock detection is always disabled.
     */
+   @Deprecated
    public DeadlockDetectionConfigurationBuilder enabled(boolean enabled) {
-      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 

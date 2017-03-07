@@ -27,7 +27,6 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.util.EnumSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -57,7 +56,6 @@ import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
@@ -126,7 +124,6 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
       doWriteSkewTest(true);
    }
 
-   @Test (groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-3341")
    public void testWriteSkewOnNonOwner() throws Exception {
       doWriteSkewTest(false);
    }
@@ -141,7 +138,6 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
                .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
          builder.transaction().recovery().disable();
          builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
-         builder.deadlockDetection().enable();
          builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
          extendedStatisticInterceptors[i] = new ExtendedStatisticInterceptor();
          builder.customInterceptors().addInterceptor().interceptor(extendedStatisticInterceptors[i])
@@ -167,8 +163,8 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
          replaceComponent(cache(i), RpcManager.class, controlledRpcManager[i], true);
          transactionTrackInterceptors[i] = TransactionTrackInterceptor.injectInCache(cache(i));
          if (i == 0) {
-            DeadlockDetectingLockManager dldLockManager = (DeadlockDetectingLockManager) lockManager.getActual();
-            LockContainer container = extractField(dldLockManager, "lockContainer");
+            LockManager actualLockManager = lockManager.getActual();
+            LockContainer container = extractField(actualLockManager, "lockContainer");
             if (container instanceof PerKeyLockContainer) {
                ((PerKeyLockContainer) container).inject(lockManagerTimeService);
             } else if (container instanceof StripedLockContainer) {
@@ -189,18 +185,13 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
             transactionTrackInterceptors[i].reset();
          }
       }
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (LockManager lockManager : lockManagers) {
-               if (lockManager.getNumberOfLocksHeld() != 0) {
-                  return false;
-               }
-            }
-            return true;
-         }
-      });
-      //sleepThread(1000);
+      assertNoLocks();
+   }
+
+   private void assertNoLocks() {
+      for (LockManager lockManager : lockManagers) {
+         eventuallyEquals(0, lockManager::getNumberOfLocksHeld);
+      }
    }
 
    private void doWriteSkewTest(boolean executeOnOwner) throws Exception {
@@ -220,6 +211,9 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
       cache(txExecutor).put(KEY_1, VALUE_2);
       tm(txExecutor).commit();
 
+      //ensures no lock waiting time.
+      assertNoLocks();
+
       tm(txExecutor).resume(tx1);
       cache(txExecutor).put(KEY_1, VALUE_3);
       try {
@@ -229,20 +223,8 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
          //expected
       }
 
-      //sometimes the tx2 tries to acquire the lock and the lock was not been released by tx1 because
-      // TxCompletionNotificationCommand is async. If this happens the waiting time will be != from zero and the
-      // test will fail.
-      boolean allLocksReleased = false;
-      while (!allLocksReleased) {
-         allLocksReleased = true;
-         for (LockManager lockManager : lockManagers) {
-            if (lockManager.getNumberOfLocksHeld() != 0) {
-               allLocksReleased = false;
-               TestingUtil.sleepThread(100);
-               break;
-            }
-         }
-      }
+      //ensures no lock waiting time.
+      assertNoLocks();
 
       tm(txExecutor).resume(tx2);
       cache(txExecutor).put(KEY_1, VALUE_3);
@@ -274,13 +256,10 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
 
       controlledRpcManager[successTxExecutor].blockBefore(CommitCommand.class, VersionedCommitCommand.class);
 
-      Future future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            tm(successTxExecutor).resume(transaction);
-            tm(successTxExecutor).commit();
-            return null;
-         }
+      Future future = fork(() -> {
+         tm(successTxExecutor).resume(transaction);
+         tm(successTxExecutor).commit();
+         return null;
       });
 
       controlledRpcManager[successTxExecutor].waitForCommandToBlock();
