@@ -15,13 +15,16 @@ import java.util.Arrays;
  * @since 9.0
  */
 public class ByteString {
-   public static final Charset CHARSET = StandardCharsets.UTF_8;
+   private static final Charset CHARSET = StandardCharsets.UTF_8;
    private static final ByteString EMPTY = new ByteString(new byte[0]);
    private final byte[] b;
    private String s;
    private final transient int hash;
 
-   ByteString(byte[] b) {
+   private ByteString(byte[] b) {
+      if (b.length > 127) {
+         throw new IllegalArgumentException("ByteString must be shorter than 127 bytes");
+      }
       this.b = b;
       this.hash = Arrays.hashCode(b);
    }
