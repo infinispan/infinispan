@@ -51,9 +51,9 @@ class FixedShardsDistribution implements ShardDistribution {
 
       int[] shardsNumPerServer = allocateShardsToNodes(numShards, numNodes, segmentsPerServer);
       this.populateSegments(shardsNumPerServer, segmentsPerServer, nodes);
-      LOGGER.debugf("Calculated shard distribution shardPerSegmentMap: %s", shardPerSegmentMap);
-      LOGGER.debugf("Calculated shard distribution shardsPerAddressMap: %s", shardsPerAddressMap);
-      LOGGER.debugf("Calculated shard distribution addressPerShardMap: %s", addressPerShardMap);
+      LOGGER.tracef("Calculated shard distribution shardPerSegmentMap: %s", shardPerSegmentMap);
+      LOGGER.tracef("Calculated shard distribution shardsPerAddressMap: %s", shardsPerAddressMap);
+      LOGGER.tracef("Calculated shard distribution addressPerShardMap: %s", addressPerShardMap);
    }
 
    /**
