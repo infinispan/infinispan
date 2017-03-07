@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -50,12 +49,7 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
       checkPoint.triggerForever("pre_raise_notification_release");
 
       final MagicKey key = new MagicKey(cache1, cache2);
-      Future<String> future = fork(new Callable<String>() {
-         @Override
-         public String call() throws Exception {
-            return cache0.put(key, FIRST_VALUE);
-         }
-      });
+      Future<String> future = fork(() -> cache0.put(key, FIRST_VALUE));
 
       checkPoint.awaitStrict("post_raise_notification_invoked", 10, TimeUnit.SECONDS);
       awaitForBackups(cache0);
@@ -64,6 +58,8 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
       TestingUtil.killCacheManagers(cache1.getCacheManager());
 
       future.get(10, TimeUnit.SECONDS);
+
+      TestingUtil.waitForRehashToComplete(cache0, cache2);
 
       // The command is retried during rebalance, but there are two topologies - in the first (rebalancing) topology
       // one node can be primary owner and in the second (rebalanced) the other. In this case, it's possible that
@@ -82,7 +78,6 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
 
       checkEvent(clusterListener.events.get(1), key, false, true);
       if (clusterListener.events.size() == 3) {
-         assertTrue(cache0primary.equals(cache0.getCacheManager().getAddress()));
          checkEvent(clusterListener.events.get(2), key, false, true);
       }
    }
