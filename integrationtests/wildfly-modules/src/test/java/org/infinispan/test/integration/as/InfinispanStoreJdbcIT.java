@@ -2,6 +2,8 @@ package org.infinispan.test.integration.as;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
+
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -32,7 +34,10 @@ public class InfinispanStoreJdbcIT {
 
    @Deployment
    public static Archive<?> deployment() {
-      return ShrinkWrap.create(WebArchive.class, "jdbc.war").addClass(InfinispanStoreJdbcIT.class).add(manifest(), "META-INF/MANIFEST.MF");
+      return ShrinkWrap.create(WebArchive.class, "jdbc.war")
+            .addClass(InfinispanStoreJdbcIT.class)
+            .addAsResource("jdbc-config.xml")
+            .add(manifest(), "META-INF/MANIFEST.MF");
    }
 
    private static Asset manifest() {
@@ -58,11 +63,31 @@ public class InfinispanStoreJdbcIT {
             .timestampColumnType("BIGINT")
          .dataSource().jndiUrl("java:jboss/datasources/ExampleDS");
 
-      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), builder.build());
-      Cache<String, String> cache = cm.getCache();
-      cache.put("a", "a");
-      assertEquals("a", cache.get("a"));
-      cm.stop();
+      EmbeddedCacheManager cm = null;
+      try {
+         cm = new DefaultCacheManager(gcb.build(), builder.build());
+
+         Cache<String, String> cache = cm.getCache();
+         cache.put("a", "a");
+         assertEquals("a", cache.get("a"));
+      } finally {
+         if (cm != null)
+            cm.stop();
+      }
+   }
+
+   @Test
+   public void testXmlConfig() throws IOException {
+      EmbeddedCacheManager cm = null;
+      try {
+         cm = new DefaultCacheManager("jdbc-config.xml");
+         Cache<String, String> cache = cm.getCache("anotherCache");
+         cache.put("a", "a");
+         assertEquals("a", cache.get("a"));
+      } finally {
+         if (cm != null)
+            cm.stop();
+      }
    }
 
 }
