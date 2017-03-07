@@ -79,7 +79,9 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
       ACTIVATIONS(ClusterWideMetricKeys.ACTIVATIONS, ModelType.STRING, true),
       CACHE_LOADER_LOADS(ClusterWideMetricKeys.CACHE_LOADER_LOADS, ModelType.LONG, true),
       CACHE_LOADER_MISSES(ClusterWideMetricKeys.CACHE_LOADER_MISSES, ModelType.LONG, true),
-      CACHE_LOADER_STORES(ClusterWideMetricKeys.CACHE_LOADER_STORES, ModelType.LONG, true);
+      CACHE_LOADER_STORES(ClusterWideMetricKeys.CACHE_LOADER_STORES, ModelType.LONG, true),
+
+      STALE_STATS_THRESHOLD(ClusterWideMetricKeys.STALE_STATS_THRESHOLD, ModelType.LONG, true);
 
       private static final Map<String, ClusteredCacheMetrics> MAP = new HashMap<String, ClusteredCacheMetrics>();
 
@@ -205,7 +207,7 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             break;
          }
          case TIME_SINCE_RESET: {
-            result.set(clusterCacheStats.getTimeSinceStart());
+            result.set(clusterCacheStats.getTimeSinceReset());
             break;
          }
          case INVALIDATIONS: {
@@ -232,6 +234,9 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             result.set(clusterCacheStats.getStoreWrites());
             break;
          }
+         case STALE_STATS_THRESHOLD:
+            result.set(clusterCacheStats.getStaleStatsThreshold());
+            break;
          default: {
             context.getFailureDescription().set(String.format("Unknown metric %s", metric));
             break;
