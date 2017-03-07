@@ -8,6 +8,12 @@ import java.lang.annotation.Target;
 
 /**
  * Allows to skip a test on certain Operation Systems.
+ *
+ * <p>
+ *    Note that TestNG implementation does not work properly on inherited test methods. In other words, you always
+ *    need to override all <code>test*</code> methods in a class annotated using <code>SkipOnOs</code>
+ * </p>
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
