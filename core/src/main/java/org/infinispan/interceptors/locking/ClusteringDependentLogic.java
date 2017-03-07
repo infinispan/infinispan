@@ -377,13 +377,8 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
-         throw new IllegalStateException("Cannot invoke this method for local caches");
-      }
-
-      @Override
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
-         return null; //not used
+         return key -> true;
       }
    }
 

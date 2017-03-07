@@ -21,12 +21,12 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani
  * @since 5.1
  */
-public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements Versioned {
+public class VersionedRepeatableReadEntry extends RepeatableReadEntry implements Versioned {
 
-   private static final Log log = LogFactory.getLog(ClusteredRepeatableReadEntry.class);
+   private static final Log log = LogFactory.getLog(VersionedRepeatableReadEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   public ClusteredRepeatableReadEntry(Object key, Object value, Metadata metadata) {
+   public VersionedRepeatableReadEntry(Object key, Object value, Metadata metadata) {
       super(key, value, metadata);
    }
 
@@ -110,7 +110,7 @@ public class ClusteredRepeatableReadEntry extends RepeatableReadEntry implements
    }
 
    @Override
-   public ClusteredRepeatableReadEntry clone() {
-      return (ClusteredRepeatableReadEntry) super.clone();
+   public VersionedRepeatableReadEntry clone() {
+      return (VersionedRepeatableReadEntry) super.clone();
    }
 }

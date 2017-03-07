@@ -7,7 +7,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ClusteredRepeatableReadEntry;
+import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
@@ -79,7 +79,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
       if (ctx.isInTxScope() && stateTransferFlag == null) {
          Metadata commitMetadata;
          // If user provided version, use it, otherwise generate/increment accordingly
-         ClusteredRepeatableReadEntry clusterMvccEntry = (ClusteredRepeatableReadEntry) entry;
+         VersionedRepeatableReadEntry clusterMvccEntry = (VersionedRepeatableReadEntry) entry;
          EntryVersion existingVersion = clusterMvccEntry.getMetadata().version();
          EntryVersion newVersion;
          if (existingVersion == null) {

@@ -393,6 +393,11 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          if (isProperWriter(ctx, command, command.getKey())) {
             if (generateStatistics) putCount++;
             CacheEntry entry = ctx.lookupEntry(command.getKey());
+            // If the value is null, there is a subsequent remove operation in the transaction and we can ignore
+            // this modification.
+            if (entry.getValue() == null) {
+               return null;
+            }
             InternalCacheEntry ice;
             if (entry instanceof InternalCacheEntry) {
                ice = (InternalCacheEntry) entry;
@@ -440,8 +445,13 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          if (isProperWriter(ctx, command, key)) {
             if (generateStatistics) putCount++;
             InternalCacheValue sv = entryFactory.getValueFromCtxOrCreateNew(key, ctx);
-            MarshalledEntryImpl me = new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller);
-            persistenceManager.writeToAllNonTxStores(me, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
+            // TODO: we should merge all modifications and write each key only once
+            // If the value in context is null, the transaction contains a subsequent remove,
+            // so we'll ignore this modification
+            if (sv.getValue() != null) {
+               MarshalledEntryImpl me = new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller);
+               persistenceManager.writeToAllNonTxStores(me, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
+            }
          }
          return null;
       }

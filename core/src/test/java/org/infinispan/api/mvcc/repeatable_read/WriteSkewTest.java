@@ -17,6 +17,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -41,6 +43,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
@@ -53,6 +56,14 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setUp() {
+      ConfigurationBuilder configurationBuilder = createConfigurationBuilder();
+      // The default cache is NOT write skew enabled.
+      cacheManager = TestCacheManagerFactory.createCacheManager(configurationBuilder);
+      configurationBuilder.locking().writeSkewCheck(true).versioning().enable().scheme(VersioningScheme.SIMPLE);
+      cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
+   }
+
+   protected ConfigurationBuilder createConfigurationBuilder() {
       ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
       configurationBuilder
          .transaction()
@@ -60,10 +71,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          .locking()
             .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
             .isolationLevel(IsolationLevel.REPEATABLE_READ);
-      // The default cache is NOT write skew enabled.
-      cacheManager = TestCacheManagerFactory.createCacheManager(configurationBuilder);
-      configurationBuilder.locking().writeSkewCheck(true).versioning().enable().scheme(VersioningScheme.SIMPLE);
-      cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
+      return configurationBuilder;
    }
 
    @AfterClass
@@ -75,33 +83,31 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       tm = null;
    }
 
-   private void postStart() {
+   @BeforeMethod
+   public void postStart() {
+      cache = cacheManager.getCache("writeSkew");
       lockManager = TestingUtil.extractComponentRegistry(cache).getComponent(LockManager.class);
       tm = TestingUtil.extractComponentRegistry(cache).getComponent(TransactionManager.class);
+   }
+
+   protected void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException {
+      tm.commit();
    }
 
    protected void assertNoLocks() {
       LockAssert.assertNoLocks(lockManager);
    }
 
-   private void setCacheWithWriteSkewCheck() {
-      cache = cacheManager.getCache("writeSkew");
-   }
-
-   private void setCacheWithoutWriteSkewCheck() {
+   public void testDontCheckWriteSkew() throws Exception {
       // Use the default cache here.
       cache = cacheManager.getCache();
-   }
+      lockManager = TestingUtil.extractComponentRegistry(cache).getComponent(LockManager.class);
+      tm = TestingUtil.extractComponentRegistry(cache).getComponent(TransactionManager.class);
 
-   public void testDontCheckWriteSkew() throws Exception {
-      setCacheWithoutWriteSkewCheck();
-      postStart();
       doTest(true);
    }
 
    public void testCheckWriteSkew() throws Exception {
-      setCacheWithWriteSkewCheck();
-      postStart();
       doTest(false);
    }
 
@@ -114,9 +120,6 @@ public class WriteSkewTest extends AbstractInfinispanTest {
     * @throws Exception
     */
    public void testCheckWriteSkewWithMultipleModifications() throws Exception {
-      setCacheWithWriteSkewCheck();
-      postStart();
-
       final CountDownLatch latch1 = new CountDownLatch(1);
       final CountDownLatch latch2 = new CountDownLatch(1);
       final CountDownLatch latch3 = new CountDownLatch(1);
@@ -136,7 +139,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                   latch2.countDown();
                }
                latch3.await();
-               tm.commit(); //this is expected to fail
+               commit(); //this is expected to fail
                fail("Commit should have failed!");
             } catch (Exception e) {
                // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
@@ -165,7 +168,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                   cache.get("k1");
                   cache.put("k1", "v2");
                   cache.put("k3", "thread 2");
-                  tm.commit();
+                  commit();
                } finally {
                   latch3.countDown();
                }
@@ -197,15 +200,12 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
    /** Checks that multiple modifications compare the initial value and the write skew does not fire */
    public void testNoWriteSkewWithMultipleModifications() throws Exception {
-      setCacheWithWriteSkewCheck();
-      postStart();
-
       cache.put("k1", "init");
       tm.begin();
       assertEquals("init", cache.get("k1"));
       cache.put("k1", "v2");
       cache.put("k2", "v3");
-      tm.commit();
+      commit();
    }
 
    /**
@@ -213,8 +213,6 @@ public class WriteSkewTest extends AbstractInfinispanTest {
     * See also ISPN-2075.
     */
    public void testDontFailOnImmediateRemoval() throws Exception {
-      setCacheWithWriteSkewCheck();
-      postStart();
       final String key = "testDontOnImmediateRemoval-Key";
 
       tm.begin();
@@ -222,7 +220,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       assertEquals("Wrong value for key " + key, "testDontOnImmediateRemoval-Value", cache.get(key));
       cache.put(key, "testDontOnImmediateRemoval-Value-Second");
       cache.remove(key);
-      tm.commit();
+      commit();
       assertFalse("Key " + key + " was not removed as expected.", cache.containsKey(key));
    }
 
@@ -231,8 +229,6 @@ public class WriteSkewTest extends AbstractInfinispanTest {
     * See also ISPN-2075.
     */
    public void testDontFailOnImmediateRemovalOfAtomicMaps() throws Exception {
-      setCacheWithWriteSkewCheck();
-      postStart();
       final String key = "key1";
       final String subKey = "subK";
       TestingUtil.withTx(tm, new Callable<Object>() {
@@ -254,9 +250,6 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
    public void testNoWriteSkew() throws Exception {
       //simplified version of testWriteSkewWithOnlyPut
-      setCacheWithWriteSkewCheck();
-      postStart();
-
       final String key = "k";
       tm.begin();
       try {
@@ -266,7 +259,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          throw e;
       } finally {
          if (tm.getStatus() == Status.STATUS_ACTIVE) {
-            tm.commit();
+            commit();
          } else {
             tm.rollback();
          }
@@ -287,20 +280,17 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       //the following commits should not fail the write skew check
       tm.resume(tx1);
-      tm.commit();
+      commit();
 
       tm.resume(tx2);
-      tm.commit();
+      commit();
 
       tm.resume(tx3);
-      tm.commit();
+      commit();
    }
 
    public void testWriteSkew() throws Exception {
       //simplified version of testWriteSkewWithOnlyPut
-      setCacheWithWriteSkewCheck();
-      postStart();
-
       final String key = "k";
       tm.begin();
       try {
@@ -310,7 +300,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          throw e;
       } finally {
          if (tm.getStatus() == Status.STATUS_ACTIVE) {
-            tm.commit();
+            commit();
          } else {
             tm.rollback();
          }
@@ -330,12 +320,12 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       //the first commit should succeed
       tm.resume(tx1);
-      tm.commit();
+      commit();
 
       //the remaining should fail
       try {
          tm.resume(tx2);
-         tm.commit();
+         commit();
          fail("Transaction should fail!");
       } catch (RollbackException e) {
          //expected
@@ -343,7 +333,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       try {
          tm.resume(tx3);
-         tm.commit();
+         commit();
          fail("Transaction should fail!");
       } catch (RollbackException e) {
          //expected
@@ -354,9 +344,6 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    // (the first put does not read the value)
    // This test actually tests only local write skew check
    public void testPreviousValueIgnored() throws Exception {
-      setCacheWithWriteSkewCheck();
-      postStart();
-
       cache.put("k", "init");
 
       tm.begin();
@@ -367,13 +354,10 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       assertEquals("init", cache.put("k", "other"));
 
       tm.resume(tx);
-      tm.commit();
+      commit();
    }
 
    public void testWriteSkewWithOnlyPut() throws Exception {
-      setCacheWithWriteSkewCheck();
-      postStart();
-
       tm.begin();
       try {
          cache.put("k", "init");
@@ -381,7 +365,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          tm.setRollbackOnly();
          throw e;
       } finally {
-         if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
+         if (tm.getStatus() == Status.STATUS_ACTIVE) commit();
          else tm.rollback();
       }
 
@@ -420,7 +404,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                threadSignal.countDown();
                w1Signal.await();
                cache.put(key, "v2");
-               tm.commit();
+               commit();
             } catch (Exception e) {
                w1exceptions.add(e);
                // Tx should be rolled back already, but we're being extra cautious
@@ -441,7 +425,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                threadSignal.countDown();
                w2Signal.await();
                cache.put(key, "v3");
-               tm.commit();
+               commit();
             } catch (Exception e) {
                w2exceptions.add(e);
                // Tx should be rolled back already, but we're being extra cautious
@@ -505,7 +489,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                tm.setRollbackOnly();
                throw e;
             } finally {
-               if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
+               if (tm.getStatus() == Status.STATUS_ACTIVE) commit();
                else tm.rollback();
             }
 

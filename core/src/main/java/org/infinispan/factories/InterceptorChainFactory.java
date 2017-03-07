@@ -222,7 +222,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new GroupingInterceptor(), GroupingInterceptor.class), false);
       }
 
-      if (needsVersionAwareComponents && cacheMode.isClustered()) {
+      if (needsVersionAwareComponents) {
          if (isTotalOrder) {
             interceptorChain.appendInterceptor(createInterceptor(new TotalOrderVersionedEntryWrappingInterceptor(),
                                                                  TotalOrderVersionedEntryWrappingInterceptor.class), false);

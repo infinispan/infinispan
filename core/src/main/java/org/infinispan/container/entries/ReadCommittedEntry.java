@@ -8,8 +8,6 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.VALID;
 
-import java.util.Arrays;
-
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
