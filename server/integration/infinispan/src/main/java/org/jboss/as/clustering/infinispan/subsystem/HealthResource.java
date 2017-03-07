@@ -40,19 +40,23 @@ public class HealthResource extends SimpleResourceDefinition {
     public static final PathElement HEALTH_PATH = PathElement.pathElement(ModelKeys.HEALTH, ModelKeys.HEALTH_NAME);
 
     private final PathManager pathManager;
+    private final boolean isRuntimeRegistration;
 
-    public HealthResource(PathManager pathManager) {
+    public HealthResource(PathManager pathManager, boolean isRuntimeRegistration) {
         super(HEALTH_PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.HEALTH),
                 new ReloadRequiredAddStepHandler(),
                 ReloadRequiredRemoveStepHandler.INSTANCE);
         this.pathManager = pathManager;
+        this.isRuntimeRegistration = isRuntimeRegistration;
     }
 
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        HealthMetricsHandler.INSTANCE.registerPathManager(pathManager);
-        HealthMetricsHandler.INSTANCE.registerMetrics(resourceRegistration);
+        if(isRuntimeRegistration) {
+            HealthMetricsHandler.INSTANCE.registerPathManager(pathManager);
+            HealthMetricsHandler.INSTANCE.registerMetrics(resourceRegistration);
+        }
     }
 
     @Override

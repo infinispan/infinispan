@@ -99,69 +99,72 @@ public class HealthMetricsHandler extends AbstractRuntimeOnlyHandler {
          *       }
          *   }
          */
+        final ModelNode result = new ModelNode();
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getElement(CACHE_CONTAINER_INDEX).getValue();
         final String metricName = operation.require(ModelDescriptionConstants.NAME).asString();
         final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
-        DefaultCacheContainer cacheManager = (DefaultCacheContainer) controller.getValue();
 
-        HealthMetrics metric = HealthMetrics.getMetric(metricName);
-        ModelNode result = new ModelNode();
+        if(controller != null) {
+            DefaultCacheContainer cacheManager = (DefaultCacheContainer) controller.getValue();
+            HealthMetrics metric = HealthMetrics.getMetric(metricName);
 
-        if (metric == null) {
-            context.getFailureDescription().set(String.format("Unknown metric %s", metricName));
-        } else if (cacheManager == null) {
-            context.getFailureDescription().set(String.format("Unavailable cache container %s", metricName));
-        } else {
-            Health health = cacheManager.getHealth();
-            switch (metric) {
-                case CACHE_HEALTH:
-                    List<CacheHealth> cacheHealths = health.getCacheHealth();
-                    List<String> perCacheHealth = new LinkedList<>();
-                    for (int i = 0; i < cacheHealths.size(); ++i) {
-                        perCacheHealth.add(cacheHealths.get(i).getCacheName());
-                        perCacheHealth.add(cacheHealths.get(i).getStatus().toString());
-                    }
-                    result.set(toModelNodeCollection(perCacheHealth));
-                    break;
-                case FREE_MEMORY_KB:
-                    result.set(health.getHostInfo().getFreeMemoryInKb());
-                    break;
-                case TOTAL_MEMORY_KB:
-                    result.set(health.getHostInfo().getTotalMemoryKb());
-                    break;
-                case NUMBER_OF_NODES:
-                    result.set(health.getClusterHealth().getNumberOfNodes());
-                    break;
-                case CLUSTER_NAME:
-                    result.set(health.getClusterHealth().getClusterName());
-                    break;
-                case NUMBER_OF_CPUS:
-                    result.set(health.getHostInfo().getNumberOfCpus());
-                    break;
-                case CLUSTER_HEALTH:
-                    result.set(health.getClusterHealth().getHealthStatus().toString());
-                    break;
-                case LOG_TAIL:
-                    File path = new File(pathManager.resolveRelativePathEntry("server.log", ServerEnvironment.SERVER_LOG_DIR));
-                    try (ReversedLinesFileReader reader = new ReversedLinesFileReader(path, StandardCharsets.UTF_8)) {
-                        List<String> results = new LinkedList<>();
-                        for (int i = 0; i < NUMBER_OF_LINES; ++i) {
-                            results.add(0, reader.readLine());
+            if (metric == null) {
+                context.getFailureDescription().set(String.format("Unknown metric %s", metricName));
+            } else if (cacheManager == null) {
+                context.getFailureDescription().set(String.format("Unavailable cache container %s", metricName));
+            } else {
+                Health health = cacheManager.getHealth();
+                switch (metric) {
+                    case CACHE_HEALTH:
+                        List<CacheHealth> cacheHealths = health.getCacheHealth();
+                        List<String> perCacheHealth = new LinkedList<>();
+                        for (int i = 0; i < cacheHealths.size(); ++i) {
+                            perCacheHealth.add(cacheHealths.get(i).getCacheName());
+                            perCacheHealth.add(cacheHealths.get(i).getStatus().toString());
                         }
-                        result.set(toModelNodeCollection(results));
-                    } catch (FileNotFoundException e) {
-                        result.set("File [" + path.getAbsolutePath() + "] does not exist");
-                    } catch (IOException e) {
-                        result.set("Unable to read file [" + path.getAbsolutePath() + "]");
-                    }
-                    break;
-                default:
-                    context.getFailureDescription().set(String.format("Unknown metric %s", metric));
-                    break;
+                        result.set(toModelNodeCollection(perCacheHealth));
+                        break;
+                    case FREE_MEMORY_KB:
+                        result.set(health.getHostInfo().getFreeMemoryInKb());
+                        break;
+                    case TOTAL_MEMORY_KB:
+                        result.set(health.getHostInfo().getTotalMemoryKb());
+                        break;
+                    case NUMBER_OF_NODES:
+                        result.set(health.getClusterHealth().getNumberOfNodes());
+                        break;
+                    case CLUSTER_NAME:
+                        result.set(health.getClusterHealth().getClusterName());
+                        break;
+                    case NUMBER_OF_CPUS:
+                        result.set(health.getHostInfo().getNumberOfCpus());
+                        break;
+                    case CLUSTER_HEALTH:
+                        result.set(health.getClusterHealth().getHealthStatus().toString());
+                        break;
+                    case LOG_TAIL:
+                        File path = new File(pathManager.resolveRelativePathEntry("server.log", ServerEnvironment.SERVER_LOG_DIR));
+                        try (ReversedLinesFileReader reader = new ReversedLinesFileReader(path, StandardCharsets.UTF_8)) {
+                            List<String> results = new LinkedList<>();
+                            for (int i = 0; i < NUMBER_OF_LINES; ++i) {
+                                results.add(0, reader.readLine());
+                            }
+                            result.set(toModelNodeCollection(results));
+                        } catch (FileNotFoundException e) {
+                            result.set("File [" + path.getAbsolutePath() + "] does not exist");
+                        } catch (IOException e) {
+                            result.set("Unable to read file [" + path.getAbsolutePath() + "]");
+                        }
+                        break;
+                    default:
+                        context.getFailureDescription().set(String.format("Unknown metric %s", metric));
+                        break;
+                }
+
             }
-            context.getResult().set(result);
         }
+        context.getResult().set(result);
     }
 
     public void registerPathManager(PathManager pathManager) {
