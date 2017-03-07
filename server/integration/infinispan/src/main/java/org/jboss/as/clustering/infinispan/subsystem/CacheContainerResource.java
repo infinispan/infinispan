@@ -386,7 +386,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         super.registerChildren(resourceRegistration);
 
         // child resources
-        resourceRegistration.registerSubModel(new HealthResource(pathManager));
+        resourceRegistration.registerSubModel(new HealthResource(pathManager, runtimeRegistration));
 
         resourceRegistration.registerSubModel(new TransportResource());
         resourceRegistration.registerSubModel(new CacheContainerSecurityResource());
