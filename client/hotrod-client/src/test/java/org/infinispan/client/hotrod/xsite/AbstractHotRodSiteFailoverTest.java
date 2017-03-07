@@ -21,7 +21,6 @@ import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -82,7 +81,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    @AfterClass(alwaysRun = true) // run even if the test failed
    protected void destroy() {
       try {
-         siteServers.values().stream().forEach(servers ->
+         siteServers.values().forEach(servers ->
             servers.forEach(HotRodClientTestingUtil::killServers));
       } finally {
          super.destroy();
@@ -113,7 +112,8 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       siteServers.forEach((name, servers) ->
          servers.forEach(server -> {
             HitCountInterceptor interceptor = new HitCountInterceptor();
-            server.getCacheManager().getCache().getAdvancedCache().addInterceptor(interceptor, 1);
+            server.getCacheManager().getCache().getAdvancedCache().getAsyncInterceptorChain()
+                  .addInterceptor(interceptor, 1);
          })
       );
    }
@@ -149,7 +149,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    }
 
    protected void assertSiteNotHit(String siteName) {
-      siteServers.get(siteName).stream().forEach(server -> {
+      siteServers.get(siteName).forEach(server -> {
          Cache<?, ?> cache = server.getCacheManager().getCache();
          HitCountInterceptor interceptor = getHitCountInterceptor(cache);
          assertEquals(0, interceptor.getHits());
@@ -157,18 +157,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    }
 
    protected HitCountInterceptor getHitCountInterceptor(Cache<?, ?> cache) {
-      HitCountInterceptor hitCountInterceptor = null;
-      List<CommandInterceptor> interceptorChain = cache.getAdvancedCache().getInterceptorChain();
-      for (CommandInterceptor interceptor : interceptorChain) {
-         boolean isHitCountInterceptor = interceptor instanceof HitCountInterceptor;
-         if (hitCountInterceptor != null && isHitCountInterceptor) {
-            throw new IllegalStateException("Two HitCountInterceptors! " + interceptorChain);
-         }
-         if (isHitCountInterceptor) {
-            hitCountInterceptor = (HitCountInterceptor) interceptor;
-         }
-      }
-      return hitCountInterceptor;
+      return cache.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(HitCountInterceptor.class);
    }
 
 }
