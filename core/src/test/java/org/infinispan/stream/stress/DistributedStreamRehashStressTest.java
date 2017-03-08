@@ -27,7 +27,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stream.CacheCollectors;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -88,8 +89,8 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
       testStressNodesLeavingWhilePerformingCallable((masterValues, cache, iteration) -> {
          Map<Integer, Integer> results = cache.entrySet().stream().filter(
                  (Serializable & Predicate<Map.Entry<Integer, Integer>>)
-                         e -> (e.getKey().intValue() & 1) == 1).collect(
-                 CacheCollectors.serializableCollector(() -> Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
+                         e -> (e.getKey() & 1) == 1).collect(
+                 CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
          assertEquals(CACHE_ENTRY_COUNT / 2, results.size());
          for (Map.Entry<Integer, Integer> entry : results.entrySet()) {
             assertEquals(entry.getKey(), entry.getValue());
@@ -126,8 +127,8 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
             seenValues.put(entry.getKey(), entry.getValue());
          }
          if (seenValues.size() != masterValues.size()) {
-            findMismatchedSegments(cache.getAdvancedCache().getDistributionManager().getConsistentHash(),
-                    masterValues, seenValues, iteration);
+            KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache, KeyPartitioner.class);
+            findMismatchedSegments(keyPartitioner, masterValues, seenValues, iteration);
          }
       });
    }
@@ -136,11 +137,12 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
            TimeoutException {
       testStressNodesLeavingWhilePerformingCallable((masterValues, cache, iteration) -> {
          Map<Integer, Integer> seenValues = new HashMap<>();
+         KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache, KeyPartitioner.class);
          AdvancedCache<Integer, Integer> advancedCache = cache.getAdvancedCache();
-         ConsistentHash ch = advancedCache.getDistributionManager().getConsistentHash();
-         Set<Integer> targetSegments = ch.getSegmentsForOwner(advancedCache.getCacheManager().getAddress());
+         LocalizedCacheTopology cacheTopology = advancedCache.getDistributionManager().getCacheTopology();
+         Set<Integer> targetSegments = cacheTopology.getWriteConsistentHash().getSegmentsForOwner(cacheTopology.getLocalAddress());
          masterValues = masterValues.entrySet().stream()
-                 .filter(e -> targetSegments.contains(ch.getSegment(e.getKey())))
+                 .filter(e -> targetSegments.contains(keyPartitioner.getSegment(e.getKey())))
                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
          Iterator<Map.Entry<Integer, Integer>> iterator = cache.entrySet().stream()
                  .distributedBatchSize(50000)
@@ -158,15 +160,16 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
             seenValues.put(entry.getKey(), entry.getValue());
          }
          if (seenValues.size() != masterValues.size()) {
-            findMismatchedSegments(ch, masterValues, seenValues, iteration);
+            findMismatchedSegments(keyPartitioner, masterValues, seenValues, iteration);
          }
       });
    }
 
-   private void findMismatchedSegments(ConsistentHash ch, Map<Integer, Integer> masterValues,
-           Map<Integer, Integer> seenValues, int iteration) {
-      Map<Integer, Set<Map.Entry<Integer, Integer>>> target = generateEntriesPerSegment(ch, masterValues.entrySet());
-      Map<Integer, Set<Map.Entry<Integer, Integer>>> actual = generateEntriesPerSegment(ch, seenValues.entrySet());
+   private void findMismatchedSegments(KeyPartitioner keyPartitioner, Map<Integer, Integer> masterValues,
+                                       Map<Integer, Integer> seenValues, int iteration) {
+      Map<Integer, Set<Map.Entry<Integer, Integer>>> target = generateEntriesPerSegment(keyPartitioner,
+                                                                                        masterValues.entrySet());
+      Map<Integer, Set<Map.Entry<Integer, Integer>>> actual = generateEntriesPerSegment(keyPartitioner, seenValues.entrySet());
       for (Map.Entry<Integer, Set<Map.Entry<Integer, Integer>>> entry : target.entrySet()) {
          Set<Map.Entry<Integer, Integer>> entrySet = entry.getValue();
          Set<Map.Entry<Integer, Integer>> actualEntries = actual.get(entry.getKey());
@@ -184,7 +187,7 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
 
    void testStressNodesLeavingWhilePerformingCallable(final PerformOperation operation)
            throws InterruptedException, ExecutionException, TimeoutException {
-      final Map<Integer, Integer> masterValues = new HashMap<Integer, Integer>();
+      final Map<Integer, Integer> masterValues = new HashMap<>();
       // First populate our caches
       for (int i = 0; i < CACHE_ENTRY_COUNT; ++i) {
          masterValues.put(i, i);
@@ -261,7 +264,7 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
          Throwable e = exchanger.exchange(null, 5, TimeUnit.MINUTES);
          fail("Found an exception in at least 1 thread", e);
       } catch (TimeoutException e) {
-
+         // Expected
       }
 
       complete.set(true);
@@ -281,17 +284,13 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
       void perform(Map<Integer, Integer> masterValues, Cache<Integer, Integer> cacheToUse, int iteration);
    }
 
-   private <K, V> Map<Integer, Set<Map.Entry<K, V>>> generateEntriesPerSegment(ConsistentHash hash,
-           Iterable<Map.Entry<K, V>> entries) {
-      Map<Integer, Set<Map.Entry<K, V>>> returnMap = new HashMap<Integer, Set<Map.Entry<K, V>>>();
+   private <K, V> Map<Integer, Set<Map.Entry<K, V>>> generateEntriesPerSegment(KeyPartitioner keyPartitioner,
+                                                                               Iterable<Map.Entry<K, V>> entries) {
+      Map<Integer, Set<Map.Entry<K, V>>> returnMap = new HashMap<>();
 
       for (Map.Entry<K, V> value : entries) {
-         int segment = hash.getSegment(value.getKey());
-         Set<Map.Entry<K, V>> set = returnMap.get(segment);
-         if (set == null) {
-            set = new HashSet<Map.Entry<K, V>>();
-            returnMap.put(segment, set);
-         }
+         int segment = keyPartitioner.getSegment(value.getKey());
+         Set<Map.Entry<K, V>> set = returnMap.computeIfAbsent(segment, k -> new HashSet<>());
          set.add(new ImmortalCacheEntry(value.getKey(), value.getValue()));
       }
       return returnMap;

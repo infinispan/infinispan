@@ -100,7 +100,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
       @Override
       public boolean accept(Object key, Object value, Metadata metadata) {
-         return clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+         return clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
       }
    }
 

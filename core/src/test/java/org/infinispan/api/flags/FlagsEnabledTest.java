@@ -210,7 +210,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    }
 
    private boolean isPrimaryOwner(Cache<?, ?> cache, Object key) {
-      return TestingUtil.extractComponent(cache, ClusteringDependentLogic.class).localNodeIsPrimaryOwner(key);
+      return TestingUtil.extractComponent(cache, ClusteringDependentLogic.class).getCacheTopology().getDistribution(key).isPrimary();
    }
 
    private boolean isTxCache() {

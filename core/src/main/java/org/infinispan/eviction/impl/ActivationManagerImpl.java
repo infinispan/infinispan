@@ -76,7 +76,7 @@ public class ActivationManagerImpl implements ActivationManager {
          return;
       }
       //if we are the primary owner, we need to remove from the shared store,
-      final boolean primaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+      final boolean primaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
       try {
          if (newEntry) {
             //the entry does not exists in data container. We need to remove from private and shared stores.

@@ -124,7 +124,9 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
             new WrappedByteArrayConverter());
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
-      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
+      ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
+      cdl.init(null);
+      n.injectDependencies(mockCache, cdl, null, config,
                            mock(DistributionManager.class), new InternalEntryFactoryImpl(),
                            mock(ClusterEventManager.class));
       n.start();
@@ -141,7 +143,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
    }
 
    private void testSimpleCacheStarting(final StateListener<String, String> listener) {
-      final List<CacheEntry<String, String>> initialValues = new ArrayList<CacheEntry<String, String>>(10);
+      final List<CacheEntry<String, String>> initialValues = new ArrayList<>(10);
       for (int i = 0; i < 10; i++) {
          String key = "key-" + i;
          String value = "value-" + i;

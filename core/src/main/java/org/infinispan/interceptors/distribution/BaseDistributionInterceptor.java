@@ -42,15 +42,14 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.Ownership;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -82,10 +81,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private static final boolean trace = log.isTraceEnabled();
 
    protected DistributionManager dm;
-   protected ClusteringDependentLogic cdl;
    protected RemoteValueRetrievedListener rvrl;
+   protected KeyPartitioner keyPartitioner;
+
    protected boolean isL1Enabled;
-   private GroupManager groupManager;
+   protected boolean isReplicated;
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
    private final InvocationSuccessFunction primaryReturnHandler = this::primaryReturnHandler;
@@ -96,12 +96,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    }
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, ClusteringDependentLogic cdl,
-         RemoteValueRetrievedListener rvrl, GroupManager groupManager) {
+   public void injectDependencies(DistributionManager distributionManager, RemoteValueRetrievedListener rvrl,
+                                  KeyPartitioner keyPartitioner) {
       this.dm = distributionManager;
-      this.cdl = cdl;
       this.rvrl = rvrl;
-      this.groupManager = groupManager;
+      this.keyPartitioner = keyPartitioner;
    }
 
 
@@ -109,6 +108,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    public void configure() {
       // Can't rely on the super injectConfiguration() to be called before our injectDependencies() method2
       isL1Enabled = cacheConfiguration.clustering().l1().enabled();
+      isReplicated = cacheConfiguration.clustering().cacheMode().isReplicated();
    }
 
    @Override
@@ -119,8 +119,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          //don't go remote if we are an owner.
          return invokeNext(ctx, command);
       }
+      Address primaryOwner = dm.getCacheTopology().getDistribution(groupName).primary();
       CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
-            Collections.singleton(groupManager.getPrimaryOwner(groupName)), command, defaultSyncOptions);
+            Collections.singleton(primaryOwner), command, defaultSyncOptions);
       return asyncInvokeNext(ctx, command, future.thenAccept(responses -> {
          if (!responses.isEmpty()) {
             Response response = responses.values().iterator().next();
@@ -147,14 +148,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<Void> remoteGet(
          InvocationContext ctx, C command, Object key, boolean isWrite) {
-      CacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       int topologyId = cacheTopology.getTopologyId();
-      ConsistentHash readCH = cacheTopology.getReadConsistentHash();
 
-      DistributionInfo info = new DistributionInfo(key, readCH, rpcManager.getAddress());
-      if (info.ownership() != Ownership.NON_OWNER) {
+      DistributionInfo info = cacheTopology.getDistribution(key);
+      if (info.isReadOwner()) {
          if (trace) {
-            log.tracef("Key %s is local, skipping remote get. Command topology is %d, current topology is %d",
+            log.tracef("Key %s became local after wrapping, retrying command. Command topology is %d, current topology is %d",
                   key, command.getTopologyId(), topologyId);
          }
          // The topology has changed between EWI and BDI, let's retry
@@ -165,14 +165,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
       if (trace) {
          log.tracef("Perform remote get for key %s. currentTopologyId=%s, owners=%s",
-            key, topologyId, info.owners());
+            key, topologyId, info.readOwners());
       }
 
       ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, command.getFlagsBitSet());
       getCommand.setTopologyId(topologyId);
       getCommand.setWrite(isWrite);
 
-      return rpcManager.invokeRemotelyAsync(info.owners(), getCommand, staggeredOptions).thenAccept(responses -> {
+      return rpcManager.invokeRemotelyAsync(info.readOwners(), getCommand, staggeredOptions).thenAccept(responses -> {
          for (Response r : responses.values()) {
             if (r instanceof SuccessfulResponse) {
                SuccessfulResponse response = (SuccessfulResponse) r;
@@ -217,8 +217,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNext(ctx, command);
       }
 
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      DistributionInfo info = cacheTopology.getDistribution(key);
       if (entry == null) {
-         DistributionInfo info = new DistributionInfo(key, checkTopologyId(command).getWriteConsistentHash(), rpcManager.getAddress());
          boolean load = shouldLoad(ctx, command, info);
          if (info.isPrimary()) {
             throw new IllegalStateException("Primary owner in writeCH should always be an owner in readCH as well.");
@@ -234,7 +235,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }
          }
       } else {
-         DistributionInfo info = new DistributionInfo(key, checkTopologyId(command).getWriteConsistentHash(), rpcManager.getAddress());
          if (info.isPrimary()) {
             return invokeNextThenApply(ctx, command, primaryReturnHandler);
          } else if (ctx.isOriginLocal()) {
@@ -252,16 +252,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             case DONT_LOAD:
                return false;
             case OWNER:
-               switch (info.ownership()) {
-                  case PRIMARY:
-                     return true;
-                  case BACKUP:
-                     return !ctx.isOriginLocal();
-                  case NON_OWNER:
-                     return false;
-                  default:
-                     throw new IllegalStateException();
-               }
+               return info.isPrimary() || (info.isWriteOwner() && !ctx.isOriginLocal());
             case PRIMARY:
                return info.isPrimary();
             default:
@@ -304,15 +295,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return localResult;
       }
-      CacheTopology cacheTopology = checkTopologyId(command);
-      ConsistentHash writeCH = cacheTopology.getWriteConsistentHash();
-      DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), writeCH, rpcManager.getAddress());
-      Collection<Address> owners = distributionInfo.owners();
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      DistributionInfo distributionInfo = cacheTopology.getDistribution(command.getKey());
+      Collection<Address> owners = distributionInfo.writeOwners();
       if (owners.size() == 1) {
          // There are no backups, skip the replication part.
          return localResult;
       }
-      Collection<Address> recipients = writeCH.isReplicated() ? null : owners;
+      Collection<Address> recipients = isReplicated ? null : owners;
 
       // Cache the matcher and reset it if we get OOTE (or any other exception) from backup
       ValueMatcher originalMatcher = command.getValueMatcher();
@@ -376,10 +366,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNext(ctx, command);
       }
 
-      CacheTopology cacheTopology = checkTopologyId(command);
-      ConsistentHash ch = cacheTopology.getReadConsistentHash();
-
-      Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, command.getKeys(), ch, null);
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, command.getKeys(), cacheTopology, null);
       if (requestedKeys.isEmpty()) {
          return invokeNext(ctx, command);
       }
@@ -439,7 +427,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return handleLocalOnlyReadManyCommand(ctx, command, helper.keys(command));
       }
 
-      CacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       Collection<?> keys = helper.keys(command);
       if (!ctx.isOriginLocal()) {
          return handleRemoteReadManyCommand(ctx, command, keys, helper);
@@ -451,7 +439,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       ConsistentHash ch = cacheTopology.getReadConsistentHash();
       int estimateForOneNode = 2 * keys.size() / ch.getMembers().size();
       List<Object> availableKeys = new ArrayList<>(estimateForOneNode);
-      Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, keys, ch, availableKeys);
+      Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, keys, cacheTopology, availableKeys);
 
       // TODO: while this works in a non-blocking way, the returned stream is not lazy as the functional
       // contract suggests. Traversable is also not honored as it is executed only locally on originator.
@@ -540,17 +528,20 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       });
    }
 
-   private Map<Address, List<Object>> getKeysByOwner(InvocationContext ctx, Collection<?> keys, ConsistentHash ch, List<Object> availableKeys) {
-      Map<Address, List<Object>> requestedKeys = new HashMap<>(ch.getMembers().size());
-      int estimateForOneNode = 2 * keys.size() / ch.getMembers().size();
+   private Map<Address, List<Object>> getKeysByOwner(InvocationContext ctx, Collection<?> keys,
+                                                     LocalizedCacheTopology cacheTopology,
+                                                     List<Object> availableKeys) {
+      int capacity = cacheTopology.getMembers().size();
+      Map<Address, List<Object>> requestedKeys = new HashMap<>(capacity);
+      int estimateForOneNode = 2 * keys.size() / capacity;
       for (Object key : keys) {
          CacheEntry entry = ctx.lookupEntry(key);
          if (entry == null) {
-            List<Address> owners = ch.locateOwners(key);
+            DistributionInfo distributionInfo = cacheTopology.getDistribution(key);
             // Let's try to minimize the number of messages by preferring owner to which we've already
             // decided to send message
             boolean foundExisting = false;
-            for (Address address : owners) {
+            for (Address address : distributionInfo.readOwners()) {
                if (address.equals(rpcManager.getAddress())) {
                   throw new IllegalStateException("Entry should be always wrapped!");
                }
@@ -564,7 +555,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             if (!foundExisting) {
                List<Object> list = new ArrayList<>(estimateForOneNode);
                list.add(key);
-               requestedKeys.put(owners.get(0), list);
+               requestedKeys.put(distributionInfo.primary(), list);
             }
          } else if (availableKeys != null) {
             availableKeys.add(key);
@@ -743,8 +734,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return handleMissingEntryOnRead(command);
       }
       if (readNeedsRemoteValue(command)) {
-         CacheTopology cacheTopology = checkTopologyId(command);
-         List<Address> owners = cacheTopology.getReadConsistentHash().locateOwners(key);
+         LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+         Collection<Address> owners = cacheTopology.getDistribution(key).readOwners();
          if (trace)
             log.tracef("Doing a remote get for key %s in topology %d to %s", key, cacheTopology.getTopologyId(), owners);
 
@@ -783,8 +774,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return responseValue;
    }
 
-   protected CacheTopology checkTopologyId(TopologyAffectedCommand command) {
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+   protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
+      LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
       int currentTopologyId = cacheTopology.getTopologyId();
       int cmdTopology = command.getTopologyId();
       if (currentTopologyId != cmdTopology && cmdTopology != -1) {

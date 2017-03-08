@@ -17,6 +17,6 @@ public class PrimaryOwnerFilter<K> implements KeyFilter<K> {
 
    @Override
    public boolean accept(K key) {
-      return cdl.localNodeIsPrimaryOwner(key);
+      return cdl.getCacheTopology().getDistribution(key).isPrimary();
    }
 }

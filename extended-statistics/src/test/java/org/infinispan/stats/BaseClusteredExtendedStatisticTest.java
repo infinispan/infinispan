@@ -74,11 +74,11 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    }
 
    protected static Collection<Address> getOwners(Cache<?, ?> cache, Object key) {
-      return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().locate(key));
+      return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().getCacheTopology().getWriteOwners(key));
    }
 
    protected static Collection<Address> getOwners(Cache<?, ?> cache, Collection<Object> keys) {
-      return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().locateAll(keys));
+      return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().getCacheTopology().getWriteOwners(keys));
    }
 
    public void testPut(Method method) throws InterruptedException {

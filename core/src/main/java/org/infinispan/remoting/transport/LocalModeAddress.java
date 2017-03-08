@@ -14,7 +14,7 @@ public class LocalModeAddress implements Address {
 
    @Override
    public String toString() {
-      return "Local Address";
+      return "<local>";
    }
 
    @Override

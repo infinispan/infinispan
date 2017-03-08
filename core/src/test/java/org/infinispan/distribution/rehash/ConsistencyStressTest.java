@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static org.infinispan.test.TestingUtil.sleepRandom;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -26,7 +27,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionTestHelper;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -59,9 +60,8 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
             .useLockStriping(false)
          .clustering()
             .cacheMode(CacheMode.DIST_SYNC)
+            .remoteTimeout(30000)
             .l1().disable()
-            .sync()
-               .replTimeout(30000)
          .transaction()
             .lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
@@ -113,7 +113,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       // lets make sure any rehashing work has completed
       TestingUtil.blockUntilViewsReceived(60000, false, cacheMap.values());
       TestingUtil.waitForRehashToComplete(cacheMap.values());
-      ConsistentHash hash = cache(1).getAdvancedCache().getDistributionManager().getConsistentHash();
+      LocalizedCacheTopology cacheTopology = cache(1).getAdvancedCache().getDistributionManager().getCacheTopology();
 
       for (int i = 0; i < NUM_NODES; i++) {
          for (int j = 0; j < WORKERS_PER_NODE; j++) {
@@ -122,13 +122,16 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
                if (keysToIgnore.contains(key)) {
                   log.infof("Skipping test on failing key %s", key);
                } else {
-                  List<Address> owners = hash.locateOwners(key);
+                  Collection<Address> owners = cacheTopology.getWriteOwners(key);
                   for (Map.Entry<Address, Cache<Object, Object>> e : cacheMap.entrySet()) {
                      try {
-                        if (owners.contains(e.getKey())) DistributionTestHelper.assertIsInContainerImmortal(e.getValue(), key);
+                        if (owners.contains(e.getKey())) {
+                           DistributionTestHelper.assertIsInContainerImmortal(e.getValue(), key);
+                        }
                         // Don't bother testing non-owners since invalidations caused by rehashing are async!
                      } catch (Throwable th) {
-                        log.fatalf("Key %s (segment %s) should be on owners %s according to %s", key, hash.getSegment(key), owners, hash);
+                        log.fatalf("Key %s (segment %s) should be on owners %s according to %s",
+                                   key, cacheTopology.getSegment(key), owners, cacheTopology);
                         throw th;
                      }
                   }
@@ -157,7 +160,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public Void call() {
+      public Void call() throws TimeoutException {
          for (int iterationId = 0; iterationId < NUM_ITERATIONS; iterationId++) {
             if (iterationId % 500 == 0)
                log.infof("  >> Stressor %s Worker %s Iteration %s", cacheId, workerId, iterationId);

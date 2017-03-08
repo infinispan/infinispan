@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
 
@@ -75,7 +77,9 @@ public interface ConsistentHash {
     * Useful as a performance optimization, as this is a frequently needed information.
     * @param key key to locate
     * @return the address of the owner
+    * @deprecated Since 9.0, please use {@link LocalizedCacheTopology#getDistribution(Object)} instead.
     */
+   @Deprecated
    default Address locatePrimaryOwner(Object key) {
       return locatePrimaryOwnerForSegment(getSegment(key));
    }
@@ -86,15 +90,21 @@ public interface ConsistentHash {
     * @param key key to locate
     * @return An unmodifiable list of addresses where the key resides.
     *         Will never be {@code null}, and it will always have at least 1 element.
+    * @deprecated Since 9.0, please use {@link LocalizedCacheTopology#getDistribution(Object)} instead.
     */
+   @Deprecated
    default List<Address> locateOwners(Object key) {
       return locateOwnersForSegment(getSegment(key));
    }
 
+   /**
+    * @deprecated Since 9.0, please use {@link LocalizedCacheTopology#getWriteOwners(Collection)} instead.
+    */
+   @Deprecated
    default Set<Address> locateAllOwners(Collection<Object> keys) {
       // Use a HashSet assuming most of the time the number of keys is small.
-      HashSet<Address> owners = new HashSet<Address>();
-      HashSet<Integer> segments = new HashSet<Integer>();
+      HashSet<Address> owners = new HashSet<>();
+      SmallIntSet segments = new SmallIntSet(getNumSegments());
       for (Object key : keys) {
          int segment = getSegment(key);
          if (segments.add(segment)) {
@@ -113,14 +123,20 @@ public interface ConsistentHash {
     * @param nodeAddress address of the node to test
     * @param key key to test
     * @return {@code true} if the key is mapped to the address; {@code false} otherwise
+    * @deprecated Since 9.0, please use {@link LocalizedCacheTopology#isReadOwner(Object)} and {@link LocalizedCacheTopology#isWriteOwner(Object)} instead.
     */
+   @Deprecated
    default boolean isKeyLocalToNode(Address nodeAddress, Object key) {
       return locateOwnersForSegment(getSegment(key)).contains(nodeAddress);
    }
 
    /**
     * @return The hash space segment that a key maps to.
+    *
+    * @deprecated Since 9.0, please use {@link KeyPartitioner#getSegment(Object)}
+    *    or {@link LocalizedCacheTopology#getSegment(Object)} instead.
     */
+   @Deprecated
    int getSegment(Object key);
 
    /**

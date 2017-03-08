@@ -1,4 +1,4 @@
-package org.infinispan.distribution.group;
+package org.infinispan.distribution.group.impl;
 
 import org.infinispan.filter.KeyFilter;
 

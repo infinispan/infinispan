@@ -1,4 +1,4 @@
-package org.infinispan.distribution.group;
+package org.infinispan.distribution.group.impl;
 
 import java.util.List;
 import java.util.Objects;
@@ -16,7 +16,6 @@ import org.infinispan.remoting.transport.Address;
  *
  * @author Dan Berindei
  * @since 8.2
- * @private
  */
 public class PartitionerConsistentHash implements ConsistentHash {
    private final ConsistentHash ch;

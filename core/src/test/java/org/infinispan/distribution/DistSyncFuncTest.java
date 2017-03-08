@@ -31,11 +31,11 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       for (int i = 0; i < 100; i++) keys[i] = Integer.toHexString(r.nextInt());
 
       for (String key : keys) {
-         List<Address> owners = new ArrayList<Address>();
+         List<Address> owners = new ArrayList<>();
          for (Cache<Object, String> c : caches) {
             boolean isOwner = isOwner(c, key);
             if (isOwner) owners.add(addressOf(c));
-            boolean secondCheck = getConsistentHash(c).locateOwners(key).contains(addressOf(c));
+            boolean secondCheck = getCacheTopology(c).getWriteOwners(key).contains(addressOf(c));
             assert isOwner == secondCheck : "Second check failed for key " + key + " on cache " + addressOf(c) + " isO = " + isOwner + " sC = " + secondCheck;
          }
          // check consensus
@@ -45,10 +45,10 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
    }
 
    private void assertOwnershipConsensus(String key) {
-      List l1 = getConsistentHash(c1).locateOwners(key);
-      List l2 = getConsistentHash(c2).locateOwners(key);
-      List l3 = getConsistentHash(c3).locateOwners(key);
-      List l4 = getConsistentHash(c4).locateOwners(key);
+      List l1 = getCacheTopology(c1).getDistribution(key).writeOwners();
+      List l2 = getCacheTopology(c2).getDistribution(key).writeOwners();
+      List l3 = getCacheTopology(c3).getDistribution(key).writeOwners();
+      List l4 = getCacheTopology(c4).getDistribution(key).writeOwners();
 
       assert l1.equals(l2) : "L1 "+l1+" and L2 "+l2+" don't agree.";
       assert l2.equals(l3): "L2 "+l2+" and L3 "+l3+" don't agree.";
@@ -112,17 +112,14 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            try {
-               assertOnAllCachesAndOwnership("k1", "value2");
-            } catch (AssertionError e) {
-               log.debugf("Assertion failed once", e);
-               return false;
-            }
-            return true;
+      eventually(() -> {
+         try {
+            assertOnAllCachesAndOwnership("k1", "value2");
+         } catch (AssertionError e) {
+            log.debugf("Assertion failed once", e);
+            return false;
          }
+         return true;
       });
 
       if (testRetVals) assert null == retval;
@@ -183,7 +180,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       assertOnAllCachesAndOwnership("k1", "value");
 
-      assert !nonOwner.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).getLocality("k1").isLocal();
+      assert !nonOwner.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).getCacheTopology().isWriteOwner("k1");
       retval = nonOwner.replace("k1", "value", "value2");
       asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assert retval : "Should have replaced";

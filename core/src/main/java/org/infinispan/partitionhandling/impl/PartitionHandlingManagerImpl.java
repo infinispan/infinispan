@@ -243,7 +243,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       if (availabilityMode == AvailabilityMode.AVAILABLE)
          return;
 
-      List<Address> owners = distributionManager.locate(key);
+      Collection<Address> owners = distributionManager.getCacheTopology().getDistribution(key).writeOwners();
       List<Address> actualMembers = stateTransferManager.getCacheTopology().getActualMembers();
       if (!actualMembers.containsAll(owners)) {
          if (trace) log.tracef("Partition is in %s mode, access is not allowed for key %s", availabilityMode, key);

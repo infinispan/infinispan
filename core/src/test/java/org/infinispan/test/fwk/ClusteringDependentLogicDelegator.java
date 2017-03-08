@@ -1,8 +1,5 @@
 package org.infinispan.test.fwk;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.container.entries.CacheEntry;
@@ -11,6 +8,7 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
@@ -30,18 +28,8 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
-   public boolean localNodeIsOwner(Object key) {
-      return clusteringDependentLogic.localNodeIsOwner(key);
-   }
-
-   @Override
-   public boolean localNodeIsPrimaryOwner(Object key) {
-      return clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-   }
-
-   @Override
-   public Address getPrimaryOwner(Object key) {
-      return clusteringDependentLogic.getPrimaryOwner(key);
+   public LocalizedCacheTopology getCacheTopology() {
+      return clusteringDependentLogic.getCacheTopology();
    }
 
    @Override
@@ -55,16 +43,6 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
-   public List<Address> getOwners(Collection<Object> keys) {
-      return clusteringDependentLogic.getOwners(keys);
-   }
-
-   @Override
-   public List<Address> getOwners(Object key) {
-      return clusteringDependentLogic.getOwners(key);
-   }
-
-   @Override
    public EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand) {
       return clusteringDependentLogic.createNewVersionsAndCheckForWriteSkews(versionGenerator, context, prepareCommand);
    }
@@ -72,10 +50,5 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    @Override
    public Address getAddress() {
       return clusteringDependentLogic.getAddress();
-   }
-
-   @Override
-   public int getSegmentForKey(Object key) {
-      return clusteringDependentLogic.getSegmentForKey(key);
    }
 }

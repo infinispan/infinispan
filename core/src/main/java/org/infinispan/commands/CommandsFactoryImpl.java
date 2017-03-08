@@ -87,7 +87,7 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -166,7 +166,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private GroupManager groupManager;
    private LocalStreamManager localStreamManager;
    private ClusterStreamManager clusterStreamManager;
-   @SuppressWarnings("deprecation")
    private ClusteringDependentLogic clusteringDependentLogic;
    private CommandAckCollector commandAckCollector;
 
@@ -185,7 +184,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  XSiteStateTransferManager xSiteStateTransferManager,
                                  GroupManager groupManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
+                                 ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
                                  CommandAckCollector commandAckCollector) {
       this.dataContainer = container;
       this.notifier = notifier;

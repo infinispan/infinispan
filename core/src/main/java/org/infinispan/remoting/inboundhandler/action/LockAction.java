@@ -28,7 +28,7 @@ public class LockAction extends BaseLockingAction implements LockListener {
    private final CompletableFuture<Void> notifier;
    private volatile LockPromise lockPromise;
 
-   public LockAction(LockManager lockManager, @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic) {
+   public LockAction(LockManager lockManager, ClusteringDependentLogic clusteringDependentLogic) {
       super(clusteringDependentLogic);
       this.lockManager = lockManager;
       notifier = new CompletableFuture<>();

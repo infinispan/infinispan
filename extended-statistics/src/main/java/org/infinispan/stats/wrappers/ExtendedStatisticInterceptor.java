@@ -656,15 +656,16 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    @ManagedAttribute(description = "Number of replicas for each key",
                      displayName = "Replication Degree")
    public double getReplicationDegree() {
-      if (distributionManager != null) {
-         //distributed mode
-         return distributionManager.getConsistentHash().getNumOwners();
-      } else if (rpcManager != null) {
-         //replicated or other clustered mode
-         return this.rpcManager.getTransport().getMembers().size();
+      switch (cacheConfiguration.clustering().cacheMode()) {
+         case DIST_SYNC:
+         case DIST_ASYNC:
+            return cacheConfiguration.clustering().hash().numOwners();
+         case REPL_ASYNC:
+         case REPL_SYNC:
+            return rpcManager.getMembers().size();
+         default:
+            return 1;
       }
-      //local mode
-      return 1;
    }
 
    @ManagedAttribute(description = "Number of concurrent transactions executing on the current node",
@@ -807,7 +808,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    private boolean isRemote(Object key) {
-      return distributionManager != null && !distributionManager.getLocality(key).isLocal();
+      return distributionManager != null && !distributionManager.getCacheTopology().isWriteOwner(key);
    }
 
    private void replace() {

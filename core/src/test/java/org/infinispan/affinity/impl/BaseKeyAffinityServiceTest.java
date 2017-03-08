@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
@@ -44,8 +44,8 @@ public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest<
    }
 
    protected void assertMapsToAddress(Object o, Address addr) {
-      ConsistentHash hash = caches.get(0).getAdvancedCache().getDistributionManager().getConsistentHash();
-      List<Address> addresses = hash.locateOwners(o);
+      LocalizedCacheTopology cacheTopology = caches.get(0).getAdvancedCache().getDistributionManager().getCacheTopology();
+      List<Address> addresses = cacheTopology.getDistribution(o).writeOwners();
       assertEquals("Expected key " + o + " to map to address " + addr + ". List of addresses is" + addresses, true, addresses.contains(addr));
    }
 

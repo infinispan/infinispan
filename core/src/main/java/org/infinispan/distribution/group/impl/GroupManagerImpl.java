@@ -1,4 +1,4 @@
-package org.infinispan.distribution.group;
+package org.infinispan.distribution.group.impl;
 
 import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
@@ -13,34 +13,24 @@ import java.util.concurrent.ConcurrentMap;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.group.Group;
+import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
 
-/**
- * @private
- */
 public class GroupManagerImpl implements GroupManager {
 
     private interface GroupMetadata {
-
-        GroupMetadata NONE = new GroupMetadata() {
-
-            @Override
-            public String getGroup(Object instance) {
-                return null;
-            }
-
-        };
+        GroupMetadata NONE = instance -> null;
 
         String getGroup(Object instance);
-
     }
 
     private static class GroupMetadataImpl implements GroupMetadata {
         private final Method method;
 
-        public GroupMetadataImpl(Method method) {
+        GroupMetadataImpl(Method method) {
             if (!String.class.isAssignableFrom(method.getReturnType()))
                 throw new IllegalArgumentException(Util.formatString("@Group method %s must return java.lang.String", method));
             if (method.getParameterTypes().length > 0)
@@ -78,7 +68,7 @@ public class GroupManagerImpl implements GroupManager {
 
     private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
     private final List<Grouper<?>> groupers;
-    private ClusteringDependentLogic clusteringDependentLogic;
+    private DistributionManager distributionManager;
 
     public GroupManagerImpl(List<Grouper<?>> groupers) {
         this.groupMetadataCache = CollectionFactory.makeConcurrentMap();
@@ -89,8 +79,8 @@ public class GroupManagerImpl implements GroupManager {
     }
 
     @Inject
-    public void injectDependencies(ClusteringDependentLogic clusteringDependentLogic) {
-        this.clusteringDependentLogic = clusteringDependentLogic;
+    public void injectDependencies(DistributionManager distributionManager) {
+        this.distributionManager = distributionManager;
     }
 
     @Override
@@ -104,17 +94,17 @@ public class GroupManagerImpl implements GroupManager {
 
    @Override
    public boolean isOwner(String group) {
-      return clusteringDependentLogic.localNodeIsOwner(group);
+      return distributionManager.getCacheTopology().isWriteOwner(group);
    }
 
    @Override
    public Address getPrimaryOwner(String group) {
-      return clusteringDependentLogic.getPrimaryOwner(group);
+      return distributionManager.getCacheTopology().getDistribution(group).primary();
    }
 
    @Override
    public boolean isPrimaryOwner(String group) {
-      return clusteringDependentLogic.localNodeIsPrimaryOwner(group);
+      return distributionManager.getCacheTopology().getDistribution(group).isPrimary();
    }
 
    private String applyGroupers(String group, Object key) {

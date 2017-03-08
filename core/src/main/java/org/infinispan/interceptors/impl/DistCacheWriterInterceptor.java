@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
@@ -14,12 +13,9 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,14 +36,12 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
-   private DistributionManager dm;
-   private Transport transport;
-   private Address address;
-
    private static final Log log = LogFactory.getLog(DistCacheWriterInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   private DistributionManager dm;
+
    private boolean isUsingLockDelegation;
-   private ClusteringDependentLogic cdl;
-   private StateTransferManager stateTransferManager;
 
    @Override
    protected Log getLog() {
@@ -55,17 +49,14 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    }
 
    @Inject
-   public void inject(DistributionManager dm, Transport transport, ClusteringDependentLogic cdl, StateTransferManager stateTransferManager) {
+   public void inject(DistributionManager dm) {
       this.dm = dm;
-      this.transport = transport;
-      this.cdl = cdl;
-      this.stateTransferManager = stateTransferManager;
    }
 
    @Start(priority = 25) // after the distribution manager!
    @SuppressWarnings("unused")
-   private void setAddress() {
-      this.address = transport.getAddress();
+   protected void start() {
+      super.start();
       this.isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional();
    }
 
@@ -90,18 +81,19 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         PutMapCommand putMapCommand = (PutMapCommand) rCommand;
-         if (!isStoreEnabled(putMapCommand) || rCtx.isInTxScope())
-            return rv;
+      if (!isStoreEnabled(command) || ctx.isInTxScope())
+         return invokeNext(ctx, command);
 
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         PutMapCommand putMapCommand = (PutMapCommand) rCommand;
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
          Map<Object, Object> map = putMapCommand.getMap();
          int count = 0;
          for (Object key : map.keySet()) {
             // In non-tx mode, a node may receive the same forwarded PutMapCommand many times - but each time
             // it must write only the keys locked on the primary owner that forwarded the command
             if (isUsingLockDelegation && putMapCommand.isForwarded() &&
-                  !dm.getPrimaryLocation(key).equals(rCtx.getOrigin()))
+                  !cacheTopology.getDistribution(key).primary().equals(rCtx.getOrigin()))
                continue;
 
             if (isProperWriter(rCtx, putMapCommand, key)) {
@@ -111,8 +103,6 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
          }
          if (getStatisticsEnabled())
             cacheStores.getAndAdd(count);
-
-         return rv;
       });
    }
 
@@ -128,7 +118,8 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
          boolean resp = persistenceManager
                .deleteFromAllStores(key, skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
-         log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
+         if (trace)
+            log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
 
          return rv;
       });
@@ -155,7 +146,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
    @Override
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {
-      return !cdl.localNodeIsPrimaryOwner(key) || command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE);
+      return !dm.getCacheTopology().getDistribution(key).isPrimary() || command.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE);
    }
 
    @Override
@@ -163,19 +154,12 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       if (command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK))
          return true;
 
-      if (isUsingLockDelegation && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-         if (ctx.isOriginLocal() && !dm.getPrimaryLocation(key).equals(address)) {
-            // The command will be forwarded back to the originator, and the value will be stored then
-            // (while holding the lock on the primary owner).
-            log.tracef("Skipping cache store on the originator because it is not the primary owner " +
-                             "of key %s", toStr(key));
-            return false;
-         }
+      if (isUsingLockDelegation && ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+         // If the originator is a backup, the command will be forwarded back to it, and the value will be stored then
+         // (while holding the lock on the primary owner).
+         return dm.getCacheTopology().getDistribution(key).isPrimary();
+      } else {
+         return dm.getCacheTopology().isWriteOwner(key);
       }
-      if (stateTransferManager.getCacheTopology() != null && !dm.getWriteConsistentHash().isKeyLocalToNode(address, key)) {
-         log.tracef("Skipping cache store since the key is not local: %s", key);
-         return false;
-      }
-      return true;
    }
 }

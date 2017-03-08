@@ -13,7 +13,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -45,7 +45,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    protected StateTransferManager stateTransferManager;
    protected StateTransferLock stateTransferLock;
    protected Executor remoteExecutor;
-   private GroupManager groupManager;
+   private DistributionManager distributionManager;
    private ScheduledExecutorService timeoutExecutor;
 
    private long transactionDataTimeout;
@@ -54,12 +54,12 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    @Inject
    public void init(StateTransferLock stateTransferLock, Configuration configuration,
-                    StateTransferManager stateTransferManager, GroupManager groupManager,
+                    StateTransferManager stateTransferManager, DistributionManager distributionManager,
                     @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
                     @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) Executor remoteExecutor) {
       this.stateTransferLock = stateTransferLock;
       this.stateTransferManager = stateTransferManager;
-      this.groupManager = groupManager;
+      this.distributionManager = distributionManager;
       this.timeoutExecutor = timeoutExecutor;
       this.remoteExecutor = remoteExecutor;
       transactionDataTimeout = configuration.clustering().remoteTimeout();
@@ -76,7 +76,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
             GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) rCommand;
             final int commandTopologyId = cmd.getTopologyId();
             String groupName = cmd.getGroupName();
-            if (groupManager.isOwner(groupName) && currentTopologyId() != commandTopologyId) {
+            if (currentTopologyId() != commandTopologyId &&
+                  distributionManager.getCacheTopology().isWriteOwner(groupName)) {
                throw new OutdatedTopologyException(
                      "Cache topology changed while the command was executing: expected " +
                            commandTopologyId + ", got " + currentTopologyId());
@@ -99,7 +100,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          shouldRetry = ce instanceof OutdatedTopologyException || ce instanceof SuspectException;
       } else {
          // Only check the topology id if if we are an owner
-         shouldRetry = groupManager.isOwner(cmd.getGroupName()) && currentTopologyId() != commandTopologyId;
+         shouldRetry = currentTopologyId() != commandTopologyId &&
+               distributionManager.getCacheTopology().isWriteOwner(cmd.getGroupName());
       }
       if (shouldRetry) {
          logRetry(cmd);
@@ -144,7 +146,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          getLog().tracef("Retrying command %s for topology %d", command, topologyId);
          return invokeNextAndHandle(ctx, command, callback);
       } else {
-         CancellableRetry<T> cancellableRetry = new CancellableRetry<>(command, topologyId, stateTransferManager);
+         CancellableRetry<T> cancellableRetry = new CancellableRetry<>(command, topologyId);
          // We have to use handleAsync and rethrow the exception in the handler, rather than
          // thenComposeAsync(), because if `future` completes with an exception we want to continue in remoteExecutor
          CompletableFuture<Void> retryFuture = future.handleAsync(cancellableRetry, remoteExecutor);
@@ -170,18 +172,17 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
       private final T command;
       private final int topologyId;
-      private final StateTransferManager stateTransferManager;
       private volatile Throwable cancelled = null;
       // retryFuture is not volatile because it is used only in the timeout handler = run()
       // and that is scheduled after retryFuture is set
       private CompletableFuture<Void> retryFuture;
       // ScheduledFuture does not have any dummy implementations, so we'll use plain Object as the field
+      @SuppressWarnings("unused")
       private volatile Object timeoutFuture;
 
-      public CancellableRetry(T command, int topologyId, StateTransferManager stateTransferManager) {
+      public CancellableRetry(T command, int topologyId) {
          this.command = command;
          this.topologyId = topologyId;
-         this.stateTransferManager = stateTransferManager;
       }
 
       /**

@@ -53,7 +53,8 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          if (!skipXSiteBackup(dataWriteCommand)) {
-            if (dataWriteCommand.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(dataWriteCommand.getKey())) {
+            if (dataWriteCommand.isSuccessful() &&
+                  clusteringDependentLogic.getCacheTopology().getDistribution(dataWriteCommand.getKey()).isPrimary()) {
                backupSender.processResponses(backupSender.backupWrite(transform(dataWriteCommand)), dataWriteCommand);
             }
          }

@@ -1,21 +1,26 @@
 package org.infinispan.distribution.impl;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DataLocality;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,8 +42,11 @@ public class DistributionManagerImpl implements DistributionManager {
    private static final boolean trace = log.isTraceEnabled();
 
    // Injected components
-   private RpcManager rpcManager;
-   private StateTransferManager stateTransferManager;
+   private Transport transport;
+   private KeyPartitioner keyPartitioner;
+   private CacheMode cacheMode;
+
+   private volatile LocalizedCacheTopology extendedTopology;
 
    /**
     * Default constructor
@@ -47,85 +55,81 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Inject
-   public void init(RpcManager rpcManager, StateTransferManager stateTransferManager) {
-      this.rpcManager = rpcManager;
-      this.stateTransferManager = stateTransferManager;
+   public void init(Transport transport, Configuration configuration, KeyPartitioner keyPartitioner) {
+      this.transport = transport;
+      this.keyPartitioner = keyPartitioner;
+      this.cacheMode = configuration.clustering().cacheMode();
    }
 
-   // The DMI is cache-scoped, so it will always start after the RMI, which is global-scoped
-   @Start(priority = 20)
+   // Start before RpcManagerImpl
+   @Start(priority = 8)
    @SuppressWarnings("unused")
    private void start() throws Exception {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
+
+      // We need an extended topology for preload, before the start of StateTransferManagerImpl
+      Address localAddress = transport.getAddress();
+      extendedTopology = LocalizedCacheTopology.makeSingletonTopology(cacheMode, localAddress);
    }
 
    private Address getAddress() {
-      return rpcManager.getAddress();
+      return transport.getAddress();
    }
 
    @Override
    public DataLocality getLocality(Object key) {
-      boolean transferInProgress = stateTransferManager.isStateTransferInProgressForKey(key);
-      CacheTopology topology = stateTransferManager.getCacheTopology();
-
-      // Null topology means state transfer has not occurred,
-      // hence data should be stored locally.
-      boolean local = topology == null
-            || topology.getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
-
-      if (transferInProgress) {
-         if (local) {
-            return DataLocality.LOCAL_UNCERTAIN;
-         } else {
-            return DataLocality.NOT_LOCAL_UNCERTAIN;
-         }
+      LocalizedCacheTopology info = this.extendedTopology;
+      if (info == null) {
+         return DataLocality.NOT_LOCAL;
+      }
+      DistributionInfo segmentInfo = info.getDistribution(key);
+      if (segmentInfo.isReadOwner()) {
+         return DataLocality.LOCAL;
+      } else if (segmentInfo.isWriteOwner()) {
+         return DataLocality.LOCAL_UNCERTAIN;
       } else {
-         if (local) {
-            return DataLocality.LOCAL;
-         } else {
-            return DataLocality.NOT_LOCAL;
-         }
+         return DataLocality.NOT_LOCAL;
       }
    }
 
    @Override
    public List<Address> locate(Object key) {
-      return getConsistentHash().locateOwners(key);
+      return extendedTopology.getDistribution(key).writeOwners();
    }
 
    @Override
    public Address getPrimaryLocation(Object key) {
-      return getConsistentHash().locatePrimaryOwner(key);
+      return extendedTopology.getDistribution(key).primary();
    }
 
    @Override
    public Set<Address> locateAll(Collection<Object> keys) {
-      return getConsistentHash().locateAllOwners(keys);
-   }
-
-   @Override
-   public ConsistentHash getConsistentHash() {
-      return getWriteConsistentHash();
+      Collection<Address> owners = extendedTopology.getWriteOwners(keys);
+      return new HashSet<>(owners);
    }
 
    @Override
    public ConsistentHash getReadConsistentHash() {
-      return stateTransferManager.getCacheTopology().getReadConsistentHash();
+      return extendedTopology.getReadConsistentHash();
    }
 
    @Override
    public ConsistentHash getWriteConsistentHash() {
-      return stateTransferManager.getCacheTopology().getWriteConsistentHash();
+      return extendedTopology.getWriteConsistentHash();
    }
 
-   // TODO Move these methods to the StateTransferManager interface so we can eliminate the dependency
    @Override
    @ManagedOperation(
          description = "Determines whether a given key is affected by an ongoing rehash, if any.",
          displayName = "Could key be affected by rehash?"
    )
    public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
-      return stateTransferManager.isStateTransferInProgressForKey(key);
+      if (!isRehashInProgress())
+         return false;
+
+      int segment = keyPartitioner.getSegment(key);
+      DistributionInfo distributionInfo = this.extendedTopology.getDistribution(segment);
+      return distributionInfo.isWriteOwner() && !distributionInfo.isReadOwner();
    }
 
    /**
@@ -135,31 +139,43 @@ public class DistributionManagerImpl implements DistributionManager {
     */
    @Override
    public boolean isRehashInProgress() {
-      return stateTransferManager.isStateTransferInProgress();
+      return extendedTopology.getPendingCH() != null;
    }
 
    @Override
    public boolean isJoinComplete() {
-      return stateTransferManager.isJoinComplete();
+      return extendedTopology != null;
    }
 
    @ManagedOperation(
-         description = "Tells you whether a given key is local to this instance of the cache according to the consistent hashing algorithm. " +
-               "Only works with String keys. This operation might return true even if the object does not exist in the cache.",
+         description = "Tells you whether a given key would be written to this instance of the cache according to the consistent hashing algorithm. " +
+               "Only works with String keys.",
          displayName = "Is key local?"
    )
    public boolean isLocatedLocally(@Parameter(name = "key", description = "Key to query") String key) {
-      return getLocality(key).isLocal();
+      return getCacheTopology().isWriteOwner(key);
    }
 
    @ManagedOperation(
-         description = "Shows the addresses of the nodes where a put operation would store the entry associated with the specified key. Only " +
-               "works with String keys. The list of potential owners is returned even if the object does not exist in the cache.",
+         description = "Shows the addresses of the nodes where a write operation would store the entry associated with the specified key. Only " +
+               "works with String keys.",
          displayName = "Locate key"
    )
    public List<String> locateKey(@Parameter(name = "key", description = "Key to locate") String key) {
-      List<String> l = new LinkedList<String>();
-      for (Address a : locate(key)) l.add(a.toString());
-      return l;
+      List<Address> addresses = getCacheTopology().getDistribution(key).writeOwners();
+      return addresses.stream()
+                      .map(Address::toString)
+                      .collect(Collectors.toList());
    }
+
+   @Override
+   public LocalizedCacheTopology getCacheTopology() {
+      return this.extendedTopology;
+   }
+
+   @Override
+   public void setCacheTopology(CacheTopology cacheTopology) {
+      this.extendedTopology = new LocalizedCacheTopology(cacheMode, cacheTopology, keyPartitioner, transport.getAddress());
+   }
+
 }

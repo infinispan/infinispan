@@ -5,11 +5,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +21,7 @@ import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.PersistentUUID;
+import org.infinispan.commons.util.SmallIntSet;
 
 import net.jcip.annotations.Immutable;
 
@@ -69,7 +67,7 @@ public class DefaultConsistentHash implements ConsistentHash {
 
       this.numOwners = numOwners;
       this.hashFunction = hashFunction;
-      this.members = new ArrayList<Address>(members);
+      this.members = new ArrayList<>(members);
       if (capacityFactors == null) {
          this.capacityFactors = null;
       } else {
@@ -155,7 +153,7 @@ public class DefaultConsistentHash implements ConsistentHash {
          throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
 
-      Set<Integer> segments = new HashSet<Integer>();
+      Set<Integer> segments = new SmallIntSet(segmentOwners.length);
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          if (segmentOwners[segment].contains(owner)) {
             segments.add(segment);
@@ -173,7 +171,7 @@ public class DefaultConsistentHash implements ConsistentHash {
          throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
 
-      Set<Integer> segments = new HashSet<Integer>();
+      SmallIntSet segments = new SmallIntSet(segmentOwners.length);
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          if (owner.equals(segmentOwners[segment].get(0))) {
             segments.add(segment);
@@ -188,7 +186,7 @@ public class DefaultConsistentHash implements ConsistentHash {
       return getNormalizedHash(key) / segmentSize;
    }
 
-   public int getNormalizedHash(Object key) {
+   private int getNormalizedHash(Object key) {
       return hashFunction.hash(key) & Integer.MAX_VALUE;
    }
 
@@ -198,7 +196,7 @@ public class DefaultConsistentHash implements ConsistentHash {
    @Deprecated
    public List<Integer> getSegmentEndHashes() {
       int numSegments = segmentOwners.length;
-      List<Integer> hashes = new ArrayList<Integer>(numSegments);
+      List<Integer> hashes = new ArrayList<>(numSegments);
       for (int i = 0; i < numSegments; i++) {
          hashes.add(((i + 1) % numSegments) * segmentSize);
       }
@@ -223,35 +221,6 @@ public class DefaultConsistentHash implements ConsistentHash {
    @Override
    public int getNumOwners() {
       return numOwners;
-   }
-
-   @Override
-   public Address locatePrimaryOwner(Object key) {
-      return locatePrimaryOwnerForSegment(getSegment(key));
-   }
-
-   @Override
-   public List<Address> locateOwners(Object key) {
-      return locateOwnersForSegment(getSegment(key));
-   }
-
-   @Override
-   public Set<Address> locateAllOwners(Collection<Object> keys) {
-      // Use a HashSet assuming most of the time the number of keys is small.
-      HashSet<Integer> segments = new HashSet<Integer>();
-      for (Object key : keys) {
-         segments.add(getSegment(key));
-      }
-      HashSet<Address> ownersUnion = new HashSet<Address>();
-      for (Integer segment : segments) {
-         ownersUnion.addAll(segmentOwners[segment]);
-      }
-      return ownersUnion;
-   }
-
-   @Override
-   public boolean isKeyLocalToNode(Address nodeAddress, Object key) {
-      return isSegmentLocalToNode(nodeAddress, getSegment(key));
    }
 
    @Override
@@ -310,14 +279,15 @@ public class DefaultConsistentHash implements ConsistentHash {
    @Override
    public String getRoutingTableAsString() {
       StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < segmentOwners.length; i++) {
-         if (i > 0) {
-            sb.append(", ");
+      for (Address a : members) {
+         if (sb.length() > 0) {
+            sb.append("\n  ");
          }
-         sb.append(i).append(":");
-         for (int j = 0; j < segmentOwners[i].size(); j++) {
-            sb.append(' ').append(members.indexOf(segmentOwners[i].get(j)));
-         }
+         Set<Integer> primarySegments = getPrimarySegmentsForOwner(a);
+         sb.append(a).append(" primary: ").append(primarySegments);
+         Set<Integer> backupSegments = getSegmentsForOwner(a);
+         backupSegments.removeAll(primarySegments);
+         sb.append(", backup: ").append(backupSegments);
       }
       return sb.toString();
    }
@@ -338,18 +308,18 @@ public class DefaultConsistentHash implements ConsistentHash {
          throw new IllegalArgumentException("The consistent hash objects must have the same number of owners");
       }
 
-      List<Address> unionMembers = new ArrayList<Address>(this.members);
+      List<Address> unionMembers = new ArrayList<>(this.members);
       mergeLists(unionMembers, dch2.getMembers());
 
       List<Address>[] unionSegmentOwners = new List[numSegments];
       for (int i = 0; i < numSegments; i++) {
-         unionSegmentOwners[i] = new ArrayList<Address>(locateOwnersForSegment(i));
+         unionSegmentOwners[i] = new ArrayList<>(locateOwnersForSegment(i));
          mergeLists(unionSegmentOwners[i], dch2.locateOwnersForSegment(i));
       }
 
       Map<Address, Float> unionCapacityFactors = null;
       if (this.capacityFactors != null || dch2.capacityFactors != null) {
-         unionCapacityFactors = new HashMap<Address, Float>();
+         unionCapacityFactors = new HashMap<>();
          if (this.capacityFactors != null) {
             unionCapacityFactors.putAll(this.getCapacityFactors());
          } else {
@@ -439,8 +409,8 @@ public class DefaultConsistentHash implements ConsistentHash {
    @Override
    public ConsistentHash remapAddresses(UnaryOperator<Address> remapper) {
       List<Address> remappedMembers = new ArrayList<>(members.size());
-      for(Iterator<Address> i = members.iterator(); i.hasNext(); ) {
-         Address a = remapper.apply(i.next());
+      for (Address member : members) {
+         Address a = remapper.apply(member);
          if (a == null) {
             return null;
          }
@@ -456,8 +426,8 @@ public class DefaultConsistentHash implements ConsistentHash {
       List<Address>[] remappedSegmentOwners = new List[segmentOwners.length];
       for(int i=0; i < segmentOwners.length; i++) {
          List<Address> remappedOwners = new ArrayList<>(segmentOwners[i].size());
-         for(Iterator<Address> j = segmentOwners[i].iterator(); j.hasNext(); ) {
-            remappedOwners.add(remapper.apply(j.next()));
+         for (Address address : segmentOwners[i]) {
+            remappedOwners.add(remapper.apply(address));
          }
          remappedSegmentOwners[i] = remappedOwners;
       }
@@ -481,8 +451,8 @@ public class DefaultConsistentHash implements ConsistentHash {
          for (int i = 0; i < ch.segmentOwners.length; i++) {
             List<Address> owners = ch.segmentOwners[i];
             output.writeInt(owners.size());
-            for (int j = 0; j < owners.size(); j++) {
-               output.writeInt(memberIndexes.get(owners.get(j)));
+            for (Address owner : owners) {
+               output.writeInt(memberIndexes.get(owner));
             }
          }
       }

@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +35,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
@@ -47,7 +47,6 @@ import org.infinispan.remoting.responses.WriteResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferInterceptor;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -133,32 +132,31 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    }
 
    private Object handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
-      CacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       final ConsistentHash ch = cacheTopology.getWriteConsistentHash();
       final VisitableCommand.LoadType loadType = command.loadType();
 
       if (command.isForwarded() || ch.getNumOwners() == 1) {
          //backup & remote || no backups
          return asyncInvokeNext(ctx, command,
-               checkRemoteGetIfNeeded(ctx, command, command.getMap().keySet(), ch, loadType == OWNER));
+               checkRemoteGetIfNeeded(ctx, command, command.getMap().keySet(), cacheTopology, loadType == OWNER));
       }
       //primary, we need to send the command to the backups ordered!
-      sendToBackups(command, command.getMap(), ch);
+      sendToBackups(command, command.getMap(), cacheTopology);
       return asyncInvokeNext(ctx, command,
-            checkRemoteGetIfNeeded(ctx, command, command.getMap().keySet(), ch, loadType == OWNER));
+            checkRemoteGetIfNeeded(ctx, command, command.getMap().keySet(), cacheTopology, loadType == OWNER));
    }
 
-   private void sendToBackups(PutMapCommand command, Map<Object, Object> entries, ConsistentHash ch) {
-      BackupOwnerClassifier filter = new BackupOwnerClassifier(ch, entries.size());
+   private void sendToBackups(PutMapCommand command, Map<Object, Object> entries, LocalizedCacheTopology cacheTopology) {
+      BackupOwnerClassifier filter = new BackupOwnerClassifier(cacheTopology, entries.size());
       entries.entrySet().forEach(filter::add);
       int topologyId = command.getTopologyId();
       for (Map.Entry<Integer, Map<Object, Object>> entry : filter.perSegmentKeyValue.entrySet()) {
          int segmentId = entry.getKey();
-         List<Address> owners = ch.locateOwnersForSegment(segmentId);
-         int size = owners.size();
-         if (size == 1) {
-            //only the primary owner
-            continue; //or break? can we have another segment with backups?
+         Collection<Address> backups = cacheTopology.getDistributionForSegment(segmentId).writeBackups();
+         if (backups.isEmpty()) {
+            // Only the primary owner. Other segments may have more than one owner, e.g. during rebalance.
+            continue;
          }
          Map<Object, Object> map = entry.getValue();
          long sequence = triangleOrderManager.next(segmentId, topologyId);
@@ -169,15 +167,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
                   sequence);
          }
-         rpcManager.sendToMany(owners.subList(1, size), backupPutMapRcpCommand, DeliverOrder.NONE);
+         rpcManager.sendToMany(backups, backupPutMapRcpCommand, DeliverOrder.NONE);
       }
    }
 
    private Object handleLocalPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       //local command. we need to split by primary owner to send the command to them
-      final CacheTopology cacheTopology = checkTopologyId(command);
-      final ConsistentHash consistentHash = cacheTopology.getWriteConsistentHash();
-      final PrimaryOwnerClassifier filter = new PrimaryOwnerClassifier(consistentHash, command.getMap().size());
+      final LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      final PrimaryOwnerClassifier filter = new PrimaryOwnerClassifier(cacheTopology, command.getMap().size());
       final boolean sync = isSynchronous(command);
       final VisitableCommand.LoadType loadType = command.loadType();
 
@@ -198,10 +195,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             return null;
          });
          if (localEntries != null) {
-            sendToBackups(command, localEntries, consistentHash);
-            CompletableFuture<?> remoteGet = checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), consistentHash,
-                  loadType == PRIMARY || loadType == OWNER);
-
+            sendToBackups(command, localEntries, cacheTopology);
+            CompletableFuture<?> remoteGet = checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), cacheTopology,
+                                                                loadType == PRIMARY || loadType == OWNER);
             return makeStage(asyncInvokeNext(ctx, command, remoteGet))
                   .andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
                      if (throwable != null) {
@@ -221,21 +217,21 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       final Map<Object, Object> localEntries = filter.primaries.remove(localAddress);
       forwardToPrimaryOwners(command, filter);
       if (localEntries != null) {
-         sendToBackups(command, localEntries, consistentHash);
+         sendToBackups(command, localEntries, cacheTopology);
          return asyncInvokeNext(ctx, command,
-               checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), consistentHash,
+               checkRemoteGetIfNeeded(ctx, command, localEntries.keySet(), cacheTopology,
                      loadType == PRIMARY || loadType == OWNER));
       }
       return null;
    }
 
    private <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<?> checkRemoteGetIfNeeded(
-         InvocationContext ctx, C command, Set<Object> keys, ConsistentHash consistentHash,
+         InvocationContext ctx, C command, Set<Object> keys, LocalizedCacheTopology cacheTopology,
          boolean needsPreviousValue) {
       if (!needsPreviousValue) {
          for (Object key : keys) {
             CacheEntry cacheEntry = ctx.lookupEntry(key);
-            if (cacheEntry == null && consistentHash.isKeyLocalToNode(localAddress, key)) {
+            if (cacheEntry == null && cacheTopology.isWriteOwner(key)) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             }
          }
@@ -244,7 +240,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       final List<CompletableFuture<?>> futureList = new ArrayList<>(keys.size());
       for (Object key : keys) {
          CacheEntry cacheEntry = ctx.lookupEntry(key);
-         if (cacheEntry == null && consistentHash.isKeyLocalToNode(localAddress, key)) {
+         if (cacheEntry == null && cacheTopology.isWriteOwner(key)) {
             wrapKeyExternally(ctx, command, key, futureList);
          }
       }
@@ -296,26 +292,23 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          //don't go through the triangle
          return invokeNext(context, command);
       }
-      final CacheTopology topology = checkTopologyId(command);
-      DistributionInfo distributionInfo = new DistributionInfo(command.getKey(), topology.getWriteConsistentHash(),
-            localAddress);
+      LocalizedCacheTopology topology = checkTopologyId(command);
+      DistributionInfo distributionInfo = topology.getDistribution(command.getKey());
 
-      switch (distributionInfo.ownership()) {
-         case PRIMARY:
-            assert context.lookupEntry(command.getKey()) != null;
-            return context.isOriginLocal() ?
-                  localPrimaryOwnerWrite(context, command, distributionInfo) :
-                  remotePrimaryOwnerWrite(context, command, distributionInfo);
-         case BACKUP:
-            return context.isOriginLocal() ?
-                  localWriteInvocation(context, command, distributionInfo) :
-                  remoteBackupOwnerWrite(context, command);
-         case NON_OWNER:
-            //always local!
-            assert context.isOriginLocal();
-            return localWriteInvocation(context, command, distributionInfo);
+      if (distributionInfo.isPrimary()) {
+         assert context.lookupEntry(command.getKey()) != null;
+         return context.isOriginLocal() ?
+               localPrimaryOwnerWrite(context, command, distributionInfo) :
+               remotePrimaryOwnerWrite(context, command, distributionInfo);
+      } else if (distributionInfo.isWriteBackup()) {
+         return context.isOriginLocal() ?
+               localWriteInvocation(context, command, distributionInfo) :
+               remoteBackupOwnerWrite(context, command);
+      } else {
+         //always local!
+         assert context.isOriginLocal();
+         return localWriteInvocation(context, command, distributionInfo);
       }
-      throw new IllegalStateException();
    }
 
    private Object remoteBackupOwnerWrite(InvocationContext context, DataWriteCommand command) {
@@ -338,7 +331,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       return invokeNextThenApply(context, command, (rCtx, rCommand, rv) -> {
          final DataWriteCommand dwCommand = (DataWriteCommand) rCommand;
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
-         Collection<Address> backupOwners = distributionInfo.backups();
+         Collection<Address> backupOwners = distributionInfo.writeBackups();
          if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
             if (trace) {
                log.tracef("Command %s not successful in primary owner.", id);
@@ -371,7 +364,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       return invokeNextThenApply(context, command, (rCtx, rCommand, rv) -> {
          final DataWriteCommand dwCommand = (DataWriteCommand) rCommand;
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
-         Collection<Address> backupOwners = distributionInfo.backups();
+         Collection<Address> backupOwners = distributionInfo.writeBackups();
          if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
             if (trace) {
                log.tracef("Command %s not successful in primary owner.", id);
@@ -386,7 +379,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private void sendToBackups(DistributionInfo distributionInfo, DataWriteCommand command,
          Collection<Address> backupOwners) {
       CommandInvocationId id = command.getCommandInvocationId();
-      int segmentId = distributionInfo.getSegmentId();
+      int segmentId = distributionInfo.segmentId();
       if (trace) {
          log.tracef("Command %s send to backup owner %s.", id, backupOwners);
       }
@@ -408,7 +401,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             .hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
          final int topologyId = command.getTopologyId();
          Collector<Object> collector = commandAckCollector
-               .create(invocationId.getId(), distributionInfo.backups(), topologyId);
+               .create(invocationId.getId(), distributionInfo.writeBackups(), topologyId);
          //check the topology after registering the collector.
          //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
          checkTopologyId(topologyId, collector);
@@ -455,25 +448,24 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
    private static class PrimaryOwnerClassifier {
       private final Map<Address, Collection<Integer>> backups;
       private final Map<Address, Map<Object, Object>> primaries;
-      private final ConsistentHash consistentHash;
+      private final LocalizedCacheTopology cacheTopology;
       private final int entryCount;
 
-      private PrimaryOwnerClassifier(ConsistentHash consistentHash, int entryCount) {
-         this.consistentHash = consistentHash;
-         int memberSize = consistentHash.getMembers().size();
+      private PrimaryOwnerClassifier(LocalizedCacheTopology cacheTopology, int entryCount) {
+         this.cacheTopology = cacheTopology;
+         int memberSize = cacheTopology.getMembers().size();
          this.backups = new HashMap<>(memberSize);
          this.primaries = new HashMap<>(memberSize);
          this.entryCount = entryCount;
       }
 
       public void add(Map.Entry<Object, Object> entry) {
-         final int segment = consistentHash.getSegment(entry.getKey());
-         final Iterator<Address> iterator = consistentHash.locateOwnersForSegment(segment).iterator();
-         final Address primaryOwner = iterator.next();
+         int segment = cacheTopology.getSegment(entry.getKey());
+         DistributionInfo distributionInfo = cacheTopology.getDistributionForSegment(segment);
+         final Address primaryOwner = distributionInfo.primary();
          primaries.computeIfAbsent(primaryOwner, address -> new HashMap<>(entryCount))
                .put(entry.getKey(), entry.getValue());
-         while (iterator.hasNext()) {
-            Address backup = iterator.next();
+         for (Address backup : distributionInfo.writeBackups()) {
             backups.computeIfAbsent(backup, address -> new HashSet<>(entryCount)).add(segment);
          }
       }
@@ -487,18 +479,18 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
     */
    private static class BackupOwnerClassifier {
       private final Map<Integer, Map<Object, Object>> perSegmentKeyValue;
-      private final ConsistentHash consistentHash;
+      private final LocalizedCacheTopology cacheTopology;
       private final int entryCount;
 
-      private BackupOwnerClassifier(ConsistentHash consistentHash, int entryCount) {
-         this.consistentHash = consistentHash;
-         this.perSegmentKeyValue = new HashMap<>(consistentHash.getNumSegments());
+      private BackupOwnerClassifier(LocalizedCacheTopology cacheTopology, int entryCount) {
+         this.cacheTopology = cacheTopology;
+         this.perSegmentKeyValue = new HashMap<>(cacheTopology.getReadConsistentHash().getNumSegments());
          this.entryCount = entryCount;
       }
 
       public void add(Map.Entry<Object, Object> entry) {
          perSegmentKeyValue
-               .computeIfAbsent(consistentHash.getSegment(entry.getKey()), address -> new HashMap<>(entryCount))
+               .computeIfAbsent(cacheTopology.getSegment(entry.getKey()), address -> new HashMap<>(entryCount))
                .put(entry.getKey(), entry.getValue());
       }
    }

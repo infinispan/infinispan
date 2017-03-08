@@ -55,19 +55,20 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
 
       //fork it into another thread as this is going to block in commit
       Future<Object> future = fork(() -> {
-         for (int i = 0; i < TX_COUNT; i++) {
-            Object k = getKeyForCache(1);
-            tm(0).begin();
-            cache(0).put(k, k);
-            EmbeddedTransaction transaction = ((EmbeddedTransactionManager) tm(0)).getTransaction();
-            keys2Tx.put(k, transaction);
-            tm(0).commit();
-         }
-         return null;
+            for (int i = 0; i < TX_COUNT; i++) {
+               Object k = getKeyForCache(1);
+               tm(0).begin();
+               cache(0).put(k, k);
+               EmbeddedTransaction transaction = ((EmbeddedTransactionManager) tm(0)).getTransaction();
+               keys2Tx.put(k, transaction);
+               tm(0).commit();
+            }
+            return null;
+
       });
 
       //now wait for all the commits to block
-      eventually(() -> ccf.blockTypeCommandsReceived.get() == TX_COUNT);
+      eventuallyEquals(TX_COUNT, ccf.blockTypeCommandsReceived::get);
 
       log.tracef("Viewid middle %s", viewId);
 
@@ -93,14 +94,14 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       log.tracef("Number of migrated tx is %s", migratedTx.size());
       assertEquals(TX_COUNT, migratedTx.size());
 
-      eventually(() -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == migratedTx.size());
+      eventuallyEquals(migratedTx.size(), () -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
 
       log.trace("Releasing the gate");
       ccf.gate.open();
 
       future.get(10, TimeUnit.SECONDS);
 
-      eventually(() -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount() == 0);
+      eventuallyEquals(0, () -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
 
 
       eventually(() -> {
@@ -131,7 +132,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
    }
 
    private Address owner(Object key) {
-      return advancedCache(0).getDistributionManager().getConsistentHash().locatePrimaryOwner(key);
+      return advancedCache(0).getDistributionManager().getCacheTopology().getDistribution(key).primary();
    }
 
 }

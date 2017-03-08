@@ -13,10 +13,11 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -52,9 +53,9 @@ public class OutboundTransferTask implements Runnable {
 
    private final Set<Integer> segments = new CopyOnWriteArraySet<>();
 
-   private final int stateTransferChunkSize;
+   private final int chunkSize;
 
-   private final ConsistentHash readCh;
+   private final KeyPartitioner keyPartitioner;
 
    private final DataContainer<Object, Object> dataContainer;
 
@@ -84,9 +85,9 @@ public class OutboundTransferTask implements Runnable {
 
    private InternalEntryFactory entryFactory;
 
-   public OutboundTransferTask(Address destination, Set<Integer> segments, int stateTransferChunkSize,
-                               int topologyId, ConsistentHash readCh, StateProviderImpl stateProvider, DataContainer dataContainer,
-                               PersistenceManager persistenceManager, RpcManager rpcManager,
+   public OutboundTransferTask(Address destination, Set<Integer> segments, int chunkSize,
+                               int topologyId, KeyPartitioner keyPartitioner, StateProviderImpl stateProvider,
+                               DataContainer dataContainer, PersistenceManager persistenceManager, RpcManager rpcManager,
                                CommandsFactory commandsFactory, InternalEntryFactory ef, long timeout, String cacheName) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("Segments must not be null or empty");
@@ -94,15 +95,15 @@ public class OutboundTransferTask implements Runnable {
       if (destination == null) {
          throw new IllegalArgumentException("Destination address cannot be null");
       }
-      if (stateTransferChunkSize <= 0) {
-         throw new IllegalArgumentException("stateTransferChunkSize must be greater than 0");
+      if (chunkSize <= 0) {
+         throw new IllegalArgumentException("chunkSize must be greater than 0");
       }
       this.stateProvider = stateProvider;
       this.destination = destination;
       this.segments.addAll(segments);
-      this.stateTransferChunkSize = stateTransferChunkSize;
+      this.chunkSize = chunkSize;
       this.topologyId = topologyId;
-      this.readCh = readCh;
+      this.keyPartitioner = keyPartitioner;
       this.dataContainer = dataContainer;
       this.persistenceManager = persistenceManager;
       this.entryFactory = ef;
@@ -146,7 +147,7 @@ public class OutboundTransferTask implements Runnable {
          // send data container entries
          for (InternalCacheEntry ice : dataContainer) {
             Object key = ice.getKey();  //todo [anistor] should we check for expired entries?
-            int segmentId = readCh.getSegment(key);
+            int segmentId = keyPartitioner.getSegment(key);
             if (segments.contains(segmentId) && !ice.isL1Entry()) {
                sendEntry(ice, segmentId);
             }
@@ -157,7 +158,7 @@ public class OutboundTransferTask implements Runnable {
             try {
                CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
                AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
-                  int segmentId = readCh.getSegment(me.getKey());
+                  int segmentId = keyPartitioner.getSegment(me.getKey());
                   if (segments.contains(segmentId)) {
                      try {
                         InternalCacheEntry icv = entryFactory.create(me.getKey(), me.getValue(), me.getMetadata());
@@ -193,7 +194,7 @@ public class OutboundTransferTask implements Runnable {
 
    private void sendEntry(InternalCacheEntry ice, int segmentId) {
       // send if we have a full chunk
-      if (accumulatedEntries >= stateTransferChunkSize) {
+      if (accumulatedEntries >= chunkSize) {
          sendEntries(false);
          accumulatedEntries = 0;
       }
@@ -285,8 +286,8 @@ public class OutboundTransferTask implements Runnable {
       return "OutboundTransferTask{" +
             "topologyId=" + topologyId +
             ", destination=" + destination +
-            ", segments=" + segments +
-            ", stateTransferChunkSize=" + stateTransferChunkSize +
+            ", segments=" + new SmallIntSet(segments) +
+            ", chunkSize=" + chunkSize +
             ", timeout=" + timeout +
             ", cacheName='" + cacheName + '\'' +
             '}';

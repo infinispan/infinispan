@@ -26,7 +26,7 @@ import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
@@ -36,6 +36,7 @@ import org.infinispan.stream.impl.termop.SingleRunOperation;
 import org.infinispan.stream.impl.termop.object.FlatMapIteratorOperation;
 import org.infinispan.stream.impl.termop.object.MapIteratorOperation;
 import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
+import org.infinispan.util.RangeSet;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -58,6 +59,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
    protected final Executor executor;
    protected final ComponentRegistry registry;
    protected final PartitionHandlingManager partition;
+   protected final KeyPartitioner keyPartitioner;
 
    protected Runnable closeRunnable = null;
 
@@ -91,6 +93,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       this.executor = executor;
       this.registry = registry;
       this.partition = registry.getComponent(PartitionHandlingManager.class);
+      this.keyPartitioner = registry.getComponent(KeyPartitioner.class);
       intermediateOperations = new ArrayDeque<>();
    }
 
@@ -104,6 +107,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       this.executor = other.executor;
       this.registry = other.registry;
       this.partition = other.partition;
+      this.keyPartitioner = other.keyPartitioner;
 
       this.closeRunnable = other.closeRunnable;
 
@@ -199,7 +203,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
    <R> R performOperation(Function<? super S2, ? extends R> function, ResultsAccumulator<R> remoteResults,
                           Predicate<? super R> earlyTerminatePredicate) {
-      ConsistentHash ch = dm.getConsistentHash();
+      ConsistentHash ch = dm.getWriteConsistentHash();
       TerminalOperation<R> op = new SingleRunOperation(intermediateOperations,
               supplierForSegments(ch, segmentsToFilter, null), function);
       Object id = csm.remoteStreamOperation(getParallelDistribution(), parallel, ch, segmentsToFilter, keysToFilter,
@@ -301,10 +305,10 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       final AtomicBoolean complete = new AtomicBoolean();
 
       ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
-      KeyTrackingConsumer<Object, Object> results = new KeyTrackingConsumer<>(segmentInfoCH, (c) -> {},
+      KeyTrackingConsumer<Object, Object> results = new KeyTrackingConsumer<>(keyPartitioner, segmentInfoCH, (c) -> {},
               c -> c, null);
       Set<Integer> segmentsToProcess = segmentsToFilter == null ?
-              new ReplicatedConsistentHash.RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
+              new RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
       do {
          ConsistentHash ch = dm.getReadConsistentHash();
          boolean localRun = ch.getMembers().contains(localAddress);
@@ -366,6 +370,10 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       } while (!complete.get());
    }
 
+   protected boolean isPrimaryOwner(ConsistentHash ch, CacheEntry e) {
+      return localAddress.equals(ch.locatePrimaryOwnerForSegment(keyPartitioner.getSegment(e.getKey())));
+   }
+
    static class AtomicReferenceArrayToMap<R> extends AbstractMap<Integer, R> {
       final AtomicReferenceArray<R> array;
 
@@ -416,6 +424,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
    class KeyTrackingConsumer<K, V> implements ClusterStreamManager.ResultsCallback<Collection<CacheEntry<K, Object>>>,
            KeyTrackingTerminalOperation.IntermediateCollector<Collection<CacheEntry<K, Object>>> {
+      final KeyPartitioner keyPartitioner;
       final ConsistentHash ch;
       final Consumer<V> consumer;
       final Set<Integer> lostSegments = new ConcurrentHashSet<>();
@@ -425,8 +434,10 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
       final DistributedCacheStream.SegmentListenerNotifier listenerNotifier;
 
-      KeyTrackingConsumer(ConsistentHash ch, Consumer<V> consumer, Function<CacheEntry<K, Object>, V> valueFunction,
-              DistributedCacheStream.SegmentListenerNotifier completedSegments) {
+      KeyTrackingConsumer(KeyPartitioner keyPartitioner, ConsistentHash ch, Consumer<V> consumer,
+                          Function<CacheEntry<K, Object>, V> valueFunction,
+                          DistributedCacheStream.SegmentListenerNotifier completedSegments) {
+         this.keyPartitioner = keyPartitioner;
          this.ch = ch;
          this.consumer = consumer;
          this.valueFunction = valueFunction;
@@ -436,7 +447,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
          this.referenceArray = new AtomicReferenceArray<>(ch.getNumSegments());
          for (int i = 0; i < referenceArray.length(); ++i) {
             // We only allow 1 request per id
-            referenceArray.set(i, new HashSet<K>());
+            referenceArray.set(i, new HashSet<>());
          }
       }
 
@@ -453,7 +464,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
             }
             results.forEach(e -> {
                K key = e.getKey();
-               int segment = ch.getSegment(key);
+               int segment = keyPartitioner.getSegment(key);
                Set<K> keys = referenceArray.get(segment);
                // On completion we null this out first - thus we don't need to add
                if (keys != null) {

@@ -6,27 +6,27 @@ import org.testng.annotations.Test;
 public class MagicKeyTest extends BaseDistFunctionalTest<Object, String> {
    public void testMagicKeys() {
       MagicKey k1 = new MagicKey(c1, c2);
-      assert getDistributionManager(c1).getLocality(k1).isLocal();
-      assert getDistributionManager(c2).getLocality(k1).isLocal();
-      assert !getDistributionManager(c3).getLocality(k1).isLocal();
-      assert !getDistributionManager(c4).getLocality(k1).isLocal();
+      assert getCacheTopology(c1).isWriteOwner(k1);
+      assert getCacheTopology(c2).isWriteOwner(k1);
+      assert !getCacheTopology(c3).isWriteOwner(k1);
+      assert !getCacheTopology(c4).isWriteOwner(k1);
 
       MagicKey k2 = new MagicKey(c2, c3);
-      assert !getDistributionManager(c1).getLocality(k2).isLocal();
-      assert getDistributionManager(c2).getLocality(k2).isLocal();
-      assert getDistributionManager(c3).getLocality(k2).isLocal();
-      assert !getDistributionManager(c4).getLocality(k2).isLocal();
+      assert !getCacheTopology(c1).isWriteOwner(k2);
+      assert getCacheTopology(c2).isWriteOwner(k2);
+      assert getCacheTopology(c3).isWriteOwner(k2);
+      assert !getCacheTopology(c4).isWriteOwner(k2);
 
       MagicKey k3 = new MagicKey(c3, c4);
-      assert !getDistributionManager(c1).getLocality(k3).isLocal();
-      assert !getDistributionManager(c2).getLocality(k3).isLocal();
-      assert getDistributionManager(c3).getLocality(k3).isLocal();
-      assert getDistributionManager(c4).getLocality(k3).isLocal();
+      assert !getCacheTopology(c1).isWriteOwner(k3);
+      assert !getCacheTopology(c2).isWriteOwner(k3);
+      assert getCacheTopology(c3).isWriteOwner(k3);
+      assert getCacheTopology(c4).isWriteOwner(k3);
 
       MagicKey k4 = new MagicKey(c4, c1);
-      assert getDistributionManager(c1).getLocality(k4).isLocal();
-      assert !getDistributionManager(c2).getLocality(k4).isLocal();
-      assert !getDistributionManager(c3).getLocality(k4).isLocal();
-      assert getDistributionManager(c4).getLocality(k4).isLocal();
+      assert getCacheTopology(c1).isWriteOwner(k4);
+      assert !getCacheTopology(c2).isWriteOwner(k4);
+      assert !getCacheTopology(c3).isWriteOwner(k4);
+      assert getCacheTopology(c4).isWriteOwner(k4);
    }
 }

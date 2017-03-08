@@ -38,7 +38,6 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    private final CheckTopologyAction checkTopologyAction;
 
    private LockManager lockManager;
-   @SuppressWarnings("deprecation")
    private ClusteringDependentLogic clusteringDependentLogic;
    private PendingLockManager pendingLockManager;
    private boolean pessimisticLocking;
@@ -49,7 +48,7 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
    }
 
    @Inject
-   public void inject(LockManager lockManager, @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic, Configuration configuration,
+   public void inject(LockManager lockManager, ClusteringDependentLogic clusteringDependentLogic, Configuration configuration,
                       PendingLockManager pendingLockManager) {
       this.lockManager = lockManager;
       this.clusteringDependentLogic = clusteringDependentLogic;

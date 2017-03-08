@@ -15,11 +15,11 @@ import org.testng.annotations.Test;
 public class ConcurrentNonOverlappingLeaveTest extends RehashLeaveTestBase {
    Address l1, l2;
    // since two nodes are leaving, we allow some entries to be lost
-   private Set<Integer> lostSegments = new HashSet<Integer>();
+   private Set<Integer> lostSegments = new HashSet<>();
 
    @Override
    protected void assertOwnershipAndNonOwnership(Object key, boolean allowL1) {
-      if (lostSegments.contains(getConsistentHash(c1).getSegment(key)))
+      if (lostSegments.contains(getCacheTopology(c1).getSegment(key)))
          return;
 
       super.assertOwnershipAndNonOwnership(key, allowL1);
@@ -27,7 +27,7 @@ public class ConcurrentNonOverlappingLeaveTest extends RehashLeaveTestBase {
 
    @Override
    protected void assertOnAllCaches(Object key, String value) {
-      if (lostSegments.contains(getConsistentHash(c1).getSegment(key)))
+      if (lostSegments.contains(getCacheTopology(c1).getSegment(key)))
       return;
 
       super.assertOnAllCaches(key, value);
@@ -41,8 +41,8 @@ public class ConcurrentNonOverlappingLeaveTest extends RehashLeaveTestBase {
       CacheContainer cm2 = c2.getCacheManager();
       CacheContainer cm4 = c4.getCacheManager();
 
-      Set<Integer> overlappingSegments = new HashSet<Integer>();
-      ConsistentHash ch = getConsistentHash(c1);
+      Set<Integer> overlappingSegments = new HashSet<>();
+      ConsistentHash ch = getCacheTopology(c1).getWriteConsistentHash();
       for (int segment = 0; segment < ch.getNumSegments(); segment++) {
          List<Address> owners = ch.locateOwnersForSegment(segment);
          if (owners.containsAll(killedNodes)) {

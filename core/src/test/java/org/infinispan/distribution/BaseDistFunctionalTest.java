@@ -17,7 +17,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.L1InternalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.groups.KXGrouper;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -88,7 +87,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       if (INIT_CLUSTER_SIZE > 2) c3 = caches.get(2);
       if (INIT_CLUSTER_SIZE > 3) c4 = caches.get(3);
 
-      cacheAddresses = new ArrayList<Address>(INIT_CLUSTER_SIZE);
+      cacheAddresses = new ArrayList<>(INIT_CLUSTER_SIZE);
       for (Cache cache : caches) {
          EmbeddedCacheManager cacheManager = cache.getCacheManager();
          cacheAddresses.add(cacheManager.getAddress());
@@ -279,17 +278,12 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       return nonOwners;
    }
 
-   protected List<Address> residentAddresses(Object key) {
-      DistributionManager dm = c1.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
-      return dm.locate(key);
-   }
-
    protected DistributionManager getDistributionManager(Cache<?, ?> c) {
       return c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
    }
 
-   protected ConsistentHash getConsistentHash(Cache<?, ?> c) {
-      return getDistributionManager(c).getConsistentHash();
+   protected LocalizedCacheTopology getCacheTopology(Cache<?, ?> c) {
+      return getDistributionManager(c).getCacheTopology();
    }
 
    /**

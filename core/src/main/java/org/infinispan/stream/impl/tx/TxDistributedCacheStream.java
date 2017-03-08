@@ -37,7 +37,7 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
            int distributedBatchSize, Executor executor, ComponentRegistry registry, LocalTxInvocationContext ctx) {
       super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor, registry);
       this.localAddress = localAddress;
-      this.hash = dm.getConsistentHash();
+      this.hash = dm.getWriteConsistentHash();
       this.ctx = ctx;
    }
 
@@ -47,7 +47,7 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
            Function<? super CacheEntry<K, V>, R> function, LocalTxInvocationContext ctx) {
       super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor, registry, function);
       this.localAddress = localAddress;
-      this.hash = dm.getConsistentHash();
+      this.hash = dm.getWriteConsistentHash();
       this.ctx = ctx;
    }
 
@@ -66,8 +66,9 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
          Supplier<Stream<CacheEntry>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
          // Now we have to add entries that aren't mapped to our local segments since we are excluding those
          // remotely via {@link TxClusterStreamManager} using the same hash
-         Set<CacheEntry> set = ctx.getLookedUpEntries().values().stream().filter(
-                 e -> !localAddress.equals(ch.locatePrimaryOwner(e.getKey()))).collect(Collectors.toSet());
+         Set<CacheEntry> set = ctx.getLookedUpEntries().values().stream()
+                                  .filter(e -> !isPrimaryOwner(ch, e))
+                                  .collect(Collectors.toSet());
          Stream<CacheEntry> suppliedStream = supplier.get();
          if (!set.isEmpty()) {
             return Stream.concat(set.stream(), suppliedStream);

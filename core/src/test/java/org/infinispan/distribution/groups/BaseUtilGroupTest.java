@@ -7,8 +7,9 @@ import java.util.Map;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.Group;
-import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -46,7 +47,7 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
    protected abstract void resetCaches(List<Cache<GroupKey, String>> cacheList);
 
    protected static boolean isGroupOwner(Cache<?, ?> cache, String groupName) {
-      return TestingUtil.extractComponent(cache, GroupManager.class).isOwner(groupName);
+      return TestingUtil.extractComponent(cache, DistributionManager.class).getCacheTopology().isWriteOwner(groupName);
    }
 
    protected static AdvancedCache<GroupKey, String> extractTargetCache(TestCache testCache) {
@@ -78,13 +79,14 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
       return factory.create(groupName, cacheList);
    }
 
-   public static enum TestCacheFactory {
+   public enum TestCacheFactory {
       PRIMARY_OWNER {
          @Override
          public TestCache create(String groupName, List<Cache<GroupKey, String>> cacheList) {
             for (Cache<GroupKey, String> cache : cacheList) {
-               GroupManager groupManager = TestingUtil.extractComponent(cache, GroupManager.class);
-               if (groupManager.isPrimaryOwner(groupName)) {
+               DistributionManager distributionManager = TestingUtil.extractComponent(cache, DistributionManager.class);
+               DistributionInfo distributionInfo = distributionManager.getCacheTopology().getDistribution(groupName);
+               if (distributionInfo.isPrimary()) {
                   return new TestCache(cache, cache.getAdvancedCache());
                }
             }
@@ -97,10 +99,11 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
             Cache<GroupKey, String> primaryOwner = null;
             AdvancedCache<GroupKey, String> backupOwner = null;
             for (Cache<GroupKey, String> cache : cacheList) {
-               GroupManager groupManager = TestingUtil.extractComponent(cache, GroupManager.class);
-               if (primaryOwner == null && groupManager.isPrimaryOwner(groupName)) {
+               DistributionManager distributionManager = TestingUtil.extractComponent(cache, DistributionManager.class);
+               DistributionInfo distributionInfo = distributionManager.getCacheTopology().getDistribution(groupName);
+               if (primaryOwner == null && distributionInfo.isPrimary()) {
                   primaryOwner = cache;
-               } else if (backupOwner == null && groupManager.isOwner(groupName)) {
+               } else if (backupOwner == null && distributionInfo.isWriteOwner()) {
                   backupOwner = cache.getAdvancedCache();
                }
                if (primaryOwner != null && backupOwner != null) {
@@ -116,10 +119,11 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
             Cache<GroupKey, String> primaryOwner = null;
             AdvancedCache<GroupKey, String> nonOwner = null;
             for (Cache<GroupKey, String> cache : cacheList) {
-               GroupManager groupManager = TestingUtil.extractComponent(cache, GroupManager.class);
-               if (primaryOwner == null && groupManager.isPrimaryOwner(groupName)) {
+               DistributionManager distributionManager = TestingUtil.extractComponent(cache, DistributionManager.class);
+               DistributionInfo distributionInfo = distributionManager.getCacheTopology().getDistribution(groupName);
+               if (primaryOwner == null && distributionInfo.isPrimary()) {
                   primaryOwner = cache;
-               } else if (nonOwner == null && !groupManager.isOwner(groupName)) {
+               } else if (nonOwner == null && distributionInfo.isWriteOwner()) {
                   nonOwner = cache.getAdvancedCache();
                }
                if (primaryOwner != null && nonOwner != null) {

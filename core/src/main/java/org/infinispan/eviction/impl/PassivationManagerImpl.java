@@ -70,7 +70,7 @@ public class PassivationManagerImpl implements PassivationManager {
    }
 
    private boolean isL1Key(Object key) {
-      return distributionManager != null && !distributionManager.getLocality(key).isLocal();
+      return distributionManager != null && !distributionManager.getCacheTopology().isWriteOwner(key);
    }
 
    @Override

@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.distribution.group.impl.GroupingPartitioner;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;

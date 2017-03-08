@@ -69,7 +69,7 @@ public class AffinityShardIdentifierProvider implements ShardIdentifierProvider 
       if (distributionManager == null) {
          return 0;
       }
-      return distributionManager.getReadConsistentHash().getSegment(key);
+      return distributionManager.getCacheTopology().getSegment(key);
    }
 
    @Override

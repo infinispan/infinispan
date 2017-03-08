@@ -78,7 +78,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
    protected void shutdownAndRestart(int extraneousNodePosition, boolean reverse) throws Throwable {
       Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
 
-      ConsistentHash oldConsistentHash = cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
+      ConsistentHash oldConsistentHash = cache(0).getAdvancedCache().getDistributionManager().getWriteConsistentHash();
 
       // Shutdown the cache cluster-wide
       cache(0).shutdown();
@@ -108,9 +108,10 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
             checkClusterRestartedCorrectly(addressMappings);
             checkData();
 
-            ConsistentHash newConsistentHash = cache(0).getAdvancedCache().getDistributionManager().getConsistentHash();
+            ConsistentHash newConsistentHash =
+                  cache(0).getAdvancedCache().getDistributionManager().getWriteConsistentHash();
             PersistentUUIDManager persistentUUIDManager = TestingUtil.extractGlobalComponent(manager(0), PersistentUUIDManager.class);
-            assertTrue(isEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager));
+            assertEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager);
             break;
          }
          case 0: {
@@ -135,6 +136,12 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
             }
          }
       }
+   }
+
+   private void assertEquivalent(Map<JGroupsAddress, PersistentUUID> addressMappings,
+         ConsistentHash oldConsistentHash, ConsistentHash newConsistentHash,
+         PersistentUUIDManager persistentUUIDManager) {
+      assertTrue(isEquivalent(addressMappings, oldConsistentHash, newConsistentHash, persistentUUIDManager));
    }
 
    private void checkClusterRestartedCorrectly(Map<JGroupsAddress, PersistentUUID> addressMappings) throws Exception {

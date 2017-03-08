@@ -20,14 +20,12 @@ import org.infinispan.stream.impl.DistributedLongCacheStream;
  * @see TxDistributedCacheStream
  */
 public class TxDistributedIntCacheStream extends DistributedIntCacheStream {
-   private final Address localAddress;
    private final LocalTxInvocationContext ctx;
    private final ConsistentHash hash;
 
    TxDistributedIntCacheStream(AbstractCacheStream stream, Address localAddress, ConsistentHash hash,
            LocalTxInvocationContext ctx) {
       super(stream);
-      this.localAddress = localAddress;
       this.ctx = ctx;
       this.hash = hash;
    }
@@ -37,8 +35,9 @@ public class TxDistributedIntCacheStream extends DistributedIntCacheStream {
            Set<Object> excludedKeys, boolean primaryOnly) {
       return () -> {
          Supplier<Stream<CacheEntry>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
-         Set<CacheEntry> set = ctx.getLookedUpEntries().values().stream().filter(
-                 e -> !localAddress.equals(ch.locatePrimaryOwner(e.getKey()))).collect(Collectors.toSet());
+         Set<CacheEntry> set = ctx.getLookedUpEntries().values().stream()
+                                  .filter(e -> !isPrimaryOwner(ch, e))
+                                  .collect(Collectors.toSet());
          Stream<CacheEntry> suppliedStream = supplier.get();
          if (!set.isEmpty()) {
             return Stream.concat(set.stream(), suppliedStream);

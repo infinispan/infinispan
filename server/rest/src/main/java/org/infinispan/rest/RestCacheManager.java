@@ -90,7 +90,7 @@ public class RestCacheManager {
 
    String getPrimaryOwner(String cacheName, String key) {
       DistributionManager dm = getCache(cacheName).getDistributionManager();
-      return dm.getPrimaryLocation(key).toString();
+      return dm.getCacheTopology().getDistribution(key).primary().toString();
    }
 
    EmbeddedCacheManager getInstance() {

@@ -19,13 +19,13 @@ import java.util.stream.Collectors;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.RangeSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -254,7 +254,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
 
    private Map<Address, Set<Integer>> determineTargets(ConsistentHash ch, Set<Integer> segments) {
       if (segments == null) {
-         segments = new ReplicatedConsistentHash.RangeSet(ch.getNumSegments());
+         segments = new RangeSet(ch.getNumSegments());
       }
       // This has to be a concurrent hash map in case if a node completes operation while we are still iterating
       // over the map and submitting to others

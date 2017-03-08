@@ -778,8 +778,8 @@ public interface Log extends BasicLogger {
    void couldNotInterruptThread(UUID id);
 
    @LogMessage(level = ERROR)
-   @Message(value = "No live owners found for segment %d of cache %s. Current owners are: %s. Faulty owners: %s", id=208)
-   void noLiveOwnersFoundForSegment(int segmentId, String cacheName, Collection<Address> owners, Collection<Address> faultySources);
+   @Message(value = "No live owners found for segments %s of cache %s. Excluded owners: %s", id=208)
+   void noLiveOwnersFoundForSegments(Collection<Integer> segments, String cacheName,  Collection<Address> faultySources);
 
    @LogMessage(level = WARN)
    @Message(value = "Failed to retrieve transactions of cache %s from node %s, segments %s", id=209)

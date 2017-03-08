@@ -71,12 +71,8 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
       }
 
       for (XSiteState state : cmd.getChunk()) {
-         final Address primaryOwner = clusteringDependentLogic.getPrimaryOwner(state.key());
-         List<XSiteState> primaryOwnerList = primaryOwnersChunks.get(primaryOwner);
-         if (primaryOwnerList == null) {
-            primaryOwnerList = new LinkedList<>();
-            primaryOwnersChunks.put(primaryOwner, primaryOwnerList);
-         }
+         Address primaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(state.key()).primary();
+         List<XSiteState> primaryOwnerList = primaryOwnersChunks.computeIfAbsent(primaryOwner, k -> new LinkedList<>());
          primaryOwnerList.add(state);
       }
 

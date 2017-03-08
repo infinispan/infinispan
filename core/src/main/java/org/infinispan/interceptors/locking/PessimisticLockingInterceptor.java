@@ -17,6 +17,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -43,6 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    private static final Log log = LogFactory.getLog(PessimisticLockingInterceptor.class);
+   public static final boolean trace = log.isTraceEnabled();
 
    private CommandsFactory cf;
    private StateTransferManager stateTransferManager;
@@ -99,7 +101,8 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private void acquireLocalLock(InvocationContext ctx, DataCommand command) throws InterruptedException {
-      log.tracef("acquireLocalLock");
+      if (trace)
+         log.tracef("acquireLocalLock");
       final TxInvocationContext txContext = (TxInvocationContext) ctx;
       Object key = command.getKey();
       lockOrRegisterBackupLock(txContext, key, getLockTimeoutMillis(command));
@@ -233,6 +236,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             Object[] compositeKeys = command.getCompositeKeys();
             Set<Object> keysToLock = new HashSet<>(Arrays.asList(compositeKeys));
             if (!needRemoteLocks(ctx, keysToLock, command)) {
+               ((TxInvocationContext<?>) ctx).addAllAffectedKeys(keysToLock);
                acquireLocalCompositeLocks(command, keysToLock, ctx);
                stage = invokeNext(ctx, command);
             } else {
@@ -258,9 +262,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private void acquireLocalCompositeLocks(ApplyDeltaCommand command, Set<Object> keysToLock,
          InvocationContext ctx1) throws InterruptedException {
-      if (cdl.localNodeIsPrimaryOwner(command.getKey())) {
+      DistributionInfo distributionInfo = cdl.getCacheTopology().getDistribution(command.getKey());
+      if (distributionInfo.isPrimary()) {
          lockAllAndRecord(ctx1, keysToLock, getLockTimeoutMillis(command));
-      } else if (cdl.localNodeIsOwner(command.getKey())) {
+      } else if (distributionInfo.isWriteOwner()) {
          TxInvocationContext<?> txContext = (TxInvocationContext<?>) ctx1;
          for (Object key : keysToLock) {
             txContext.getCacheTransaction().addBackupLockForKey(key);
@@ -283,7 +288,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       // Only acquire remote lock if multiple keys or the single key primary owner is not the local node.
       if (ctx.isOriginLocal()) {
          final boolean isSingleKeyAndLocal =
-               !command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey());
+               !command.multipleKeys() && cdl.getCacheTopology().getDistribution(command.getSingleKey()).isPrimary();
          boolean needBackupLocks = !isSingleKeyAndLocal || isStateTransferInProgress();
          if (needBackupLocks && !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
             LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
@@ -348,7 +353,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
          needRemoteLock = !localTransaction.getAffectedKeys().containsAll(keys);
          if (!needRemoteLock) {
-            log.tracef("We already have lock for keys %s, skip remote lock acquisition", keys);
+            if (trace) log.tracef("We already have lock for keys %s, skip remote lock acquisition", keys);
          }
       }
       return needRemoteLock;
@@ -363,8 +368,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();
          needRemoteLock = !localTransaction.getAffectedKeys().contains(key);
          if (!needRemoteLock) {
-            log.tracef("We already have lock for key %s, skip remote lock acquisition", key);
+            if (trace)
+               log.tracef("We already have lock for key %s, skip remote lock acquisition", key);
          }
+      } else {
+         if (trace)
+            log.tracef("Don't need backup locks %s", needBackupLocks);
       }
       return needRemoteLock;
    }

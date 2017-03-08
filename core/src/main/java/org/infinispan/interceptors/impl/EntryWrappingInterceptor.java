@@ -53,8 +53,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.group.GroupFilter;
-import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.group.impl.GroupFilter;
+import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -68,7 +69,6 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -92,6 +92,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
    private VersionGenerator versionGenerator;
+   private DistributionManager distributionManager;
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private boolean isInvalidation;
    private boolean isSync;
@@ -101,7 +102,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private GroupManager groupManager;
    private CacheNotifier notifier;
    private StateTransferManager stateTransferManager;
-   private Address localAddress;
    private boolean useRepeatableRead;
    private boolean writeSkewCheck;
 
@@ -132,8 +132,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
    };
 
-   private final InvocationSuccessAction
-         commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> {
+   private final InvocationSuccessAction commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> {
       commitContextEntries(rCtx, null, null);
    };
 
@@ -148,7 +147,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public void init(EntryFactory entryFactory, DataContainer<Object, Object> dataContainer, ClusteringDependentLogic cdl,
                     StateConsumer stateConsumer, StateTransferLock stateTransferLock,
                     XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager, CacheNotifier notifier,
-                    StateTransferManager stateTransferManager, VersionGenerator versionGenerator) {
+                    StateTransferManager stateTransferManager, VersionGenerator versionGenerator, DistributionManager distributionManager) {
       this.entryFactory = entryFactory;
       this.dataContainer = dataContainer;
       this.cdl = cdl;
@@ -159,13 +158,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       this.notifier = notifier;
       this.stateTransferManager = stateTransferManager;
       this.versionGenerator = versionGenerator;
+      this.distributionManager = distributionManager;
    }
 
    @Start
    public void start() {
       isInvalidation = cacheConfiguration.clustering().cacheMode().isInvalidation();
       isSync = cacheConfiguration.clustering().cacheMode().isSynchronous();
-      localAddress = cdl.getAddress();
       // isolation level makes no sense without transactions
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
@@ -178,8 +177,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean canRead(Object key) {
-      // STM is null in local cache
-      return stateTransferManager == null || stateTransferManager.getCacheTopology().getReadConsistentHash().isKeyLocalToNode(localAddress, key);
+      return distributionManager.getCacheTopology().isReadOwner(key);
    }
 
    @Override

@@ -48,8 +48,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.distribution.group.GroupFilter;
-import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.group.impl.GroupFilter;
+import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -504,8 +504,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                // TODO: how to pass in key filter...
                new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
-                     new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048)), e -> e.getKey(),
-               seenKeys);
+                     new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048)),
+                     CacheEntry::getKey, seenKeys);
       }
 
       @Override

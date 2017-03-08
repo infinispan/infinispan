@@ -190,7 +190,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    protected boolean skipL1Lookup(FlagAffectedCommand command, Object key) {
       return command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)
-            || command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) || cdl.localNodeIsOwner(key)
+            || command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) || cdl.getCacheTopology().isWriteOwner(key)
             || dataContainer.containsKey(key);
    }
 
@@ -215,7 +215,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       Set<Object> keys = command.getMap().keySet();
       Set<Object> toInvalidate = new HashSet<>(keys.size());
       for (Object k : keys) {
-         if (cdl.localNodeIsOwner(k)) {
+         if (cdl.getCacheTopology().isWriteOwner(k)) {
             toInvalidate.add(k);
          }
       }
@@ -225,7 +225,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
       //we also need to remove from L1 the keys that are not ours
       Iterator<VisitableCommand> subCommands = command.getAffectedKeys().stream().filter(
-            k -> !cdl.localNodeIsOwner(k)).map(k -> removeFromL1Command(ctx, k)).iterator();
+            k -> !cdl.getCacheTopology().isWriteOwner(k)).map(k -> removeFromL1Command(ctx, k)).iterator();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          PutMapCommand putMapCommand = (PutMapCommand) rCommand;
          processInvalidationResult(putMapCommand, invalidationFuture);
@@ -298,7 +298,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    }
 
    private Object removeFromLocalL1(InvocationContext ctx, DataWriteCommand command, Object returnValue) {
-      if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
+      if (ctx.isOriginLocal() && !cdl.getCacheTopology().isWriteOwner(command.getKey())) {
          VisitableCommand removeFromL1Command = removeFromL1Command(ctx, command.getKey());
          return invokeNextThenApply(ctx, removeFromL1Command, (rCtx, rCommand, rv) -> returnValue);
       } else if (trace) {
@@ -329,7 +329,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private Future<?> invalidateL1InCluster(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) {
       Future<?> l1InvalidationFuture = null;
-      if (cdl.localNodeIsOwner(command.getKey())) {
+      if (cdl.getCacheTopology().isWriteOwner(command.getKey())) {
          l1InvalidationFuture = l1Manager.flushCache(Collections.singletonList(command.getKey()), ctx.getOrigin(), assumeOriginKeptEntryInL1);
       } else if (trace) {
          log.tracef("Not invalidating key '%s' as local node(%s) is not owner", command.getKey(), rpcManager.getAddress());
