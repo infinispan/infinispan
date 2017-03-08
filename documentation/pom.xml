@@ -1,13 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
-        <version>9.0.0-SNAPSHOT</version>
+        <version>9.0.0.CR3</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
@@ -158,7 +157,7 @@
                             </sourceDocumentExtensions>
                             <sourceHighlighter>coderay</sourceHighlighter>
                             <attributes>
-                                <idprefix/>
+                                <idprefix />
                                 <sectanchors>true</sectanchors>
                                 <toclevels>5</toclevels>
                                 <numbered>true</numbered>
@@ -194,7 +193,7 @@
                             </sourceDocumentExtensions>
                             <sourceHighlighter>coderay</sourceHighlighter>
                             <attributes>
-                                <idprefix/>
+                                <idprefix />
                                 <sectanchors>true</sectanchors>
                                 <toclevels>3</toclevels>
                                 <numbered>true</numbered>
@@ -227,7 +226,7 @@
                         <configuration>
                             <target>
                                 <ant antfile="optimize-pdf.xml" inheritRefs="true">
-                                    <target name="optimize-pdf"/>
+                                    <target name="optimize-pdf" />
                                 </ant>
                             </target>
                         </configuration>
