@@ -1,7 +1,5 @@
 package org.infinispan.commands.read;
 
-import java.util.Set;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;

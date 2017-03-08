@@ -1,7 +1,5 @@
 package org.infinispan.container.offheap;
 
-import java.util.Arrays;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import sun.misc.Unsafe;

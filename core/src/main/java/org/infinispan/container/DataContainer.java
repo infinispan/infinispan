@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
