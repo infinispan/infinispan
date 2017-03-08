@@ -21,6 +21,8 @@ import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.PersistentUUID;
+import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.util.RangeSet;
 
 /**
  * Special implementation of {@link org.infinispan.distribution.ch.ConsistentHash} for replicated caches.
@@ -47,16 +49,8 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       this.members = Collections.unmodifiableList(new ArrayList<>(members));
       this.membersSet = Collections.unmodifiableSet(new HashSet<>(members));
       this.primaryOwners = primaryOwners;
-      segments = computeSegments(primaryOwners);
+      segments = new RangeSet(primaryOwners.length);
       segmentSize = Util.getSegmentSize(primaryOwners.length);
-   }
-
-   private Set<Integer> computeSegments(int[] primaryOwners) {
-      Set<Integer> segmentIds = new HashSet<>(primaryOwners.length);
-      for (int i = 0; i < primaryOwners.length; i++) {
-         segmentIds.add(i);
-      }
-      return Collections.unmodifiableSet(segmentIds);
    }
 
    public ReplicatedConsistentHash union(ReplicatedConsistentHash ch2) {
@@ -68,7 +62,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
       }
 
-      List<Address> unionMembers = new ArrayList<Address>(this.getMembers());
+      List<Address> unionMembers = new ArrayList<>(this.getMembers());
       for (Address member : ch2.getMembers()) {
          if (!unionMembers.contains(member)) {
             unionMembers.add(member);
@@ -99,7 +93,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       for (int i = 0; i < numPrimaryOwners; i++) {
          this.primaryOwners[i] = state.getIntProperty(String.format(STATE_PRIMARY_OWNERS, i));
       }
-      segments = computeSegments(primaryOwners);
+      segments = new RangeSet(primaryOwners.length);
       segmentSize = Util.getSegmentSize(primaryOwners.length);
    }
 
@@ -132,7 +126,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    @Override
    public List<Address> locateOwnersForSegment(int segmentId) {
       Address primaryOwner = locatePrimaryOwnerForSegment(segmentId);
-      List<Address> owners = new ArrayList<Address>(members.size());
+      List<Address> owners = new ArrayList<>(members.size());
       owners.add(primaryOwner);
       for (Address member : members) {
          if (!member.equals(primaryOwner)) {
@@ -164,7 +158,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       if (index == -1) {
          throw new IllegalArgumentException("The node is not a member : " + owner);
       }
-      Set<Integer> primarySegments = new HashSet<Integer>();
+      Set<Integer> primarySegments = new SmallIntSet(primaryOwners.length);
       for (int i = 0; i < primaryOwners.length; ++i) {
          if (primaryOwners[i] == index) {
             primarySegments.add(i);
@@ -175,17 +169,15 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public String getRoutingTableAsString() {
-      return Arrays.toString(primaryOwners);
-   }
-
-   @Override
-   public Address locatePrimaryOwner(Object key) {
-      return locatePrimaryOwnerForSegment(getSegment(key));
-   }
-
-   @Override
-   public List<Address> locateOwners(Object key) {
-      return locateOwnersForSegment(getSegment(key));
+      StringBuilder sb = new StringBuilder();
+      for (Address a : members) {
+         if (sb.length() > 0) {
+            sb.append("\n  ");
+         }
+         Set<Integer> primarySegments = getPrimarySegmentsForOwner(a);
+         sb.append(a).append(" primary: ").append(primarySegments);
+      }
+      return sb.toString();
    }
 
    @Override
@@ -293,126 +285,6 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       if (!Arrays.equals(primaryOwners, other.primaryOwners))
          return false;
       return true;
-   }
-
-   public static class RangeSet implements Set<Integer> {
-      final int size;
-
-      public RangeSet(int size) {
-         this.size = size;
-      }
-
-      @Override
-      public int size() {
-         return size;
-      }
-
-      @Override
-      public boolean isEmpty() {
-         return size <= 0;
-      }
-
-      @Override
-      public boolean contains(Object o) {
-         if (!(o instanceof Integer))
-            return false;
-         int i = (int) o;
-         return 0 <= i && i < size;
-      }
-
-      @Override
-      public Iterator<Integer> iterator() {
-         return new RangeSetIterator(size);
-      }
-
-      @Override
-      public Object[] toArray() {
-         Object[] array = new Object[size];
-         for (int i = 0; i < size; i++) {
-            array[i] = i;
-         }
-         return array;
-      }
-
-      @Override
-      public <T> T[] toArray(T[] a) {
-         T[] array = a.length >= size ? a :
-               (T[])java.lang.reflect.Array
-                     .newInstance(a.getClass().getComponentType(), size);
-         for (int i = 0; i < size; i++) {
-            array[i] = (T) Integer.valueOf(i);
-         }
-         return array;
-      }
-
-      @Override
-      public boolean add(Integer integer) {
-         throw new UnsupportedOperationException("RangeSet is immutable");
-      }
-
-      @Override
-      public boolean remove(Object o) {
-         throw new UnsupportedOperationException("RangeSet is immutable");
-      }
-
-      @Override
-      public boolean containsAll(Collection<?> c) {
-         for (Object o : c) {
-            if (!contains(o))
-               return false;
-         }
-         return true;
-      }
-
-      @Override
-      public boolean addAll(Collection<? extends Integer> c) {
-         throw new UnsupportedOperationException("RangeSet is immutable");
-      }
-
-      @Override
-      public boolean retainAll(Collection<?> c) {
-         throw new UnsupportedOperationException("RangeSet is immutable");
-      }
-
-      @Override
-      public boolean removeAll(Collection<?> c) {
-         throw new UnsupportedOperationException("RangeSet is immutable");
-      }
-
-      @Override
-      public void clear() {
-         throw new UnsupportedOperationException("RangeSet is immutable");
-      }
-
-      @Override
-      public String toString() {
-         return "RangeSet(" + size + ")";
-      }
-
-      private static class RangeSetIterator implements Iterator<Integer> {
-         private int size;
-         private int next;
-
-         public RangeSetIterator(int size) {
-            this.size = size;
-            this.next = 0;
-         }
-
-         @Override
-         public boolean hasNext() {
-            return next < size;
-         }
-
-         @Override
-         public Integer next() {
-            return next++;
-         }
-
-         @Override
-         public void remove() {
-            throw new UnsupportedOperationException("RangeSet is read-only");
-         }
-      }
    }
 
 

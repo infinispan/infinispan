@@ -3,52 +3,82 @@ package org.infinispan.distribution;
 import java.util.Collection;
 import java.util.List;
 
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
+/**
+ * @author Radim Vansa
+ * @author Dan Berindei
+ * @since 9.0
+ */
 public class DistributionInfo {
-   private final Address primary;
-   private final List<Address> owners;
-   private final Ownership ownership;
    private final int segmentId;
+   // The write CH always includes the read CH, and the primary owner is always in the read CH
+   private final Address primary;
+   private final List<Address> readOwners;
+   private final List<Address> writeOwners;
+   private final Collection<Address> writeBackups;
 
-   public DistributionInfo(Object key, ConsistentHash ch, Address self) {
-      segmentId = ch.getSegment(key);
-      owners = ch.locateOwnersForSegment(segmentId);
-      int index = owners.indexOf(self);
-      if (index == 0) {
-         ownership = Ownership.PRIMARY;
-         primary = self;
-      } else if (index > 0) {
-         ownership = Ownership.BACKUP;
-         primary = owners.get(0);
-      } else {
-         ownership = Ownership.NON_OWNER;
-         primary = owners.get(0);
-      }
+   private final boolean isPrimary;
+   private final boolean isReadOwner;
+   private final boolean isWriteOwner;
+   private final boolean isWriteBackup;
+
+   public DistributionInfo(int segmentId, Address primary, List<Address> readOwners, List<Address> writeOwners,
+                           Collection<Address> writeBackups, Address localAddress) {
+      this.segmentId = segmentId;
+      this.primary = primary;
+      this.readOwners = readOwners;
+      this.writeOwners = writeOwners;
+      this.writeBackups = writeBackups;
+
+      this.isPrimary = primary.equals(localAddress);
+      this.isReadOwner = readOwners.contains(localAddress);
+      this.isWriteOwner = writeOwners.contains(localAddress);
+      this.isWriteBackup = this.isWriteOwner && !this.isPrimary;
    }
 
-   public int getSegmentId() {
+
+   public int segmentId() {
       return segmentId;
-   }
-
-   public boolean isPrimary() {
-      return ownership == Ownership.PRIMARY;
    }
 
    public Address primary() {
       return primary;
    }
 
-   public Ownership ownership() {
-      return ownership;
+   public List<Address> readOwners() {
+      return readOwners;
    }
 
-   public Collection<Address> owners() {
-      return owners;
+   public List<Address> writeOwners() {
+      return writeOwners;
    }
 
-   public Collection<Address> backups() {
-      return owners.subList(1, owners.size());
+   public Collection<Address> writeBackups() {
+      return writeBackups;
+   }
+
+   public boolean isPrimary() {
+      return isPrimary;
+   }
+
+   public boolean isReadOwner() {
+      return isReadOwner;
+   }
+
+   public boolean isWriteOwner() {
+      return isWriteOwner;
+   }
+
+   public boolean isWriteBackup() {
+      return isWriteBackup;
+   }
+
+   public Ownership readOwnership() {
+      return isPrimary ? Ownership.PRIMARY : (isReadOwner ? Ownership.BACKUP : Ownership.NON_OWNER);
+   }
+
+   public Ownership writeOwnership() {
+      return isPrimary ? Ownership.PRIMARY : (isWriteOwner ? Ownership.BACKUP : Ownership.NON_OWNER);
    }
 }

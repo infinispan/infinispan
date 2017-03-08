@@ -34,7 +34,7 @@ public class MagicKey implements Serializable, ExternalPojo {
     */
    private static final long serialVersionUID = -835275755945753954L;
 
-   private static final WeakHashMap<ConsistentHash, int[]> hashCodes = new WeakHashMap<>();
+   private static final WeakHashMap<Integer, int[]> hashCodes = new WeakHashMap<>();
    private static final AtomicLong counter = new AtomicLong();
 
    /**
@@ -43,7 +43,7 @@ public class MagicKey implements Serializable, ExternalPojo {
    private final String name;
    private final int hashcode;
    /**
-    * As hashcodes can collide, using counter makes the key unique.
+    * As hash codes can collide, using counter makes the key unique.
     */
    private final long unique;
    private final int segment;
@@ -54,14 +54,15 @@ public class MagicKey implements Serializable, ExternalPojo {
       Address primaryAddress = addressOf(primaryOwner);
       this.address = primaryAddress.toString();
 
-      ConsistentHash ch = primaryOwner.getAdvancedCache().getDistributionManager().getConsistentHash();
+      LocalizedCacheTopology cacheTopology = primaryOwner.getAdvancedCache().getDistributionManager().getCacheTopology();
+      ConsistentHash ch = cacheTopology.getWriteConsistentHash();
       int segment = findSegment(ch.getNumSegments(), s -> primaryAddress.equals(ch.locatePrimaryOwnerForSegment(s)));
       if (segment < 0) {
          throw new IllegalStateException("Could not find any segment owned by " + primaryOwner +
             ", primary segments: " + segments(primaryOwner));
       }
       this.segment = segment;
-      hashcode = getHashCodeForSegment(ch, segment);
+      hashcode = getHashCodeForSegment(cacheTopology, segment);
       unique = counter.getAndIncrement();
    }
 
@@ -70,7 +71,8 @@ public class MagicKey implements Serializable, ExternalPojo {
       Address primaryAddress = addressOf(primaryOwner);
       this.address = primaryAddress.toString();
 
-      ConsistentHash ch = primaryOwner.getAdvancedCache().getDistributionManager().getConsistentHash();
+      LocalizedCacheTopology cacheTopology = primaryOwner.getAdvancedCache().getDistributionManager().getCacheTopology();
+      ConsistentHash ch = cacheTopology.getWriteConsistentHash();
       segment = findSegment(ch.getNumSegments(), s -> {
          List<Address> owners = ch.locateOwnersForSegment(s);
          if (!primaryAddress.equals(owners.get(0))) return false;
@@ -83,18 +85,17 @@ public class MagicKey implements Serializable, ExternalPojo {
       if (segment < 0) {
          throw new IllegalStateException("Could not find any segment owned by " + primaryOwner + ", "
             + Arrays.toString(backupOwners) + ", primary segments: " + segments(primaryOwner)
-            + ", backup segments: " + Stream.of(backupOwners).collect(Collectors.toMap(Function.identity(), owner -> segments(owner))));
+            + ", backup segments: " + Stream.of(backupOwners).collect(Collectors.toMap(Function.identity(), this::segments)));
       }
-      hashcode = getHashCodeForSegment(ch, segment);
+      hashcode = getHashCodeForSegment(cacheTopology, segment);
       unique = counter.getAndIncrement();
    }
 
-   public int findSegment(int numSegments, Predicate<Integer> predicate) {
+   private int findSegment(int numSegments, Predicate<Integer> predicate) {
       // use random offset so that we don't use only lower segments
       int offset = ThreadLocalRandom.current().nextInt(numSegments);
-      int segment = 0;
       for (int i = 0; i < numSegments; ++i) {
-         segment = (offset + i) % numSegments;
+         int segment = (offset + i) % numSegments;
          if (predicate.test(segment)) {
             return segment;
          }
@@ -102,31 +103,30 @@ public class MagicKey implements Serializable, ExternalPojo {
       return -1;
    }
 
-   private static synchronized int getHashCodeForSegment(ConsistentHash ch, int segment) {
-      // Caching the hashcodes prevents random failures in tests where we create many magic keys
-      int[] hcs = hashCodes.get(ch);
-      if (hcs == null) {
-         hashCodes.put(ch, hcs = new int[ch.getNumSegments()]);
-      }
+   private static synchronized int getHashCodeForSegment(LocalizedCacheTopology cacheTopology, int segment) {
+      int numSegments = cacheTopology.getReadConsistentHash().getNumSegments();
+      // Caching the hash codes prevents random failures in tests where we create many magic keys
+      int[] hcs = hashCodes.computeIfAbsent(numSegments, k -> new int[numSegments]);
       int hc = hcs[segment];
       if (hc != 0) {
          return hc;
       }
       Random r = new Random();
-      int attemptsLeft = 100 * ch.getNumSegments();
-      Integer dummy;
+      int attemptsLeft = 100 * numSegments;
+      int dummy;
       do {
          dummy = r.nextInt();
          attemptsLeft--;
          if (attemptsLeft < 0) {
             throw new IllegalStateException("Could not find any key in segment " + segment);
          }
-      } while (ch.getSegment(dummy) != segment);
-      return hcs[segment] = dummy.intValue();
+      } while (cacheTopology.getSegment(dummy) != segment);
+      return hcs[segment] = dummy;
    }
 
    private Set<Integer> segments(Cache<?, ?> owner) {
-      return owner.getAdvancedCache().getDistributionManager().getConsistentHash().getPrimarySegmentsForOwner(owner.getCacheManager().getAddress());
+      return owner.getAdvancedCache().getDistributionManager().getWriteConsistentHash()
+                  .getPrimarySegmentsForOwner(owner.getCacheManager().getAddress());
    }
 
    public MagicKey(Cache<?, ?> primaryOwner) {

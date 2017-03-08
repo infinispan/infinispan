@@ -6,6 +6,7 @@ import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -51,7 +52,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
 
       int indexToKill = -1;
       //this tx spreads over 3 out of 4 nodes, let's find one that has the tx and kill it
-      final List<Address> locate = advancedCache(0).getDistributionManager().getConsistentHash().locateOwners(key);
+      final Collection<Address> locate = advancedCache(0).getDistributionManager().getCacheTopology().getWriteOwners(key);
       for (int i = 3; i > 0; i--) {
          if (locate.contains(address(i))) {
             indexToKill = i;

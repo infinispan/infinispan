@@ -1,4 +1,4 @@
-package org.infinispan.distribution.group;
+package org.infinispan.distribution.group.impl;
 
 import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
@@ -7,9 +7,6 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
-/**
- * @private
- */
 @Scope(Scopes.NAMED_CACHE)
 @DefaultFactoryFor(classes = GroupManager.class)
 public class GroupManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {

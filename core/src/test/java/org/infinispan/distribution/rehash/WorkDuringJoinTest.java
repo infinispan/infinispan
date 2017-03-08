@@ -8,10 +8,12 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 /**
@@ -33,7 +35,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest<Object, String> {
    }
 
    private List<MagicKey> init() {
-      List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(
+      List<MagicKey> keys = new ArrayList<>(Arrays.asList(
             new MagicKey("k1", c1), new MagicKey("k2", c2),
             new MagicKey("k3", c1), new MagicKey("k4", c2)
       ));
@@ -54,16 +56,18 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest<Object, String> {
 
    public void testJoinAndGet() {
       List<MagicKey> keys = init();
-      ConsistentHash chOld = getConsistentHash(c1);
+      KeyPartitioner keyPartitioner = TestingUtil.extractComponent(c1, KeyPartitioner.class);
+      ConsistentHash chOld = getCacheTopology(c1).getWriteConsistentHash();
       Address joinerAddress = startNewMember();
-      List<Address> newMembers = new ArrayList<Address>(chOld.getMembers());
+      List<Address> newMembers = new ArrayList<>(chOld.getMembers());
       newMembers.add(joinerAddress);
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
       ConsistentHash chNew = chf.rebalance(chf.updateMembers((DefaultConsistentHash) chOld, newMembers, null));
       // which key should me mapped to the joiner?
       MagicKey keyToTest = null;
       for (MagicKey k: keys) {
-         if (chNew.isKeyLocalToNode(joinerAddress, k)) {
+         int segment = keyPartitioner.getSegment(k);
+         if (chNew.isSegmentLocalToNode(joinerAddress, segment)) {
             keyToTest = k;
             break;
          }

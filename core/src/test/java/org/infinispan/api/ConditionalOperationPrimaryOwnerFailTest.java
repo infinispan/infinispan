@@ -28,8 +28,6 @@ import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 /**
@@ -57,42 +55,31 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
       //it blocks the StateResponseCommand.class
       final CountDownLatch latch1 = new CountDownLatch(1);
       final CountDownLatch latch2 = new CountDownLatch(1);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheRpcCommand command = (CacheRpcCommand) invocation.getArguments()[0];
-            if (command instanceof StateResponseCommand) {
-               log.debugf("Blocking command %s", command);
-               latch2.countDown();
-               latch1.await();
-            }
-            return invocation.callRealMethod();
+      doAnswer(invocation -> {
+         CacheRpcCommand command = (CacheRpcCommand) invocation.getArguments()[0];
+         if (command instanceof StateResponseCommand) {
+            log.debugf("Blocking command %s", command);
+            latch2.countDown();
+            latch1.await();
          }
+         return invocation.callRealMethod();
       }).when(spyHandler).handle(any(CacheRpcCommand.class), any(Reply.class), any(DeliverOrder.class));
 
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            InvocationContext context = (InvocationContext) invocation.getArguments()[0];
-            log.debugf("wrapEntryForWriting invoked with %s", context);
+      doAnswer(invocation -> {
+         InvocationContext context = (InvocationContext) invocation.getArguments()[0];
+         log.debugf("wrapEntryForWriting invoked with %s", context);
 
-            Object mvccEntry = invocation.callRealMethod();
-            assertNull(mvccEntry, "Entry should not be wrapped!");
-            assertNull(context.lookupEntry(key), "Entry should not be wrapped!");
-            return mvccEntry;
-         }
+         Object mvccEntry = invocation.callRealMethod();
+         assertNull(mvccEntry, "Entry should not be wrapped!");
+         assertNull(context.lookupEntry(key), "Entry should not be wrapped!");
+         return mvccEntry;
       }).when(spyEntryFactory).wrapEntryForWriting(any(InvocationContext.class), anyObject(),
-            anyBoolean(), anyBoolean());
+                                                      anyBoolean(), anyBoolean());
 
-      Future<?> killMemberResult = fork(new Runnable() {
-         @Override
-         public void run() {
-            killMember(1);
-         }
-      });
+      Future<?> killMemberResult = fork(() -> killMember(1));
 
       //await until the key is received from state transfer (the command is blocked now...)
-      latch2.await();
+      latch2.await(30, TimeUnit.SECONDS);
       futureBackupOwnerCache.put(key, FINAL_VALUE);
 
       latch1.countDown();

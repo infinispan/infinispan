@@ -50,7 +50,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.NotSerializableException;
@@ -95,6 +94,7 @@ import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ByteString;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -148,8 +148,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testListMarshalling() throws Exception {
-      List<GlobalTransaction> l1 = new ArrayList<GlobalTransaction>();
-      List<GlobalTransaction> l2 = new LinkedList<GlobalTransaction>();
+      List<GlobalTransaction> l1 = new ArrayList<>();
+      List<GlobalTransaction> l2 = new LinkedList<>();
       for (int i = 0; i < 10; i++) {
          JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress("localhost", 1000 * i));
          GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
@@ -161,10 +161,10 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testMapMarshalling() throws Exception {
-      Map<Integer, GlobalTransaction> m1 = new HashMap<Integer, GlobalTransaction>();
-      Map<Integer, GlobalTransaction> m2 = new TreeMap<Integer, GlobalTransaction>();
-      Map<Integer, GlobalTransaction> m3 = new HashMap<Integer, GlobalTransaction>();
-      Map<Integer, GlobalTransaction> m4 = new FastCopyHashMap<Integer, GlobalTransaction>();
+      Map<Integer, GlobalTransaction> m1 = new HashMap<>();
+      Map<Integer, GlobalTransaction> m2 = new TreeMap<>();
+      Map<Integer, GlobalTransaction> m3 = new HashMap<>();
+      Map<Integer, GlobalTransaction> m4 = new FastCopyHashMap<>();
       for (int i = 0; i < 10; i++) {
          JGroupsAddress jGroupsAddress = new JGroupsAddress(UUID.randomUUID());
          GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
@@ -185,8 +185,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testSetMarshalling() throws Exception {
-      Set<Integer> s1 = new HashSet<Integer>();
-      Set<Integer> s2 = new TreeSet<Integer>();
+      Set<Integer> s1 = new HashSet<>();
+      Set<Integer> s2 = new TreeSet<>();
       for (int i = 0; i < 10; i++) {
          Integer integ = 1000 * i;
          s1.add(integ);
@@ -197,7 +197,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testTreeSetWithComparator() throws Exception {
-      Set<Human> treeSet = new TreeSet<Human>(new HumanComparator());
+      Set<Human> treeSet = new TreeSet<>(new HumanComparator());
       for (int i = 0; i < 10; i++) {
          treeSet.add(new Human().age(i));
       }
@@ -250,7 +250,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       ClearCommand c9 = new ClearCommand();
       marshallAndAssertEquality(c9);
 
-      Map<Integer, GlobalTransaction> m1 = new HashMap<Integer, GlobalTransaction>();
+      Map<Integer, GlobalTransaction> m1 = new HashMap<>();
       for (int i = 0; i < 10; i++) {
          GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(UUID.randomUUID()), false);
          m1.put(1000 * i, gtx);
@@ -272,7 +272,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       TotalOrderNonVersionedPrepareCommand c14 = new TotalOrderNonVersionedPrepareCommand(cacheName, gtx, c5, c6, c8, c10);
       marshallAndAssertEquality(c14);
 
-      TotalOrderVersionedPrepareCommand c15 = new TotalOrderVersionedPrepareCommand(cacheName, gtx, Arrays.<WriteCommand>asList(c5, c10), true);
+      TotalOrderVersionedPrepareCommand c15 = new TotalOrderVersionedPrepareCommand(cacheName, gtx, Arrays.asList(c5, c10), true);
       c15.setVersionsSeen(new EntryVersionsMap());
       marshallAndAssertEquality(c15);
 
@@ -291,22 +291,22 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
       ByteString cacheName = ByteString.fromString(EmbeddedCacheManager.DEFAULT_CACHE_NAME);
       ImmortalCacheEntry entry1 = (ImmortalCacheEntry) TestInternalCacheEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
-      Collection<InternalCacheEntry> state = new ArrayList<InternalCacheEntry>();
+      Collection<InternalCacheEntry> state = new ArrayList<>();
       state.add(entry1);
       Address a1 = new JGroupsAddress(UUID.randomUUID());
       Address a2 = new JGroupsAddress(UUID.randomUUID());
       Address a3 = new JGroupsAddress(UUID.randomUUID());
-      List<Address> oldAddresses = new ArrayList<Address>();
+      List<Address> oldAddresses = new ArrayList<>();
       oldAddresses.add(a1);
       oldAddresses.add(a2);
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
       DefaultConsistentHash oldCh = chf.create(MurmurHash3.getInstance(), 2, 3, oldAddresses, null);
-      List<Address> newAddresses = new ArrayList<Address>();
+      List<Address> newAddresses = new ArrayList<>();
       newAddresses.add(a1);
       newAddresses.add(a2);
       newAddresses.add(a3);
       DefaultConsistentHash newCh = chf.create(MurmurHash3.getInstance(), 2, 3, newAddresses, null);
-      StateRequestCommand c14 = new StateRequestCommand(cacheName, StateRequestCommand.Type.START_STATE_TRANSFER, a1, 99, Collections.emptySet());
+      StateRequestCommand c14 = new StateRequestCommand(cacheName, StateRequestCommand.Type.START_STATE_TRANSFER, a1, 99, new SmallIntSet());
       byte[] bytes = marshaller.objectToByteBuffer(c14);
       marshaller.objectFromByteBuffer(bytes);
 
@@ -369,7 +369,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testAtomicHashMap() throws Exception {
-      AtomicHashMap<String, String> m = new AtomicHashMap<String, String>();
+      AtomicHashMap<String, String> m = new AtomicHashMap<>();
       m.initForWriting();
       m.put("k1", "v1");
       m.put("k1", "v2");
@@ -382,13 +382,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       assert m.size() == 1;
 
-      m = new AtomicHashMap<String, String>();
+      m = new AtomicHashMap<>();
       assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
       m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
       assert m.isEmpty();
 
-      m = new AtomicHashMap<String, String>();
+      m = new AtomicHashMap<>();
       m.initForWriting();
       m.put("k1", "v1");
       m.put("k2", "v2");
@@ -402,7 +402,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       assert m.size() == 2;
 
-      m = new AtomicHashMap<String, String>();
+      m = new AtomicHashMap<>();
       m.initForWriting();
       m.put("k5", "v1");
       m.put("k5", "v2");
@@ -459,7 +459,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testConcurrentHashMap() throws Exception {
-      ConcurrentHashMap map = new ConcurrentHashMap();
+      ConcurrentHashMap<Integer, String> map = new ConcurrentHashMap<>();
       map.put(1, "v1");
       map.put(2, "v2");
       map.put(3, "v3");

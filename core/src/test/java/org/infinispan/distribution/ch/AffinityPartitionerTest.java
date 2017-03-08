@@ -8,6 +8,7 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -36,10 +37,10 @@ public class AffinityPartitionerTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       cacheManagers.stream().map(cm -> cm.getCache().getAdvancedCache()).forEach(advancedCache -> {
-         ConsistentHash ch = advancedCache.getDistributionManager().getConsistentHash();
+         LocalizedCacheTopology cacheTopology = advancedCache.getDistributionManager().getCacheTopology();
          advancedCache.getDataContainer().keySet().forEach(key -> {
             int keySegmentId = ((AffinityKey) key).segmentId;
-            assertEquals(ch.getSegment(key), keySegmentId);
+            assertEquals(cacheTopology.getSegment(key), keySegmentId);
          });
       });
    }

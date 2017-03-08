@@ -1,5 +1,6 @@
 package org.infinispan.cli.interpreter.statement;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -24,7 +25,7 @@ public class LocateStatement implements Statement {
 
    private enum Options {
       CODEC
-   };
+   }
 
    final KeyData keyData;
    final private List<Option> options;
@@ -54,7 +55,8 @@ public class LocateStatement implements Statement {
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       if(distributionManager!=null) {
          Object key = keyData.getKey();
-         List<Address> addresses = distributionManager.locate(codec.encodeKey(key));
+         Collection<Address> addresses = distributionManager.getCacheTopology()
+                                                            .getDistribution(codec.encodeKey(key)).writeOwners();
          return new StringResult(addresses.toString());
       } else {
          throw log.cacheNotDistributed();

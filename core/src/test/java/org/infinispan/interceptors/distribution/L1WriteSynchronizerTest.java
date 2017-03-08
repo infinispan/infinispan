@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -51,6 +52,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       dc = mock(DataContainer.class);
       stl = mock(StateTransferLock.class);
       cdl = mock(ClusteringDependentLogic.class);
+      when(cdl.getCacheTopology()).thenReturn(mock(LocalizedCacheTopology.class));
 
       sync = new L1WriteSynchronizer(dc, l1Timeout, stl, cdl);
    }
@@ -249,13 +251,10 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       // the synchronizer has been marked as a write occurring
       doAnswer(i -> { barrier.await(); return null; }).when(stl).acquireSharedTopologyLock();
 
-      Future<Void> future = fork(new Runnable() {
-         @Override
-         public void run() {
-            Object keyValue = new Object();
-            InternalCacheEntry ice = new ImmortalCacheEntry(keyValue, keyValue);
-            sync.runL1UpdateIfPossible(ice);
-         }
+      Future<Void> future = fork(() -> {
+         Object keyValue = new Object();
+         InternalCacheEntry ice = new ImmortalCacheEntry(keyValue, keyValue);
+         sync.runL1UpdateIfPossible(ice);
       }, null);
 
       // wait for the thread to try updating

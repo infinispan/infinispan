@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -199,7 +201,9 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
     * this method returns the reunion between 'recipients' and {@link #getRemoteLocksAcquired()} from which it discards
     * the members that left.
     */
-   public Collection<Address> getCommitNodes(Collection<Address> recipients, int currentTopologyId, Collection<Address> members) {
+   public Collection<Address> getCommitNodes(Collection<Address> recipients, CacheTopology cacheTopology) {
+      int currentTopologyId = cacheTopology.getTopologyId();
+      List<Address> members = cacheTopology.getMembers();
       if (trace) log.tracef("getCommitNodes recipients=%s, currentTopologyId=%s, members=%s, txTopologyId=%s",
                             recipients, currentTopologyId, members, getTopologyId());
       if (hasModification(ClearCommand.class)) {

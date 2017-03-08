@@ -8,6 +8,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 
 /**
  * A component that manages the distribution of elements across a cache cluster
@@ -26,8 +27,11 @@ public interface DistributionManager {
     * @param key key to test
     * @return a DataLocality that allows you to test whether a key is mapped to the local node or not, and the degree of
     * certainty of such a result.
+    *
+    * @deprecated Since 9.0, please use {@code getCacheTopology().getDistributionInfo(key)} instead.
     */
-   DataLocality getLocality(Object key); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
+   @Deprecated
+   DataLocality getLocality(Object key);
 
    /**
     * Locates a key in a cluster.  The returned addresses <i>may not</i> be owners of the keys if a rehash happens to be
@@ -36,15 +40,20 @@ public interface DistributionManager {
     *
     * @param key key to test
     * @return a list of addresses where the key may reside
+    *
+    * @deprecated Since 9.0, please use {@code getCacheTopology().getDistributionInfo(key)} instead.
     */
-   List<Address> locate(Object key); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
+   @Deprecated
+   List<Address> locate(Object key);
 
    /**
     * Returns the first Address containing the key.  Equivalent to returning the first element of {@link #locate(Object)}
     * @param key key to test
     * @return the first address on which the key may reside
+    * @deprecated Since 9.0, please use {@code getCacheTopology().getDistributionInfo(key)} instead.
     */
-   Address getPrimaryLocation(Object key);  //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
+   @Deprecated
+   Address getPrimaryLocation(Object key);
 
    /**
     * Locates a list of keys in a cluster.  Like {@link #locate(Object)} the returned addresses <i>may not</i> be owners
@@ -52,20 +61,30 @@ public interface DistributionManager {
     * should be checked for and the next address checked accordingly.
     *
     * @param keys list of keys to locate
-    * @return a list of addresses where the keys reside
+    * @return all the nodes that would need to write a copy of one of the keys.
+    * @deprecated Since 9.0, no direct replacement.
     */
-   Set<Address> locateAll(Collection<Object> keys); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
+   @Deprecated
+   Set<Address> locateAll(Collection<Object> keys);
 
    /**
-    * Retrieves the consistent hash instance currently in use, an instance of the configured ConsistentHash
-    * class (which defaults to {@link org.infinispan.distribution.ch.impl.DefaultConsistentHash}.
+    * @return the consistent hash used for writing.
     *
-    * @return a ConsistentHash instance
+    * @deprecated Since 9.0, please use {@link #getWriteConsistentHash()} instead.
     */
-   ConsistentHash getConsistentHash();
+   @Deprecated
+   default ConsistentHash getConsistentHash() {
+      return getWriteConsistentHash();
+   }
 
+   /**
+    * @return the consistent hash used for reading.
+    */
    ConsistentHash getReadConsistentHash();
 
+   /**
+    * @return the consistent hash used for writing.
+    */
    ConsistentHash getWriteConsistentHash();
 
    /**
@@ -88,4 +107,15 @@ public interface DistributionManager {
     * @return true if join is in progress, false otherwise
     */
    boolean isJoinComplete();
+
+   /**
+    * @return the current cache topology, which includes the read and write consistent hashes.
+    */
+   LocalizedCacheTopology getCacheTopology();
+
+   /**
+    * @deprecated Internal only.
+    */
+   @Deprecated
+   void setCacheTopology(CacheTopology cacheTopology);
 }

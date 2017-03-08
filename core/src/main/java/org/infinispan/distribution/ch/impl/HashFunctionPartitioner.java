@@ -47,7 +47,7 @@ public class HashFunctionPartitioner implements KeyPartitioner {
    }
 
    public List<Integer> getSegmentEndHashes() {
-      List<Integer> hashes = new ArrayList<Integer>(numSegments);
+      List<Integer> hashes = new ArrayList<>(numSegments);
       for (int i = 0; i < numSegments; i++) {
          hashes.add(((i + 1) % numSegments) * segmentSize);
       }
@@ -76,4 +76,11 @@ public class HashFunctionPartitioner implements KeyPartitioner {
       return result;
    }
 
+   @Override
+   public String toString() {
+      return "HashFunctionPartitioner{" +
+            "hashFunction=" + hashFunction +
+            ", ns=" + numSegments +
+            '}';
+   }
 }

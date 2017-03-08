@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -28,6 +27,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -40,6 +40,7 @@ import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -67,8 +68,6 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -148,53 +147,50 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       TotalOrderManager totalOrderManager = mock(TotalOrderManager.class);
       BlockingTaskAwareExecutorService remoteCommandsExecutor = mock(BlockingTaskAwareExecutorService.class);
 
-      when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(Set.class))).thenAnswer(new Answer<StateRequestCommand>() {
-         @Override
-         public StateRequestCommand answer(InvocationOnMock invocation) {
-            return new StateRequestCommand(ByteString.fromString("cache1"), (StateRequestCommand.Type) invocation.getArguments()[0], (Address) invocation.getArguments()[1], (Integer) invocation.getArguments()[2], (Set) invocation.getArguments()[3]);
-         }
-      });
+      when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(SmallIntSet.class)))
+         .thenAnswer(invocation-> new StateRequestCommand(ByteString.fromString("cache1"),
+                                                          (StateRequestCommand.Type) invocation.getArguments()[0],
+                                                          (Address) invocation.getArguments()[1],
+                                                          (Integer) invocation.getArguments()[2],
+                                                          (Set) invocation.getArguments()[3]));
 
       when(transport.getViewId()).thenReturn(1);
       when(rpcManager.getAddress()).thenReturn(addresses[0]);
       when(rpcManager.getTransport()).thenReturn(transport);
 
       final Map<Address, Set<Integer>> requestedSegments = CollectionFactory.makeConcurrentMap();
-      final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<Integer>();
+      final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<>();
       when(rpcManager.invokeRemotely(any(Collection.class), any(StateRequestCommand.class), any(RpcOptions.class)))
-            .thenAnswer(new Answer<Map<Address, Response>>() {
-               @Override
-               public Map<Address, Response> answer(InvocationOnMock invocation) {
-                  Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
-                  Address recipient = recipients.iterator().next();
-                  StateRequestCommand cmd = (StateRequestCommand) invocation.getArguments()[1];
-                  Map<Address, Response> results = new HashMap<Address, Response>(1);
-                  if (cmd.getType().equals(StateRequestCommand.Type.GET_TRANSACTIONS)) {
-                     results.put(recipient, SuccessfulResponse.create(new ArrayList<TransactionInfo>()));
-                     Set<Integer> segments = cmd.getSegments();
-                     requestedSegments.put(recipient, segments);
-                     flatRequestedSegments.addAll(segments);
-                  } else if (cmd.getType().equals(StateRequestCommand.Type.START_STATE_TRANSFER)
-                        || cmd.getType().equals(StateRequestCommand.Type.CANCEL_STATE_TRANSFER)) {
-                     results.put(recipient, SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
-                  }
-                  return results;
+            .thenAnswer(invocation -> {
+               Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
+               Address recipient = recipients.iterator().next();
+               StateRequestCommand cmd = (StateRequestCommand) invocation.getArguments()[1];
+               Map<Address, Response> results = new HashMap<>(1);
+               if (cmd.getType().equals(StateRequestCommand.Type.GET_TRANSACTIONS)) {
+                  results.put(recipient, SuccessfulResponse.create(new ArrayList<TransactionInfo>()));
+                  Set<Integer> segments = cmd.getSegments();
+                  requestedSegments.put(recipient, segments);
+                  flatRequestedSegments.addAll(segments);
+               } else if (cmd.getType().equals(StateRequestCommand.Type.START_STATE_TRANSFER)
+                     || cmd.getType().equals(StateRequestCommand.Type.CANCEL_STATE_TRANSFER)) {
+                  results.put(recipient, SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
                }
+               return results;
             });
 
-      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(new Answer<RpcOptionsBuilder>() {
-         public RpcOptionsBuilder answer(InvocationOnMock invocation) {
-            Object[] args = invocation.getArguments();
-            return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0], DeliverOrder.PER_SENDER);
-         }
+      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(invocation -> {
+         Object[] args = invocation.getArguments();
+         return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0],
+                                      DeliverOrder.PER_SENDER);
       });
 
 
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
       stateConsumer.init(cache, pooledExecutorService, stateTransferManager, interceptorChain, icf, configuration, rpcManager, null,
-            commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
-            totalOrderManager, remoteCommandsExecutor, new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0));
+                         commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
+                         totalOrderManager, remoteCommandsExecutor, new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0), null,
+                         new HashFunctionPartitioner());
       stateConsumer.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
@@ -224,12 +220,9 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertEquals(flatRequestedSegments, newSegments);
 
       // simulate a cluster state recovery and return to ch2
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
-            return null;
-         }
+      Future<Object> future = fork(() -> {
+         stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
+         return null;
       });
       stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers())), false);
       future.get();

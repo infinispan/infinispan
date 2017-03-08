@@ -1,5 +1,6 @@
 package org.infinispan.partitionhandling.impl;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -44,13 +46,15 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private PartitionHandlingManager partitionHandlingManager;
    private Transport transport;
    private StateTransferManager stateTransferManager;
+   private DistributionManager distributionManager;
 
    @Inject
    void init(PartitionHandlingManager partitionHandlingManager, Transport transport,
-             StateTransferManager stateTransferManager) {
+             StateTransferManager stateTransferManager, DistributionManager distributionManager) {
       this.partitionHandlingManager = partitionHandlingManager;
       this.transport = transport;
       this.stateTransferManager = stateTransferManager;
+      this.distributionManager = distributionManager;
    }
 
    private boolean performPartitionCheck(InvocationContext ctx, FlagAffectedCommand command) {
@@ -151,12 +155,14 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                   // Unlike in PartitionHandlingManager.checkRead(), here we ignore the availability status
                   // and we only fail the operation if _all_ owners have left the cluster.
                   // TODO Move this to the availability strategy when implementing ISPN-4624
+                  // TODO We should collect the owners and check the topology atomically
+                  Collection<Address> owners =
+                        distributionManager.getCacheTopology().getDistribution(dataCommand.getKey()).readOwners();
                   CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
                   if (cacheTopology == null || cacheTopology.getTopologyId() != dataCommand.getTopologyId()) {
                      // just rethrow the exception
                      throw t;
                   }
-                  List<Address> owners = cacheTopology.getReadConsistentHash().locateOwners(dataCommand.getKey());
                   if (!InfinispanCollections.containsAny(transport.getMembers(), owners)) {
                      throw log.degradedModeKeyUnavailable(dataCommand.getKey());
                   }
@@ -235,7 +241,8 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
                missingKeys.removeAll(result.keySet());
                for (Iterator<Object> it = missingKeys.iterator(); it.hasNext(); ) {
                   Object key = it.next();
-                  if (InfinispanCollections.containsAny(transport.getMembers(), stateTransferManager.getCacheTopology().getReadConsistentHash().locateOwners(key))) {
+                  List<Address> readOwners = distributionManager.getCacheTopology().getDistribution(key).readOwners();
+                  if (InfinispanCollections.containsAny(transport.getMembers(), readOwners)) {
                      it.remove();
                   }
                }

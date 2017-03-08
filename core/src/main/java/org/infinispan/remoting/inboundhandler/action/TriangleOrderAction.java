@@ -47,7 +47,7 @@ public class TriangleOrderAction implements Action {
    private int computeSegmentIdIfNeeded() {
       int tmp = segmentId;
       if (tmp == -1) {
-         tmp = handler.getClusteringDependentLogic().getSegmentForKey(key);
+         tmp = handler.getClusteringDependentLogic().getCacheTopology().getSegment(key);
          segmentId = tmp;
       }
       return tmp;

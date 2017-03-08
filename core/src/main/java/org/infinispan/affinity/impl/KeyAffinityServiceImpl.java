@@ -83,7 +83,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       this.keyGenerator = keyGenerator;
       this.bufferSize = bufferSize;
       if (filter != null) {
-         this.filter = new ConcurrentHashSet<Address>();
+         this.filter = new ConcurrentHashSet<>();
          for (Address address : filter) {
             this.filter.add(address);
          }
@@ -230,9 +230,9 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       @Override
       public void run() {
          try {
-            while (isStopped == false) {
+            while (!isStopped) {
                keyProducerStartLatch.await();
-               if (isStopped == false) {
+               if (!isStopped) {
                   isActive = true;
                   log.trace("KeyGeneratorWorker marked as ACTIVE");
                   generateKeys();
@@ -280,6 +280,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
          }
       }
 
+      @GuardedBy("maxNumberInvariant")
       private boolean tryAddKey(Address address, K key) {
          BlockingQueue<K> queue = address2key.get(address);
          // on node stop the distribution manager might still return the dead server for a while after we have already removed its queue
@@ -307,6 +308,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    /**
     * Important: this *MUST* be called with WL on {@link #address2key}.
     */
+   @GuardedBy("maxNumberInvariant")
    private void resetNumberOfKeys() {
       maxNumberOfKeys.set(address2key.keySet().size() * bufferSize);
       existingKeyCount.set(0);
@@ -319,10 +321,11 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    /**
     * Important: this *MUST* be called with WL on {@link #address2key}.
     */
+   @GuardedBy("maxNumberInvariant")
    private void addQueuesForAddresses(Collection<Address> addresses) {
       for (Address address : addresses) {
          if (interestedInAddress(address)) {
-            address2key.put(address, new ArrayBlockingQueue<K>(bufferSize));
+            address2key.put(address, new ArrayBlockingQueue<>(bufferSize));
          } else {
             log.tracef("Skipping address: %s", address);
          }
@@ -339,13 +342,12 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
 
    private Address getAddressForKey(Object key) {
       DistributionManager distributionManager = getDistributionManager();
-      ConsistentHash hash = distributionManager.getConsistentHash();
-      return hash.locatePrimaryOwner(key);
+      return distributionManager.getCacheTopology().getDistribution(key).primary();
    }
 
    private boolean isNodeInConsistentHash(Address address) {
       DistributionManager distributionManager = getDistributionManager();
-      ConsistentHash hash = distributionManager.getConsistentHash();
+      ConsistentHash hash = distributionManager.getWriteConsistentHash();
       return hash.getMembers().contains(address);
    }
    private DistributionManager getDistributionManager() {

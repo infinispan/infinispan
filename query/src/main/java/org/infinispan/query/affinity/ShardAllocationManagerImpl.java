@@ -49,7 +49,7 @@ public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
    private ShardDistribution getShardDistribution() {
       if (shardDistribution == null) {
          shardDistribution = this.buildShardDistribution(
-               distributionManager == null ? null : distributionManager.getConsistentHash());
+               distributionManager == null ? null : distributionManager.getWriteConsistentHash());
       }
       return shardDistribution;
    }
@@ -61,7 +61,7 @@ public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
 
    @Override
    public String getShardFromKey(Object key) {
-      int segment = distributionManager.getConsistentHash().getSegment(key);
+      int segment = distributionManager.getCacheTopology().getSegment(key);
       logger.debugf("Segment for key %s: %d", key, segment);
       return this.getShardDistribution().getShardFromSegment(segment);
    }
@@ -102,7 +102,7 @@ public final class ShardAllocationManagerImpl implements ShardAllocatorManager {
    public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
       if (initialized) {
          logger.debugf("Updating shard allocation");
-         this.shardDistribution = this.buildShardDistribution(distributionManager.getConsistentHash());
+         this.shardDistribution = this.buildShardDistribution(distributionManager.getWriteConsistentHash());
       }
    }
 

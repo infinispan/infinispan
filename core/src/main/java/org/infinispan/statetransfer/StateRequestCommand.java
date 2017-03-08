@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +15,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -158,7 +158,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
          case CANCEL_STATE_TRANSFER:
          case START_STATE_TRANSFER:
             setOrigin((Address) input.readObject());
-            segments = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
+            segments = MarshallUtil.unmarshallCollectionUnbounded(input, SmallIntSet::new);
             return;
          case GET_CACHE_LISTENERS:
             return;

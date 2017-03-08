@@ -15,7 +15,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
-import org.infinispan.distribution.group.PartitionerConsistentHash;
+import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.distribution.group.impl.GroupingPartitioner;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;

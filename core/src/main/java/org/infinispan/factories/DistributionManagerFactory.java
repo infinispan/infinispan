@@ -9,7 +9,7 @@ public class DistributionManagerFactory extends AbstractNamedCacheComponentFacto
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      if (configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated())
+      if (configuration.clustering().cacheMode().isClustered())
          return (T) new DistributionManagerImpl();
       else
          return null;

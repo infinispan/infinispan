@@ -9,7 +9,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.Cache;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
@@ -44,7 +44,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
    @Test (dependsOnMethods = "testKeysAreCorrectlyCreated")
    public void testConcurrentConsumptionOfKeys() throws InterruptedException {
-      List<KeyConsumer> consumers = new ArrayList<KeyConsumer>();
+      List<KeyConsumer> consumers = new ArrayList<>();
       int keysToConsume = 1000;
       CountDownLatch consumersStart = new CountDownLatch(1);
       for (int i = 0; i < 10; i++) {
@@ -70,13 +70,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
       Cache<Object, String> cache = cm.getCache(cacheName);
       caches.add(cache);
       waitForClusterToResize();
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-           return keyAffinityService.getAddress2KeysMapping().keySet().size() == 3;
-         }
-      });
-      assertEquals(3, keyAffinityService.getAddress2KeysMapping().keySet().size());
+      eventuallyEquals(3, () -> keyAffinityService.getAddress2KeysMapping().keySet().size());
       assertEventualFullCapacity();
       assertKeyAffinityCorrectness();
    }
@@ -86,24 +80,19 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
       caches.get(2).getCacheManager().stop();
       caches.remove(2);
       waitForClusterToResize();
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return keyAffinityService.getAddress2KeysMapping().keySet().size() == 2;
-         }
-      });
-      assertEquals(2, keyAffinityService.getAddress2KeysMapping().keySet().size());
+      eventuallyEquals(2, () -> keyAffinityService.getAddress2KeysMapping().keySet().size());
       assertEventualFullCapacity();
       assertKeyAffinityCorrectness();
    }
 
    @Test (dependsOnMethods = "testServersDropped")
    public void testCollocatedKey() {
-      ConsistentHash hash = manager(0).getCache(cacheName).getAdvancedCache().getDistributionManager().getConsistentHash();
+      LocalizedCacheTopology cacheTopology =
+            manager(0).getCache(cacheName).getAdvancedCache().getDistributionManager().getCacheTopology();
       for (int i = 0; i < 1000; i++) {
-         List<Address> addresses = hash.locateOwners(i);
+         List<Address> addresses = cacheTopology.getDistribution(i).writeOwners();
          Object collocatedKey = keyAffinityService.getCollocatedKey(i);
-         List<Address> addressList = hash.locateOwners(collocatedKey);
+         List<Address> addressList = cacheTopology.getDistribution(collocatedKey).writeOwners();
          assertEquals(addresses, addressList);
       }
    }

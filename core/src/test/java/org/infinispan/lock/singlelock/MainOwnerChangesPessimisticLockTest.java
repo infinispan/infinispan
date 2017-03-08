@@ -10,7 +10,7 @@ import javax.transaction.Transaction;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -89,9 +89,9 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
       // search for a key that was migrated to third node and the suspended TX that locked it
       Object migratedKey = null;
       Transaction migratedTransaction = null;
-      ConsistentHash consistentHash = advancedCache(2).getDistributionManager().getConsistentHash();
+      LocalizedCacheTopology cacheTopology = advancedCache(2).getDistributionManager().getCacheTopology();
       for (Object key : key2Tx.keySet()) {
-         if (consistentHash.locatePrimaryOwner(key).equals(address(2))) {
+         if (cacheTopology.getDistribution(key).isPrimary()) {
             migratedKey = key;
             migratedTransaction = key2Tx.get(key);
             log.trace("Migrated key = " + migratedKey);

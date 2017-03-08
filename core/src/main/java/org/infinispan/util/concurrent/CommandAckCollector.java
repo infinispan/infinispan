@@ -257,21 +257,21 @@ public class CommandAckCollector {
    }
 
    private class SingleKeyCollector extends BaseCollector<Object> {
-      private final Collection<Address> owners;
+      private final Collection<Address> backupOwners;
 
-      private SingleKeyCollector(long id, Collection<Address> owners, int topologyId) {
+      private SingleKeyCollector(long id, Collection<Address> backupOwners, int topologyId) {
          super(id, topologyId);
-         this.owners = Collections.synchronizedSet(new HashSet<>(owners)); //removal is fast
+         this.backupOwners = Collections.synchronizedSet(new HashSet<>(backupOwners));
       }
 
       @Override
       public boolean hasPendingBackupAcks() {
-         return !owners.isEmpty();
+         return !backupOwners.isEmpty();
       }
 
       @Override
       public void onMembersChange(Collection<Address> members) {
-         if (owners.retainAll(members) && owners.isEmpty() && primaryResultReceived) {
+         if (backupOwners.retainAll(members) && backupOwners.isEmpty() && primaryResultReceived) {
             if (trace) {
                log.tracef("[Collector#%s] Some backups left the cluster.", id);
             }
@@ -283,7 +283,7 @@ public class CommandAckCollector {
       public void primaryResult(Object result, boolean success) {
          primaryResult = result;
          primaryResultReceived = true;
-         if (!success || owners.isEmpty()) {
+         if (!success || backupOwners.isEmpty()) {
             markReady();
          }
       }
@@ -296,7 +296,7 @@ public class CommandAckCollector {
          if (isWrongTopologyOrIsDone(topologyId)) {
             return;
          }
-         if (owners.remove(from) && owners.isEmpty() && primaryResultReceived) {
+         if (backupOwners.remove(from) && backupOwners.isEmpty() && primaryResultReceived) {
             markReady();
          }
       }

@@ -42,7 +42,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -61,17 +60,14 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
-      Answer answer = new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return Mockito.mock((Class) invocationOnMock.getArguments()[0]);
-         }
-      };
+      Answer answer = (Answer<Object>) invocationOnMock -> Mockito.mock((Class) invocationOnMock.getArguments()[0]);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
             new WrappedByteArrayConverter());
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
-      n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
+      ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
+      cdl.init(null);
+      n.injectDependencies(mockCache, cdl, null, config,
                            mock(DistributionManager.class), mock(InternalEntryFactory.class),
                            mock(ClusterEventManager.class));
       cl = new CacheListener();

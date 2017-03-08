@@ -55,7 +55,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
@@ -74,6 +73,7 @@ import org.infinispan.stream.impl.termop.object.ForEachBiOperation;
 import org.infinispan.stream.impl.termop.object.ForEachOperation;
 import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
 import org.infinispan.util.CloseableSuppliedIterator;
+import org.infinispan.util.RangeSet;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.CloseableSupplier;
 import org.infinispan.util.function.SerializableBiConsumer;
@@ -580,7 +580,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    private void ignoreRehashIteration(Consumer<R> consumer, IteratorSupplier<R> supplier, boolean iteratorParallelDistribute) {
       CollectionConsumer<R> remoteResults = new CollectionConsumer<>(consumer);
-      ConsistentHash ch = dm.getConsistentHash();
+      ConsistentHash ch = dm.getWriteConsistentHash();
 
       boolean runLocal = ch.getMembers().contains(localAddress);
       boolean stayLocal = runLocal && segmentsToFilter != null
@@ -641,15 +641,15 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       } else {
          listenerNotifier = null;
       }
-      KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(segmentInfoCH,
-              iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
-              listenerNotifier);
+      KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(keyPartitioner, segmentInfoCH,
+                                                                         iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
+                                                                         listenerNotifier);
       Thread thread = Thread.currentThread();
       executor.execute(() -> {
          try {
             log.tracef("Thread %s submitted iterator request for stream", thread);
             Set<Integer> segmentsToProcess = segmentsToFilter == null ?
-                    new ReplicatedConsistentHash.RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
+                                             new RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
             do {
                ConsistentHash ch = dm.getReadConsistentHash();
                boolean runLocal = ch.getMembers().contains(localAddress);

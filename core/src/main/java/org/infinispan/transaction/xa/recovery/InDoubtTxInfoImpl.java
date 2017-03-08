@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -21,24 +22,25 @@ import org.infinispan.remoting.transport.Address;
 public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
    private Xid xid;
    private Long internalId;
-   private Set<Integer> status;
-   private transient Set<Address> owners = new HashSet<Address>();
+   private SmallIntSet status;
+   private transient Set<Address> owners = new HashSet<>();
    private transient boolean isLocal;
 
    public InDoubtTxInfoImpl(Xid xid, Long internalId, Integer status) {
       this.xid = xid;
       this.internalId = internalId;
-      this.status = Collections.singleton(status);
+      this.status = new SmallIntSet(status);
+      this.status.set(status);
    }
 
    public InDoubtTxInfoImpl(Xid xid, long internalId, Set<Integer> status) {
       this.xid = xid;
       this.internalId = internalId;
-      this.status = new HashSet<Integer>(status);
+      this.status = new SmallIntSet(status);
    }
 
    public InDoubtTxInfoImpl(Xid xid, long internalId) {
-      this(xid, internalId, Collections.<Integer>emptySet());
+      this(xid, internalId, Collections.emptySet());
    }
 
    @Override
@@ -87,12 +89,12 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
       public void writeObject(ObjectOutput output, InDoubtTxInfoImpl inDoubtTxInfoImpl) throws IOException {
          output.writeObject(inDoubtTxInfoImpl.getXid());
          output.writeLong(inDoubtTxInfoImpl.getInternalId());
-         output.writeObject(inDoubtTxInfoImpl.status);
+         SmallIntSet.writeTo(output, inDoubtTxInfoImpl.status);
       }
 
       @Override
       public InDoubtTxInfoImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new InDoubtTxInfoImpl((Xid) input.readObject(), input.readLong(), (Set<Integer>)input.readObject());
+         return new InDoubtTxInfoImpl((Xid) input.readObject(), input.readLong(), SmallIntSet.readFrom(input));
       }
 
       @Override
@@ -102,7 +104,7 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
 
       @Override
       public Set<Class<? extends InDoubtTxInfoImpl>> getTypeClasses() {
-         return Util.<Class<? extends InDoubtTxInfoImpl>>asSet(InDoubtTxInfoImpl.class);
+         return Util.asSet(InDoubtTxInfoImpl.class);
       }
    }
 

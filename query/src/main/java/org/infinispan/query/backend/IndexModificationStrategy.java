@@ -66,7 +66,7 @@ public enum IndexModificationStrategy {
                                          DistributionManager distributionManager, RpcManager rpcManager, Object key) {
          return command instanceof ClearCommand ||
                !(command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER) || command.hasAnyFlag(FlagBitSets.SKIP_INDEXING)) &&
-                     (distributionManager == null || distributionManager.getPrimaryLocation(key).equals(rpcManager.getAddress()));
+                     (distributionManager == null || distributionManager.getCacheTopology().getDistribution(key).isPrimary());
 
       }
    };

@@ -2,6 +2,7 @@ package org.infinispan.distribution.topologyaware;
 
 import static org.testng.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -60,17 +61,17 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 //      assert advancedCache(2).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
-      log.trace("distributionManager.ConsistentHash() = " + dmi.getConsistentHash());
-      assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());
+      log.trace("distributionManager.ConsistentHash() = " + dmi.getWriteConsistentHash());
+      assertTopologyInfo3Nodes(dmi.getWriteConsistentHash().getMembers());
       dmi = (DistributionManagerImpl) advancedCache(1).getDistributionManager();
-      assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());
+      assertTopologyInfo3Nodes(dmi.getWriteConsistentHash().getMembers());
       dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
-      assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());
+      assertTopologyInfo3Nodes(dmi.getWriteConsistentHash().getMembers());
 
-      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getConsistentHash();
-      ConsistentHash tach1 = advancedCache(1).getDistributionManager().getConsistentHash();
+      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash tach1 = advancedCache(1).getDistributionManager().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach1.getMembers());
-      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getConsistentHash();
+      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 
@@ -81,29 +82,29 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       TestingUtil.waitForRehashToComplete(cache(0), cache(2));
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
-      assertTopologyInfo2Nodes(dmi.getConsistentHash().getMembers());
+      assertTopologyInfo2Nodes(dmi.getWriteConsistentHash().getMembers());
       dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
-      assertTopologyInfo2Nodes(dmi.getConsistentHash().getMembers());
+      assertTopologyInfo2Nodes(dmi.getWriteConsistentHash().getMembers());
 
-      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getConsistentHash();
-      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getConsistentHash();
+      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 
    private void assertTopologyInfo3Nodes(List<Address> caches) {
-      assertTopologyInfo2Nodes(caches);
-      TopologyAwareAddress address1 = (TopologyAwareAddress) address(1);
+      assertTopologyInfo2Nodes(Arrays.asList(caches.get(0), caches.get(2)));
+      TopologyAwareAddress address1 = (TopologyAwareAddress) caches.get(1);
       assertEquals(address1.getSiteId(), "s1");
       assertEquals(address1.getRackId(), "r1");
       assertEquals(address1.getMachineId(), "m1");
    }
 
    private void assertTopologyInfo2Nodes(List<Address> caches) {
-      TopologyAwareAddress address0 = (TopologyAwareAddress) address(0);
+      TopologyAwareAddress address0 = (TopologyAwareAddress) caches.get(0);
       assertEquals(address0.getSiteId(), "s0");
       assertEquals(address0.getRackId(), "r0");
       assertEquals(address0.getMachineId(), "m0");
-      TopologyAwareAddress address2 = (TopologyAwareAddress) address(2);
+      TopologyAwareAddress address2 = (TopologyAwareAddress) caches.get(1);
       assertEquals(address2.getSiteId(), "s2");
       assertEquals(address2.getRackId(), "r2");
       assertEquals(address2.getMachineId(), "m2");

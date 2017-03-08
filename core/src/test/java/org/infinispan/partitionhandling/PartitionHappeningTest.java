@@ -6,8 +6,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.PartitionHappeningTest")
@@ -19,7 +17,7 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
    public void testPartitionHappening() throws Throwable {
 
-      final List<ViewChangedHandler> listeners = new ArrayList<ViewChangedHandler>();
+      final List<ViewChangedHandler> listeners = new ArrayList<>();
       for (int i = 0; i < caches().size(); i++) {
          ViewChangedHandler listener = new ViewChangedHandler();
          cache(i).getCacheManager().addListener(listener);
@@ -28,47 +26,17 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (ViewChangedHandler l : listeners)
-               if (!l.notified) return false;
-            return true;
-         }
+      eventually(() -> {
+         for (ViewChangedHandler l : listeners)
+            if (!l.notified) return false;
+         return true;
       });
 
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            RpcManager rpcManager = advancedCache(0).getRpcManager();
-            List<org.infinispan.remoting.transport.Address> members = rpcManager.getTransport().getMembers();
-            return members.size() == 2;
-         }
-      });
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return clusterAndChFormed(0, 2);
-         }
-      });
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return clusterAndChFormed(1, 2);
-         }
-      });
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return clusterAndChFormed(2, 2);
-         }
-      });
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return clusterAndChFormed(3, 2);
-         }
-      });
+      eventuallyEquals(2, () -> advancedCache(0).getRpcManager().getTransport().getMembers().size());
+      eventually(() -> clusterAndChFormed(0, 2));
+      eventually(() -> clusterAndChFormed(1, 2));
+      eventually(() -> clusterAndChFormed(2, 2));
+      eventually(() -> clusterAndChFormed(3, 2));
 
 
       cache(0).put("k", "v1");
@@ -88,7 +56,7 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
    public boolean clusterAndChFormed(int cacheIndex, int memberCount) {
       return advancedCache(cacheIndex).getRpcManager().getTransport().getMembers().size() == memberCount &&
-            advancedCache(cacheIndex).getDistributionManager().getConsistentHash().getMembers().size() == memberCount;
+            advancedCache(cacheIndex).getDistributionManager().getWriteConsistentHash().getMembers().size() == memberCount;
    }
 
 }

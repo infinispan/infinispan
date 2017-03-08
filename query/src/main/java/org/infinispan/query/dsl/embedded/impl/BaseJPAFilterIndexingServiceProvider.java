@@ -200,7 +200,8 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       @Override
       public void onFilterResult(Object userContext, Object eventType, Object instance, Object[] projection, Comparable[] sortProjection) {
          CacheEntryEvent<K, V> event = (CacheEntryEvent<K, V>) userContext;
-         if (event.isPre() && isClustered || isPrimaryOnly && !clusteringDependentLogic.localNodeIsPrimaryOwner(event.getKey())) {
+         if (event.isPre() && isClustered || isPrimaryOnly &&
+               !clusteringDependentLogic.getCacheTopology().getDistribution(event.getKey()).isPrimary()) {
             return;
          }
 

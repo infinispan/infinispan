@@ -16,7 +16,7 @@ import org.infinispan.client.hotrod.retry.DistributionRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -115,12 +115,12 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
    }
 
    private void runTest(int cacheIndex) {
-      ConsistentHash serverCH = advancedCache(cacheIndex).getDistributionManager().getConsistentHash();
+      LocalizedCacheTopology serverTopology = advancedCache(cacheIndex).getDistributionManager().getCacheTopology();
 
       for (int i = 0; i < NUM_KEYS; i++) {
          byte[] keyBytes = (byte[]) kas.getKeyForAddress(address(cacheIndex));
          String key = DistributionRetryTest.ByteKeyGenerator.getStringObject(keyBytes);
-         Address serverPrimary = serverCH.locatePrimaryOwner(keyBytes);
+         Address serverPrimary = serverTopology.getDistribution(keyBytes).primary();
          assertEquals(address(cacheIndex), serverPrimary);
 
          remoteCache.put(key, "v");

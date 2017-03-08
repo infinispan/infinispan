@@ -217,7 +217,7 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
       //prepare can be send more than once if we have a state transfer
       context.clearLockedKeys();
       for (Object k : affectedKeys) {
-         if (clusteringDependentLogic.localNodeIsPrimaryOwner(k)) {
+         if (clusteringDependentLogic.getCacheTopology().getDistribution(k).isPrimary()) {
             context.addLockedKey(k);
          }
       }

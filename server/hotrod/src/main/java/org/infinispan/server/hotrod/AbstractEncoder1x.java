@@ -15,7 +15,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
-import org.infinispan.distribution.group.PartitionerConsistentHash;
+import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.distribution.group.impl.GroupingPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -213,7 +213,7 @@ abstract class AbstractEncoder1x implements VersionedEncoder {
    void writeHashTopologyUpdate(AbstractHashDistAwareResponse h, HotRodServer server, Response r, ByteBuf buffer) {
       AdvancedCache<byte[], byte[]> cache = server.getCacheInstance(r.cacheName, server.getCacheManager(), false, true);
       DistributionManager distManager = cache.getDistributionManager();
-      ConsistentHash ch = distManager.getConsistentHash();
+      ConsistentHash ch = distManager.getWriteConsistentHash();
 
       Map<Address, ServerAddress> topologyMap = h.serverEndpointsMap;
       if (topologyMap.isEmpty()) {

@@ -38,9 +38,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
@@ -196,9 +196,9 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       future.get(10, TimeUnit.SECONDS);
 
 
-      ConsistentHash hash = cache0.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).getReadConsistentHash();
-      Map<Integer, Set<Map.Entry<Object, String>>> expected = generateEntriesPerSegment(hash, values.entrySet());
-      Map<Integer, Set<Map.Entry<Object, String>>> answer = generateEntriesPerSegment(hash, returnQueue);
+      KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache0, KeyPartitioner.class);
+      Map<Integer, Set<Map.Entry<Object, String>>> expected = generateEntriesPerSegment(keyPartitioner, values.entrySet());
+      Map<Integer, Set<Map.Entry<Object, String>>> answer = generateEntriesPerSegment(keyPartitioner, returnQueue);
 
       for (Map.Entry<Integer, Set<Map.Entry<Object, String>>> entry : expected.entrySet()) {
          assertEquals("Segment " + entry.getKey() + " had a mismatch", answer.get(entry.getKey()), entry.getValue());
@@ -251,9 +251,9 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       future.get(10, TimeUnit.SECONDS);
 
 
-      ConsistentHash hash = cache0.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).getReadConsistentHash();
-      Map<Integer, Set<Map.Entry<Object, String>>> expected = generateEntriesPerSegment(hash, values.entrySet());
-      Map<Integer, Set<Map.Entry<Object, String>>> answer = generateEntriesPerSegment(hash, returnQueue);
+      KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache0, KeyPartitioner.class);
+      Map<Integer, Set<Map.Entry<Object, String>>> expected = generateEntriesPerSegment(keyPartitioner, values.entrySet());
+      Map<Integer, Set<Map.Entry<Object, String>>> answer = generateEntriesPerSegment(keyPartitioner, returnQueue);
 
       for (Map.Entry<Integer, Set<Map.Entry<Object, String>>> entry : expected.entrySet()) {
          assertEquals("Segment " + entry.getKey() + " had a mismatch", answer.get(entry.getKey()), entry.getValue());
@@ -320,7 +320,8 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       IntStream.rangeClosed(0, 499).boxed().forEach(i -> cache0.put(i, i.toString()));
 
-      ConsistentHash ch = cache0.getAdvancedCache().getDistributionManager().getConsistentHash();
+      KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache0, KeyPartitioner.class);
+      ConsistentHash ch = cache0.getAdvancedCache().getDistributionManager().getWriteConsistentHash();
       Set<Integer> segmentsCache0 = ch.getSegmentsForOwner(cache0.getCacheManager().getAddress());
 
       CacheStream<Map.Entry<Object, String>> stream = cache0.entrySet().stream();
@@ -328,7 +329,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       Map<Object, String> entries = mapFromIterator(stream.filterKeySegments(segmentsCache0).iterator());
 
-      Map<Integer, Set<Map.Entry<Object, String>>> entriesPerSegment = generateEntriesPerSegment(ch, entries.entrySet());
+      Map<Integer, Set<Map.Entry<Object, String>>> entriesPerSegment = generateEntriesPerSegment(keyPartitioner, entries.entrySet());
 
       // We should not see keys from other segments, but there may be segments without any keys
       assertTrue(segmentsCache0.containsAll(entriesPerSegment.keySet()));
@@ -342,16 +343,13 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       return clusterStreamManager;
    }
 
-   private Map<Integer, Set<Map.Entry<Object, String>>> generateEntriesPerSegment(ConsistentHash hash, Iterable<Map.Entry<Object, String>> entries) {
+   private Map<Integer, Set<Map.Entry<Object, String>>> generateEntriesPerSegment(KeyPartitioner keyPartitioner,
+                                                                                  Iterable<Map.Entry<Object, String>> entries) {
       Map<Integer, Set<Map.Entry<Object, String>>> returnMap = new HashMap<>();
 
       for (Map.Entry<Object, String> value : entries) {
-         int segment = hash.getSegment(value.getKey());
-         Set<Map.Entry<Object, String>> set = returnMap.get(segment);
-         if (set == null) {
-            set = new HashSet<>();
-            returnMap.put(segment, set);
-         }
+         int segment = keyPartitioner.getSegment(value.getKey());
+         Set<Map.Entry<Object, String>> set = returnMap.computeIfAbsent(segment, k -> new HashSet<>());
          set.add(new ImmortalCacheEntry(value.getKey(), value.getValue()));
       }
       return returnMap;

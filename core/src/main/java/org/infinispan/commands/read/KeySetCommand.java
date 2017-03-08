@@ -100,7 +100,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
       @Override
       public CacheStream<K> stream() {
          DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getWriteConsistentHash() : null,
                  () -> StreamSupport.stream(spliterator(), false)), false,
                  cache.getAdvancedCache().getComponentRegistry());
       }
@@ -108,7 +108,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
       @Override
       public CacheStream<K> parallelStream() {
          DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getWriteConsistentHash() : null,
                  () -> StreamSupport.stream(spliterator(), false)), true,
                  cache.getAdvancedCache().getComponentRegistry());
       }

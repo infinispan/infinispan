@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -17,6 +16,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -36,12 +36,12 @@ public class InboundTransferTask {
    /**
     * All access to fields {@code segments} and {@code finishedSegments} must be done while synchronizing on {@code segments}.
     */
-   private final Set<Integer> segments = new HashSet<>();
+   private final SmallIntSet segments;
 
    /**
     * All access to fields {@code segments} and {@code finishedSegments} must be done while synchronizing on {@code segments}.
     */
-   private final Set<Integer> finishedSegments = new HashSet<>();
+   private final SmallIntSet finishedSegments;
 
    private final Address source;
 
@@ -73,7 +73,8 @@ public class InboundTransferTask {
          throw new IllegalArgumentException("Source address cannot be null");
       }
 
-      this.segments.addAll(segments);
+      this.segments = new SmallIntSet(segments);
+      this.finishedSegments = new SmallIntSet();
       this.source = source;
       this.topologyId = topologyId;
       this.rpcManager = rpcManager;
@@ -86,15 +87,15 @@ public class InboundTransferTask {
             .timeout(timeout, TimeUnit.MILLISECONDS).build();
    }
 
-   public Set<Integer> getSegments() {
+   public SmallIntSet getSegments() {
       synchronized (segments) {
-         return new HashSet<>(segments);
+         return new SmallIntSet(segments);
       }
    }
 
-   public Set<Integer> getUnfinishedSegments() {
+   public SmallIntSet getUnfinishedSegments() {
       synchronized (segments) {
-         Set<Integer> unfinishedSegments = new HashSet<>(segments);
+         SmallIntSet unfinishedSegments = new SmallIntSet(segments);
          unfinishedSegments.removeAll(finishedSegments);
          return unfinishedSegments;
       }

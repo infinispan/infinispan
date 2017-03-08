@@ -53,7 +53,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private static final boolean trace = log.isTraceEnabled();
 
    private LockManager lockManager;
-   @SuppressWarnings("deprecation")
    private ClusteringDependentLogic clusteringDependentLogic;
    private long lockTimeout;
    private TriangleOrderManager triangleOrderManager;
@@ -64,7 +63,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
 
    @Inject
    public void inject(LockManager lockManager,
-         @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic,
+         ClusteringDependentLogic clusteringDependentLogic,
          Configuration configuration, TriangleOrderManager anotherTriangleOrderManager, RpcManager rpcManager,
          CommandAckCollector commandAckCollector, CommandsFactory commandsFactory) {
       this.lockManager = lockManager;
@@ -139,7 +138,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       return remoteCommandsExecutor;
    }
 
-   @SuppressWarnings("deprecation")
    public ClusteringDependentLogic getClusteringDependentLogic() {
       return clusteringDependentLogic;
    }
@@ -312,8 +310,8 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
          protected void afterInvoke() {
             super.afterInvoke();
             readyAction.onFinally();
-            final int segment = clusteringDependentLogic
-                  .getSegmentForKey(((BackupPutMapRcpCommand) command).getMap().keySet().iterator().next());
+            Object key = ((BackupPutMapRcpCommand) command).getMap().keySet().iterator().next();
+            int segment = clusteringDependentLogic.getCacheTopology().getDistribution(key).segmentId();
             sendPutMapBackupAck(((BackupPutMapRcpCommand) command).getCommandInvocationId(), commandTopologyId,
                   segment);
          }

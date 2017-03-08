@@ -118,7 +118,7 @@ public class HotRodTargetMigrator implements TargetMigrator {
                return count.get();
             } else {
                int numSegments = cacheTopologyInfo.getNumSegments();
-               List<Address> servers = cache.getAdvancedCache().getDistributionManager().getConsistentHash().getMembers();
+               List<Address> servers = cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getMembers();
                List<List<Integer>> partitions = split(range(numSegments), servers.size());
                DistributedExecutorService executor = new DefaultExecutorService(cache);
                Iterator<Address> iterator = servers.iterator();

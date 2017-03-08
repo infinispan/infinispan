@@ -258,7 +258,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
                // unboxes them
                CloseableSpliterator<K> closeableSpliterator = super.spliterator();
                CacheStream<K> stream = new LocalCacheStream<>(
-                     new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+                     new KeyStreamSupplier<>(cache, dm != null ? dm.getWriteConsistentHash() : null,
                            () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
                      cache.getAdvancedCache().getComponentRegistry());
                // We rely on the fact that on close returns the same instance
@@ -299,7 +299,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
                // unboxes them
                CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = super.spliterator();
                CacheStream<CacheEntry<K, V>> stream = new LocalCacheStream<>(
-                     new EntryStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+                     new EntryStreamSupplier<>(cache, dm != null ? dm.getWriteConsistentHash() : null,
                            () -> StreamSupport.stream(closeableSpliterator, parallel)), parallel,
                      cache.getAdvancedCache().getComponentRegistry());
                // We rely on the fact that on close returns the same instance

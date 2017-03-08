@@ -1,5 +1,6 @@
-package org.infinispan.distribution.group;
+package org.infinispan.distribution.group.impl;
 
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -22,7 +23,10 @@ public interface GroupManager {
     *
     * @param group the group name.
     * @return {@code true} if this node is an owner of the group, {@code false} otherwise.
+    *
+    * @deprecated Since 9.0, please use {@link DistributionManager#getCacheTopology()} instead.
     */
+   @Deprecated
    boolean isOwner(String group);
 
    /**
@@ -30,7 +34,10 @@ public interface GroupManager {
     *
     * @param group the group name.
     * @return the primary owner of the group.
+    *
+    * @deprecated Since 9.0, please use {@link DistributionManager#getCacheTopology()} instead.
     */
+   @Deprecated
    Address getPrimaryOwner(String group);
 
    /**
@@ -38,7 +45,10 @@ public interface GroupManager {
     *
     * @param group the group name.
     * @return {@code true} if this node is the primary owner of the group, {@code false} otherwise.
+    *
+    * @deprecated Since 9.0, please use {@link DistributionManager#getCacheTopology()} instead.
     */
+   @Deprecated
    boolean isPrimaryOwner(String group);
 
 }

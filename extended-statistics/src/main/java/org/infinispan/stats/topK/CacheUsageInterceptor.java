@@ -229,6 +229,6 @@ public class CacheUsageInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    private boolean isRemote(Object key) {
-      return distributionManager != null && !distributionManager.getLocality(key).isLocal();
+      return distributionManager != null && !distributionManager.getCacheTopology().isWriteOwner(key);
    }
 }

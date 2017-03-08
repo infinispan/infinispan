@@ -37,8 +37,9 @@ public class TxDistributedLongCacheStream extends DistributedLongCacheStream {
            Set<Object> excludedKeys, boolean primaryOnly) {
       return () -> {
          Supplier<Stream<CacheEntry>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
-         Set<CacheEntry> set = ctx.getLookedUpEntries().values().stream().filter(
-                 e -> !localAddress.equals(ch.locatePrimaryOwner(e.getKey()))).collect(Collectors.toSet());
+         Set<CacheEntry> set = ctx.getLookedUpEntries().values().stream()
+                                  .filter(e -> !isPrimaryOwner(ch, e))
+                                  .collect(Collectors.toSet());
          Stream<CacheEntry> suppliedStream = supplier.get();
          if (!set.isEmpty()) {
             return Stream.concat(set.stream(), suppliedStream);

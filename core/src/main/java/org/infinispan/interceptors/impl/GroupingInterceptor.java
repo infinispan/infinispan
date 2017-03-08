@@ -10,8 +10,9 @@ import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.group.GroupFilter;
-import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.group.impl.GroupFilter;
+import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.Listener;
@@ -32,20 +33,24 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
    private GroupManager groupManager;
    private InternalEntryFactory factory;
    private boolean isPassivationEnabled;
+   private DistributionManager distributionManager;
 
    @Inject
    public void injectDependencies(CacheNotifier<?, ?> cacheNotifier, GroupManager groupManager,
-                                  InternalEntryFactory factory, Configuration configuration) {
+                                  InternalEntryFactory factory, Configuration configuration,
+                                  DistributionManager distributionManager) {
       this.cacheNotifier = cacheNotifier;
       this.groupManager = groupManager;
       this.factory = factory;
       this.isPassivationEnabled = configuration.persistence().passivation();
+      this.distributionManager = distributionManager;
    }
 
    @Override
    public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
-      command.setGroupOwner(isGroupOwner(groupName));
+      //no need to contact the primary owner if we are a backup owner.
+      command.setGroupOwner(distributionManager.getCacheTopology().isWriteOwner(groupName));
       if (!command.isGroupOwner() || !isPassivationEnabled) {
          return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (rv instanceof List) {
@@ -82,11 +87,6 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
             list.set(i, factory.create(entry));
          }
       }
-   }
-
-   private boolean isGroupOwner(String groupName) {
-      //no need to contact the primary owner if we are a backup owner.
-      return groupManager.isOwner(groupName);
    }
 
    @Listener

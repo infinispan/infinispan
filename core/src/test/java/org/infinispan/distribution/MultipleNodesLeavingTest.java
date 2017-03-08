@@ -24,41 +24,17 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
    public void testMultipleLeaves() throws Exception {
 
       //kill 3 caches at once
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            manager(3).stop();
-         }
-      });
+      fork(() -> manager(3).stop());
+      fork(() -> manager(2).stop());
+      fork(() -> manager(1).stop());
 
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            manager(2).stop();
-         }
-      });
-
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            manager(1).stop();
-         }
-      });
-
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            List<Address> members = advancedCache(0).getRpcManager().getTransport().getMembers();
-            log.trace("members = " + members);
-            return members.size() == 1;
-         }
-      });
+      eventuallyEquals(1, () -> advancedCache(0).getRpcManager().getTransport().getMembers().size());
 
       log.trace("MultipleNodesLeavingTest.testMultipleLeaves");
 
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0));
       TestingUtil.waitForRehashToComplete(cache(0));
-      List<Address> caches = advancedCache(0).getDistributionManager().getConsistentHash().getMembers();
+      List<Address> caches = advancedCache(0).getDistributionManager().getWriteConsistentHash().getMembers();
       log.tracef("caches = %s", caches);
       int size = caches.size();
       assert size == 1;

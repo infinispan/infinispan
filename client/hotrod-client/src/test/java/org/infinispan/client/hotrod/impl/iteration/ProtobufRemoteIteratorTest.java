@@ -22,7 +22,7 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
@@ -115,9 +115,9 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
       assertForAll(values, s -> s instanceof String);
 
       Marshaller marshaller = clients.iterator().next().getMarshaller();
-      ConsistentHash consistentHash = advancedCache(0).getDistributionManager().getConsistentHash();
+      LocalizedCacheTopology cacheTopology = advancedCache(0).getDistributionManager().getCacheTopology();
 
-      assertKeysInSegment(results, segments, marshaller, consistentHash::getSegment);
+      assertKeysInSegment(results, segments, marshaller, cacheTopology::getSegment);
    }
 
    public void testFilteredIterationWithQuery() {

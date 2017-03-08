@@ -12,7 +12,7 @@ import javax.transaction.Transaction;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -73,9 +73,9 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       Object migratedKey = null;
-      ConsistentHash ch = advancedCache(2).getDistributionManager().getConsistentHash();
+      LocalizedCacheTopology cacheTopology = advancedCache(2).getDistributionManager().getCacheTopology();
       for (Object key : key2Tx.keySet()) {
-         if (ch.locatePrimaryOwner(key).equals(address(2))) {
+         if (cacheTopology.getDistribution(key).isPrimary()) {
             migratedKey = key;
             break;
          }

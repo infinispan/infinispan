@@ -74,8 +74,9 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          Object key;
          DataWriteCommand writeCommand = (DataWriteCommand) rCommand;
+         Object key1 = (key = writeCommand.getKey());
          if (shouldUpdateOnWriteCommand(writeCommand) && writeCommand.isSuccessful() &&
-               cdl.localNodeIsOwner((key = writeCommand.getKey()))) {
+               cdl.getCacheTopology().isWriteOwner(key1)) {
             if (trace) {
                log.trace("Sending additional invalidation for requestors if necessary.");
             }
@@ -95,7 +96,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
             Set<Object> keys = putMapCommand.getMap().keySet();
             Set<Object> toInvalidate = new HashSet<>(keys.size());
             for (Object k : keys) {
-               if (cdl.localNodeIsOwner(k)) {
+               if (cdl.getCacheTopology().isWriteOwner(k)) {
                   toInvalidate.add(k);
                }
             }

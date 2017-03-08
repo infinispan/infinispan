@@ -154,16 +154,13 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private void notifyStateTransferEnd(final String siteName, final Address origin, final boolean error) {
       if (rpcManager.getAddress().equals(origin)) {
-         executorService.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-               try {
-                  stateTransferManager.notifyStatePushFinished(siteName, origin, !error);
-               } catch (Throwable throwable) {
-                  //ignored
-               }
-               return null;
+         executorService.submit((Callable<Void>) () -> {
+            try {
+               stateTransferManager.notifyStatePushFinished(siteName, origin, !error);
+            } catch (Throwable throwable) {
+               //ignored
             }
+            return null;
          });
       } else {
          XSiteStateTransferControlCommand command = commandsFactory.buildXSiteStateTransferControlCommand(FINISH_SEND, siteName);
@@ -173,7 +170,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    }
 
    private boolean shouldSendKey(Object key) {
-      return clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+      return clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
    }
 
    private void sendFromSharedBuffer(XSiteBackup xSiteBackup, List<XSiteState> sharedBuffer, StatePushTask task) throws Throwable {

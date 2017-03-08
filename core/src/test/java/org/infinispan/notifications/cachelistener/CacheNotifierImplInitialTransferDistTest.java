@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -38,7 +37,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -47,7 +46,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -98,7 +96,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
    }
 
    private void testSimpleCacheStarting(final StateListener<String, String> listener) {
-      final Map<String, String> expectedValues = new HashMap<String, String>(10);
+      final Map<String, String> expectedValues = new HashMap<>(10);
       Cache<String, String> cache = cache(0, CACHE_NAME);
       populateCache(cache, expectedValues);
 
@@ -229,8 +227,9 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
               }).when(mock).iterator());
       try {
          String keyToChange = findKeyBasedOnOwnership("key-to-change",
-               cache.getAdvancedCache().getDistributionManager().getConsistentHash(), shouldBePrimaryOwner,
-               cache.getCacheManager().getAddress());
+                                                      cache.getAdvancedCache().getDistributionManager()
+                                                           .getCacheTopology(),
+                                                      shouldBePrimaryOwner);
          String value = prepareOperation(operation, cache, keyToChange);
          if (value != null) {
             expectedValues.put(keyToChange, value);
@@ -284,7 +283,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
                                                                          Operation operation,
                                                                          boolean shouldBePrimaryOwner)
          throws IOException, InterruptedException, TimeoutException, BrokenBarrierException, ExecutionException {
-      final Map<String, String> expectedValues = new HashMap<String, String>(10);
+      final Map<String, String> expectedValues = new HashMap<>(10);
       final Cache<String, String> cache = cache(0, CACHE_NAME);
       populateCache(cache, expectedValues);
 
@@ -304,8 +303,9 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       try {
          String keyToChange = findKeyBasedOnOwnership("key-to-change",
-               cache.getAdvancedCache().getDistributionManager().getConsistentHash(), shouldBePrimaryOwner,
-               cache.getCacheManager().getAddress());
+                                                      cache.getAdvancedCache().getDistributionManager()
+                                                           .getCacheTopology(),
+                                                      shouldBePrimaryOwner);
          String value = prepareOperation(operation, cache, keyToChange);
          if (cache.get(keyToChange) != null) {
             expectedValues.put(keyToChange, cache.get(keyToChange));
@@ -381,16 +381,17 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       }
    }
 
-   private String findKeyBasedOnOwnership(String keyPrefix, ConsistentHash hash, boolean shouldBePrimaryOwner,
-                                         Address address) {
+   private String findKeyBasedOnOwnership(String keyPrefix, LocalizedCacheTopology cacheTopology, boolean shouldBePrimaryOwner) {
       for (int i = 0; i < 1000; i++) {
          String key = keyPrefix + i;
-         boolean isPrimaryOwner = hash.locatePrimaryOwner(key).equals(address);
+         boolean isPrimaryOwner = cacheTopology.getDistribution(key).isPrimary();
          if (isPrimaryOwner == shouldBePrimaryOwner) {
             if (shouldBePrimaryOwner) {
-               log.debugf("Found key %s with primary owner %s, segment %d", key, address, hash.getSegment(key));
+               log.debugf("Found key %s with primary owner %s, segment %d", key, cacheTopology.getLocalAddress(),
+                          cacheTopology.getSegment(key));
             } else {
-               log.debugf("Found key %s with primary owner != %s, segment %d", key, address, hash.getSegment(key));
+               log.debugf("Found key %s with primary owner != %s, segment %d", key, cacheTopology.getLocalAddress(),
+                          cacheTopology.getSegment(key));
             }
             return key;
          }
@@ -467,31 +468,27 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
    protected void testIterationBeganAndSegmentNotComplete(final StateListener<String, String> listener,
                                                           Operation operation, boolean shouldBePrimaryOwner)
          throws TimeoutException, InterruptedException, ExecutionException {
-      final Map<String, String> expectedValues = new HashMap<String, String>(10);
+      final Map<String, String> expectedValues = new HashMap<>(10);
       final Cache<String, String> cache = cache(0, CACHE_NAME);
       populateCache(cache, expectedValues);
 
       String keyToChange = findKeyBasedOnOwnership("key-to-change-",
-            cache.getAdvancedCache().getDistributionManager().getConsistentHash(), shouldBePrimaryOwner,
-            cache.getCacheManager().getAddress());
+                                                   cache.getAdvancedCache().getDistributionManager().getCacheTopology(),
+                                                         shouldBePrimaryOwner);
       String value = prepareOperation(operation, cache, keyToChange);
       if (cache.get(keyToChange) != null) {
          expectedValues.put(keyToChange, cache.get(keyToChange));
       }
 
       CheckPoint checkPoint = new CheckPoint();
-      int segmentToUse = cache.getAdvancedCache().getDistributionManager().getConsistentHash().getSegment(keyToChange);
+      int segmentToUse = cache.getAdvancedCache().getDistributionManager().getCacheTopology().getSegment(keyToChange);
 
       // do the operation, which should put it in the queue.
       ClusterCacheNotifier notifier = waitUntilClosingSegment(cache, segmentToUse, checkPoint);
 
-      Future<Void> future = fork(new Callable<Void>() {
-
-         @Override
-         public Void call() throws Exception {
-            cache.addListener(listener);
-            return null;
-         }
+      Future<Void> future = fork(() -> {
+         cache.addListener(listener);
+         return null;
       });
 
       try {

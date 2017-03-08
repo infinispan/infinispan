@@ -1427,28 +1427,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
     *
     * @return true if we skip the thread (performing it in sync)
     */
-   private boolean asyncSkipsThread(EnumSet<Flag> flags, K key) {
-      boolean isSkipLoader = isSkipLoader(flags);
-      if (!isSkipLoader) {
-         // if we can't skip the cacheloader, we really want a thread for async.
-         return false;
-      }
-      if (!config.clustering().cacheMode().isDistributed()) {
-         //in these cluster modes we won't RPC for a get, so no need to fork a thread.
-         return true;
-      } else if (flags != null && (flags.contains(Flag.SKIP_REMOTE_LOOKUP) || flags.contains(Flag.CACHE_MODE_LOCAL))) {
-         //with these flags we won't RPC either
-         return true;
-      }
-      //finally, we will skip the thread if the key maps to the local node
-      return distributionManager.getLocality(key).isLocal();
-   }
-
-   /**
-    * Encodes the cases for an asyncGet operation in which it makes sense to actually perform the operation in sync.
-    *
-    * @return true if we skip the thread (performing it in sync)
-    */
    private boolean asyncSkipsThread(long flags, K key) {
       if (!isSkipLoader(flags)) {
          // if we can't skip the cacheloader, we really want a thread for async.
@@ -1462,13 +1440,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          return true;
       }
       //finally, we will skip the thread if the key maps to the local node
-      return distributionManager.getLocality(key).isLocal();
-   }
-
-   private boolean isSkipLoader(EnumSet<Flag> flags) {
-      boolean hasCacheLoaderConfig = !config.persistence().stores().isEmpty();
-      return !hasCacheLoaderConfig
-            || (flags != null && (flags.contains(Flag.SKIP_CACHE_LOAD) || flags.contains(Flag.SKIP_CACHE_STORE)));
+      return distributionManager.getCacheTopology().isReadOwner(key);
    }
 
    private boolean isSkipLoader(long flags) {
@@ -1492,7 +1464,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       if (flags == null || flags.length == 0)
          return this;
       else
-         return new DecoratedCache<K, V>(this, flags);
+         return new DecoratedCache<>(this, flags);
    }
 
    private Transaction getOngoingTransaction() {

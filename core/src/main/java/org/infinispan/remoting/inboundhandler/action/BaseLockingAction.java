@@ -24,11 +24,10 @@ public abstract class BaseLockingAction implements Action {
    private static final AtomicReferenceFieldUpdater<BaseLockingAction, InternalState> UPDATER =
          newUpdater(BaseLockingAction.class, InternalState.class, "internalState");
 
-   @SuppressWarnings("deprecation")
    private final ClusteringDependentLogic clusteringDependentLogic;
    private volatile InternalState internalState;
 
-   public BaseLockingAction(@SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic) {
+   public BaseLockingAction(ClusteringDependentLogic clusteringDependentLogic) {
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.internalState = InternalState.INIT;
    }

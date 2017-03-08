@@ -13,7 +13,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
@@ -77,8 +76,8 @@ public class InvalidateL1Command extends InvalidateCommand {
       for (Object k : getKeys()) {
          InternalCacheEntry ice = dataContainer.get(k);
          if (ice != null) {
-            DataLocality locality = dm.getLocality(k);
-            if (!locality.isLocal()) {
+            boolean isLocal = dm.getCacheTopology().isWriteOwner(k);
+            if (!isLocal) {
                if (trace) log.tracef("Invalidating key %s.", k);
                MVCCEntry e = (MVCCEntry) ctx.lookupEntry(k);
                notify(ctx, e, true);

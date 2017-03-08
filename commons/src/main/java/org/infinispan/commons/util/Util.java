@@ -685,9 +685,10 @@ public final class Util {
          return new CacheException(t);
    }
 
+   @SafeVarargs
    public static <T> Set<T> asSet(T... a) {
       if (a.length > 1)
-         return new HashSet<T>(Arrays.<T>asList(a));
+         return new HashSet<>(Arrays.asList(a));
       else
          return Collections.singleton(a[0]);
    }

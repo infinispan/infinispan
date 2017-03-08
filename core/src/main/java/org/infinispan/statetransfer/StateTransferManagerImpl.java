@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,17 +15,20 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
-import org.infinispan.distribution.group.PartitionerConsistentHash;
+import org.infinispan.distribution.group.impl.PartitionerConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.globalstate.GlobalStateManager;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -53,6 +57,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private StateConsumer stateConsumer;
    private StateProvider stateProvider;
    private PartitionHandlingManager partitionHandlingManager;
+   private DistributionManager distributionManager;
    private String cacheName;
    private CacheNotifier cacheNotifier;
    private Configuration configuration;
@@ -81,7 +86,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
                     KeyPartitioner keyPartitioner,
                     LocalTopologyManager localTopologyManager,
                     PartitionHandlingManager partitionHandlingManager,
-                    GlobalStateManager globalStateManager) {
+                    GlobalStateManager globalStateManager,
+                    DistributionManager distributionManager) {
       this.stateConsumer = stateConsumer;
       this.stateProvider = stateProvider;
       this.cacheName = cache.getName();
@@ -92,8 +98,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.keyPartitioner = keyPartitioner;
       this.localTopologyManager = localTopologyManager;
       this.partitionHandlingManager = partitionHandlingManager;
+      this.distributionManager = distributionManager;
       if (globalStateManager != null) {
-         persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(state -> state.getChecksum());
+         persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(ScopedPersistentState::getChecksum);
       } else {
          persistentStateChecksum = Optional.empty();
       }
@@ -269,7 +276,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys,
                                                         Address origin) {
-      final CacheTopology cacheTopology = getCacheTopology();
+      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
       if (cacheTopology == null) {
          if (trace) {
             log.tracef("Not fowarding command %s because topology is null.", command);
@@ -286,8 +293,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
 
       if (cmdTopologyId < localTopologyId) {
-         ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
-         Set<Address> newTargets = new HashSet<>(writeCh.locateAllOwners(affectedKeys));
+         Collection<Address> newTargets = new HashSet<>(cacheTopology.getWriteOwners(affectedKeys));
          newTargets.remove(rpcManager.getAddress());
          // Forwarding to the originator would create a cycle
          // TODO This may not be the "real" originator, but one of the original recipients

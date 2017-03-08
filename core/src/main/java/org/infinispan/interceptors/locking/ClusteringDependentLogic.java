@@ -15,7 +15,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.Immutables;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -29,23 +29,21 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.FunctionalNotifier;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.LocalModeAddress;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.statetransfer.StateTransferManager;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.TimeService;
@@ -57,12 +55,9 @@ import org.infinispan.util.TimeService;
  *
  * @author Mircea Markus
  * @author Pedro Ruivo
- * @deprecated Since 9.0, no longer public API.
  */
-@Deprecated
 @Scope(Scopes.NAMED_CACHE)
 public interface ClusteringDependentLogic {
-
    enum Commit {
       /**
        * Do not commit the entry.
@@ -94,29 +89,63 @@ public interface ClusteringDependentLogic {
       }
    }
 
-   boolean localNodeIsOwner(Object key);
+   /**
+    * @return information about the location of keys.
+    */
+   LocalizedCacheTopology getCacheTopology();
 
-   boolean localNodeIsPrimaryOwner(Object key);
+   /**
+    * @deprecated Since 9.0, please use {@code getCacheTopology().isWriteOwner(key)} instead.
+    */
+   @Deprecated
+   default boolean localNodeIsOwner(Object key) {
+      return getCacheTopology().isWriteOwner(key);
+   }
 
-   Address getPrimaryOwner(Object key);
+   /**
+    * @deprecated Since 9.0, please use {@code getCacheTopology().getDistribution(key).isPrimary()} instead.
+    */
+   @Deprecated
+   default boolean localNodeIsPrimaryOwner(Object key) {
+      return getCacheTopology().getDistribution(key).isPrimary();
+   }
+
+   /**
+    * @deprecated Since 9.0, please use {@code getCacheTopology().getDistributionInfo(key).primary()} instead.
+    */
+   @Deprecated
+   default Address getPrimaryOwner(Object key) {
+      return getCacheTopology().getDistribution(key).primary();
+   }
 
    void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
                     Flag trackFlag, boolean l1Invalidation);
 
    Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed);
 
-   List<Address> getOwners(Collection<Object> keys);
+   /**
+    * @deprecated Since 9.0, please use {@code getCacheTopology().getWriteOwners(keys)} instead.
+    */
+   @Deprecated
+   default Collection<Address> getOwners(Collection<Object> keys) {
+      return getCacheTopology().getWriteOwners(keys);
+   }
 
-   List<Address> getOwners(Object key);
+   /**
+    * @deprecated Since 9.0, please use {@code getCacheTopology().getWriteOwners(key)} instead.
+    */
+   @Deprecated
+   default Collection<Address> getOwners(Object key) {
+      return getCacheTopology().getWriteOwners(key);
+   }
+
 
    EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
 
    Address getAddress();
 
-   int getSegmentForKey(Object key);
-
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
-
+      protected DistributionManager distributionManager;
       protected DataContainer<Object, Object> dataContainer;
       protected CacheNotifier<Object, Object> notifier;
       protected boolean totalOrder;
@@ -129,10 +158,11 @@ public interface ClusteringDependentLogic {
       @Inject
       public void init(DataContainer<Object, Object> dataContainer, CacheNotifier<Object, Object> notifier, Configuration configuration,
                        CommitManager commitManager, PersistenceManager persistenceManager, TimeService timeService,
-                       FunctionalNotifier<Object, Object> functionalNotifier) {
+                       FunctionalNotifier<Object, Object> functionalNotifier, DistributionManager distributionManager) {
          this.dataContainer = dataContainer;
          this.notifier = notifier;
          this.totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+         this.distributionManager = distributionManager;
          this.keySpecificLogic = initKeySpecificLogic(totalOrder);
          this.commitManager = commitManager;
          this.persistenceManager = persistenceManager;
@@ -185,14 +215,14 @@ public interface ClusteringDependentLogic {
             // During ST, entries whose ownership is lost are invalidated by InvalidateCommand
             // and at that point we're no longer owners - the only information is that the origin
             // is local and the entry is removed.
-            if (localNodeIsOwner(key)) {
+            if (getCacheTopology().isWriteOwner(key)) {
                return Commit.COMMIT_LOCAL;
             } else if (removed) {
                return Commit.COMMIT_NON_LOCAL;
             }
          } else {
             // in non-tx mode, on backup we don't commit in original context, backup command has its own context.
-            return localNodeIsPrimaryOwner(key) ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
+            return getCacheTopology().getDistribution(key).isPrimary() ? Commit.COMMIT_LOCAL : Commit.NO_COMMIT;
          }
          return Commit.NO_COMMIT;
       }
@@ -296,57 +326,38 @@ public interface ClusteringDependentLogic {
          cacheTransaction.setUpdatedEntryVersions(uv);
          return (uv.isEmpty()) ? null : uv;
       }
+
+      @Override
+      public LocalizedCacheTopology getCacheTopology() {
+         return distributionManager.getCacheTopology();
+      }
+
+      @Override
+      public Address getAddress() {
+         return getCacheTopology().getLocalAddress();
+      }
    }
 
    /**
     * This logic is used in local mode caches.
     */
    class LocalLogic extends AbstractClusteringDependentLogic {
-
-      private EmbeddedCacheManager cacheManager;
+      private LocalizedCacheTopology localTopology;
 
       @Inject
-      public void init(EmbeddedCacheManager cacheManager) {
-         this.cacheManager = cacheManager;
+      public void init(Transport transport) {
+         Address address = transport != null ? transport.getAddress() : LocalModeAddress.INSTANCE;
+         this.localTopology = LocalizedCacheTopology.makeSingletonTopology(CacheMode.LOCAL, address);
       }
 
       @Override
-      public boolean localNodeIsOwner(Object key) {
-         return true;
-      }
-
-      @Override
-      public boolean localNodeIsPrimaryOwner(Object key) {
-         return true;
-      }
-
-      @Override
-      public Address getPrimaryOwner(Object key) {
-         throw new IllegalStateException("Cannot invoke this method for local caches");
-      }
-
-      @Override
-      public List<Address> getOwners(Collection<Object> keys) {
-         return null;
-      }
-
-      @Override
-      public List<Address> getOwners(Object key) {
-         return null;
+      public LocalizedCacheTopology getCacheTopology() {
+         return localTopology;
       }
 
       @Override
       public Address getAddress() {
-         Address address = cacheManager.getAddress();
-         if (address == null) {
-            address = LocalModeAddress.INSTANCE;
-         }
-         return address;
-      }
-
-      @Override
-      public int getSegmentForKey(Object key) {
-         return 0;
+         return localTopology.getLocalAddress();
       }
 
       @Override
@@ -387,32 +398,6 @@ public interface ClusteringDependentLogic {
     */
    class InvalidationLogic extends AbstractClusteringDependentLogic {
 
-      private StateTransferManager stateTransferManager;
-      private RpcManager rpcManager;
-
-      @Inject
-      public void init(RpcManager rpcManager, StateTransferManager stateTransferManager) {
-         this.rpcManager = rpcManager;
-         this.stateTransferManager = stateTransferManager;
-      }
-
-      @Override
-      public boolean localNodeIsOwner(Object key) {
-         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-         return cacheTopology == null || cacheTopology.getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
-      }
-
-      @Override
-      public boolean localNodeIsPrimaryOwner(Object key) {
-         CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-         return cacheTopology == null || cacheTopology.getWriteConsistentHash().locatePrimaryOwner(key).equals(rpcManager.getAddress());
-      }
-
-      @Override
-      public Address getPrimaryOwner(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().locatePrimaryOwner(key);
-      }
-
       @Override
       protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
@@ -441,26 +426,6 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public List<Address> getOwners(Collection<Object> keys) {
-         return null;    //todo [anistor] should I actually return this based on current CH?
-      }
-
-      @Override
-      public List<Address> getOwners(Object key) {
-         return null;
-      }
-
-      @Override
-      public Address getAddress() {
-         return rpcManager.getAddress();
-      }
-
-      @Override
-      public int getSegmentForKey(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().getSegment(key);
-      }
-
-      @Override
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
          return null; //not used because write skew check is not allowed with invalidation
       }
@@ -472,11 +437,25 @@ public interface ClusteringDependentLogic {
    class ReplicationLogic extends InvalidationLogic {
       private StateTransferLock stateTransferLock;
 
-      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner = this::localNodeIsPrimaryOwner;
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner =
+            (key) -> getCacheTopology().getDistribution(key).isPrimary();
 
       @Inject
       public void init(StateTransferLock stateTransferLock) {
          this.stateTransferLock = stateTransferLock;
+      }
+
+      @Override
+      public Collection<Address> getOwners(Object key) {
+         return null;
+      }
+
+      @Override
+      public Collection<Address> getOwners(Collection<Object> keys) {
+         if (keys.isEmpty())
+            return Collections.emptyList();
+
+         return null;
       }
 
       @Override
@@ -530,47 +509,17 @@ public interface ClusteringDependentLogic {
     * This logic is used in distributed mode caches.
     */
    class DistributionLogic extends AbstractClusteringDependentLogic {
-      private DistributionManager dm;
       private Configuration configuration;
-      private RpcManager rpcManager;
       private StateTransferLock stateTransferLock;
 
-      private final WriteSkewHelper.KeySpecificLogic localNodeIsOwner = this::localNodeIsOwner;
-      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner = this::localNodeIsPrimaryOwner;
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsOwner = (key) -> getCacheTopology().isWriteOwner(key);
+      private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner =
+            (key) -> getCacheTopology().getDistribution(key).isPrimary();
 
       @Inject
-      public void init(DistributionManager dm, Configuration configuration,
-                       RpcManager rpcManager, StateTransferLock stateTransferLock) {
-         this.dm = dm;
+      public void init(Configuration configuration, StateTransferLock stateTransferLock) {
          this.configuration = configuration;
-         this.rpcManager = rpcManager;
          this.stateTransferLock = stateTransferLock;
-      }
-
-      @Override
-      public boolean localNodeIsOwner(Object key) {
-         return dm.getLocality(key).isLocal();
-      }
-
-      @Override
-      public Address getAddress() {
-         return rpcManager.getAddress();
-      }
-
-      @Override
-      public int getSegmentForKey(Object key) {
-         return dm.getWriteConsistentHash().getSegment(key);
-      }
-
-      @Override
-      public boolean localNodeIsPrimaryOwner(Object key) {
-         final Address address = rpcManager.getAddress();
-         return dm.getPrimaryLocation(key).equals(address);
-      }
-
-      @Override
-      public Address getPrimaryOwner(Object key) {
-         return dm.getPrimaryLocation(key);
       }
 
       @Override
@@ -642,19 +591,6 @@ public interface ClusteringDependentLogic {
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
-      }
-
-      @Override
-      public List<Address> getOwners(Collection<Object> affectedKeys) {
-         if (affectedKeys.isEmpty()) {
-            return Collections.emptyList();
-         }
-         return Immutables.immutableListConvert(dm.locateAll(affectedKeys));
-      }
-
-      @Override
-      public List<Address> getOwners(Object key) {
-         return Immutables.immutableListConvert(dm.locate(key));
       }
 
       @Override

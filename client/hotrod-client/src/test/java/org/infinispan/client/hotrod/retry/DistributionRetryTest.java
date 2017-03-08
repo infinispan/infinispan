@@ -132,17 +132,15 @@ public class DistributionRetryTest extends AbstractRetryTest {
       return key;
    }
 
-   public static class ByteKeyGenerator implements KeyGenerator {
+   public static class ByteKeyGenerator implements KeyGenerator<Object> {
       Random r = new Random();
       @Override
-      public Object getKey() {
+      public byte[] getKey() {
          String result = String.valueOf(r.nextLong());
          Marshaller sm = new JBossMarshaller();
          try {
             return sm.objectToByteBuffer(result, 64);
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         } catch (InterruptedException e) {
+         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
          }
       }

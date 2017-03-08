@@ -19,7 +19,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
@@ -27,6 +27,7 @@ import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -125,13 +126,10 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
          }
       }
 
-      Marshaller marshaller = clients.iterator()
-                                     .next()
-                                     .getMarshaller();
-      ConsistentHash consistentHash = advancedCache(0).getDistributionManager()
-                                                      .getConsistentHash();
+      Marshaller marshaller = clients.get(0).getMarshaller();
+      KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache(0), KeyPartitioner.class);
 
-      assertKeysInSegment(entries, filterBySegments, marshaller, consistentHash::getSegment);
+      assertKeysInSegment(entries, filterBySegments, marshaller, keyPartitioner::getSegment);
    }
 
    @Test
@@ -200,13 +198,11 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    private Set<Integer> getKeysFromSegments(Set<Integer> segments) {
       RemoteCacheManager remoteCacheManager = clients.get(0);
       RemoteCache<Integer, ?> cache = remoteCacheManager.getCache();
-      Marshaller marshaller = clients.get(0)
-                                     .getMarshaller();
-      ConsistentHash hash = advancedCache(0).getDistributionManager()
-                                            .getConsistentHash();
+      Marshaller marshaller = clients.get(0).getMarshaller();
+      KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache(0), KeyPartitioner.class);
       Set<Integer> keys = cache.keySet();
       return keys.stream()
-                 .filter(b -> segments.contains(hash.getSegment(toByteBuffer(b, marshaller))))
+                 .filter(b -> segments.contains(keyPartitioner.getSegment(toByteBuffer(b, marshaller))))
                  .collect(Collectors.toSet());
    }
 
