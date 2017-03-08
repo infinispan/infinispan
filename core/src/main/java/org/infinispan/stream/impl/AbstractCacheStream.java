@@ -22,10 +22,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;

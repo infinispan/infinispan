@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.StripedHashFunction;
 import org.testng.annotations.BeforeMethod;

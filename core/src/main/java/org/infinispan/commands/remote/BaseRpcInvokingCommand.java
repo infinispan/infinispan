@@ -8,7 +8,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

@@ -2,7 +2,6 @@ package org.infinispan.context;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.container.entries.CacheEntry;

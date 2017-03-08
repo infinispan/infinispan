@@ -3,7 +3,6 @@ package org.infinispan.marshall;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

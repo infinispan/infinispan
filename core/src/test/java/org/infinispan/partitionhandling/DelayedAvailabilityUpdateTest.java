@@ -3,10 +3,7 @@ package org.infinispan.partitionhandling;
 import static org.infinispan.test.TestingUtil.extractComponentRegistry;
 import static org.testng.Assert.assertEquals;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
@@ -14,7 +11,6 @@ import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEv
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.concurrent.StateSequencer;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;

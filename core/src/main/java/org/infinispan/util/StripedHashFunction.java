@@ -1,7 +1,5 @@
 package org.infinispan.util;
 
-import org.infinispan.commons.equivalence.Equivalence;
-
 /**
  * An hash function for stripping.
  * <p>
