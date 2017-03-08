@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.impl;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
@@ -13,6 +14,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
@@ -28,6 +30,8 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
 
    protected VersionGenerator versionGenerator;
    private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
+
+   private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
 
    @Override
    protected Log getLog() {
@@ -45,17 +49,22 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
       if (ctx.isOriginLocal()) {
          versionedPrepareCommand.setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
       }
-      wrapEntriesForPrepare(ctx, command);
+      return wrapEntriesForPrepareAndApply(ctx, command, prepareHandler);
+   }
+
+   private Object prepareHandler(InvocationContext nonTxCtx, VisitableCommand command, Object nil) {
+      TxInvocationContext ctx = (TxInvocationContext) nonTxCtx;
       EntryVersionsMap originVersionData;
       if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) {
          originVersionData =
-               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, versionedPrepareCommand);
+               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
       } else {
          originVersionData = null;
       }
 
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
+         VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) rCommand;
          EntryVersionsMap newVersionData;
          if (txInvocationContext.isOriginLocal()) {
             newVersionData = originVersionData;
@@ -73,10 +82,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          if (onePhaseCommit) {
             commitContextEntries(txInvocationContext, null, null);
          }
-         if (newVersionData != null)
-            return newVersionData;
-
-         return rv;
+         return newVersionData;
       });
    }
 

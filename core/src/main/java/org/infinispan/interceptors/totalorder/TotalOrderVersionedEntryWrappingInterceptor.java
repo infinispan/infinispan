@@ -3,6 +3,7 @@ package org.infinispan.interceptors.totalorder;
 import java.util.ArrayList;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
@@ -14,6 +15,7 @@ import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -32,6 +34,9 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
    private static final boolean trace = log.isTraceEnabled();
    private static final EntryVersionsMap EMPTY_VERSION_MAP = new EntryVersionsMap();
 
+   private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
+   private final InvocationSuccessFunction afterPrepareHandler = this::afterPrepareHandler;
+
    @Override
    public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
@@ -46,26 +51,29 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
       }
 
       //Remote context, delivered in total order
+      return wrapEntriesForPrepareAndApply(ctx, command, prepareHandler);
+   }
 
-      wrapEntriesForPrepare(ctx, command);
+   private Object prepareHandler(InvocationContext ctx, VisitableCommand command, Object rv) {
+      return invokeNextThenApply(ctx, command, afterPrepareHandler);
+   }
 
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         TxInvocationContext txInvocationContext = (TxInvocationContext) rCtx;
-         VersionedPrepareCommand prepareCommand = (VersionedPrepareCommand) rCommand;
-         EntryVersionsMap versionsMap =
-               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
-                     prepareCommand);
+   private Object afterPrepareHandler(InvocationContext ctx, VisitableCommand command, Object rv) {
+      TxInvocationContext txInvocationContext = (TxInvocationContext) ctx;
+      VersionedPrepareCommand prepareCommand = (VersionedPrepareCommand) command;
+      EntryVersionsMap versionsMap =
+            cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, txInvocationContext,
+                  prepareCommand);
 
-         if (prepareCommand.isOnePhaseCommit()) {
-            commitContextEntries(txInvocationContext, null, null);
-         } else {
-            if (trace)
-               log.tracef("Transaction %s will be committed in the 2nd phase",
-                     txInvocationContext.getGlobalTransaction().globalId());
-         }
+      if (prepareCommand.isOnePhaseCommit()) {
+         commitContextEntries(txInvocationContext, null, null);
+      } else {
+         if (trace)
+            log.tracef("Transaction %s will be committed in the 2nd phase",
+                  txInvocationContext.getGlobalTransaction().globalId());
+      }
 
-         return versionsMap == null ? rv : new ArrayList<Object>(versionsMap.keySet());
-      });
+      return versionsMap == null ? rv : new ArrayList<>(versionsMap.keySet());
    }
 
    @Override

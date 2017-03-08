@@ -84,6 +84,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static final Log log = LogFactory.getLog(TxDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final long SKIP_REMOTE_FLAGS = FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP;
 
    private PartitionHandlingManager partitionHandlingManager;
 
@@ -365,14 +366,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected <C extends TopologyAffectedCommand & FlagAffectedCommand, K, V> Object
          handleTxWriteManyEntriesCommand(InvocationContext ctx, C command, Map<K, V> entries,
                                   BiFunction<C, Map<K, V>, C> copyCommand) {
+      boolean ignorePreviousValue = command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD;
       Map<K, V> filtered = new HashMap<>(entries.size());
       Collection<CompletableFuture<?>> remoteGets = null;
       for (Map.Entry<K, V> e : entries.entrySet()) {
          K key = e.getKey();
          if (ctx.isOriginLocal() || dm.getCacheTopology().isWriteOwner(key)) {
             if (ctx.lookupEntry(key) == null) {
-               if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command.hasAnyFlag(
-                     FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
+               if (ignorePreviousValue) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                } else {
                   if (remoteGets == null) {
@@ -384,26 +385,30 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             filtered.put(key, e.getValue());
          }
       }
-      C narrowed = copyCommand.apply(command, filtered);
-      if (remoteGets != null) {
-         return asyncInvokeNext(ctx, narrowed, CompletableFuture.allOf(remoteGets.toArray(new CompletableFuture[remoteGets.size()])));
-      } else {
-         return invokeNext(ctx, narrowed);
-      }
+      return asyncInvokeNext(ctx, copyCommand.apply(command, filtered), remoteGets);
    }
 
-   protected <C extends VisitableCommand & FlagAffectedCommand, K> Object handleTxWriteManyCommand(
+   protected <C extends VisitableCommand & FlagAffectedCommand & TopologyAffectedCommand, K> Object handleTxWriteManyCommand(
          InvocationContext ctx, C command, Collection<K> keys, BiFunction<C, List<K>, C> copyCommand) {
-         List<K> filtered = new ArrayList<>(keys.size());
+      boolean ignorePreviousValue = command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD;
+      List<K> filtered = new ArrayList<>(keys.size());
+      List<CompletableFuture<?>> remoteGets = null;
       for (K key : keys) {
          if (ctx.isOriginLocal() || dm.getCacheTopology().isWriteOwner(key)) {
             if (ctx.lookupEntry(key) == null) {
-               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+               if (ignorePreviousValue) {
+                  entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+               } else {
+                  if (remoteGets == null) {
+                     remoteGets = new ArrayList<>();
+                  }
+                  remoteGets.add(remoteGet(ctx, command, key, true));
+               }
             }
             filtered.add(key);
          }
       }
-      return invokeNext(ctx, copyCommand.apply(command, filtered));
+      return asyncInvokeNext(ctx, copyCommand.apply(command, filtered), remoteGets);
    }
 
    public <C extends AbstractDataWriteCommand & FunctionalCommand> Object handleTxFunctionalCommand(InvocationContext ctx, C command) {
@@ -411,8 +416,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (ctx.isOriginLocal()) {
          CacheEntry entry = ctx.lookupEntry(key);
          if (entry == null) {
-            if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)
-                  || command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
+            if (command.hasAnyFlag(SKIP_REMOTE_FLAGS)|| command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
             } else {
@@ -443,7 +447,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
          CacheEntry entry = ctx.lookupEntry(key);
          if (entry == null) {
-            return UnsureResponse.INSTANCE;
+            if (command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
+               // in transactional mode, we always need the entry wrapped
+               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+            } else {
+               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true));
+            }
          }
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) ->
                wrapFunctionalResultOnNonOriginOnReturn(rv, entry));
