@@ -31,7 +31,6 @@ import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.ClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CompatibilityInterceptor;
-import org.infinispan.interceptors.impl.DeadlockDetectingInterceptor;
 import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.GroupingInterceptor;
@@ -253,10 +252,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                   break;
             }
          }
-      }
-
-      if (configuration.deadlockDetection().enabled() && !isTotalOrder) {
-         interceptorChain.appendInterceptor(createInterceptor(new DeadlockDetectingInterceptor(), DeadlockDetectingInterceptor.class), false);
       }
 
       if (configuration.clustering().l1().enabled()) {

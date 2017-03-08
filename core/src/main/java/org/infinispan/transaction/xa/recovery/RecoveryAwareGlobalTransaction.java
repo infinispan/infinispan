@@ -16,7 +16,6 @@ import org.infinispan.transaction.xa.TransactionFactory;
 /**
  * GlobalTransaction that also holds xid information, required for recovery.
  *
- * @see RecoveryAwareDldGlobalTransaction
  * @author Mircea.Markus@jboss.com
  * @since 5.0
  */

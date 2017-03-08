@@ -18,18 +18,20 @@ import org.infinispan.util.logging.LogFactory;
  * This class is used when deadlock detection is enabled.
  *
  * @author Mircea.Markus@jboss.com
+ * @deprecated Since 9.0, no longer used.
  */
+@Deprecated
 public class DldGlobalTransaction extends GlobalTransaction {
 
    private static final Log log = LogFactory.getLog(DldGlobalTransaction.class);
 
    private static final boolean trace = log.isTraceEnabled();
 
-   protected volatile long coinToss;
+   private volatile long coinToss;
 
-   protected transient volatile Collection<Object> lockIntention = Collections.emptySet();
+   private transient volatile Collection<Object> lockIntention = Collections.emptySet();
 
-   protected volatile Collection<?> remoteLockIntention = Collections.emptySet();
+   private volatile Collection<?> remoteLockIntention = Collections.emptySet();
 
    protected volatile Collection<?> locksAtOrigin = Collections.emptySet();
 
@@ -129,11 +131,12 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return this.locksAtOrigin;
    }
 
+   @Deprecated
    public static class Externalizer extends GlobalTransaction.AbstractGlobalTxExternalizer<DldGlobalTransaction> {
 
       @Override
       protected DldGlobalTransaction createGlobalTransaction() {
-         return (DldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_NORECOVERY_XA.newGlobalTransaction();
+         return new DldGlobalTransaction();
       }
 
       @Override
