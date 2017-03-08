@@ -482,7 +482,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<Void> remoteGet(InvocationContext ctx, C command, Object key, boolean isWrite) {
       CompletableFuture<Void> cf = super.remoteGet(ctx, command, key, isWrite);
-      if (!ctx.isInTxScope()) {
+      // If the remoteGet is executed on non-origin node, the mutations list already contains all modifications
+      // and we are just trying to execute all of them from EntryWrappingIntercepot$EntryWrappingVisitor
+      if (!ctx.isOriginLocal() || !ctx.isInTxScope()) {
          return cf;
       }
       List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, key);
