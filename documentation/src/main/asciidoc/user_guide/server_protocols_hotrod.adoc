@@ -2,6 +2,10 @@
 The Infinispan Server distribution contains a server module that implements Infinispan's custom binary protocol called Hot Rod. The protocol was designed to enable faster client/server interactions compared to other existing text based protocols and to allow clients to make more intelligent decisions with regards to load balancing, failover and even data location operations.
 Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a HotRod server.
 
+To connect to Infinispan over this highly efficient Hot Rod protocol you can
+either use one of the clients described in this chapter, or use higher level
+tools such as <<integrations:hibernate-ogm,Hibernate OGM>>.
+
 include::server_protocols_hotrod_wire.adoc[]
 
 ===  Java Hot Rod client
