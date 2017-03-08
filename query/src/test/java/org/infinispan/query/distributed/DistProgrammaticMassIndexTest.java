@@ -9,6 +9,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
@@ -29,28 +30,27 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      cacheCfg.indexing()
-            .index(Index.LOCAL)
-            .addIndexedEntity(Car.class)
-            .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
-            .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
-            .addProperty("lucene_version", "LUCENE_CURRENT");
-      cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
-      List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, "default", cacheCfg);
+      createCluster(holder -> {
+         String defaultName = "default";
+         holder.getGlobalConfigurationBuilder().defaultCacheName(defaultName);
 
-      for(int i = 0; i < NUM_NODES; i++) {
-         ConfigurationBuilder cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-         cacheCfg1.clustering().stateTransfer().fetchInMemoryState(true);
-         cacheManagers.get(i).defineConfiguration(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME, cacheCfg1.build());
-         cacheManagers.get(i).defineConfiguration(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME, cacheCfg1.build());
-      }
+         ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+         cacheCfg.indexing()
+               .index(Index.LOCAL)
+               .addIndexedEntity(Car.class)
+               .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
+               .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
+               .addProperty("lucene_version", "LUCENE_CURRENT");
+         cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);
+         holder.newConfigurationBuilder(defaultName).read(cacheCfg.build());
 
-      waitForClusterToForm(neededCacheNames);
+         Configuration cacheCfg1 = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false)
+               .clustering().stateTransfer().fetchInMemoryState(true).build();
+         holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME).read(cacheCfg1);
+         holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME).read(cacheCfg1);
+      }, NUM_NODES);
 
-      for(Cache cache : cacheList) {
-         caches.add(cache);
-      }
+      caches.addAll(caches());
    }
 
    protected void verifyFindsCar(Cache cache, int count, String carMake) throws Exception {

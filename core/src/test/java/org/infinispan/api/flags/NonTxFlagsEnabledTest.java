@@ -39,7 +39,6 @@ public class NonTxFlagsEnabledTest extends FlagsEnabledTest {
 
    public void testCacheLocalInNonOwner() {
       addClusterEnabledCacheManager(getConfigurationBuilder());
-      defineConfigurationOnAllManagers(cacheName, getConfigurationBuilder());
       waitForClusterToForm(cacheName);
       final AdvancedCache<Object, String> cache1 = advancedCache(0, cacheName);
       final AdvancedCache<Object, String> cache2 = advancedCache(1, cacheName);

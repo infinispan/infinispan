@@ -49,11 +49,17 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       registerInternalCache(name, configuration, EnumSet.noneOf(Flag.class));
    }
 
+   // Synchronized to prevent users from registering the same configuration at the same time
    @Override
-   public void registerInternalCache(String name, Configuration configuration, EnumSet<Flag> flags) {
+   public synchronized void registerInternalCache(String name, Configuration configuration, EnumSet<Flag> flags) {
+      boolean configPresent = cacheManager.getCacheConfiguration(name) != null;
       // check if it already has been defined. Currently we don't support existing user-defined configuration.
-      if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.containsKey(name)) && cacheManager.getCacheConfiguration(name) != null) {
+      if ((flags.contains(Flag.EXCLUSIVE) || !internalCaches.containsKey(name)) && configPresent) {
          throw log.existingConfigForInternalCache(name);
+      }
+      // Don't redefine
+      if (configPresent) {
+         return;
       }
       ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration);
       builder.jmxStatistics().disable(); // Internal caches must not be included in stats counts
@@ -61,8 +67,8 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       if (flags.contains(Flag.PERSISTENT) && globalConfiguration.globalState().enabled()) {
          builder.persistence().addSingleFileStore().location(globalConfiguration.globalState().persistentLocation()).purgeOnStartup(false).preload(true).fetchPersistentState(true);
       }
-      internalCaches.put(name, flags);
       SecurityActions.defineConfiguration(cacheManager, name, builder.build());
+      internalCaches.put(name, flags);
       if (!flags.contains(Flag.USER)) {
          privateCaches.add(name);
       }

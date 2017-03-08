@@ -225,8 +225,7 @@ public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
    }
 
    synchronized void addNode() {
-      EmbeddedCacheManager cacheManager = addClusterEnabledCacheManager(getDefaultCacheConfigBuilder());
-      configureIndexCaches(Collections.singleton(cacheManager));
+      addClusterEnabledCacheManager(getDefaultCacheConfigBuilder());
       waitForClusterToForm();
    }
 

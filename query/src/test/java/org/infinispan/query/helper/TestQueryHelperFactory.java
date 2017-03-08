@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -17,6 +18,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -61,7 +63,14 @@ public class TestQueryHelperFactory {
    }
 
    public static List createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
-                                                    boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName) {
+         boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName) {
+      return createTopologyAwareCacheNodes(numberOfNodes, cacheMode, transactional, indexLocalOnly,
+            isRamDirectoryProvider, defaultCacheName, f -> {});
+   }
+
+   public static List createTopologyAwareCacheNodes(int numberOfNodes, CacheMode cacheMode, boolean transactional,
+         boolean indexLocalOnly, boolean isRamDirectoryProvider, String defaultCacheName,
+         Consumer<ConfigurationBuilderHolder> holderConsumer) {
       List caches = new ArrayList();
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
@@ -88,12 +97,14 @@ public class TestQueryHelperFactory {
       }
 
       for (int i = 0; i < numberOfNodes; i++) {
-         GlobalConfigurationBuilder globalConfigurationBuilder = GlobalConfigurationBuilder
-               .defaultClusteredBuilder();
+         ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+         GlobalConfigurationBuilder globalConfigurationBuilder = holder.getGlobalConfigurationBuilder().clusteredDefault();
          globalConfigurationBuilder.transport().machineId("a" + i).rackId("b" + i).siteId("test" + i).defaultCacheName(defaultCacheName);
 
-         EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(
-               globalConfigurationBuilder, builder);
+         holderConsumer.accept(holder);
+         holder.newConfigurationBuilder(defaultCacheName).read(builder.build());
+
+         EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(holder);
 
          caches.add(cm1.getCache());
       }
