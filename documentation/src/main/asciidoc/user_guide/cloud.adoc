@@ -76,7 +76,7 @@ Finally you can configure your JGroups instances to use a shared storage to exch
 ==== JDBC_PING
 A similar approach to S3_PING, but using a JDBC connection to a shared database. On EC2 that is quite easy using Amazon RDS. See the link:http://community.jboss.org/wiki/JDBCPING[JDBC_PING Wiki page] for details.
 
-== Kubernetes and OpenShift
+=== Kubernetes and OpenShift
 
 Since OpenShift uses Kubernetes underneath both of them can use the same discovery protocol - link:https://github.com/jgroups-extras/jgroups-kubernetes[Kube_PING]. The configuration is very straightforward:
 
@@ -109,7 +109,7 @@ oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -
 
 After performing all above steps, the clustering should be enabled and all Pods should automatically form a cluster within a single namespace.
 
-==  Using Kubernetes and OpenShift Rolling Updates
+==== Using Kubernetes and OpenShift Rolling Updates
 
 Since Pods in Kubernetes and OpenShift are immutable, the only way to alter the configuration is to roll out a new deployment. There are several
 different strategies to do that but we suggest using link:https://docs.openshift.org/latest/dev_guide/deployments/deployment_strategies.html#when-to-use-a-rolling-deployment[Rolling Updates].
@@ -193,7 +193,7 @@ adjust the value of `FD_ALL` timeout and adjust it to the longest GC Pause.
 * When using Initial State Transfer, the `initialDelaySeconds` value for both probes should be set to higher value.
 * During Initial State Transfer nodes might not respond to probes. The best results are achieved with higher values of `failureThreshold` and `successThreshold` values.
 
-==  Rolling upgrades with Kubernetes and OpenShift
+==== Rolling upgrades with Kubernetes and OpenShift
 
 Even though Rolling Upgrades and Rolling Update may sound similarly, they mean different things. The link:$$https://docs.openshift.org/latest/dev_guide/deployments/deployment_strategies.html#rolling-strategy[Rolling Update]
 is a process of replacing old Pods with new ones. In other words it is a process of rolling out new version of an application. A typical example is a configuration change. Since Pods are immutable, Kubernetes/OpenShift needs to replace them one by one
@@ -214,3 +214,4 @@ For both Kubernetes and OpenShift, the Rolling Upgrade procedure is almost the s
 The last step in the Rolling Upgrade (removing a Remote Cache Store) needs to be performed differently. We need to use link:$$http://kubernetes.io/docs/user-guide/rolling-updates/$$[Kubernetes/OpenShift Rolling update] command and replace Pods configuration with the one which does not contain Remote Cache Store.
 
 A detailed instruction might be found in link:$$https://issues.jboss.org/browse/ISPN-6673[ISPN-6673] ticket.
+
