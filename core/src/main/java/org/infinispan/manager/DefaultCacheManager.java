@@ -339,7 +339,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public Configuration defineConfiguration(String name, Configuration configuration) {
-      return actualDefineConfiguration(name, configuration);
+      return doDefineConfiguration(name, configuration);
    }
 
    @Override
@@ -349,13 +349,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          if (c == null) {
             throw log.undeclaredConfiguration(template, name);
          } else {
-            return actualDefineConfiguration(name, configurationOverride, c);
+            return doDefineConfiguration(name, configurationOverride, c);
          }
       }
-      return actualDefineConfiguration(name, configurationOverride);
+      return doDefineConfiguration(name, configurationOverride);
    }
 
-   private Configuration actualDefineConfiguration(String name, Configuration... configurations) {
+   private Configuration doDefineConfiguration(String name, Configuration... configurations) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       assertIsNotTerminated();
       if (name == null || configurations == null)

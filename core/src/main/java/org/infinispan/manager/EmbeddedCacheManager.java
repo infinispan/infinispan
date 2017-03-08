@@ -232,7 +232,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @param configurationName name of the configuration template to use
     * @return null if no configuration exists as per rules set above, otherwise
     *         returns a cache instance identified by cacheName
-    * @deprecated Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
+    * @deprecated as of 9.0. Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
     * {@link EmbeddedCacheManager#getCache(String)} instead
     */
    <K, V> Cache<K, V> getCache(String cacheName, String configurationName);
@@ -253,7 +253,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     *        #getCache(String, String)}
     * @return null if no configuration exists as per rules set above, otherwise
     *         returns a cache instance identified by cacheName
-    * @deprecated Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
+    * @deprecated as of 9.0. Use {@link EmbeddedCacheManager#defineConfiguration(String, String, Configuration)} and
     * {@link EmbeddedCacheManager#getCache(String, boolean)} instead
     */
    <K, V> Cache<K, V> getCache(String cacheName, String configurationTemplate, boolean createIfAbsent);
