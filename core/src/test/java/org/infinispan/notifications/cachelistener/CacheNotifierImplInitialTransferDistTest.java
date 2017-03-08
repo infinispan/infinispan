@@ -49,6 +49,8 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -659,11 +661,13 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
    protected static abstract class StateListener<K, V> {
       final List<CacheEntryEvent<K, V>> events = Collections.synchronizedList(new ArrayList<>());
+      private final Log log = LogFactory.getLog(getClass());
 
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
       public void onCacheNotification(CacheEntryEvent<K, V> event) {
+         log.tracef("Received event: %s", event);
          events.add(event);
       }
    }

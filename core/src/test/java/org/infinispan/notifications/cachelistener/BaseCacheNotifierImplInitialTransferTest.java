@@ -52,6 +52,8 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
@@ -511,11 +513,13 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
    protected static abstract class StateListener<K, V> {
       final List<CacheEntryEvent<K, V>> events = new ArrayList<CacheEntryEvent<K, V>>();
+      private final Log log = LogFactory.getLog(getClass());
 
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
       public synchronized void onCacheNotification(CacheEntryEvent<K, V> event) {
+         log.tracef("Received event: %s", event);
          events.add(event);
       }
    }
