@@ -98,7 +98,6 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateConsumer;
@@ -111,9 +110,7 @@ import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.stream.impl.StreamSegmentResponseCommand;
-import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
@@ -149,8 +146,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private ByteString cacheName;
    private boolean transactional;
    private boolean totalOrderProtocol;
-   private boolean deadlockDetection;
-   private boolean distributedOrReplicated;
 
    private AsyncInterceptorChain interceptorChain;
    private DistributionManager distributionManager;
@@ -188,7 +183,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
                                  XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
                                  XSiteStateTransferManager xSiteStateTransferManager,
-                                 GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
+                                 GroupManager groupManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
                                  @SuppressWarnings("deprecation") ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
                                  CommandAckCollector commandAckCollector) {
@@ -226,8 +221,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       cacheName = ByteString.fromString(cache.getName());
       this.transactional = configuration.transaction().transactionMode().isTransactional();
       this.totalOrderProtocol = configuration.transaction().transactionProtocol().isTotalOrder();
-      this.deadlockDetection = configuration.deadlockDetection().enabled();
-      this.distributedOrReplicated = configuration.clustering().cacheMode().isDistributed() || configuration.clustering().cacheMode().isReplicated();
    }
 
    @Override
@@ -400,10 +393,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
                   initializeReplicableCommand(nested, false);
                }
             pc.markTransactionAsRemote(isRemote);
-            if (deadlockDetection && isRemote) {
-               DldGlobalTransaction transaction = (DldGlobalTransaction) pc.getGlobalTransaction();
-               transaction.setLocksHeldAtOrigin(pc.getAffectedKeys());
-            }
             break;
          case CommitCommand.COMMAND_ID:
          case VersionedCommitCommand.COMMAND_ID:
@@ -433,21 +422,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             LockControlCommand lcc = (LockControlCommand) c;
             lcc.init(interceptorChain, icf, txTable);
             lcc.markTransactionAsRemote(isRemote);
-            if (deadlockDetection && isRemote) {
-               DldGlobalTransaction gtx = (DldGlobalTransaction) lcc.getGlobalTransaction();
-               RemoteTransaction transaction = txTable.getRemoteTransaction(gtx);
-               if (transaction != null) {
-                  if (!distributedOrReplicated) {
-                     Set<Object> keys = txTable.getLockedKeysForRemoteTransaction(gtx);
-                     GlobalTransaction gtx2 = transaction.getGlobalTransaction();
-                     ((DldGlobalTransaction) gtx2).setLocksHeldAtOrigin(keys);
-                     gtx.setLocksHeldAtOrigin(keys);
-                  } else {
-                     GlobalTransaction gtx2 = transaction.getGlobalTransaction();
-                     ((DldGlobalTransaction) gtx2).setLocksHeldAtOrigin(gtx.getLocksHeldAtOrigin());
-                  }
-               }
-            }
             break;
          case StateRequestCommand.COMMAND_ID:
             ((StateRequestCommand) c).init(stateProvider);

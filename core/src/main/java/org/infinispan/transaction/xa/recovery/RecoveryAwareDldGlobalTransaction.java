@@ -13,7 +13,6 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.TransactionFactory;
 
 /**
  * DldGlobalTransaction that also holds xid information, required for recovery.
@@ -22,7 +21,9 @@ import org.infinispan.transaction.xa.TransactionFactory;
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0
+ * @deprecated Since 9.0, no longer used.
  */
+@Deprecated
 public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction implements RecoverableTransactionIdentifier {
 
    public RecoveryAwareDldGlobalTransaction() {
@@ -56,6 +57,7 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
       this.internalId = internalId;
    }
 
+   @Deprecated
    public static class Externalizer extends GlobalTransaction.AbstractGlobalTxExternalizer<RecoveryAwareDldGlobalTransaction> {
       @Override
       public void writeObject(ObjectOutput output, RecoveryAwareDldGlobalTransaction globalTransaction) throws IOException {
@@ -73,7 +75,7 @@ public class RecoveryAwareDldGlobalTransaction extends DldGlobalTransaction impl
 
       @Override
       protected RecoveryAwareDldGlobalTransaction createGlobalTransaction() {
-         return (RecoveryAwareDldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_RECOVERY_XA.newGlobalTransaction();
+         return new RecoveryAwareDldGlobalTransaction();
       }
 
       @Override
