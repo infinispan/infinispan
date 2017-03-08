@@ -43,7 +43,6 @@ import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
-import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -67,10 +66,9 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
    // Rudimentary constructor, we'll provide more idiomatic construction
    // via main Infinispan class which is still to be defined
    private FunctionalJCache(FunctionalMapImpl<K, V> map) {
-      FunctionalMapImpl<K, V> blockingMap = map.withParams(FutureMode.COMPLETED);
-      this.readOnly = ReadOnlyMapImpl.create(blockingMap);
-      this.writeOnly = WriteOnlyMapImpl.create(blockingMap);
-      this.readWrite = ReadWriteMapImpl.create(blockingMap);
+      this.readOnly = ReadOnlyMapImpl.create(map);
+      this.writeOnly = WriteOnlyMapImpl.create(map);
+      this.readWrite = ReadWriteMapImpl.create(map);
    }
 
    public static <K, V> Cache<K, V> create(AdvancedCache<K, V> cache) {
@@ -119,12 +117,7 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map) {
-      // Since blocking is in use, there's no need to consume the iterator for
-      // the put all effects to be executed.
-      // With blocking, the iterator gets pro-actively consumed, and the
-      // return offers the possibility to re-iterate by the user.
-      // Since the iteration here has no result, we can skip the iteration altogether.
-      writeOnly.evalMany(map, setValueConsumer());
+      await(writeOnly.evalMany(map, setValueConsumer()));
    }
 
    @Override
@@ -164,17 +157,12 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
 
    @Override
    public void removeAll(Set<? extends K> keys) {
-      // Since blocking is in use, there's no need to consume the iterator for
-      // the put all effects to be executed.
-      // With blocking, the iterator gets pro-actively consumed, and the
-      // return offers the possibility to re-iterate by the user.
-      // Since the iteration here has no result, we can skip the iteration altogether.
-      writeOnly.evalMany(keys, removeConsumer());
+      await(writeOnly.evalMany(keys, removeConsumer()));
    }
 
    @Override
    public void removeAll() {
-      writeOnly.evalAll(removeConsumer());
+      await(writeOnly.evalAll(removeConsumer()));
    }
 
    @Override

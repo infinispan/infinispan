@@ -209,7 +209,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
                      return asyncValue(collector.getFuture());
                   });
          } else {
-            localResult.complete(new HashMap<>());
+            localResult.complete(command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) ? null : new HashMap<>());
             return asyncValue(collector.getFuture());
          }
       }

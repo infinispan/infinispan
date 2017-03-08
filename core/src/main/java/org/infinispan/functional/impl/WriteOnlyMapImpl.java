@@ -1,7 +1,5 @@
 package org.infinispan.functional.impl;
 
-import static org.infinispan.functional.impl.Params.withFuture;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -9,7 +7,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
@@ -18,7 +15,6 @@ import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
 import org.infinispan.commons.api.functional.Param;
-import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
@@ -32,11 +28,9 @@ import org.infinispan.util.logging.LogFactory;
 @Experimental
 public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements WriteOnlyMap<K, V> {
    private static final Log log = LogFactory.getLog(WriteOnlyMapImpl.class);
-   private final Params params;
 
    private WriteOnlyMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
-      super(functionalMap);
-      this.params = params;
+      super(params, functionalMap);
    }
 
    public static <K, V> WriteOnlyMap<K, V> create(FunctionalMapImpl<K, V> functionalMap) {
@@ -50,68 +44,55 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      WriteOnlyKeyCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyCommand(key, f, params);
+      WriteOnlyKeyCommand cmd = fmap.commandsFactory.buildWriteOnlyKeyCommand(key, f, params);
       InvocationContext ctx = getInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getKeyLockOwner());
-      return futureVoid(futureMode, ctx, cmd);
+      return invokeAsync(ctx, cmd);
    }
 
    @Override
    public CompletableFuture<Void> eval(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      WriteOnlyKeyValueCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyValueCommand(key, value, f, params);
+      WriteOnlyKeyValueCommand cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(key, value, f, params);
       InvocationContext ctx = getInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getKeyLockOwner());
-      return futureVoid(futureMode, ctx, cmd);
+      return invokeAsync(ctx, cmd);
    }
 
    @Override
    public CompletableFuture<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
       log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      WriteOnlyManyEntriesCommand cmd = fmap.cmdFactory().buildWriteOnlyManyEntriesCommand(entries, f, params);
+      WriteOnlyManyEntriesCommand cmd = fmap.commandsFactory.buildWriteOnlyManyEntriesCommand(entries, f, params);
       InvocationContext ctx = getInvocationContext(true, entries.size());
       ctx.setLockOwner(cmd.getKeyLockOwner());
-      return futureVoid(futureMode, ctx, cmd);
+      return invokeAsync(ctx, cmd);
    }
 
    @Override
    public CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f, params);
+      WriteOnlyManyCommand cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(keys, f, params);
       InvocationContext ctx = getInvocationContext(true, keys.size());
       ctx.setLockOwner(cmd.getKeyLockOwner());
-      return futureVoid(futureMode, ctx, cmd);
+      return invokeAsync(ctx, cmd);
    }
 
    @Override
    public CompletableFuture<Void> evalAll(Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked evalAll(%s)", params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
       // TODO: during commmand execution the set is iterated multiple times, and can execute remote operations
       // therefore we should rather have separate command (or different semantics for keys == null)
-      Set<K> keys = new HashSet<K>(fmap.cache.keySet());
-      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f, params);
+      Set<K> keys = new HashSet<>(fmap.cache.keySet());
+      WriteOnlyManyCommand cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(keys, f, params);
       InvocationContext ctx = getInvocationContext(true, keys.size());
       ctx.setLockOwner(cmd.getKeyLockOwner());
-      return futureVoid(futureMode, ctx, cmd);
+      return invokeAsync(ctx, cmd);
    }
 
    @Override
    public CompletableFuture<Void> truncate() {
       log.tracef("Invoked truncate(%s)", params);
-      Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      return withFuture(futureMode, fmap.asyncExec(), () -> {
-         fmap.cache.clear();
-         return null;
-      });
-   }
-
-   CompletableFuture<Void> futureVoid(Param<FutureMode> futureMode, InvocationContext ctx, VisitableCommand cmd) {
-      return withFuture(futureMode, fmap.asyncExec(), () -> { invoke(ctx, cmd); return null; });
+      return fmap.cache.clearAsync();
    }
 
    @Override
@@ -127,7 +108,7 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
 
    @Override
    public WriteListeners<K, V> listeners() {
-      return fmap.notifier();
+      return fmap.notifier;
    }
 
 }

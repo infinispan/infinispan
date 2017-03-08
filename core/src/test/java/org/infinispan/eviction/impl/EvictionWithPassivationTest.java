@@ -359,7 +359,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
          assertEquals(value, testCache.get(key));
 
          // The spawned thread shouldn't see the new value yet, should see the old one still
-         Future<String> future = testCache.getAsync(key);
+         Future<String> future = fork(() -> testCache.get(key));
 
          if (previousValue != null) {
             assertEquals(previousValue, future.get(10000, TimeUnit.SECONDS));

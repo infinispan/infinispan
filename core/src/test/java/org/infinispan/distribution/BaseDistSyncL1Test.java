@@ -98,7 +98,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       addBlockingInterceptorBeforeTx(nonOwnerCache, barrier, GetKeyValueCommand.class);
 
       try {
-         Future<String> future = nonOwnerCache.getAsync(key);
+         Future<String> future = fork(() -> nonOwnerCache.get(key));
 
          // Now wait for the get to return and block it for now
          barrier.await(5, TimeUnit.SECONDS);
@@ -188,7 +188,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       try {
          assertEquals(firstValue, nonOwnerCache.get(key));
 
-         Future<String> futurePut = ownerCache.putAsync(key, secondValue);
+         Future<String> futurePut = fork(() -> ownerCache.put(key, secondValue));
 
          // Wait for the invalidation to be processing
          invalidationBarrier.await(5, TimeUnit.SECONDS);
@@ -205,7 +205,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          CyclicBarrier getBarrier = new CyclicBarrier(2);
          addBlockingInterceptorBeforeTx(nonOwnerCache, getBarrier, GetKeyValueCommand.class);
 
-         Future<String> futureGet = nonOwnerCache.getAsync(key);
+         Future<String> futureGet = fork(() -> nonOwnerCache.get(key));
 
          // Wait for the get to retrieve the remote value but not try to update L1 yet
          getBarrier.await(5, TimeUnit.SECONDS);
@@ -324,7 +324,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
             getL1InterceptorClass(), true);
 
       try {
-         Future<String> future = nonOwnerCache.getAsync(key);
+         Future<String> future = fork(() -> nonOwnerCache.get(key));
 
          // Wait until get goes remote and retrieves value before going back into L1 interceptor
          getBarrier.await(10, TimeUnit.SECONDS);
@@ -359,12 +359,12 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       log.warn("Doing get here - ignore all previous");
 
-      Future<String> getFuture = nonOwnerCache.getAsync(key);
+      Future<String> getFuture = fork(() -> nonOwnerCache.get(key));
 
       // Wait until we are about to write value into data container on non owner
       checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
 
-      Future<String> putFuture = ownerCache.putAsync(key, secondValue);
+      Future<String> putFuture = fork(() -> ownerCache.put(key, secondValue));
 
       Exceptions.expectException(TimeoutException.class, () -> putFuture.get(1, TimeUnit.SECONDS));
 
@@ -393,12 +393,12 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       try {
          log.warn("Doing get here - ignore all previous");
 
-         Future<String> getFuture = nonOwnerCache.getAsync(key);
+         Future<String> getFuture = fork(() -> nonOwnerCache.get(key));
 
          // Wait until we are about to write value into data container on non owner
          checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
 
-         Future<String> getFuture2 = nonOwnerCache.getAsync(key);
+         Future<String> getFuture2 = fork(() -> nonOwnerCache.get(key));
 
          Exceptions.expectException(TimeoutException.class, () -> getFuture2.get(1, TimeUnit.SECONDS));
 
@@ -428,12 +428,12 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       try {
          log.warn("Doing get here - ignore all previous");
 
-         Future<String> getFuture = nonOwnerCache.getAsync(key);
+         Future<String> getFuture = fork(() -> nonOwnerCache.get(key));
 
          // Wait until we are about to write value into data container on non owner
          checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
 
-         Future<String> getFuture2 = nonOwnerCache.getAsync(key);
+         Future<String> getFuture2 = fork(() -> nonOwnerCache.get(key));
 
          Exceptions.expectException(TimeoutException.class, () -> getFuture2.get(1, TimeUnit.SECONDS));
 
@@ -462,12 +462,12 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
       log.warn("Doing get here - ignore all previous");
 
-      Future<String> getFuture = nonOwnerCache.getAsync(key);
+      Future<String> getFuture = fork(() -> nonOwnerCache.get(key));
 
       // Wait until we are about to write value into data container on non owner
       checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
 
-      Future<String> putFuture = nonOwnerCache.putAsync(key, secondValue);
+      Future<String> putFuture = fork(() -> nonOwnerCache.put(key, secondValue));
 
       Exceptions.expectException(TimeoutException.class, () -> putFuture.get(1, TimeUnit.SECONDS));
 
