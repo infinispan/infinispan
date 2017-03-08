@@ -1,12 +1,13 @@
 package org.infinispan.functional;
 
+import static org.infinispan.test.Exceptions.assertException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -62,9 +63,13 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
       tm.resume(transaction);
       try {
          assertEquals("value0", op2.action.eval(cache(0, DIST), key, ro, rw));
-      } catch (WriteSkewException e) {
+      } catch (CompletionException e) {
+         assertException(WriteSkewException.class, e.getCause());
          // this is fine; either we read the old value, or we can't read it and we throw
          tm.rollback();
+      } catch (WriteSkewException e) {
+         // synchronous get is invoked using synchronous API, without wrapping into CompletionExceptions
+         assert op2 == ReadOp.GET;
       }
       if (tm.getStatus() == Status.STATUS_ACTIVE) {
          try {
@@ -85,11 +90,11 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
 
    enum ReadOp {
       READ(true, (cache, key, ro, rw) ->
-            ro.eval(key, (Serializable & Function<EntryView.ReadEntryView, Object>) EntryView.ReadEntryView::get).get(10, TimeUnit.SECONDS)),
+            ro.eval(key, (Serializable & Function<EntryView.ReadEntryView, Object>) EntryView.ReadEntryView::get).join()),
       READ_MANY(true, (cache, key, ro, rw) ->
             ro.evalMany(Collections.singleton(key), (Serializable & Function<EntryView.ReadEntryView, Object>) EntryView.ReadEntryView::get).findAny().get()),
-      READ_WRITE_KEY(true, (cache, key, ro, rw) -> rw.eval(key, (Serializable & Function<EntryView.ReadWriteEntryView, Object>) EntryView.ReadEntryView::get).get()),
-      READ_WRITE_KEY_VALUE(true, (cache, key, ro, rw) -> rw.eval(key, null, (Serializable & BiFunction<Object, EntryView.ReadWriteEntryView, Object>) (value, v) -> v.get()).get()),
+      READ_WRITE_KEY(true, (cache, key, ro, rw) -> rw.eval(key, (Serializable & Function<EntryView.ReadWriteEntryView, Object>) EntryView.ReadEntryView::get).join()),
+      READ_WRITE_KEY_VALUE(true, (cache, key, ro, rw) -> rw.eval(key, null, (Serializable & BiFunction<Object, EntryView.ReadWriteEntryView, Object>) (value, v) -> v.get()).join()),
       READ_WRITE_MANY(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singleton(key), (Serializable & Function<EntryView.ReadWriteEntryView, Object>) EntryView.ReadEntryView::get).findAny().get()),
       READ_WRITE_MANY_ENTRIES(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singletonMap(key, null), (Serializable & BiFunction<Object, EntryView.ReadWriteEntryView, Object>) (value, v) -> v.get()).findAny().get()),
       GET(false, (cache, key, ro, rw) -> cache.get(key))

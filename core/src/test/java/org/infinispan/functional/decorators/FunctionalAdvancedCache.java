@@ -30,7 +30,6 @@ import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
-import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
@@ -69,9 +68,7 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    final ConcurrentMap<K, V> map;
    final ReadWriteMap<K, V> rw;
-   final ReadWriteMap<K, V> rwCompleted;
    final WriteOnlyMap<K, V> wo;
-   final WriteOnlyMap<K, V> woCompleted;
 
    private FunctionalAdvancedCache(ConcurrentMap<K, V> map, AdvancedCache<K, V> cache) {
       this.map = map;
@@ -79,8 +76,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       FunctionalMapImpl<K, V> fmap = FunctionalMapImpl.create(cache);
       this.rw = ReadWriteMapImpl.create(fmap);
       this.wo = WriteOnlyMapImpl.create(fmap);
-      this.woCompleted = wo.withParams(FutureMode.COMPLETED);
-      this.rwCompleted = rw.withParams(FutureMode.COMPLETED);
    }
 
    public static <K, V> AdvancedCache<K, V> create(AdvancedCache<K, V> cache) {
@@ -153,70 +148,70 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
       final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      return await(rwCompleted.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+      return await(rw.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan, metaMaxIdle)));
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
       final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      await(woCompleted.evalMany(map, setValueMetasConsumer(metaLifespan, metaMaxIdle)));
+      await(wo.evalMany(map, setValueMetasConsumer(metaLifespan, metaMaxIdle)));
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
       final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      return await(rwCompleted.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+      return await(rw.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan, metaMaxIdle)));
    }
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
       final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      return await(rwCompleted.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+      return await(rw.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan, metaMaxIdle)));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
       final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      return await(rwCompleted.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan, metaMaxIdle)));
+      return await(rw.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan, metaMaxIdle)));
    }
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit unit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      return await(rwCompleted.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan)));
+      return await(rw.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan)));
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      await(woCompleted.evalMany(map, setValueMetasConsumer(metaLifespan)));
+      await(wo.evalMany(map, setValueMetasConsumer(metaLifespan)));
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      return await(rwCompleted.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan)));
+      return await(rw.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan)));
    }
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit unit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      return await(rwCompleted.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan)));
+      return await(rw.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan)));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      return await(rwCompleted.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan)));
+      return await(rw.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan)));
    }
 
    @Override
    public void evict(K key) {
-      await(woCompleted.withParams(PersistenceMode.SKIP).eval(key, removeConsumer()));
+      await(wo.withParams(PersistenceMode.SKIP).eval(key, removeConsumer()));
    }
 
    @Override

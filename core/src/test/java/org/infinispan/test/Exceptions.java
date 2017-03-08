@@ -37,6 +37,16 @@ public class Exceptions {
       }
    }
 
+   public static void assertExceptionNonStrict(Class<? extends Throwable> exceptionClass, Throwable t) {
+      if (t == null) {
+         throw new AssertionError("Should have thrown an " + exceptionClass, null);
+      }
+      if (!exceptionClass.isInstance(t)) {
+         throw new AssertionError(
+               "Wrong exception thrown: expected:<" + exceptionClass + ">, actual:<" + t.getClass() + ">", t);
+      }
+   }
+
    public static void assertException(Class<? extends Throwable> wrapperExceptionClass,
          Class<? extends Throwable> exceptionClass, Throwable t) {
       assertException(wrapperExceptionClass, t);
@@ -49,6 +59,14 @@ public class Exceptions {
       assertException(exceptionClass, messageRegex, t.getCause());
    }
 
+   public static void assertException(Class<? extends Throwable> wrapperExceptionClass2,
+                                      Class<? extends Throwable> wrapperExceptionClass,
+                                      Class<? extends Throwable> exceptionClass, Throwable t) {
+      assertException(wrapperExceptionClass2, t);
+      assertException(wrapperExceptionClass, t.getCause());
+      assertException(exceptionClass, t.getCause().getCause());
+   }
+
    public static void expectException(Class<? extends Throwable> exceptionClass, String messageRegex,
          ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);
@@ -59,18 +77,14 @@ public class Exceptions {
          Class<? extends Throwable> exceptionClass,
          String messageRegex, ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);
-      assertException(wrapperExceptionClass, t);
-      assertException(exceptionClass, t.getCause());
-      assertException(exceptionClass, messageRegex, t.getCause());
+      assertException(wrapperExceptionClass, exceptionClass, messageRegex, t);
    }
 
    public static void expectException(Class<? extends Throwable> wrapperExceptionClass2,
          Class<? extends Throwable> wrapperExceptionClass1, Class<? extends Throwable> exceptionClass,
          ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);
-      assertException(wrapperExceptionClass2, t);
-      assertException(wrapperExceptionClass1, t.getCause());
-      assertException(exceptionClass, t.getCause().getCause());
+      assertException(wrapperExceptionClass2, wrapperExceptionClass1, exceptionClass, t);
    }
 
    public static void expectException(Class<? extends Throwable> exceptionClass, ExceptionRunnable runnable) {
@@ -84,6 +98,14 @@ public class Exceptions {
       assertException(wrapperExceptionClass, t);
       assertException(exceptionClass, t.getCause());
    }
+
+   public static void expectExceptionNonStrict(Class<? extends Throwable> we2, Class<? extends Throwable> we1, Class<? extends Throwable> e, ExceptionRunnable runnable) {
+      Throwable t = extractException(runnable);
+      assertExceptionNonStrict(we2, t);
+      assertExceptionNonStrict(we1, t.getCause());
+      assertExceptionNonStrict(e, t.getCause().getCause());
+   }
+
 
    public static void expectExecutionException(Class<? extends Throwable> exceptionClass, String messageRegex,
          Future<?> future) {

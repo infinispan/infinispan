@@ -27,7 +27,6 @@ import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.commons.api.functional.Param;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -111,13 +110,13 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    @BeforeMethod
    public void createBeforeMethod() throws Throwable {
       super.createBeforeMethod();
-      this.ro = ReadOnlyMapImpl.create(fmapD1).withParams(Param.FutureMode.COMPLETED);
-      this.lro = ReadOnlyMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
-      this.wo = WriteOnlyMapImpl.create(fmapD1).withParams(Param.FutureMode.COMPLETED);
-      this.rw = ReadWriteMapImpl.create(fmapD1).withParams(Param.FutureMode.COMPLETED);
+      this.ro = ReadOnlyMapImpl.create(fmapD1);
+      this.lro = ReadOnlyMapImpl.create(fmapL1);
+      this.wo = WriteOnlyMapImpl.create(fmapD1);
+      this.rw = ReadWriteMapImpl.create(fmapD1);
       this.cache = cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache();
-      this.lwo = WriteOnlyMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
-      this.lrw = ReadWriteMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED);
+      this.lwo = WriteOnlyMapImpl.create(fmapL1);
+      this.lrw = ReadWriteMapImpl.create(fmapL1);
    }
 
    @Override

@@ -1,6 +1,6 @@
 package org.infinispan.functional;
 
-import static org.testng.Assert.fail;
+import static org.infinispan.test.Exceptions.expectExceptionNonStrict;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -19,7 +20,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.FunctionalMap;
-import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.marshall.MarshallableFunctions;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.test.TestingUtil;
@@ -137,7 +137,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       tm.commit();
 
       tm.begin();
-      wo.eval(KEY, MarshallableFunctions.removeConsumer());
+      wo.eval(KEY, MarshallableFunctions.removeConsumer()).join();
       assertNull(cache.putIfAbsent(KEY, "y"));
       assertEquals("y", ro.eval(KEY, MarshallableFunctions.returnReadOnlyFindOrNull()).join());
       tm.commit();
@@ -189,7 +189,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
 
    @Test(dataProvider = "readMethods")
    public void testReadOnMissingValuesLocal(ReadMethod method) throws Exception {
-      testReadOnMissingValue(INT_KEYS, ReadOnlyMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED), method);
+      testReadOnMissingValue(INT_KEYS, ReadOnlyMapImpl.create(fmapL1), method);
    }
 
    private <K> void testReadOnMissingValue(K[] keys, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) throws Exception {
@@ -202,16 +202,12 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
 
       tm.begin();
       for (K key : keys) {
-         try {
-            method.action.eval(key, ro, (Function<EntryView.ReadEntryView<K, String>, Object> & Serializable) EntryView.ReadEntryView::get);
-            fail("Should throw CacheException:NoSuchElementException");
-         } catch (CacheException e) { // catches RemoteException, too
-            // The first exception should cause the whole transaction to fail
-            assertEquals(NoSuchElementException.class, e.getCause().getClass());
-            assertEquals(Status.STATUS_MARKED_ROLLBACK, tm.getStatus());
-            tm.rollback();
-            break;
-         }
+         expectExceptionNonStrict(CompletionException.class, CacheException.class, NoSuchElementException.class, () ->
+            method.action.eval(key, ro, (Function<EntryView.ReadEntryView<K, String>, Object> & Serializable) EntryView.ReadEntryView::get));
+         // The first exception should cause the whole transaction to fail
+         assertEquals(Status.STATUS_MARKED_ROLLBACK, tm.getStatus());
+         tm.rollback();
+         break;
       }
       if (tm.getStatus() == Status.STATUS_ACTIVE) {
          tm.commit();
