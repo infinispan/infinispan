@@ -40,4 +40,9 @@ public class SyncInvocationStage extends InvocationStage {
          return new SimpleAsyncInvocationStage(throwable);
       }
    }
+
+   @Override
+   public String toString() {
+      return new StringBuilder("SyncInvocationStage(").append(rv).append(')').toString();
+   }
 }

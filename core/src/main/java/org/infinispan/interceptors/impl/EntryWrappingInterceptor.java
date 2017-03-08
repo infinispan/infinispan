@@ -64,8 +64,8 @@ import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
-import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessAction;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -138,6 +138,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private final InvocationFinallyAction
          commitEntriesFinallyHandler = (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null);
 
+   private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
+
    protected Log getLog() {
       return log;
    }
@@ -181,11 +183,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      wrapEntriesForPrepare(ctx, command);
-      if (!shouldCommitDuringPrepare(command, ctx)) {
+      return wrapEntriesForPrepareAndApply(ctx, command, prepareHandler);
+   }
+
+   private Object prepareHandler(InvocationContext ctx, VisitableCommand command, Object rv) {
+      if (shouldCommitDuringPrepare((PrepareCommand) command, (TxInvocationContext) ctx)) {
+         return invokeNextThenAccept(ctx, command, commitEntriesSuccessHandler);
+      } else {
          return invokeNext(ctx, command);
       }
-      return invokeNextThenAccept(ctx, command, commitEntriesSuccessHandler);
    }
 
    @Override
@@ -817,19 +823,33 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
              command.isOnePhaseCommit();
    }
 
-   protected final void wrapEntriesForPrepare(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   protected final Object wrapEntriesForPrepareAndApply(TxInvocationContext ctx, PrepareCommand command, InvocationSuccessFunction handler) throws Throwable {
       if (!ctx.isOriginLocal() || command.isReplayEntryWrapping()) {
-         for (WriteCommand c : command.getModifications()) {
-            c.setTopologyId(command.getTopologyId());
-            // TODO: we need async invocation since the interceptors may do remote get
-            InvocationStage visitorStage = makeStage(c.acceptVisitor(ctx, entryWrappingVisitor));
-            // Wait for the sub-command to finish. If there was an exception, rethrow it.
-            visitorStage.get();
+         return applyModificationsAndThen(ctx, command, command.getModifications(), 0, handler);
+      }
+      return handler.apply(ctx, command, null);
+   }
 
-            if (c.hasAnyFlag(FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
-               ctx.getCacheTransaction().setStateTransferFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
+   private Object applyModificationsAndThen(TxInvocationContext ctx, PrepareCommand command, WriteCommand[] modifications, int startIndex, InvocationSuccessFunction handler) throws Throwable {
+      // We need to execute modifications for the same key sequentially. In theory we could optimize
+      // this loop if there are multiple remote invocations but since remote invocations are rare, we omit this.
+      for (int i = startIndex; i < modifications.length; i++) {
+         WriteCommand c = modifications[i];
+         c.setTopologyId(command.getTopologyId());
+         if (c.hasAnyFlag(FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
+            ctx.getCacheTransaction().setStateTransferFlag(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
+         }
+         Object result = c.acceptVisitor(ctx, entryWrappingVisitor);
+
+         if (!isSuccessfullyDone(result)) {
+            int nextIndex = i + 1;
+            if (nextIndex >= modifications.length) {
+               return makeStage(result).thenApply(ctx, command, handler);
             }
+            return makeStage(result).thenApply(ctx, command,
+                  (rCtx, rCommand, rv) -> applyModificationsAndThen(ctx, command, modifications, nextIndex, handler));
          }
       }
+      return handler.apply(ctx, command, null);
    }
 }

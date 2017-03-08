@@ -1,5 +1,7 @@
 package org.infinispan.interceptors;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
@@ -228,6 +230,26 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    }
 
    /**
+    * Suspend invocation until all {@code delays} complete, then if successful invoke the next interceptor.
+    * If the list is empty or null, invoke the next interceptor immediately.
+    *
+    * <p>If any of {@code delays} completes exceptionally, skip the next interceptor and continue with the exception.</p>
+    *
+    * <p>You need to wrap the result with {@link #makeStage(Object)} if you need to add another handler.</p>
+    */
+   public final Object asyncInvokeNext(InvocationContext ctx, VisitableCommand command,
+                                       Collection<CompletableFuture<?>> delays) {
+      if (delays == null || delays.isEmpty()) {
+         return invokeNext(ctx, command);
+      } else if (delays.size() == 1) {
+         return asyncInvokeNext(ctx, command, delays.iterator().next());
+      } else {
+         return asyncInvokeNext(ctx, command,
+               CompletableFuture.allOf(delays.toArray(new CompletableFuture[delays.size()])));
+      }
+   }
+
+   /**
     * Return the value if {@code throwable != null}, throw the exception otherwise.
     */
    public static Object valueOrException(Object rv, Throwable throwable) throws Throwable {
@@ -249,5 +271,13 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       } else {
          return new SyncInvocationStage(rv);
       }
+   }
+
+   protected static boolean isSuccessfullyDone(Object maybeStage) {
+      if (maybeStage instanceof InvocationStage) {
+         InvocationStage stage = (InvocationStage) maybeStage;
+         return stage.isDone() && !stage.toCompletableFuture().isCompletedExceptionally();
+      }
+      return true;
    }
 }
