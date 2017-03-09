@@ -18,6 +18,11 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.infinispan.rest.configuration.ExtendedHeaders;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -51,9 +56,16 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
          authConfig = config.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
          restAuthMethod = RestAuthMethod.valueOf(RestAuthenticationResource.AUTH_METHOD.resolveModelAttribute(context, authConfig).asString());
       }
+      String contextPath = RestConnectorResource.CONTEXT_PATH.resolveModelAttribute(context, config).asString();
+      ExtendedHeaders extendedHeaders = ExtendedHeaders.valueOf(RestConnectorResource.EXTENDED_HEADERS.resolveModelAttribute(context, config).asString());
 
+      Set<String> ignoredCaches = Collections.emptySet();
+      if (config.hasDefined(ModelKeys.IGNORED_CACHES)) {
+         ignoredCaches = config.get(ModelKeys.IGNORED_CACHES).asList()
+               .stream().map(ModelNode::asString).collect(Collectors.toSet());
+      }
       // Create the service
-      final RestService service = new RestService(getServiceName(config), config, restAuthMethod);
+      final RestService service = new RestService(getServiceName(config), restAuthMethod, cleanContextPath(contextPath), extendedHeaders, ignoredCaches);
 
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "rest"), service);
@@ -73,6 +85,14 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       EncryptableSubsystemHelper.processEncryption(context, config, service, builder);
       builder.setInitialMode(ServiceController.Mode.ACTIVE);
       builder.install();
+   }
+
+   private static String cleanContextPath(String s) {
+      if (s.endsWith("/")) {
+         return s.substring(0, s.length() - 1);
+      } else {
+         return s;
+      }
    }
 
    protected String getSocketBindingName(ModelNode config) {

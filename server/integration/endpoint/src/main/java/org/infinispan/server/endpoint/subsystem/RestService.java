@@ -54,7 +54,6 @@ import org.jboss.resteasy.plugins.server.embedded.SecurityDomain;
  * @since 6.0
  */
 public class RestService implements Service<NettyRestServer>, EncryptableService {
-   private static final String DEFAULT_CONTEXT_PATH = "";
    private final InjectedValue<PathManager> pathManagerInjector = new InjectedValue<>();
    private final InjectedValue<EmbeddedCacheManager> cacheManagerInjector = new InjectedValue<>();
    private final InjectedValue<SocketBinding> socketBinding = new InjectedValue<>();
@@ -63,40 +62,26 @@ public class RestService implements Service<NettyRestServer>, EncryptableService
    private final Map<String, InjectedValue<SecurityRealm>> sniDomains = new HashMap<>();
 
    private final RestAuthMethod authMethod;
-   private final ModelNode config;
    private final String serverName;
+   private final String contextPath;
+   private final ExtendedHeaders extendedHeaders;
+   private final Set<String> ignoredCaches;
    private NettyRestServer restServer;
    private boolean clientAuth;
 
-   public RestService(String serverName, ModelNode config, RestAuthMethod authMethod) {
+   public RestService(String serverName, RestAuthMethod authMethod, String contextPath, ExtendedHeaders extendedHeaders, Set<String> ignoredCaches) {
       this.serverName = serverName;
-      this.config = config.clone();
       this.authMethod = authMethod;
-   }
-
-   private String cleanContextPath(String s) {
-      if (s.endsWith("/")) {
-         return s.substring(0, s.length() - 1);
-      } else {
-         return s;
-      }
+      this.contextPath = contextPath;
+      this.extendedHeaders = extendedHeaders;
+      this.ignoredCaches = ignoredCaches;
    }
 
    /** {@inheritDoc} */
    @Override
    public synchronized void start(StartContext startContext) throws StartException {
-      String path = this.config.hasDefined(ModelKeys.CONTEXT_PATH) ? cleanContextPath(this.config.get(ModelKeys.CONTEXT_PATH).asString()) : DEFAULT_CONTEXT_PATH;
-
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
-      builder.name(serverName);
-      if (config.hasDefined(ModelKeys.IGNORED_CACHES)) {
-         Set<String> ignoredCaches = config.get(ModelKeys.IGNORED_CACHES).asList()
-               .stream().map(ModelNode::asString).collect(Collectors.toSet());
-         builder.ignoredCaches(ignoredCaches);
-      }
-      builder.extendedHeaders(config.hasDefined(ModelKeys.EXTENDED_HEADERS)
-            ? ExtendedHeaders.valueOf(config.get(ModelKeys.EXTENDED_HEADERS).asString())
-            : ExtendedHeaders.ON_DEMAND);
+      builder.name(serverName).extendedHeaders(extendedHeaders).ignoredCaches(ignoredCaches).contextPath(contextPath);
 
       EncryptableServiceHelper.fillSecurityConfiguration(this, builder.ssl());
 
@@ -146,7 +131,7 @@ public class RestService implements Service<NettyRestServer>, EncryptableService
 
       try {
          restServer.start();
-         ROOT_LOGGER.httpEndpointStarted(protocolName, path, "rest");
+         ROOT_LOGGER.httpEndpointStarted(protocolName, contextPath, "rest");
       } catch (Exception e) {
          throw ROOT_LOGGER.restContextStartFailed(e);
       }

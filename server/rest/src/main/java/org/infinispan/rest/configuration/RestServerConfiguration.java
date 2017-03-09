@@ -10,11 +10,13 @@ import org.infinispan.server.core.configuration.SslConfiguration;
 public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final ExtendedHeaders extendedHeaders;
    private final boolean startTransport;
+   private final String contextPath;
 
-   RestServerConfiguration(ExtendedHeaders extendedHeaders, String host, int port, Set<String> ignoredCaches, SslConfiguration ssl, boolean startTransport) {
+   RestServerConfiguration(ExtendedHeaders extendedHeaders, String host, int port, Set<String> ignoredCaches, SslConfiguration ssl, boolean startTransport, String contextPath) {
       super(null, null, host, port, -1, -1, -1, ssl, false, -1, ignoredCaches, startTransport);
       this.extendedHeaders = extendedHeaders;
       this.startTransport = startTransport;
+      this.contextPath = contextPath;
    }
 
    public ExtendedHeaders extendedHeaders() {
@@ -31,5 +33,9 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
 
    public boolean startTransport() {
       return startTransport;
+   }
+
+   public String contextPath() {
+      return contextPath;
    }
 }
