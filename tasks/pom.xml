@@ -34,10 +34,6 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-query</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-tasks-api</artifactId>
       </dependency>
       <dependency>

@@ -75,12 +75,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.javassist</groupId>
-         <artifactId>javassist</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>org.apache.geronimo.components</groupId>
          <artifactId>geronimo-transaction</artifactId>
          <scope>test</scope>
