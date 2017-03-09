@@ -117,13 +117,12 @@ final class ProtobufFieldBridgeProvider implements LuceneQueryMaker.FieldBridgeP
    }
 
    private FieldBridge makeFieldBridge(FieldDescriptor fd, String indexNullAs) {
+      if (indexNullAs == null) {
+         throw new IllegalArgumentException("indexNullAs argument must not be null");
+      }
       Type type = fd.getType();
-      if (fd.getType() == null) {
-         if (fd.getEnumType() != null) {
-            type = Type.ENUM;
-         } else {
-            return null;
-         }
+      if (type == null) {
+         throw new IllegalStateException("FieldDescriptors are not fully initialised!");
       }
       switch (type) {
          case DOUBLE:
