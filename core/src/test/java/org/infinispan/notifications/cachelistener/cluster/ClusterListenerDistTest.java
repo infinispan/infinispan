@@ -60,23 +60,24 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
       // Maybe some day this can work properly
       assertEquals(future.get(10, TimeUnit.SECONDS), FIRST_VALUE);
 
+      TestingUtil.waitForRehashToComplete(cache0, cache2);
+
       // The command is retried during rebalance, but there are two topologies - in the first (rebalancing) topology
       // one node can be primary owner and in the second (rebalanced) the other. In this case, it's possible that
       // the listener is fired both in the first topology and then after the response from primary owner arrives
       // and the originator now has become the new primary owner.
-      // Similar situation is possible with triangle algorigthm (TODO pruivo: elaborate)
+      // Similar situation is possible with triangle algorithm (TODO pruivo: elaborate)
       assertTrue(clusterListener.events.size() >= 1);
       assertTrue(clusterListener.events.size() <= 2);
 
-      Address cache0primary = cache0.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
-      Address cache2primary = cache2.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
+      Address cache0primary = cache0.getAdvancedCache().getDistributionManager().getCacheTopology().getDistribution(key).primary();
+      Address cache2primary = cache2.getAdvancedCache().getDistributionManager().getCacheTopology().getDistribution(key).primary();
       // we expect that now both nodes have the same topology
       assertEquals(cache0primary, cache2primary);
       checkEvent(clusterListener.events.get(0), key, false, true);
 
       // This is possible after rebalance; when rebalancing, primary owner is always the old backup
       if (clusterListener.events.size() == 2) {
-         assertTrue(cache0primary.equals(cache0.getCacheManager().getAddress()));
          checkEvent(clusterListener.events.get(1), key, false, true);
       }
    }
