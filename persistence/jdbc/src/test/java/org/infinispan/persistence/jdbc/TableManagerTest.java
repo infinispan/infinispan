@@ -1,10 +1,12 @@
 package org.infinispan.persistence.jdbc;
 
+import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Random;
 
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.connectionfactory.SimpleConnectionFactory;
@@ -109,10 +111,14 @@ public class TableManagerTest {
    @Test(dependsOnMethods = "testExists")
    public void testDrop() throws Exception {
       assert tableManager.tableExists(connection);
+      byte[] data = new byte[64];
+      new Random().nextBytes(data);
       PreparedStatement ps = null;
       try {
-         ps = connection.prepareStatement("INSERT INTO " + tableManager.getTableName() + "(ID_COLUMN) values(?)");
+         ps = connection.prepareStatement("INSERT INTO " + tableManager.getTableName() + "(ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN) values(?, ?, ?)");
          ps.setString(1, System.currentTimeMillis() + "");
+         ps.setBlob(2, new ByteArrayInputStream(data));
+         ps.setLong(3, System.currentTimeMillis());
          assert 1 == ps.executeUpdate();
       } finally {
          JdbcUtil.safeClose(ps);
