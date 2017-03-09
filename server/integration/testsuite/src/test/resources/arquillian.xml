@@ -3,7 +3,7 @@
             xsi:schemaLocation="http://www.jboss.org/arquillian-1.0 http://jboss.org/schema/arquillian/arquillian-1.0.xsd">
 
     <group qualifier="suite-manual">
-       <container qualifier="default-clustered-manual-1" mode="manual">
+        <container qualifier="default-clustered-manual-1" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
@@ -14,7 +14,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -29,7 +29,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -44,7 +44,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -59,7 +59,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -74,7 +74,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -88,7 +88,7 @@
                     -Djboss.socket.binding.port-offset=100
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -116,7 +116,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -131,7 +131,7 @@
                     -Djboss.socket.binding.port-offset=100
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -146,7 +146,7 @@
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -166,7 +166,7 @@
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -186,7 +186,7 @@
                     -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
                     -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11411 11422 8280</property>
+                <property name="waitForPorts">11422 8280</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -201,7 +201,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -216,7 +216,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -231,7 +231,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -246,7 +246,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -261,7 +261,7 @@
                     -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
-                <property name="waitForPorts">11411 11422 8280</property>
+                <property name="waitForPorts">11422 8280</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -275,7 +275,7 @@
                     -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip}
                     -Djboss.bind.address=${node0.ip} -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -304,7 +304,7 @@
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -319,7 +319,7 @@
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -347,7 +347,7 @@
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -376,7 +376,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -391,7 +391,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -406,7 +406,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -421,7 +421,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
             </configuration>
         </container>
         <container qualifier="rest-security-cert" mode="manual">
@@ -435,7 +435,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -450,7 +450,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -465,7 +465,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -481,7 +481,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -496,7 +496,7 @@
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -511,7 +511,7 @@
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -526,7 +526,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -541,7 +541,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -556,7 +556,7 @@
                     -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
-                <property name="waitForPorts">11411 11422 8280</property>
+                <property name="waitForPorts">11422 8280</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -571,7 +571,7 @@
                     -Djboss.default.jgroups.stack=tcp -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -587,7 +587,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -601,7 +601,7 @@
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -631,7 +631,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
                 <property name="startupTimeoutInSeconds">60000</property>
             </configuration>
@@ -647,7 +647,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -662,7 +662,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -677,7 +677,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -693,7 +693,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -709,7 +709,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -724,7 +724,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -739,7 +739,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -754,7 +754,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -784,7 +784,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -799,7 +799,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -829,7 +829,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -859,7 +859,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -874,7 +874,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -889,7 +889,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -904,7 +904,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -919,7 +919,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -934,7 +934,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -947,7 +947,7 @@
                 <property name="serverConfig">testsuite/clustered-with-sasl-md5-0.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip} -Dsasl.username=test -Dsasl.password=heslo -Dsasl.realm=testRealm
                 </property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -963,7 +963,7 @@
                     -Dsasl.username=test -Dsasl.password=heslo -Dsasl.realm=testRealm
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -978,7 +978,7 @@
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000 -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -993,7 +993,7 @@
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1007,7 +1007,7 @@
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=another_node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip} -Dsasl.username=test -Dsasl.password=heslo -Dsasl.realm=testRealm
                     -Djboss.socket.binding.port-offset=100
                 </property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
             </configuration>
         </container>
         <container qualifier="hotrodAuth" mode="manual">
@@ -1021,7 +1021,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1036,7 +1036,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1051,7 +1051,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1066,7 +1066,7 @@
                       -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1081,7 +1081,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1114,7 +1114,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1148,7 +1148,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1163,7 +1163,40 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
+    </group>
+
+    <group qualifier="suite-memcached-local">
+        <container qualifier="container1" mode="suite">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">examples/standalone-memcached.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">9990</property>
+                <property name="waitForPorts">11211</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
+        <container qualifier="container2" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server2.dist}</property>
+                <property name="managementAddress">${node1.ip}</property>
+                <property name="serverConfig">examples/standalone-memcached.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">9990</property>
+                <property name="waitForPorts">11211</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1181,7 +1214,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1197,7 +1230,41 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
+    </group>
+
+    <group qualifier="suite-memcached-dist">
+        <container qualifier="container1" mode="suite">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">examples/clustered-memcached.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">9990</property>
+                <property name="waitForPorts">11211</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
+        <container qualifier="container2" mode="suite">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server2.dist}</property>
+                <property name="managementAddress">${node1.ip}</property>
+                <property name="serverConfig">examples/clustered-memcached.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">10090</property>
+                <property name="waitForPorts">11311</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1215,7 +1282,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1231,7 +1298,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1260,7 +1327,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1275,7 +1342,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1290,7 +1357,7 @@
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
             </configuration>
         </container>
         <container qualifier="rest-rolling-upgrade-2-old" mode="manual">
@@ -1302,7 +1369,7 @@
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1320,7 +1387,7 @@
                     -Dremote.destination.port=11422
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1337,7 +1404,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1351,7 +1418,7 @@
                     -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
-                <property name="waitForPorts">11411 11422 8280</property>
+                <property name="waitForPorts">11422 8280</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1365,7 +1432,7 @@
                     -Djboss.socket.binding.port-offset=300 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10290</property>
-                <property name="waitForPorts">11511 11522 8380</property>
+                <property name="waitForPorts">11522 8380</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1383,7 +1450,7 @@
                     -Dremote.destination.port=8280 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">9990</property>
-                <property name="waitForPorts">11211 11222 8080</property>
+                <property name="waitForPorts">11222 8080</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1400,7 +1467,7 @@
                     -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10090</property>
-                <property name="waitForPorts">11311 11322 8180</property>
+                <property name="waitForPorts">11322 8180</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1414,7 +1481,7 @@
                     -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
-                <property name="waitForPorts">11411 11422 8280</property>
+                <property name="waitForPorts">11422 8280</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
@@ -1428,7 +1495,7 @@
                     -Djboss.socket.binding.port-offset=300 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10290</property>
-                <property name="waitForPorts">11511 11522 8380</property>
+                <property name="waitForPorts">11522 8380</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>

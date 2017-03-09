@@ -285,7 +285,6 @@ public class ExampleConfigsIT {
     @WithRunningServer({@RunningServer(name = "standalone-fcs-local")})
     public void testFileCacheStoreConfig() throws Exception {
         doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", DEFAULT_CACHE_NAME), "dc", -1.0);
-        doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", MEMCACHED_CACHE_NAME), "mc", -1.0);
         doPutGetCheckPath(createRemotes("standalone-fcs-local", "local", NAMED_CACHE_NAME), "nc", 2.1);
     }
 
@@ -314,7 +313,6 @@ public class ExampleConfigsIT {
     @WithRunningServer({@RunningServer(name = "standalone-rocksdb-cs-local")})
     public void testRocksDBCacheStoreConfig() throws Exception {
         doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", DEFAULT_CACHE_NAME), "rocksdb-dcdefault", -1.0);
-        doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", MEMCACHED_CACHE_NAME), "rocksdb-mcmemcachedCache", -1.0);
         doPutGetCheckPath(createRemotes("standalone-rocksdb-cs-local", "local", NAMED_CACHE_NAME), "rocksdb-ncnamedCache", 2.1);
     }
 
@@ -340,14 +338,11 @@ public class ExampleConfigsIT {
     @WithRunningServer({@RunningServer(name = "standalone-rcs-local-2"),@RunningServer(name = "standalone-rcs-local-1")})
     public void testRemoteCacheStoreConfig() throws Exception {
         RemoteInfinispanMBeans sRemoteStoreDefault = createRemotes("standalone-rcs-local-2", "local", DEFAULT_CACHE_NAME);
-        RemoteInfinispanMBeans sRemoteStoreMemcached = createRemotes("standalone-rcs-local-2", "local", MEMCACHED_CACHE_NAME);
         RemoteInfinispanMBeans sRemoteStoreNamed = createRemotes("standalone-rcs-local-2", "local", NAMED_CACHE_NAME);
         RemoteInfinispanMBeans s1Default = createRemotes("standalone-rcs-local-1", "local", DEFAULT_CACHE_NAME);
-        RemoteInfinispanMBeans s1Memcached = createRemotes("standalone-rcs-local-1", "local", MEMCACHED_CACHE_NAME);
         RemoteInfinispanMBeans s1Named = createRemotes("standalone-rcs-local-1", "local", NAMED_CACHE_NAME);
 
         doPutGetRemove(s1Default, sRemoteStoreDefault);
-        doPutGetRemove(s1Memcached, sRemoteStoreMemcached);
         doPutGetWithExpiration(s1Named, sRemoteStoreNamed);
     }
 

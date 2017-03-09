@@ -134,7 +134,7 @@
        </dependency>
         <dependency>
             <groupId>org.apache.directory.server</groupId>
-            <artifactId>apacheds-all</artifactId> 
+            <artifactId>apacheds-all</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -308,7 +308,7 @@
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
 
-        
+
         <hotrod.protocol.version />
 
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
@@ -319,7 +319,7 @@
         <node0.mgmt.port>9990</node0.mgmt.port>
         <node1.mgmt.port>10090</node1.mgmt.port>
         <node2.mgmt.port>10190</node2.mgmt.port>
-        <mcast.ip>234.99.54.14</mcast.ip> 
+        <mcast.ip>234.99.54.14</mcast.ip>
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false
             -Djboss.default.multicast.address=${mcast.ip}
         </jvm.ip.stack>
@@ -349,7 +349,6 @@
         <suite.client.arq.domain>suite-client-domain</suite.client.arq.domain>
         <groups.client.local>
             org.infinispan.server.test.category.HotRodSingleNode,
-            org.infinispan.server.test.category.MemcachedSingleNode,
             org.infinispan.server.test.category.RESTSingleNode
         </groups.client.local>
         <groups.client.local.domain>
@@ -359,7 +358,6 @@
         </groups.client.local.domain>
         <groups.client.clustered>
             org.infinispan.server.test.category.HotRodClustered,
-            org.infinispan.server.test.category.MemcachedClustered,
             org.infinispan.server.test.category.RESTClustered
         </groups.client.clustered>
         <groups.client.clustered.domain>
@@ -410,7 +408,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.servicemix.tooling</groupId>
                 <artifactId>depends-maven-plugin</artifactId>
@@ -468,7 +466,7 @@
                             <skip>${skipTests}</skip>
                             <target>
                                 <ant antfile="build-testsuite.xml" inheritRefs="true" target="create-all-distros">
-                                    
+
                                     <property name="test_classpath" refid="maven.test.classpath" />
 
                                     <property name="database" value="${database}" />
@@ -487,7 +485,7 @@
 
                                     <property name="new.server.schema.version" value="${new.server.schema.version}" />
                                 </ant>
-                                
+
                                 <echo message="Removing empty xmlns attributes (xmlns=&apos;&apos;) which IBM JDK could produce" />
                                 <replace dir="target" value="">
                                     <include name="server/node*/standalone/configuration/**/*.xml" />
@@ -496,7 +494,7 @@
                             </target>
                         </configuration>
                     </execution>
-                    
+
                     <execution>
                         <id>check-h2-db-property</id>
                         <phase>pre-integration-test</phase>
@@ -529,14 +527,14 @@
                                 <echo>Starting H2 TCP server!</echo>
                                 <echo>H2 jar: ${driver.dir}/${driver.jar}</echo>
                                 <java classname="org.h2.tools.Server" classpath="${driver.dir}/${driver.jar}" fork="true" spawn="true">
-                                    
+
                                     <arg line="-tcp -tcpPort 9092 -tcpAllowOthers" />
                                     <jvmarg value="-Dh2.bindAddress=${h2.server.ip}" />
                                 </java>
                             </target>
                         </configuration>
                     </execution>
-                    
+
                     <execution>
                         <id>stop-h2-tcp-server</id>
                         <phase>post-integration-test</phase>
@@ -607,10 +605,10 @@
                         <node0.mgmt.port>${node0.mgmt.port}</node0.mgmt.port>
                         <node1.mgmt.port>${node1.mgmt.port}</node1.mgmt.port>
                         <node2.mgmt.port>${node2.mgmt.port}</node2.mgmt.port>
-                        
+
                         <server.jmx.domain>jboss.datagrid-infinispan</server.jmx.domain>
                     </systemPropertyVariables>
-                    
+
                     <additionalClasspathElements>
                         <element>${driver.dir}/${driver.jar}</element>
                     </additionalClasspathElements>
@@ -700,6 +698,22 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>suite-memcached-local</id>
+                        <phase>${suite.client.local.phase}</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <reportNameSuffix>localmode-${default.transport.stack}</reportNameSuffix>
+                            <groups>org.infinispan.server.test.category.MemcachedSingleNode</groups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
+                            <systemPropertyVariables>
+                                <clustering.mode>local</clustering.mode>
+                                <arquillian.launch>suite-memcached-local</arquillian.launch>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>suite-client-local-domain</id>
                         <phase>${suite.client.local.domain.phase}</phase>
                         <goals>
@@ -728,6 +742,22 @@
                             <systemPropertyVariables>
                                 <clustering.mode>dist</clustering.mode>
                                 <arquillian.launch>suite-client-dist</arquillian.launch>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>suite-memcached-dist</id>
+                        <phase>${suite.client.dist.phase}</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <reportNameSuffix>distmode-${default.transport.stack}</reportNameSuffix>
+                            <groups>org.infinispan.server.test.category.MemcachedClustered</groups>
+                            <excludedGroups>${groups.unstable}</excludedGroups>
+                            <systemPropertyVariables>
+                                <clustering.mode>dist</clustering.mode>
+                                <arquillian.launch>suite-memcached-dist</arquillian.launch>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -1200,14 +1230,14 @@
                 </property>
             </activation>
             <properties>
-                
+
                 <h2.server.ip>[::1]</h2.server.ip>
-                
+
 
                 <node0.ip>[::1]</node0.ip>
                 <node1.ip>[::1]</node1.ip>
                 <node2.ip>[::1]</node2.ip>
-                <mcast.ip>[ff01::1]</mcast.ip> 
+                <mcast.ip>[ff01::1]</mcast.ip>
                 <jvm.ip.stack>-Djava.net.preferIPv4Stack=false -Djava.net.preferIPv6Addresses=true
                     -Djboss.default.multicast.address=${mcast.ip}
                 </jvm.ip.stack>
