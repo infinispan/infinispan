@@ -33,30 +33,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 @Category({RollingUpgrades.class})
-public class HotRodRollingUpgradesIT {
-
-    @InfinispanResource
-    RemoteInfinispanServers serverManager;
-
-    static final String DEFAULT_CACHE_NAME = "default";
-
-    @ArquillianResource
-    ContainerController controller;
-
-    RemoteCacheManagerFactory rcmFactory;
-
-    @Before
-    public void setUp() {
-        rcmFactory = new RemoteCacheManagerFactory();
-    }
-
-    @After
-    public void tearDown() {
-        if (rcmFactory != null) {
-            rcmFactory.stopManagers();
-        }
-        rcmFactory = null;
-    }
+public class HotRodRollingUpgradesIT extends AbstractHotRodRollingUpgradesIT {
 
     @Test
     public void testHotRodRollingUpgradesDiffVersions() throws Exception {
@@ -134,28 +111,5 @@ public class HotRodRollingUpgradesIT {
                 controller.stop("hotrod-rolling-upgrade-2-old");
             }
         }
-    }
-
-    protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans) {
-        if (System.getProperty("hotrod.protocol.version") != null) {
-            // we might want to test backwards compatibility as well
-            // old Hot Rod protocol version was set for communication with new server
-            return createCache(cacheBeans, System.getProperty("hotrod.protocol.version"));
-        } else {
-            return createCache(cacheBeans, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
-        }
-    }
-
-    protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans, String protocolVersion) {
-        return rcmFactory.createCache(cacheBeans, protocolVersion);
-    }
-
-    protected RemoteInfinispanMBeans createRemotes(String serverName, String managerName, String cacheName) {
-        return RemoteInfinispanMBeans.create(serverManager, serverName, cacheName, managerName);
-    }
-
-    private Object invokeOperation(MBeanServerConnectionProvider provider, String mbean, String operationName, Object[] params,
-                                   String[] signature) throws Exception {
-        return provider.getConnection().invoke(new ObjectName(mbean), operationName, params, signature);
     }
 }

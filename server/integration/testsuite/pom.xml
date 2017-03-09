@@ -295,8 +295,8 @@
         <server2.old.dist>${basedir}/target/server/node2_old</server2.old.dist>
         <server3.old.dist>${basedir}/target/server/node3_old</server3.old.dist>
 
-        <old.server.schema.version>6.1</old.server.schema.version>
-        <new.server.schema.version>7.0</new.server.schema.version>
+        <old.server.schema.version>8.0</old.server.schema.version>
+        <new.server.schema.version>9.0</new.server.schema.version>
 
         <start.jboss.as.manually>false</start.jboss.as.manually>
 
