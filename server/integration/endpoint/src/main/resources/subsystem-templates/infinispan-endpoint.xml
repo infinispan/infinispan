@@ -11,11 +11,9 @@
          <hotrod-connector socket-binding="hotrod" cache-container="local">
             <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
          </hotrod-connector>
-         <memcached-connector socket-binding="memcached" cache-container="local" />
          <rest-connector socket-binding="rest" cache-container="local">
             <authentication security-realm="ApplicationRealm" auth-method="BASIC" />
          </rest-connector>
-         <websocket-connector socket-binding="websocket" cache-container="local" />
       </replacement>
    </supplement>
    <supplement name="clustered">
@@ -24,11 +22,9 @@
          <hotrod-connector socket-binding="hotrod" cache-container="clustered">
             <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
          </hotrod-connector>
-         <memcached-connector socket-binding="memcached" cache-container="clustered" />
          <rest-connector socket-binding="rest" cache-container="clustered">
             <authentication security-realm="ApplicationRealm" auth-method="BASIC" />
          </rest-connector>
-         <websocket-connector socket-binding="websocket" cache-container="clustered" />
       </replacement>
    </supplement>
    <supplement name="hotrod-rolling-upgrade">
@@ -133,6 +129,24 @@
                </rest>
             </multi-tenancy>
          </router-connector>
+      </replacement>
+   </supplement>
+   <supplement name="memcached-local">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <memcached-connector socket-binding="memcached" cache-container="local" cache="default"/>
+      </replacement>
+   </supplement>
+   <supplement name="memcached-clustered">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CONNECTORS">
+         <memcached-connector socket-binding="memcached" cache-container="clustered" cache="default"/>
+      </replacement>
+   </supplement>
+   <supplement name="websocket-local">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <websocket-connector socket-binding="websocket" cache-container="local" />
       </replacement>
    </supplement>
    <socket-binding name="hotrod" port="11222" />
