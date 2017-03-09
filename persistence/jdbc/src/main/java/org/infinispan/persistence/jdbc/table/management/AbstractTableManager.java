@@ -107,7 +107,7 @@ public abstract class AbstractTableManager implements TableManager {
       if (cacheName == null || cacheName.trim().length() == 0)
          throw new PersistenceException("cacheName needed in order to create table");
 
-      String ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s, %6$s %7$s, PRIMARY KEY (%2$s))",
+      String ddl = String.format("CREATE TABLE %1$s (%2$s %3$s NOT NULL, %4$s %5$s NOT NULL, %6$s %7$s NOT NULL, PRIMARY KEY (%2$s))",
                                  getTableName(), config.idColumnName(), config.idColumnType(), config.dataColumnName(),
                                  config.dataColumnType(), config.timestampColumnName(), config.timestampColumnType());
 
