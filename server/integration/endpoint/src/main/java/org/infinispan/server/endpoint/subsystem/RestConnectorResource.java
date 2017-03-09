@@ -19,6 +19,7 @@
 package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.rest.configuration.ExtendedHeaders;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -49,10 +50,11 @@ public class RestConnectorResource extends CommonConnectorResource {
 
    static final SimpleAttributeDefinition CONTEXT_PATH =
          new SimpleAttributeDefinitionBuilder(ModelKeys.CONTEXT_PATH, ModelType.STRING, true)
-                 .setAllowExpression(true)
-                 .setXmlName(ModelKeys.CONTEXT_PATH)
-                 .setRestartAllServices()
-                 .build();
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.CONTEXT_PATH)
+               .setRestartAllServices()
+               .setDefaultValue(new ModelNode().set(RestServerConfigurationBuilder.DEFAULT_CONTEXT_PATH))
+               .build();
 
    static final SimpleAttributeDefinition EXTENDED_HEADERS =
          new SimpleAttributeDefinitionBuilder(ModelKeys.EXTENDED_HEADERS, ModelType.STRING, true)

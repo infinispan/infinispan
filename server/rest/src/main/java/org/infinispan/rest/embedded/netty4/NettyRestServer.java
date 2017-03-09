@@ -28,8 +28,6 @@ import io.netty.handler.ssl.ClientAuth;
 public final class NettyRestServer extends AbstractCacheIgnoreAware implements Lifecycle {
    private final static Log log = LogFactory.getLog(NettyRestServer.class, Log.class);
 
-   private static final String DEFAULT_REST_PATH = "rest";
-
    private final EmbeddedCacheManager cacheManager;
    private final RestServerConfiguration configuration;
    private final Authenticator authenticator;
@@ -94,7 +92,7 @@ public final class NettyRestServer extends AbstractCacheIgnoreAware implements L
          addEncryption(configuration, nettyServer);
          nettyServer.start();
          ResteasyDeployment deployment = nettyServer.getDeployment();
-         deployment.getRegistry().addSingletonResource(server, DEFAULT_REST_PATH);
+         deployment.getRegistry().addSingletonResource(server, configuration.contextPath());
          deployment.getProviderFactory().register(new RestAccessLoggingHandler(), ContainerRequestFilter.class,
                ContainerResponseFilter.class);
          log.startRestServer(configuration.host(), configuration.port());
