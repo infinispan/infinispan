@@ -51,7 +51,7 @@ import org.junit.runner.RunWith;
 @Category(HotRodSingleNode.class)
 public class HotRodCustomMarshallerEventIT {
 
-    private final String TEST_CACHE_NAME = "testCache";
+    private final String TEST_CACHE_NAME = "default";
 
     static RemoteCacheManager remoteCacheManager;
     RemoteCache<Id, Id> remoteCache;

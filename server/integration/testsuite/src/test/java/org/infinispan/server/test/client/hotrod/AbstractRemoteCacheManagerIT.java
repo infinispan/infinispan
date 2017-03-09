@@ -53,7 +53,7 @@ public abstract class AbstractRemoteCacheManagerIT {
     private static final String IPV6_REGEX = "\\A\\[(.*)\\]:([0-9]+)\\z";
     private static final String IPV4_REGEX = "\\A([^:]+):([0-9]+)\\z";
 
-    protected static String testCache = "testCache";
+    protected static String testCache = "default";
 
     private static final Log log = LogFactory.getLog(AbstractRemoteCacheManagerIT.class);
 
