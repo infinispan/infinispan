@@ -1,11 +1,11 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
             <cache-container
                 name="clustered"
-                default-cache="testCache">
+                default-cache="default">
                 <transport
                     lock-timeout="240000"/>
                 <replicated-cache
-                    name="testCache"
+                    name="default"
                     batching="false"
                     remote-timeout="60000">
                     <state-transfer

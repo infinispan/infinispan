@@ -1,9 +1,9 @@
         <subsystem xmlns="urn:infinispan:server:core:9.0" >
             <cache-container
                 name="local"
-                default-cache="testCache">
+                default-cache="default">
                 <local-cache
-                    name="testCache"
+                    name="default"
                     batching="false"
                     >
                 </local-cache>

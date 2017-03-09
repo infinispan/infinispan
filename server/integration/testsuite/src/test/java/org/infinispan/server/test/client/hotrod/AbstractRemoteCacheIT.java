@@ -67,7 +67,7 @@ import org.junit.Test;
  */
 public abstract class AbstractRemoteCacheIT {
     private static final Log log = LogFactory.getLog(AbstractRemoteCacheIT.class);
-    protected static String testCache = "testCache";
+    protected static String testCache = "default";
     protected static RemoteCacheManager remoteCacheManager = null;
     protected RemoteCache remoteCache;
     protected final int ASYNC_OPS_ENTRY_LOAD = 10;
