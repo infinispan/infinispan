@@ -1,7 +1,5 @@
 package org.infinispan.distribution.group;
 
-import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
-
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
@@ -16,6 +14,8 @@ import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+
+import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
 
 public class GroupManagerImpl implements GroupManager {
