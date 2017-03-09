@@ -35,11 +35,8 @@ public class PreferConsistencyStrategyTest {
    }
 
    public void testAvoidingNullPointerExceptionWhenUpdatingPartitionWithNullTopology() {
-      //given
-      AvailabilityStrategyContext availabilityStrategyContext = Mockito.mock(AvailabilityStrategyContext.class);
-
       //when
-      preferConsistencyStrategy.onPartitionMerge(availabilityStrategyContext, Collections.emptyList());
+      preferConsistencyStrategy.onPartitionMerge(status, Collections.emptyList());
 
       //then
       Assert.assertNull(status.getCurrentTopology());
