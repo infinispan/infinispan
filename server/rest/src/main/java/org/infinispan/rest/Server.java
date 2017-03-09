@@ -7,16 +7,15 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.Writer;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -73,6 +72,7 @@ public class Server {
 
    private final MurmurHash3 hashFunc = MurmurHash3.getInstance();
 
+   private final static DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.systemDefault());
    private final static MediaType TextPlainUtf8Type = new MediaType("text", "plain", "UTF-8");
    private final static String TextPlainUtf8 = TextPlainUtf8Type.toString();
    private final static MediaType ApplicationXJavaSerializedObjectType = new MediaType("application", "x-java-serialized-object");
@@ -104,12 +104,6 @@ public class Server {
 
    private static class XStreamholder {
       public static final XStream XStream = new XStream();
-   }
-
-   private static final DateFormat DatePatternRfc1123LocaleUS = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-
-   static {
-      DatePatternRfc1123LocaleUS.setTimeZone(TimeZone.getTimeZone("GMT"));
    }
 
    public Server(RestServerConfiguration configuration, RestCacheManager manager) {
@@ -324,7 +318,7 @@ public class Server {
       if (date == null)
          return null;
       else
-         return Server.DatePatternRfc1123LocaleUS.format(date);
+         return DATE_TIME_FORMATTER.format(date.toInstant());
    }
 
    private CacheControl calcCacheControl(Date expires) {
