@@ -168,13 +168,11 @@
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
                    modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered-${new.server.schema.version}.xml"
                    infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint-${new.server.schema.version}.xml"
-                   addNewHotrodSocketBinding="${other.parts}/socket-binding-hotrod-store.xml"
                    modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"/>
         <transform in="clustered.xml" out="examples/clustered-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml"
                    modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered-rest-${new.server.schema.version}.xml"
                    infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint-${new.server.schema.version}.xml"
-                   addNewRestSocketBinding="${other.parts}/socket-binding-rest-store.xml"
                    modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"
                    removeRestSecurity="true"/>
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
