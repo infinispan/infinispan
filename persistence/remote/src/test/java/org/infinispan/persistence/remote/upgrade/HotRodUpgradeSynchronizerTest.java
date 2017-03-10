@@ -1,100 +1,58 @@
 package org.infinispan.persistence.remote.upgrade;
 
-import org.infinispan.Cache;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.client.hotrod.MetadataValue;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
-import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-
 @Test(testName = "upgrade.hotrod.HotRodUpgradeSynchronizerTest", groups = "functional")
 public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
-   private HotRodServer sourceServer;
-   private HotRodServer targetServer;
-   private EmbeddedCacheManager sourceContainer;
-   private Cache<byte[], byte[]> sourceServerDefaultCache;
-   private Cache<byte[], byte[]> sourceServerAltCache;
-   private EmbeddedCacheManager targetContainer;
-   private Cache<byte[], byte[]> targetServerDefaultCache;
-   private Cache<byte[], byte[]> targetServerAltCache;
-   private RemoteCacheManager sourceRemoteCacheManager;
-   private RemoteCache<String, String> sourceRemoteDefaultCache;
-   private RemoteCache<String, String> sourceRemoteAltCache;
-   private RemoteCacheManager targetRemoteCacheManager;
-   private RemoteCache<String, String> targetRemoteDefaultCache;
-   private RemoteCache<String, String> targetRemoteAltCache;
+   private Cluster sourceCluster, targetCluster;
 
-   private static final String ALT_CACHE_NAME = "whatever";
+   private static final String OLD_CACHE = "old-cache";
+   private static final String TEST_CACHE = HotRodUpgradeSynchronizerTest.class.getName();
+
    private static final String OLD_PROTOCOL_VERSION = "2.0";
+   private static final String NEW_PROTOCOL_VERSION = ConfigurationProperties.DEFAULT_PROTOCOL_VERSION;
 
    @BeforeClass
    public void setup() throws Exception {
-      ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      sourceContainer = TestCacheManagerFactory
-              .createCacheManager(hotRodCacheConfiguration(serverBuilder));
-      sourceServerDefaultCache = sourceContainer.getCache();
-      sourceServerAltCache = sourceContainer.getCache(ALT_CACHE_NAME);
-      sourceServer = HotRodClientTestingUtil.startHotRodServer(sourceContainer);
+      sourceCluster = new Cluster.Builder().setName("sourceCluster").setNumMembers(1)
+            .cache().name(OLD_CACHE)
+            .cache().name(TEST_CACHE)
+            .build();
 
-      ConfigurationBuilder targetConfigurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      targetConfigurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true)
-              .ignoreModifications(true).addServer().host("localhost").port(sourceServer.getPort());
-
-      ConfigurationBuilder builderOldVersion = new ConfigurationBuilder();
-      builderOldVersion.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true)
-              .ignoreModifications(true).remoteCacheName(ALT_CACHE_NAME).protocolVersion(OLD_PROTOCOL_VERSION).addServer().host("localhost").port(sourceServer.getPort());
-
-      targetContainer = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(targetConfigurationBuilder));
-      targetContainer.defineConfiguration(ALT_CACHE_NAME, hotRodCacheConfiguration(builderOldVersion).build());
-
-      targetServerDefaultCache = targetContainer.getCache();
-      targetServerAltCache = targetContainer.getCache(ALT_CACHE_NAME);
-      targetServer = HotRodClientTestingUtil.startHotRodServer(targetContainer);
-
-      sourceRemoteCacheManager = new RemoteCacheManager("localhost", sourceServer.getPort());
-      sourceRemoteCacheManager.start();
-      sourceRemoteDefaultCache = sourceRemoteCacheManager.getCache();
-      sourceRemoteAltCache = sourceRemoteCacheManager.getCache(ALT_CACHE_NAME);
-      targetRemoteCacheManager = new RemoteCacheManager("localhost", targetServer.getPort());
-      targetRemoteCacheManager.start();
-      targetRemoteDefaultCache = targetRemoteCacheManager.getCache();
-      targetRemoteAltCache = targetRemoteCacheManager.getCache(ALT_CACHE_NAME);
+      targetCluster = new Cluster.Builder().setName("targetCluster").setNumMembers(1)
+            .cache().name(OLD_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(OLD_PROTOCOL_VERSION)
+            .cache().name(TEST_CACHE).remotePort(sourceCluster.getHotRodPort()).remoteProtocolVersion(NEW_PROTOCOL_VERSION)
+            .build();
    }
 
    public void testSynchronizationViaIterator() throws Exception {
       // Fill the old cluster with data
       for (char ch = 'A'; ch <= 'Z'; ch++) {
          String s = Character.toString(ch);
-         sourceRemoteDefaultCache.put(s, s, 20, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
+         sourceCluster.getRemoteCache(TEST_CACHE).put(s, s, 20, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
       }
       // Verify access to some of the data from the new cluster
-      assertEquals("A", targetRemoteDefaultCache.get("A"));
+      assertEquals("A", targetCluster.getRemoteCache(TEST_CACHE).get("A"));
 
-      RollingUpgradeManager targetUpgradeManager = targetServerDefaultCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      RollingUpgradeManager targetUpgradeManager = targetCluster.getRollingUpgradeManager(TEST_CACHE);
       targetUpgradeManager.synchronizeData("hotrod");
-      assertEquals(sourceServerDefaultCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size(), targetServerDefaultCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
-
       targetUpgradeManager.disconnectSource("hotrod");
 
-      MetadataValue<String> metadataValue = targetRemoteDefaultCache.getWithMetadata("B");
+      assertEquals(sourceCluster.getRemoteCache(TEST_CACHE).size(), targetCluster.getRemoteCache(TEST_CACHE).size());
+
+      MetadataValue<String> metadataValue = targetCluster.getRemoteCache(TEST_CACHE).getWithMetadata("B");
       assertEquals(20, metadataValue.getLifespan());
       assertEquals(30, metadataValue.getMaxIdle());
    }
@@ -103,39 +61,35 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       // Fill the old cluster with data
       for (char ch = 'A'; ch <= 'Z'; ch++) {
          String s = Character.toString(ch);
-         sourceRemoteAltCache.put(s, s, 20, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
+         sourceCluster.getRemoteCache(OLD_CACHE).put(s, s, 20, TimeUnit.SECONDS, 30, TimeUnit.SECONDS);
       }
       // Verify access to some of the data from the new cluster
-      assertEquals("A", targetRemoteAltCache.get("A"));
+      assertEquals("A", targetCluster.getRemoteCache(OLD_CACHE).get("A"));
 
-      RollingUpgradeManager sourceUpgradeManager = sourceServerAltCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
-      sourceUpgradeManager.recordKnownGlobalKeyset();
-      RollingUpgradeManager targetUpgradeManager = targetServerAltCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      sourceCluster.getRollingUpgradeManager(OLD_CACHE).recordKnownGlobalKeyset();
+
+      RollingUpgradeManager targetUpgradeManager = targetCluster.getRollingUpgradeManager(OLD_CACHE);
       targetUpgradeManager.synchronizeData("hotrod");
-      assertEquals(sourceServerAltCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size() - 1, targetServerAltCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
-
       targetUpgradeManager.disconnectSource("hotrod");
 
-      MetadataValue<String> metadataValue = targetRemoteAltCache.getWithMetadata("A");
+      assertEquals(sourceCluster.getRemoteCache(OLD_CACHE).size() - 1, targetCluster.getRemoteCache(OLD_CACHE).size());
+
+      MetadataValue<String> metadataValue = targetCluster.getRemoteCache(OLD_CACHE).getWithMetadata("A");
       assertEquals(20, metadataValue.getLifespan());
       assertEquals(30, metadataValue.getMaxIdle());
-
    }
 
 
    @BeforeMethod
    public void cleanup() {
-      sourceServerDefaultCache.clear();
-      sourceServerAltCache.clear();
-      targetServerDefaultCache.clear();
-      targetServerAltCache.clear();
+      sourceCluster.cleanAllCaches();
+      targetCluster.cleanAllCaches();
    }
 
    @AfterClass
    public void tearDown() {
-      HotRodClientTestingUtil.killRemoteCacheManagers(sourceRemoteCacheManager, targetRemoteCacheManager);
-      HotRodClientTestingUtil.killServers(sourceServer, targetServer);
-      TestingUtil.killCacheManagers(targetContainer, sourceContainer);
+      sourceCluster.destroy();
+      targetCluster.destroy();
    }
 
 }
