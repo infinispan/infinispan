@@ -27,6 +27,7 @@ public class CheckPoint {
    private final Lock lock = new ReentrantLock();
    private final Condition unblockCondition = lock.newCondition();
    private final Map<String, EventStatus> events = new HashMap<String, EventStatus>();
+   private boolean released = false;
 
    public void awaitStrict(String event, long timeout, TimeUnit unit)
          throws InterruptedException, TimeoutException {
@@ -51,6 +52,10 @@ public class CheckPoint {
          EventStatus status = null;
          long waitNanos = unit.toNanos(timeout);
          while (waitNanos > 0) {
+            if (released) {
+               log.trace("Unblocked all events.");
+               return true;
+            }
             status = events.get(event);
             if (status == null) {
                status = new EventStatus();
@@ -86,6 +91,9 @@ public class CheckPoint {
       try {
          long waitNanos = unit.toNanos(timeout);
          while (waitNanos > 0) {
+            if (released) {
+               return null;
+            }
             for (String event : expectedEvents) {
                EventStatus status = events.get(event);
                if (status != null && status.available >= 1) {
@@ -136,6 +144,16 @@ public class CheckPoint {
          status.total = count != INFINITE ? status.total + count : INFINITE;
          log.tracef("Triggering event %s * %d (available = %d, total = %d)", event, count,
                status.available, status.total);
+         unblockCondition.signalAll();
+      } finally {
+         lock.unlock();
+      }
+   }
+
+   public void triggerAll() {
+      lock.lock();
+      try {
+         released = true;
          unblockCondition.signalAll();
       } finally {
          lock.unlock();
