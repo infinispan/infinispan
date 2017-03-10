@@ -118,7 +118,7 @@ public class TestResourceTracker {
       Thread.currentThread().setName(getNextTestThreadName());
    }
 
-   private static void setThreadTestName(String testName) {
+   public static void setThreadTestName(String testName) {
       threadTestName.set(testName);
    }
 
