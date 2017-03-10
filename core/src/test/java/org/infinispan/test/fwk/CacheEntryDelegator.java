@@ -104,8 +104,8 @@ public class CacheEntryDelegator implements CacheEntry {
    }
 
    @Override
-   public void commit(DataContainer container, Metadata metadata) {
-      delegate.commit(container, metadata);
+   public void commit(DataContainer container) {
+      delegate.commit(container);
    }
 
    @Override

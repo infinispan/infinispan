@@ -68,7 +68,6 @@ import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -134,10 +133,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
    };
 
-   private final InvocationSuccessAction commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null, null);
+   private final InvocationSuccessAction commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null);
 
    private final InvocationFinallyAction
-         commitEntriesFinallyHandler = (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null);
+         commitEntriesFinallyHandler = (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null);
 
    private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
 
@@ -281,7 +280,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
          if (!rCtx.isInTxScope()) {
             ClearCommand clearCommand = (ClearCommand) rCommand;
-            applyChanges(rCtx, clearCommand, null);
+            applyChanges(rCtx, clearCommand);
          }
 
          if (trace)
@@ -565,13 +564,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return null;
    }
 
-   protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {
+   protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command) {
       final Flag stateTransferFlag = extractStateTransferFlag(ctx, command);
 
       if (ctx instanceof SingleKeyNonTxInvocationContext) {
          SingleKeyNonTxInvocationContext singleKeyCtx = (SingleKeyNonTxInvocationContext) ctx;
          commitEntryIfNeeded(ctx, command,
-                             singleKeyCtx.getCacheEntry(), stateTransferFlag, metadata);
+                             singleKeyCtx.getCacheEntry(), stateTransferFlag);
       } else {
          Set<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
          Iterator<Map.Entry<Object, CacheEntry>> it = entries.iterator();
@@ -579,7 +578,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          while (it.hasNext()) {
             Map.Entry<Object, CacheEntry> e = it.next();
             CacheEntry entry = e.getValue();
-            if (!commitEntryIfNeeded(ctx, command, entry, stateTransferFlag, metadata)) {
+            if (!commitEntryIfNeeded(ctx, command, entry, stateTransferFlag)) {
                if (trace) {
                   if (entry == null)
                      log.tracef("Entry for key %s is null : not calling commitUpdate", toStr(e.getKey()));
@@ -592,11 +591,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
-                                     Metadata metadata, Flag stateTransferFlag, boolean l1Invalidation) {
-      cdl.commitEntry(entry, metadata, command, ctx, stateTransferFlag, l1Invalidation);
+                                     Flag stateTransferFlag, boolean l1Invalidation) {
+      cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
    }
 
-   private void applyChanges(InvocationContext ctx, WriteCommand command, Metadata metadata) {
+   private void applyChanges(InvocationContext ctx, WriteCommand command) {
       stateTransferLock.acquireSharedTopologyLock();
       try {
          // We only retry non-tx write commands
@@ -626,7 +625,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             }
          }
 
-         commitContextEntries(ctx, command, metadata);
+         commitContextEntries(ctx, command);
       } finally {
          stateTransferLock.releaseSharedTopologyLock();
       }
@@ -639,7 +638,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
-            applyChanges(rCtx, writeCommand, null);
+            applyChanges(rCtx, writeCommand);
             return;
          }
 
@@ -678,15 +677,11 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
    private Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
-         DataWriteCommand command) {
+                                                               DataWriteCommand command) {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
-            if (dataWriteCommand instanceof MetadataAwareCommand) {
-               applyChanges(rCtx, dataWriteCommand, ((MetadataAwareCommand) dataWriteCommand).getMetadata());
-            } else {
-               applyChanges(rCtx, dataWriteCommand, null);
-            }
+            applyChanges(rCtx, dataWriteCommand);
             return;
          }
 
@@ -800,7 +795,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    }
 
    private boolean commitEntryIfNeeded(final InvocationContext ctx, final FlagAffectedCommand command,
-         final CacheEntry entry, final Flag stateTransferFlag, final Metadata metadata) {
+                                       final CacheEntry entry, final Flag stateTransferFlag) {
       if (entry == null) {
          return false;
       }
@@ -808,7 +803,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
       if (entry.isChanged()) {
          if (trace) log.tracef("About to commit entry %s", entry);
-         commitContextEntry(entry, ctx, command, metadata, stateTransferFlag, l1Invalidation);
+         commitContextEntry(entry, ctx, command, stateTransferFlag, l1Invalidation);
 
          return true;
       }

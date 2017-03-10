@@ -26,7 +26,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -182,17 +181,17 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       ClusteringDependentLogic cdl1 = cache.getComponentRegistry().getComponent(ClusteringDependentLogic.class);
       ClusteringDependentLogic replaceCdl = new ClusteringDependentLogicDelegator(cdl1) {
          @Override
-         public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
+         public void commitEntry(CacheEntry entry, FlagAffectedCommand command,
                                  InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
             //skip for clear command!
             if (entry instanceof ClearCacheEntry) {
-               super.commitEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
+               super.commitEntry(entry, command, ctx, trackFlag, l1Invalidation);
                return;
             }
             final Address source = ctx.getOrigin();
             CacheEntry newEntry = new CacheEntryDelegator(entry) {
                @Override
-               public void commit(DataContainer container, Metadata metadata) {
+               public void commit(DataContainer container) {
                   checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_" + source);
                   try {
                      checkPoint.awaitStrict("resume_commit_entry_" + getKey() + "_from_" + source, 10,
@@ -200,11 +199,11 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
                   } catch (InterruptedException | TimeoutException e) {
                      throw new RuntimeException(e);
                   }
-                  super.commit(container, metadata);
+                  super.commit(container);
                   checkPoint.trigger("post_commit_entry_" + getKey() + "_from_" + source);
                }
             };
-            super.commitEntry(newEntry, metadata, command, ctx, trackFlag, l1Invalidation);
+            super.commitEntry(newEntry, command, ctx, trackFlag, l1Invalidation);
          }
       };
       TestingUtil.replaceComponent(cache, ClusteringDependentLogic.class, replaceCdl, true);

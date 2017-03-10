@@ -11,7 +11,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -73,13 +72,10 @@ public class CommitManager {
    /**
     * It tries to commit the cache entry. The entry is not committed if it is originated from state transfer and other
     * operation already has updated it.
-    *
-    * @param entry     the entry to commit
-    * @param metadata  the entry's metadata
+    *  @param entry     the entry to commit
     * @param operation if {@code null}, it identifies this commit as originated from a normal operation. Otherwise, it
-    *                  is originated from a state transfer (local or remote site)
     */
-   public final void commit(final CacheEntry entry, final Metadata metadata, final Flag operation,
+   public final void commit(final CacheEntry entry, final Flag operation,
                             boolean l1Invalidation) {
       if (trace) {
          log.tracef("Trying to commit. Key=%s. Operation Flag=%s, L1 invalidation=%s", toStr(entry.getKey()),
@@ -92,7 +88,7 @@ public class CommitManager {
             log.tracef("Committing key=%s. It is a L1 invalidation or a normal put and no tracking is enabled!",
                   toStr(entry.getKey()));
          }
-         entry.commit(dataContainer, metadata);
+         entry.commit(dataContainer);
          return;
       }
       if (isTrackDisabled(operation)) {
@@ -112,7 +108,7 @@ public class CommitManager {
             }
             return discardPolicy;
          }
-         entry.commit(dataContainer, metadata);
+         entry.commit(dataContainer);
          DiscardPolicy newDiscardPolicy = calculateDiscardPolicy();
          if (trace) {
             log.tracef("Committed key=%s. Old discard policy=%s. New discard policy=%s", toStr(entry.getKey()),

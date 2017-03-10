@@ -79,8 +79,8 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public void commit(DataContainer container, Metadata metadata) {
-      delegate().commit(container, metadata);
+   public void commit(DataContainer container) {
+      delegate().commit(container);
    }
 
    @Override
