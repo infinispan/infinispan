@@ -81,7 +81,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
       if (this.key == null) {
          // Set the key here
          this.key = key;
-      } else if (!this.key.equals(key)) {
+      } else if (!isKeyEquals(key)) {
          throw illegalStateException();
       }
 
@@ -94,10 +94,14 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public CacheEntry lookupEntry(final Object key) {
-      if (this.key != null && this.key.equals(key))
+      if (this.key != null && isKeyEquals(key))
          return cacheEntry;
 
       return null;
+   }
+
+   public boolean isKeyEquals(Object key) {
+      return this.key == key || this.key.equals(key);
    }
 
    @Override
@@ -110,7 +114,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
       if (this.key == null) {
          // Set the key here
          this.key = key;
-      } else if (!this.key.equals(key)) {
+      } else if (!isKeyEquals(key)) {
          throw illegalStateException();
       }
 
@@ -119,7 +123,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public void removeLookedUpEntry(final Object key) {
-      if (this.key != null && this.key.equals(key)) {
+      if (this.key != null && isKeyEquals(key)) {
          this.cacheEntry = null;
       }
    }
@@ -149,7 +153,7 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
 
    @Override
    public boolean hasLockedKey(final Object key) {
-      return isLocked && this.key.equals(key);
+      return isLocked && isKeyEquals(key);
    }
 
    @Override

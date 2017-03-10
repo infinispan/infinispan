@@ -25,7 +25,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -632,4 +631,31 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertEquals("hello_es:hola", cache.get("es"));
       assertEquals("hello_cz:ahoj", cache.get("cz"));
    }
+
+   public void testFalseEqualsKey() {
+      assertNull(cache.get(new FalseEqualsKey("boo", 1)));
+      cache.put(new FalseEqualsKey("boo", 1), "blah");
+      assertNull(cache.get(new FalseEqualsKey("boo", 1)));
+   }
+
+   static class FalseEqualsKey {
+      final String name;
+      final int value;
+
+      FalseEqualsKey(String name, int value) {
+         this.name = name;
+         this.value = value;
+      }
+
+      @Override
+      public int hashCode() {
+         return 0;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         return false;
+      }
+   }
+
 }
