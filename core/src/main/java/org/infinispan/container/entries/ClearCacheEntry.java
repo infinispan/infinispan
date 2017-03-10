@@ -120,7 +120,7 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public void commit(DataContainer<K, V> container, Metadata metadata) {
+   public void commit(DataContainer<K, V> container) {
       container.clear();
    }
 

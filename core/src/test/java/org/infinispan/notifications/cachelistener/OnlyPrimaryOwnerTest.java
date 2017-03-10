@@ -32,7 +32,6 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -87,7 +86,7 @@ public class OnlyPrimaryOwnerTest {
       }
 
       @Override
-      public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
+      public void commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
                               Flag trackFlag, boolean l1Invalidation) {
          throw new UnsupportedOperationException();
       }
