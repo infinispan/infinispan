@@ -386,6 +386,28 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       });
    }
 
+   public void testDefineConfigurationWithOverrideAndTemplate() {
+      withCacheManager(new CacheManagerCallable(createClusteredCacheManager()) {
+         @Override
+         public void call() {
+            // DIST_ASYNC isn't default so it should stay applied
+            CacheMode cacheMode = CacheMode.DIST_ASYNC;
+            String templateName = "dist-cache-template";
+            cm.defineConfiguration(templateName, new ConfigurationBuilder().clustering().cacheMode(cacheMode).template(true).build());
+
+            CacheMode overrideCacheMode = CacheMode.REPL_ASYNC;
+            Configuration overrideConfiguration = new ConfigurationBuilder().clustering().cacheMode(overrideCacheMode).build();
+
+            String ourCacheName = "my-cache";
+            cm.defineConfiguration(ourCacheName, templateName, overrideConfiguration);
+
+            Cache cache = cm.getCache(ourCacheName);
+            // We expect the override to take precedence
+            assertEquals(overrideCacheMode, cache.getCacheConfiguration().clustering().cacheMode());
+         }
+      });
+   }
+
    private EmbeddedCacheManager getManagerWithStore(Method m, boolean isClustered, boolean isStoreShared) {
       return getManagerWithStore(m, isClustered, isStoreShared, "store-");
    }
