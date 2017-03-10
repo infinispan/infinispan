@@ -354,6 +354,9 @@ public class RemoteCommandsFactory {
             case RenewBiasCommand.COMMAND_ID:
                command = new RenewBiasCommand(cacheName);
                break;
+            case ForgetInvocationsCommand.COMMAND_ID:
+               command = new ForgetInvocationsCommand(cacheName);
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }

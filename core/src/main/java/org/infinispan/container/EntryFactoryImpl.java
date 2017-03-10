@@ -15,7 +15,6 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -140,6 +139,9 @@ public class EntryFactoryImpl implements EntryFactory {
             if (isRead) {
                mvccEntry.setRead();
             }
+            if (mvccEntry.isNull()) {
+               mvccEntry.setCreated(true);
+            }
             ctx.putLookedUpEntry(key, mvccEntry);
             if (trace)
                log.tracef("Updated context entry %s -> %s", contextEntry, mvccEntry);
@@ -228,9 +230,6 @@ public class EntryFactoryImpl implements EntryFactory {
       if (useRepeatableRead) {
          MVCCEntry mvccEntry;
          if (useVersioning) {
-            if (metadata == null) {
-               metadata = new EmbeddedMetadata.Builder().version(versionGenerator.nonExistingVersion()).build();
-            }
             mvccEntry = new VersionedRepeatableReadEntry(key, value, metadata);
          } else {
             mvccEntry = new RepeatableReadEntry(key, value, metadata);

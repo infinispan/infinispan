@@ -13,6 +13,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -42,7 +43,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -123,12 +123,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       // Since we can assume that old and new values are comparable in size, fetching old value into context is acceptable
       // and it is more efficient in case that we execute more subsequent modifications than sending the return value.
       return handleTxWriteCommand(ctx, command, command.getKey());
-   }
-
-   private void updateMatcherForRetry(WriteCommand command) {
-      // The command is already included in PrepareCommand.modifications - when the command is executed on the remote
-      // owners it should not behave conditionally anymore because its success/failure is defined on originator.
-      command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
    }
 
    @Override
@@ -388,34 +382,35 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     */
    private Object handleTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command,
          Object key) throws Throwable {
-      try {
-         if (!ctx.isOriginLocal() && !checkTopologyId(command).isWriteOwner(command.getKey())) {
-            return null;
-         }
-         CacheEntry entry = ctx.lookupEntry(command.getKey());
-         if (entry == null) {
-            if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
-               // in transactional mode, we always need the entry wrapped
-               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
-            } else {
-               // we need to retrieve the value locally regardless of load type; in transactional mode all operations
-               // execute on origin
-               // Also, operations that need value on backup [delta write] need to do the remote lookup even on non-origin
-               Object result = asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true));
-               return makeStage(result)
-                     .andFinally(ctx, command, (rCtx, rCommand, rv, t) ->
-                           updateMatcherForRetry((WriteCommand) rCommand));
-            }
-         }
-         // already wrapped, we can continue
-         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> updateMatcherForRetry((WriteCommand) rCommand));
-      } catch (Throwable t) {
-         updateMatcherForRetry(command);
-         throw t;
+      if (!ctx.isOriginLocal() && !checkTopologyId(command).isWriteOwner(command.getKey())) {
+         return null;
       }
+      CacheEntry entry = ctx.lookupEntry(command.getKey());
+      if (entry == null) {
+         if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
+            // in transactional mode, we always need the entry wrapped
+            entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+         } else {
+            // we need to retrieve the value locally regardless of load type; in transactional mode all operations
+            // execute on origin
+            // Also, operations that need value on backup [delta write] need to do the remote lookup even on non-origin
+            // Delta write cannot retrieve a value where the current change is already applied because this is happening
+            // in the prepare phase and the updated delta-aware is not published until commit.
+            // We don't have to worry about this branch during retries, as the entry will stay in the context.
+            return asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true, command.getFlagsBitSet()));
+         }
+      } else {
+         InvocationRecord record;
+         if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+            record.touch(timeService.wallClockTime());
+            return record.previousValue;
+         }
+      }
+      // already wrapped, we can continue
+      return invokeNext(ctx, command);
    }
 
-   protected <C extends TopologyAffectedCommand & FlagAffectedCommand, K, V> Object
+   protected <C extends WriteCommand, K, V> Object
          handleTxWriteManyEntriesCommand(InvocationContext ctx, C command, Map<K, V> entries,
                                   BiFunction<C, Map<K, V>, C> copyCommand) {
       boolean ignorePreviousValue = command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD;
@@ -425,23 +420,29 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       for (Map.Entry<K, V> e : entries.entrySet()) {
          K key = e.getKey();
          if (ctx.isOriginLocal() || cacheTopology.isWriteOwner(key)) {
-            if (ctx.lookupEntry(key) == null) {
+            CacheEntry entry = ctx.lookupEntry(key);
+            InvocationRecord record;
+            if (entry == null) {
                if (ignorePreviousValue) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                } else {
                   if (remoteGets == null) {
                      remoteGets = new ArrayList<>();
                   }
-                  remoteGets.add(remoteGet(ctx, command, key, true).toCompletableFuture());
+                  remoteGets.add(remoteGet(ctx, command, key, true, command.getFlagsBitSet()).toCompletableFuture());
                }
+               filtered.put(key, e.getValue());
+            } else if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+               record.touch(timeService.wallClockTime());
+            } else {
+               filtered.put(key, e.getValue());
             }
-            filtered.put(key, e.getValue());
          }
       }
       return asyncInvokeNext(ctx, copyCommand.apply(command, filtered), remoteGets);
    }
 
-   protected <C extends VisitableCommand & FlagAffectedCommand & TopologyAffectedCommand, K> Object handleTxWriteManyCommand(
+   protected <C extends WriteCommand, K> Object handleTxWriteManyCommand(
          InvocationContext ctx, C command, Collection<K> keys, BiFunction<C, List<K>, C> copyCommand) {
       boolean ignorePreviousValue = command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD;
       List<K> filtered = new ArrayList<>(keys.size());
@@ -449,17 +450,23 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       for (K key : keys) {
          if (ctx.isOriginLocal() || cacheTopology.isWriteOwner(key)) {
-            if (ctx.lookupEntry(key) == null) {
+            CacheEntry entry = ctx.lookupEntry(key);
+            InvocationRecord record;
+            if (entry == null) {
                if (ignorePreviousValue) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                } else {
                   if (remoteGets == null) {
                      remoteGets = new ArrayList<>();
                   }
-                  remoteGets.add(remoteGet(ctx, command, key, true).toCompletableFuture());
+                  remoteGets.add(remoteGet(ctx, command, key, true, command.getFlagsBitSet()).toCompletableFuture());
                }
+               filtered.add(key);
+            } else if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+               record.touch(timeService.wallClockTime());
+            } else {
+               filtered.add(key);
             }
-            filtered.add(key);
          }
       }
       return asyncInvokeNext(ctx, copyCommand.apply(command, filtered), remoteGets);
@@ -474,7 +481,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
             } else if (forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
-               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, key, true));
+               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, key, true, command.getFlagsBitSet()));
             } else {
                LocalizedCacheTopology cacheTopology = checkTopologyId(command);
                Collection<Address> owners = cacheTopology.getDistribution(key).readOwners();
@@ -499,6 +506,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                }));
             }
          }
+         InvocationRecord record;
+         if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+            record.touch(timeService.wallClockTime());
+            return record.previousValue;
+         }
          // It's possible that this is not an owner, but the entry was loaded from L1 - let the command run
          return invokeNext(ctx, command);
       } else {
@@ -511,8 +523,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                // in transactional mode, we always need the entry wrapped
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
             } else {
-               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true));
+               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), true, command.getFlagsBitSet()));
             }
+         }
+         InvocationRecord record;
+         if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+            record.touch(timeService.wallClockTime());
+            return record.previousValue;
          }
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) ->
                wrapFunctionalResultOnNonOriginOnReturn(rv, entry));
@@ -548,9 +565,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletionStage<Void> remoteGet(
-         InvocationContext ctx, C command, Object key, boolean isWrite) {
-      CompletionStage<Void> cf = super.remoteGet(ctx, command, key, isWrite);
+   protected CompletionStage<Void> remoteGet(InvocationContext ctx, TopologyAffectedCommand command,
+                                             Object key, boolean isWrite, long flagsBitSet) {
+      CompletionStage<Void> cf = super.remoteGet(ctx, command, key, isWrite, flagsBitSet);
       // If the remoteGet is executed on non-origin node, the mutations list already contains all modifications
       // and we are just trying to execute all of them from EntryWrappingIntercepot$EntryWrappingVisitor
       if (!ctx.isOriginLocal() || !ctx.isInTxScope()) {

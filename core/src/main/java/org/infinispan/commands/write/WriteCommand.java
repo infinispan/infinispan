@@ -1,6 +1,7 @@
 package org.infinispan.commands.write;
 
 import java.util.Collection;
+import java.util.stream.Stream;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -33,16 +34,6 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
    boolean isConditional();
 
    /**
-    * @return The current value matching policy.
-    */
-   ValueMatcher getValueMatcher();
-
-   /**
-    * @param valueMatcher The new value matching policy.
-    */
-   void setValueMatcher(ValueMatcher valueMatcher);
-
-   /**
     *
     * @return a collection of keys affected by this write command.  Some commands - such as ClearCommand - may return
     * an empty collection for this method.
@@ -64,6 +55,43 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
    void fail();
 
    /**
+    * @return Unique identifier for the operation this command belongs to.
+    */
+   CommandInvocationId getCommandInvocationId();
+
+   /**
+    * Mark the operation on this key as executed (when this command is a retry).
+    *
+    * @param key
+    * @param isCompleted
+    */
+   void setCompleted(Object key, boolean isCompleted);
+
+   /**
+    * @return True if this operation was already executed and should not be persisted or applied in any other way.
+    */
+   boolean isCompleted(Object key);
+
+   default Stream<?> completedKeys() {
+      return getAffectedKeys().stream().filter(this::isCompleted);
+   }
+
+   /**
+    * We guarantee that all operations are invoked on all owners in the same order. This method gives backup
+    * id of the command that was invoked on primary before this one.
+    * @param key
+    * @return Id of the last command, or <code>null</code> if no such record exists.
+    */
+   CommandInvocationId getLastInvocationId(Object key);
+
+   /**
+    * Primary owner sets what was the id of previously executed command.
+    * @param key
+    * @param id
+    */
+   void setLastInvocationId(Object key, CommandInvocationId id);
+
+   /**
     * Indicates whether the command is write-only, meaning that it makes no
     * attempt to read the previously associated value with key for which the
     * command is directed.
@@ -73,10 +101,4 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
    default boolean isWriteOnly() {
       return false;
    }
-
-   /**
-    * @return the {@link CommandInvocationId} associated to the command.
-    */
-   CommandInvocationId getCommandInvocationId();
-
 }

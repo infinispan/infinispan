@@ -1,13 +1,12 @@
 package org.infinispan.commands.triangle;
 
-import static org.infinispan.commands.write.ValueMatcher.MATCH_ALWAYS;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
@@ -39,6 +38,7 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
 
    private InvocationContextFactory invocationContextFactory;
    private AsyncInterceptorChain interceptorChain;
+   protected InvocationManager invocationManager;
 
    BackupWriteCommand(ByteString cacheName) {
       super(cacheName);
@@ -49,7 +49,6 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
       WriteCommand command = createWriteCommand();
       command.setFlagsBitSet(flags);
       command.addFlags(FlagBitSets.SKIP_LOCKING);
-      command.setValueMatcher(MATCH_ALWAYS);
       command.setTopologyId(topologyId);
       InvocationContext invocationContext = createContext(command);
       return interceptorChain.invokeAsync(invocationContext, command);
@@ -126,9 +125,10 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
             ", flags=" + flags;
    }
 
-   final void injectDependencies(InvocationContextFactory factory, AsyncInterceptorChain chain) {
+   final void injectDependencies(InvocationContextFactory factory, AsyncInterceptorChain chain, InvocationManager invocationManager) {
       this.invocationContextFactory = factory;
       this.interceptorChain = chain;
+      this.invocationManager = invocationManager;
    }
 
    private InvocationContext createContext(WriteCommand command) {

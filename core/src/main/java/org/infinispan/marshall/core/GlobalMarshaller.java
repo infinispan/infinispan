@@ -12,6 +12,7 @@ import java.util.function.BiConsumer;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.io.ExposedByteArrayInputStream;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.BufferSizePredictor;
@@ -317,12 +318,18 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    @Override
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) {
+      if (is instanceof ExposedByteArrayInputStream) {
+         ExposedByteArrayInputStream eis = (ExposedByteArrayInputStream) is;
+         return BytesObjectInput.from(eis.getBuf(), eis.getOffset(), this);
+      }
       throw new UnsupportedOperationException("No longer in use");
    }
 
    @Override
    public void finishObjectInput(ObjectInput oi) {
-      throw new UnsupportedOperationException("No longer in use");
+      if (!(oi instanceof BytesObjectInput)) {
+         throw new UnsupportedOperationException("No longer in use");
+      }
    }
 
    @Override

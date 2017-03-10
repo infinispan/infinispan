@@ -145,7 +145,7 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       for (Cache<Object, String> c : caches) {
          CacheLoader store = TestingUtil.getFirstLoader(c);
          MarshalledEntry me = store.load(key);
-         if (me == null) {
+         if (me == null || me.getValue() == null) {
             assertNumberOfInvocations(store, "delete", 1);
             assertNumberOfInvocations(store, "write", 1);
          } else {

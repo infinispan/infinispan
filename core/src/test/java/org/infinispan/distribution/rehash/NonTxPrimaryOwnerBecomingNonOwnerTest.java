@@ -132,8 +132,8 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
 
       // Every operation command will be blocked before reaching the distribution interceptor on cache0 (the originator)
       CyclicBarrier beforeCache0Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor<>(beforeCache0Barrier,
-            op.getCommandClass(), false, true);
+      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(beforeCache0Barrier, false, true,
+            op.getCommandClass()::isInstance);
       cache0.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
 
       // Write from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry

@@ -106,14 +106,15 @@ public class CacheLoaderAndCacheWriterInterceptorMBeanTest extends SingleCacheMa
       assertStoreAccess(0, 1, 1);
 
       assert cache.remove("key").equals("value");
-      assertStoreAccess(0, 1, 1);
+      assertStoreAccess(0, 1, 2);
 
+      // TODO: ISPN-8204 Remove should not write to store if the read was a miss
       cache.remove("no_such_key");
-      assertStoreAccess(0, 2, 1);
+      assertStoreAccess(0, 2, 3);
 
       store.write(new MarshalledEntryImpl("a", "b", null, marshaller()));
       assert cache.remove("a").equals("b");
-      assertStoreAccess(1, 2, 1);
+      assertStoreAccess(1, 2, 4);
    }
 
    public void testReplaceCommand() throws Exception {

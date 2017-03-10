@@ -23,6 +23,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
+import org.infinispan.commands.ForgetInvocationsCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -545,5 +546,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand() {
       return actual.buildMultiKeyFunctionalBackupWriteCommand();
+   }
+
+   @Override
+   public ForgetInvocationsCommand buildForgetInvocationsCommand(Object[] keys, long[] ids) {
+      return actual.buildForgetInvocationsCommand(keys, ids);
    }
 }

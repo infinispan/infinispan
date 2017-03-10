@@ -7,12 +7,16 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -26,6 +30,7 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.metadata.Metadata;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -36,16 +41,15 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    private Map<?, ?> arguments;
    private BiFunction<T, ReadWriteEntryView<K, V>, R> f;
 
-   boolean isForwarded = false;
-
    public ReadWriteManyEntriesCommand(Map<?, ?> arguments,
                                       BiFunction<T, ReadWriteEntryView<K, V>, R> f,
                                       Params params,
                                       CommandInvocationId commandInvocationId,
                                       DataConversion keyDataConversion,
                                       DataConversion valueDataConversion,
+                                      InvocationManager invocationManager,
                                       ComponentRegistry componentRegistry) {
-      super(commandInvocationId, params, keyDataConversion, valueDataConversion);
+      super(commandInvocationId, params, keyDataConversion, valueDataConversion, invocationManager);
       this.arguments = arguments;
       this.f = f;
       init(componentRegistry);
@@ -74,8 +78,13 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
       this.arguments = arguments;
    }
 
-   public final ReadWriteManyEntriesCommand<K, V, T, R> withArguments(Map<?, ?> entries) {
-      setArguments(entries);
+   public final ReadWriteManyEntriesCommand<K, V, T, R> withArguments(Map<?, ?> arguments) {
+      setArguments(arguments);
+      if (lastInvocationIds != null) {
+         lastInvocationIds = lastInvocationIds.entrySet().stream()
+               .filter(entry -> arguments.containsKey(entry.getKey()))
+               .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+      }
       return this;
    }
 
@@ -91,8 +100,8 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
-      output.writeInt(topologyId);
       output.writeLong(flags);
+      MarshallUtil.marshallMap(lastInvocationIds, ObjectOutput::writeObject, CommandInvocationId::writeTo, output);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
    }
@@ -105,8 +114,8 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
       f = (BiFunction<T, ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
-      topologyId = input.readInt();
       flags = input.readLong();
+      lastInvocationIds = MarshallUtil.unmarshallMap(input, in -> in.readObject(), CommandInvocationId::readFrom, HashMap::new);
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
    }
@@ -139,23 +148,15 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
          if (entry == null) {
             throw new IllegalStateException();
          }
+         Object prevValue = entry.getValue();
+         Metadata prevMetadata = entry.getMetadata();
          T decodedArgument = (T) valueDataConversion.fromStorage(arg);
-         boolean exists = entry.getValue() != null;
          AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
          R r = snapshot(f.apply(decodedArgument, view));
-         returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
+         recordInvocation(ctx, entry, prevValue, prevMetadata);
+         returns.add(skipStats ? r : StatsEnvelope.create(r, entry, prevValue != null, view.isRead()));
       });
       return returns;
-   }
-
-   @Override
-   public boolean isSuccessful() {
-      return true;
-   }
-
-   @Override
-   public boolean isConditional() {
-      return false;
    }
 
    @Override
@@ -175,6 +176,8 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
       sb.append(", isForwarded=").append(isForwarded);
       sb.append(", keyDataConversion=").append(keyDataConversion);
       sb.append(", valueDataConversion=").append(valueDataConversion);
+      sb.append(", topologyId=").append(topologyId);
+      sb.append(", commandInvocationId=").append(commandInvocationId);
       sb.append('}');
       return sb.toString();
    }
@@ -190,12 +193,10 @@ public final class ReadWriteManyEntriesCommand<K, V, T, R> extends AbstractWrite
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry) {
+   protected void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
-
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
+      InjectableComponent.inject(componentRegistry, f);
    }
 
 }

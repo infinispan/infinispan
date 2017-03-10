@@ -116,8 +116,6 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public final void commit(DataContainer container) {
-      // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
-
       // only do stuff if there are changes.
       if (isChanged()) {
          if (trace)
@@ -126,9 +124,9 @@ public class ReadCommittedEntry implements MVCCEntry {
 
          if (isEvicted()) {
             container.evict(key);
-         } else if (isRemoved()) {
+         } else if (value == null && (metadata == null || metadata.lastInvocation() == null)) {
             container.remove(key);
-         } else if (value != null) {
+         } else {
             // Can't just rely on the entry's metadata because it could have
             // been modified by the interceptor chain (i.e. new version
             // generated if none provided by the user)

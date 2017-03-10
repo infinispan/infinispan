@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
@@ -38,18 +39,19 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
                                  CommandInvocationId commandInvocationId,
                                  Metadata metadata,
                                  CacheNotifier notifier,
-                                 ComponentRegistry componentRegistry) {
-
-      super(key, flagsBitSet, commandInvocationId);
+                                 ComponentRegistry componentRegistry,
+                                 InvocationManager invocationManager) {
+      super(key, flagsBitSet, commandInvocationId, invocationManager);
       this.mappingFunction = mappingFunction;
       this.metadata = metadata;
       this.notifier = notifier;
       componentRegistry.wireDependencies(this.mappingFunction);
    }
 
-   public void init(CacheNotifier notifier, ComponentRegistry componentRegistry) {
+   public void init(CacheNotifier notifier, ComponentRegistry componentRegistry, InvocationManager invocationManager) {
       //noinspection unchecked
       this.notifier = notifier;
+      this.invocationManager = invocationManager;
       componentRegistry.wireDependencies(mappingFunction);
    }
 
@@ -74,16 +76,6 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      //implementation not needed
-   }
-
-   @Override
    public void fail() {
       successful = false;
    }
@@ -96,31 +88,35 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
          throw new IllegalStateException("Not wrapped");
       }
 
-      Object value = e.getValue();
+      Object prevValue = e.getValue();
 
-      if (value == null) {
-         try {
-            value = mappingFunction.apply(key);
-         } catch (RuntimeException ex) {
-            throw new UserRaisedFunctionalException(ex);
-         }
+      if (prevValue != null) {
+         return prevValue;
+      }
+      Object newValue;
+      try {
+         newValue = mappingFunction.apply(key);
+      } catch (RuntimeException ex) {
+         throw new UserRaisedFunctionalException(ex);
+      }
 
-         if (value != null) {
-            e.setValue(value);
-            Metadatas.updateMetadata(e, metadata);
-            if (e.isCreated()) {
-               notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
-            }
-            if (e.isRemoved()) {
-               e.setCreated(true);
-               e.setExpired(false);
-               e.setRemoved(false);
-            }
-            e.setChanged(true);
+      if (newValue != null) {
+         e.setValue(newValue);
+         Metadata prevMetadata = e.getMetadata();
+         Metadatas.updateMetadata(e, metadata);
+         if (e.isCreated()) {
+            notifier.notifyCacheEntryCreated(key, prevValue, metadata, true, ctx, this);
          }
+         if (e.isRemoved()) {
+            e.setCreated(true);
+            e.setExpired(false);
+            e.setRemoved(false);
+         }
+         e.setChanged(true);
+         recordInvocation(ctx, e, prevValue, prevMetadata);
          successful = true;
       }
-      return value;
+      return newValue;
    }
 
    public Function getMappingFunction() {
@@ -138,6 +134,7 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
       output.writeObject(mappingFunction);
       output.writeObject(metadata);
       CommandInvocationId.writeTo(output, commandInvocationId);
+      CommandInvocationId.writeTo(output, lastInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
@@ -147,6 +144,7 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
       mappingFunction = (Function) input.readObject();
       metadata = (Metadata) input.readObject();
       commandInvocationId = CommandInvocationId.readFrom(input);
+      lastInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
    }
 
@@ -157,7 +155,7 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
 
    @Override
    public LoadType loadType() {
-      return LoadType.PRIMARY;
+      return LoadType.OWNER;
    }
 
    @Override
@@ -185,7 +183,6 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
             ", metadata=" + metadata +
             ", flags=" + printFlags() +
             ", successful=" + isSuccessful() +
-            ", valueMatcher=" + getValueMatcher() +
             ", topologyId=" + getTopologyId() +
             '}';
    }

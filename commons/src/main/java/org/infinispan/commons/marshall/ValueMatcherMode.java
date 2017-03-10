@@ -2,7 +2,10 @@ package org.infinispan.commons.marshall;
 
 /**
  * Value matcher mode.
+ *
+ * @deprecated since 9.2
  */
+@Deprecated
 public enum ValueMatcherMode {
 
    MATCH_ALWAYS,

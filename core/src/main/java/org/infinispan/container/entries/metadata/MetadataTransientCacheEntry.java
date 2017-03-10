@@ -107,8 +107,8 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
    }
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
-      return new MetadataTransientCacheValue(value, metadata, lastUsed);
+   public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
+      return new MetadataTransientCacheValue(value, includeInvocationRecords ? metadata : metadata.builder().noInvocations().build(), lastUsed);
    }
 
    @Override
@@ -119,6 +119,11 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
    @Override
    public void setMetadata(Metadata metadata) {
       this.metadata = metadata;
+   }
+
+   @Override
+   protected boolean hasMetadata() {
+      return true;
    }
 
    public static class Externalizer extends AbstractExternalizer<MetadataTransientCacheEntry> {

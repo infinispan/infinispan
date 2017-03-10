@@ -66,12 +66,22 @@ class WriteOnlyManyHelper extends WriteManyCommandHelper<WriteOnlyManyCommand, C
    }
 
    @Override
-   public boolean shouldRegisterRemoteCallback(WriteOnlyManyCommand cmd) {
-      return !cmd.isForwarded();
+   public boolean isForwarded(WriteOnlyManyCommand cmd) {
+      return cmd.isForwarded();
+   }
+
+   @Override
+   public void setForwarded(WriteOnlyManyCommand backupCommand) {
+      backupCommand.setForwarded(true);
    }
 
    @Override
    public Object transformResult(Object[] results) {
       return results == null ? null : Arrays.asList(results);
+   }
+
+   @Override
+   public Collection<Object> asCollection(Collection<Object> objects) {
+      return objects;
    }
 }

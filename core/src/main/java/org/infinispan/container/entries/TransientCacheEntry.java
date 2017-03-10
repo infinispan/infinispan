@@ -1,7 +1,5 @@
 package org.infinispan.container.entries;
 
-import static org.infinispan.commons.util.Util.toStr;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -110,7 +108,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
+   public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
       return new TransientCacheValue(value, maxIdle, lastUsed);
    }
 
@@ -158,13 +156,5 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       public Set<Class<? extends TransientCacheEntry>> getTypeClasses() {
          return Util.asSet(TransientCacheEntry.class);
       }
-   }
-
-   @Override
-   public String toString() {
-      return "TransientCacheEntry{" +
-            "key=" + toStr(key) +
-            ", value=" + toStr(value) +
-            "}";
    }
 }

@@ -123,7 +123,6 @@ public class VersionedCallInterceptor extends DDAsyncInterceptor {
 		if (e.isRemoved()) {
 			e.setRemoved(false);
 			e.setCreated(true);
-			e.setValid(true);
 		}
 		else {
 			e.setChanged(true);

@@ -2,7 +2,6 @@ package org.infinispan.interceptors.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -38,44 +37,27 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
 
    @Override
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
-      if (transactional) {
-         // LoadType.OWNER is used when the previous value is required to produce new value itself (functional commands
-         // or delta-aware), therefore, we have to load them into context. Other load types have checked the value
-         // already on the originator and therefore the value is loaded only for WSC (without this interceptor)
-         if (!ctx.isOriginLocal() && cmd.loadType() != VisitableCommand.LoadType.OWNER) {
+      // In transactional cache it is possible that the node is first committed as a backup, overwriting both DC and
+      // cache store, and then we find out that the primary owner was lost and we have become the new primary.
+      // Then we have to fire the listeners and we need the previous value.
+      if (!transactional) {
+         // In non-transactional cache even backups have to store the previous value in context as it may be required
+         // when this node becomes primary owner for the listener invocation. Note that commands have to fire events
+         // even when they know that the modification was already applied because clustered listeners and continuous
+         // query require the event from primary owner.
+         if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
+            return false;
+         }
+         // TODO [Dan] I'm not sure using the write CH is OK here
+         DistributionInfo info = distributionManager.getCacheTopology().getDistribution(key);
+         if (!info.isPrimary() && (!info.isWriteOwner() || ctx.isOriginLocal())) {
+            if (trace) {
+               log.tracef("Skip load for command %s. This node is neither the primary owner nor non-origin backup of %s", cmd, toStr(key));
+            }
             return true;
          }
-      } else {
-         switch (cmd.loadType()) {
-            case DONT_LOAD:
-               return true;
-            case PRIMARY:
-               if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-                  return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
-               }
-               if (!distributionManager.getCacheTopology().getDistribution(key).isPrimary()) {
-                  if (trace) {
-                     log.tracef("Skip load for command %s. This node is not the primary owner of %s", cmd, toStr(key));
-                  }
-                  return true;
-               }
-               break;
-            case OWNER:
-               if (cmd.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL)) {
-                  return cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD);
-               }
-               // TODO [Dan] I'm not sure using the write CH is OK here
-               DistributionInfo info = distributionManager.getCacheTopology().getDistribution(key);
-               if (!info.isPrimary() && (!info.isWriteOwner() || ctx.isOriginLocal())) {
-                  if (trace) {
-                     log.tracef("Skip load for command %s. This node is neither the primary owner nor non-origin backup of %s", cmd, toStr(key));
-                  }
-                  return true;
-               }
-               break;
-         }
       }
-      return super.skipLoadForWriteCommand(cmd, key, ctx);
+      return false;
    }
 
    @Override

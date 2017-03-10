@@ -1,5 +1,7 @@
 package org.infinispan.container.entries;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -55,7 +57,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public final boolean isNull() {
-      return false;
+      return getValue() == null;
    }
 
    @Override
@@ -93,6 +95,10 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       // no-op
    }
 
+   protected boolean hasMetadata() {
+      return false;
+   }
+
    @Override
    public final Object getKey() {
       return key;
@@ -105,9 +111,14 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "key=" + key +
-            '}';
+      String className = getClass().getSimpleName();
+      StringBuilder sb = new StringBuilder(className)
+            .append("{key=").append(toStr(key))
+            .append(", value=").append(toStr(getValue()));
+      if (hasMetadata()) {
+            sb.append(", metadata=").append(getMetadata());
+      }
+      return sb.append('}').toString();
    }
 
    @Override

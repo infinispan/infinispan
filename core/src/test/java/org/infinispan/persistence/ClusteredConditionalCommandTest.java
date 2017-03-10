@@ -137,12 +137,14 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
    protected <K, V> void assertLoadAfterOperation(CacheHelper<K, V> cacheHelper, ConditionalOperation operation, Ownership ownership, boolean skipLoad) {
       //in non-transactional caches, only the primary owner will load from store
       // backup will load only in case that it is origin (and needs previous value)
-      assertLoad(cacheHelper, skipLoad ? 0 : 1, 0, 0);
+      assertLoad(cacheHelper, skipLoad ? 0 : 1, operation.successful(skipLoad) && !skipLoad ? 1 : 0, 0);
    }
 
    protected final <K, V> void assertLoad(CacheHelper<K, V> cacheHelper, int primaryOwner, int backupOwner, int nonOwner) {
       assertEquals("primary owner load", primaryOwner, cacheHelper.loads(Ownership.PRIMARY));
-      assertEquals("backup owner load", backupOwner, cacheHelper.loads(Ownership.BACKUP));
+      if (!cacheMode.isScattered()) {
+         assertEquals("backup owner load", backupOwner, cacheHelper.loads(Ownership.BACKUP));
+      }
       assertEquals("non owner load", nonOwner, cacheHelper.loads(Ownership.NON_OWNER));
    }
 
@@ -517,6 +519,11 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          public <V> V finalValue(V value1, V value2, boolean skipLoad) {
             return skipLoad ? value2 : value1;
          }
+
+         @Override
+         public boolean successful(boolean skipLoad) {
+            return skipLoad;
+         }
       },
       REPLACE {
          @Override
@@ -527,6 +534,11 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          @Override
          public <V> V finalValue(V value1, V value2, boolean skipLoad) {
             return skipLoad ? value1 : value2;
+         }
+
+         @Override
+         public boolean successful(boolean skipLoad) {
+            return !skipLoad;
          }
       },
       REPLACE_IF {
@@ -539,6 +551,11 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          public <V> V finalValue(V value1, V value2, boolean skipLoad) {
             return skipLoad ? value1 : value2;
          }
+
+         @Override
+         public boolean successful(boolean skipLoad) {
+            return !skipLoad;
+         }
       },
       REMOVE_IF {
          @Override
@@ -550,11 +567,18 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          public <V> V finalValue(V value1, V value2, boolean skipLoad) {
             return skipLoad ? value1 : null;
          }
+
+         @Override
+         public boolean successful(boolean skipLoad) {
+            return !skipLoad;
+         }
       };
 
       public abstract <K, V> void execute(Cache<K, V> cache, K key, V value1, V value2);
 
       public abstract <V> V finalValue(V value1, V value2, boolean skipLoad);
+
+      public abstract boolean successful(boolean skipLoad);
    }
 
    protected static class CacheHelper<K, V> {
@@ -590,7 +614,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          if (cache == null) return 0;
          AsyncInterceptorChain chain = extractComponent(cache, AsyncInterceptorChain.class);
          CacheLoaderInterceptor interceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
-         return interceptor.getCacheLoaderLoads();
+         return interceptor.getCacheLoaderLoads() + interceptor.getCacheLoaderMisses();
       }
 
       private void resetStats(Ownership ownership) {

@@ -393,13 +393,17 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       private void checkSingleSuccessfulThread() {
          //for CAS operations there's only one successful thread
          int successfulThreads = 0;
-         for (SharedThreadState threadState : state.threadStates) {
+         SharedThreadState[] threadStates = state.threadStates;
+         String threadIds = "";
+         for (int i = 0; i < threadStates.length; i++) {
+            SharedThreadState threadState = threadStates[i];
             if (threadState.successfulOperation) {
                successfulThreads++;
+               threadIds += i + ", ";
             }
          }
          if (successfulThreads != 1) {
-            fail(successfulThreads + " threads assume a successful replacement! (CAS should succeed on a single thread only)");
+            fail(successfulThreads + " threads assume a successful replacement! (CAS should succeed on a single thread only): " + threadIds);
          }
       }
    }
@@ -479,6 +483,9 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       @Override
       public boolean execute(Cache cache, String sharedKey, Object existing, String targetValue) {
          try {
+            if (existing == null) {
+               return false;
+            }
             return cache.remove(SHARED_KEY, existing);
          } catch (CacheException e) {
             return false;

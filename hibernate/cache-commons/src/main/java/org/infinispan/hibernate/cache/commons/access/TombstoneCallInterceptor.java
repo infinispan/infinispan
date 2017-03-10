@@ -13,7 +13,6 @@ import org.infinispan.hibernate.cache.commons.util.Tombstone;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CloseableIterator;
@@ -155,7 +154,6 @@ public class TombstoneCallInterceptor extends DDAsyncInterceptor {
 		if (e.isRemoved()) {
 			e.setRemoved(false);
 			e.setCreated(true);
-			e.setValid(true);
 		}
 		else {
 			e.setChanged(true);

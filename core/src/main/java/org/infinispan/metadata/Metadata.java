@@ -2,6 +2,8 @@ package org.infinispan.metadata;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.container.versioning.EntryVersion;
 
 /**
@@ -38,6 +40,10 @@ public interface Metadata {
     * @return version of the entry
     */
    EntryVersion version();
+
+   InvocationRecord lastInvocation();
+
+   InvocationRecord invocation(CommandInvocationId id);
 
    /**
     * Returns an instance of {@link Builder} which can be used to build
@@ -94,6 +100,16 @@ public interface Metadata {
        * @return a builder instance with the version applied
        */
       Builder version(EntryVersion version);
+
+      Builder invocation(CommandInvocationId id, Object previousValue, Metadata previousMetadata, long timestamp);
+
+      Builder invocations(InvocationRecord invocations);
+
+      default Builder noInvocations() {
+         return invocations(null);
+      }
+
+      InvocationRecord invocations();
 
       /**
        * Build a metadata instance.

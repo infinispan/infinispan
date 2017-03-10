@@ -285,6 +285,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
             ", transactionSuccessful=" + transactionSuccessful +
             ", entries=" + entries +
             ", created=" + created +
+            ", retry=" + commandRetried +
             '}';
    }
 

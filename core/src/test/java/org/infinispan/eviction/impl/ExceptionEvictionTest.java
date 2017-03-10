@@ -219,7 +219,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          case OBJECT:
             return expected;
          case BINARY:
-            return expected * (optimisticTransaction ? 64 : 24);
+            return expected * (optimisticTransaction ? 72 : 48);
          case OFF_HEAP:
             return expected * (optimisticTransaction ? UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(51) :
                   UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(33));

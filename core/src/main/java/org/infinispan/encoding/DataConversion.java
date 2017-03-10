@@ -295,7 +295,7 @@ public final class DataConversion {
       byte flags = 0;
       boolean isDefault = isDefault(dataConversion);
       if (isDefault) flags = 1;
-      if (dataConversion.isKey) flags = (byte) (flags | 2);
+      if (dataConversion != null && dataConversion.isKey) flags = (byte) (flags | 2);
       output.writeByte(flags);
       if (!isDefault) {
          output.writeShort(dataConversion.encoder.id());

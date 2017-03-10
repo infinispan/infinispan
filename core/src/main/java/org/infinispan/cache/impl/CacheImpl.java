@@ -63,7 +63,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.Encoder;
@@ -1376,7 +1375,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata merged = applyDefaultMetadata(metadata);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
       command.setPutIfAbsent(true);
-      command.setValueMatcher(ValueMatcher.MATCH_EXPECTED);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(command.getKeyLockOwner());
       }

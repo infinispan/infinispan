@@ -159,6 +159,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
          InternalCacheEntry entry = dataContainer.get(key);
          assertNotNull("Entry cannot be null in " + address(cache) + ".", entry);
+         assertNotNull("Entry cannot be null in " + address(cache) + ".", entry.getValue());
          assertNotNull("Version cannot be null.", entry.getMetadata().version());
       }
    }

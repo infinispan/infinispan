@@ -4,6 +4,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -47,12 +48,16 @@ public class TestResourceTracker {
    public static void cleanUpResources(String testName) {
       TestResources resources = testResources.remove(testName);
       if (resources != null) {
-         for (Cleaner<?> cleaner : resources.getCleaners()) {
+         for (Iterator<Cleaner<?>> iterator = resources.getCleaners().iterator(); iterator.hasNext(); ) {
+            Cleaner<?> cleaner = iterator.next();
             try {
                cleaner.close();
             } catch (Throwable t) {
                log.fatalf(t, "Error cleaning resource %s for test %s", cleaner.ref, testName);
                throw new IllegalStateException("Error cleaning resource " + cleaner.ref + " for test " + testName, t);
+            } finally {
+               // drop reference to avoid running out of memory
+               iterator.remove();
             }
          }
       }

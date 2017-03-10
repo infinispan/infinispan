@@ -7,6 +7,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.InvocationManager;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -39,6 +41,7 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    @Inject protected DataContainer<K, V> dataContainer;
    @Inject protected CacheNotifier<K, V> cacheNotifier;
    @Inject protected TimeService timeService;
+   @Inject protected InvocationManager invocationManager;
 
    protected boolean enabled;
    protected String cacheName;
@@ -87,11 +90,33 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
                start = timeService.time();
             }
             long currentTimeMillis = timeService.wallClockTime();
+            long invocationLimitTime = invocationManager == null ? 0 : currentTimeMillis - invocationManager.invocationTimeout();
             for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.iteratorIncludingExpired();
                  purgeCandidates.hasNext();) {
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.isExpired(currentTimeMillis)) {
                   handleInMemoryExpiration(e, currentTimeMillis);
+               }
+               InvocationRecord record = e.getMetadata() == null ? null : e.getMetadata().lastInvocation();
+               if (record != null) {
+                  InvocationRecord purged = InvocationRecord.purgeExpired(record, invocationLimitTime);
+                  if (purged != record) {
+                     dataContainer.compute(e.getKey(), (k, entry, f) -> {
+                        // By not synchronizing the access to entry we're risking that we'll change
+                        // the metadata during entry copy by GetCacheEntryCommand or expiration checks,
+                        // but that's can't do any harm.
+                        Metadata metadata = entry.getMetadata();
+                        if (metadata == null) return entry;
+                        InvocationRecord last = metadata.lastInvocation();
+                        if (last != record) return entry;
+                        if (purged != null || entry.getValue() != null) {
+                           entry.setMetadata(metadata.builder().invocations(purged).build());
+                           return entry;
+                        } else {
+                           return null;
+                        }
+                     });
+                  }
                }
             }
             if (trace) {

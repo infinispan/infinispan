@@ -200,6 +200,9 @@ public interface Ids {
 
    int STATS_ENVELOPE = 137;
 
+   int META_PARAM_INVOCATION_RECORDS = 138;
+   int LOCAL_MODE_ADDRESS = 139;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

@@ -55,11 +55,13 @@ public class WriteSkewHelper {
 
                if (entry.performWriteSkewCheck(dataContainer, persistenceManager, context,
                                                prepareCommand.getVersionsSeen().get(k), versionGenerator, timeService)) {
-                  IncrementableEntryVersion oldVersion = (IncrementableEntryVersion) entry.getMetadata().version();
-                  IncrementableEntryVersion newVersion = entry.isCreated() || oldVersion == null
-                        ? versionGenerator.generateNew()
-                        : versionGenerator.increment(oldVersion);
-                  uv.put(k, newVersion);
+                  if (!entry.isRemoved()) {
+                     IncrementableEntryVersion oldVersion = (IncrementableEntryVersion) entry.getMetadata().version();
+                     IncrementableEntryVersion newVersion = entry.isCreated() || oldVersion == null
+                           ? versionGenerator.generateNew()
+                           : versionGenerator.increment(oldVersion);
+                     uv.put(k, newVersion);
+                  }
                } else {
                   // Write skew check detected!
                   throw new WriteSkewException("Write skew detected on key " + k + " for transaction " +

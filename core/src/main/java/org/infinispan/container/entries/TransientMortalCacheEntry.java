@@ -1,7 +1,6 @@
 package org.infinispan.container.entries;
 
 import static java.lang.Math.min;
-import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -91,7 +90,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
+   public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
       return new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
    }
 
@@ -146,14 +145,6 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public TransientMortalCacheEntry clone() {
       return (TransientMortalCacheEntry) super.clone();
-   }
-
-   @Override
-   public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "key=" + toStr(key) +
-            ", value=" + toStr(value) +
-            "}";
    }
 
    public static class Externalizer extends AbstractExternalizer<TransientMortalCacheEntry> {

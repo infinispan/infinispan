@@ -193,14 +193,19 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
       if (trace) {
          log.tracef("Adding entry: %s", entry);
       }
+      // TODO: Store other metadata (versions, mime-types, invocation records, custom...)
       InternalMetadata metadata = entry.getMetadata();
       long lifespan = metadata != null ? metadata.lifespan() : -1;
       long maxIdle = metadata != null ? metadata.maxIdle() : -1;
       Object key = getKey(entry);
       Object value = getValue(entry);
 
-      remoteCache.put(key, value, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS,
-            toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
+      if (value != null) {
+         remoteCache.put(key, value, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS,
+               toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
+      } else {
+         remoteCache.remove(key);
+      }
    }
 
    private Object getKey(MarshalledEntry entry) {

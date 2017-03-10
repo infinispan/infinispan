@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -56,9 +57,7 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
       // Kill the cache now - note this will automatically unblock the fork thread
       TestingUtil.killCacheManagers(cache1.getCacheManager());
 
-      // This should return null normally, but since it was retried it returns it's own value :(
-      // Maybe some day this can work properly
-      assertEquals(future.get(10, TimeUnit.SECONDS), FIRST_VALUE);
+      assertNull(future.get(10, TimeUnit.SECONDS));
 
       TestingUtil.waitForNoRebalance(cache0, cache2);
 
@@ -76,6 +75,6 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
       // we expect that now both nodes have the same topology
       assertEquals(cache0primary, cache2primary);
 
-      clusterListener.events.forEach(e -> checkEvent(e, key, false, true));
+      clusterListener.events.forEach(e -> checkEvent(e, key, true));
    }
 }

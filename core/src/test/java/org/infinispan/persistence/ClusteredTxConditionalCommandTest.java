@@ -27,11 +27,10 @@ public class ClusteredTxConditionalCommandTest extends ClusteredConditionalComma
    protected <K, V> void assertLoadAfterOperation(CacheHelper<K, V> cacheHelper, ConditionalOperation operation, Ownership ownership, boolean skipLoad) {
       switch (ownership) {
          case PRIMARY:
-            assertLoad(cacheHelper, skipLoad ? 0 : 1, 0, 0);
+            assertLoad(cacheHelper, skipLoad ? 0 : 1, operation.successful(skipLoad) && !skipLoad ? 1 : 0, 0);
             break;
          case BACKUP:
-            // If the command succeeds, WSC is executed - load on primary owner
-            assertLoad(cacheHelper, 0, skipLoad ? 0 : 1, 0);
+            assertLoad(cacheHelper, operation.successful(skipLoad) && !skipLoad ? 1 : 0, skipLoad ? 0 : 1, 0);
             break;
          case NON_OWNER:
             if (skipLoad) {

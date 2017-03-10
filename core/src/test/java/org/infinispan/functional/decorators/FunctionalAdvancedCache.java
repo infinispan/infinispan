@@ -1,6 +1,5 @@
 package org.infinispan.functional.decorators;
 
-import static org.infinispan.marshall.core.MarshallableFunctions.removeConsumer;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueIfEqualsReturnBoolean;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueMetasConsumer;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueMetasIfAbsentReturnPrevOrNull;
@@ -50,7 +49,6 @@ import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.functional.MetaParam.MetaLifespan;
 import org.infinispan.functional.MetaParam.MetaMaxIdle;
-import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
@@ -218,7 +216,9 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public void evict(K key) {
-      await(wo.withParams(PersistenceMode.SKIP).eval(key, removeConsumer()));
+      // Evict cannot be implemented using functional commands, because it may require passivation,
+      // should set entry.setEvicted(true) and it shouldn't record invocation nor keep the tombstone.
+      cache.evict(key);
    }
 
    @Override

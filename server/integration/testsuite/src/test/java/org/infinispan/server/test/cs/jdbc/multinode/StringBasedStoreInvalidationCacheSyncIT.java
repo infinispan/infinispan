@@ -3,9 +3,11 @@ package org.infinispan.server.test.cs.jdbc.multinode;
 import static org.infinispan.server.test.util.ITestUtils.createMemcachedClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.cs.jdbc.AbstractJdbcStoreMultinodeIT;
 import org.junit.Before;
@@ -68,7 +70,7 @@ public class StringBasedStoreInvalidationCacheSyncIT extends AbstractJdbcStoreMu
         mc2.delete("key");
         assertEquals(null, mc1.get("key"));
         assertEquals(null, mc2.get("key"));
-        assertEquals(null, dbServer1.stringTable.getValueByKey("key"));
+        assertTrue(isTombstone(dbServer1.stringTable.getValueByKey("key")));
     }
 
     @Test
@@ -81,7 +83,7 @@ public class StringBasedStoreInvalidationCacheSyncIT extends AbstractJdbcStoreMu
         mc2.delete("key"); //delete from the other cache (the entry is not here)
         assertEquals(null, mc1.get("key"));
         assertEquals(null, mc2.get("key"));
-        assertEquals(null, dbServer1.stringTable.getValueByKey("key"));
+        assertTrue(isTombstone(dbServer1.stringTable.getValueByKey("key")));
     }
 
     private void assertCleanCache() throws Exception {
@@ -115,5 +117,13 @@ public class StringBasedStoreInvalidationCacheSyncIT extends AbstractJdbcStoreMu
 
     protected String cacheName() {
         return CACHE_NAME;
+    }
+
+    private static boolean isTombstone(Object object) {
+        if (!(object instanceof byte[])) return false;
+        byte[] bytes = (byte[]) object;
+        assert bytes[0] == 2;
+        assert bytes[1] == Ids.KEY_VALUE_PAIR_ID;
+        return bytes[2] == 0;
     }
 }

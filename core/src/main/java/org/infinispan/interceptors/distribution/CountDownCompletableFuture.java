@@ -2,11 +2,14 @@ package org.infinispan.interceptors.distribution;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
-class CountDownCompletableFuture extends CompletableFuture<Object> {
+import org.infinispan.remoting.responses.Response;
+
+class CountDownCompletableFuture extends CompletableFuture<Object> implements BiConsumer<Response, Throwable> {
    protected final AtomicInteger counter;
 
-   public CountDownCompletableFuture(int participants) {
+   CountDownCompletableFuture(int participants) {
       this.counter = new AtomicInteger(participants);
       assert participants != 0;
    }
@@ -34,5 +37,14 @@ class CountDownCompletableFuture extends CompletableFuture<Object> {
 
    protected Object result() {
       return null;
+   }
+
+   @Override
+   public void accept(Response response, Throwable throwable) {
+      if (throwable != null) {
+         completeExceptionally(throwable);
+      } else {
+         countDown();
+      }
    }
 }

@@ -410,9 +410,7 @@ public interface ClusteringDependentLogic {
                if (doCommit.isLocal()) {
                   created = entry.isCreated();
                   removed = entry.isRemoved();
-                  if (removed && entry instanceof MVCCEntry) {
-                     expired = ((MVCCEntry) entry).isExpired();
-                  }
+                  expired = ((MVCCEntry) entry).isExpired();
                }
 
                InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
@@ -487,9 +485,7 @@ public interface ClusteringDependentLogic {
                if (doCommit.isLocal()) {
                   created = entry.isCreated();
                   removed = entry.isRemoved();
-                  if (removed && entry instanceof MVCCEntry) {
-                     expired = ((MVCCEntry) entry).isExpired();
-                  }
+                  expired = ((MVCCEntry) entry).isExpired();
                }
 
                // TODO use value from the entry

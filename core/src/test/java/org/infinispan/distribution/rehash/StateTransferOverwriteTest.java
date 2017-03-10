@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import java.util.concurrent.Callable;
+import java.util.function.Predicate;
 
 import javax.transaction.TransactionManager;
 
@@ -28,8 +29,8 @@ public class StateTransferOverwriteTest extends BaseTxStateTransferOverwriteTest
    }
 
    @Override
-   protected Class<? extends VisitableCommand> getVisitableCommand(TestWriteOperation op) {
-      return op.getCommandClass();
+   protected Predicate<VisitableCommand> isExpectedCommand(TestWriteOperation op) {
+      return op.getCommandClass()::isInstance;
    }
 
    @Override

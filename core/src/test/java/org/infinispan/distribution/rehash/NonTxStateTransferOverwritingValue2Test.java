@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
@@ -30,9 +31,9 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.test.MVCCEntryDelegator;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CacheEntryDelegator;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.ClusteringDependentLogicDelegator;
 import org.infinispan.topology.ClusterTopologyManager;
@@ -202,7 +203,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
                return;
             }
             final Address source = ctx.getOrigin();
-            CacheEntry newEntry = new CacheEntryDelegator(entry) {
+            CacheEntry newEntry = new MVCCEntryDelegator((MVCCEntry) entry) {
                @Override
                public void commit(DataContainer container) {
                   checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_" + source);

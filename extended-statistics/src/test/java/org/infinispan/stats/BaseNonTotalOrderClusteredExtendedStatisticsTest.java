@@ -45,7 +45,7 @@ public abstract class BaseNonTotalOrderClusteredExtendedStatisticsTest extends B
 
    @Override
    protected void awaitComputeIfAbsent(int cacheIndex, Object key, Function<? super Object, ?> computeFunction) throws InterruptedException {
-      awaitSingleKeyOperation(Operation.COMPUTE_IF_ABSENT, cacheIndex, key);
+      awaitSingleKeyOperation(Operation.READ_WRITE_KEY_VALUE, cacheIndex, key);
    }
 
    @Override

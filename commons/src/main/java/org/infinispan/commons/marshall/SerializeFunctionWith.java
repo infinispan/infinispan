@@ -18,11 +18,13 @@ import java.lang.annotation.Target;
  * externalizer discovery.
  *
  * @since 8.0
+ * @deprecated since 9.2, use plain {@link SerializeWith}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Inherited
 @Documented
+@Deprecated
 public @interface SerializeFunctionWith {
 
    /**

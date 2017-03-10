@@ -24,7 +24,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
@@ -201,11 +200,9 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       }
 
       assertNull("Should have cleaned up", cache1.get(key));
-      assertNull("Should have cleaned up", cache1.getAdvancedCache().getDataContainer().get(key));
+      assertFalse("Should have cleaned up", cache1.getAdvancedCache().getDataContainer().containsKey(key));
       assertNull("Should have cleaned up", cache2.get(key));
-      // scattered cache leaves tombstone
-      InternalCacheEntry<String, String> cache2Entry = cache2.getAdvancedCache().getDataContainer().get(key);
-      assertTrue("Should have cleaned up", cache2Entry == null || cache2Entry.getValue() == null);
+      assertFalse("Should have cleaned up", cache2.getAdvancedCache().getDataContainer().containsKey(key));
 
       // should not barf
       cache1.putForExternalRead(key, value);

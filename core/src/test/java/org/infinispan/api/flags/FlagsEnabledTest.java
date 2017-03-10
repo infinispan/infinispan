@@ -79,9 +79,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
       MagicKey nonLocalKey = new MagicKey("nonLocal", cache2);
       cache1.put(nonLocalKey, "value");
-      // Write skew check needs the previous version on the originator AND on the primary owner
-      int cache1Loads = isTxCache() ? 1 : 0;
-      assertLoadsAndReset(cache1, cache1Loads, cache2, 1);
+      assertLoadsAndReset(cache1, 1, cache2, 1);
 
       assertCacheValue(cache2, nonLocalKey, "value");
       assertLoadsAndReset(cache1, 0, cache2, 0);

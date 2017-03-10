@@ -1,8 +1,8 @@
 package org.infinispan.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
@@ -230,9 +230,9 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
          for (int i = 0; i < numKeys; i++) {
-            assertNull(dc0.get(i));
-            assertNull(dc1.get(i));
-            assertNull(dc2.get(i));
+            assertFalse(dc0.containsKey(i));
+            assertFalse(dc1.containsKey(i));
+            assertFalse(dc2.containsKey(i));
          }
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
          // check that all values are the ones expected after state transfer and were not overwritten with old values carried by state transfer

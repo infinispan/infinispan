@@ -156,6 +156,7 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
 
    /**
     * @deprecated since 8.1
+    * Note: Since 9.2 moved to {@link MVCCEntry}
     */
    @Deprecated
    default void setLoaded(boolean loaded) {

@@ -43,13 +43,10 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
@@ -69,6 +66,7 @@ import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateConsumer;
@@ -92,7 +90,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Inject private EntryFactory entryFactory;
    @Inject private DataContainer<Object, Object> dataContainer;
    @Inject protected ClusteringDependentLogic cdl;
-   @Inject private VersionGenerator versionGenerator;
    @Inject protected DistributionManager distributionManager;
    @Inject private StateConsumer stateConsumer;       // optional
    @Inject private StateTransferLock stateTransferLock;
@@ -105,7 +102,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private boolean isInvalidation;
    private boolean isSync;
    private boolean useRepeatableRead;
-   private boolean isVersioned;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -120,9 +116,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // The entry must be in the context
          CacheEntry cacheEntry = rCtx.lookupEntry(dataCommand.getKey());
          cacheEntry.setSkipLookup(true);
-         if (isVersioned && ((MVCCEntry) cacheEntry).isRead()) {
-            addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataCommand.getKey());
-         }
       }
 
       // Entry visit notifications used to happen in the CallInterceptor
@@ -153,7 +146,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ
             || cacheConfiguration.clustering().cacheMode().isScattered();
-      isVersioned = Configurations.isTxVersioned(cacheConfiguration);
       totalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
    }
 
@@ -416,9 +408,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             for (Map.Entry<Object, CacheEntry> keyEntry : txCtx.getLookedUpEntries().entrySet()) {
                CacheEntry cacheEntry = keyEntry.getValue();
                cacheEntry.setSkipLookup(true);
-               if (isVersioned && ((MVCCEntry) cacheEntry).isRead()) {
-                  addVersionRead(txCtx, cacheEntry, keyEntry.getKey());
-               }
             }
          });
       } else {
@@ -592,8 +581,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
                             ctx.hasLockedKey(((DataCommand)command).getKey())) {
                      if (trace) log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
                            commandTopologyId, currentTopologyId);
-                     // This shouldn't be necessary, as we'll have a fresh command instance when retrying
-                     command.setValueMatcher(command.getValueMatcher().matcherForRetry());
                      throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
                            commandTopologyId + ", got " + currentTopologyId);
                   }
@@ -621,32 +608,16 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          if (trace)
             log.tracef("The return value is %s", toStr(rv));
          if (useRepeatableRead) {
-            boolean addVersionRead = isVersioned && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
             TxInvocationContext txCtx = (TxInvocationContext) rCtx;
             for (Object key : writeCommand.getAffectedKeys()) {
                CacheEntry cacheEntry = rCtx.lookupEntry(key);
                if (cacheEntry != null) {
                   cacheEntry.setSkipLookup(true);
-                  if (addVersionRead && ((MVCCEntry) cacheEntry).isRead()) {
-                     addVersionRead(txCtx, cacheEntry, key);
-                  }
                   ((MVCCEntry) cacheEntry).updatePreviousValue();
                }
             }
          }
       });
-   }
-
-   private void addVersionRead(TxInvocationContext rCtx, CacheEntry cacheEntry, Object key) {
-      EntryVersion version;
-      if (cacheEntry != null && cacheEntry.getMetadata() != null) {
-         version = cacheEntry.getMetadata().version();
-         if (trace) log.tracef("Adding version read %s for key %s", version, key);
-      } else {
-         version = versionGenerator.nonExistingVersion();
-         if (trace) log.tracef("Adding non-existent version read for key %s", key);
-      }
-      rCtx.getCacheTransaction().addVersionRead(key, version);
    }
 
    /**
@@ -668,10 +639,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // The entry is not in context when the command's execution type does not contain origin
             if (cacheEntry != null) {
                cacheEntry.setSkipLookup(true);
-               if (isVersioned && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD
-                     && ((MVCCEntry) cacheEntry).isRead()) {
-                  addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataWriteCommand.getKey());
-               }
                ((MVCCEntry) cacheEntry).updatePreviousValue();
             }
          }
@@ -791,6 +758,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
       if (entry.isChanged()) {
          if (trace) log.tracef("About to commit entry %s", entry);
+         if (ctx.isInTxScope()) {
+            // In transactional mode we don't need to store invocation records; we keep these only
+            // to prevent applying the commands again upon multiple prepare commands.
+            Metadata metadata = entry.getMetadata();
+            if (metadata != null) {
+               entry.setMetadata(metadata.builder().noInvocations().build());
+            }
+         }
          commitContextEntry(entry, ctx, command, stateTransferFlag, l1Invalidation);
 
          return true;

@@ -17,7 +17,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
-import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -86,15 +86,18 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
       if (ctx.isInTxScope() && stateTransferFlag == null) {
          // If user provided version, use it, otherwise generate/increment accordingly
          VersionedRepeatableReadEntry clusterMvccEntry = (VersionedRepeatableReadEntry) entry;
-         EntryVersion existingVersion = clusterMvccEntry.getMetadata().version();
+         Metadata metadata = clusterMvccEntry.getMetadata();
+         EntryVersion existingVersion = metadata.version();
          EntryVersion newVersion;
-         if (existingVersion == null) {
+         if (entry.isRemoved()) {
+            newVersion = versionGenerator.nonExistingVersion();
+         } else if (existingVersion == null) {
             newVersion = versionGenerator.generateNew();
          } else {
             newVersion = versionGenerator.increment((IncrementableEntryVersion) existingVersion);
          }
 
-         entry.setMetadata(new EmbeddedMetadata.Builder().version(newVersion).build());
+         entry.setMetadata(metadata.builder().version(newVersion).build());
          cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
       } else {
          // This could be a state transfer call!

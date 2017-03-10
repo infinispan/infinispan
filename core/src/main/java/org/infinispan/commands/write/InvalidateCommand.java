@@ -35,7 +35,7 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    private static final boolean trace = log.isTraceEnabled();
    protected Object[] keys;
    protected CommandInvocationId commandInvocationId;
-   protected CacheNotifier notifier;
+   protected transient CacheNotifier notifier;
 
    public InvalidateCommand() {
    }
@@ -68,13 +68,12 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
       }
       for (Object key : keys) {
          MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-         if (e != null) {
-            notify(ctx, e, true);
-            e.setChanged(true);
-            e.setRemoved(true);
-            e.setCreated(false);
-            e.setValid(false);
-         }
+         notify(ctx, e, true);
+         e.setValue(null);
+         e.setMetadata(null);
+         e.setChanged(true);
+         e.setRemoved(true);
+         e.setCreated(false);
       }
       return null;
    }
@@ -139,15 +138,6 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-   }
-
-   @Override
    public Collection<?> getAffectedKeys() {
       return CollectionFactory.makeSet(keys);
    }
@@ -155,6 +145,25 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public void fail() {
       throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setCompleted(Object key, boolean isCompleted) {
+   }
+
+   @Override
+   public boolean isCompleted(Object key) {
+      return false;
+   }
+
+   @Override
+   public CommandInvocationId getLastInvocationId(Object key) {
+      return null;
+   }
+
+   @Override
+   public void setLastInvocationId(Object key, CommandInvocationId id) {
+      // noop
    }
 
    @Override

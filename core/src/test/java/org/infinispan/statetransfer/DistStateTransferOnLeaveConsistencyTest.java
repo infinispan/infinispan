@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashMap;
@@ -255,8 +255,8 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       if (op == Operation.CLEAR || op == Operation.REMOVE) {
          // caches should be empty. check that no keys were revived by an inconsistent state transfer
          for (int i = 0; i < numKeys; i++) {
-            assertNull(dc0.get(i));
-            assertNull(dc2.get(i));
+            assertFalse(dc0.containsKey(i));
+            assertFalse(dc2.containsKey(i));
          }
       } else if (op == Operation.PUT || op == Operation.PUT_MAP || op == Operation.REPLACE) {
          ConsistentHash ch = advancedCache(0).getComponentRegistry().getStateTransferManager().getCacheTopology().getReadConsistentHash();
@@ -264,10 +264,10 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          for (int i = 0; i < numKeys; i++) {
             // check number of owners
             int owners = 0;
-            if (dc0.get(i) != null) {
+            if (dc0.containsKey(i)) {
                owners++;
             }
-            if (dc2.get(i) != null) {
+            if (dc2.containsKey(i)) {
                owners++;
             }
             assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);
@@ -282,10 +282,10 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          for (int i = 0; i < numKeys; i++) {
             // check number of owners
             int owners = 0;
-            if (dc0.get(i) != null) {
+            if (dc0.containsKey(i)) {
                owners++;
             }
-            if (dc2.get(i) != null) {
+            if (dc2.containsKey(i)) {
                owners++;
             }
             assertEquals("Wrong number of owners", ch.locateOwners(i).size(), owners);

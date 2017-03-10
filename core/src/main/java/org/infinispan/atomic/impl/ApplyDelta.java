@@ -10,6 +10,7 @@ import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.functional.EntryView;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
@@ -86,7 +87,7 @@ public final class ApplyDelta<K> implements BiFunction<Object, EntryView.ReadWri
 
       @Override
       public ApplyDelta readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ApplyDelta(gcr.getComponent(Marshaller.class));
+         return new ApplyDelta(gcr.getComponent(StreamingMarshaller.class));
       }
    }
 }

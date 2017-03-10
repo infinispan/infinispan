@@ -1,8 +1,8 @@
 package org.infinispan.container.entries;
 
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.util.AbstractEntrySizeCalculatorHelper;
 import org.infinispan.commons.util.EntrySizeCalculator;
-import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.KeyValueMetadataSizeCalculator;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
@@ -22,11 +22,14 @@ import org.infinispan.metadata.Metadata;
  */
 public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorHelper<K, InternalCacheEntry<K, V>>
       implements KeyValueMetadataSizeCalculator<K, V> {
-   public CacheEntrySizeCalculator(EntrySizeCalculator<? super K, ? super V> calculator) {
-      this.calculator = calculator;
-   }
 
    private final EntrySizeCalculator<? super K, ? super V> calculator;
+   private final boolean includeInvocationRecords;
+
+   public CacheEntrySizeCalculator(EntrySizeCalculator<? super K, ? super V> calculator, boolean includeInvocationRecords) {
+      this.calculator = calculator;
+      this.includeInvocationRecords = includeInvocationRecords;
+   }
 
    @Override
    public long calculateSize(K key, InternalCacheEntry<K, V> ice) {
@@ -92,17 +95,31 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorH
          if (metadata.maxIdle() != -1) {
             iceSize += 16;
          }
-         if (InternalEntryFactoryImpl.isStoreMetadata(metadata, null)) {
-            // Assume it has a pointer for the metadata
-            iceSize += POINTER_SIZE;
-            // The metadata has itself and the class reference
-            metadataSize += OBJECT_SIZE + POINTER_SIZE;
-            // We only support embedded metadata that has a reference and NumericVersion instance
-            metadataSize += POINTER_SIZE;
-            metadataSize = roundUpToNearest8(metadataSize);
+         // Assume it has a pointer for the metadata
+         iceSize += POINTER_SIZE;
+         // The metadata has itself and the class reference
+         metadataSize += OBJECT_SIZE + POINTER_SIZE;
+         // We only support embedded metadata that has a reference and NumericVersion instance
+         metadataSize += POINTER_SIZE;
+         // ... and an invocation record
+         metadataSize += POINTER_SIZE;
+
+         metadataSize = roundUpToNearest8(metadataSize);
+
+         if (metadata.version() != null) {
             // This is for the NumericVersion and the long inside of it
             metadataSize += OBJECT_SIZE + POINTER_SIZE + 8;
             metadataSize = roundUpToNearest8(metadataSize);
+         }
+         if (includeInvocationRecords) {
+            InvocationRecord invocationRecord = metadata.lastInvocation();
+            // commandInvocationId, previous value, metdata, timestamp, next reference
+            metadataSize += roundUpToNearest8(OBJECT_SIZE + POINTER_SIZE + POINTER_SIZE + POINTER_SIZE + 8 + POINTER_SIZE);
+            // CommandInvocationId; the Address is shared
+            metadataSize += roundUpToNearest8(OBJECT_SIZE + POINTER_SIZE + 8);
+            // previousMetadata probably references the previous invocation so we won't loop
+            // through invocationRecord.next but let recursion count it
+            metadataSize += calculateSize(null, (V) invocationRecord.previousValue, invocationRecord.previousMetadata);
          }
       }
       return objSize + roundUpToNearest8(iceSize) + metadataSize;

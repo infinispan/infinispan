@@ -3,8 +3,8 @@ package org.infinispan.commands.functional;
 import static org.infinispan.commons.util.Util.toStr;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -13,17 +13,16 @@ import org.infinispan.functional.impl.Params;
 public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements FunctionalCommand<K, V> {
 
    Params params;
-   ValueMatcher valueMatcher;
    boolean successful = true;
    DataConversion keyDataConversion;
    DataConversion valueDataConversion;
 
-   public AbstractWriteKeyCommand(Object key, ValueMatcher valueMatcher,
+   public AbstractWriteKeyCommand(Object key,
                                   CommandInvocationId id, Params params,
                                   DataConversion keyDataConversion,
-                                  DataConversion valueDataConversion) {
-      super(key, EnumUtil.EMPTY_BIT_SET, id);
-      this.valueMatcher = valueMatcher;
+                                  DataConversion valueDataConversion,
+                                  InvocationManager invocationManager) {
+      super(key, EnumUtil.EMPTY_BIT_SET, id, invocationManager);
       this.params = params;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
@@ -34,14 +33,9 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
       // No-op
    }
 
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return valueMatcher;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      this.valueMatcher = valueMatcher;
+   public void init(InvocationManager invocationManager, ComponentRegistry componentRegistry) {
+      this.invocationManager = invocationManager;
+      init(componentRegistry);
    }
 
    @Override
@@ -66,7 +60,6 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
             ", flags=" + printFlags() +
             ", commandInvocationId=" + commandInvocationId +
             ", params=" + params +
-            ", valueMatcher=" + valueMatcher +
             ", successful=" + successful +
             "}";
    }
@@ -81,5 +74,5 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
       return valueDataConversion;
    }
 
-   abstract public void init(ComponentRegistry componentRegistry);
+   protected abstract void init(ComponentRegistry componentRegistry);
 }

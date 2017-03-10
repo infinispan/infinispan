@@ -61,8 +61,10 @@ public interface VisitableCommand extends ReplicableCommand {
     * @return Nodes on which the command needs to read the previous values of the keys it acts on.
     * @throws UnsupportedOperationException if the distinction does not make any sense.
     */
+   @Deprecated
    LoadType loadType();
 
+   @Deprecated
    enum LoadType {
       /**
        * Never load previous value.

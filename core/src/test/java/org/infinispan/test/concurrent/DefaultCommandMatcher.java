@@ -1,8 +1,10 @@
 package org.infinispan.test.concurrent;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import org.infinispan.commands.DataCommand;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.transport.Address;
@@ -18,35 +20,39 @@ public class DefaultCommandMatcher implements CommandMatcher {
    public static final Address LOCAL_ORIGIN_PLACEHOLDER = new AddressPlaceholder();
    public static final Address ANY_REMOTE_PLACEHOLDER = new AddressPlaceholder();
 
-   private final Class<? extends ReplicableCommand> commandClass;
+   private final Class<? extends ReplicableCommand>[] commandClasses;
    private final String cacheName;
    private final Address origin;
    private final Object key;
+   private final long withFlags;
+   private final long withoutFlags;
 
    private final AtomicInteger actualMatchCount = new AtomicInteger(0);
 
-   public DefaultCommandMatcher(Class<? extends ReplicableCommand> commandClass) {
-      this(commandClass, null, null, null);
+   public DefaultCommandMatcher(Class<? extends ReplicableCommand>... commandClasses) {
+      this(commandClasses, null, null, null, 0, 0);
    }
 
-   public DefaultCommandMatcher(Class<? extends CacheRpcCommand> commandClass, String cacheName, Address origin) {
-      this(commandClass, cacheName, origin, null);
+   public DefaultCommandMatcher(Class<? extends ReplicableCommand>[] commandClass, String cacheName, Address origin) {
+      this(commandClass, cacheName, origin, null, 0, 0);
    }
 
-   public DefaultCommandMatcher(Class<? extends DataCommand> commandClass, Object key) {
-      this(commandClass, null, null, key);
+   public DefaultCommandMatcher(Class<? extends ReplicableCommand>[] commandClasses, Object key, long withFlags, long withoutFlags) {
+      this(commandClasses, null, null, key, withFlags, withoutFlags);
    }
 
-   DefaultCommandMatcher(Class<? extends ReplicableCommand> commandClass, String cacheName, Address origin, Object key) {
-      this.commandClass = commandClass;
+   DefaultCommandMatcher(Class<? extends ReplicableCommand>[] commandClasses, String cacheName, Address origin, Object key, long withFlags, long withoutFlags) {
+      this.commandClasses = commandClasses;
       this.cacheName = cacheName;
       this.origin = origin;
       this.key = key;
+      this.withFlags = withFlags;
+      this.withoutFlags = withoutFlags;
    }
 
    @Override
    public boolean accept(ReplicableCommand command) {
-      if (commandClass != null && !commandClass.equals(command.getClass()))
+      if (commandClasses != null && !Stream.of(commandClasses).anyMatch(command.getClass()::equals))
          return false;
 
       if (cacheName != null && !cacheName.equals(((CacheRpcCommand) command).getCacheName().toString())) {
@@ -58,6 +64,11 @@ public class DefaultCommandMatcher implements CommandMatcher {
 
       if (key != null && !key.equals(((DataCommand) command).getKey()))
          return false;
+
+      if (command instanceof FlagAffectedCommand) {
+         long flags = ((FlagAffectedCommand) command).getFlagsBitSet();
+         if ((flags & withFlags) != withFlags || (flags & withoutFlags) != 0) return false;
+      }
 
       return true;
    }

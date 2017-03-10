@@ -18,6 +18,9 @@ public class PrimitiveEntrySizeCalculator extends AbstractEntrySizeCalculatorHel
    }
 
    protected long handleObject(Object object) {
+      if (object == null) {
+         return 0;
+      }
       Class<?> objClass = object.getClass();
       if (objClass == String.class) {
          String realString = (String) object;

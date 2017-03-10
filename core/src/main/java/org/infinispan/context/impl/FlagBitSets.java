@@ -27,6 +27,7 @@ public class FlagBitSets {
    public static final long PUT_FOR_STATE_TRANSFER = EnumUtil.bitSetOf(Flag.PUT_FOR_STATE_TRANSFER);
    public static final long PUT_FOR_X_SITE_STATE_TRANSFER = EnumUtil.bitSetOf(Flag.PUT_FOR_X_SITE_STATE_TRANSFER);
    public static final long SKIP_SHARED_CACHE_STORE = EnumUtil.bitSetOf(Flag.SKIP_SHARED_CACHE_STORE);
+   @Deprecated
    public static final long REMOVE_DATA_ON_STOP = EnumUtil.bitSetOf(Flag.REMOVE_DATA_ON_STOP);
    public static final long SKIP_OWNERSHIP_CHECK = EnumUtil.bitSetOf(Flag.SKIP_OWNERSHIP_CHECK);
    @Deprecated
@@ -42,6 +43,7 @@ public class FlagBitSets {
    public static final long COMMAND_RETRY = EnumUtil.bitSetOf(Flag.COMMAND_RETRY);
    public static final long ROLLING_UPGRADE = EnumUtil.bitSetOf(Flag.ROLLING_UPGRADE);
    public static final long REMOTE_ITERATION = EnumUtil.bitSetOf(Flag.REMOTE_ITERATION);
+   public static final long WITH_INVOCATION_RECORDS = EnumUtil.bitSetOf(Flag.WITH_INVOCATION_RECORDS);
 
    /**
     * Creates a copy of a Flag BitSet removing instances of FAIL_SILENTLY.

@@ -7,6 +7,8 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CommandsFactoryImpl;
+import org.infinispan.commands.InvocationManager;
+import org.infinispan.commands.impl.InvocationManagerImpl;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
@@ -79,7 +81,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
                               OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
-                              BiasManager.class})
+                              BiasManager.class, InvocationManager.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -189,6 +191,13 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             if (configuration.clustering().cacheMode().isScattered() &&
                   configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER) {
                return componentType.cast(new BiasManagerImpl());
+            } else {
+               return null;
+            }
+         } else if (componentType.equals(InvocationManager.class)) {
+            CacheMode cacheMode = configuration.clustering().cacheMode();
+            if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
+               return componentType.cast(new InvocationManagerImpl());
             } else {
                return null;
             }

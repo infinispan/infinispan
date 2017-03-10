@@ -5,9 +5,13 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -18,6 +22,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.metadata.Metadata;
 
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
@@ -32,8 +37,9 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
                                CommandInvocationId commandInvocationId,
                                DataConversion keyDataConversion,
                                DataConversion valueDataConversion,
+                               InvocationManager invocationManager,
                                ComponentRegistry componentRegistry) {
-      super(commandInvocationId, params, keyDataConversion, valueDataConversion);
+      super(commandInvocationId, params, keyDataConversion, valueDataConversion, invocationManager);
       this.keys = keys;
       this.f = f;
       init(componentRegistry);
@@ -45,6 +51,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       this.f = command.f;
       this.keyDataConversion = command.keyDataConversion;
       this.valueDataConversion = command.valueDataConversion;
+      this.invocationManager = command.invocationManager;
    }
 
    public WriteOnlyManyCommand() {
@@ -60,6 +67,11 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    public final WriteOnlyManyCommand<K, V> withKeys(Collection<?> keys) {
       setKeys(keys);
+      if (lastInvocationIds != null) {
+         lastInvocationIds = lastInvocationIds.entrySet().stream()
+               .filter(e -> keys.contains(e.getKey()))
+               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      }
       return this;
    }
 
@@ -75,8 +87,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
-      output.writeInt(topologyId);
       output.writeLong(flags);
+      MarshallUtil.marshallMap(lastInvocationIds, ObjectOutput::writeObject, CommandInvocationId::writeTo, output);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
    }
@@ -88,8 +100,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       f = (Consumer<WriteEntryView<K, V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
-      topologyId = input.readInt();
       flags = input.readLong();
+      lastInvocationIds = MarshallUtil.unmarshallMap(input, in -> in.readObject(), CommandInvocationId::readFrom, HashMap::new);
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
    }
@@ -102,11 +114,11 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       for (Object k : keys) {
-         CacheEntry cacheEntry = ctx.lookupEntry(k);
-         if (cacheEntry == null) {
-            throw new IllegalStateException();
-         }
+         CacheEntry<K, V> cacheEntry = ctx.lookupEntry(k);
+         Object prevValue = cacheEntry.getValue();
+         Metadata prevMetadata = cacheEntry.getMetadata();
          f.accept(EntryViews.writeOnly(cacheEntry, valueDataConversion));
+         recordInvocation(ctx, cacheEntry, prevValue, prevMetadata);
       }
       return null;
    }
@@ -140,6 +152,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       sb.append(", isForwarded=").append(isForwarded);
       sb.append(", keyDataConversion=").append(keyDataConversion);
       sb.append(", valueDataConversion=").append(valueDataConversion);
+      sb.append(", topologyId=").append(topologyId);
+      sb.append(", commandInvocationId=").append(commandInvocationId);
       sb.append('}');
       return sb.toString();
    }
@@ -155,11 +169,10 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry) {
+   protected void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent)
-         ((InjectableComponent) f).inject(componentRegistry);
+      InjectableComponent.inject(componentRegistry, f);
    }
 
 }

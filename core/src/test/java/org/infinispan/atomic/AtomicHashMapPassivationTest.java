@@ -70,7 +70,7 @@ public class AtomicHashMapPassivationTest extends SingleCacheManagerTest {
    }
 
    private void testStoredEntry(InternalCacheValue entry, Object key, String src) {
-      assert entry != null : src + " entry for key " + key + " should NOT be null";
+      assert entry != null && entry.getValue() != null : src + " entry for key " + key + " should NOT be null";
    }
 
    private void testStoredEntry(MarshalledEntry entry, Object key, String src) {

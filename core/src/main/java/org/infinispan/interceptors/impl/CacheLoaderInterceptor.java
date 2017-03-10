@@ -370,9 +370,22 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          }
          return true;
       }
+      if (e.getMetadata() != null) {
+         if (trace) {
+            log.tracef("Skip load for command %s. Entry %s has non-null metadata (is a tombstone).", cmd, e);
+         }
+         return true;
+      }
       if (e.skipLookup()) {
          if (trace) {
             log.tracef("Skip load for command %s. Entry %s (skipLookup=%s) is set to skip lookup.", cmd, e, e.skipLookup());
+         }
+         return true;
+      }
+
+      if (cmd.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD)) {
+         if (trace) {
+            log.tracef("Skip load for command %s. Command has SKIP_CACHE_LOAD flag.", cmd);
          }
          return true;
       }
@@ -384,33 +397,26 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return true;
       }
 
-      boolean skip;
+      boolean skip = false;
       if (cmd instanceof WriteCommand) {
          skip = skipLoadForWriteCommand((WriteCommand) cmd, key, ctx);
-         if (trace) {
-            log.tracef("Skip load for write command %s? %s", cmd, skip);
-         }
-      } else {
-         //read command
-         skip = hasSkipLoadFlag(cmd);
-         if (trace) {
-            log.tracef("Skip load for command %s?. %s", cmd, skip);
-         }
       }
+      if (trace) {
+         log.tracef("Skip load for write command %s? %s", cmd, skip);
+      }
+
       return skip;
    }
 
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
       // TODO loading should be mandatory if there are listeners for previous values
-      if (cmd.loadType() != VisitableCommand.LoadType.DONT_LOAD) {
-         if (hasSkipLoadFlag(cmd)) {
-            log.tracef("Skipping load for command that reads existing values %s", cmd);
-            return true;
-         } else {
-            return false;
-         }
+      // ISPN-7590 requirement is that clustered listeners are properly notified for continuous query;
+      // do we care about continuous query on local caches?
+      if (cmd.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
+         return true;
+      } else {
+         return false;
       }
-      return true;
    }
 
    protected void sendNotification(Object key, Object value, boolean pre,

@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
@@ -62,7 +63,7 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       // We should have received an event that was marked as retried - maybe even two!
       assertTrue(clusterListener.events.size() >= 1);
       assertTrue(clusterListener.events.size() <= 2);
-      checkEvent(clusterListener.events.get(0), key, true, true);
+      checkEvent(clusterListener.events.get(0), key, true);
    }
 
    public void testPrimaryOwnerGoesDownAfterBackupRaisesEvent() throws InterruptedException, TimeoutException,
@@ -101,18 +102,21 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       // Unblock the command
       barrier.await(10, TimeUnit.SECONDS);
 
-      // This should return null normally, but since it was retried it returns it's own value :(
-      // Maybe some day this can work properly
       String returnValue = future.get(10, TimeUnit.SECONDS);
-      assertEquals(FIRST_VALUE, returnValue);
+      assertNull(returnValue);
 
-      assertTrue(clusterListener.events.size() >= 2);
-      assertTrue(clusterListener.events.size() <= 3);
-      // First create should not be retried since it was sent before node failure.
-      checkEvent(clusterListener.events.get(0), key, true, false);
+      // We should receive the first event as backup from primary. Then, if we become the new primary, we will
+      // generate another event as primary always executes the command (on rewinded value).
+      // TODO: I am not sure if it is necessary to fire event there - maybe just in dist mode where the primary
+      //       has to notify remote clustered listeners
+      // If we don't become primary, the retry from primary will be ignored because we will see that the update was
+      // already applied.
+      assertTrue(clusterListener.events.size() >= 1);
+      checkEvent(clusterListener.events.get(0), key, false);
 
-      // We should receive a retry event since it doesn't know the exact state, but it will be a MODIFY since
-      // CREATE was already done
-      checkEvent(clusterListener.events.get(1), key, false, true);
+      assertTrue(clusterListener.events.size() <= 2);
+      if (clusterListener.events.size() > 1) {
+         checkEvent(clusterListener.events.get(1), key, true);
+      }
    }
 }

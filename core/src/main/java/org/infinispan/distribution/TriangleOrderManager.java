@@ -68,7 +68,11 @@ public class TriangleOrderManager {
    }
 
    private void checkTopologyId(int topologyId) {
-      if (topologyId != currentCacheTopology.getTopologyId()) {
+      int current = currentCacheTopology.getTopologyId();
+      if (topologyId != current) {
+         if (trace) {
+            log.tracef(new Exception(), "Topology check failed, command has %d, current is %d", topologyId, current);
+         }
          throw OutdatedTopologyException.INSTANCE;
       }
    }

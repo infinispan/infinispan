@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.functional.MetaParam.MetaCreated;
 import org.infinispan.functional.MetaParam.MetaEntryVersion;
@@ -91,6 +93,30 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    }
 
    @Override
+   public InvocationRecord lastInvocation() {
+      return params.find(InvocationRecords.class).flatMap(InvocationRecords::lastInvocation).orElse(null);
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return params.find(InvocationRecords.class).flatMap(ir -> ir.invocation(id)).orElse(null);
+   }
+
+   /**
+    * @return True if these metaparams contain type of metadata that is not covered in EmbeddedMetadata
+    */
+   public boolean isCustom() {
+      for (MetaParam param : params) {
+         if (param instanceof MetaLifespan) continue;
+         if (param instanceof MetaMaxIdle) continue;
+         if (param instanceof MetaEntryVersion) continue;
+         if (param instanceof InvocationRecords) continue;
+         return true;
+      }
+      return false;
+   }
+
+   @Override
    public Builder builder() {
       return new Builder(params.copy());
    }
@@ -146,6 +172,23 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       public Builder version(EntryVersion version) {
          params.add(new MetaEntryVersion(version));
          return this;
+      }
+
+      @Override
+      public Metadata.Builder invocation(CommandInvocationId id, Object previousValue, Metadata previousMetadata, long timestamp) {
+         params.replace(InvocationRecords.class, records -> InvocationRecords.join(id, previousValue, previousMetadata, timestamp, records));
+         return this;
+      }
+
+      @Override
+      public Metadata.Builder invocations(InvocationRecord invocations) {
+         params.replace(InvocationRecords.class, ignored -> InvocationRecords.of(invocations));
+         return this;
+      }
+
+      @Override
+      public InvocationRecord invocations() {
+         return params.find(InvocationRecords.class).flatMap(InvocationRecords::lastInvocation).orElse(null);
       }
 
       @Override

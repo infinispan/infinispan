@@ -2,10 +2,13 @@ package org.infinispan.container.offheap;
 
 import java.io.IOException;
 
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.ExpiryHelper;
@@ -13,6 +16,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.TimeService;
@@ -27,23 +31,24 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
    private static final byte[] EMPTY_BYTES = new byte[0];
 
-   @Inject private Marshaller marshaller;
+   @Inject private StreamingMarshaller marshaller;
    @Inject private OffHeapMemoryAllocator allocator;
    @Inject private TimeService timeService;
    @Inject private InternalEntryFactory internalEntryFactory;
    @Inject private Configuration configuration;
 
    private boolean evictionEnabled;
+   private boolean transactional;
 
    // If custom than we just store the metadata as is (no other bits should be used)
-   private static final byte CUSTOM = 1;
+   private static final int CUSTOM = 1;
    // Version can be set with any combination of the following types
-   private static final byte HAS_VERSION = 2;
+   private static final int HAS_VERSION = 2;
    // Only one of the following should ever be set
-   private static final byte IMMORTAL = 1 << 2;
-   private static final byte MORTAL = 1 << 3;
-   private static final byte TRANSIENT = 1 << 4;
-   private static final byte TRANSIENT_MORTAL = 1 << 5;
+   private static final int MORTAL = 1 << 2;
+   private static final int TRANSIENT = 1 << 3;
+   private static final int HAS_INVOCATIONS = 1 << 4;
+   private static final int EMBEDDED_TYPE_MASK = TRANSIENT | MORTAL;
 
    /**
     * HEADER is composed of type (byte), hashCode (int), keyLength (int), valueLength (int)
@@ -54,6 +59,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    @Start
    public void start() {
       this.evictionEnabled = configuration.memory().isEvictionEnabled();
+      this.transactional = configuration.transaction().transactionMode().isTransactional();
    }
 
    /**
@@ -65,55 +71,87 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
     */
    @Override
    public long create(WrappedBytes key, WrappedBytes value, Metadata metadata) {
-      byte type;
+      byte type = 0;
       boolean shouldWriteMetadataSize = false;
       byte[] metadataBytes;
       if (metadata instanceof EmbeddedMetadata) {
+         // regular
+      } else if (metadata instanceof MetaParamsInternalMetadata && !((MetaParamsInternalMetadata) metadata).isCustom()) {
+         // metaparams without any custom type
+      } else {
+         type = CUSTOM;
+      }
+      if (type != CUSTOM) {
+         int versionInvocationsLength = 0;
          EntryVersion version = metadata.version();
          byte[] versionBytes;
          if (version != null) {
-            type = HAS_VERSION;
+            type |= HAS_VERSION;
             shouldWriteMetadataSize = true;
             try {
                versionBytes = marshaller.objectToByteBuffer(version);
+               versionInvocationsLength += versionBytes.length;
             } catch (IOException | InterruptedException e) {
                throw new CacheException(e);
             }
          } else {
-            type = 0;
             versionBytes = EMPTY_BYTES;
+         }
+         ByteBuffer invocationBytes;
+         if (metadata.lastInvocation() != null) {
+            type |= HAS_INVOCATIONS;
+            shouldWriteMetadataSize = true;
+            try {
+               invocationBytes = metadata.lastInvocation().toByteBuffer(marshaller);
+               versionInvocationsLength += invocationBytes.getLength();
+            } catch (IOException e) {
+               throw new CacheException(e);
+            }
+         } else {
+            invocationBytes = null;
+         }
+
+         if (type == (HAS_INVOCATIONS | HAS_VERSION)) {
+            versionInvocationsLength += 4;
          }
 
          long lifespan = metadata.lifespan();
          long maxIdle = metadata.maxIdle();
 
          if (lifespan < 0 && maxIdle < 0) {
-            type |= IMMORTAL;
-            metadataBytes = versionBytes;
+            if ((type & HAS_VERSION) == 0) {
+               metadataBytes = invocationBytes == null ? EMPTY_BYTES : invocationBytes.toBytes();
+            } else if ((type & HAS_INVOCATIONS) == 0) {
+               metadataBytes = versionBytes;
+            } else {
+               metadataBytes = new byte[versionInvocationsLength];
+               Bits.putInt(metadataBytes, 0, versionBytes.length);
+               System.arraycopy(versionBytes, 0, metadataBytes, 4, versionBytes.length);
+               invocationBytes.copyTo(metadataBytes, 4 + versionBytes.length);
+            }
          } else if (lifespan > -1 && maxIdle < 0) {
             type |= MORTAL;
-            metadataBytes = new byte[16 + versionBytes.length];
+            metadataBytes = new byte[16 + versionInvocationsLength];
             Bits.putLong(metadataBytes, 0, lifespan);
             Bits.putLong(metadataBytes, 8, timeService.wallClockTime());
-            System.arraycopy(versionBytes, 0, metadataBytes, 16, versionBytes.length);
+            putVersionsInvocations(metadataBytes, 16, type, versionBytes, invocationBytes);
          } else if (lifespan < 0 && maxIdle > -1) {
             type |= TRANSIENT;
-            metadataBytes = new byte[16 + versionBytes.length];
+            metadataBytes = new byte[16 + versionInvocationsLength];
             Bits.putLong(metadataBytes, 0, maxIdle);
             Bits.putLong(metadataBytes, 8, timeService.wallClockTime());
-            System.arraycopy(versionBytes, 0, metadataBytes, 16, versionBytes.length);
+            putVersionsInvocations(metadataBytes, 16, type, versionBytes, invocationBytes);
          } else {
-            type |= TRANSIENT_MORTAL;
-            metadataBytes = new byte[32 + versionBytes.length];
+            type |= TRANSIENT | MORTAL;
+            metadataBytes = new byte[32 + versionInvocationsLength];
             Bits.putLong(metadataBytes, 0, maxIdle);
             Bits.putLong(metadataBytes, 8, lifespan);
             long time = timeService.wallClockTime();
             Bits.putLong(metadataBytes, 16, time);
             Bits.putLong(metadataBytes, 24, time);
-            System.arraycopy(versionBytes, 0, metadataBytes, 32, versionBytes.length);
+            putVersionsInvocations(metadataBytes, 32, type, versionBytes, invocationBytes);
          }
       } else {
-         type = CUSTOM;
          shouldWriteMetadataSize = true;
          try {
             metadataBytes = marshaller.objectToByteBuffer(metadata);
@@ -121,9 +159,10 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             throw new CacheException(e);
          }
       }
+
       int keySize = key.getLength();
       int metadataSize = metadataBytes.length;
-      int valueSize = value.getLength();
+      int valueSize = value == null ? 0 : value.getLength();
 
       // Eviction requires 2 additional pointers at the beginning
       int offset = evictionEnabled ? 16 : 0;
@@ -148,7 +187,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          MEMORY.putInt(memoryAddress, offset, metadataBytes.length);
          offset += 4;
       }
-      MEMORY.putInt(memoryAddress, offset, value.getLength());
+      MEMORY.putInt(memoryAddress, offset, valueSize);
       offset += 4;
 
       MEMORY.putBytes(key.getBytes(), key.backArrayOffset(), memoryAddress, offset, keySize);
@@ -157,12 +196,27 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       MEMORY.putBytes(metadataBytes, 0, memoryAddress, offset, metadataSize);
       offset += metadataSize;
 
-      MEMORY.putBytes(value.getBytes(), value.backArrayOffset(), memoryAddress, offset, valueSize);
-      offset += valueSize;
+      if (value != null) {
+         MEMORY.putBytes(value.getBytes(), value.backArrayOffset(), memoryAddress, offset, valueSize);
+         offset += valueSize;
+      }
 
       assert offset == totalSize;
 
       return memoryAddress;
+   }
+
+   private void putVersionsInvocations(byte[] metadataBytes, int offset, byte type, byte[] versionBytes, ByteBuffer invocationBytes) {
+      int hasBoth = HAS_VERSION | HAS_INVOCATIONS;
+      if ((type & hasBoth) == hasBoth) {
+         Bits.putInt(metadataBytes, offset, versionBytes.length);
+         System.arraycopy(versionBytes, 0, metadataBytes, offset + 4, versionBytes.length);
+         invocationBytes.copyTo(metadataBytes, offset + 4 + versionBytes.length);
+      } else if ((type & HAS_VERSION) != 0) {
+         System.arraycopy(versionBytes, 0, metadataBytes, offset, versionBytes.length);
+      } else if ((type & HAS_INVOCATIONS) != 0) {
+         invocationBytes.copyTo(metadataBytes, offset);
+      }
    }
 
    @Override
@@ -228,7 +282,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
       byte[] metadataBytes;
       switch (metadataType) {
-         case IMMORTAL:
+         case 0:
             metadataBytes = EMPTY_BYTES;
             break;
          case MORTAL:
@@ -237,7 +291,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          case TRANSIENT:
             metadataBytes = new byte[16];
             break;
-         case TRANSIENT_MORTAL:
+         case TRANSIENT | MORTAL:
             metadataBytes = new byte[32];
             break;
          default:
@@ -246,15 +300,21 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             offset += 4;
       }
 
-      byte[] valueBytes = new byte[MEMORY.getInt(address, offset)];
+      // TODO: when this is a tombstone we don't need to write value length
+      int valueLength = MEMORY.getInt(address, offset);
+      byte[] valueBytes = valueLength == 0 ? null : new byte[valueLength];
       offset += 4;
 
       MEMORY.getBytes(address, offset, keyBytes, 0, keyBytes.length);
       offset += keyBytes.length;
       MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
       offset += metadataBytes.length;
-      MEMORY.getBytes(address, offset, valueBytes, 0, valueBytes.length);
-      offset += valueBytes.length;
+
+      WrappedByteArray value = null;
+      if (valueLength != 0) {
+         MEMORY.getBytes(address, offset, valueBytes, 0, valueBytes.length);
+         value = new WrappedByteArray(valueBytes);
+      }
 
       Metadata metadata;
       // This is a custom metadata
@@ -264,8 +324,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          } catch (IOException | ClassNotFoundException e) {
             throw new CacheException(e);
          }
-         return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
-               new WrappedByteArray(valueBytes), metadata);
+         return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode), value, metadata);
       } else {
          long lifespan;
          long maxIdle;
@@ -273,9 +332,10 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          long lastUsed;
          offset = 0;
          boolean hasVersion = (metadataType & HAS_VERSION) == HAS_VERSION;
+         boolean hasInvocations = (metadataType & HAS_INVOCATIONS) == HAS_INVOCATIONS;
          // Ignore CUSTOM and VERSION to find type
-         switch (metadataType & 0xFC) {
-            case IMMORTAL:
+         switch (metadataType & EMBEDDED_TYPE_MASK) {
+            case 0:
                lifespan = -1;
                maxIdle = -1;
                created = -1;
@@ -293,7 +353,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
                created = -1;
                lastUsed = Bits.getLong(metadataBytes, offset += 8);
                break;
-            case TRANSIENT_MORTAL:
+            case TRANSIENT | MORTAL:
                lifespan = Bits.getLong(metadataBytes, offset);
                maxIdle = Bits.getLong(metadataBytes, offset += 8);
                created = Bits.getLong(metadataBytes, offset += 8);
@@ -302,18 +362,32 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             default:
                throw new IllegalArgumentException("Unsupported type: " + metadataType);
          }
-         if (hasVersion) {
-            try {
-               EntryVersion version = (EntryVersion) marshaller.objectFromByteBuffer(metadataBytes, offset,
-                     metadataBytes.length - offset);
+
+         try {
+            if (hasVersion) {
+               if (hasInvocations) {
+                  int versionLength = Bits.getInt(metadataBytes, offset);
+                  EntryVersion version = (EntryVersion) marshaller.objectFromByteBuffer(metadataBytes, offset += 4, versionLength);
+                  InvocationRecord invocations = InvocationRecord.fromBytes(marshaller, metadataBytes, offset += versionLength, metadataBytes.length - offset);
+                  metadata = new EmbeddedMetadata.Builder().version(version).invocations(invocations).lifespan(lifespan).maxIdle(maxIdle).build();
+                  return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
+                        value, metadata, created, lifespan, lastUsed, maxIdle);
+               } else {
+                  EntryVersion version = (EntryVersion) marshaller.objectFromByteBuffer(metadataBytes, offset, metadataBytes.length - offset);
+                  return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
+                        value, version, created, lifespan, lastUsed, maxIdle);
+               }
+            } else if (hasInvocations) {
+               InvocationRecord invocations = InvocationRecord.fromBytes(marshaller, metadataBytes, offset, metadataBytes.length - offset);
+               metadata = new EmbeddedMetadata.Builder().invocations(invocations).lifespan(lifespan).maxIdle(maxIdle).build();
                return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
-                     new WrappedByteArray(valueBytes), version, created, lifespan, lastUsed, maxIdle);
-            } catch (IOException | ClassNotFoundException e) {
-               throw new CacheException(e);
+                     value, metadata, created, lifespan, lastUsed, maxIdle);
+            } else {
+               return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
+                     value, (Metadata) null, created, lifespan, lastUsed, maxIdle);
             }
-         } else {
-            return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
-                  new WrappedByteArray(valueBytes), (Metadata) null, created, lifespan, lastUsed, maxIdle);
+         } catch (IOException | ClassNotFoundException e) {
+            throw new CacheException("Metadata: " + Util.hexDump(metadataBytes), e);
          }
       }
    }
@@ -370,7 +444,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       int offset = evictionEnabled ? 24 : 8;
 
       byte metadataType = MEMORY.getByte(address, offset);
-      if ((metadataType & IMMORTAL) != 0) {
+      if ((metadataType & EMBEDDED_TYPE_MASK) == 0) {
          return false;
       }
       // type
@@ -421,7 +495,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
                metadataBytes = new byte[16];
                MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
                return ExpiryHelper.isExpiredTransient(Bits.getLong(metadataBytes, 0), Bits.getLong(metadataBytes, 8), now);
-            case TRANSIENT_MORTAL:
+            case TRANSIENT | MORTAL:
                metadataBytes = new byte[32];
                MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
                long lifespan = Bits.getLong(metadataBytes, 0);
@@ -436,7 +510,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    }
 
    static private boolean requiresMetadataSize(byte type) {
-      return (type & (CUSTOM | HAS_VERSION)) != 0;
+      return (type & (CUSTOM | HAS_VERSION | HAS_INVOCATIONS)) != 0;
    }
 
    @Override
@@ -444,8 +518,14 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       long totalSize = evictionEnabled ? 24 : 8;
       totalSize += HEADER_LENGTH;
       totalSize += key.getLength() + value.getLength();
-      long metadataSize = 0;
-      if (metadata instanceof EmbeddedMetadata) {
+      if (transactional && metadata != null && metadata.lastInvocation() != null) {
+         // estimate the size without invocations as these are kept only in the context
+         metadata = metadata.builder().noInvocations().build();
+      }
+      long metadataSize;
+      if (metadata instanceof EmbeddedMetadata ||
+            metadata instanceof MetaParamsInternalMetadata && !((MetaParamsInternalMetadata) metadata).isCustom()) {
+         metadataSize = 0;
          EntryVersion version = metadata.version();
          if (version != null) {
             try {
@@ -462,11 +542,20 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          if (metadata.lifespan() >= 0) {
             metadataSize += 16;
          }
+         if (metadata.lastInvocation() != null) {
+            try {
+               metadataSize += metadata.lastInvocation().toByteBuffer(marshaller).getLength();
+            } catch (IOException e) {
+               throw new CacheException(e);
+            }
+            if (version != null) {
+               metadataSize += 4;
+            }
+         }
       } else {
          // We have to write the size of the metadata object
-         metadataSize += 4;
          try {
-            metadataSize += marshaller.objectToByteBuffer(metadata).length;
+            metadataSize = 4 + marshaller.objectToByteBuffer(metadata).length;
          } catch (IOException | InterruptedException e) {
             throw new CacheException(e);
          }

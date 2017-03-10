@@ -25,6 +25,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.jgroups.protocols.relay.RELAY2;
@@ -57,6 +58,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          clearSites();
       } else {
          killSites();
+         TestResourceTracker.cleanUpResources(TestResourceTracker.getCurrentTestName());
       }
    }
 

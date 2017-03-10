@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -113,6 +114,9 @@ public abstract class MultiStoresFunctionalTest<TStoreConfigurationBuilder exten
             assertEquals("VALUE2 V2", cache0.get("KEY2"));
             cache0.remove("KEY2");
             assertEquals(null, cache0.get("KEY2"));
+
+            // Make sure that tombstones are expired
+            cache0.getAdvancedCache().getComponentRegistry().getComponent(InvocationManager.class).flush();
 
             withCacheManager(new CacheManagerCallable(
                   TestCacheManagerFactory.createClusteredCacheManager(configs.get(1))) {

@@ -13,6 +13,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
@@ -113,7 +114,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
             cache1.getRpcManager().getMembers().size() == 3 &&
             cache2.getRpcManager().getMembers().size() == 3);
 
-      CommandMatcher writeCommandMatcher = matchCommand(op.getCommandClass()).build();
+      CommandMatcher writeCommandMatcher = matchCommand(op.getCommandClass()).withoutFlags(FlagBitSets.CACHE_MODE_LOCAL).build();
       // Allow the value to be written on cache1 before "write:cache1_before_return"
       advanceOnInterceptor(sequencer, cache1, StateTransferInterceptor.class, writeCommandMatcher).before("write:cache1_before_return");
       // The remote get (if any) will happen after "write:cache2_before_dist"

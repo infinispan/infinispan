@@ -8,9 +8,9 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -18,7 +18,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -33,7 +32,6 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    private boolean nonExistent = false;
 
    protected Metadata metadata;
-   protected ValueMatcher valueMatcher;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value.
@@ -42,17 +40,17 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    protected Object value;
 
    public RemoveCommand(Object key, Object value, CacheNotifier notifier, long flagsBitSet,
-                        CommandInvocationId commandInvocationId) {
-      super(key, flagsBitSet, commandInvocationId);
+                        CommandInvocationId commandInvocationId, InvocationManager invocationManager) {
+      super(key, flagsBitSet, commandInvocationId, invocationManager);
       this.value = value;
       //noinspection unchecked
       this.notifier = notifier;
-      this.valueMatcher = value != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
    }
 
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier notifier, InvocationManager invocationManager) {
       //noinspection unchecked
       this.notifier = notifier;
+      this.invocationManager = invocationManager;
    }
 
    public RemoveCommand() {
@@ -65,40 +63,26 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       Object prevValue = e.getValue();
       if (prevValue == null) {
          nonExistent = true;
-         if (valueMatcher.matches(null, value, null)) {
-            e.setChanged(true);
-            e.setRemoved(true);
-            e.setCreated(false);
-            if (this instanceof EvictCommand) {
-               e.setEvicted(true);
-            }
-            e.setValue(null);
-            return isConditional() ? true : null;
+         if (value == null) {
+            // TODO ISPN-8204 It would be more correct to set successful = false here
+            return performRemove(e, null, ctx);
          } else {
             log.trace("Nothing to remove since the entry doesn't exist in the context or it is null");
             successful = false;
-            return false;
+            return Boolean.FALSE;
          }
       }
 
-      if (!valueMatcher.matches(prevValue, value, null)) {
+      if (value != null && !value.equals(prevValue)) {
          successful = false;
-         return false;
+         return Boolean.FALSE;
       }
 
-      if (this instanceof EvictCommand) {
-         e.setEvicted(true);
-      }
-
+      notify(ctx, prevValue, e.getMetadata(), true);
       return performRemove(e, prevValue, ctx);
    }
 
@@ -144,16 +128,14 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    @Override
    public String toString() {
       return new StringBuilder()
-         .append("RemoveCommand{key=")
-         .append(toStr(key))
+         .append("RemoveCommand{key=").append(toStr(key))
          .append(", value=").append(toStr(value))
          .append(", metadata=").append(metadata)
          .append(", flags=").append(printFlags())
          .append(", commandInvocationId=").append(CommandInvocationId.show(commandInvocationId))
-         .append(", valueMatcher=").append(valueMatcher)
+         .append(", lastInvocationId=").append(lastInvocationId)
          .append(", topologyId=").append(getTopologyId())
-         .append("}")
-         .toString();
+         .append('}').toString();
    }
 
    @Override
@@ -176,7 +158,6 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       output.writeObject(value);
       output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
    }
 
@@ -186,18 +167,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       value = input.readObject();
       metadata = (Metadata) input.readObject();
       setFlagsBitSet(input.readLong());
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return valueMatcher;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      this.valueMatcher = valueMatcher;
    }
 
    @Override
@@ -207,7 +177,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
 
    @Override
    public LoadType loadType() {
-      return isConditional() || !hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) ? LoadType.PRIMARY : LoadType.DONT_LOAD;
+      return isConditional() || !hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES) ? LoadType.OWNER : LoadType.DONT_LOAD;
    }
 
    public Object getValue() {
@@ -225,20 +195,21 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    }
 
    protected Object performRemove(MVCCEntry e, Object prevValue, InvocationContext ctx) {
-      notify(ctx, prevValue, e.getMetadata(), true);
-
-      e.setRemoved(true);
       e.setChanged(true);
+      e.setRemoved(true);
+      e.setCreated(false);
       e.setValue(null);
       if (metadata != null) {
          e.setMetadata(metadata);
       }
 
-      if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-         return isConditional() ? true : prevValue;
+      Object result;
+      if (isConditional()) {
+         result = Boolean.TRUE;
       } else {
-         // Return the expected value when retrying
-         return isConditional() ? true : value;
+         result = prevValue;
       }
+      recordInvocation(ctx, e, prevValue, e.getMetadata());
+      return result;
    }
 }

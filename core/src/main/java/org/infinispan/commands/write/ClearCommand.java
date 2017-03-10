@@ -85,16 +85,6 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // Do nothing
-   }
-
-   @Override
    public Collection<?> getAffectedKeys() {
       return Collections.emptySet();
    }
@@ -102,6 +92,25 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    @Override
    public void fail() {
       throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setCompleted(Object key, boolean isCompleted) {
+   }
+
+   @Override
+   public boolean isCompleted(Object key) {
+      return false;
+   }
+
+   @Override
+   public CommandInvocationId getLastInvocationId(Object key) {
+      return null;
+   }
+
+   @Override
+   public void setLastInvocationId(Object key, CommandInvocationId id) {
+      // noop
    }
 
    @Override

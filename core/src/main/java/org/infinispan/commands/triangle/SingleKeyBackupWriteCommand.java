@@ -6,6 +6,8 @@ import java.io.ObjectOutput;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -37,6 +39,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    private Object key;
    private Object valueOrFunction;
    private Metadata metadata;
+   private CommandInvocationId lastInvocationId;
 
    private CacheNotifier cacheNotifier;
    private ComponentRegistry componentRegistry;
@@ -57,8 +60,8 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
    }
 
    public void init(InvocationContextFactory factory, AsyncInterceptorChain chain,
-         CacheNotifier cacheNotifier, ComponentRegistry componentRegistry, VersionGenerator versionGenerator) {
-      injectDependencies(factory, chain);
+                    CacheNotifier cacheNotifier, ComponentRegistry componentRegistry, VersionGenerator versionGenerator, InvocationManager invocationManager) {
+      injectDependencies(factory, chain, invocationManager);
       this.cacheNotifier = cacheNotifier;
       this.componentRegistry = componentRegistry;
       this.versionGenerator = versionGenerator;
@@ -75,6 +78,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       this.key = command.getKey();
       this.valueOrFunction = command.getValue();
       this.metadata = command.getMetadata();
+      this.lastInvocationId = command.getLastInvocationId(command.getKey());
    }
 
    public void setRemoveCommand(RemoveCommand command, boolean removeExpired) {
@@ -82,6 +86,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       setCommonAttributesFromCommand(command);
       this.key = command.getKey();
       this.valueOrFunction = command.getValue();
+      this.lastInvocationId = command.getLastInvocationId(command.getKey());
    }
 
    public void setReplaceCommand(ReplaceCommand command) {
@@ -90,6 +95,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       this.key = command.getKey();
       this.valueOrFunction = command.getNewValue();
       this.metadata = command.getMetadata();
+      this.lastInvocationId = command.getLastInvocationId(command.getKey());
    }
 
    public void setComputeCommand(ComputeCommand command) {
@@ -98,6 +104,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       this.key = command.getKey();
       this.valueOrFunction = command.getRemappingBiFunction();
       this.metadata = command.getMetadata();
+      this.lastInvocationId = command.getLastInvocationId(command.getKey());
    }
 
    public void setComputeIfAbsentCommand(ComputeIfAbsentCommand command) {
@@ -106,6 +113,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       this.key = command.getKey();
       this.valueOrFunction = command.getMappingFunction();
       this.metadata = command.getMetadata();
+      this.lastInvocationId = command.getLastInvocationId(command.getKey());
    }
 
    @Override
@@ -113,6 +121,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       writeBase(output);
       MarshallUtil.marshallEnum(operation, output);
       output.writeObject(key);
+      CommandInvocationId.writeTo(output, lastInvocationId);
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
@@ -134,6 +143,7 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
       readBase(input);
       operation = MarshallUtil.unmarshallEnum(input, SingleKeyBackupWriteCommand::valueOf);
       key = input.readObject();
+      lastInvocationId = CommandInvocationId.readFrom(input);
       switch (operation) {
          case COMPUTE_IF_PRESENT:
          case COMPUTE_IF_ABSENT:
@@ -157,30 +167,40 @@ public class SingleKeyBackupWriteCommand extends BackupWriteCommand {
 
    @Override
    WriteCommand createWriteCommand() {
+      WriteCommand command;
       switch (operation) {
          case REMOVE:
-            return new RemoveCommand(key, null, cacheNotifier, getFlags(), getCommandInvocationId());
+            command = new RemoveCommand(key, null, cacheNotifier, getFlags(), getCommandInvocationId(), invocationManager);
+            break;
          case WRITE:
-            return new PutKeyValueCommand(key, valueOrFunction, false, cacheNotifier, metadata, getTopologyId(),
-                  getCommandInvocationId());
+            command = new PutKeyValueCommand(key, valueOrFunction, false, cacheNotifier, metadata, getTopologyId(),
+                  getCommandInvocationId(), invocationManager);
+            break;
          case COMPUTE:
-            return new ComputeCommand(key, (BiFunction) valueOrFunction, false, getFlags(), getCommandInvocationId(),
-                  metadata, cacheNotifier, componentRegistry);
+            command = new ComputeCommand(key, (BiFunction) valueOrFunction, false, getFlags(), getCommandInvocationId(),
+                  metadata, cacheNotifier, componentRegistry, invocationManager);
+            break;
          case REPLACE:
-            return new ReplaceCommand(key, null, valueOrFunction, cacheNotifier, metadata, getFlags(),
-                  getCommandInvocationId());
+            command = new ReplaceCommand(key, null, valueOrFunction, cacheNotifier, metadata, getFlags(),
+                  getCommandInvocationId(), invocationManager);
+            break;
          case REMOVE_EXPIRED:
-            return new RemoveExpiredCommand(key, valueOrFunction, null, cacheNotifier, getCommandInvocationId(),
-                  versionGenerator.nonExistingVersion());
+            command = new RemoveExpiredCommand(key, valueOrFunction, null, cacheNotifier, getCommandInvocationId(),
+                  versionGenerator.nonExistingVersion(), invocationManager);
+            break;
          case COMPUTE_IF_PRESENT:
-            return new ComputeCommand(key, (BiFunction) valueOrFunction, true, getFlags(), getCommandInvocationId(),
-                  metadata, cacheNotifier, componentRegistry);
+            command = new ComputeCommand(key, (BiFunction) valueOrFunction, true, getFlags(), getCommandInvocationId(),
+                  metadata, cacheNotifier, componentRegistry, invocationManager);
+            break;
          case COMPUTE_IF_ABSENT:
-            return new ComputeIfAbsentCommand(key, (Function) valueOrFunction, getFlags(), getCommandInvocationId(),
-                  metadata, cacheNotifier, componentRegistry);
+            command = new ComputeIfAbsentCommand(key, (Function) valueOrFunction, getFlags(), getCommandInvocationId(),
+                  metadata, cacheNotifier, componentRegistry, invocationManager);
+            break;
          default:
             throw new IllegalStateException("Unknown operation " + operation);
       }
+      command.setLastInvocationId(key, lastInvocationId);
+      return command;
    }
 
    @Override

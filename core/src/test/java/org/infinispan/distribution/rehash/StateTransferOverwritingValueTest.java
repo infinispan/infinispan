@@ -21,8 +21,6 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -162,10 +160,9 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
-      // Scattered cache mode uses only PKVC or RemoveCommands for backup
+      // The implementation is free to change the command for backup or transactional modification
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-            true, false, cacheMode.isScattered() ? t -> t instanceof PutKeyValueCommand || t instanceof RemoveCommand
-            : t -> t.getClass().equals(op.getCommandClass()));
+            true, false, WriteCommand.class::isInstance);
 
       Class<? extends AsyncInterceptor> ewi = cache1.getAsyncInterceptorChain().getInterceptors().stream()
             .filter(i -> i instanceof EntryWrappingInterceptor).findFirst().orElseThrow(IllegalStateException::new).getClass();

@@ -6,6 +6,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -25,7 +26,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    public EvictCommand(Object key, CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId,
                        InternalEntryFactory factory) {
-      super(key, null, notifier, flagsBitSet, commandInvocationId);
+      super(key, null, notifier, flagsBitSet, commandInvocationId, null);
       this.factory = factory;
    }
 
@@ -36,10 +37,13 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (key == null) {
-         throw new NullPointerException("Key is null!!");
-      }
-      super.perform(ctx);
+      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      e.setChanged(true);
+      e.setRemoved(true);
+      e.setCreated(false);
+      e.setEvicted(true);
+      e.setValue(null);
+
       return null;
    }
 

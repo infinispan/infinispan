@@ -7,10 +7,14 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -24,11 +28,9 @@ import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.EntryViews.AccessLoggingReadWriteView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.functional.impl.StatsEnvelope;
+import org.infinispan.metadata.Metadata;
 
-// TODO: the command does not carry previous values to backup, so it can cause
-// the values on primary and backup owners to diverge in case of topology change
 public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyCommand<K, V> {
-
    public static final byte COMMAND_ID = 52;
 
    private Collection<?> keys;
@@ -41,8 +43,9 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
                                CommandInvocationId commandInvocationId,
                                DataConversion keyDataConversion,
                                DataConversion valueDataConversion,
+                               InvocationManager invocationManager,
                                ComponentRegistry componentRegistry) {
-      super(commandInvocationId, params, keyDataConversion, valueDataConversion);
+      super(commandInvocationId, params, keyDataConversion, valueDataConversion, invocationManager);
       this.keys = keys;
       this.f = f;
       init(componentRegistry);
@@ -69,6 +72,11 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
 
    public final ReadWriteManyCommand<K, V, R> withKeys(Collection<?> keys) {
       setKeys(keys);
+      if (lastInvocationIds != null) {
+         lastInvocationIds = lastInvocationIds.entrySet().stream()
+               .filter(entry -> keys.contains(entry.getKey()))
+               .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+      }
       return this;
    }
 
@@ -84,8 +92,8 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
-      output.writeInt(topologyId);
       output.writeLong(flags);
+      MarshallUtil.marshallMap(lastInvocationIds, ObjectOutput::writeObject, CommandInvocationId::writeTo, output);
       DataConversion.writeTo(output, keyDataConversion);
       DataConversion.writeTo(output, valueDataConversion);
    }
@@ -97,8 +105,8 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
-      topologyId = input.readInt();
       flags = input.readLong();
+      lastInvocationIds = MarshallUtil.unmarshallMap(input, in -> (K) in.readObject(), CommandInvocationId::readFrom, HashMap::new);
       keyDataConversion = DataConversion.readFrom(input);
       valueDataConversion = DataConversion.readFrom(input);
    }
@@ -132,10 +140,12 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       keys.forEach(k -> {
          MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(k);
 
-         boolean exists = entry.getValue() != null;
+         Object prevValue = entry.getValue();
+         Metadata prevMetadata = entry.getMetadata();
          AccessLoggingReadWriteView<K, V> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
          R r = snapshot(f.apply(view));
-         returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
+         recordInvocation(ctx, entry, prevValue, prevMetadata);
+         returns.add(skipStats ? r : StatsEnvelope.create(r, entry, prevValue != null, view.isRead()));
       });
       return returns;
    }
@@ -158,6 +168,9 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       sb.append(", isForwarded=").append(isForwarded);
       sb.append(", keyDataConversion=").append(keyDataConversion);
       sb.append(", valueDataConversion=").append(valueDataConversion);
+      sb.append(", topologyId=").append(topologyId);
+      sb.append(", commandInvocationId=").append(commandInvocationId);
+      sb.append(", lastInvocations=").append(lastInvocationIds);
       sb.append('}');
       return sb.toString();
    }
@@ -172,12 +185,10 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    }
 
    @Override
-   public void init(ComponentRegistry componentRegistry) {
+   protected void init(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
-      if (f instanceof InjectableComponent) {
-         ((InjectableComponent) f).inject(componentRegistry);
-      }
+      InjectableComponent.inject(componentRegistry, f);
    }
 
 }

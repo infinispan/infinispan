@@ -17,11 +17,16 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -77,8 +82,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
     * transaction based the default value is to return a {@link PrepareCommand}, however other tests
     * can change this behavior if desired.
     */
-   protected Class<? extends VisitableCommand> getVisitableCommand(TestWriteOperation op) {
-      return PrepareCommand.class;
+   protected Predicate<VisitableCommand> isExpectedCommand(TestWriteOperation op) {
+      return PrepareCommand.class::isInstance;
    }
 
    protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<?> callable) {
@@ -239,7 +244,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
                log.tracef("Adding additional value on nonOwner value inserted: %s = %s", mk, value);
             }
             primaryOwnerCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(
-                  new BlockingInterceptor<>(cyclicBarrier, getVisitableCommand(op), true, false),
+                  new BlockingInterceptor(cyclicBarrier, true, false, isExpectedCommand(op)),
                   StateTransferInterceptor.class);
             return op.perform(primaryOwnerCache, key);
          }));
@@ -327,9 +332,10 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       ControlledRpcManager blockingRpcManager2 = ControlledRpcManager.replaceRpcManager(nonOwnerCache);
       // The execution of the write/prepare/commit commands is controlled with the BlockingInterceptor
       blockingRpcManager0.excludeCommands(BackupWriteCommand.class, PrepareCommand.class, CommitCommand.class,
-                                          TxCompletionNotificationCommand.class
+                                          TxCompletionNotificationCommand.class,
+                                          SingleRpcCommand.class /* contains InvalidateL1Command */
       );
-      blockingRpcManager2.excludeCommands(BackupAckCommand.class);
+      blockingRpcManager2.excludeCommands(BackupAckCommand.class, ClusteredGetCommand.class, ClusteredGetAllCommand.class);
 
       // Block the rebalance confirmation on cache0
       int rebalanceTopologyId = preJoinTopologyId + 2;
@@ -366,12 +372,11 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-                                                                         op.getCommandClass(), true, false);
+      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier, true, false, isExpectedCommand(op));
       nonOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
 
-      // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
-      // The put command will be blocked on cache1 just before committing the entry.
+      // Put/Replace/Remove from cache0 with cache0 as primary owner, cache2 will become a backup owner for the retry
+      // The put command will be blocked on cache2 just before committing the entry.
       Future<Object> future = fork(() -> op.perform(primaryOwnerCache, key));
 
       // Wait for the entry to be wrapped on node 2
@@ -446,8 +451,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Block on the interceptor right after ST which should now have the soon to be old topology id
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-                                                                         getVisitableCommand(op), false, false);
+      BlockingInterceptor<?> blockingInterceptor1 = new BlockingInterceptor<VisitableCommand>(
+            beforeCommitCache1Barrier, false, false, isExpectedCommand(op));
       primaryOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
 
       // Put/Replace/Remove from primary owner.  This will block before it is committing on remote nodes

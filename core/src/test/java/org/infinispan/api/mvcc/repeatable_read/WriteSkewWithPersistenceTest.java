@@ -26,10 +26,7 @@ public class WriteSkewWithPersistenceTest extends WriteSkewTest {
    protected void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SystemException {
       // Make sure that all entries are evicted from DC
       DataContainer<Object, Object> dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      Object[] keys = dataContainer.entrySet().stream().map(InternalCacheEntry::getKey).toArray(Object[]::new);
-      for (Object key : keys) {
-         dataContainer.evict(key);
-      }
+      dataContainer.entrySet().stream().map(InternalCacheEntry::getKey).forEach(dataContainer::evict);
       super.commit();
    }
 }
