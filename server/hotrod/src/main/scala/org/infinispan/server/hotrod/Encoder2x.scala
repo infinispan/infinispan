@@ -358,8 +358,11 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                      val maxIdle = if (ice.getMaxIdle < 0) -1 else (ice.getMaxIdle / 1000).toInt
                      val lastUsed = ice.getLastUsed
                      val created = ice.getCreated
-                     val dataVersion = ice.getMetadata.version().asInstanceOf[NumericVersion]
-                     writeMetadata(lifespan, maxIdle, created, lastUsed, dataVersion.getVersion, buf)
+                     val version = ice.getMetadata.version() match {
+                        case n: NumericVersion => n.getVersion
+                        case _ => 0
+                     }
+                     writeMetadata(lifespan, maxIdle, created, lastUsed, version, buf)
                   } else {
                      buf.writeByte(0)
                   }
