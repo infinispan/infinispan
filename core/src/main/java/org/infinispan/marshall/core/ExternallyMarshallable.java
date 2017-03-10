@@ -47,6 +47,7 @@ final class ExternallyMarshallable {
             || className.contains("$$Lambda$")
             || className.equals("java.lang.Class")
             || className.equals("java.time.Instant") // prod
+            || className.startsWith("org.hibernate.cache") // prod
             || className.equals("org.hibernate.search.query.engine.impl.LuceneHSQuery") // prod
             || className.equals("org.infinispan.distexec.RunnableAdapter") // prod
             || className.equals("org.infinispan.jcache.annotation.DefaultCacheKey") // prod
