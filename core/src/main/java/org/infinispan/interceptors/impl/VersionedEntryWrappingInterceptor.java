@@ -71,7 +71,7 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          }
 
          if (onePhaseCommit) {
-            commitContextEntries(txInvocationContext, null, null);
+            commitContextEntries(txInvocationContext, null);
          }
          if (newVersionData != null)
             return newVersionData;
@@ -96,32 +96,31 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
          ((TxInvocationContext<?>) rCtx).getCacheTransaction().setUpdatedEntryVersions(
                versionedCommitCommand.getUpdatedVersions());
       }
-      commitContextEntries(rCtx, null, null);
+      commitContextEntries(rCtx, null);
    }
 
    @Override
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
-                                     Metadata metadata, Flag stateTransferFlag, boolean l1Invalidation) {
+                                     Flag stateTransferFlag, boolean l1Invalidation) {
       if (ctx.isInTxScope() && stateTransferFlag == null) {
          EntryVersion updatedEntryVersion = ((TxInvocationContext) ctx)
                .getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
          Metadata commitMetadata;
          if (updatedEntryVersion != null) {
-            if (metadata == null && entry.getMetadata() == null) {
+            if (entry.getMetadata() == null) {
                commitMetadata = new EmbeddedMetadata.Builder().version(updatedEntryVersion).build();
-            } else if (metadata != null) {
-               commitMetadata = metadata.builder().version(updatedEntryVersion).build();
             } else {
                commitMetadata = entry.getMetadata().builder().version(updatedEntryVersion).build();
             }
          } else {
-            commitMetadata = metadata != null ? metadata : entry.getMetadata();
+            commitMetadata = entry.getMetadata();
          }
 
-         cdl.commitEntry(entry, commitMetadata, command, ctx, null, l1Invalidation);
+         entry.setMetadata(commitMetadata);
+         cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, entry.getMetadata(), command, ctx, stateTransferFlag, l1Invalidation);
+         cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
       }
    }
 

@@ -177,7 +177,7 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
    }
 
    @Override
-   public final void commit(final DataContainer<K, DeltaAware> container, final Metadata metadata) {
+   public final void commit(final DataContainer<K, DeltaAware> container) {
       //If possible, we now ensure copy-on-write semantics. This way, it can ensure the correct transaction isolation.
       //note: we want to merge/copy to/from the data container value.
       PersistenceUtil.loadAndComputeInDataContainer(container, persistenceManager, key, ctx, timeService, (key, oldEntry, factory) -> {
@@ -195,7 +195,7 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
                      value = delta.merge(value);
                   }
                   value.commit();
-                  newEntry = factory.create(key, value, extractMetadata(null, metadata));
+                  newEntry = factory.create(key, value, extractMetadata(null));
                } else if (value != null) {
                   final boolean makeCopy = value instanceof CopyableDeltaAware;
                   if (makeCopy) {
@@ -207,8 +207,8 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
                   if (makeCopy) {
                      //create or update existing entry.
                      newEntry = oldEntry == null ?
-                             factory.create(key, value, extractMetadata(null, metadata)) :
-                             factory.update(oldEntry, value, extractMetadata(oldEntry, metadata));
+                             factory.create(key, value, extractMetadata(null)) :
+                             factory.update(oldEntry, value, extractMetadata(oldEntry));
                   }
                   value.commit();
                }
@@ -217,10 +217,8 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
          });
    }
 
-   private Metadata extractMetadata(CacheEntry<K, DeltaAware> entry, Metadata provided) {
-      if (provided != null) {
-         return provided;
-      } else if (wrappedEntry != null) {
+   private Metadata extractMetadata(CacheEntry<K, DeltaAware> entry) {
+      if (wrappedEntry != null) {
          return wrappedEntry.getMetadata();
       }
       return entry == null ? null : entry.getMetadata();

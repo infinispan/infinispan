@@ -80,7 +80,7 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public void commit(DataContainer container, Metadata metadata) {
+   public void commit(DataContainer container) {
       // No-op
    }
 

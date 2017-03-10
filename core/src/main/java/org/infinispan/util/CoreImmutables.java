@@ -56,7 +56,7 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public void commit(DataContainer container, Metadata metadata) {
+      public void commit(DataContainer container) {
          throw new UnsupportedOperationException();
       }
 

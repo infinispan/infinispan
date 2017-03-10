@@ -24,7 +24,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public final void commit(DataContainer container, Metadata metadata) {
+   public final void commit(DataContainer container) {
       // no-op
    }
 
