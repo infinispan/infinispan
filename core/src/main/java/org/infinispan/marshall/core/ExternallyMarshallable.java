@@ -1,8 +1,47 @@
 package org.infinispan.marshall.core;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 final class ExternallyMarshallable {
+
+   private static final List<String> whiteListClasses = new ArrayList<>();
+
+   static {
+      whiteListClasses.add("Exception");
+      whiteListClasses.add("$$Lambda$");
+      whiteListClasses.add("java.lang.Class");
+      whiteListClasses.add("java.time.Instant"); // prod
+      whiteListClasses.add("org.hibernate.cache"); // prod
+      whiteListClasses.add("org.hibernate.search.query.engine.impl.LuceneHSQuery"); // prod
+      whiteListClasses.add("org.infinispan.distexec.RunnableAdapter"); // prod
+      whiteListClasses.add("org.infinispan.jcache.annotation.DefaultCacheKey"); // prod
+      whiteListClasses.add("org.infinispan.query.clustered.QueryResponse"); // prod
+      whiteListClasses.add("org.infinispan.server.core.transport.NettyTransport$ConnectionAdderTask"); // prod
+      whiteListClasses.add("org.infinispan.server.hotrod.CheckAddressTask"); // prod
+      whiteListClasses.add("org.infinispan.server.infinispan.task.DistributedServerTask"); // prod
+      whiteListClasses.add("org.infinispan.scripting.impl.DataType"); // prod
+      whiteListClasses.add("org.infinispan.scripting.impl.DistributedScript");
+      whiteListClasses.add("org.infinispan.stats.impl.ClusterCacheStatsImpl$DistributedCacheStatsCallable"); // prod
+      whiteListClasses.add("org.infinispan.xsite.BackupSender$TakeSiteOfflineResponse"); // prod
+      whiteListClasses.add("org.infinispan.xsite.BackupSender$BringSiteOnlineResponse"); // prod
+      whiteListClasses.add("org.infinispan.xsite.XSiteAdminCommand$Status"); // prod
+      whiteListClasses.add("org.infinispan.util.logging.events.EventLogLevel"); // prod
+      whiteListClasses.add("org.infinispan.util.logging.events.EventLogCategory"); // prod
+      whiteListClasses.add("java.util.Date"); // test
+      whiteListClasses.add("java.lang.Byte"); // test
+      whiteListClasses.add("java.lang.Integer"); // test
+      whiteListClasses.add("java.lang.Double"); // test
+      whiteListClasses.add("java.lang.Short"); // test
+      whiteListClasses.add("java.lang.Long"); // test
+      whiteListClasses.add("org.infinispan.test"); // test
+      whiteListClasses.add("org.infinispan.server.test"); // test
+      whiteListClasses.add("org.infinispan.it"); // test
+      whiteListClasses.add("org.infinispan.all"); // test
+      whiteListClasses.add("org.infinispan.query.api"); // test
+      whiteListClasses.add("org.jboss.as.quickstarts.datagrid"); // quickstarts testing
+   }
 
    private ExternallyMarshallable() {
       // Static class
@@ -43,39 +82,7 @@ final class ExternallyMarshallable {
    }
 
    private static boolean isWhiteList(String className) {
-      return className.endsWith("Exception")
-            || className.contains("$$Lambda$")
-            || className.equals("java.lang.Class")
-            || className.equals("java.time.Instant") // prod
-            || className.startsWith("org.hibernate.cache") // prod
-            || className.equals("org.hibernate.search.query.engine.impl.LuceneHSQuery") // prod
-            || className.equals("org.infinispan.distexec.RunnableAdapter") // prod
-            || className.equals("org.infinispan.jcache.annotation.DefaultCacheKey") // prod
-            || className.equals("org.infinispan.query.clustered.QueryResponse") // prod
-            || className.equals("org.infinispan.server.core.transport.NettyTransport$ConnectionAdderTask") // prod
-            || className.equals("org.infinispan.server.hotrod.CheckAddressTask") // prod
-            || className.equals("org.infinispan.server.infinispan.task.DistributedServerTask") // prod
-            || className.equals("org.infinispan.scripting.impl.DataType") // prod
-            || className.equals("org.infinispan.scripting.impl.DistributedScript")
-            || className.equals("org.infinispan.stats.impl.ClusterCacheStatsImpl$DistributedCacheStatsCallable") // prod
-            || className.equals("org.infinispan.xsite.BackupSender$TakeSiteOfflineResponse") // prod
-            || className.equals("org.infinispan.xsite.BackupSender$BringSiteOnlineResponse") // prod
-            || className.equals("org.infinispan.xsite.XSiteAdminCommand$Status") // prod
-            || className.equals("org.infinispan.util.logging.events.EventLogLevel") // prod
-            || className.equals("org.infinispan.util.logging.events.EventLogCategory") // prod
-            || className.equals("java.util.Date") // test
-            || className.equals("java.lang.Byte") // test
-            || className.equals("java.lang.Integer") // test
-            || className.equals("java.lang.Double") // test
-            || className.equals("java.lang.Short") // test
-            || className.equals("java.lang.Long") // test
-            || className.startsWith("org.infinispan.test") // test
-            || className.startsWith("org.infinispan.server.test") // test
-            || className.startsWith("org.infinispan.it") // test
-            || className.startsWith("org.infinispan.all") // test
-            || className.startsWith("org.infinispan.query.api") // test
-            || className.contains("org.jboss.as.quickstarts.datagrid") // quickstarts testing
-            ;
+      return whiteListClasses.stream().anyMatch(className::contains);
    }
 
 }
