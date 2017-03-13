@@ -131,7 +131,7 @@ public class CompressedFileManager extends FileManager {
             os = new FileOutputStream(name, data.append);
             int bufferSize = data.bufferSize;
             if (name.endsWith(".gz")) {
-               os = new GZIPOutputStream(os, bufferSize);
+               os = new GZIPOutputStream(os, bufferSize, true);
                os.flush();
             } else {
                if (data.bufferedIO) {
