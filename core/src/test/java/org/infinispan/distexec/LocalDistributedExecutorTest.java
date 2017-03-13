@@ -111,8 +111,8 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    }
 
    protected DistributedExecutorService createDES(Cache<?,?> cache){
-      ExecutorService executorService = Executors.newCachedThreadPool(getTestThreadFactory("DistributedExecutorZ"));
-      DistributedExecutorService des = new DefaultExecutorService(cache, executorService);
+      ExecutorService executorService = Executors.newCachedThreadPool(getTestThreadFactory("LocalExecutor"));
+      DistributedExecutorService des = new DefaultExecutorService(cache, executorService, true);
       cleanupService = des;
       return des;
    }
