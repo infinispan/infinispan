@@ -22,12 +22,10 @@ import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -174,25 +172,23 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       // Clear the store so that we can start fresh again
       store.clear();
 
-      ExecutorService executor = Executors.newSingleThreadExecutor(getTestThreadFactory("Purge"));
       // Repeat the same logic as above
       // Just that, in this case we will call purge after each iteration
-      for (int i = 0; i < TIMES; i++) {
-         for (int j = 0; j < NUM_KEYS; j++) {
-            String key = "key" + j;
-            String value = key + "_value_" + j + "_" + times("123456789_", i);
-            MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-            store.write(entry);
+      ExecutorService executor = Executors.newSingleThreadExecutor(getTestThreadFactory("Purge"));
+      try {
+         for (int i = 0; i < TIMES; i++) {
+            populateStore(NUM_KEYS, i, store, marshaller);
+            // Call purge so that the entries are coalesced
+            // Since this will merge and make bigger free entries available, new entries should get some free slots (unlike earlier case)
+            // This should prove that the file size increases slowly
+            store.purge(executor, null);
+            // Give some time for the purge thread to finish
+            MILLISECONDS.sleep(200);
+            fileSizesWithPurge[i] = file.length();
          }
-         // Call purge so that the entries are coalesced
-         // Since this will merge and make bigger free entries available, new entries should get some free slots (unlike earlier case)
-         // This should prove that the file size increases slowly
-         store.purge(executor, null);
-         // Give some time for the purge thread to finish
-         MILLISECONDS.sleep(200);
-         fileSizesWithoutPurge[i] = file.length();
+      } finally {
+         executor.shutdownNow();
       }
-      executor.shutdown();
 
       // Verify that file size increases slowly when the space optimization logic (implemented within store.purge()) is used
       for (int j = 2; j < TIMES; j++) {
@@ -471,23 +467,19 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          assertTrue(file.exists());
 
          final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
-         final AtomicInteger count = new AtomicInteger(0);
-         store.process(new KeyFilter() {
-            @Override
-            public boolean accept(Object key) {
-               return true;
-            }
-         }, new AdvancedCacheLoader.CacheLoaderTask() {
-            @Override
-            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext)
-                  throws InterruptedException {
-               count.incrementAndGet();
-               Object key = marshalledEntry.getKey();
-               Object value = marshalledEntry.getValue();
-               assertEquals(key, ((String) value).substring(0, ((String) key).length()));
-            }
-         }, executor, true, true);
-         log.tracef("Processed %d entries from the store", count.get());
+         try {
+            final AtomicInteger count = new AtomicInteger(0);
+            store.process(key -> true,
+                          (marshalledEntry, taskContext) -> {
+                             count.incrementAndGet();
+                             Object key = marshalledEntry.getKey();
+                             Object value = marshalledEntry.getValue();
+                             assertEquals(key, ((String) value).substring(0, ((String) key).length()));
+                          }, executor, true, true);
+            log.tracef("Processed %d entries from the store", count.get());
+         } finally {
+            executor.shutdownNow();
+         }
          return null;
       }
    }
@@ -506,17 +498,21 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
-         final AtomicInteger count = new AtomicInteger(0);
-         store.process(
-                 (key) -> true,
-                 (marshalledEntry, taskContext) -> {
-                    count.incrementAndGet();
-                    Object key = marshalledEntry.getKey();
-                    assertNotNull(key);
-                 },
-                 executor, false, false);  // Set (value and metadata) == false so that no disk reads are performed
-         log.tracef("Processed %d in-memory keys from the store", count.get());
+         ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
+         try {
+            final AtomicInteger count = new AtomicInteger(0);
+            store.process(
+                  (key) -> true,
+                  (marshalledEntry, taskContext) -> {
+                     count.incrementAndGet();
+                     Object key = marshalledEntry.getKey();
+                     assertNotNull(key);
+                  },
+                  executor, false, false);  // Set (value and metadata) == false so that no disk reads are performed
+            log.tracef("Processed %d in-memory keys from the store", count.get());
+         } finally {
+            executor.shutdownNow();
+         }
          return null;
       }
    }
