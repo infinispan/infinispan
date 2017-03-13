@@ -32,6 +32,10 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
       this.topologyId = topologyId;
    }
 
+   public long getVersion() {
+      return version;
+   }
+
    @Override
    public InequalVersionComparisonResult compareTo(EntryVersion other) {
       if (other instanceof SimpleClusteredVersion) {

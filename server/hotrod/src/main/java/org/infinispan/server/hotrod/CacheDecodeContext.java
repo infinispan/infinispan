@@ -8,6 +8,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.NumericVersionGenerator;
+import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
@@ -149,11 +150,11 @@ public final class CacheDecodeContext {
    Response getKeyMetadata() {
       CacheEntry<byte[], byte[]> ce = cache.getCacheEntry(key);
       if (ce != null) {
-         NumericVersion entryVersion = (NumericVersion) ce.getMetadata().version();
+         EntryVersion entryVersion = ce.getMetadata().version();
+         long version = extractVersion(entryVersion);
          byte[] v = ce.getValue();
          int lifespan = ce.getLifespan() < 0 ? -1 : (int) ce.getLifespan() / 1000;
          int maxIdle = ce.getMaxIdle() < 0 ? -1 : (int) ce.getMaxIdle() / 1000;
-         long version = entryVersion != null ? entryVersion.getVersion() : 0;
          if (header.op == HotRodOperation.GET_WITH_METADATA) {
             return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
                   header.op, OperationStatus.Success, header.topologyId, v, version,
@@ -173,6 +174,19 @@ public final class CacheDecodeContext {
                   header.op, OperationStatus.KeyDoesNotExist, header.topologyId);
          }
       }
+   }
+
+   static long extractVersion(EntryVersion entryVersion) {
+      long version = 0;
+      if (entryVersion != null) {
+         if (entryVersion instanceof NumericVersion) {
+            version = NumericVersion.class.cast(entryVersion).getVersion();
+         }
+         if (entryVersion instanceof SimpleClusteredVersion) {
+            version = SimpleClusteredVersion.class.cast(entryVersion).getVersion();
+         }
+      }
+      return version;
    }
 
    Response containsKey() {
