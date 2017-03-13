@@ -1,6 +1,7 @@
 package org.infinispan.server.test.task;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -12,11 +13,9 @@ import java.util.Map;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.arquillian.core.RunningServer;
-import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.server.test.category.SingleNode;
 import org.infinispan.server.test.category.Task;
 import org.infinispan.server.test.task.servertask.Greeting;
 import org.infinispan.server.test.task.servertask.GreetingServerTask;
@@ -25,12 +24,14 @@ import org.infinispan.server.test.task.servertask.LocalExceptionalServerTask;
 import org.infinispan.server.test.task.servertask.LocalMapReduceServerTask;
 import org.infinispan.server.test.task.servertask.LocalTestServerTask;
 import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.ManagementClient;
 import org.infinispan.tasks.ServerTask;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,19 +40,31 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
-@Category({Task.class})
+@Category({SingleNode.class})
 public class LocalServerTaskIT {
 
-   @InfinispanResource("standalone-customtask")
+   private static final String CACHE_CONTAINER = "local";
+   private static final String CACHE_TEMPLATE = "localCacheConfiguration";
+   private RemoteCache cache;
+
+   @InfinispanResource("container1")
    RemoteInfinispanServer server;
 
    @Rule
    public ExpectedException exceptionRule = ExpectedException.none();
 
-   @BeforeClass
-   public static void before() throws Exception {
-      String serverDir = System.getProperty("server1.dist");
+   @Before
+   public void before() throws Exception {
+      server.reconnect();
+      if (cache == null) {
+         cache = ITestUtils.createCacheManager(server).getCache(LocalTestServerTask.CACHE_NAME);
+      }
+      cache.clear();
+   }
 
+   @BeforeClass
+   public static void beforeClass() throws Exception {
+      String serverDir = System.getProperty("server1.dist");
       JavaArchive jar = ShrinkWrap.create(JavaArchive.class);
       jar.addClass(LocalTestServerTask.class);
       jar.addClass(LocalExceptionalServerTask.class);
@@ -66,10 +79,16 @@ public class LocalServerTaskIT {
 
       File f = new File(serverDir, "/standalone/deployments/custom-task.jar");
       jar.as(ZipExporter.class).exportTo(f, true);
+
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.addCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+      client.enableCompatibilityForConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+      client.addCache(LocalTestServerTask.CACHE_NAME, CACHE_CONTAINER, CACHE_TEMPLATE, ManagementClient.CacheType.LOCAL);
+      client.reload();
    }
 
    @AfterClass
-   public static void undeploy() {
+   public static void afterClass() throws Exception {
       String serverDir = System.getProperty("server1.dist");
       File jar = new File(serverDir, "/standalone/deployments/custom-task.jar");
       if (jar.exists())
@@ -78,42 +97,35 @@ public class LocalServerTaskIT {
       File f = new File(serverDir, "/standalone/deployments/custom-task.jar.deployed");
       if (f.exists())
          f.delete();
+
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.removeCache(LocalTestServerTask.CACHE_NAME, CACHE_CONTAINER, ManagementClient.CacheType.LOCAL);
+      client.removeCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
    }
 
    @Test
-   @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldModifyCacheInViaTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
-
       String value = "value";
-      rcm.getCache().put(LocalTestServerTask.TASK_EXECUTED, value);
-      rcm.getCache().execute(LocalTestServerTask.NAME, Collections.emptyMap());
+      cache.put(LocalTestServerTask.TASK_EXECUTED, value);
+      cache.execute(LocalTestServerTask.NAME, Collections.emptyMap());
 
-      assertEquals(LocalTestServerTask.MODIFIED_PREFIX + value, rcm.getCache().get(LocalTestServerTask.TASK_EXECUTED));
-      assertEquals(LocalTestServerTask.MODIFIED_PREFIX + value, rcm.getCache(LocalTestServerTask.CACHE_NAME).get(LocalTestServerTask.TASK_EXECUTED));
+      assertEquals(LocalTestServerTask.MODIFIED_PREFIX + value, cache.get(LocalTestServerTask.TASK_EXECUTED));
    }
 
    @Test
-   @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldThrowExceptionInViaTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
-
       exceptionRule.expect(HotRodClientException.class);
       exceptionRule.expectMessage(LocalExceptionalServerTask.EXCEPTION_MESSAGE);
-
-      rcm.getCache().execute(LocalExceptionalServerTask.NAME, Collections.emptyMap());
+      cache.execute(LocalExceptionalServerTask.NAME, Collections.emptyMap());
    }
 
    @Test
-   @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldExecuteMapReduceViaTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
-      RemoteCache remoteCache = rcm.getCache();
-      remoteCache.put(1, "word1 word2 word3");
-      remoteCache.put(2, "word1 word2");
-      remoteCache.put(3, "word1");
+      cache.put(1, "word1 word2 word3");
+      cache.put(2, "word1 word2");
+      cache.put(3, "word1");
 
-      Map<String, Long> result = (Map<String, Long>)remoteCache.execute(LocalMapReduceServerTask.NAME, Collections.emptyMap());
+      Map<String, Long> result = (Map<String, Long>)cache.execute(LocalMapReduceServerTask.NAME, Collections.emptyMap());
       assertEquals(3, result.size());
       assertEquals(3, result.get("word1").intValue());
       assertEquals(2, result.get("word2").intValue());
@@ -121,15 +133,12 @@ public class LocalServerTaskIT {
    }
 
    @Test
-   @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldExecuteMapReduceViaJavaScriptInTask() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
-      RemoteCache remoteCache = rcm.getCache();
-      remoteCache.put(1, "word1 word2 word3");
-      remoteCache.put(2, "word1 word2");
-      remoteCache.put(3, "word1");
+      cache.put(1, "word1 word2 word3");
+      cache.put(2, "word1 word2");
+      cache.put(3, "word1");
 
-      Map<String, Long> result = (Map<String, Long>)remoteCache.execute(JSExecutingServerTask.NAME, Collections.emptyMap());
+      Map<String, Long> result = (Map<String, Long>)cache.execute(JSExecutingServerTask.NAME, Collections.emptyMap());
       assertEquals(3, result.size());
       assertEquals(3, result.get("word1").intValue());
       assertEquals(2, result.get("word2").intValue());
@@ -137,18 +146,13 @@ public class LocalServerTaskIT {
    }
 
    @Test
-   @WithRunningServer({@RunningServer(name = "standalone-customtask")})
    public void shouldWorkWithCustomMojo() throws Exception {
-      RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
-      RemoteCache remoteCache = rcm.getCache();
-
       Map params = new HashMap();
       params.put("greeting", toBytes(new Greeting("hello, good morning :)")));
 
-      String result = (String) remoteCache.execute(GreetingServerTask.NAME, params);
+      String result = (String) cache.execute(GreetingServerTask.NAME, params);
       assertEquals("hello, good morning :)", result);
    }
-
 
    private byte[] toBytes(Object o) {
       try {

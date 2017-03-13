@@ -16,10 +16,13 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.server.test.category.HotRodClustered;
 import org.infinispan.server.test.category.HotRodSingleNode;
+import org.infinispan.server.test.category.SingleNode;
+import org.infinispan.server.test.util.ManagementClient;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -28,10 +31,12 @@ import org.junit.runner.RunWith;
  * Tests for remote iteration in compat mode with primitive values and default (JBoss) marshalling.
  */
 @RunWith(Arquillian.class)
-@Category({HotRodSingleNode.class, HotRodClustered.class})
+@Category({HotRodClustered.class, SingleNode.class})
 public class HotRodRemoteCacheCompatIT {
 
    private static final String CACHE_NAME = "compatibilityCache";
+   private static final String CACHE_TEMPLATE = "localCacheConfiguration";
+   private static final String CACHE_CONTAINER = "local";
    private static final int CACHE_SIZE = 1000;
    private static RemoteCacheManager remoteCacheManager;
 
@@ -51,12 +56,23 @@ public class HotRodRemoteCacheCompatIT {
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
    }
 
+   @BeforeClass
+   public static void beforeClass() throws Exception {
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.addCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+      client.enableCompatibilityForConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+      client.addCache(CACHE_NAME, CACHE_CONTAINER, CACHE_TEMPLATE, ManagementClient.CacheType.LOCAL);
+   }
+
    @AfterClass
-   public static void release() {
+   public static void afterClass() throws Exception {
       if (remoteCacheManager != null) {
          remoteCacheManager.getCache(CACHE_NAME).clear();
          remoteCacheManager.stop();
       }
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.removeCache(CACHE_NAME, CACHE_CONTAINER, ManagementClient.CacheType.LOCAL);
+      client.removeCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
    }
 
    @Test

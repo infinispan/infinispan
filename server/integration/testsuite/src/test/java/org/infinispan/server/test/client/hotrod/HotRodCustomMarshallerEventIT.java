@@ -30,6 +30,9 @@ import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.server.test.category.HotRodSingleNode;
+import org.infinispan.server.test.category.SingleNode;
+import org.infinispan.server.test.task.servertask.LocalTestServerTask;
+import org.infinispan.server.test.util.ManagementClient;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
@@ -38,6 +41,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -48,10 +52,12 @@ import org.junit.runner.RunWith;
  * @author Galder Zamarreño
  */
 @RunWith(Arquillian.class)
-@Category(HotRodSingleNode.class)
+@Category({SingleNode.class})
 public class HotRodCustomMarshallerEventIT {
 
-    private final String TEST_CACHE_NAME = "default";
+    private static final String TEST_CACHE_NAME = "TEST_CACHE";
+    private static final String CACHE_TEMPLATE = "localCacheConfiguration";
+    private static final String CACHE_CONTAINER = "local";
 
     static RemoteCacheManager remoteCacheManager;
     RemoteCache<Id, Id> remoteCache;
@@ -63,6 +69,23 @@ public class HotRodCustomMarshallerEventIT {
     @TargetsContainer("container1")
     public static Archive<?> deploy1() {
         return createArchive();
+    }
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        ManagementClient client = ManagementClient.getStandaloneInstance();
+        client.addCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+        client.addCache(TEST_CACHE_NAME, CACHE_CONTAINER, CACHE_TEMPLATE, ManagementClient.CacheType.LOCAL);
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        if (remoteCacheManager != null) {
+            remoteCacheManager.stop();
+        }
+        ManagementClient client = ManagementClient.getStandaloneInstance();
+        client.removeCache(TEST_CACHE_NAME, CACHE_CONTAINER, ManagementClient.CacheType.LOCAL);
+        client.removeCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
     }
 
     @Before
@@ -83,13 +106,6 @@ public class HotRodCustomMarshallerEventIT {
 
         config.marshaller("org.infinispan.server.test.client.hotrod.HotRodCustomMarshallerEventIT$IdMarshaller");
         return config.build();
-    }
-
-    @AfterClass
-    public static void release() {
-        if (remoteCacheManager != null) {
-            remoteCacheManager.stop();
-        }
     }
 
     private static Archive<?> createArchive() {

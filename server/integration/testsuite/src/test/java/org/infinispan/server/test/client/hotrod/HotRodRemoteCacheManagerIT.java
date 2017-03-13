@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
  * @author mgencur
  */
 @RunWith(Arquillian.class)
-@Category({ HotRodSingleNode.class, HotRodClustered.class, Smoke.class })
+@Category({HotRodClustered.class, Smoke.class })
 public class HotRodRemoteCacheManagerIT extends AbstractRemoteCacheManagerIT {
 
     @InfinispanResource("container1")

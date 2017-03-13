@@ -4,13 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.management.ObjectName;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.arquillian.core.RunningServer;
-import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -20,11 +20,14 @@ import org.infinispan.persistence.cluster.MyCustomCacheStore;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.CacheStore;
+import org.infinispan.server.test.category.SingleNode;
 import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.ManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -37,30 +40,59 @@ import org.junit.runner.RunWith;
  * @author Sebastian Laskawiec
  */
 @RunWith(Arquillian.class)
-@Category({CacheStore.class})
+@Category({SingleNode.class})
 public class CustomCacheStoreIT {
-   private static final Log log = LogFactory.getLog(CustomCacheStoreIT.class);
+   static final Log log = LogFactory.getLog(CustomCacheStoreIT.class);
+   static final String TEST_CACHE = "customcs-cache";
+   static final String TARGET_CONTAINER = "local";
+   static final String CONFIG_TEMPLATE = "customcs-cache-configuration";
 
-   @InfinispanResource("standalone-customcs")
+   @InfinispanResource("container1")
    RemoteInfinispanServer server;
 
    final int managementPort = 9990;
-   final String cacheLoaderMBean = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\"default(local)\",manager=\"local\",component=CacheLoader";
+   final String cacheLoaderMBean = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\""+ TEST_CACHE +"(local)\",manager=\"local\",component=CacheLoader";
+
 
    @BeforeClass
-   public static void before() throws Exception {
+   public static void beforeClass() throws Exception {
       String serverDir = System.getProperty("server1.dist");
-
       JavaArchive deployedCacheStore = ShrinkWrap.create(JavaArchive.class);
       deployedCacheStore.addPackage(MyCustomCacheStore.class.getPackage());
       deployedCacheStore.addAsServiceProvider(ExternalStore.class, MyCustomCacheStore.class);
 
       deployedCacheStore.as(ZipExporter.class).exportTo(
-            new File(serverDir, "/standalone/deployments/custom-store.jar"), true);
+              new File(serverDir, "/standalone/deployments/custom-store.jar"), true);
+
+      Map<String, String> props = new HashMap<>();
+      props.put("customProperty", "10");
+      final String cachestoreClass = "org.infinispan.persistence.cluster.MyCustomCacheStore";
+
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.addCacheConfiguration(CONFIG_TEMPLATE, TARGET_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+      client.addCustomCacheStore(TARGET_CONTAINER, CONFIG_TEMPLATE, ManagementClient.CacheTemplate.LOCAL, "customcs", cachestoreClass, props);
+      client.addCache(TEST_CACHE, TARGET_CONTAINER, CONFIG_TEMPLATE, ManagementClient.CacheType.LOCAL);
+      //Requires reload - ISPN-7609
+      client.reload();
+   }
+
+   @AfterClass
+   public static void afterClass() throws Exception {
+      String serverDir = System.getProperty("server1.dist");
+      File jar = new File(serverDir, "/standalone/deployments/custom-store.jar");
+      if (jar.exists())
+         jar.delete();
+
+      File f = new File(serverDir, "/standalone/deployments/custom-store.jar.deployed");
+      if (f.exists())
+         f.delete();
+
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.removeCache(TEST_CACHE, TARGET_CONTAINER, ManagementClient.CacheType.LOCAL);
+      client.removeCacheConfiguration(CONFIG_TEMPLATE, TARGET_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
    }
 
    @Test
-   @WithRunningServer({@RunningServer(name = "standalone-customcs")})
    public void testIfDeployedCacheContainsProperValues() throws Exception {
       RemoteCacheManager rcm = ITestUtils.createCacheManager(server);
       RemoteCache<String, String> rc = rcm.getCache();

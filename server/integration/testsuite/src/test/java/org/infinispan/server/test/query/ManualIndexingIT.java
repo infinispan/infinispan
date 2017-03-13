@@ -3,7 +3,9 @@ package org.infinispan.server.test.query;
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.management.ObjectName;
 
@@ -15,8 +17,12 @@ import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.Queries;
+import org.infinispan.server.test.category.SingleNode;
+import org.infinispan.server.test.util.ManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -28,25 +34,49 @@ import org.junit.runner.RunWith;
  * @author vchepeli@redhat.com
  *
  */
-@Category(Queries.class)
+@Category({SingleNode.class})
 @RunWith(Arquillian.class)
 public class ManualIndexingIT extends RemoteQueryBaseIT {
 
-    private static final String CACHE_CONTAINER_NAME = "clustered";
     private static final String CACHE_NAME = "localtestcache_manual";
+    private static final String CACHE_TEMPLATE = "localtestcache_manualConfiguration";
+    private static final String CACHE_CONTAINER = "local";
 
-    @InfinispanResource("remote-query-1")
+    @InfinispanResource("container1")
     protected RemoteInfinispanServer server;
 
     private MBeanServerConnectionProvider jmxConnectionProvider;
 
     public ManualIndexingIT() {
-        super(CACHE_CONTAINER_NAME, CACHE_NAME);
+        super(CACHE_CONTAINER, CACHE_NAME);
     }
 
     @Override
     public RemoteInfinispanServer getServer() {
+        server.reconnect();
         return server;
+    }
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        ManagementClient client = ManagementClient.getStandaloneInstance();
+        client.addCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+        Map<String, String> properties = new HashMap<>();
+        properties.put("default.directory_provider", "ram");
+        properties.put("lucene_version", "LUCENE_CURRENT");
+        properties.put("hibernate.search.indexing_strategy", "manual");
+        properties.put("hibernate.search.jmx_enabled", "true");
+        client.enableIndexingForConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL, ManagementClient.IndexingType.LOCAL, properties);
+        //Server reload required, see ISPN-7662
+        client.reload();
+        client.addCache(CACHE_NAME, CACHE_CONTAINER, CACHE_TEMPLATE, ManagementClient.CacheType.LOCAL);
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        ManagementClient client = ManagementClient.getStandaloneInstance();
+        client.removeCache(CACHE_NAME, CACHE_CONTAINER, ManagementClient.CacheType.LOCAL);
+        client.removeCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
     }
 
     @Before
@@ -72,7 +102,7 @@ public class ManualIndexingIT extends RemoteQueryBaseIT {
 
         //manual indexing
         ObjectName massIndexerName = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Query,manager="
-                + ObjectName.quote(CACHE_CONTAINER_NAME)
+                + ObjectName.quote(CACHE_CONTAINER)
                 + ",cache=" + ObjectName.quote(CACHE_NAME)
                 + ",component=MassIndexer");
         jmxConnectionProvider.getConnection().invoke(massIndexerName, "start", null, null);

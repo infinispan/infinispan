@@ -93,7 +93,7 @@ public class DistributedServerTaskDomainIT extends AbstractDistributedServerTask
         }
 
         //@TODO The next line is a workaround for JDG-314. Please remove this line when the JDG-314 is fixed.
-        client.reloadServer();
+        client.reloadMaster();
 
         expectedServerList = asList("master:server-two", "master:server-one");
     }

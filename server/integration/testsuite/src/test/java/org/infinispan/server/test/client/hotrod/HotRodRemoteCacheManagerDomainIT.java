@@ -38,12 +38,12 @@ public class HotRodRemoteCacheManagerDomainIT extends AbstractRemoteCacheManager
         ManagementClient client = ManagementClient.getInstance();
         client.enableJmx();
         if (isDistributedMode()) {
-            testCache = "cmDistTestCache";
+            TEST_CACHE = "cmDistTestCache";
             client.addDistributedCacheConfiguration("distCacheConfiguration", "clustered");
-            client.addDistributedCache(testCache, "clustered", "distCacheConfiguration");
+            client.addDistributedCache(TEST_CACHE, "clustered", "distCacheConfiguration");
         } else {
-            testCache = "cmReplTestCache";
-            client.addReplicatedCache(testCache, "clustered", "replicated");
+            TEST_CACHE = "cmReplTestCache";
+            client.addReplicatedCache(TEST_CACHE, "clustered", "replicated");
         }
     }
 
@@ -51,13 +51,13 @@ public class HotRodRemoteCacheManagerDomainIT extends AbstractRemoteCacheManager
     public static void afterClass() throws Exception {
         ManagementClient client = ManagementClient.getInstance();
         if (isDistributedMode()) {
-            client.removeDistributedCache(testCache, "clustered");
+            client.removeDistributedCache(TEST_CACHE, "clustered");
             client.removeDistributedCacheConfiguration("distCacheConfiguration", "clustered");
         } else if (isLocalMode()) {
-            client.removeLocalCache(testCache, "default");
+            client.removeLocalCache(TEST_CACHE, "default");
             client.removeDistributedCacheConfiguration("distCacheConfiguration", "default");
         } else {
-            client.removeReplicatedCache(testCache, "clustered");
+            client.removeReplicatedCache(TEST_CACHE, "clustered");
         }
         client.disableJmx();
     }
