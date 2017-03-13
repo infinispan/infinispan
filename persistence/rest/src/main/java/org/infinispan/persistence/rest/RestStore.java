@@ -3,10 +3,7 @@ package org.infinispan.persistence.rest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -53,6 +50,7 @@ import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -74,7 +72,6 @@ public class RestStore implements AdvancedLoadWriteStore {
    private static final String MAX_IDLE_TIME_SECONDS = "maxIdleTimeSeconds";
    private static final String TIME_TO_LIVE_SECONDS = "timeToLiveSeconds";
    private static final Log log = LogFactory.getLog(RestStore.class, Log.class);
-   private static final DateFormat RFC1123_DATEFORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
    private volatile RestStoreConfiguration configuration;
    private Bootstrap bootstrap;
    private InternalEntryFactory iceFactory;
@@ -128,6 +125,12 @@ public class RestStore implements AdvancedLoadWriteStore {
       } catch (EncoderException e) {
       }
       this.metadataHelper = Util.getInstance(configuration.metadataHelper(), ctx.getCache().getAdvancedCache().getClassLoader());
+      /*
+       * HACK ALERT. Initialize some internal Netty structures early while we are within the scope of the correct classloader to
+       * avoid triggering ISPN-7602
+       * This needs to be fixed properly within the context of ISPN-7601
+       */
+      new HttpResponseHandler();
    }
 
    @Override
@@ -200,7 +203,7 @@ public class RestStore implements AdvancedLoadWriteStore {
       }
    }
 
-   private class HttpResponseHandler extends SimpleChannelInboundHandler<HttpResponse> {
+   private static class HttpResponseHandler extends SimpleChannelInboundHandler<HttpResponse> {
 
       private FullHttpResponse response;
 
@@ -251,7 +254,7 @@ public class RestStore implements AdvancedLoadWriteStore {
          Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpObjectAggregator(maxContentLength), handler).channel();
          ch.writeAndFlush(delete).sync().channel().closeFuture().sync();
          try {
-            return isSuccessful(handler.getResponse().getStatus().code());
+            return isSuccessful(handler.getResponse().status().code());
          } finally {
             handler.getResponse().release();
          }
@@ -272,8 +275,8 @@ public class RestStore implements AdvancedLoadWriteStore {
          ch.writeAndFlush(get).sync().channel().closeFuture().sync();
          FullHttpResponse response = handler.getResponse();
          try {
-            if (HttpResponseStatus.OK.equals(response.getStatus())) {
-               String contentType = response.headers().get(HttpHeaders.Names.CONTENT_TYPE);
+            if (HttpResponseStatus.OK.equals(response.status())) {
+               String contentType = response.headers().get(HttpHeaderNames.CONTENT_TYPE);
                long ttl = timeHeaderToSeconds(response.headers().get(TIME_TO_LIVE_SECONDS));
                long maxidle = timeHeaderToSeconds(response.headers().get(MAX_IDLE_TIME_SECONDS));
                Metadata metadata = metadataHelper.buildMetadata(contentType, ttl, TimeUnit.SECONDS, maxidle, TimeUnit.SECONDS);
@@ -288,10 +291,10 @@ public class RestStore implements AdvancedLoadWriteStore {
                byte[] bytes = new byte[content.readableBytes()];
                content.readBytes(bytes);
                return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, unmarshall(contentType, bytes), internalMetadata);
-            } else if (HttpResponseStatus.NOT_FOUND.equals(response.getStatus())) {
+            } else if (HttpResponseStatus.NOT_FOUND.equals(response.status())) {
                return null;
             } else {
-               throw log.httpError(response.getStatus().toString());
+               throw log.httpError(response.status().toString());
             }
          } finally {
             response.release();
@@ -320,8 +323,8 @@ public class RestStore implements AdvancedLoadWriteStore {
    @Override
    public void process(KeyFilter keyFilter, final CacheLoaderTask cacheLoaderTask, Executor executor, boolean loadValue, boolean loadMetadata) {
       DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, path + "?global");
-      get.headers().add(HttpHeaders.Names.ACCEPT, "text/plain");
-      get.headers().add(HttpHeaders.Names.ACCEPT_CHARSET, "UTF-8");
+      get.headers().add(HttpHeaderNames.ACCEPT, "text/plain");
+      get.headers().add(HttpHeaderNames.ACCEPT_CHARSET, "UTF-8");
       try {
          HttpResponseHandler handler = new HttpResponseHandler(true);
          Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(
