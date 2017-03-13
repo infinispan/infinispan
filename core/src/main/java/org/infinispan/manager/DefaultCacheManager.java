@@ -734,7 +734,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       log.tracef("Cache stop order: %s", cachesToStop);
 
       for (String cacheName : cachesToStop) {
-         terminate(cacheName);
+         try {
+            terminate(cacheName);
+         } catch (Throwable t) {
+            log.componentFailedToStop(t);
+         }
       }
    }
 
