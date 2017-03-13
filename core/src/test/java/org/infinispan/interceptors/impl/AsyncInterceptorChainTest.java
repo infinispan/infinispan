@@ -15,6 +15,7 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ import org.testng.annotations.Test;
  * @since 9.0
  */
 @Test(groups = "functional", testName = "interceptors.AsyncInterceptorChainTest")
-public class AsyncInterceptorChainTest {
+public class AsyncInterceptorChainTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(AsyncInterceptorChainTest.class);
 
@@ -40,7 +41,7 @@ public class AsyncInterceptorChainTest {
       ic.addInterceptor(new DummyActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
       List<Future<Void>> futures = new ArrayList<>(2);
-      ExecutorService executorService = Executors.newFixedThreadPool(3);
+      ExecutorService executorService = Executors.newFixedThreadPool(3, getTestThreadFactory("Worker"));
       try {
          // We do test concurrent add/remove of different types per thread,
          // so that the final result is predictable (testable) and that we

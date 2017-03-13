@@ -47,4 +47,12 @@ final public class CachePrincipalPair {
          return false;
       return true;
    }
+
+   @Override
+   public String toString() {
+      return "CachePrincipalPair{" +
+            "cacheName=" + cacheName +
+            ", principalName=" + principalName +
+            '}';
+   }
 }
