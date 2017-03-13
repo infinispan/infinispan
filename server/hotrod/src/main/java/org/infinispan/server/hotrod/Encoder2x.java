@@ -14,7 +14,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -388,8 +387,8 @@ class Encoder2x implements VersionedEncoder {
                      int maxIdle = ice.getMaxIdle() < 0 ? -1 : (int) (ice.getMaxIdle() / 1000);
                      long lastUsed = ice.getLastUsed();
                      long created = ice.getCreated();
-                     NumericVersion dataVersion = (NumericVersion) ice.getMetadata().version();
-                     writeMetadata(lifespan, maxIdle, created, lastUsed, dataVersion.getVersion(), buf);
+                     long dataVersion = CacheDecodeContext.extractVersion(ice.getMetadata().version());
+                     writeMetadata(lifespan, maxIdle, created, lastUsed, dataVersion, buf);
                   } else {
                      buf.writeByte(0);
                   }
