@@ -22,7 +22,6 @@ import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
@@ -240,7 +239,6 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testSTWithWritingNonTxThread(Method m) throws Exception {
-      TestResourceTracker.testThreadStarted(this);
       testCount++;
       logTestStart(m);
       writingThreadTest(false);
@@ -248,7 +246,6 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testSTWithWritingTxThread(Method m) throws Exception {
-      TestResourceTracker.testThreadStarted(this);
       testCount++;
       logTestStart(m);
       writingThreadTest(true);

@@ -1,5 +1,7 @@
 package org.infinispan.distexec;
 
+import static org.infinispan.test.Exceptions.expectException;
+
 import java.io.Serializable;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -39,7 +41,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
    public void testBasicInvocation() throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
       try {
-         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des);
          decs.submit(new SimpleCallable());
          CompletableFuture<Integer> future = decs.take();
          Integer r = future.get();
@@ -56,9 +58,9 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       c1.put("key4", "Sanne");
 
       DistributedExecutorService des = new DefaultExecutorService(c1);
-      DistributedExecutionCompletionService<Boolean> decs = new DistributedExecutionCompletionService<Boolean>(des);
+      DistributedExecutionCompletionService<Boolean> decs = new DistributedExecutionCompletionService<>(des);
       try {
-         decs.submit(new SimpleDistributedCallable(true), new String[] { "key1", "key2" });
+         decs.submit(new SimpleDistributedCallable(true), "key1", "key2");
          Future<Boolean> future = decs.take();
          Boolean r = future.get();
          assert r;
@@ -74,10 +76,10 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       c1.put("key4", "Sanne");
 
       DefaultExecutorService des = new DefaultExecutorService(c1);
-      DistributedExecutionCompletionService<Boolean> decs = new DistributedExecutionCompletionService<Boolean>(des);
+      DistributedExecutionCompletionService<Boolean> decs = new DistributedExecutionCompletionService<>(des);
       try {
-         decs.submitEverywhere(new SimpleDistributedCallable(true), new String[] { "key1", "key2" });
-         Future<Boolean> f = null;
+         decs.submitEverywhere(new SimpleDistributedCallable(true), "key1", "key2");
+         Future<Boolean> f;
          int counter = 0;
          while ((f = decs.poll(1,TimeUnit.SECONDS)) != null) {
             assert f.get();
@@ -92,10 +94,10 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
    public void testDistributedCallableEverywhere() throws Exception {
 
       DefaultExecutorService des = new DefaultExecutorService(c1);
-      DistributedExecutionCompletionService<Boolean> decs = new DistributedExecutionCompletionService<Boolean>(des);
+      DistributedExecutionCompletionService<Boolean> decs = new DistributedExecutionCompletionService<>(des);
       try {
          decs.submitEverywhere(new SimpleDistributedCallable(false));
-         Future<Boolean> f = null;
+         Future<Boolean> f;
          int counter = 0;
          while ((f = decs.poll(1,TimeUnit.SECONDS)) != null) {
             assert f.get();
@@ -107,18 +109,16 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       }
    }
 
-   @Test(expectedExceptions = NullPointerException.class)
    public void testBasicInvocationWithNullExecutor() throws Exception {
       DistributedExecutorService des = null;
-      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+      expectException(NullPointerException.class, () -> new DistributedExecutionCompletionService(des));
    }
 
-   @Test(expectedExceptions = NullPointerException.class)
    public void testBasicInvocationWithNullTask() throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
       try {
-         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
-         decs.submit(null);
+         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des);
+         expectException(NullPointerException.class, () -> decs.submit(null));
       } finally {
          des.shutdownNow();
       }
@@ -128,7 +128,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       DistributedExecutorService des = new DefaultExecutorService(c1);
       try {
          BlockingQueue<CompletableFuture<Integer>> queue = new ArrayBlockingQueue<>(10);
-         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des, queue);
+         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des, queue);
          decs.submit(new SimpleCallable());
          CompletableFuture<Integer> future = decs.take();
          Integer r = future.get();
@@ -141,7 +141,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
    public void testBasicInvocationWithRunnable() throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
       try {
-         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des);
          Integer result = 5;
          decs.submit(new SimpleRunnable(), result);
 
@@ -153,13 +153,12 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
       }
    }
 
-   @Test(expectedExceptions = NullPointerException.class)
    public void testBasicInvocationWithNullRunnable() throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
       try {
-         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+         DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des);
          Integer result = 5;
-         decs.submit(null, result);
+         expectException(NullPointerException.class, () -> decs.submit(null, result));
       } finally {
          des.shutdownNow();
       }
@@ -167,7 +166,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
 
    public void testBasicPollInvocationWithSleepingCallable() throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
-      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des);
       try {
          decs.submit(new SimpleCallable(true, 5000));
          CompletableFuture<Integer> callable = decs.poll();
@@ -180,7 +179,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
    public void testBasicTakeInvocationWithSleepingCallable() throws Exception {
       long sleepTime = 2000;
       DistributedExecutorService des = new DefaultExecutorService(c1);
-      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des);
       try {
          long start = System.currentTimeMillis();
          decs.submit(new SimpleCallable(true, sleepTime));
@@ -198,7 +197,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
 
    public void testBasicPollInvocation() throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
-      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des);
       try {
          decs.submit(new SimpleCallable());
 
@@ -212,7 +211,7 @@ public class DistributedExecutionCompletionTest extends BaseDistFunctionalTest<O
 
    public void testBasicPollInvocationWithTimeout() throws Exception {
       DistributedExecutorService des = new DefaultExecutorService(c1);
-      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<Integer>(des);
+      DistributedExecutionCompletionService<Integer> decs = new DistributedExecutionCompletionService<>(des);
       try {
          decs.submit(new SimpleCallable(true,5000));
          CompletableFuture<Integer> callable = decs.poll(10, TimeUnit.MILLISECONDS);

@@ -70,14 +70,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
       assertEquals(0, store.size());
 
-      final List<String> keys = new ArrayList<String>(NUM_KEYS);
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j;
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      final List<String> keys = populateStore(NUM_KEYS, 0, store, marshaller);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[NUM_WRITER_THREADS];
@@ -113,7 +106,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
       assertEquals(0, store.size());
 
-      final List<String> keys = new ArrayList<String>(NUM_KEYS);
+      final List<String> keys = new ArrayList<>(NUM_KEYS);
       for (int j = 0; j < NUM_KEYS; j++) {
          String key = "key" + j;
          keys.add(key);
@@ -160,12 +153,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       // Also record the file size after each such iteration.
       // Since entry sizes increase during each iteration, new entries won't fit in old free entries
       for (int i = 0; i < TIMES; i++) {
-         for (int j = 0; j < NUM_KEYS; j++) {
-            String key = "key" + j;
-            String value = key + "_value_" + j + "_" + times("123456789_", i);
-            MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-            store.write(entry);
-         }
+         populateStore(NUM_KEYS, i, store, marshaller);
          fileSizesWithoutPurge[i] = file.length();
       }
 
@@ -209,14 +197,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertEquals(0, store.size());
 
       // Write a few entries into the cache
-      final List<String> keys = new ArrayList<String>(NUM_KEYS);
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j;
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      final List<String> keys = populateStore(NUM_KEYS, 0, store, marshaller);
 
       // Do some reading/writing entries with random size
       final CountDownLatch stopLatch = new CountDownLatch(1);
@@ -250,13 +231,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       long length2 = file.length();
 
       // Again write entries with smaller size
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j;
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      populateStore(NUM_KEYS, 0, store, marshaller);
 
       store.purge(executor, null);
       // Give some time for the purge thread to finish
@@ -270,6 +245,18 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertTrue(length3 < length2);
    }
 
+   public List<String> populateStore(int numKeys, int numPadding, SingleFileStore store, StreamingMarshaller marshaller) {
+      final List<String> keys = new ArrayList<>(numKeys);
+      for (int j = 0; j < numKeys; j++) {
+         String key = "key" + j;
+         String value = key + "_value_" + j + times("123456789_", numPadding);
+         keys.add(key);
+         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
+         store.write(entry);
+      }
+      return keys;
+   }
+
    public void testProcess() throws ExecutionException, InterruptedException {
       final int NUM_WRITER_THREADS = 2;
       final int NUM_KEYS = 2000;
@@ -281,14 +268,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
       assertEquals(0, store.size());
 
-      final List<String> keys = new ArrayList<String>(NUM_KEYS);
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j + times("123456789_", new Random().nextInt(MAX_VALUE_SIZE/10));
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      final List<String> keys = new ArrayList<>(NUM_KEYS);
+      populateStoreRandomValues(NUM_KEYS, MAX_VALUE_SIZE, store, marshaller, keys);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[NUM_WRITER_THREADS];
@@ -319,13 +300,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<>(NUM_KEYS);
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j + times("123456789_", new Random().nextInt(MAX_VALUE_SIZE / 10));
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      populateStoreRandomValues(NUM_KEYS, MAX_VALUE_SIZE, store, marshaller, keys);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[NUM_WRITER_THREADS];
@@ -344,11 +319,25 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       }
    }
 
+   private void populateStoreRandomValues(int NUM_KEYS, int MAX_VALUE_SIZE, SingleFileStore store,
+                                         StreamingMarshaller marshaller, List<String> keys) {
+      for (int j = 0; j < NUM_KEYS; j++) {
+         String key = "key" + j;
+         String value = key + "_value_" + j + times("123456789_", new Random().nextInt(MAX_VALUE_SIZE / 10));
+         keys.add(key);
+         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
+         store.write(entry);
+      }
+   }
+
    private Callable<Object> stopOnException(Callable<Object> task, CountDownLatch stopLatch) {
       return new StopOnExceptionTask(task, stopLatch);
    }
 
    private String times(String s, int count) {
+      if (count == 0)
+         return "";
+
       StringBuilder sb = new StringBuilder(s.length() * count);
       for (int i = 0; i < count; i++) {
          sb.append(s);
@@ -378,7 +367,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          while (stopLatch.getCount() != 0) {
             String key = keys.get(random.nextInt(keys.size()));
             String value = key + "_value_" + i + "_" + times("123456789_", random.nextInt(MAX_VALUE_SIZE) / 10);
-            MarshalledEntry entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
+            MarshalledEntry entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
             store.write(entry);
 //            log.tracef("Wrote value %s for key %s", value, key);
 
@@ -436,14 +425,14 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
          MILLISECONDS.sleep(100);
          while (stopLatch.getCount() != 0) {
-            long sizeBeforeClear = file.length();
+            log.tracef("Clearing store, store size before = %d, file size before = %d", store.getFileSize(), file.length());
             store.clear();
-            log.tracef("Cleared store, store size before = %d, file size before = %d", store.getFileSize(), file.length());
             MILLISECONDS.sleep(1);
             // The store size is incremented before values are actually written, so the on-disk size should always be
             // smaller than the logical size.
             long fileSizeAfterClear = file.length();
             long storeSizeAfterClear = store.getFileSize();
+            log.tracef("Cleared store, store size after = %d, file size after = %d", storeSizeAfterClear, fileSizeAfterClear);
             assertTrue("Store size " + storeSizeAfterClear + " is smaller than the file size " + fileSizeAfterClear,
                   fileSizeAfterClear <= storeSizeAfterClear);
             MILLISECONDS.sleep(100);

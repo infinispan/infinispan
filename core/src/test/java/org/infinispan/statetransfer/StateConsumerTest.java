@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -126,8 +126,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       when(cache.getName()).thenReturn("testCache");
       when(cache.getStatus()).thenReturn(ComponentStatus.RUNNING);
 
-      pooledExecutorService = new ThreadPoolExecutor(10, 20, 0L,
-                                                     TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(),
+      pooledExecutorService = new ThreadPoolExecutor(0, 20, 0L,
+                                                     TimeUnit.MILLISECONDS, new SynchronousQueue<>(),
                                                      getTestThreadFactory("Worker"),
                                                      new ThreadPoolExecutor.CallerRunsPolicy());
 

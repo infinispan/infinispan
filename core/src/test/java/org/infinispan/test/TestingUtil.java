@@ -697,7 +697,7 @@ public class TestingUtil {
 
    private static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
       if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())
-         return new HashSet<>();
+         return Collections.emptySet();
 
       Set<String> running = new LinkedHashSet<>(getOrderedCacheNames(cacheContainer));
       extractGlobalComponent(cacheContainer, InternalCacheRegistry.class).filterPrivateCaches(running);
@@ -1039,7 +1039,8 @@ public class TestingUtil {
       StringBuilder builder = new StringBuilder(cache.getName() + "[");
       while (it.hasNext()) {
          CacheEntry ce = (CacheEntry) it.next();
-         builder.append(ce.getKey()).append("=").append(ce.getValue()).append(",l=").append(ce.getLifespan()).append("; ");
+         builder.append(ce.getKey() ).append("=").append( ce.getValue() ).append( ",l=" ).append( ce.getLifespan() )
+                .append( "; ");
       }
       builder.append("]");
       return builder.toString();

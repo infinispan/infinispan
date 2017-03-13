@@ -14,7 +14,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -47,13 +46,7 @@ public class DistributedExecutorBadResponseFailoverTest extends MultipleCacheMan
       // this is the node sending DistributedExecuteCommand
       final EmbeddedCacheManager cacheManager1 = manager(0);
       TestingUtil.wrapGlobalComponent(cacheManager1, Transport.class,
-            new TestingUtil.WrapFactory<Transport, Transport, CacheContainer>() {
-
-               @Override
-               public Transport wrap(CacheContainer wrapOn, Transport current) {
-                  return new CacheNotFoundResponseTransport(current);
-               }
-            }, true);
+                                      (wrapOn, current) -> new CacheNotFoundResponseTransport(current), true);
 
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
@@ -87,7 +80,8 @@ public class DistributedExecutorBadResponseFailoverTest extends MultipleCacheMan
       } catch (Exception ex) {
          AssertJUnit.fail("Task did not failover properly " + ex);
       } finally {
-         des.shutdown();
+         if (des != null)
+            des.shutdown();
       }
    }
 
@@ -109,7 +103,7 @@ public class DistributedExecutorBadResponseFailoverTest extends MultipleCacheMan
 
    private static class CacheNotFoundResponseTransport extends AbstractDelegatingTransport {
 
-      public CacheNotFoundResponseTransport(Transport actual) {
+      CacheNotFoundResponseTransport(Transport actual) {
          super(actual);
       }
 
@@ -128,7 +122,7 @@ public class DistributedExecutorBadResponseFailoverTest extends MultipleCacheMan
 
          // intercept the response we received for DistributedExecuteCommand
          if (rpcCommand instanceof DistributedExecuteCommand) {
-            Map<Address, Response> cacheNotFoundResponse = new HashMap<Address, Response>();
+            Map<Address, Response> cacheNotFoundResponse = new HashMap<>();
             for (Entry<Address, Response> e : properResponse.entrySet()) {
                // and augment it to return CacheNotFoundResponse (any other non SuccessfulResponse will do)
                cacheNotFoundResponse.put(e.getKey(), CacheNotFoundResponse.INSTANCE);
