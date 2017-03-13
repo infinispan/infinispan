@@ -4,7 +4,27 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-final class ExternallyMarshallable {
+/**
+ * As much as possible, Infinispan consumers should provide
+ * {@link org.infinispan.commons.marshall.Externalizer} or
+ * {@link org.infinispan.commons.marshall.AdvancedExternalizer} instances
+ * for the types being marshalled, so that these types can be marshalled
+ * as efficiently as possible.
+ *
+ * Sometimes however, Infinispan consumers might rely on the fact
+ * that a certain type implements Java's standard {@link Serializable}
+ * or {@link java.io.Externalizable}.
+ *
+ * This class acts a test barrier which controls, provided assertions
+ * have been enabled, which types can be externally marshalled using
+ * JBoss Marshalling.
+ *
+ * The plan is for external marshalling is be morphed into user type
+ * marshalling, at which point this class won't be used any more.
+ *
+ * @since 9.0
+ */
+public final class ExternallyMarshallable {
 
    private static final List<String> whiteListClasses = new ArrayList<>();
 
@@ -13,7 +33,6 @@ final class ExternallyMarshallable {
       whiteListClasses.add("$$Lambda$");
       whiteListClasses.add("java.lang.Class");
       whiteListClasses.add("java.time.Instant"); // prod
-      whiteListClasses.add("org.hibernate.cache"); // prod
       whiteListClasses.add("org.hibernate.search.query.engine.impl.LuceneHSQuery"); // prod
       whiteListClasses.add("org.infinispan.distexec.RunnableAdapter"); // prod
       whiteListClasses.add("org.infinispan.jcache.annotation.DefaultCacheKey"); // prod
@@ -45,6 +64,13 @@ final class ExternallyMarshallable {
 
    private ExternallyMarshallable() {
       // Static class
+   }
+
+   /**
+    * Adds package or class name to the externally marshallable white list.
+    */
+   public static void addToWhiteList(String type) {
+      whiteListClasses.add(type);
    }
 
    public static boolean isAllowed(Object obj) {
