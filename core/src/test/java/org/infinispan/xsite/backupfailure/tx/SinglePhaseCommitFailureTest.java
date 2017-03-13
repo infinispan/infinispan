@@ -1,7 +1,8 @@
 package org.infinispan.xsite.backupfailure.tx;
 
-import static org.testng.AssertJUnit.fail;
+import static org.infinispan.test.Exceptions.expectException;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -23,14 +24,15 @@ public class SinglePhaseCommitFailureTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       failureInterceptor = new BaseBackupFailureTest.FailureInterceptor();
-      backup("LON").getAdvancedCache().addInterceptor(failureInterceptor, 1);
+      backup("LON").getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
    }
 
    public void testPrepareFailure() {
+      failureInterceptor.enable();
       try {
-         cache("LON", 0).put("k", "v");
-         fail("This should have thrown an exception");
-      } catch (Exception e) {
+         expectException(CacheException.class, () -> cache("LON", 0).put("k", "v"));
+      } finally {
+         failureInterceptor.disable();
       }
    }
 

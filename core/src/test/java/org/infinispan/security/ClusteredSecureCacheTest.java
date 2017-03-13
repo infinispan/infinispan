@@ -33,57 +33,44 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
       global.security().authorization().enable()
             .principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL);
       builder.security().authorization().enable().role("admin");
-      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-         @Override
-         public Void run() throws Exception {
-            createCluster(global, builder, 2);
-            waitForClusterToForm();
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
+         createCluster(global, builder, 2);
+         waitForClusterToForm();
+         return null;
       });
    }
 
    @Override
    @AfterClass(alwaysRun = true)
    protected void destroy() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            ClusteredSecureCacheTest.super.destroy();
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         ClusteredSecureCacheTest.super.destroy();
+         return null;
       });
    }
 
    @Override
    @AfterMethod(alwaysRun = true)
    protected void clearContent() throws Throwable {
-      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-         @Override
-         public Void run() throws Exception {
-            try {
-               ClusteredSecureCacheTest.super.clearContent();
-            } catch (Throwable e) {
-               throw new Exception(e);
-            }
-            return null;
+      Security.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
+         try {
+            ClusteredSecureCacheTest.super.clearContent();
+         } catch (Throwable e) {
+            throw new Exception(e);
          }
+         return null;
       });
    }
 
    public void testClusteredSecureCache() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-
-         @Override
-         public Void run() {
-            Cache<String, String> cache1 = cache(0);
-            Cache<String, String> cache2 = cache(1);
-            cache1.put("a", "a");
-            cache2.put("b", "b");
-            assertEquals("a", cache2.get("a"));
-            assertEquals("b", cache1.get("b"));
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         Cache<String, String> cache1 = cache(0);
+         Cache<String, String> cache2 = cache(1);
+         cache1.put("a", "a");
+         cache2.put("b", "b");
+         assertEquals("a", cache2.get("a"));
+         assertEquals("b", cache1.get("b"));
+         return null;
       });
    }
 }

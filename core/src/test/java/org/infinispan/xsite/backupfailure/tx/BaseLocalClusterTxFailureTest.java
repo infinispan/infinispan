@@ -3,6 +3,9 @@ package org.infinispan.xsite.backupfailure.tx;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
+import javax.transaction.xa.XAException;
+
+import org.infinispan.test.Exceptions;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.backupfailure.BaseBackupFailureTest;
 
@@ -18,14 +21,15 @@ public abstract class BaseLocalClusterTxFailureTest extends AbstractTwoSitesTest
    protected void createSites() {
       super.createSites();
       failureInterceptor = new BaseBackupFailureTest.FailureInterceptor();
-      cache("LON", 1).getAdvancedCache().addInterceptor(failureInterceptor, 1);
+      cache("LON", 1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
    }
 
    public void testPrepareFailure() {
+      failureInterceptor.enable();
       try {
-         cache("LON", 0).put("k","v");
-         fail("This should have thrown an exception");
-      } catch (Exception e) {
+         Exceptions.expectException(XAException.class, () -> cache("LON", 0).put("k", "v"));
+      } finally {
+         failureInterceptor.disable();
       }
       assertNull(cache("LON",0).get("k"));
       assertNull(cache("LON",1).get("k"));

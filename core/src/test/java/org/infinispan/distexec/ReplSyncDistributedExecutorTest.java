@@ -22,10 +22,4 @@ public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
    protected CacheMode getCacheMode() {
       return CacheMode.REPL_SYNC;
    }
-
-   @Test(groups = "unstable")
-   @Override
-   public void testBasicTargetRemoteDistributedCallableWithHighFutureAndLowTaskTimeout() throws Exception {
-      super.testBasicTargetRemoteDistributedCallableWithHighFutureAndLowTaskTimeout();
-   }
 }
