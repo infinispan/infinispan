@@ -3,17 +3,28 @@ package org.infinispan.executors;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Test(groups = "functional", testName = "executors.ExecutorAllCompletionServiceTest")
-public class ExecutorAllCompletionServiceTest {
+public class ExecutorAllCompletionServiceTest extends AbstractInfinispanTest {
+
+   private ExecutorService lastExecutorService;
+
+   @AfterClass(alwaysRun = true)
+   public void stopExecutors() {
+      if (lastExecutorService != null) {
+         lastExecutorService.shutdownNow();
+      }
+   }
 
    public void testWaitForAll() {
       ExecutorAllCompletionService service = createService(1);
@@ -44,16 +55,13 @@ public class ExecutorAllCompletionServiceTest {
       for (int i = 0; i < 300; ++i) {
          service.submit(new WaitRunnable(10), null);
       }
-      List<Thread> threads = new ArrayList<Thread>(10);
+      List<Thread> threads = new ArrayList<>(10);
       for (int i = 0; i < 10; ++i) {
-         Thread t = new Thread() {
-            @Override
-            public void run() {
-               service.waitUntilAllCompleted();
-               assert service.isAllCompleted();
-               assert !service.isExceptionThrown();
-            }
-         };
+         Thread t = new Thread(() -> {
+            service.waitUntilAllCompleted();
+            assert service.isAllCompleted();
+            assert !service.isExceptionThrown();
+         });
          threads.add(t);
          t.start();
       }
@@ -73,16 +81,13 @@ public class ExecutorAllCompletionServiceTest {
       for (int i = 0; i < 150; ++i) {
          service.submit(new WaitRunnable(10), null);
       }
-      List<Thread> threads = new ArrayList<Thread>(10);
+      List<Thread> threads = new ArrayList<>(10);
       for (int i = 0; i < 10; ++i) {
-         Thread t = new Thread() {
-            @Override
-            public void run() {
-               service.waitUntilAllCompleted();
-               assert service.isAllCompleted();
-               assert service.isExceptionThrown();
-            }
-         };
+         Thread t = new Thread(() -> {
+            service.waitUntilAllCompleted();
+            assert service.isAllCompleted();
+            assert service.isExceptionThrown();
+         });
          threads.add(t);
          t.start();
       }
@@ -100,7 +105,12 @@ public class ExecutorAllCompletionServiceTest {
    }
 
    private ExecutorAllCompletionService createService(int maxThreads) {
-      return new ExecutorAllCompletionService(new ThreadPoolExecutor(1, maxThreads, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(1000)));
+      if (lastExecutorService != null) {
+         lastExecutorService.shutdownNow();
+      }
+
+      lastExecutorService = Executors.newFixedThreadPool(maxThreads, getTestThreadFactory("Worker"));
+      return new ExecutorAllCompletionService(lastExecutorService);
    }
 
    private class WaitRunnable implements Runnable {
@@ -112,10 +122,7 @@ public class ExecutorAllCompletionServiceTest {
 
       @Override
       public void run() {
-         try {
-            Thread.sleep(period);
-         } catch (InterruptedException e) {
-         }
+         TestingUtil.sleepThread(period);
       }
    }
 
