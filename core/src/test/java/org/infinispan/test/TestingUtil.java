@@ -68,6 +68,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -88,6 +89,7 @@ import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -631,28 +633,14 @@ public class TestingUtil {
       killCacheManagers(cms);
    }
 
-   public static void killCacheManagers(List<? extends CacheContainer> cacheContainers) {
-      EmbeddedCacheManager[] cms = new EmbeddedCacheManager[cacheContainers.size()];
-      for (int i = 0; i < cacheContainers.size(); i++) cms[i] = (EmbeddedCacheManager) cacheContainers.get(i);
-      killCacheManagers(cms);
-   }
-
    public static void killCacheManagers(EmbeddedCacheManager... cacheManagers) {
-      killCacheManagers(false, cacheManagers);
+      killCacheManagers(Arrays.asList(cacheManagers));
    }
 
-   public static void killCacheManagers(boolean clear, EmbeddedCacheManager... cacheManagers) {
-      // stop the caches first so that stopping the cache managers doesn't trigger a rehash
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         try {
-            killCaches(clear, getRunningCaches(cm));
-         } catch (Throwable e) {
-            log.warn("Problems stopping cache manager " + cm, e);
-         }
-      }
+   public static void killCacheManagers(List<? extends EmbeddedCacheManager> cacheManagers) {
       // Stop the managers in reverse order to prevent each of them from becoming coordinator in turn
-      for (int i = cacheManagers.length - 1; i >= 0; i--) {
-         EmbeddedCacheManager cm = cacheManagers[i];
+      for (int i = cacheManagers.size() - 1; i >= 0; i--) {
+         EmbeddedCacheManager cm = cacheManagers.get(i);
          try {
             if (cm != null)
                cm.stop();
@@ -686,8 +674,12 @@ public class TestingUtil {
          if (!cacheContainer.getStatus().allowInvocations()) return;
 
          for (Cache cache : runningCaches) {
-            clearCacheLoader(cache);
-            removeInMemoryData(cache);
+            try {
+               clearCacheLoader(cache);
+               removeInMemoryData(cache);
+            } catch (Exception e) {
+               log.errorf(e, "Failed to clear cache %s after test", cache);
+            }
          }
       }
    }
@@ -695,7 +687,8 @@ public class TestingUtil {
    private static Set<String> getOrderedCacheNames(EmbeddedCacheManager cacheContainer) {
       Set<String> caches = new LinkedHashSet<>();
       try {
-         DependencyGraph<String> graph = TestingUtil.extractField(cacheContainer, "cacheDependencyGraph");
+         DependencyGraph<String> graph = TestingUtil.extractGlobalComponentRegistry(cacheContainer)
+                                            .getComponent(KnownComponentNames.CACHE_DEPENDENCY_GRAPH);
          caches.addAll(graph.topologicalSort());
       } catch (Exception ignored) {
       }
@@ -706,10 +699,10 @@ public class TestingUtil {
       if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())
          return new HashSet<>();
 
-      Set<String> running = new LinkedHashSet<>();
-      running.addAll(getOrderedCacheNames(cacheContainer));
+      Set<String> running = new LinkedHashSet<>(getOrderedCacheNames(cacheContainer));
+      extractGlobalComponent(cacheContainer, InternalCacheRegistry.class).filterPrivateCaches(running);
       running.addAll(cacheContainer.getCacheNames());
-      running.add(DEFAULT_CACHE_NAME);
+      running.add(cacheContainer.getCacheManagerConfiguration().defaultCacheName().orElse(DEFAULT_CACHE_NAME));
 
       return running.stream()
               .map(s -> cacheContainer.getCache(s, false))
@@ -721,14 +714,7 @@ public class TestingUtil {
    private static void clearRunningTx(Cache cache) {
       if (cache != null) {
          TransactionManager txm = TestingUtil.getTransactionManager(cache);
-         if (txm == null) return;
-         try {
-            if (txm.getTransaction() == null) return;
-            txm.rollback();
-         }
-         catch (Exception e) {
-            // don't care
-         }
+         killTransaction(txm);
       }
    }
 
@@ -754,7 +740,7 @@ public class TestingUtil {
          str = "a cache manager at address " + a;
       log.debugf("Cleaning data for cache '%s' on %s", cache.getName(), str);
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      if (log.isDebugEnabled()) log.debugf("Data container size before clear: %d", dataContainer.size());
+      if (log.isDebugEnabled()) log.debugf("Data container size before clear: %d", dataContainer.sizeIncludingExpired());
       dataContainer.clear();
    }
 
@@ -769,13 +755,6 @@ public class TestingUtil {
     * Kills a cache - stops it and rolls back any associated txs
     */
    public static void killCaches(Collection<Cache> caches) {
-      killCaches(false, caches);
-   }
-
-   /**
-    * Kills a cache - stops it and rolls back any associated txs
-    */
-   public static void killCaches(boolean clear, Collection<Cache> caches) {
       for (Cache c : caches) {
          try {
             if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
@@ -795,13 +774,6 @@ public class TestingUtil {
                } else {
                   log.tracef("Local size before stopping: %d", size);
                }
-               if (clear) {
-                  try {
-                     c.clear();
-                  } catch (Exception e) {
-                     log.errorf(e, "Error clearing cache %s", c.getName());
-                  }
-               }
                c.stop();
             }
          }
@@ -819,7 +791,9 @@ public class TestingUtil {
    public static void killTransaction(TransactionManager txManager) {
       if (txManager != null) {
          try {
-            txManager.rollback();
+            if (txManager.getTransaction() != null) {
+               txManager.rollback();
+            }
          }
          catch (Exception e) {
             // don't care
@@ -1315,7 +1289,10 @@ public class TestingUtil {
       } catch (Exception e) {
          throw new RuntimeException(e);
       } finally {
-         TestingUtil.killCacheManagers(c.clearBeforeKill(), c.cm);
+         if (c.clearBeforeKill()) {
+            TestingUtil.clearContent(c.cm);
+         }
+         TestingUtil.killCacheManagers(c.cm);
       }
    }
 
@@ -1334,7 +1311,7 @@ public class TestingUtil {
          cm = s.get();
          c.accept(cm);
       } finally {
-         if (cm != null) TestingUtil.killCacheManagers(false, cm);
+         if (cm != null) TestingUtil.killCacheManagers(cm);
       }
    }
 

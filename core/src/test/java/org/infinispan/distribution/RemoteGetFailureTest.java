@@ -76,7 +76,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       // When we send a ClearCommand from node that does not have a newer view installed to node that has already
       // installed a view without the sender, the message is dropped and the ClearCommand has to time out.
       // Therefore, don't issue the clear command at all.
-      TestingUtil.killCacheManagers(false, cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]));
+      TestingUtil.killCacheManagers(cacheManagers);
       cacheManagers.clear();
    }
 

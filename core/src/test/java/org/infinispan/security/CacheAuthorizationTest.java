@@ -32,8 +32,9 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
    static final Subject ADMIN;
    static final Map<AuthorizationPermission, Subject> SUBJECTS;
 
-   static {      // Initialize one subject per permission
-      SUBJECTS = new HashMap<AuthorizationPermission, Subject>(AuthorizationPermission.values().length);
+   static {
+      // Initialize one subject per permission
+      SUBJECTS = new HashMap<>(AuthorizationPermission.values().length);
       for (AuthorizationPermission perm : AuthorizationPermission.values()) {
          SUBJECTS.put(perm, TestingUtil.makeSubject(perm.toString() + "_user", perm.toString()));
       }

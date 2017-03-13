@@ -122,7 +122,10 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    @AfterClass(alwaysRun = true)
    protected void destroy() {
-      if (cleanupAfterTest()) TestingUtil.killCacheManagers(cacheManagers);
+      if (cleanupAfterTest()) {
+         TestingUtil.clearContent(cacheManagers);
+         TestingUtil.killCacheManagers(cacheManagers);
+      }
       cacheManagers.clear();
       listeners.clear();
    }
@@ -136,7 +139,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
             throw new IllegalStateException("No caches registered! Use registerCacheManager(Cache... caches) to do that!");
          TestingUtil.clearContent(cacheManagers);
       } else {
-         TestingUtil.killCacheManagers(true, cacheManagers.toArray(new EmbeddedCacheManager[cacheManagers.size()]));
+         TestingUtil.clearContent(cacheManagers);
+         TestingUtil.killCacheManagers(cacheManagers);
          cacheManagers.clear();
       }
    }
@@ -748,7 +752,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }  else if (!c.clustering().cacheMode().isClustered()) {
          throw new IllegalStateException("This is not a clustered cache!");
       } else {
-         final Address address = getCache(0, cacheName).getAdvancedCache().getDistributionManager().locate(key).get(0);
+         Address address = getCache(0, cacheName).getAdvancedCache().getDistributionManager().getCacheTopology()
+                                                 .getDistribution(key).primary();
          for (Cache<K, V> cache : this.<K, V>caches(cacheName)) {
             if (cache.getAdvancedCache().getRpcManager().getTransport().getAddress().equals(address)) {
                return cache;
