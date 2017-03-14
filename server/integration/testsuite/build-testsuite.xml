@@ -127,34 +127,34 @@
         <if>
             <equals arg1="${zip.dist.old}" arg2="false" />
             <then>
-                <echo message="Zip for old server distribution was not passed. Skipping." />
+                <echo message="Zip for old server distribution was not passed. Using default old ISPN version ${version.org.infinispan.server-build.old}." />
             </then>
             <else>
                 <echo message="Using file ${zip.dist.old}" />
                 <unzip src="${zip.dist.old}" dest="${server.old.dist}-tmp" />
-                <for param="file">
-                    <path>
-                        <fileset dir="${server.old.dist}-tmp" includes="**/jboss-modules.jar" />
-                    </path>
-                    <sequential>
-                        <propertyregex override="yes" property="dir.in.zip" input="@{file}" regexp=".*[/\\]([^/\\]*)[/\\]jboss-modules\.jar" replace="\1" />
-                    </sequential>
-                </for>
-                <move file="${server.old.dist}-tmp/${dir.in.zip}" tofile="${server.old.dist}" />
-                <delete dir="${server.old.dist}-tmp" />
-                <transform transformDir="${server.old.dist}/standalone/configuration" in="standalone.xml" out="standalone.xml"
-                           removeRestSecurity="true" />
-                <transform transformDir="${server.old.dist}/standalone/configuration" in="clustered.xml" out="clustered.xml"
-                           removeRestSecurity="true"/>
-
-                <copy todir="${server2.old.dist}">
-                    <fileset dir="${server.old.dist}" />
-                </copy>
-                <copy todir="${server3.old.dist}">
-                    <fileset dir="${server.old.dist}" />
-                </copy>
             </else>
         </if>
+        <for param="file">
+            <path>
+                <fileset dir="${server.old.dist}-tmp" includes="**/jboss-modules.jar" />
+            </path>
+            <sequential>
+                <propertyregex override="yes" property="dir.in.zip" input="@{file}" regexp=".*[/\\]([^/\\]*)[/\\]jboss-modules\.jar" replace="\1" />
+            </sequential>
+        </for>
+        <move file="${server.old.dist}-tmp/${dir.in.zip}" tofile="${server.old.dist}" />
+        <delete dir="${server.old.dist}-tmp" />
+        <transform transformDir="${server.old.dist}/standalone/configuration" in="standalone.xml" out="standalone.xml"
+                   removeRestSecurity="true"/>
+        <transform transformDir="${server.old.dist}/standalone/configuration" in="clustered.xml" out="clustered.xml"
+                   removeRestSecurity="true"/>
+
+        <copy todir="${server2.old.dist}">
+            <fileset dir="${server.old.dist}" />
+        </copy>
+        <copy todir="${server3.old.dist}">
+            <fileset dir="${server.old.dist}" />
+        </copy>
     </target>
 
     <target name="transform-distro1-examples" depends="create-distro1">

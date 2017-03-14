@@ -133,6 +133,12 @@
           <scope>test</scope>
        </dependency>
         <dependency>
+            <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-build</artifactId>
+            <type>zip</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
             <scope>test</scope>
@@ -295,6 +301,7 @@
         <server2.old.dist>${basedir}/target/server/node2_old</server2.old.dist>
         <server3.old.dist>${basedir}/target/server/node3_old</server3.old.dist>
 
+        <old.server.version>8.0.0.Final</old.server.version>
         <old.server.schema.version>8.0</old.server.schema.version>
         <new.server.schema.version>9.0</new.server.schema.version>
 
@@ -325,8 +332,6 @@
         <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
         <suite.manual.phase>integration-test</suite.manual.phase>
         <suite.queries.phase>integration-test</suite.queries.phase>
-        <suite.rollups.manual.phase>none</suite.rollups.manual.phase>
-        <suite.rollups.manual.dist.phase>none</suite.rollups.manual.dist.phase>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
@@ -341,7 +346,7 @@
 
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
-            org.infinispan.server.test.category.ClientSingleNode,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.RollingUpgradesDist,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
+            org.infinispan.server.test.category.ClientSingleNode,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
             org.infinispan.server.test.category.Queries
         </suite.manual.exclude.groups>
         <suite.client.arq.domain>suite-client-domain</suite.client.arq.domain>
@@ -650,36 +655,6 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>suite-rollups-manual</id>
-                        <phase>${suite.rollups.manual.phase}</phase>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                        <configuration>
-                            <reportNameSuffix>${old.server.schema.version}-to-${new.server.schema.version}</reportNameSuffix>
-                            <groups>org.infinispan.server.test.category.RollingUpgrades</groups>
-                            <excludedGroups>${groups.unstable}</excludedGroups>
-                            <systemPropertyVariables>
-                                <arquillian.launch>suite-rollups-manual</arquillian.launch>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>suite-rollups-manual-dist</id>
-                        <phase>${suite.rollups.manual.dist.phase}</phase>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                        <configuration>
-                            <reportNameSuffix>${old.server.schema.version}-to-${new.server.schema.version}</reportNameSuffix>
-                            <groups>org.infinispan.server.test.category.RollingUpgradesDist</groups>
-                            <excludedGroups>${groups.unstable}</excludedGroups>
-                            <systemPropertyVariables>
-                                <arquillian.launch>suite-rollups-manual-dist</arquillian.launch>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>suite-client-local</id>
                         <phase>${suite.client.local.phase}</phase>
                         <goals>
@@ -967,35 +942,10 @@
             </properties>
         </profile>
         <profile>
-            <id>suite.rolling.upgrades</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.rollups.manual.phase>integration-test</suite.rollups.manual.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-                <start.jboss.as.manually>false</start.jboss.as.manually>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.rolling.upgrades.dist</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.rollups.manual.dist.phase>integration-test</suite.rollups.manual.dist.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-                <start.jboss.as.manually>false</start.jboss.as.manually>
-            </properties>
-        </profile>
-        <profile>
             <id>suite.rolling.upgrades.jbossas</id>
             <properties>
-                <suite.manual.phase>none</suite.manual.phase>
+                <suite.manual.phase>integration-test</suite.manual.phase>
                 <suite.queries.phase>none</suite.queries.phase>
-                <suite.rollups.manual.phase>integration-test</suite.rollups.manual.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
@@ -1052,9 +1002,8 @@
         <profile>
             <id>suite.rolling.upgrades.dist.jbossas</id>
             <properties>
-                <suite.manual.phase>none</suite.manual.phase>
+                <suite.manual.phase>integration-test</suite.manual.phase>
                 <suite.queries.phase>none</suite.queries.phase>
-                <suite.rollups.manual.dist.phase>integration-test</suite.rollups.manual.dist.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
@@ -1251,6 +1200,48 @@
                 <groups.client.local>org.infinispan.server.test.category.UnstableClientLocal</groups.client.local>
                 <groups.client.clustered>org.infinispan.server.test.category.UnstableClientClustered</groups.client.clustered>
             </properties>
+        </profile>
+
+        <profile>
+            <id>unpack-old-server</id>
+            <activation>
+                <property>
+                    <name>!zip.dist.old</name>
+                </property>
+            </activation>
+            <properties>
+                <hotrod.protocol.version>2.0</hotrod.protocol.version>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>copy-old-server</id>
+                            <phase>generate-resources</phase>
+                            <configuration>
+                                <skip>${skipTests}</skip>
+                                <outputDirectory>${server.old.dist}-tmp</outputDirectory>
+                                <stripVersion>true</stripVersion>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>${project.groupId}</groupId>
+                                        <artifactId>infinispan-server-build</artifactId>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>
