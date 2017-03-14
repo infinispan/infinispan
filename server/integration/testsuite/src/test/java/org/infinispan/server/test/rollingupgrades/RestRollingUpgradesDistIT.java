@@ -13,6 +13,7 @@ import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -23,6 +24,7 @@ import org.junit.runner.RunWith;
  * @author Tomas Sykora (tsykora@redhat.com)
  * @author Martin Gencur (mgencur@redhat.com)
  */
+@Ignore("Disabled until ISPN-7617 is fixed")
 @RunWith(Arquillian.class)
 @Category({RollingUpgradesDist.class})
 public class RestRollingUpgradesDistIT {
