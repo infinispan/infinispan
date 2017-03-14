@@ -11,7 +11,6 @@
          <cache-container name="local" default-cache="default" statistics="true">
             <global-state />
             <local-cache name="default" />
-            <local-cache name="memcachedCache"/>
             <local-cache name="namedCache" />
          </cache-container>
       </replacement>
@@ -78,9 +77,6 @@
             <distributed-cache name="default" />
 
             <replicated-cache name="repl" configuration="replicated"/>
-
-            <distributed-cache name="memcachedCache" />
-
          </cache-container>
       </replacement>
    </supplement>
@@ -96,9 +92,6 @@
                   <object size="1000"/>
                </memory>
                <file-store passivation="true" path="dc" purge="true" shared="false" />
-            </local-cache>
-            <local-cache name="memcachedCache">
-               <file-store passivation="false" path="mc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
@@ -119,11 +112,6 @@
                   <object size="1000"/>
                </memory>
                <rocksdb-store passivation="true" path="rocksdb-dc" purge="true" shared="false" />
-            </local-cache>
-            <local-cache name="memcachedCache">
-               <rocksdb-store passivation="false" path="rocksdb-mc" purge="true" shared="false">
-                  <expiration path="rocksdb-mc-expired"/>
-               </rocksdb-store>
             </local-cache>
             <local-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
@@ -168,21 +156,6 @@
                </string-keyed-jdbc-store>
             </distributed-cache>
 
-            <distributed-cache name="memcachedCache" remote-timeout="30000">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <memory>
-                  <object size="1000"/>
-               </memory>
-               <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="true" fetch-state="true" preload="false" purge="false" shared="false">
-                  <string-keyed-table prefix="ISPN_MC_SK">
-                     <id-column name="id" type="VARCHAR" />
-                     <data-column name="datum" type="BINARY" />
-                     <timestamp-column name="version" type="BIGINT" />
-                  </string-keyed-table>
-                  <write-behind modification-queue-size="1024" thread-pool-size="1" />
-               </string-keyed-jdbc-store>
-            </distributed-cache>
-
             <distributed-cache name="namedCache">
                <expiration lifespan="2000" max-idle="1000" />
                <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="false" fetch-state="true" preload="true" purge="false" shared="false">
@@ -206,15 +179,6 @@
                   <object size="1000"/>
                </memory>
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" passivation="true">
-                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
-               </remote-store>
-            </local-cache>
-            <local-cache name="memcachedCache">
-               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <memory>
-                  <object size="1000"/>
-               </memory>
-               <remote-store cache="memcachedCache" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
             </local-cache>
@@ -264,13 +228,6 @@
             <global-state />
             <transport lock-timeout="60000"/>
             <distributed-cache name="default" remote-timeout="30000">
-               <backups>
-                  <backup site="NYC" strategy="SYNC" />
-                  <backup site="SFO" strategy="ASYNC" />
-               </backups>
-            </distributed-cache>
-
-            <distributed-cache name="memcachedCache" remote-timeout="30000">
                <backups>
                   <backup site="NYC" strategy="SYNC" />
                   <backup site="SFO" strategy="ASYNC" />

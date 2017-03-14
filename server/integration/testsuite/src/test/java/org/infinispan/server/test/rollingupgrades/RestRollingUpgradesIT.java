@@ -1,9 +1,5 @@
 package org.infinispan.server.test.rollingupgrades;
 
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.get;
-import static org.infinispan.server.test.client.rest.RESTHelper.post;
-
 import javax.management.ObjectName;
 
 import org.apache.http.HttpStatus;
@@ -17,7 +13,6 @@ import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
-import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -41,11 +36,6 @@ public class RestRollingUpgradesIT {
     @ArquillianResource
     ContainerController controller;
 
-    @AfterClass
-    public static void clearServers() {
-        RESTHelper.clearServers();
-    }
-
     @Test
     public void testRestRollingUpgradesDiffVersions() throws Exception {
         // target node
@@ -55,6 +45,8 @@ public class RestRollingUpgradesIT {
         int managementPortServer2 = 10099;
         MBeanServerConnectionProvider provider2;
 
+        RESTHelper rest = new RESTHelper();
+
         try {
 
             if (!Boolean.parseBoolean(System.getProperty("start.jboss.as.manually"))) {
@@ -63,21 +55,21 @@ public class RestRollingUpgradesIT {
                 managementPortServer2 = 10090;
             }
 
-            RESTHelper.addServer("127.0.0.1", "/rest");
+            rest.addServer("127.0.0.1", "/rest");
 
-            post(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", "text/html");
-            get(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", "text/html");
+            rest.get(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
 
             for (int i = 0; i < 50; i++) {
-                post(fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET), "valueLoad" + i, "text/html");
+                rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET), "valueLoad" + i, "text/html");
             }
 
             controller.start("rest-rolling-upgrade-1");
 
             RemoteInfinispanMBeans s1 = createRemotes("rest-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
-            RESTHelper.addServer(s1.server.getRESTEndpoint().getInetAddress().getHostName(), s1.server.getRESTEndpoint().getContextPath());
+            rest.addServer(s1.server.getRESTEndpoint().getInetAddress().getHostName(), s1.server.getRESTEndpoint().getContextPath());
 
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "key1", 0), "data");
+            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "key1", 0), "data");
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
@@ -95,14 +87,14 @@ public class RestRollingUpgradesIT {
             invokeOperation(provider1, rollMan.toString(), "disconnectSource", new Object[]{"rest"},
                     new String[]{"java.lang.String"});
 
-            post(fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
 
             //Source node entries should NOT be accessible from target node
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
+            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
 
             //All remaining entries migrated?
             for (int i = 0; i < 50; i++) {
-                get(fullPathKey(1, DEFAULT_CACHE_NAME, "keyLoad" + i, 0), "valueLoad" + i);
+                rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "keyLoad" + i, 0), "valueLoad" + i);
             }
         } finally {
             if (controller.isStarted("rest-rolling-upgrade-1")) {

@@ -50,7 +50,7 @@ public class StringBasedStoreMultinodeIT extends AbstractJdbcStoreMultinodeIT {
             mc1.set("k1", "v1");
             mc1.set("k2", "v2");
             mc1.set("k3", "v3");
-            assertNotNull(dbServer1.stringTable.getValueByKey("k1"));
+            assertNotNull("k1", dbServer1.stringTable.getValueByKey("k1"));
 
             startContainer(controller, CONTAINER2, CONFIG_FETCH_STATE_2);
             mc2 = createMemcachedClient(server2);
