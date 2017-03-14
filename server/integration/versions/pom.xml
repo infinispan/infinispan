@@ -39,6 +39,7 @@
       <version.org.infinispan>${project.version}</version.org.infinispan>
       <version.org.infinispan.infinispan-management-console>9.0.0.Final</version.org.infinispan.infinispan-management-console>
       <version.org.infinispan.arquillian.container>1.2.0.Beta2</version.org.infinispan.arquillian.container>
+      <version.org.infinispan.server-build.old>8.0.0.Final</version.org.infinispan.server-build.old>
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.apache.logging.log4j>2.3</version.org.apache.logging.log4j>
 
@@ -632,6 +633,14 @@
             <artifactId>infinispan-server-build</artifactId>
             <type>pom</type>
             <version>${version.org.infinispan}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-build</artifactId>
+            <type>zip</type>
+            <version>${version.org.infinispan.server-build.old}</version>
             <scope>test</scope>
          </dependency>
 
