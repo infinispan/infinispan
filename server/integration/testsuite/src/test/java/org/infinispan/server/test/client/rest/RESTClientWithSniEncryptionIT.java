@@ -1,11 +1,5 @@
 package org.infinispan.server.test.client.rest;
 
-import static org.infinispan.server.test.client.rest.RESTHelper.addServer;
-import static org.infinispan.server.test.client.rest.RESTHelper.clearServers;
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.put;
-import static org.infinispan.server.test.client.rest.RESTHelper.setSni;
-import static org.infinispan.server.test.client.rest.RESTHelper.toSsl;
 import static org.junit.Assert.fail;
 
 import java.io.File;
@@ -42,14 +36,17 @@ public class RESTClientWithSniEncryptionIT {
    @InfinispanResource("hotrodSslWithSni")
    RemoteInfinispanServer ispnServer;
 
+   RESTHelper rest;
+
    @Before
    public void setup() {
-      addServer(ispnServer.getRESTEndpoint().getInetAddress().getHostName(), ispnServer.getRESTEndpoint().getContextPath());
+      rest = new RESTHelper();
+      rest.addServer(ispnServer.getRESTEndpoint().getInetAddress().getHostName(), ispnServer.getRESTEndpoint().getContextPath());
    }
 
    @After
    public void release() {
-      clearServers();
+      rest.clearServers();
    }
 
    @Test
@@ -58,10 +55,10 @@ public class RESTClientWithSniEncryptionIT {
       SSLContext sslContext = SslContextFactory.getContext(null, null, DEFAULT_TRUSTSTORE_PATH, DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
 
       //when
-      setSni(sslContext, Optional.empty());
+      rest.setSni(sslContext, Optional.empty());
       try {
          //when
-         put(toSsl(fullPathKey("test")), "test", "text/plain");
+         rest.put(rest.toSsl(rest.fullPathKey("test")), "test", "text/plain");
 
          fail();
       } catch (javax.net.ssl.SSLHandshakeException ignoreMe) {
@@ -75,8 +72,8 @@ public class RESTClientWithSniEncryptionIT {
       SSLContext sslContext = SslContextFactory.getContext(null, null, DEFAULT_TRUSTSTORE_PATH, DEFAULT_TRUSTSTORE_PASSWORD.toCharArray());
 
       //when
-      setSni(sslContext, Optional.of("sni"));
-      HttpResponse response = put(toSsl(fullPathKey("test")), "test", "text/plain");
+      rest.setSni(sslContext, Optional.of("sni"));
+      HttpResponse response = rest.put(rest.toSsl(rest.fullPathKey("test")), "test", "text/plain");
 
       //then
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());

@@ -36,13 +36,14 @@ public class MultitenancyIT {
 
    private static RemoteCache<String, String> remoteCache = null;
    private static RemoteCacheManager remoteCacheManager = null;
+   RESTHelper rest;
 
    @After
    public void release() {
       if (remoteCacheManager != null) {
          remoteCacheManager.stop();
       }
-      RESTHelper.clearServers();
+      rest.clearServers();
    }
 
    @Before
@@ -53,7 +54,8 @@ public class MultitenancyIT {
       remoteCacheManager = new RemoteCacheManager(builder.build());
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
 
-      RESTHelper.addServer("127.0.0.1", 8080, "/rest/multi-tenancy-1");
+      rest = new RESTHelper();
+      rest.addServer("127.0.0.1", 8080, "/rest/multi-tenancy-1");
    }
 
    @Test
@@ -62,7 +64,7 @@ public class MultitenancyIT {
       remoteCache.put("hello", "Infinispan!");
 
       //then
-      RESTHelper.get(RESTHelper.fullPathKey(CACHE_NAME, "hello"), "Infinispan!");
+      rest.get(rest.fullPathKey(CACHE_NAME, "hello"), "Infinispan!");
    }
 
 }

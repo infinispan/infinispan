@@ -27,13 +27,14 @@ public class RESTBasicSecurityIT extends AbstractBasicSecurity {
 
     @Before
     public void setUp() throws Exception {
-        RESTHelper.addServer(server.getRESTEndpoint().getInetAddress().getHostName(), server.getRESTEndpoint()
+        rest = new RESTHelper();
+        rest.addServer(server.getRESTEndpoint().getInetAddress().getHostName(), server.getRESTEndpoint()
                 .getContextPath());
     }
 
     @After
     public void tearDown() throws Exception {
-        RESTHelper.clearServers();
+        rest.clearServers();
     }
 
     @Test

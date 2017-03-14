@@ -1,9 +1,5 @@
 package org.infinispan.server.test.rollingupgrades;
 
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.get;
-import static org.infinispan.server.test.client.rest.RESTHelper.post;
-
 import javax.management.ObjectName;
 
 import org.apache.http.HttpStatus;
@@ -17,7 +13,6 @@ import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
-import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -43,11 +38,6 @@ public class RestRollingUpgradesDistIT {
     @ArquillianResource
     ContainerController controller;
 
-    @AfterClass
-    public static void clearServers() {
-        RESTHelper.clearServers();
-    }
-
     @Test
     public void testRestRollingUpgradesDiffVersionsDist() throws Exception {
         // Target node
@@ -58,6 +48,8 @@ public class RestRollingUpgradesDistIT {
         int managementPortServer3 = 10199;
         MBeanServerConnectionProvider provider3;
 
+        RESTHelper rest = new RESTHelper();
+
         if (!Boolean.parseBoolean(System.getProperty("start.jboss.as.manually"))) {
             // start it by Arquillian
             controller.start("rest-rolling-upgrade-3-old-dist");
@@ -67,19 +59,19 @@ public class RestRollingUpgradesDistIT {
 
         try {
             // port offset 200, server3, index 0 in RESTHelper
-            RESTHelper.addServer("127.0.0.1", "/rest");
+            rest.addServer("127.0.0.1", "/rest");
 
             // port offset 300, server4, index 1 in RESTHelper
-            RESTHelper.addServer("127.0.0.1", "/rest");
+            rest.addServer("127.0.0.1", "/rest");
 
-            post(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET_200), "data", "text/html");
-            get(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET_200), "data");
-            post(fullPathKey(1, DEFAULT_CACHE_NAME, "key1x", PORT_OFFSET_300), "datax", "text/html");
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "key1x", PORT_OFFSET_300), "datax");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET_200), "data", "text/html");
+            rest.get(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET_200), "data");
+            rest.post(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "key1x", PORT_OFFSET_300), "datax", "text/html");
+            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "key1x", PORT_OFFSET_300), "datax");
 
             for (int i = 0; i < 50; i++) {
-                post(fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET_200), "valueLoad" + i, "text/html");
-                post(fullPathKey(1, DEFAULT_CACHE_NAME, "keyLoadx" + i, PORT_OFFSET_300), "valueLoadx" + i, "text/html");
+                rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET_200), "valueLoad" + i, "text/html");
+                rest.post(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "keyLoadx" + i, PORT_OFFSET_300), "valueLoadx" + i, "text/html");
             }
 
             controller.start("rest-rolling-upgrade-1-dist");
@@ -87,18 +79,18 @@ public class RestRollingUpgradesDistIT {
 
             // port offset 0, server0, index 2 in RESTHelper
             RemoteInfinispanMBeans s1 = createRemotes("rest-rolling-upgrade-1-dist", "clustered-new", DEFAULT_CACHE_NAME);
-            RESTHelper.addServer(s1.server.getRESTEndpoint().getInetAddress().getHostName(), s1.server.getRESTEndpoint().getContextPath());
+            rest.addServer(s1.server.getRESTEndpoint().getInetAddress().getHostName(), s1.server.getRESTEndpoint().getContextPath());
 
             // port offset 100, server1, index 3 in RESTHelper
             RemoteInfinispanMBeans s2 = createRemotes("rest-rolling-upgrade-2-dist", "clustered-new", DEFAULT_CACHE_NAME);
-            RESTHelper.addServer(s2.server.getRESTEndpoint().getInetAddress().getHostName(), s2.server.getRESTEndpoint().getContextPath());
+            rest.addServer(s2.server.getRESTEndpoint().getInetAddress().getHostName(), s2.server.getRESTEndpoint().getContextPath());
 
             // test cross-fetching of entries from stores
             // if fails, it probably can't access entries stored in source node (target's RemoteCacheStore).
-            get(fullPathKey(2, DEFAULT_CACHE_NAME, "key1", 0), "data");
-            get(fullPathKey(2, DEFAULT_CACHE_NAME, "key1x", 0), "datax");
-            get(fullPathKey(3, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
-            get(fullPathKey(3, DEFAULT_CACHE_NAME, "key1x", PORT_OFFSET), "datax");
+            rest.get(rest.fullPathKey(2, DEFAULT_CACHE_NAME, "key1", 0), "data");
+            rest.get(rest.fullPathKey(2, DEFAULT_CACHE_NAME, "key1x", 0), "datax");
+            rest.get(rest.fullPathKey(3, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
+            rest.get(rest.fullPathKey(3, DEFAULT_CACHE_NAME, "key1x", PORT_OFFSET), "datax");
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
@@ -124,27 +116,27 @@ public class RestRollingUpgradesDistIT {
                     new String[]{"java.lang.String"});
 
             // 2 puts into source cluster
-            post(fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET_200), "source", "text/html");
-            post(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET_300), "sourcex", "text/html");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET_200), "source", "text/html");
+            rest.post(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET_300), "sourcex", "text/html");
 
-            get(fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET_200), "source");
-            get(fullPathKey(0, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET_200), "sourcex");
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET_300), "source");
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET_300), "sourcex");
+            rest.get(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET_200), "source");
+            rest.get(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET_200), "sourcex");
+            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET_300), "source");
+            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET_300), "sourcex");
 
             // is RemoteCacheStore really disconnected?
             // source node entries should NOT be accessible from target node now
-            get(fullPathKey(2, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
-            get(fullPathKey(3, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), HttpStatus.SC_NOT_FOUND);
-            get(fullPathKey(2, DEFAULT_CACHE_NAME, "disconnectedx", 0), HttpStatus.SC_NOT_FOUND);
-            get(fullPathKey(3, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET), HttpStatus.SC_NOT_FOUND);
+            rest.get(rest.fullPathKey(2, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
+            rest.get(rest.fullPathKey(3, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), HttpStatus.SC_NOT_FOUND);
+            rest.get(rest.fullPathKey(2, DEFAULT_CACHE_NAME, "disconnectedx", 0), HttpStatus.SC_NOT_FOUND);
+            rest.get(rest.fullPathKey(3, DEFAULT_CACHE_NAME, "disconnectedx", PORT_OFFSET), HttpStatus.SC_NOT_FOUND);
 
             // all entries migrated?
-            get(fullPathKey(2, DEFAULT_CACHE_NAME, "key1", 0), "data");
+            rest.get(rest.fullPathKey(2, DEFAULT_CACHE_NAME, "key1", 0), "data");
             for (int i = 0; i < 50; i++) {
-                get(fullPathKey(2, DEFAULT_CACHE_NAME, "keyLoad" + i, 0), "valueLoad" + i);
+                rest.get(rest.fullPathKey(2, DEFAULT_CACHE_NAME, "keyLoad" + i, 0), "valueLoad" + i);
                 // clustered => all entries should be migrated and accessible
-                get(fullPathKey(2, DEFAULT_CACHE_NAME, "keyLoadx" + i, 0), "valueLoadx" + i);
+                rest.get(rest.fullPathKey(2, DEFAULT_CACHE_NAME, "keyLoadx" + i, 0), "valueLoadx" + i);
             }
         } finally {
             if (controller.isStarted("rest-rolling-upgrade-1-dist")) {

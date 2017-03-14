@@ -48,6 +48,6 @@ public class RESTClientDomainIT extends AbstractRESTClientIT {
 
     @Override
     protected void addRestServer() {
-        RESTHelper.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), REST_PORT, server1.getRESTEndpoint().getContextPath());
+        rest.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), REST_PORT, server1.getRESTEndpoint().getContextPath());
     }
 }
