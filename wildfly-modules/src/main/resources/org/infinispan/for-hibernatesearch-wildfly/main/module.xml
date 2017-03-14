@@ -25,16 +25,9 @@ and obviously needs to avoid dependencies to different versions of Hibernate Sea
     <dependencies>
         <module name="org.apache.lucene" slot="${override.lucene.slot}" />
         <module name="org.hibernate.search.engine" slot="${override.hibernate-search.slot}" />
-        <!-- Next dependencies are essentially a copy of those from module org.infinispan,
-             but filtering out the ones related to Apache Lucene, Infinispan Query and Hibernate Search. -->
         <module name="javax.api"/>
-        <module name="javax.transaction.api"/>
-        <module name="org.apache.xerces" services="import"/>
-        <module name="org.jboss.jandex"/>
+        <module name="org.infinispan.commons" slot="${infinispan.slot}" export="true"/>
+        <module name="org.infinispan.core" slot="${infinispan.slot}" export="true" services="export" />
         <module name="org.jboss.logging"/>
-        <module name="org.jboss.marshalling" slot="${infinispan.slot}" services="import"/>
-        <module name="org.jgroups" slot="${infinispan.slot}"/>
-        <module name="com.github.ben-manes.caffeine" slot="${infinispan.slot}"/>
-        <module name="sun.jdk"/>
     </dependencies>
 </module>

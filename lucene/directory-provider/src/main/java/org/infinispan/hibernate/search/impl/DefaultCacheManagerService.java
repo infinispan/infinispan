@@ -13,10 +13,14 @@ import org.hibernate.search.engine.service.spi.Stoppable;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.spi.BuildContext;
 import org.hibernate.search.util.configuration.impl.ConfigurationParseHelper;
+
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.hibernate.search.logging.Log;
 import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.hibernate.search.util.impl.JNDIHelper;
+import org.infinispan.lucene.LifecycleCallbacks;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.kohsuke.MetaInfServices;
@@ -78,6 +82,7 @@ public class DefaultCacheManagerService implements CacheManagerService, Startabl
          try {
             InfinispanConfigurationParser ispnConfiguration = new InfinispanConfigurationParser();
             ConfigurationBuilderHolder configurationBuilderHolder = ispnConfiguration.parseFile(cfgName, transportOverrideResource, serviceManager);
+            forceExternalizerRegistration(configurationBuilderHolder);
             cacheManager = new DefaultCacheManager(configurationBuilderHolder, true);
             manageCacheManager = true;
          } catch (IOException e) {
@@ -90,6 +95,18 @@ public class DefaultCacheManagerService implements CacheManagerService, Startabl
          cacheManager = locateCacheManager(name, JNDIHelper.getJndiProperties(properties, JNDIHelper.HIBERNATE_JNDI_PREFIX));
          manageCacheManager = false;
       }
+   }
+
+   /**
+    * Do not rely on automatic discovery but enforce the registration of the required Externalizers.
+    */
+   private void forceExternalizerRegistration(ConfigurationBuilderHolder configurationBuilderHolder) {
+      SerializationConfigurationBuilder serialization = configurationBuilderHolder
+              .getGlobalConfigurationBuilder()
+              .serialization();
+      LifecycleCallbacks.moduleExternalizers().forEach(
+              (i, e) -> serialization.addAdvancedExternalizer( i, e )
+      );
    }
 
    private EmbeddedCacheManager locateCacheManager(String jndiNamespace, Properties jndiProperties) {
