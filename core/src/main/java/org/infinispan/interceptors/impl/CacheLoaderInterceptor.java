@@ -496,6 +496,13 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          this.entrySet = entrySet;
       }
 
+      long calculateTimeoutSeconds() {
+         int minimum = 10;
+         int size = dataContainer.sizeIncludingExpired();
+         if (size < 10_000) return minimum;
+         return Math.round(Math.log1p(size) * 10);
+      }
+
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
@@ -504,7 +511,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                // TODO: how to pass in key filter...
                new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
-                     new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048)),
+                     new CollectionKeyFilter<>(seenKeys), calculateTimeoutSeconds(), TimeUnit.SECONDS, 2048)),
                      CacheEntry::getKey, seenKeys);
       }
 
