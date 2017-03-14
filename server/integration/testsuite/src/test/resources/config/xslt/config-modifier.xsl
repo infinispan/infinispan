@@ -41,6 +41,7 @@
     <xsl:param name="addVault">false</xsl:param>
     <xsl:param name="addConnection">false</xsl:param>
     <xsl:param name="trace">none</xsl:param>
+    <xsl:param name="remoteStoreHrVersion">none</xsl:param>
 
     <xsl:template match="node()|@*" name="copynode">
         <xsl:copy>
@@ -336,6 +337,17 @@
                 <xsl:copy-of select="document($addNewHotrodSocketBinding)"/>
             </xsl:when>
         </xsl:choose>
+    </xsl:template>
+
+    <xsl:template match="//*[local-name()='remote-store']">
+        <xsl:copy>
+            <xsl:if test="$remoteStoreHrVersion != 'none'">
+                <xsl:attribute name="protocol-version">
+                    <xsl:value-of select="$remoteStoreHrVersion"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:apply-templates select="node()|@*"/>
+        </xsl:copy>
     </xsl:template>
 
     <!-- matches on the remaining tags and recursively applies templates to their children and copies them to the result -->
