@@ -57,9 +57,7 @@
                 <filter token="override.hibernate-search-directory-wildfly-ref" value="@{slot}" />
             </filterset>
             <module-def name="org.infinispan.hibernate-search.directory-provider" slot="@{slot}" module.src="org.infinispan.for-hibernatesearch-wildfly">
-                <maven-resource group="org.infinispan" artifact="infinispan-core"/>
                 <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory"/>
-                <maven-resource group="org.infinispan" artifact="infinispan-commons"/>
                 <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
             </module-def>
         </sequential>

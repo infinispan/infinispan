@@ -22,7 +22,8 @@ public class InfinispanConfigurationParser {
    private final ClassLoader ispnClassLoadr;
 
    public InfinispanConfigurationParser() {
-      ispnClassLoadr = ParserRegistry.class.getClassLoader();
+      //This class instance will have visibility on the components we need
+      ispnClassLoadr = InfinispanConfigurationParser.class.getClassLoader();
       configurationParser = new ParserRegistry(ispnClassLoadr);
    }
 
