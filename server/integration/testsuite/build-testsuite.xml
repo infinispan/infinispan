@@ -2,6 +2,7 @@
 
     <taskdef resource="net/sf/antcontrib/antlib.xml" classpath="${test_classpath}" />
     <property name="default.transform" value="${resources.dir}/config/xslt/config-modifier.xsl" />
+    <property name="examples.transform" value="${resources.dir}/config/xslt/examples-modifier.xsl" />
     <property name="default.transform.rest" value="${resources.dir}/config/xslt/rest-sec-config-modifier.xsl" />
     <property name="server1.configs" value="${server1.dist}/standalone/configuration" />
     <property name="server2.configs" value="${server2.dist}/standalone/configuration" />
@@ -15,6 +16,7 @@
     <property name="zip.dist.old" value="false" />
     <property name="trace" value="none"/>
     <property name="new.server.schema.version" value="${new.server.schema.version}"/>
+    <property name="hotrod.protocol.version" value="none"/>
     <condition property="jdk.vendor.qualifier" value="-ibm" else="">
         <contains string="${java.vendor}" substring="IBM" />
     </condition>
@@ -113,7 +115,7 @@
         </copy>
     </target>
 
-    <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">
+    <target name="create-all-distros" depends="transform-distro1-examples, transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">
         <copy todir="${server2.dist}">
             <fileset dir="${server1.dist}" />
         </copy>
@@ -155,29 +157,27 @@
         </if>
     </target>
 
-    <target name="transform-distro1-configs" depends="create-distro1">
+    <target name="transform-distro1-examples" depends="create-distro1">
         <!-- transform -->
-        <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite2.xml" modifyInfinispan="${infinispan.parts}/xsite-server2.xml"/>
-        <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite3.xml"
+        <transform templateFile="${examples.transform}" in="examples/clustered-xsite.xml" out="examples/clustered-xsite2.xml" modifyInfinispan="${infinispan.parts}/xsite-server2.xml"/>
+        <transform templateFile="${examples.transform}" in="examples/clustered-xsite.xml" out="examples/clustered-xsite3.xml"
                    modifyInfinispan="${infinispan.parts}/xsite-server3.xml" modifyRelay="${other.parts}/xsite-relay-server3.xml"
                    modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"/>
-        <transform in="examples/standalone-rcs-local.xml" out="examples/standalone-rcs-local.xml" modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
-        <transform in="examples/standalone-hotrod-rolling-upgrade.xml" out="examples/standalone-hotrod-rolling-upgrade.xml"
+        <transform templateFile="${examples.transform}" in="examples/standalone-rcs-local.xml" out="examples/standalone-rcs-local.xml" modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
+        <transform templateFile="${examples.transform}" in="examples/standalone-hotrod-rolling-upgrade.xml" out="examples/standalone-hotrod-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"/>
-        <transform in="clustered.xml" out="examples/clustered-hotrod-rolling-upgrade.xml"
-                   modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
-                   modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered-${new.server.schema.version}.xml"
-                   infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint-${new.server.schema.version}.xml"
-                   modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"/>
-        <transform in="clustered.xml" out="examples/clustered-rest-rolling-upgrade.xml"
+        <transform templateFile="${examples.transform}" in="clustered.xml" out="examples/clustered-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml"
                    modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered-rest-${new.server.schema.version}.xml"
                    infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint-${new.server.schema.version}.xml"
                    modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"
                    removeRestSecurity="true"/>
-        <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
+        <transform templateFile="${examples.transform}" in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
-        <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml" removeRestSecurity="true"/>
+        <transform templateFile="${examples.transform}" in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml" removeRestSecurity="true"/>
+    </target>
+
+    <target name="transform-distro1-configs" depends="create-distro1">
         <transform in="clustered.xml" out="testsuite/clustered-1.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-2.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-jmx.xml" modifyInfinispan="${infinispan.parts}/jmx.xml" infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"/>
@@ -346,6 +346,14 @@
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
                    modifyInfinispan="${infinispan.parts}/multitenancy.xml"
                    infinispanServerEndpoint="${other.parts}/cachecontainer-endpoints-multitenancy.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-hotrod-rolling-upgrade.xml"
+                   modifyRemoteDestination="${other.parts}/rcs-remote-destination.xml"
+                   modifyInfinispan="${infinispan.parts}/rolling-upgrades-clustered-${new.server.schema.version}.xml"
+                   infinispanServerEndpoint="${other.parts}/rolling-upgrades-server-endpoint-${new.server.schema.version}.xml"
+                   modifyMulticastAddress="${other.parts}/switch-multicast-address.xml"/>
+        <!-- add hotrod protocol version into remote cache store -->
+        <transform in="examples/standalone-hotrod-rolling-upgrade.xml" out="testsuite/standalone-hotrod-rolling-upgrade.xml"/>
+        <transform in="testsuite/clustered-hotrod-rolling-upgrade.xml" out="testsuite/clustered-hotrod-rolling-upgrade.xml"/>
     </target>
 
     <macrodef name="transform">
@@ -379,6 +387,7 @@
         <attribute name="addSecRealm" default="false"/>
         <attribute name="addSecRealm2" default="false"/>
         <attribute name="addConnection" default="false"/>
+        <attribute name="remoteStoreHrVersion" default="false"/>
         <element name="jdbc-conf" optional="yes"/>
         <element name="rest-sec" optional="yes"/>
 
@@ -410,6 +419,7 @@
                 <param name="infinispanServerEndpoint" expression="@{infinispanServerEndpoint}"/>
                 <param name="infinispanFile" expression="@{infinispanFile}"/>
                 <param name="trace" expression="${trace}"/>
+                <param name="remoteStoreHrVersion" expression="${hotrod.protocol.version}"/>
             </xslt>
 
             <jdbc-conf/>

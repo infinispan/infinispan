@@ -309,8 +309,6 @@
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
 
 
-        <hotrod.protocol.version />
-
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <node0.ip>127.0.0.1</node0.ip>
         <node1.ip>127.0.0.1</node1.ip>

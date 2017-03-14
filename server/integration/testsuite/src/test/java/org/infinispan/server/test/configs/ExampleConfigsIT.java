@@ -99,14 +99,14 @@ public class ExampleConfigsIT {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = "hotrod-rolling-upgrade-2"),@RunningServer(name = "hotrod-rolling-upgrade-1")})
+    @WithRunningServer({@RunningServer(name = "example-hotrod-rolling-upgrade-2"),@RunningServer(name = "example-hotrod-rolling-upgrade-1")})
     public void testHotRodRollingUpgrades() throws Exception {
         // Target node
         MBeanServerConnectionProvider provider1;
         // Source node
         MBeanServerConnectionProvider provider2;
 
-        RemoteInfinispanMBeans s2 = createRemotes("hotrod-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
+        RemoteInfinispanMBeans s2 = createRemotes("example-hotrod-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
         final RemoteCache<Object, Object> c2 = createCache(s2);
 
         c2.put("key1", "value1");
@@ -116,9 +116,9 @@ public class ExampleConfigsIT {
             c2.put("keyLoad" + i, "valueLoad" + i);
         }
 
-        controller.start("hotrod-rolling-upgrade-1");
+        controller.start("example-hotrod-rolling-upgrade-1");
 
-        RemoteInfinispanMBeans s1 = createRemotes("hotrod-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
+        RemoteInfinispanMBeans s1 = createRemotes("example-hotrod-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
         final RemoteCache<Object, Object> c1 = createCache(s1);
 
         assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
