@@ -1,5 +1,6 @@
 package org.infinispan.manager;
 
+import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.test.TestingUtil.v;
@@ -8,6 +9,8 @@ import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
@@ -58,16 +61,12 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = createCacheManager(false);
 
       try {
-         assert cm.getCache().getStatus() == ComponentStatus.RUNNING;
-         assert cm.getCache().getName().equals(CacheContainer.DEFAULT_CACHE_NAME);
+         assertEquals(ComponentStatus.RUNNING, cm.getCache().getStatus());
+         assertTrue(cm.getCache().getName().equals(CacheContainer.DEFAULT_CACHE_NAME));
 
-         try {
-            cm.defineConfiguration(CacheContainer.DEFAULT_CACHE_NAME, new ConfigurationBuilder().build());
-            assert false : "Should fail";
-         }
-         catch (IllegalArgumentException e) {
-            assert true; // ok
-         }
+         expectException(IllegalArgumentException.class,
+                         () -> cm.defineConfiguration(CacheContainer.DEFAULT_CACHE_NAME,
+                                                      new ConfigurationBuilder().build()));
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
@@ -77,11 +76,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(createCacheManager(false)){
          @Override
          public void call() {
-            assert cm.getStatus().equals(ComponentStatus.INSTANTIATED);
-            assert !cm.getStatus().allowInvocations();
+            assertTrue(cm.getStatus().equals(ComponentStatus.INSTANTIATED));
+            assertFalse(cm.getStatus().allowInvocations());
             Cache<Object, Object> cache = cm.getCache();
             cache.put("k","v");
-            assert cache.get("k").equals("v");
+            assertTrue(cache.get("k").equals("v"));
          }
       });
    }
@@ -108,15 +107,15 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          Cache<?, ?> c2 = cm.getCache("cache2");
          Cache<?, ?> c3 = cm.getCache("cache3");
 
-         assert c1.getStatus() == ComponentStatus.RUNNING;
-         assert c2.getStatus() == ComponentStatus.RUNNING;
-         assert c3.getStatus() == ComponentStatus.RUNNING;
+         assertEquals(ComponentStatus.RUNNING, c1.getStatus());
+         assertEquals(ComponentStatus.RUNNING, c2.getStatus());
+         assertEquals(ComponentStatus.RUNNING, c3.getStatus());
 
          cm.stop();
 
-         assert c1.getStatus() == ComponentStatus.TERMINATED;
-         assert c2.getStatus() == ComponentStatus.TERMINATED;
-         assert c3.getStatus() == ComponentStatus.TERMINATED;
+         assertEquals(ComponentStatus.TERMINATED, c1.getStatus());
+         assertEquals(ComponentStatus.TERMINATED, c2.getStatus());
+         assertEquals(ComponentStatus.TERMINATED, c3.getStatus());
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
@@ -124,26 +123,15 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    public void testDefiningConfigurationValidation() {
       EmbeddedCacheManager cm = createCacheManager(false);
-      try {
-         cm.defineConfiguration("cache1", (Configuration) null);
-         assert false : "Should fail";
-      } catch(NullPointerException npe) {
-         assert npe.getMessage() != null;
-      }
 
-      try {
-         cm.defineConfiguration(null, (Configuration) null);
-         assert false : "Should fail";
-      } catch(NullPointerException npe) {
-         assert npe.getMessage() != null;
-      }
+      expectException(NullPointerException.class,
+                      () -> cm.defineConfiguration("cache1", null));
 
-      try {
-         cm.defineConfiguration(null, new ConfigurationBuilder().build());
-         assert false : "Should fail";
-      } catch(NullPointerException npe) {
-         assert npe.getMessage() != null;
-      }
+      expectException(NullPointerException.class,
+                      () -> cm.defineConfiguration(null, null));
+
+      expectException(NullPointerException.class,
+                      () -> cm.defineConfiguration(null, new ConfigurationBuilder().build()));
    }
 
    public void testDefiningConfigurationOverridingBooleans() {
@@ -151,26 +139,26 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.storeAsBinary().enable();
       Configuration lazy = cm.defineConfiguration("storeAsBinary", c.build());
-      assert lazy.storeAsBinary().enabled();
+      assertTrue(lazy.storeAsBinary().enabled());
 
       c = new ConfigurationBuilder().read(lazy);
       c.eviction().strategy(EvictionStrategy.LRU).maxEntries(1);
       Configuration lazyLru = cm.defineConfiguration("lazyDeserializationWithLRU", c.build());
-      assert lazy.storeAsBinary().enabled();
-      assert lazyLru.eviction().strategy() == EvictionStrategy.LRU;
+      assertTrue(lazy.storeAsBinary().enabled());
+      assertEquals(EvictionStrategy.LRU, lazyLru.eviction().strategy());
    }
 
    public void testDefineConfigurationTwice() {
       EmbeddedCacheManager cm = createCacheManager(false);
       try {
          Configuration override = new ConfigurationBuilder().invocationBatching().enable().build();
-         assert override.invocationBatching().enabled();
-         assert cm.defineConfiguration("test1", override).invocationBatching().enabled();
+         assertTrue(override.invocationBatching().enabled());
+         assertTrue(cm.defineConfiguration("test1", override).invocationBatching().enabled());
          ConfigurationBuilder cb = new ConfigurationBuilder();
          cb.read(override);
          Configuration config = cb.build();
-         assert config.invocationBatching().enabled();
-         assert cm.defineConfiguration("test2", config).invocationBatching().enabled();
+         assertTrue(config.invocationBatching().enabled());
+         assertTrue(cm.defineConfiguration("test2", config).invocationBatching().enabled());
       } finally {
          cm.stop();
       }
@@ -277,15 +265,15 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          cache.put(k(m, 3), v(m, 3));
          DummyInMemoryStore store = getDummyStore(cache);
          DataContainer data = getDataContainer(cache);
-         assert !store.isEmpty();
-         assert 0 != data.size();
+         assertFalse(store.isEmpty());
+         assertTrue(0 != data.size());
          manager.removeCache("cache");
-         assert store.isEmpty();
-         assert 0 == data.size();
+         assertEquals(0, DummyInMemoryStore.getStoreDataSize(store.getStoreName()));
+         assertEquals(0, data.size());
          // Try removing the cache again, it should be a no-op
          manager.removeCache("cache");
-         assert store.isEmpty();
-         assert 0 == data.size();
+         assertEquals(0, DummyInMemoryStore.getStoreDataSize(store.getStoreName()));
+         assertEquals(0, data.size());
       } finally {
          manager.stop();
       }
@@ -440,10 +428,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
             Cache<String, String> cache1 = manager1.getCache("cache", true);
             Cache<String, String> cache2 = manager2.getCache("cache", true);
-            assert cache1 != null;
-            assert cache2 != null;
-            assert manager1.cacheExists("cache");
-            assert manager2.cacheExists("cache");
+            assertTrue(cache1 != null);
+            assertTrue(cache2 != null);
+            assertTrue(manager1.cacheExists("cache"));
+            assertTrue(manager2.cacheExists("cache"));
             cache1.put(k(m, 1), v(m, 1));
             cache1.put(k(m, 2), v(m, 2));
             cache1.put(k(m, 3), v(m, 3));
@@ -453,19 +441,20 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             DataContainer data1 = getDataContainer(cache1);
             DummyInMemoryStore store2 = getDummyStore(cache2);
             DataContainer data2 = getDataContainer(cache2);
-            assert !store1.isEmpty();
-            assert 5 == data1.size();
-            assert !store2.isEmpty();
-            assert 5 == data2.size();
+            assertFalse(store1.isEmpty());
+            assertEquals(5, data1.size());
+            assertFalse(store2.isEmpty());
+            assertEquals(5, data2.size());
+
             manager1.removeCache("cache");
-            assert !manager1.cacheExists("cache");
-            assert !manager2.cacheExists("cache");
-            assert null == manager1.getCache("cache", false);
-            assert null == manager2.getCache("cache", false);
-            assert store1.isEmpty();
-            assert 0 == data1.size();
-            assert store2.isEmpty();
-            assert 0 == data2.size();
+            assertFalse(manager1.cacheExists("cache"));
+            assertFalse(manager2.cacheExists("cache"));
+            assertNull(manager1.getCache("cache", false));
+            assertNull(manager2.getCache("cache", false));
+            assertEquals(0, DummyInMemoryStore.getStoreDataSize(store1.getStoreName()));
+            assertEquals(0, data1.size());
+            assertEquals(0, DummyInMemoryStore.getStoreDataSize(store2.getStoreName()));
+            assertEquals(0, data2.size());
          }
       });
    }

@@ -48,8 +48,8 @@ public class InitCountTest extends AbstractCacheTest {
          CacheLoader undelegatedLoader = firstLoader instanceof DelegatingCacheLoader ? ((DelegatingCacheLoader) firstLoader).undelegate() : firstLoader;
          CacheWriter firstWriter = TestingUtil.getFirstWriter(cache);
          CacheWriter undelegatedWriter = firstWriter instanceof DelegatingCacheWriter ? ((DelegatingCacheWriter) firstWriter).undelegate() : firstWriter;
-         assertEquals(1, ((DummyInMemoryStore)undelegatedLoader).initCount.get());
-         assertEquals(1, ((DummyInMemoryStore)undelegatedWriter).initCount.get());
+         assertEquals(1, ((DummyInMemoryStore)undelegatedLoader).getInitCount());
+         assertEquals(1, ((DummyInMemoryStore)undelegatedWriter).getInitCount());
       } finally {
          TestingUtil.killCacheManagers(cacheManager);
       }
