@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan>
+
+  <cache-container default-cache="default">
+    <local-cache name="default">
+      <locking isolation="REPEATABLE_READ"
+               acquire-timeout="20000" write-skew="false"
+               concurrency-level="500" striping="false" />
+    </local-cache>
+    <local-cache name="anotherCache">
+      <persistence passivation="false">
+        <string-keyed-jdbc-store>
+          <string-keyed-table prefix="ISPN">
+            <id-column name="K" type="VARCHAR(255)"/>
+            <data-column name="V" type="BLOB"/>
+            <timestamp-column name="T" type="BIGINT"/>
+          </string-keyed-table>
+          <data-source jndi-url="java:jboss/datasources/ExampleDS"/>
+        </string-keyed-jdbc-store>
+      </persistence>
+    </local-cache>
+  </cache-container>
+
+</infinispan>
