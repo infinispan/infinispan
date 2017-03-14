@@ -1,9 +1,5 @@
 package org.infinispan.server.test.expiration;
 
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.get;
-import static org.infinispan.server.test.client.rest.RESTHelper.head;
-import static org.infinispan.server.test.client.rest.RESTHelper.post;
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -21,7 +17,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,48 +40,45 @@ public class ExpirationIT {
     @InfinispanResource("expiration-2")
     RemoteInfinispanServer server2;
 
-    @AfterClass
-    public static void clearServers() {
-        RESTHelper.clearServers();
-    }
 
     @Test
     public void testRESTExpiration() throws Exception {
-        RESTHelper.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint()
+        RESTHelper rest = new RESTHelper();
+        rest.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint()
                 .getContextPath());
-        RESTHelper.addServer(server2.getRESTEndpoint().getInetAddress().getHostName(), server2.getRESTEndpoint()
+        rest.addServer(server2.getRESTEndpoint().getInetAddress().getHostName(), server2.getRESTEndpoint()
                 .getContextPath());
-        URI key1Path = fullPathKey(0, "k1");
-        URI key2Path = fullPathKey(1, "k2");
-        URI key3Path = fullPathKey(0, "k3");
-        URI key4Path = fullPathKey(0, "k4");
+        URI key1Path = rest.fullPathKey(0, "k1");
+        URI key2Path = rest.fullPathKey(1, "k2");
+        URI key3Path = rest.fullPathKey(0, "k3");
+        URI key4Path = rest.fullPathKey(0, "k4");
         Assert.assertEquals(2, server1.getCacheManager("clustered").getClusterSize());
         // specific entry timeToLiveSeconds and maxIdleTimeSeconds that overrides the default
-        post(key1Path, "v1", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
+        rest.post(key1Path, "v1", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
              "timeToLiveSeconds", "4", "maxIdleTimeSeconds", "4");
         // no value means never expire
-        post(key2Path, "v2", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text");
+        rest.post(key2Path, "v2", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text");
         // 0 value means use default
-        post(key3Path, "v3", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
+        rest.post(key3Path, "v3", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
                 "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "0");
-        post(key4Path, "v4", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
+        rest.post(key4Path, "v4", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
                 "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "2");
 
         sleepForSecs(1);
-        get(key1Path, "v1");
-        get(key3Path, "v3");
-        get(key4Path, "v4");
+        rest.get(key1Path, "v1");
+        rest.get(key3Path, "v3");
+        rest.get(key4Path, "v4");
         sleepForSecs(2);
         // k3 and k4 expired
-        get(key1Path, "v1");
-        head(key3Path, HttpStatus.SC_NOT_FOUND);
-        head(key4Path, HttpStatus.SC_NOT_FOUND);
+        rest.get(key1Path, "v1");
+        rest.head(key3Path, HttpStatus.SC_NOT_FOUND);
+        rest.head(key4Path, HttpStatus.SC_NOT_FOUND);
         sleepForSecs(1);
         // k1 expired
-        head(key1Path, HttpStatus.SC_NOT_FOUND);
+        rest.head(key1Path, HttpStatus.SC_NOT_FOUND);
         // k2 should not be expired because without timeToLive/maxIdle parameters,
         // the entries live forever. To use default values, 0 must be passed in.
-        head(key2Path, HttpStatus.SC_OK);
+        rest.head(key2Path, HttpStatus.SC_OK);
     }
 
     @Test

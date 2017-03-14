@@ -22,6 +22,6 @@ public class RESTClientIT extends AbstractRESTClientIT {
 
     @Override
     protected void addRestServer() {
-        RESTHelper.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint().getContextPath());
+        rest.addServer(server1.getRESTEndpoint().getInetAddress().getHostName(), server1.getRESTEndpoint().getContextPath());
     }
 }

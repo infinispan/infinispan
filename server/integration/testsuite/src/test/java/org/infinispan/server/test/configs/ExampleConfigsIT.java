@@ -3,12 +3,6 @@ package org.infinispan.server.test.configs;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
-import static org.infinispan.server.test.client.rest.RESTHelper.delete;
-import static org.infinispan.server.test.client.rest.RESTHelper.fullPathKey;
-import static org.infinispan.server.test.client.rest.RESTHelper.get;
-import static org.infinispan.server.test.client.rest.RESTHelper.head;
-import static org.infinispan.server.test.client.rest.RESTHelper.post;
-import static org.infinispan.server.test.client.rest.RESTHelper.put;
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.eventually;
@@ -65,7 +59,6 @@ import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,7 +81,6 @@ public class ExampleConfigsIT {
 
     static final String DEFAULT_CACHE_NAME = "default";
     static final String NAMED_CACHE_NAME = "namedCache";
-    static final String MEMCACHED_CACHE_NAME = "memcachedCache";
 
     @ArquillianResource
     ContainerController controller;
@@ -106,11 +98,6 @@ public class ExampleConfigsIT {
             rcmFactory.stopManagers();
         }
         rcmFactory = null;
-    }
-
-    @AfterClass
-    public static void clearServers() {
-        RESTHelper.clearServers();
     }
 
     @Test
@@ -176,24 +163,26 @@ public class ExampleConfigsIT {
         // Source node
         MBeanServerConnectionProvider provider2;
 
+        RESTHelper rest = new RESTHelper();
+
         controller.start("rest-rolling-upgrade-2");
         try {
             RemoteInfinispanMBeans s2 = createRemotes("rest-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
-            RESTHelper.addServer(s2.server.getRESTEndpoint().getInetAddress().getHostName(), s2.server.getRESTEndpoint().getContextPath());
+            rest.addServer(s2.server.getRESTEndpoint().getInetAddress().getHostName(), s2.server.getRESTEndpoint().getContextPath());
 
-            post(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", "text/html");
-            get(fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", "text/html");
+            rest.get(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
 
             for (int i = 0; i < 50; i++) {
-                post(fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET), "valueLoad" + i, "text/html");
+                rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET), "valueLoad" + i, "text/html");
             }
 
             controller.start("rest-rolling-upgrade-1");
 
             RemoteInfinispanMBeans s1 = createRemotes("rest-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
-            RESTHelper.addServer(s1.server.getRESTEndpoint().getInetAddress().getHostName(), s1.server.getRESTEndpoint().getContextPath());
+            rest.addServer(s1.server.getRESTEndpoint().getInetAddress().getHostName(), s1.server.getRESTEndpoint().getContextPath());
 
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "key1", 0), "data");
+            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "key1", 0), "data");
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
                                                           SERVER1_MGMT_PORT);
@@ -211,14 +200,14 @@ public class ExampleConfigsIT {
             invokeOperation(provider1, rollMan.toString(), "disconnectSource", new Object[]{"rest"},
                             new String[]{"java.lang.String"});
 
-            post(fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
 
             //Source node entries should NOT be accessible from target node
-            get(fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
+            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
 
             //All remaining entries migrated?
             for (int i = 0; i < 50; i++) {
-                get(fullPathKey(1, DEFAULT_CACHE_NAME, "keyLoad" + i, 0), "valueLoad" + i);
+                rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "keyLoad" + i, 0), "valueLoad" + i);
             }
         } finally {
             if (controller.isStarted("rest-rolling-upgrade-1")) {
@@ -502,9 +491,11 @@ public class ExampleConfigsIT {
         RemoteInfinispanMBeans s2 = createRemotes("clustered-2", "clustered", DEFAULT_CACHE_NAME);
         RemoteCache<Object, Object> s1Cache = createCache(s1);
         RemoteCache<Object, Object> s2Cache = createCache(s2);
-        addServer(s1.server);
-        addServer(s2.server);
-        setUpREST(s1.server, s2.server);
+        RESTHelper rest = new RESTHelper();
+
+        addServer(rest, s1.server);
+        addServer(rest, s2.server);
+        cleanRESTServer(rest);
         assertEquals(0, s1.cache.getNumberOfEntries());
         assertEquals(0, s2.cache.getNumberOfEntries());
         eventually(new Condition() {
@@ -528,33 +519,33 @@ public class ExampleConfigsIT {
         assertEquals("v2", s2Cache.get("k2"));
         assertEquals("v3", s1Cache.get("k3"));
         assertEquals("v3", s2Cache.get("k3"));
-        setUpREST(s1.server, s2.server);
-        put(fullPathKey(0, KEY_A), "data", "text/plain");
-        get(fullPathKey(1, KEY_A), "data");
-        setUpREST(s1.server, s2.server);
-        post(fullPathKey(0, KEY_A), "data", "text/plain");
-        get(fullPathKey(1, KEY_A), "data");
-        setUpREST(s1.server, s2.server);
-        post(fullPathKey(0, KEY_A), "data", "text/plain");
-        get(fullPathKey(1, KEY_A), "data");
-        delete(fullPathKey(0, KEY_A));
-        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
-        setUpREST(s1.server, s2.server);
-        post(fullPathKey(0, KEY_A), "data", "text/plain");
-        post(fullPathKey(0, KEY_B), "data", "text/plain");
-        head(fullPathKey(0, KEY_A));
-        head(fullPathKey(0, KEY_B));
-        delete(fullPathKey(0, null));
-        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
-        head(fullPathKey(1, KEY_B), HttpStatus.SC_NOT_FOUND);
-        setUpREST(s1.server, s2.server);
-        post(fullPathKey(0, KEY_A), "data", "application/text", HttpStatus.SC_OK,
+        cleanRESTServer(rest);
+        rest.put(rest.fullPathKey(0, KEY_A), "data", "text/plain");
+        rest.get(rest.fullPathKey(1, KEY_A), "data");
+        cleanRESTServer(rest);
+        rest.post(rest.fullPathKey(0, KEY_A), "data", "text/plain");
+        rest.get(rest.fullPathKey(1, KEY_A), "data");
+        cleanRESTServer(rest);
+        rest.post(rest.fullPathKey(0, KEY_A), "data", "text/plain");
+        rest.get(rest.fullPathKey(1, KEY_A), "data");
+        rest.delete(rest.fullPathKey(0, KEY_A));
+        rest.head(rest.fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
+        cleanRESTServer(rest);
+        rest.post(rest.fullPathKey(0, KEY_A), "data", "text/plain");
+        rest.post(rest.fullPathKey(0, KEY_B), "data", "text/plain");
+        rest.head(rest.fullPathKey(0, KEY_A));
+        rest.head(rest.fullPathKey(0, KEY_B));
+        rest.delete(rest.fullPathKey(0, null));
+        rest.head(rest.fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
+        rest.head(rest.fullPathKey(1, KEY_B), HttpStatus.SC_NOT_FOUND);
+        cleanRESTServer(rest);
+        rest.post(rest.fullPathKey(0, KEY_A), "data", "application/text", HttpStatus.SC_OK,
                 // headers
                 "Content-Type", "application/text", "timeToLiveSeconds", "2");
-        head(fullPathKey(1, KEY_A));
+        rest.head(rest.fullPathKey(1, KEY_A));
         sleepForSecs(2.1);
         // should be evicted
-        head(fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
+        rest.head(rest.fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
     }
 
     @Test
@@ -587,23 +578,23 @@ public class ExampleConfigsIT {
         assertEquals(s3Cache.get("k2"), "v2");
     }
 
-    private void setUpREST(RemoteInfinispanServer server1, RemoteInfinispanServer server2) throws Exception {
-        delete(fullPathKey(KEY_A));
-        delete(fullPathKey(KEY_B));
-        delete(fullPathKey(KEY_C));
+    private static void cleanRESTServer(RESTHelper rest) throws Exception {
+        rest.delete(rest.fullPathKey(KEY_A));
+        rest.delete(rest.fullPathKey(KEY_B));
+        rest.delete(rest.fullPathKey(KEY_C));
 
-        head(fullPathKey(KEY_A), HttpStatus.SC_NOT_FOUND);
-        head(fullPathKey(KEY_B), HttpStatus.SC_NOT_FOUND);
-        head(fullPathKey(KEY_C), HttpStatus.SC_NOT_FOUND);
+        rest.head(rest.fullPathKey(KEY_A), HttpStatus.SC_NOT_FOUND);
+        rest.head(rest.fullPathKey(KEY_B), HttpStatus.SC_NOT_FOUND);
+        rest.head(rest.fullPathKey(KEY_C), HttpStatus.SC_NOT_FOUND);
     }
 
-    private void addServer(RemoteInfinispanServer server) {
+    private static void addServer(RESTHelper rest, RemoteInfinispanServer server) {
         RESTEndpoint endpoint = server.getRESTEndpoint();
         // IPv6 addresses should be in square brackets, otherwise http client does not understand it
         // otherwise should be IPv4
         String inetHostName = endpoint.getInetAddress().getHostName();
         String realHostName = endpoint.getInetAddress() instanceof Inet6Address ? "[" + inetHostName + "]" : inetHostName;
-        RESTHelper.addServer(realHostName, endpoint.getContextPath());
+        rest.addServer(realHostName, endpoint.getContextPath());
     }
 
     private ConfigurationBuilder securityConfig(final String keystoreName, final String truststoreName,
