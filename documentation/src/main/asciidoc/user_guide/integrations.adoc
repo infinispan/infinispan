@@ -157,11 +157,11 @@ Using a CacheLoader you can have the index content backed up to a permanent stor
 When using a CacheLoader to store a Lucene index, to get best write performance you would need to configure the CacheLoader with _async=true_ .
 
 ==== Storing the index in a database
-It might be useful to store the Lucene index in a relational database; this would be very slow but Infinispan can act as a cache between the application and the JDBC interface, making this configuration useful in both clustered and non-clustered configurations. When storing indexes in a JDBC database, it's suggested to use the _JdbcStringBasedCacheStore_ , which will need this attribute:
+It might be useful to store the Lucene index in a relational database; this would be very slow but Infinispan can act as a cache between the application and the JDBC interface, making this configuration useful in both clustered and non-clustered configurations. When storing indexes in a JDBC database, it's suggested to use the _JdbcStringBasedCacheStore_ , which will need the `key-to-string-mapper` attribute to be set to `org.infinispan.lucene.LuceneKey2StringMapper`:
 
 [source,xml]
 ----
-<property name="key2StringMapperClass" value="org.infinispan.lucene.LuceneKey2StringMapper" />
+<jdbc:string-keyed-jdbc-store preload="true" key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper">
 ----
 
 ==== Loading an existing Lucene Index
