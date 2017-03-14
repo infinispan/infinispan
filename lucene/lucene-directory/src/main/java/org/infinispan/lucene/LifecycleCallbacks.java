@@ -1,12 +1,15 @@
 package org.infinispan.lucene;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.lucene.impl.AddOperation;
 import org.infinispan.lucene.impl.DeleteOperation;
 import org.infinispan.lucene.impl.FileListCacheValue;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.lucene.impl.FileListCacheValueDelta;
 
 import java.util.Map;
@@ -24,6 +27,16 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
       Map<Integer,AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
+      externalizerMap.putAll( moduleExternalizers() );
+   }
+
+   /**
+    * Static helper to allow for explicit registration of Externalizers:
+    * service discovery is not always an option.
+    * @return the map of Id and Externalizer implementations for this module
+    */
+   public static Map<Integer,AdvancedExternalizer<?>> moduleExternalizers() {
+      Map<Integer,AdvancedExternalizer<?>> externalizerMap = new HashMap<>();
       externalizerMap.put(ExternalizerIds.CHUNK_CACHE_KEY, new ChunkCacheKey.Externalizer());
       externalizerMap.put(ExternalizerIds.FILE_CACHE_KEY, new FileCacheKey.Externalizer());
       externalizerMap.put(ExternalizerIds.FILE_LIST_CACHE_KEY, new FileListCacheKey.Externalizer());
@@ -33,6 +46,7 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
       externalizerMap.put(ExternalizerIds.FILE_LIST_VALUE_DELTA, new FileListCacheValueDelta.Externalizer());
       externalizerMap.put(ExternalizerIds.FILE_LIST_DELTA_ADD, new AddOperation.AddOperationExternalizer());
       externalizerMap.put(ExternalizerIds.FILE_LIST_DELTA_DEL, new DeleteOperation.DeleteElementOperationExternalizer());
+      return externalizerMap;
    }
 
 }

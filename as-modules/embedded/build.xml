@@ -116,9 +116,7 @@
         <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${hibernate-search-directory-provider-ref}"  module.src="org.infinispan.for-hibernatesearch-alias"/>
 
         <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${hibernate-search-directory-wildfly-ref}" module.src="org.infinispan.for-hibernatesearch-wildfly">
-            <maven-resource group="org.infinispan" artifact="infinispan-core"/>
             <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory"/>
-            <maven-resource group="org.infinispan" artifact="infinispan-commons"/>
             <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
         </module-def>
 
