@@ -13,7 +13,7 @@ public class DummyInMemoryStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @AfterClass
    protected void clearTempDir() {
-      DummyInMemoryStore.stores.remove(getClass().getName());
+      DummyInMemoryStore.removeStoreData(getClass().getName());
    }
 
    @Override

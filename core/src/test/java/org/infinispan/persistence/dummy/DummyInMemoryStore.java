@@ -13,6 +13,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -41,24 +42,24 @@ import org.infinispan.util.logging.LogFactory;
 @ConfiguredBy(DummyInMemoryStoreConfiguration.class)
 @Store(shared = true)
 public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCacheExpirationWriter {
+   public static final int SLOW_STORE_WAIT = 100;
+
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final boolean debug = log.isDebugEnabled();
-   static final ConcurrentMap<String, Map<Object, byte[]>> stores = new ConcurrentHashMap<>();
-   static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats = new ConcurrentHashMap<>();
-   public static final int SLOW_STORE_WAIT = 100;
-   String storeName;
-   Map<Object, byte[]> store;
+   private static final ConcurrentMap<String, Map<Object, byte[]>> stores = new ConcurrentHashMap<>();
+   private static final ConcurrentMap<String, ConcurrentMap<String, AtomicInteger>> storeStats = new ConcurrentHashMap<>();
+
+   private String storeName;
+   private Map<Object, byte[]> store;
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
-   ConcurrentMap<String, AtomicInteger> stats;
-   public AtomicInteger initCount = new AtomicInteger();
+   private ConcurrentMap<String, AtomicInteger> stats;
+   private AtomicInteger initCount = new AtomicInteger();
    private TimeService timeService;
-   Cache cache;
-
-   protected volatile StreamingMarshaller marshaller;
-
+   private Cache cache;
+   private StreamingMarshaller marshaller;
    private DummyInMemoryStoreConfiguration configuration;
    private InitializationContext ctx;
+   private volatile boolean running;
 
    @Override
    public void init(InitializationContext ctx) {
@@ -66,9 +67,17 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       this.configuration = ctx.getConfiguration();
       this.cache = ctx.getCache();
       this.marshaller = ctx.getMarshaller();
-      this.storeName = configuration.storeName();
+      this.storeName = makeStoreName(configuration, cache);
       this.initCount.incrementAndGet();
       this.timeService = ctx.getTimeService();
+   }
+
+   private String makeStoreName(DummyInMemoryStoreConfiguration configuration, Cache cache) {
+      String configName = configuration.storeName();
+      if (configName == null)
+         return null;
+
+      return cache != null ? configName + "_" + cache.getName() : configName;
    }
 
    public DummyInMemoryStore(String storeName) {
@@ -78,24 +87,34 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    public DummyInMemoryStore() {
    }
 
+   public boolean isRunning() {
+      return running;
+   }
+
+   public int getInitCount() {
+      return initCount.get();
+   }
+
    private void record(String method) {
       stats.get(method).incrementAndGet();
    }
 
    @Override
    public void write(MarshalledEntry entry) {
+      assertRunning();
       record("write");
       if (configuration.slow()) {
          TestingUtil.sleepThread(SLOW_STORE_WAIT);
       }
       if (entry!= null) {
-         if (debug) log.tracef("Store %s in dummy map store@%s", entry, Util.hexIdHashCode(store));
+         if (trace) log.tracef("Store %s in dummy map store@%s", entry, Util.hexIdHashCode(store));
          store.put(entry.getKey(), serialize(entry));
       }
    }
 
    @Override
    public void clear() {
+      assertRunning();
       record("clear");
       if (trace) log.trace("Clear store");
       store.clear();
@@ -103,13 +122,14 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    @Override
    public boolean delete(Object key) {
+      assertRunning();
       record("delete");
       if (store.remove(key) != null) {
-         if (debug) log.tracef("Removed %s from dummy store", key);
+         if (trace) log.tracef("Removed %s from dummy store", key);
          return true;
       }
 
-      if (debug) log.tracef("Key %s not present in store, so don't remove", key);
+      if (trace) log.tracef("Key %s not present in store, so don't remove", key);
       return false;
    }
 
@@ -145,6 +165,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    @Override
    public MarshalledEntry load(Object key) {
+      assertRunning();
       record("load");
       if (key == null) return null;
       MarshalledEntry me = deserialize(key, store.get(key), true, true);
@@ -163,6 +184,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    @Override
    public void process(KeyFilter filter, CacheLoaderTask task, Executor executor, boolean fetchValue, boolean fetchMetadata) {
+      assertRunning();
       record("process");
       log.tracef("Processing entries in store %s with filter %s and callback %s", storeName, filter, task);
       final long currentTimeMillis = timeService.wallClockTime();
@@ -196,8 +218,6 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       stats = newStatsMap();
 
       if (storeName != null) {
-         if (cache != null) storeName += "_" + cache.getName();
-
          Map<Object, byte[]> existing = stores.putIfAbsent(storeName, store);
          if (existing != null) {
             store = existing;
@@ -214,6 +234,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
       // record at the end!
       record("start");
+      running = true;
    }
 
    private ConcurrentMap<String, AtomicInteger> newStatsMap() {
@@ -230,12 +251,27 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    @Override
    public void stop() {
       record("stop");
+      running = false;
 
       if (configuration.purgeOnStartup()) {
          if (storeName != null) {
-            stores.remove(storeName);
+            removeStoreData(storeName);
          }
       }
+      store = null;
+   }
+
+   public String getStoreName() {
+      return storeName;
+   }
+
+   public static int getStoreDataSize(String storeName) {
+      Map<Object, byte[]> storeMap = stores.get(storeName);
+      return storeMap != null ? storeMap.size() : 0;
+   }
+
+   public static void removeStoreData(String storeName) {
+      stores.remove(storeName);
    }
 
    public boolean isEmpty() {
@@ -302,6 +338,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    @Override
    public boolean contains(Object key) {
+      assertRunning();
       record("load");
       if (key == null) return false;
       MarshalledEntry me = deserialize(key, store.get(key), false, true);
@@ -341,6 +378,12 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
          throw new CacheException(e);
       } catch (ClassNotFoundException e) {
          throw new CacheException(e);
+      }
+   }
+
+   private void assertRunning() {
+      if (!running) {
+         throw new IllegalLifecycleStateException();
       }
    }
 }

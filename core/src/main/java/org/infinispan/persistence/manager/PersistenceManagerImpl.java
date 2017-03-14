@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,13 +35,13 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.EvictionConfigurationBuilder;
-import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -256,16 +257,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
       final long maxEntries = getMaxEntries();
       final AtomicInteger loadedEntries = new AtomicInteger(0);
       final AdvancedCache<Object, Object> flaggedCache = getCacheForStateInsertion();
-      preloadCl.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
-         @Override
-         public void processEntry(MarshalledEntry me, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            if (loadedEntries.getAndIncrement() >= maxEntries) {
-               taskContext.stop();
-               return;
-            }
-            Metadata metadata = me.getMetadata() != null ? ((InternalMetadataImpl)me.getMetadata()).actual() : null; //the downcast will go away with ISPN-3460
-            preloadKey(flaggedCache, me.getKey(), me.getValue(), metadata);
+      preloadCl.process(null, (me, taskContext) -> {
+         if (loadedEntries.getAndIncrement() >= maxEntries) {
+            taskContext.stop();
+            return;
          }
+         Metadata metadata = me.getMetadata() != null ? ((InternalMetadataImpl) me.getMetadata()).actual() :
+               null; //the downcast will go away with ISPN-3460
+         preloadKey(flaggedCache, me.getKey(), me.getValue(), metadata);
       }, new WithinThreadExecutor(), true, true);
 
       log.debugf("Preloaded %s keys in %s", loadedEntries, Util.prettyPrintTime(timeService.timeDuration(start, MILLISECONDS)));
@@ -311,7 +310,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public <T> Set<T> getStores(Class<T> storeClass) {
       storesMutex.readLock().lock();
       try {
-         Set<T> result = new HashSet<T>();
+         Set<T> result = new HashSet<>();
          for (CacheLoader l : loaders) {
             CacheLoader real = undelegate(l);
             if (storeClass.isInstance(real)) {
@@ -337,7 +336,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public Collection<String> getStoresAsString() {
       storesMutex.readLock().lock();
       try {
-         Set<String> loaderTypes = new HashSet<String>(loaders.size());
+         Set<String> loaderTypes = new HashSet<>(loaders.size());
          for (CacheLoader loader : loaders)
             loaderTypes.add(undelegate(loader).getClass().getName());
          for (CacheWriter writer : nonTxWriters)
@@ -726,10 +725,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
             .withFlags(flags.toArray(new Flag[flags.size()]));
    }
 
-   private boolean localIndexingEnabled() {
-      return configuration.indexing().index() == Index.LOCAL;
-   }
-
    private boolean indexShareable() {
       return configuration.indexing().indexShareable();
    }
@@ -815,11 +810,27 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private void removeCacheLoader(String storeType, Collection<CacheLoader> collection) {
-      collection.removeIf(cacheLoader -> undelegate(cacheLoader).getClass().getName().equals(storeType));
+      for (Iterator<CacheLoader> it = collection.iterator(); it.hasNext(); ) {
+         CacheLoader loader = it.next();
+         doRemove(it, storeType, loader, undelegate(loader));
+      }
    }
 
    private void removeCacheWriter(String storeType, Collection<? extends CacheWriter> collection) {
-      collection.removeIf(cacheWriter -> undelegate(cacheWriter).getClass().getName().equals(storeType));
+      for (Iterator<? extends CacheWriter> it = collection.iterator(); it.hasNext(); ) {
+         CacheWriter writer = it.next();
+         doRemove(it, storeType, writer, undelegate(writer));
+      }
+   }
+
+   private void doRemove(Iterator<? extends Lifecycle> it, String storeType, Lifecycle wrapper, Lifecycle actual) {
+      if (actual.getClass().getName().equals(storeType)) {
+         wrapper.stop();
+         if (actual != wrapper) {
+            actual.stop();
+         }
+         it.remove();
+      }
    }
 
    private void performOnAllTxStores(AccessMode accessMode, Consumer<TransactionalCacheWriter> action) {
