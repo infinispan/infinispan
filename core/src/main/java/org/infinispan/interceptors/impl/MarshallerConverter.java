@@ -72,7 +72,6 @@ public class MarshallerConverter implements TypeConverter<Object, Object, Object
             type.equals(Byte.class) || type.equals(Short.class) || type.equals(Integer.class) ||
             type.equals(Long.class) || type.equals(Float.class) || type.equals(Double.class) ||
             // We cannot exclude array as we can't tell the difference between byte[] and WrappedByteArray
-            type.equals(GlobalTransaction.class) || Address.class.isAssignableFrom(type) ||
-            ReplicableCommand.class.isAssignableFrom(type) || type.equals(WrappedByteArray.class);
+            type.equals(WrappedByteArray.class);
    }
 }

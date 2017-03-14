@@ -3,6 +3,7 @@ package org.infinispan.eviction.impl;
 import java.util.Random;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -30,7 +31,7 @@ public class MemoryEvictionTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg
-         .eviction().strategy(EvictionStrategy.LRU).type(EvictionType.MEMORY).size(MAX_MEMORY)
+         .memory().storageType(StorageType.BINARY).evictionType(EvictionType.MEMORY).size(MAX_MEMORY)
          .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();

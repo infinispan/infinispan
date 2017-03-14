@@ -25,8 +25,7 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.eviction().maxEntries(CACHE_SIZE)
-            .strategy(EvictionStrategy.LRU).type(EvictionType.MEMORY);
+      builder.memory().size(CACHE_SIZE).evictionType(EvictionType.MEMORY);
       configure(builder);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
       cache = cm.getCache();
