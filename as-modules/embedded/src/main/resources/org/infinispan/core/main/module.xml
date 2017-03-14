@@ -19,5 +19,12 @@
         <module name="org.jboss.marshalling" slot="${slot}" services="import"/>
         <module name="org.jgroups" slot="${slot}"/>
         <module name="sun.jdk"/>
+        <!-- The CacheStore modules are listed as dependencies so that people can use them even
+          when they aren't directly exposed to the deployment !-->
+        <module name="org.infinispan.persistence.jdbc" slot="${slot}" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.jpa" slot="${slot}" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.remote" slot="${slot}" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.rest" slot="${slot}" services="import" optional="true"/>
+        <module name="org.infinispan.persistence.leveldb" slot="${slot}" services="import" optional="true"/>
     </dependencies>
 </module>
