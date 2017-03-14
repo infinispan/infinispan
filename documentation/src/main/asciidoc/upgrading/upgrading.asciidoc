@@ -148,6 +148,11 @@ CollectionFactory#makeBoundedConcurrentMap method should be used if you desire t
 bounded ConcurrentMap.
 
 
+=== Store as Binary is deprecated
+Store as Binary configuration is now deprecated and will be removed in a future release. This is replaced by
+the new memory configuration.
+
+
 == Upgrading from 8.1 to 8.2
 === Entry Retriever is deprecated
 Entry Retriever is now deprecated and will be removed in Infinispan 9.  This is replaced by the new Streams feature.

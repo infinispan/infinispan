@@ -102,7 +102,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    /**
-    * @deprecated Use {@link ConfigurationBuilder#memory()} instead
+    * @deprecated Since 9.0, Use {@link ConfigurationBuilder#memory()} instead
     */
    @Deprecated
    @Override
@@ -130,7 +130,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return jmxStatistics;
    }
 
+   @Deprecated
    @Override
+   /**
+    * Deprecated since 9.0, please use {@link ConfigurationBuilder#memory()} instead.
+    */
    public StoreAsBinaryConfigurationBuilder storeAsBinary() {
       return storeAsBinary;
    }
