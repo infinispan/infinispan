@@ -2,6 +2,7 @@ package org.infinispan.commands;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
 import java.util.Collections;
@@ -14,6 +15,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -69,10 +71,24 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
       for (int i = 0; i < numEntries; ++i)
          advancedCache(i % numNodes).put("key" + i, "value" + i);
       List<Cache<String, String>> caches = caches();
+      String notPresentString = "not-present";
       for (Cache<String, String> cache : caches) {
-         Map<String, String> result = cache.getAdvancedCache().getAll(Collections.singleton("not-present"));
-         assertFalse(result.containsKey("not-present"));
-         assertNull(result.get("not-presnt"));
+         Map<String, String> result = cache.getAdvancedCache().getAll(Collections.singleton(notPresentString));
+         assertFalse(result.containsKey(notPresentString));
+         assertNull(result.get(notPresentString));
+      }
+   }
+
+   public void testGetAllCacheEntriesKeyNotPresent() {
+      for (int i = 0; i < numEntries; ++i)
+         advancedCache(i % numNodes).put("key" + i, "value" + i);
+      List<Cache<String, String>> caches = caches();
+      String notPresentString = "not-present";
+      for (Cache<String, String> cache : caches) {
+         Map<String, CacheEntry<String, String>> result = cache.getAdvancedCache().getAllCacheEntries(
+               Collections.singleton(notPresentString));
+         assertFalse(result.containsKey(notPresentString));
+         assertNull(result.get(notPresentString));
       }
    }
 
@@ -108,6 +124,34 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
          for (Cache<Object, Object> cache : caches()) {
             Map<Object, Object> result = cache.getAdvancedCache().getAll(immutableKeys);
             assertEquals(result, expected);
+         }
+      }
+   }
+
+   public void testGetAllCacheEntries() {
+      for (int i = 0; i < numEntries; ++i)
+         advancedCache(i % numNodes).put("key" + i, "value" + i);
+      for (int i = 0; i < numEntries; ++i)
+         for (Cache<Object, Object> cache : caches())
+            assertEquals(cache.get("key" + i), "value" + i);
+
+      for (int j = 0; j < 10; ++j) {
+         Set<Object> mutableKeys = new HashSet<>();
+         Map<Object, Object> expected = new HashMap<>();
+         for (int i = j; i < numEntries; i += 10) {
+            mutableKeys.add("key" + i);
+            expected.put("key" + i, "value" + i);
+         }
+         Set<Object> immutableKeys = Collections.unmodifiableSet(mutableKeys);
+
+         for (Cache<Object, Object> cache : caches()) {
+            Map<Object, CacheEntry<Object, Object>> result = cache.getAdvancedCache().getAllCacheEntries(immutableKeys);
+            expected.forEach((k, v) -> {
+               CacheEntry<Object, Object> value = result.get(k);
+               assertNotNull(value);
+               assertEquals(k, value.getKey());
+               assertEquals(v, value.getValue());
+            });
          }
       }
    }

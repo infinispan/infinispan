@@ -126,9 +126,13 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
          K boxedKey = boxKey(originalKey);
          V originalValue = v.getValue();
          V boxedValue = boxValue(originalValue);
+         CacheEntry<K, V> entryToPut;
          if (boxedKey != originalKey || boxedValue != originalValue) {
-            entryMap.put(boxedKey, convertEntry(boxedKey, boxedValue, v));
+            entryToPut = convertEntry(boxedKey, boxedValue, v);
+         } else {
+            entryToPut = v;
          }
+         entryMap.put(boxedKey, entryToPut);
       });
       return entryMap;
    }
