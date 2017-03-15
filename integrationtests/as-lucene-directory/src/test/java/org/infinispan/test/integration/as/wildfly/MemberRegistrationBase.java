@@ -38,6 +38,7 @@ class MemberRegistrationBase {
    @OperateOnDeployment("dep.active-1")
    public void
    testRegister() throws Exception {
+      assertEquals("Index size isn't correct", 0, memberRegistration.indexSize());
       Member newMember = memberRegistration.getNewMember();
       newMember.setName("Davide D'Alto");
       newMember.setEmail("davide@mailinator.com");
