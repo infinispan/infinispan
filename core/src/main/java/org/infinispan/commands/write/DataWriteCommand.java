@@ -17,13 +17,13 @@ public interface DataWriteCommand extends WriteCommand, DataCommand {
    CommandInvocationId getCommandInvocationId();
 
    /**
-    * Initializes the {@link BackupWriteRcpCommand} to send the update to backup owner of a key.
+    * Initializes the {@link BackupWriteRpcCommand} to send the update to backup owner of a key.
     * <p>
     * This method will be invoked in the primary owner only.
     *
-    * @param command the {@link BackupWriteRcpCommand} to initialize.
+    * @param command the {@link BackupWriteRpcCommand} to initialize.
     */
-   default void initBackupWriteRcpCommand(BackupWriteRcpCommand command) {
+   default void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
       throw new UnsupportedOperationException();
    }
 

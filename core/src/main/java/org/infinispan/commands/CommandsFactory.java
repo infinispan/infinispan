@@ -51,8 +51,8 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupPutMapRcpCommand;
-import org.infinispan.commands.write.BackupWriteRcpCommand;
+import org.infinispan.commands.write.BackupPutMapRpcCommand;
+import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
@@ -501,7 +501,7 @@ public interface CommandsFactory {
 
    ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId);
 
-   BackupWriteRcpCommand buildBackupWriteRcpCommand(DataWriteCommand command);
+   BackupWriteRpcCommand buildBackupWriteRpcCommand(DataWriteCommand command);
 
-   BackupPutMapRcpCommand buildBackupPutMapRcpCommand(PutMapCommand command);
+   BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command);
 }

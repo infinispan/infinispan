@@ -232,7 +232,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public void initBackupWriteRcpCommand(BackupWriteRcpCommand command) {
+   public void initBackupWriteRpcCommand(BackupWriteRpcCommand command) {
       command.setReplace(commandInvocationId, key, newValue, metadata, getFlagsBitSet(), getTopologyId());
    }
 }
