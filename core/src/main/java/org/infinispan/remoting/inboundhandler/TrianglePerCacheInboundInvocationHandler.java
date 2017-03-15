@@ -11,8 +11,8 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupPutMapRcpCommand;
-import org.infinispan.commands.write.BackupWriteRcpCommand;
+import org.infinispan.commands.write.BackupPutMapRpcCommand;
+import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.TriangleOrderManager;
@@ -90,11 +90,11 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             case SingleRpcCommand.COMMAND_ID:
                handleSingleRpcCommand((SingleRpcCommand) command, reply, order);
                return;
-            case BackupWriteRcpCommand.COMMAND_ID:
-               handleBackupWriteRpcCommand((BackupWriteRcpCommand) command);
+            case BackupWriteRpcCommand.COMMAND_ID:
+               handleBackupWriteRpcCommand((BackupWriteRpcCommand) command);
                return;
-            case BackupPutMapRcpCommand.COMMAND_ID:
-               handleBackupPutMapRpcCommand((BackupPutMapRcpCommand) command);
+            case BackupPutMapRpcCommand.COMMAND_ID:
+               handleBackupPutMapRpcCommand((BackupPutMapRpcCommand) command);
                return;
             case BackupAckCommand.COMMAND_ID:
                handleBackupAckCommand((BackupAckCommand) command);
@@ -184,7 +184,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private void handleBackupPutMapRpcCommand(BackupPutMapRcpCommand command) {
+   private void handleBackupPutMapRpcCommand(BackupPutMapRpcCommand command) {
       final int topologyId = command.getTopologyId();
       ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(),
             command.getMap().keySet().iterator().next());
@@ -192,7 +192,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       remoteCommandsExecutor.execute(runnable);
    }
 
-   private void handleBackupWriteRpcCommand(BackupWriteRcpCommand command) {
+   private void handleBackupWriteRpcCommand(BackupWriteRpcCommand command) {
       final int topologyId = command.getTopologyId();
       ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(), command.getKey());
       BlockingRunnable runnable = createBackupWriteRpcRunnable(command, topologyId, readyAction);
@@ -248,8 +248,8 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private BlockingRunnable createBackupWriteRpcRunnable(BackupWriteRcpCommand command, int commandTopologyId,
-         ReadyAction readyAction) {
+   private BlockingRunnable createBackupWriteRpcRunnable(BackupWriteRpcCommand command, int commandTopologyId,
+                                                         ReadyAction readyAction) {
       readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
             false) {
@@ -263,14 +263,14 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             super.onException(throwable);
             readyAction.onException();
             readyAction.onFinally(); //notified TriangleOrderManager before sending the ack.
-            sendExceptionAck(((BackupWriteRcpCommand) command).getCommandInvocationId(), throwable, commandTopologyId);
+            sendExceptionAck(((BackupWriteRpcCommand) command).getCommandInvocationId(), throwable, commandTopologyId);
          }
 
          @Override
          protected void afterInvoke() {
             super.afterInvoke();
             readyAction.onFinally();
-            sendBackupAck(((BackupWriteRcpCommand) command).getCommandInvocationId(), commandTopologyId);
+            sendBackupAck(((BackupWriteRpcCommand) command).getCommandInvocationId(), commandTopologyId);
          }
       };
    }
@@ -288,8 +288,8 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private BlockingRunnable createBackupPutMapRunnable(BackupPutMapRcpCommand command, int commandTopologyId,
-         ReadyAction readyAction) {
+   private BlockingRunnable createBackupPutMapRunnable(BackupPutMapRpcCommand command, int commandTopologyId,
+                                                       ReadyAction readyAction) {
       readyAction.addListener(remoteCommandsExecutor::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
             false) {
@@ -303,16 +303,16 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             super.onException(throwable);
             readyAction.onException();
             readyAction.onFinally();
-            sendExceptionAck(((BackupPutMapRcpCommand) command).getCommandInvocationId(), throwable, commandTopologyId);
+            sendExceptionAck(((BackupPutMapRpcCommand) command).getCommandInvocationId(), throwable, commandTopologyId);
          }
 
          @Override
          protected void afterInvoke() {
             super.afterInvoke();
             readyAction.onFinally();
-            Object key = ((BackupPutMapRcpCommand) command).getMap().keySet().iterator().next();
+            Object key = ((BackupPutMapRpcCommand) command).getMap().keySet().iterator().next();
             int segment = clusteringDependentLogic.getCacheTopology().getDistribution(key).segmentId();
-            sendPutMapBackupAck(((BackupPutMapRcpCommand) command).getCommandInvocationId(), commandTopologyId,
+            sendPutMapBackupAck(((BackupPutMapRpcCommand) command).getCommandInvocationId(), commandTopologyId,
                   segment);
          }
       };

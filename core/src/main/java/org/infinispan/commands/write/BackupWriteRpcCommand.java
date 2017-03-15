@@ -28,7 +28,7 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAffectedCommand {
+public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAffectedCommand {
 
    public static final byte COMMAND_ID = 61;
    private static final Operation[] CACHED_VALUES = Operation.values();
@@ -47,11 +47,11 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
    private CacheNotifier cacheNotifier;
 
    //for org.infinispan.commands.CommandIdUniquenessTest
-   public BackupWriteRcpCommand() {
+   public BackupWriteRpcCommand() {
       super(null);
    }
 
-   public BackupWriteRcpCommand(ByteString cacheName) {
+   public BackupWriteRpcCommand(ByteString cacheName) {
       super(cacheName);
    }
 
@@ -166,7 +166,7 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      operation = MarshallUtil.unmarshallEnum(input, BackupWriteRcpCommand::valueOf);
+      operation = MarshallUtil.unmarshallEnum(input, BackupWriteRpcCommand::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);
       key = input.readObject();
       switch (operation) {
@@ -186,7 +186,7 @@ public class BackupWriteRcpCommand extends BaseRpcCommand implements TopologyAff
 
    @Override
    public String toString() {
-      return "BackupWriteRcpCommand{" +
+      return "BackupWriteRpcCommand{" +
             "operation=" + operation +
             ", commandInvocationId=" + commandInvocationId +
             ", key=" + key +

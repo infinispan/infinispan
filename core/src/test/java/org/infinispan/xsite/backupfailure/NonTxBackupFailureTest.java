@@ -37,7 +37,7 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          checkNonFailOnBackupFailure();
       }
       //in triangle, if an exception is received, the originator doesn't wait for the ack from backup
-      //it is possible to check the value before the backup handles the BackupWriteRcpCommand.
+      //it is possible to check the value before the backup handles the BackupWriteRpcCommand.
       eventuallyEquals("v", () -> cache("LON", 1).get("k"));
       assertTrue(failureInterceptor.putFailed);
       assertNull(backup("LON").get("k"));

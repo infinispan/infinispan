@@ -23,8 +23,8 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
-import org.infinispan.commands.write.BackupPutMapRcpCommand;
-import org.infinispan.commands.write.BackupWriteRcpCommand;
+import org.infinispan.commands.write.BackupPutMapRpcCommand;
+import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -60,7 +60,7 @@ import org.infinispan.util.logging.LogFactory;
  * The {@link GetKeyValueCommand} reads the value locally if it is available (the node is an owner or the value is
  * stored in L1). If it isn't available, a remote request is made. The {@link DataWriteCommand} is performed as follow:
  * <ul> <li>The command if forwarded to the primary owner of the key.</li> <li>The primary owner locks the key and
- * executes the operation; sends the {@link BackupWriteRcpCommand} to the backup owners; releases the lock; sends the
+ * executes the operation; sends the {@link BackupWriteRpcCommand} to the backup owners; releases the lock; sends the
  * {@link WriteResponse} back to the originator.</li> <li>The backup owner applies the update and sends a {@link
  * BackupAckCommand} back to the originator.</li> <li>The originator collects the ack from all the owners and
  * returns.</li> </ul> The {@link PutMapCommand} is performed in a similar way: <ul> <li>The subset of the map is split
@@ -160,14 +160,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          }
          Map<Object, Object> map = entry.getValue();
          long sequence = triangleOrderManager.next(segmentId, topologyId);
-         BackupPutMapRcpCommand backupPutMapRcpCommand = commandsFactory.buildBackupPutMapRcpCommand(command);
-         backupPutMapRcpCommand.setMap(map);
-         backupPutMapRcpCommand.setSequence(sequence);
+         BackupPutMapRpcCommand backupPutMapRpcCommand = commandsFactory.buildBackupPutMapRpcCommand(command);
+         backupPutMapRpcCommand.setMap(map);
+         backupPutMapRpcCommand.setSequence(sequence);
          if (trace) {
             log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
                   sequence);
          }
-         rpcManager.sendToMany(backups, backupPutMapRcpCommand, DeliverOrder.NONE);
+         rpcManager.sendToMany(backups, backupPutMapRpcCommand, DeliverOrder.NONE);
       }
    }
 
@@ -384,13 +384,13 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          log.tracef("Command %s send to backup owner %s.", id, backupOwners);
       }
       long sequenceNumber = triangleOrderManager.next(segmentId, command.getTopologyId());
-      BackupWriteRcpCommand backupWriteRcpCommand = commandsFactory.buildBackupWriteRcpCommand(command);
-      backupWriteRcpCommand.setSequence(sequenceNumber);
+      BackupWriteRpcCommand backupWriteRpcCommand = commandsFactory.buildBackupWriteRpcCommand(command);
+      backupWriteRpcCommand.setSequence(sequenceNumber);
       if (trace) {
          log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
       }
       // we must send the message only after the collector is registered in the map
-      rpcManager.sendToMany(backupOwners, backupWriteRcpCommand, DeliverOrder.NONE);
+      rpcManager.sendToMany(backupOwners, backupWriteRpcCommand, DeliverOrder.NONE);
    }
 
    private Object localWriteInvocation(InvocationContext context, DataWriteCommand command,
