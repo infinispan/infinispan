@@ -10,6 +10,7 @@ import org.infinispan.commons.util.concurrent.Futures;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
+import org.infinispan.distexec.DistributedTask;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.*;
@@ -121,7 +123,11 @@ public class HotRodTargetMigrator implements TargetMigrator {
                for (List<Integer> partition : partitions) {
                   Set<Integer> segmentSet = new HashSet<>();
                   segmentSet.addAll(partition);
-                  futures.add(executor.submit(iterator.next(), new MigrationTask(segmentSet, readBatch, threads)));
+                  DistributedTask<Integer> task = executor
+                     .createDistributedTaskBuilder(new MigrationTask(segmentSet, readBatch, threads))
+                     .timeout(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
+                     .build();
+                  futures.add(executor.submit(iterator.next(), task));
                }
                NotifyingFuture<List<Integer>> result = Futures.combine(futures);
                try {
