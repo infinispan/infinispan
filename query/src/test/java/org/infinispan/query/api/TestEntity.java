@@ -1,12 +1,14 @@
 package org.infinispan.query.api;
 
+import java.io.Serializable;
+
 import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
 
 @Indexed(index="indexA")
-public class TestEntity {
+public class TestEntity implements Serializable {
 
    @Field(store = Store.YES, analyze=Analyze.NO)
    private String name;

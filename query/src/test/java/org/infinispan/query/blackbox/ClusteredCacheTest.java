@@ -20,6 +20,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
@@ -60,6 +61,21 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   private StorageType storageType;
+
+   public Object[] factory() {
+      return new Object[] {
+            new ClusteredCacheTest().storageType(StorageType.OFF_HEAP),
+            new ClusteredCacheTest().storageType(StorageType.BINARY),
+            new ClusteredCacheTest().storageType(StorageType.OBJECT),
+      };
+   }
+
+   ClusteredCacheTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
+
    protected void enhanceConfig(ConfigurationBuilder cacheCfg) {
       // meant to be overridden
    }
@@ -73,6 +89,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
          .addProperty("default.directory_provider", "ram")
          .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
          .addProperty("lucene_version", "LUCENE_CURRENT");
+      cacheCfg.memory()
+            .storageType(storageType);
       enhanceConfig(cacheCfg);
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);

@@ -419,9 +419,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
       // Loop through all the keys and put those key-value pairings into lucene.
       for (Map.Entry<Object, Object> entry : previousValues.entrySet()) {
-         final Object key = extractValue(entry.getKey());
-         final Object value = extractValue(dataMap.get(key));
-         final Object previousValue = entry.getValue();
+         Object originalKey = entry.getKey();
+         final Object key = extractValue(originalKey);
+         final Object value = extractValue(dataMap.get(originalKey));
+         final Object previousValue = extractValue(entry.getValue());
          if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
             if (shouldModifyIndexes(command, ctx, key)) {
