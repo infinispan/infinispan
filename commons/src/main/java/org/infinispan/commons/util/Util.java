@@ -188,12 +188,14 @@ public final class Util {
                ne = ce;
             }
          }
-
+         if (ne != null) {
+            //Always log the NoClassDefFoundError errors first:
+            //if one happened they will contain critically useful details.
+            log.unableToLoadClass(classname, Arrays.toString(cls), ne);
+         }
          if (e != null)
             throw e;
          else if (ne != null) {
-            // Before we wrap this, make sure we appropriately log this.
-            log.unableToLoadClass(classname, Arrays.toString(cls), ne);
             throw new ClassNotFoundException(classname, ne);
          }
          else
