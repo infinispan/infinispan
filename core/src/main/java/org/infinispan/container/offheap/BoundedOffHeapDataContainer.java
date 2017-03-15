@@ -106,6 +106,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       try {
          // Current size has to be updated in the lock
          currentSize -=  removedSize;
+         boolean middleNode = true;
          if (lruNode == lastAddress) {
             if (trace) {
                log.tracef("Removing last LRU node at %d", lruNode);
@@ -115,7 +116,9 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
                UNSAFE.putLong(previousLRUNode + 16, 0);
             }
             lastAddress = previousLRUNode;
-         } else if (lruNode == firstAddress) {
+            middleNode = false;
+         }
+         if (lruNode == firstAddress) {
             if (trace) {
                log.tracef("Removing first LRU node at %d", lruNode);
             }
@@ -124,7 +127,9 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
                UNSAFE.putLong(nextLRUNode + 8, 0);
             }
             firstAddress = nextLRUNode;
-         } else {
+            middleNode = false;
+         }
+         if (middleNode) {
             if (trace) {
                log.tracef("Removing middle LRU node at %d", lruNode);
             }
