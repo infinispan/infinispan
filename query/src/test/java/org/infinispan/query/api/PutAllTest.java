@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 import org.apache.lucene.search.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -18,11 +19,28 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.api.PutAllTest")
 @CleanupAfterMethod
 public class PutAllTest extends SingleCacheManagerTest {
+
+   private StorageType storageType;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new PutAllTest().storageType(StorageType.OFF_HEAP),
+            new PutAllTest().storageType(StorageType.BINARY),
+            new PutAllTest().storageType(StorageType.OBJECT),
+      };
+   }
+
+   PutAllTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -34,6 +52,8 @@ public class PutAllTest extends SingleCacheManagerTest {
             .addProperty("default.directory_provider", "ram")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
+      cfg.memory()
+            .storageType(storageType);
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
