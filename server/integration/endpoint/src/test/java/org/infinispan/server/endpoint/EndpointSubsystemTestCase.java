@@ -27,6 +27,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -55,20 +56,22 @@ import org.junit.runners.Parameterized.Parameters;
 public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
 
    private final String xsdPath;
-   int operations = 0;
+   private final int operations;
+   private final String[] templates;
 
-   public EndpointSubsystemTestCase(String xmlFile, int operations, String xsdPath) {
+   public EndpointSubsystemTestCase(String xmlFile, int operations, String xsdPath, String[] templates) {
       super(Constants.SUBSYSTEM_NAME, new EndpointExtension(), xmlFile);
       this.operations = operations;
       this.xsdPath = xsdPath;
+      this.templates = templates;
    }
 
    @Parameters
    public static Collection<Object[]> data() {
       Object[][] data = new Object[][] {
-            { "endpoint-7.2.xml", 16, "schema/jboss-infinispan-endpoint_7_2.xsd" },
-            { "endpoint-8.0.xml", 16, "schema/jboss-infinispan-endpoint_8_0.xsd" },
-            { "endpoint-9.0.xml", 38, "schema/jboss-infinispan-endpoint_9_0.xsd" },
+            { "endpoint-7.2.xml", 16, "schema/jboss-infinispan-endpoint_7_2.xsd", null },
+            { "endpoint-8.0.xml", 16, "schema/jboss-infinispan-endpoint_8_0.xsd", null },
+            { "endpoint-9.0.xml", 38, "schema/jboss-infinispan-endpoint_9_0.xsd", new String[] { "/subsystem-templates/infinispan-endpoint.xml"} },
       };
       return Arrays.asList(data);
    }
@@ -76,6 +79,16 @@ public class EndpointSubsystemTestCase extends ClusteringSubsystemTest {
    @Override
    protected String getSubsystemXsdPath() throws Exception {
       return xsdPath;
+   }
+
+   @Override
+   protected String[] getSubsystemTemplatePaths() throws IOException {
+      return templates;
+   }
+
+   @Override
+   public void testSchemaOfSubsystemTemplates() throws Exception {
+      // TODO: implement once the schema validator supports supplements
    }
 
    @Override

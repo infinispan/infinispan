@@ -178,14 +178,6 @@ public class JmxManagementIT {
         assertTrue(names.contains("default") && names.contains("memcachedCache"));
     }
 
-    @Ignore("Not supported - https://bugzilla.redhat.com/show_bug.cgi?id=785105")
-    @Test
-    public void testCacheManagerOperations() throws Exception {
-        assertTrue(!provider.getConnection().isRegistered(new ObjectName(newExtraCacheMBean)));
-        invokeOperation(provider, cacheManagerMBean, "startCache", new Object[]{"extracache"}, new String[]{"java.lang.String"});
-        assertTrue(provider.getConnection().isRegistered(new ObjectName(newExtraCacheMBean)));
-    }
-
     @Test
     public void testDefaultCacheAttributes() throws Exception {
         assertTrue(getAttribute(provider, distCacheMBean, "CacheName").contains("default"));

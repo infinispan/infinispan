@@ -21,6 +21,7 @@
 */
 package org.infinispan.server.jgroups.subsystem;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -59,22 +60,24 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
 
     private final int expectedOperationCount;
     private final String xsdPath;
+    private final String[] templates;
 
-    public SubsystemParsingTestCase(JGroupsSchema schema, int expectedOperationCount, String xsdPath) {
+    public SubsystemParsingTestCase(JGroupsSchema schema, int expectedOperationCount, String xsdPath, String[] templates) {
         super(JGroupsExtension.SUBSYSTEM_NAME, new JGroupsExtension(), schema.format("subsystem-%s-%d_%d.xml").replaceAll(":", "_"));
         this.expectedOperationCount = expectedOperationCount;
         this.xsdPath = xsdPath;
+        this.templates = templates;
     }
 
     @Parameters
     public static Collection<Object[]> data() {
         Object[][] data = new Object[][] {
-                { JGroupsSchema.VERSION_1_1, 20, "schema/jboss-as-jgroups_1_1.xsd" },
-                { JGroupsSchema.VERSION_2_0, 22, "schema/jboss-as-jgroups_2_0.xsd" },
-                { JGroupsSchema.VERSION_3_0, 26, "schema/jboss-as-jgroups_3_0.xsd"},
-                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0, 25, "schema/jboss-infinispan-jgroups_7_0.xsd" },
-                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0, 27, "schema/jboss-infinispan-jgroups_8_0.xsd" },
-                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0, 27, "schema/jboss-infinispan-jgroups_9_0.xsd" },
+                { JGroupsSchema.VERSION_1_1, 20, "schema/jboss-as-jgroups_1_1.xsd", null },
+                { JGroupsSchema.VERSION_2_0, 22, "schema/jboss-as-jgroups_2_0.xsd", null },
+                { JGroupsSchema.VERSION_3_0, 26, "schema/jboss-as-jgroups_3_0.xsd", null },
+                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0, 25, "schema/jboss-infinispan-jgroups_7_0.xsd", null },
+                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0, 27, "schema/jboss-infinispan-jgroups_8_0.xsd", null },
+                { JGroupsSchema.INFINISPAN_SERVER_JGROUPS_9_0, 27, "schema/jboss-infinispan-jgroups_9_0.xsd", new String[] { "/subsystem-templates/infinispan-jgroups.xml", "/subsystem-templates/cloud-jgroups.xml" } },
         };
         return Arrays.asList(data);
     }
@@ -82,6 +85,16 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     @Override
     protected String getSubsystemXsdPath() throws Exception {
         return xsdPath;
+    }
+
+    @Override
+    protected String[] getSubsystemTemplatePaths() throws IOException {
+        return templates;
+    }
+
+    @Override
+    public void testSchemaOfSubsystemTemplates() throws Exception {
+        // TODO: implement once the schema validator supports supplements
     }
 
     private KernelServices buildKernelServices() throws Exception {
