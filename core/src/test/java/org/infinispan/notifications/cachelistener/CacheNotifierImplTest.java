@@ -47,7 +47,6 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")
 public class CacheNotifierImplTest extends AbstractInfinispanTest {
    CacheNotifierImpl n;
@@ -63,14 +62,14 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
       Answer answer = (Answer<Object>) invocationOnMock -> Mockito.mock((Class) invocationOnMock.getArguments()[0]);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
-      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
-            new WrappedByteArrayConverter());
-      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class))
+            .thenReturn(new WrappedByteArrayConverter());
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString()))
+            .then(answer);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null);
-      n.injectDependencies(mockCache, cdl, null, config,
-                           mock(DistributionManager.class), mock(InternalEntryFactory.class),
-                           mock(ClusterEventManager.class));
+      n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class),
+            mock(InternalEntryFactory.class), mock(ClusterEventManager.class));
       cl = new CacheListener();
       n.start();
       addListener();
@@ -78,192 +77,209 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    protected void addListener() {
-       n.addListener(cl);
+      n.addListener(cl);
    }
 
    protected Object getExpectedEventValue(Object key, Object val, Type t) {
-       return val;
+      return val;
    }
 
    public void testNotifyCacheEntryCreated() {
       n.notifyCacheEntryCreated("k", "v1", null, true, ctx, null);
       n.notifyCacheEntryCreated("k", "v1", null, false, ctx, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_CREATED;
-      assert ((CacheEntryCreatedEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", null, Event.Type.CACHE_ENTRY_CREATED);
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_CREATED;
-      assert ((CacheEntryCreatedEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(1)), "k", "v1", Event.Type.CACHE_ENTRY_CREATED);
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_CREATED, cl.getEvents().get(0).getType());
+      assertEquals("k", ((CacheEntryCreatedEvent) cl.getEvents().get(0)).getKey());
+      assertEquals(getExpectedEventValue("k", null, Event.Type.CACHE_ENTRY_CREATED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_CREATED, cl.getEvents().get(1).getType());
+      assertEquals("k", ((CacheEntryCreatedEvent) cl.getEvents().get(1)).getKey());
+      assertEquals(getExpectedEventValue("k", "v1", Event.Type.CACHE_ENTRY_CREATED),
+            ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
    }
 
    public void testNotifyCacheEntryModified() {
       n.notifyCacheEntryModified("k", "v2", null, "v1", null, true, ctx, null);
       n.notifyCacheEntryModified("k", "v2", null, "v1", null, false, ctx, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", "v1", Event.Type.CACHE_ENTRY_MODIFIED);
-      assert !((CacheEntryModifiedEvent) cl.getEvents().get(0)).isCreated();
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(1)), "k", "v2", Event.Type.CACHE_ENTRY_MODIFIED);
-      assert !((CacheEntryModifiedEvent) cl.getEvents().get(1)).isCreated();
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_MODIFIED, cl.getEvents().get(0).getType());
+      assertEquals("k", ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getKey());
+      assertEquals(getExpectedEventValue("k", "v1", Event.Type.CACHE_ENTRY_MODIFIED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
+      assertTrue(!((CacheEntryModifiedEvent) cl.getEvents().get(0)).isCreated());
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_MODIFIED, cl.getEvents().get(1).getType());
+      assertEquals("k", ((CacheEntryModifiedEvent) cl.getEvents().get(1)).getKey());
+      assertEquals(getExpectedEventValue("k", "v2", Event.Type.CACHE_ENTRY_MODIFIED),
+            ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
+      assertTrue(!((CacheEntryModifiedEvent) cl.getEvents().get(1)).isCreated());
    }
 
    public void testNotifyCacheEntryRemoved() {
       n.notifyCacheEntryRemoved("k", "v", null, true, ctx, null);
       n.notifyCacheEntryRemoved("k", "v", null, false, ctx, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_REMOVED;
-      assert ((CacheEntryRemovedEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", "v", Event.Type.CACHE_ENTRY_REMOVED);
-      assert ((CacheEntryRemovedEvent) cl.getEvents().get(0)).getOldValue().equals("v");
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_REMOVED;
-      assert ((CacheEntryRemovedEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(1)), "k", null, Event.Type.CACHE_ENTRY_REMOVED);
-      assert ((CacheEntryRemovedEvent) cl.getEvents().get(1)).getOldValue().equals("v");
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_REMOVED, cl.getEvents().get(0).getType());
+      assertEquals("k", ((CacheEntryRemovedEvent) cl.getEvents().get(0)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_REMOVED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
+      assertEquals("v", ((CacheEntryRemovedEvent) cl.getEvents().get(0)).getOldValue());
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_REMOVED, cl.getEvents().get(1).getType());
+      assertEquals("k", ((CacheEntryRemovedEvent) cl.getEvents().get(1)).getKey());
+      assertEquals(getExpectedEventValue("k", null, Event.Type.CACHE_ENTRY_REMOVED),
+            ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
+      assertEquals("v", ((CacheEntryRemovedEvent) cl.getEvents().get(1)).getOldValue());
    }
 
    public void testNotifyCacheEntryVisited() {
       n.notifyCacheEntryVisited("k", "v", true, ctx, null);
       n.notifyCacheEntryVisited("k", "v", false, ctx, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_VISITED;
-      assert ((CacheEntryEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", "v", Event.Type.CACHE_ENTRY_VISITED);
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_VISITED;
-      assert ((CacheEntryEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(1)), "k", "v", Event.Type.CACHE_ENTRY_VISITED);
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_VISITED, cl.getEvents().get(0).getType());
+      assertEquals("k", ((CacheEntryEvent) cl.getEvents().get(0)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_VISITED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_VISITED, cl.getEvents().get(1).getType());
+      assertEquals("k", ((CacheEntryEvent) cl.getEvents().get(1)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_VISITED),
+            ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
    }
 
    public void testNotifyCacheEntryEvicted() {
       n.notifyCacheEntriesEvicted(Collections.singleton(new ImmortalCacheEntry("k", "v")), null, null);
 
-      assert cl.isReceivedPost();
-      assert cl.getInvocationCount() == 1;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_EVICTED;
+      assertTrue(cl.isReceivedPost());
+      assertEquals(1, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_EVICTED, cl.getEvents().get(0).getType());
       Map<Object, Object> entries = ((CacheEntriesEvictedEvent) cl.getEvents().get(0)).getEntries();
       Map.Entry<Object, Object> entry = entries.entrySet().iterator().next();
-      assert entry.getKey().equals("k");
-      assert entry.getValue().equals("v");
+      assertEquals("k", entry.getKey());
+      assertEquals("v", entry.getValue());
    }
 
    public void testNotifyCacheEntriesEvicted() {
       InternalCacheEntry ice = TestInternalCacheEntryFactory.create("k", "v");
       n.notifyCacheEntriesEvicted(Collections.singleton(ice), null, null);
 
-      assert cl.isReceivedPost();
-      assert cl.getInvocationCount() == 1;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_EVICTED;
+      assertTrue(cl.isReceivedPost());
+      assertEquals(1, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_EVICTED, cl.getEvents().get(0).getType());
       Map<Object, Object> entries = ((CacheEntriesEvictedEvent) cl.getEvents().get(0)).getEntries();
       Map.Entry<Object, Object> entry = entries.entrySet().iterator().next();
-      assert entry.getKey().equals("k");
-      assert entry.getValue().equals("v");
+      assertEquals("k", entry.getKey());
+      assertEquals("v", entry.getValue());
    }
 
    public void testNotifyCacheEntryExpired() {
       n.notifyCacheEntryExpired("k", "v", null, null);
 
       assertTrue(cl.isReceivedPost());
-      assertEquals(1, cl.getInvocationCount());
-      assertEquals(mockCache, cl.getEvents().get(0).getCache());
-      assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, cl.getEvents().get(0).getType());
+      assertEquals(cl.getInvocationCount(), 1);
+      assertEquals(cl.getEvents().get(0).getCache(), mockCache);
+      assertEquals(cl.getEvents().get(0).getType(), Event.Type.CACHE_ENTRY_EXPIRED);
       CacheEntryExpiredEvent expiredEvent = ((CacheEntryExpiredEvent) cl.getEvents().get(0));
-      assertEquals("k", expiredEvent.getKey());
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", "v", Event.Type.CACHE_ENTRY_EXPIRED);
+      assertEquals(expiredEvent.getKey(), "k");
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_EXPIRED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
    }
 
    public void testNotifyCacheEntryInvalidated() {
       n.notifyCacheEntryInvalidated("k", "v", null, true, ctx, null);
       n.notifyCacheEntryInvalidated("k", "v", null, false, ctx, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_INVALIDATED;
-      assert ((CacheEntryEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", "v", Event.Type.CACHE_ENTRY_INVALIDATED);
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_INVALIDATED;
-      assert ((CacheEntryEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(1)), "k", "v", Event.Type.CACHE_ENTRY_INVALIDATED);
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_INVALIDATED, cl.getEvents().get(0).getType());
+      assertEquals("k", ((CacheEntryEvent) cl.getEvents().get(0)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_INVALIDATED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_INVALIDATED, cl.getEvents().get(1).getType());
+      assertEquals("k", ((CacheEntryEvent) cl.getEvents().get(1)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_INVALIDATED),
+            ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
    }
 
    public void testNotifyCacheEntryLoaded() {
       n.notifyCacheEntryLoaded("k", "v", true, ctx, null);
       n.notifyCacheEntryLoaded("k", "v", false, ctx, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_LOADED;
-      assert ((CacheEntryEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", "v", Event.Type.CACHE_ENTRY_LOADED);
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_LOADED;
-      assert ((CacheEntryEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(1)), "k", "v", Event.Type.CACHE_ENTRY_LOADED);
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_LOADED, cl.getEvents().get(0).getType());
+      assertEquals("k", ((CacheEntryEvent) cl.getEvents().get(0)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_LOADED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_LOADED, cl.getEvents().get(1).getType());
+      assertEquals("k", ((CacheEntryEvent) cl.getEvents().get(1)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_LOADED),
+            ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
    }
 
    public void testNotifyCacheEntryActivated() {
       n.notifyCacheEntryActivated("k", "v", true, ctx, null);
       n.notifyCacheEntryActivated("k", "v", false, ctx, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_ACTIVATED;
-      assert ((CacheEntryEvent) cl.getEvents().get(0)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", "v", Event.Type.CACHE_ENTRY_ACTIVATED);
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_ACTIVATED;
-      assert ((CacheEntryEvent) cl.getEvents().get(1)).getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(1)), "k", "v", Event.Type.CACHE_ENTRY_ACTIVATED);
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_ACTIVATED, cl.getEvents().get(0).getType());
+      assertEquals("k", ((CacheEntryEvent) cl.getEvents().get(0)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_ACTIVATED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_ACTIVATED, cl.getEvents().get(1).getType());
+      assertEquals("k", ((CacheEntryEvent) cl.getEvents().get(1)).getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_ACTIVATED),
+            ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
    }
 
    public void testNotifyCacheEntryPassivated() {
       n.notifyCacheEntryPassivated("k", "v", true, null, null);
       n.notifyCacheEntryPassivated("k", "v", false, null, null);
 
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_PASSIVATED;
+      assertTrue(cl.isReceivedPost());
+      assertTrue(cl.isReceivedPre());
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_PASSIVATED, cl.getEvents().get(0).getType());
       CacheEntryPassivatedEvent event = (CacheEntryPassivatedEvent) cl.getEvents().get(0);
-      assert event.getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(0)), "k", "v", Event.Type.CACHE_ENTRY_PASSIVATED);
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_PASSIVATED;
+      assertEquals("k", event.getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_PASSIVATED),
+            ((CacheEntryEvent) cl.getEvents().get(0)).getValue());
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_PASSIVATED, cl.getEvents().get(1).getType());
       event = (CacheEntryPassivatedEvent) cl.getEvents().get(1);
-      assert event.getKey().equals("k");
-      assert isReturnedEventValueCorrect(((CacheEntryEvent) cl.getEvents().get(1)), "k", "v", Event.Type.CACHE_ENTRY_PASSIVATED);
+      assertEquals("k", event.getKey());
+      assertEquals(getExpectedEventValue("k", "v", Event.Type.CACHE_ENTRY_PASSIVATED),
+            ((CacheEntryEvent) cl.getEvents().get(1)).getValue());
    }
 
    public void testNotifyTransactionCompleted() {
@@ -271,15 +287,15 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       n.notifyTransactionCompleted(tx, true, ctx);
       n.notifyTransactionCompleted(tx, false, ctx);
 
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.TRANSACTION_COMPLETED;
-      assert ((TransactionCompletedEvent) cl.getEvents().get(0)).isTransactionSuccessful();
-      assert ((TransactionCompletedEvent) cl.getEvents().get(0)).getGlobalTransaction() == tx;
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.TRANSACTION_COMPLETED;
-      assert !((TransactionCompletedEvent) cl.getEvents().get(1)).isTransactionSuccessful();
-      assert ((TransactionCompletedEvent) cl.getEvents().get(1)).getGlobalTransaction() == tx;
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.TRANSACTION_COMPLETED, cl.getEvents().get(0).getType());
+      assertTrue(((TransactionCompletedEvent) cl.getEvents().get(0)).isTransactionSuccessful());
+      assertEquals(((TransactionCompletedEvent) cl.getEvents().get(0)).getGlobalTransaction(), tx);
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.TRANSACTION_COMPLETED, cl.getEvents().get(1).getType());
+      assertTrue(!((TransactionCompletedEvent) cl.getEvents().get(1)).isTransactionSuccessful());
+      assertEquals(((TransactionCompletedEvent) cl.getEvents().get(1)).getGlobalTransaction(), tx);
    }
 
    public void testNotifyTransactionRegistered() {
@@ -287,12 +303,12 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       n.notifyTransactionRegistered(tx, false);
       n.notifyTransactionRegistered(tx, false);
 
-      assert cl.getInvocationCount() == 2;
-      assert cl.getEvents().get(0).getCache() == mockCache;
-      assert cl.getEvents().get(0).getType() == Event.Type.TRANSACTION_REGISTERED;
-      assert ((TransactionRegisteredEvent) cl.getEvents().get(0)).getGlobalTransaction() == tx;
-      assert cl.getEvents().get(1).getCache() == mockCache;
-      assert cl.getEvents().get(1).getType() == Event.Type.TRANSACTION_REGISTERED;
-      assert ((TransactionRegisteredEvent) cl.getEvents().get(1)).getGlobalTransaction() == tx;
+      assertEquals(2, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.TRANSACTION_REGISTERED, cl.getEvents().get(0).getType());
+      assertEquals(((TransactionRegisteredEvent) cl.getEvents().get(0)).getGlobalTransaction(), tx);
+      assertEquals(mockCache, cl.getEvents().get(1).getCache());
+      assertEquals(Event.Type.TRANSACTION_REGISTERED, cl.getEvents().get(1).getType());
+      assertEquals(((TransactionRegisteredEvent) cl.getEvents().get(1)).getGlobalTransaction(), tx);
    }
 }
