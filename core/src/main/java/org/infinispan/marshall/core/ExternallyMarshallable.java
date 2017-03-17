@@ -100,7 +100,6 @@ public final class ExternallyMarshallable {
       return pkg.startsWith("java.")
             || pkg.startsWith("org.infinispan.")
             || pkg.startsWith("org.jgroups.")
-            || pkg.startsWith("org.hibernate")
             || pkg.startsWith("org.apache")
             || pkg.startsWith("org.jboss")
             || pkg.startsWith("com.arjuna")
