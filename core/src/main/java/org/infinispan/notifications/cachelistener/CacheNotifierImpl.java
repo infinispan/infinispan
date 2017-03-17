@@ -1612,9 +1612,10 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             if (event instanceof EventImpl) {
                // This is a bit hacky to let the C type be passed in for the V type
                EventImpl<K, V> eventImpl = (EventImpl<K, V>)event;
+               EventType evType = new EventType(eventImpl.isCommandRetried(), eventImpl.isPre(), eventImpl.getType());
                Object newValue = converter.convert(eventImpl.getKey(), (V) eventImpl.getOldValue(),
                                  eventImpl.getOldMetadata(), (V) eventImpl.getValue(),
-                                 eventImpl.getMetadata(), null);
+                                 eventImpl.getMetadata(), evType);
                if (newValue != eventImpl.getValue()) {
                   EventImpl<K, V> clone = eventImpl.clone();
                   clone.setValue((V) newValue);
