@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
@@ -29,22 +30,13 @@ public class ComponentMetadataRepo {
    public synchronized void readMetadata(URL metadataFile) throws IOException, ClassNotFoundException {
       Map<String, ComponentMetadata> comp;
       Map<String, String> fact;
-      InputStream inputStream = metadataFile.openStream();
-      try {
-         BufferedInputStream bis = new BufferedInputStream(inputStream);
-         try {
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            try {
+      try (InputStream inputStream = metadataFile.openStream()) {
+         try (BufferedInputStream bis = new BufferedInputStream(inputStream)) {
+            try (ObjectInputStream ois = new ObjectInputStream(bis)){
                comp = (Map<String, ComponentMetadata>) ois.readObject();
                fact = (Map<String, String>) ois.readObject();
-            } finally {
-               ois.close();
             }
-         } finally {
-            bis.close();
          }
-      } finally {
-         inputStream.close();
       }
 
       componentMetadataMap.putAll(comp);
@@ -104,8 +96,9 @@ public class ComponentMetadataRepo {
     */
    public void initialize(Iterable<ModuleMetadataFileFinder> moduleMetadataFiles, ClassLoader cl) {
       // First init core module metadata
+      FileLookup fileLookup = FileLookupFactory.newInstance();
       try {
-         readMetadata(FileLookupFactory.newInstance().lookupFileLocation("infinispan-core-component-metadata.dat", cl));
+         readMetadata(fileLookup.lookupFileLocation("infinispan-core-component-metadata.dat", cl));
       } catch (Exception e) {
          throw new CacheException("Unable to load component metadata!", e);
       }
@@ -113,7 +106,7 @@ public class ComponentMetadataRepo {
       // Now the modules
       for (ModuleMetadataFileFinder finder: moduleMetadataFiles) {
          try {
-            readMetadata(FileLookupFactory.newInstance().lookupFileLocation(finder.getMetadataFilename(), cl));
+            readMetadata(fileLookup.lookupFileLocation(finder.getMetadataFilename(), cl));
          } catch (Exception e) {
             throw new CacheException("Unable to load component metadata in file " + finder.getMetadataFilename(), e);
          }
@@ -128,6 +121,10 @@ public class ComponentMetadataRepo {
     */
    public void injectFactoryForComponent(Class<?> componentType, Class<?> factoryType) {
       factories.put(componentType.getName(), factoryType.getName());
+   }
+
+   public boolean hasFactory(String name) {
+      return factories.containsKey(name);
    }
 
 }
