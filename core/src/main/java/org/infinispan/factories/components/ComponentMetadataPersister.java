@@ -10,7 +10,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
@@ -36,10 +35,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * @see ComponentMetadata
  * @since 5.1
  */
-public class ComponentMetadataPersister extends ComponentMetadataRepo {
-
-   private static ComponentMetadataRepo repo;
-
+public class ComponentMetadataPersister {
    /**
     * Usage: ComponentMetadataPersister [path containing .class files to scan] [output file to generate]
     */
@@ -52,17 +48,13 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
 
       System.out.printf(" [ComponentMetadataPersister] Starting component metadata generation.  Scanning classes in %s%n", path);
 
-      repo = new ComponentMetadataRepo();
-
-      // Wipe any stale data from memory first
-      repo.factories.clear();
-      repo.componentMetadataMap.clear();
+      ComponentMetadataRepo repo = new ComponentMetadataRepo();
 
       File f = new File(path);
-      process(path, f);
+      process(repo, path, f);
 
       // Test that all dependencies now exist in the component metadata map.
-      Map<String, String> dependencies = new HashMap<String, String>(128);
+      Map<String, String> dependencies = new HashMap<>(128);
       for (ComponentMetadata md : repo.componentMetadataMap.values()) {
          if (md.getDependencies() != null) dependencies.putAll(md.getDependencies());
       }
@@ -90,7 +82,7 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
          boolean hasErrors = false;
          for (Map.Entry<String, String> e : dependencies.entrySet()) {
             if (!repo.componentMetadataMap.containsKey(e.getKey())) {
-               if (!hasFactory(e.getKey()) && !hasFactory(e.getValue()) && !KnownComponentNames.ALL_KNOWN_COMPONENT_NAMES.contains(e.getKey())) {
+               if (!repo.hasFactory(e.getKey()) && !repo.hasFactory(e.getValue()) && !KnownComponentNames.ALL_KNOWN_COMPONENT_NAMES.contains(e.getKey())) {
                   System.out.printf(" [ComponentMetadataPersister]     **** WARNING!!!  Missing components or factories for dependency on %s%n", e.getKey());
                   hasErrors = true;
                }
@@ -100,23 +92,20 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
          if (hasErrors && Boolean.getBoolean("infinispan.isCoreModule"))
             throw new RuntimeException("Could not pass sanity check of all annotated components and their respective factories/dependencies.");
       }
-      writeMetadata(outputFile);
+      writeMetadata(repo, outputFile);
 
       System.out.printf(" [ComponentMetadataPersister] %s components and %s factories analyzed and persisted in %s.%n%n",
-            repo.componentMetadataMap.size(), repo.factories.size(), Util.prettyPrintTime(System.nanoTime() - startTime, TimeUnit.NANOSECONDS));
+            repo.componentMetadataMap.size(), repo.factories.size(), 0);
    }
 
-   private static boolean hasFactory(String name) {
-      return repo.factories.containsKey(name);
-   }
-
-   private static void process(String path, File f) throws ClassNotFoundException {
+   private static void process(ComponentMetadataRepo repo, String path, File f) throws ClassNotFoundException {
       if (f.isDirectory()) {
-         for (File child : f.listFiles()) process(path, child);
+         for (File child : f.listFiles()) process(repo, path, child);
       } else if (isValidClassFile(f)) {
          // Process this class file.
          String fqcn = extractFqcn(path, f);
-         processClass(ComponentMetadataRepo.class.getClassLoader().loadClass(fqcn), fqcn);
+         Class<?> clazz = ComponentMetadataRepo.class.getClassLoader().loadClass(fqcn);
+         processClass(repo, clazz, fqcn);
       }
    }
 
@@ -126,9 +115,9 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
       return f.getName().endsWith(".class");
    }
 
-   private static void processClass(Class<?> clazz, String className) {
-      // Look for a @MBean annotation first.
+   private static void processClass(ComponentMetadataRepo repo, Class<?> clazz, String className) {
       MBean mbean = ReflectionUtil.getAnnotation(clazz, MBean.class);
+
       boolean survivesRestarts;
       boolean isGlobal;
       // Could still be a valid component.
@@ -170,7 +159,7 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
       return f.getAbsolutePath().replace(path, "").replace(File.separator, ".").replaceAll("\\.class$", "").replaceFirst("\\.+", "");
    }
 
-   private static void writeMetadata(String metadataFile) throws IOException {
+   private static void writeMetadata(ComponentMetadataRepo repo, String metadataFile) throws IOException {
       File file = new File(metadataFile);
       File parent = file.getParentFile();
       if(!parent.exists() && !parent.mkdirs()){
