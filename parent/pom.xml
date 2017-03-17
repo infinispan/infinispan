@@ -1032,7 +1032,7 @@
       <dependency>
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-core</artifactId>
-         <optional>true</optional>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>net.jcip</groupId>
