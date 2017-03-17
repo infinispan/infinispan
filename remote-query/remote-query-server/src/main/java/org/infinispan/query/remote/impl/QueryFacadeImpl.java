@@ -34,7 +34,7 @@ public final class QueryFacadeImpl implements QueryFacade {
 
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
-      RemoteQueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryEngine.class);
+      BaseRemoteQueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(cache).getComponent(BaseRemoteQueryEngine.class);
       if (queryEngine == null) {
          throw log.queryingNotEnabled(cache.getName());
       }

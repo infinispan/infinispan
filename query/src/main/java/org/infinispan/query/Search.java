@@ -11,10 +11,10 @@ import org.infinispan.query.api.continuous.ContinuousQuery;
 import org.infinispan.query.continuous.impl.ContinuousQueryImpl;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.JPACacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.security.AuthorizationManager;
@@ -51,7 +51,7 @@ public final class Search {
       }
       AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
       ensureAccessPermissions(advancedCache);
-      QueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(QueryEngine.class);
+      EmbeddedQueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(advancedCache).getComponent(EmbeddedQueryEngine.class);
       return new EmbeddedQueryFactory(queryEngine);
    }
 

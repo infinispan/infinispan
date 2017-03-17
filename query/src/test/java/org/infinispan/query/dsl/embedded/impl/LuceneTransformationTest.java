@@ -750,7 +750,7 @@ public class LuceneTransformationTest {
 
       FilterParsingResult<Class<?>> filterParsingResult = IckleParser.parse(queryString, propertyHelper);
 
-      LuceneQueryMaker<Class<?>> luceneQueryMaker = new LuceneQueryMaker<>(searchFactory, propertyHelper::getDefaultFieldBridge);
+      LuceneQueryMaker<Class<?>> luceneQueryMaker = new LuceneQueryMaker<>(searchFactory, propertyHelper.getDefaultFieldBridgeProvider());
       return luceneQueryMaker.transform(filterParsingResult, namedParameters, filterParsingResult.getTargetEntityMetadata());
    }
 }

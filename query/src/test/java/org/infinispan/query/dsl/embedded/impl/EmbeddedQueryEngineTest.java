@@ -43,15 +43,15 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 8.0
  */
-@Test(groups = "functional", testName = "query.dsl.embedded.impl.QueryEngineTest")
+@Test(groups = "functional", testName = "query.dsl.embedded.impl.EmbeddedQueryEngineTest")
 @CleanupAfterTest
-public class QueryEngineTest extends MultipleCacheManagersTest {
+public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    private final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
    private QueryEngine<Class<?>> qe;
 
-   public QueryEngineTest() {
+   public EmbeddedQueryEngineTest() {
       DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
    }
 
@@ -77,7 +77,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
 
    @BeforeClass(alwaysRun = true)
    protected void init() throws Exception {
-      qe = new QueryEngine<>(cache(0).getAdvancedCache(), true);
+      qe = new EmbeddedQueryEngine(cache(0).getAdvancedCache(), true);
 
       // create the test objects
       User user1 = new UserHS();

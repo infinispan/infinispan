@@ -204,15 +204,17 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
       }
    }
 
-   public FieldBridge getDefaultFieldBridge(Class<?> entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
-      if (indexBinding != null) {
-         DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
-         if (fieldMetadata != null) {
-            return fieldMetadata.getFieldBridge();
+   public LuceneQueryMaker.FieldBridgeProvider<Class<?>> getDefaultFieldBridgeProvider() {
+      return (entityType, propertyPath) -> {
+         EntityIndexBinding indexBinding = getEntityIndexBinding(entityType);
+         if (indexBinding != null) {
+            DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
+            if (fieldMetadata != null) {
+               return fieldMetadata.getFieldBridge();
+            }
          }
-      }
-      return null;
+         return null;
+      };
    }
 
    @Override
