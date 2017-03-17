@@ -185,8 +185,8 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
          }
 
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-         RemoteQueryEngine remoteQueryEngine = new RemoteQueryEngine(cache, isIndexed, isCompatMode);
-         cr.registerComponent(remoteQueryEngine, RemoteQueryEngine.class);
+         BaseRemoteQueryEngine remoteQueryEngine = isCompatMode ? new CompatibilityQueryEngine(cache, isIndexed) : new RemoteQueryEngine(cache, isIndexed);
+         cr.registerComponent(remoteQueryEngine, BaseRemoteQueryEngine.class);
       }
    }
 

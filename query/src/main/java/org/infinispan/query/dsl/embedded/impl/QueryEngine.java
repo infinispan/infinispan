@@ -12,7 +12,6 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.BaseMatcher;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.objectfilter.impl.RowMatcher;
 import org.infinispan.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.objectfilter.impl.ql.AggregationFunction;
@@ -78,6 +77,8 @@ public class QueryEngine<TypeMetadata> {
 
    protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
+   protected final LuceneQueryMaker.FieldBridgeProvider<TypeMetadata> fieldBridgeProvider;
+
    /**
     * Optional cache for query objects.
     */
@@ -95,11 +96,7 @@ public class QueryEngine<TypeMetadata> {
 
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
-   public QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
-      this(cache, isIndexed, ReflectionMatcher.class);
-   }
-
-   protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass) {
+   protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeProvider<TypeMetadata> fieldBridgeProvider) {
       this.cache = cache;
       this.isIndexed = isIndexed;
       this.matcherImplClass = matcherImplClass;
@@ -107,6 +104,11 @@ public class QueryEngine<TypeMetadata> {
       this.authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
       this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
       propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
+      if (fieldBridgeProvider == null && propertyHelper instanceof HibernateSearchPropertyHelper) {
+         this.fieldBridgeProvider = (LuceneQueryMaker.FieldBridgeProvider<TypeMetadata>) (((HibernateSearchPropertyHelper) propertyHelper).getDefaultFieldBridgeProvider());
+      } else {
+         this.fieldBridgeProvider = fieldBridgeProvider;
+      }
    }
 
    protected SearchManager getSearchManager() {
@@ -648,7 +650,7 @@ public class QueryEngine<TypeMetadata> {
             projection, projectedTypes, null, sortFields);
    }
 
-   protected ResultProcessor makeResultProcessor(ResultProcessor in) {
+   protected ResultProcessor<?, ?> makeResultProcessor(ResultProcessor<?, ?> in) {
       return in;
    }
 
@@ -696,7 +698,7 @@ public class QueryEngine<TypeMetadata> {
          throw log.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
 
-      LuceneQueryParsingResult luceneParsingResult = transform(filterParsingResult, namedParameters);
+      LuceneQueryParsingResult luceneParsingResult = transformParsingResult(filterParsingResult, namedParameters);
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(luceneParsingResult.getQuery(), luceneParsingResult.getTargetEntityName());
 
       if (log.isDebugEnabled()) {
@@ -720,6 +722,17 @@ public class QueryEngine<TypeMetadata> {
       return (CacheQuery<E>) cacheQuery;
    }
 
+   private LuceneQueryParsingResult<TypeMetadata> transformParsingResult(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
+      return queryCache != null && parsingResult.getParameterNames().isEmpty()
+            ? queryCache.get(parsingResult.getQueryString(), null, LuceneQueryParsingResult.class, (queryString, accumulators) -> transformToLuceneQueryParsingResult(parsingResult, namedParameters))
+            : transformToLuceneQueryParsingResult(parsingResult, namedParameters);
+   }
+
+   private LuceneQueryParsingResult<TypeMetadata> transformToLuceneQueryParsingResult(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
+      return new LuceneQueryMaker<>(getSearchFactory(), fieldBridgeProvider)
+            .transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
+   }
+
    protected org.apache.lucene.search.Query makeTypeQuery(org.apache.lucene.search.Query query, String targetEntityName) {
       return query;
    }
@@ -730,16 +743,5 @@ public class QueryEngine<TypeMetadata> {
 
    protected CacheQuery<?> makeCacheQuery(FilterParsingResult<TypeMetadata> filterParsingResult, org.apache.lucene.search.Query luceneQuery) {
       return getSearchManager().getQuery(luceneQuery, getTargetedClass(filterParsingResult));
-   }
-
-   private LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
-      return queryCache != null && parsingResult.getParameterNames().isEmpty()
-            ? queryCache.get(parsingResult.getQueryString(), null, LuceneQueryParsingResult.class, (queryString, accumulators) -> createLuceneQueryMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult)))
-            : createLuceneQueryMaker().transform(parsingResult, namedParameters, getTargetedClass(parsingResult));
-   }
-
-   protected LuceneQueryMaker<TypeMetadata> createLuceneQueryMaker() {
-      LuceneQueryMaker.FieldBridgeProvider<Class<?>> fieldBridgeProvider = ((HibernateSearchPropertyHelper) propertyHelper)::getDefaultFieldBridge;
-      return new LuceneQueryMaker(getSearchFactory(), fieldBridgeProvider);
    }
 }

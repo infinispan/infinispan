@@ -53,11 +53,11 @@ import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.continuous.impl.ContinuousQueryResult;
 import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
 import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
 import org.infinispan.query.dsl.embedded.impl.JPACacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import org.infinispan.query.impl.externalizers.LuceneBooleanQueryExternalizer;
@@ -128,8 +128,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
          registerMatcher(cr, searchFactory);
 
-         QueryEngine<Class<?>> queryEngine = new QueryEngine<>(cache, isIndexed);
-         cr.registerComponent(queryEngine, QueryEngine.class);
+         EmbeddedQueryEngine queryEngine = new EmbeddedQueryEngine(cache, isIndexed);
+         cr.registerComponent(queryEngine, EmbeddedQueryEngine.class);
       }
    }
 

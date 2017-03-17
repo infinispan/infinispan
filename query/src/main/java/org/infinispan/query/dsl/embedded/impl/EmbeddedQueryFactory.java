@@ -13,6 +13,9 @@ public final class EmbeddedQueryFactory extends BaseQueryFactory {
    private final QueryEngine<?> queryEngine;
 
    public EmbeddedQueryFactory(QueryEngine queryEngine) {
+      if (queryEngine == null) {
+         throw new IllegalArgumentException("queryEngine cannot be null");
+      }
       this.queryEngine = queryEngine;
    }
 

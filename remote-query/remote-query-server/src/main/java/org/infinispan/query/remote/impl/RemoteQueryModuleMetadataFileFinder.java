@@ -8,6 +8,7 @@ import org.kohsuke.MetaInfServices;
  * @since 6.0
  */
 @MetaInfServices
+@SuppressWarnings("unused")
 public final class RemoteQueryModuleMetadataFileFinder implements ModuleMetadataFileFinder {
 
    @Override
