@@ -392,26 +392,28 @@ class Decoder2x implements VersionedDecoder {
                   return;
                }
             }
-            if (!readMaybeNamedFactory(buffer).map(converter -> {
-               boolean useRawData;
-               if (Constants.isVersion2x(header.version)) {
-                  Optional<Byte> rawOptional = ExtendedByteBuf.readMaybeByte(buffer);
-                  if (rawOptional.isPresent()) {
-                     useRawData = rawOptional.get() == 1;
+            if (requestCtx.getConverterFactoryInfo() == null) {
+               if (!readMaybeNamedFactory(buffer).map(converter -> {
+                  boolean useRawData;
+                  if (Constants.isVersion2x(header.version)) {
+                     Optional<Byte> rawOptional = ExtendedByteBuf.readMaybeByte(buffer);
+                     if (rawOptional.isPresent()) {
+                        useRawData = rawOptional.get() == 1;
+                     } else {
+                        return null;
+                     }
                   } else {
-                     return null;
+                     useRawData = false;
                   }
-               } else {
-                  useRawData = false;
+                  requestCtx.setConverterFactoryInfo(converter);
+                  requestCtx.setUseRawData(useRawData);
+
+                  buffer.markReaderIndex();
+
+                  return requestCtx;
+               }).isPresent()) {
+                  return;
                }
-               requestCtx.setConverterFactoryInfo(converter);
-               requestCtx.setUseRawData(useRawData);
-
-               buffer.markReaderIndex();
-
-               return requestCtx;
-            }).isPresent()) {
-               return;
             }
             if (Constants.isVersionPost25(header.version)) {
                int listenerInterests = ExtendedByteBufJava.readMaybeVInt(buffer);

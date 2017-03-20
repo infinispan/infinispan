@@ -27,7 +27,7 @@ public enum ProtocolVersion {
    PROTOCOL_VERSION_10(1, 0),
    ;
 
-   public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_25;
+   public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_26;
 
    private final String version;
 
