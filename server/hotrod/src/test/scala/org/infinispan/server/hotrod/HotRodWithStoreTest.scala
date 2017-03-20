@@ -3,11 +3,13 @@ package org.infinispan.server.hotrod
 import java.lang.reflect.Method
 
 import org.infinispan.configuration.cache.ConfigurationBuilder
+import org.infinispan.configuration.global.GlobalConfigurationBuilder
 import org.infinispan.context.Flag
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
+import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.testng.Assert._
 import org.testng.annotations.Test
 
@@ -15,12 +17,14 @@ import org.testng.annotations.Test
 class HotRodWithStoreTest extends HotRodSingleNodeTest {
 
    override def createCacheManager: EmbeddedCacheManager = {
-      val cacheManager = createTestCacheManager
       val builder = new ConfigurationBuilder
       builder.persistence()
             .addStore(classOf[DummyInMemoryStoreConfigurationBuilder])
             .storeName(getClass.getName)
-      cacheManager.defineConfiguration(cacheName, builder.build())
+      val cacheManager = TestCacheManagerFactory.createCacheManager(
+         new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName(cacheName),
+         builder)
+
       advancedCache = cacheManager.getCache[Array[Byte], Array[Byte]](cacheName).getAdvancedCache
       cacheManager
    }
