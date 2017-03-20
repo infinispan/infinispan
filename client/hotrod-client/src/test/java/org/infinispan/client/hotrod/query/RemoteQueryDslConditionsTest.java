@@ -194,12 +194,6 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals("Checking account", list.get(0).getDescription());
    }
 
-   @Test(enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-6713")
-   @Override
-   public void testIsNullNumericWithProjection1() throws Exception {
-      super.testIsNullNumericWithProjection1();
-   }
-
    @Override
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.objectfilter.ParsingException: ISPN014026: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
    public void testGroupBy3() {
