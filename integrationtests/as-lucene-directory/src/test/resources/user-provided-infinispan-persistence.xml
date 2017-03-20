@@ -10,8 +10,12 @@
         <jmx duplicate-domains="true"/>
 
         <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
+            <transaction mode="NONE" />
             <persistence passivation="false">
-                <string-keyed-jdbc-store preload="true" key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper" shared="true">
+                <!-- N.B. "shared" is false which is unusual for a JDBC CacheStore,
+                 but for testing purposes we use an in-memory H2 so each WildFly node
+                 will have an independent CacheStore instance -->
+                <string-keyed-jdbc-store preload="true" key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper" shared="false">
                     <string-keyed-table prefix="IndexMeta">
                         <id-column name="K" type="VARCHAR(255)"/>
                         <data-column name="V" type="BLOB"/>
@@ -24,8 +28,10 @@
         </replicated-cache>
 
         <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
+            <transaction mode="NONE" />
             <persistence passivation="false">
-                <string-keyed-jdbc-store key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper" shared="true">
+                <!-- N.B. "shared" is false: see comment in LuceneIndexesMetadata cache -->
+                <string-keyed-jdbc-store key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper" shared="false">
                     <string-keyed-table prefix="IndexData">
                         <id-column name="K" type="VARCHAR(255)"/>
                         <data-column name="V" type="BLOB"/>

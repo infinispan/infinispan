@@ -56,7 +56,7 @@ public class InfinispanModuleMemberRegistrationIT extends MemberRegistrationBase
               .version("2.0")
               .createPersistenceUnit()
               .name("primary")
-              .jtaDataSource("java:jboss/datasources/ExampleDS")
+              .jtaDataSource("java:jboss/datasources/HibernateTestingDS")
               .getOrCreateProperties()
               .createProperty()
               .name("hibernate.hbm2ddl.auto")
