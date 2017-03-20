@@ -9,7 +9,12 @@ This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 8.x to 9.0
 
-=== Remove async transaction support
+=== Removed eagerLocking and eagerLockingSingleNode configuration settings
+Both were deprecated since version 5.1.
+`eagerLocking(true)` can be replaced with `lockingMode(LockingMode.PESSIMISTIC)`,
+and `eagerLockingSingleNode()` does not need a replacement because it was a no-op.
+
+=== Removed async transaction support
 
 Asynchronous mode is no longer supported in transactional caches and it will automatically use the synchronous cache mode.
 In addition, the second phase of a transaction commit is done synchronously.

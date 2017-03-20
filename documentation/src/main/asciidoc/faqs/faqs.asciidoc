@@ -197,53 +197,41 @@ Have a look at our link:../performance_guide/performance_guide.html[Performance 
 
 === Locking and Transaction questions
 ==== Does Infinispan support distributed eager locking?
-Yes it does. Infinispan, by default, acquires remote locks lazily.
-Locks are acquired locally on a node that runs a transaction while other cluster nodes attempt to lock cache keys involved in a transaction during two-phase prepare/commit phase.
-However, if desired, Infinispan can eagerly lock cache keys either explicitly or implicitly.
+Yes it does. By default, transactions are optimistic, and locks are only acquired during the prepare phase.
+However, Infinispan can be configured to lock cache keys eagerly, by using the pessimistic locking mode:
+
+[source,java]
+----
+   ConfigurationBuilder builder = new ConfigurationBuilder();
+   builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
+----
+
+With pessimistic locking, Infinispan will implicitly acquire locks when a transaction modifies one or more keys:
+
+[source,java]
+----
+   tm.begin()
+   cache.put(K,V)    // acquire cluster-wide lock on K
+   cache.put(K2,V2)  // acquire cluster-wide lock on K2
+   cache.put(K,V5)   // no-op, we already own cluster wide lock for K
+   tm.commit()       // releases locks
+----
 
 ==== How does Infinispan support explicit eager locking?
-Infinispan cache interface exposes lock API that allows cache users to explicitly lock set of cache keys eagerly during a transaction.
-Lock call attempts to lock specified cache keys across all cluster nodes and it either succeeds or fails. All locks are released during commit or rollback phase.
-
-Consider a transaction running on one of the cache nodes:
-
-[source,java]
-----
-
-   tx.begin()
-   cache.lock(K)    // acquire cluster wide lock on K
-   cache.put(K,V5)  // guaranteed to succeed
-   tx.commit()      // releases locks
-
-----
-
-==== How does Infinispan support implicit eager locking?
-Implicit locking goes one step ahead and locks cache keys behind the scene as keys are accessed for modification operations.
-Consider a transaction running on one of the cache nodes:
+When the cache is configured with pessimistic locking, the
+link:{javadocroot}/org/infinispan/AdvancedCache.html#lock-K...-[`lock(K...)`]
+method allows cache users to explicitly lock set of cache keys eagerly during a transaction.
+Lock call attempts to lock specified cache keys on the proper lock owners and it either succeeds or fails.
+All locks are released during commit or rollback phase.
 
 [source,java]
 ----
-
-   tx.begin()
-   cache.put(K,V)    // acquire cluster wide lock on K
-   cache.put(K2,V2)  // acquire cluster wide lock on K2
-   cache.put(K,V5)   // no-op, we already own cluster wide lock for K
-   tx.commit()       // releases locks
-
+   tm.begin()
+   cache.getAdvancedCache().lock(K)  // acquire cluster-wide lock on K
+   cache.put(K,V5)                   // guaranteed to succeed
+   tm.commit()                       // releases locks
 ----
 
-Implicit eager locking locks cache keys across cluster nodes only if it is necessary to do so.
-In a nutshell, if implicit eager locking is turned on then for each modification Infinispan checks if cache key is locked locally.
-If it is then a global cluster wide lock has already been obtained, otherwise a cluster wide lock request is sent and lock is acquired.
-
-Implicit eager locking is enabled as follows:
-
-[source,xml]
-----
-
-<transaction useEagerLocking="true" />
-
-----
 
 ==== What isolation levels does Infinispan support?
 Infinispan only supports the isolation levels link:../glossary/glossary.html#read_committed[*READ_COMMITTED*] and link:../glossary/glossary.html#repeatable_read[*REPEATABLE_READ*].

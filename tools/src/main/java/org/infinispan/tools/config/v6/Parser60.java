@@ -401,7 +401,7 @@ public class Parser60 implements ConfigurationParser {
                builder.transaction().cacheStopTimeout(Long.parseLong(value));
                break;
             case EAGER_LOCK_SINGLE_NODE:
-               builder.transaction().eagerLockingSingleNode(Boolean.parseBoolean(value));
+               warnRemovedAttribute(Element.TRANSACTION.getLocalName(), Attribute.EAGER_LOCK_SINGLE_NODE.getLocalName());
                break;
             case LOCKING_MODE:
                builder.transaction().lockingMode(LockingMode.valueOf(value));
@@ -421,7 +421,7 @@ public class Parser60 implements ConfigurationParser {
                transactionModeSpecified = true;
                break;
             case USE_EAGER_LOCKING:
-               builder.transaction().useEagerLocking(Boolean.parseBoolean(value));
+               warnRemovedAttribute(Element.TRANSACTION.getLocalName(), Attribute.USE_EAGER_LOCKING.getLocalName());
                break;
             case USE_SYNCHRONIZAION:
                builder.transaction().useSynchronization(Boolean.parseBoolean(value));

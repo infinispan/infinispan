@@ -3,7 +3,6 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.TransactionConfiguration.AUTO_COMMIT;
 import static org.infinispan.configuration.cache.TransactionConfiguration.CACHE_STOP_TIMEOUT;
 import static org.infinispan.configuration.cache.TransactionConfiguration.COMPLETED_TX_TIMEOUT;
-import static org.infinispan.configuration.cache.TransactionConfiguration.EAGER_LOCKING_SINGLE_NODE;
 import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKING_MODE;
 import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
 import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
@@ -12,7 +11,6 @@ import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSA
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_PROTOCOL;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
-import static org.infinispan.configuration.cache.TransactionConfiguration.USE_EAGER_LOCKING;
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
 
 import java.lang.invoke.MethodHandles;
@@ -87,22 +85,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     */
    public TransactionConfigurationBuilder cacheStopTimeout(long l, TimeUnit unit) {
       return cacheStopTimeout(unit.toMillis(l));
-   }
-
-   /**
-    * Only has effect for DIST mode and when useEagerLocking is set to true. When this is enabled,
-    * then only one node is locked in the cluster, disregarding numOwners config. On the opposite,
-    * if this is false, then on all cache.lock() calls numOwners RPCs are being performed. The node
-    * that gets locked is the main data owner, i.e. the node where data would reside if
-    * numOwners==1. If the node where the lock resides crashes, then the transaction is marked for
-    * rollback - data is in a consistent state, no fault tolerance.
-    *
-    * @deprecated starting with Infinispan 5.1 single node locking is used by default
-    */
-   @Deprecated
-   public TransactionConfigurationBuilder eagerLockingSingleNode(boolean b) {
-      attributes.attribute(EAGER_LOCKING_SINGLE_NODE).set(b);
-      return this;
    }
 
    /**
@@ -192,22 +174,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       } else {
          return null;
       }
-   }
-
-   /**
-    * Prevents more than one transaction being written to a key by enforcing cluster-wide locks
-    * on each write operation. Infinispan attempts to obtain locks on specified cache keys across
-    * all nodes in a cluster. All locks are released during the commit or rollback phase.
-    * This configuration might be used when a high contention on keys is occurring, resulting in
-    * inefficiencies and unexpected roll back operations.
-    *
-    * @deprecated Starting with Infinispan 5.1 eager locking is replaced with pessimistic locking and can
-    * be enforced by setting transaction's locking mode to PESSIMISTIC.
-    */
-   @Deprecated
-   public TransactionConfigurationBuilder useEagerLocking(boolean b) {
-      this.attributes.attribute(USE_EAGER_LOCKING).set(b);
-      return this;
    }
 
    /**
@@ -337,9 +303,6 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public TransactionConfiguration create() {
-      if (attributes.attribute(USE_EAGER_LOCKING).get()) {
-         lockingMode(LockingMode.PESSIMISTIC);
-      }
       if (transactionMode() == null && getBuilder().invocationBatching().isEnabled())
          transactionMode(TransactionMode.TRANSACTIONAL);
       else if (transactionMode() == null)
