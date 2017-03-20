@@ -133,14 +133,16 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     * @see org.testng.IConfigurationListener#onConfigurationFailure(org.testng.ITestResult)
     */
    @Override
-   public void onConfigurationFailure(ITestResult itr) {
+   public void onConfigurationFailure(ITestResult tr) {
+      checkDuplicatesAndAdd(tr);
+      m_numFailed.incrementAndGet();
    }
 
    /**
     * @see org.testng.IConfigurationListener#onConfigurationSkip(org.testng.ITestResult)
     */
    @Override
-   public void onConfigurationSkip(ITestResult itr) {
+   public void onConfigurationSkip(ITestResult tr) {
    }
 
    /**
