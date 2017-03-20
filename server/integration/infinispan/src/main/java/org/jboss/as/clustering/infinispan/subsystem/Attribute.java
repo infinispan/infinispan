@@ -73,7 +73,6 @@ public enum Attribute {
     DB_MINOR_VERSION(ModelKeys.DB_MINOR_VERSION),
     DIALECT(ModelKeys.DIALECT),
     DROP_ON_EXIT(ModelKeys.DROP_ON_EXIT),
-    @Deprecated EAGER_LOCKING("eager-locking"),
     ENABLED(ModelKeys.ENABLED),
     EVICTION(ModelKeys.EVICTION),
     @Deprecated

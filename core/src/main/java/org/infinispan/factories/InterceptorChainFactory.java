@@ -172,10 +172,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(), TxInterceptor.class), false);
 
 
-      if (configuration.transaction().useEagerLocking()) {
-         configuration.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      }
-
       //the total order protocol doesn't need locks
       if (!isTotalOrder) {
          if (transactionMode.isTransactional()) {
