@@ -85,6 +85,10 @@ public class PersistenceManagerStub implements PersistenceManager {
    }
 
    @Override
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes, long flags) {
+   }
+
+   @Override
    public AdvancedCacheLoader getStateTransferProvider() {
       return null;
    }

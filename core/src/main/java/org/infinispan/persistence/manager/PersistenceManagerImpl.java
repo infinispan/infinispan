@@ -73,6 +73,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
@@ -504,9 +505,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    @Override
    public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode accessMode) {
+      writeToAllNonTxStores(marshalledEntry, accessMode, 0L);
+   }
+
+   @Override
+   public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode accessMode, long flags) {
       storesMutex.readLock().lock();
       try {
          nonTxWriters.stream()
+               .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
                .filter(writer -> accessMode.canPerform(configMap.get(writer)))
                .forEach(writer -> writer.write(marshalledEntry));
       } finally {

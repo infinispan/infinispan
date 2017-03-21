@@ -121,9 +121,16 @@ public interface PersistenceManager extends Lifecycle {
     * </ul></p>
     *
     * @param marshalledEntry the entry to be written to all non-tx stores.
-    * @param accessMode the type of access to the underlying store.
+    * @param modes           the type of access to the underlying store.
     */
    void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes);
+
+   /**
+    * @see #writeToAllNonTxStores(MarshalledEntry, AccessMode)
+    *
+    * @param flags Flags used during command invocation
+    */
+   void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes, long flags);
 
    /**
     * Perform the prepare phase of 2PC on all Tx stores.

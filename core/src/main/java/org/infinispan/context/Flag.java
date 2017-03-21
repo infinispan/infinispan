@@ -267,7 +267,12 @@ public enum Flag {
     * that such a thing happened.  This flag was created purely for internal Infinispan usage, and should not be
     * used by clients calling into Infinispan.
     */
-   COMMAND_RETRY
+   COMMAND_RETRY,
+
+   /**
+    * Flag to identity that data is being written as part of a Rolling Upgrade.
+    */
+   ROLLING_UPGRADE
 
    ;
 
