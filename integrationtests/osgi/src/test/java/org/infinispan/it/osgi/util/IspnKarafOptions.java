@@ -108,6 +108,13 @@ public class IspnKarafOptions {
       return mavenBundle().groupId("org.testng").artifactId("testng").versionAsInProject();
    }
 
+   public static Option bundleLog4J() {
+      return composite(
+            mavenBundle().groupId("org.apache.logging.log4j").artifactId("log4j-api").versionAsInProject(),
+            mavenBundle().groupId("org.apache.logging.log4j").artifactId("log4j-core").versionAsInProject()
+      );
+   }
+
    public static Option bundleTestAnnotations() {
       return wrappedBundle(mavenBundle().groupId("org.infinispan").artifactId("infinispan-commons-test").versionAsInProject().getURL());
    }
@@ -252,7 +259,6 @@ public class IspnKarafOptions {
     * Some PAX-URL protocols are not supported by Karaf. This method can be used when one of the unsupported protocol is
     * required. The URLs are resolved outside Karaf and the bundles are provided as stream bundles.
     *
-    * @param option
     * @param newURLFormat
     * @param args
     * @return
@@ -327,6 +333,7 @@ public class IspnKarafOptions {
                           featureRocksDBJNI(),
                           featureRemoteStore(),
                           bundleH2Database(),
+                          bundleLog4J(),
                           hibernatePersistenceH2(),
                           bundleSplitTestPackages());
       } else {
@@ -336,6 +343,7 @@ public class IspnKarafOptions {
                           bundleSplitTestPackages(),
                           bundleH2Database(),
                           hibernatePersistenceH2(),
+                          bundleLog4J(),
                           bundleTestNG(),
                           bundleMockito());
       }

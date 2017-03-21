@@ -42,7 +42,8 @@ public class InfinispanEmbeddedServiceFactoryTest {
             IspnKarafOptions.commonOptions(),
             /* The blueprint contained in this bundle will register a ManagedServiceFactory. */
             IspnKarafOptions.mvnFeature("org.infinispan", "infinispan-osgi", "infinispan-osgi"),
-            KarafDistributionOption.replaceConfigurationFile("/etc/custom-etc-infinispan-config.xml", OSGiTestUtils.getResourceFile("org/infinispan/it/osgi/custom-config-3.xml"))
+            KarafDistributionOption.replaceConfigurationFile("/etc/custom-etc-infinispan-config.xml", OSGiTestUtils.getResourceFile("org/infinispan/it/osgi/custom-config-3.xml")),
+            KarafDistributionOption.editConfigurationFileExtend("etc/config.properties", "org.osgi.framework.executionenvironment", "JavaSE-1.8")
       };
    }
 

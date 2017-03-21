@@ -191,9 +191,9 @@
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.metainf-services>1.7</version.metainf-services>
       <version.jacoco>0.7.5.201505241946</version.jacoco>
-      <version.pax.url>2.2.0</version.pax.url>
-      <version.karaf>3.0.4</version.karaf>
-      <version.pax.exam>4.5.0</version.pax.exam>
+      <version.pax.url>2.5.2</version.pax.url>
+      <version.karaf>3.0.8</version.karaf>
+      <version.pax.exam>4.10.0</version.pax.exam>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <dir.ispn>../</dir.ispn>
