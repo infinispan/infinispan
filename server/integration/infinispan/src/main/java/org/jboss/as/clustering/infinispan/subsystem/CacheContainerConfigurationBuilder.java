@@ -34,6 +34,7 @@ import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
@@ -130,7 +131,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
         ModuleLoader moduleLoader = this.loader.getValue();
         builder.serialization().classResolver(ModularClassResolver.getInstance(moduleLoader));
-        ClassLoader loader = null;
+        ClassLoader loader;
         try {
             loader = (this.module != null) ? moduleLoader.loadModule(this.module).getClassLoader() : CacheContainerConfiguration.class.getClassLoader();
             builder.classLoader(loader);
@@ -224,6 +225,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .jmxDomain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(CacheServiceNameFactory.DEFAULT_CACHE).getParent().getCanonicalName())
                 .allowDuplicateDomains(true);
 
+        builder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
         return builder.build();
     }
 

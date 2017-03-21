@@ -284,7 +284,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                   interceptorChain.appendInterceptor(createInterceptor(new TxDistributionInterceptor(), TxDistributionInterceptor.class), false);
                }
             } else {
-               if (cacheMode.isDistributed()) {
+               if (cacheMode.isDistributed() && Configurations.isEmbeddedMode(globalConfiguration)) {
                   interceptorChain.appendInterceptor(createInterceptor(new TriangleDistributionInterceptor(), TriangleDistributionInterceptor.class), false);
                } else {
                   interceptorChain.appendInterceptor(createInterceptor(new NonTxDistributionInterceptor(), NonTxDistributionInterceptor.class), false);
