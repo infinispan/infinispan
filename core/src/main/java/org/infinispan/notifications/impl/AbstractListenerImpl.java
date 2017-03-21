@@ -357,61 +357,54 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
          this.target = target;
          this.method = method;
          this.sync = sync;
-         this.classLoader = new WeakReference<ClassLoader>(classLoader);
+         this.classLoader = new WeakReference<>(classLoader);
          this.subject = subject;
       }
 
       @Override
       public void invoke(final A event) {
-         Runnable r = new Runnable() {
-
-            @Override
-            public void run() {
-               ClassLoader contextClassLoader = null;
-               Transaction transaction = suspendIfNeeded();
-               if (classLoader.get() != null) {
-                  contextClassLoader = SecurityActions.setContextClassLoader(classLoader.get());
-               }
-               try {
-                  if (subject != null) {
-                     try {
-                        Security.doAs(subject, new PrivilegedExceptionAction<Void>() {
-                           @Override
-                           public Void run() throws Exception {
-                              method.invoke(target, event);
-                              return null;
-                           }
-                        });
-                     } catch (PrivilegedActionException e) {
-                        Throwable cause = e.getCause();
-                        if (cause instanceof InvocationTargetException) {
-                           throw (InvocationTargetException)cause;
-                        } else if (cause instanceof IllegalAccessException) {
-                           throw (IllegalAccessException)cause;
-                        } else {
-                           throw new InvocationTargetException(cause);
-                        }
+         Runnable r = () -> {
+            ClassLoader contextClassLoader = null;
+            Transaction transaction = suspendIfNeeded();
+            if (classLoader.get() != null) {
+               contextClassLoader = SecurityActions.setContextClassLoader(classLoader.get());
+            }
+            try {
+               if (subject != null) {
+                  try {
+                     Security.doAs(subject, (PrivilegedExceptionAction<Void>) () -> {
+                        method.invoke(target, event);
+                        return null;
+                     });
+                  } catch (PrivilegedActionException e) {
+                     Throwable cause = e.getCause();
+                     if (cause instanceof InvocationTargetException) {
+                        throw (InvocationTargetException)cause;
+                     } else if (cause instanceof IllegalAccessException) {
+                        throw (IllegalAccessException)cause;
+                     } else {
+                        throw new InvocationTargetException(cause);
                      }
-                  } else {
-                     method.invoke(target, event);
                   }
-               } catch (InvocationTargetException exception) {
-                  Throwable cause = getRealException(exception);
-                  if (sync) {
-                     throw getLog().exceptionInvokingListener(
-                           cause.getClass().getName(), method, target, cause);
-                  } else {
-                     getLog().unableToInvokeListenerMethod(method, target, cause);
-                  }
-               } catch (IllegalAccessException exception) {
-                  getLog().unableToInvokeListenerMethodAndRemoveListener(method, target, exception);
-                  removeListener(target);
-               } finally {
-                  if (classLoader.get() != null) {
-                     SecurityActions.setContextClassLoader(contextClassLoader);
-                  }
-                  resumeIfNeeded(transaction);
+               } else {
+                  method.invoke(target, event);
                }
+            } catch (InvocationTargetException exception) {
+               Throwable cause = getRealException(exception);
+               if (sync) {
+                  throw getLog().exceptionInvokingListener(
+                        cause.getClass().getName(), method, target, cause);
+               } else {
+                  getLog().unableToInvokeListenerMethod(method, target, cause);
+               }
+            } catch (IllegalAccessException exception) {
+               getLog().unableToInvokeListenerMethodAndRemoveListener(method, target, exception);
+               removeListener(target);
+            } finally {
+               if (classLoader.get() != null) {
+                  SecurityActions.setContextClassLoader(contextClassLoader);
+               }
+               resumeIfNeeded(transaction);
             }
          };
 
