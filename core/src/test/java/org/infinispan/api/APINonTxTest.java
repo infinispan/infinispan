@@ -1,8 +1,11 @@
 package org.infinispan.api;
 
+import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.assertNoLocks;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,7 +28,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.1
  */
-@Test (groups = "functional", testName = "api.APINonTxTest")
+@Test(groups = "functional", testName = "api.APINonTxTest")
 public class APINonTxTest extends SingleCacheManagerTest {
 
    @Override
@@ -43,54 +46,45 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Map<String, String> data = new HashMap<String, String>();
       data.put(key, value);
 
-      assert cache.get(key) == null;
-      assert cache.keySet().isEmpty();
-      assert cache.values().isEmpty();
-      assert cache.entrySet().isEmpty();
+      assertNull(cache.get(key));
+      assertCacheIsEmpty();
 
       cache.put(key, value);
 
-      assert value.equals(cache.get(key));
-      assert 1 == cache.keySet().size() && 1 == cache.values().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      assertEquals(value, cache.get(key));
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
+      assertCacheSize(1);
 
       cache.remove(key);
 
-      assert cache.get(key) == null;
-      assert cache.keySet().isEmpty();
-      assert cache.values().isEmpty();
-      assert cache.entrySet().isEmpty();
+      assertNull(cache.get(key));
+      assertCacheIsEmpty();
 
       cache.putAll(data);
 
-      assert value.equals(cache.get(key));
-      assert 1 == cache.keySet().size() && 1 == cache.values().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      assertEquals(value, cache.get(key));
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
+      assertCacheSize(1);
    }
 
-      public void testStopClearsData() throws Exception {
+   public void testStopClearsData() throws Exception {
       String key = "key", value = "value";
-      int size = 0;
       cache.put(key, value);
-      assert cache.get(key).equals(value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      assertEquals(value, cache.get(key));
+      assertCacheSize(1);
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
 
       cache.stop();
-      assert cache.getStatus() == ComponentStatus.TERMINATED;
+      assertEquals(ComponentStatus.TERMINATED, cache.getStatus());
       cache.start();
 
-      assert !cache.containsKey(key);
-      assert cache.isEmpty();
-      assert !cache.keySet().contains(key);
-      assert cache.keySet().isEmpty();
-      assert !cache.values().contains(value);
-      assert cache.values().isEmpty();
-      assert cache.entrySet().isEmpty();
+      assertFalse(cache.containsKey(key));
+      assertFalse(cache.keySet().contains(key));
+      assertFalse(cache.values().contains(value));
+      assertCacheIsEmpty();
    }
 
    /**
@@ -98,44 +92,41 @@ public class APINonTxTest extends SingleCacheManagerTest {
     */
    public void testEvict() {
       String key1 = "keyOne", key2 = "keyTwo", value = "value";
-      int size = 0;
 
       cache.put(key1, value);
       cache.put(key2, value);
 
-      assert cache.containsKey(key1);
-      assert cache.containsKey(key2);
-      size = 2;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key1);
-      assert cache.keySet().contains(key2);
-      assert cache.values().contains(value);
+      assertTrue(cache.containsKey(key1));
+      assertTrue(cache.containsKey(key2));
+      assertCacheSize(2);
+
+      assertTrue(cache.keySet().contains(key1));
+      assertTrue(cache.keySet().contains(key2));
+      assertTrue(cache.values().contains(value));
 
       // evict two
       cache.evict(key2);
 
-      assert cache.containsKey(key1);
-      assert !cache.containsKey(key2);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key1);
-      assert !cache.keySet().contains(key2);
-      assert cache.values().contains(value);
+      assertTrue(cache.containsKey(key1));
+      assertFalse(cache.containsKey(key2));
+      assertCacheSize(1);
+
+      assertTrue(cache.keySet().contains(key1));
+      assertFalse(cache.keySet().contains(key2));
+      assertTrue(cache.values().contains(value));
 
       cache.evict(key1);
 
-      assert !cache.containsKey(key1);
-      assert !cache.containsKey(key2);
-      assert cache.isEmpty();
-      assert !cache.keySet().contains(key1);
-      assert !cache.keySet().contains(key2);
-      assert cache.keySet().isEmpty();
-      assert !cache.values().contains(value);
-      assert cache.values().isEmpty();
-      assert cache.entrySet().isEmpty();
+      assertFalse(cache.containsKey(key1));
+      assertFalse(cache.containsKey(key2));
+      assertFalse(cache.keySet().contains(key1));
+      assertFalse(cache.keySet().contains(key2));
+      assertFalse(cache.values().contains(value));
+      assertCacheIsEmpty();
    }
 
-   public void testUnsupportedKeyValueCollectionOperations() {
+
+   public void testUnsupportedKeyValueCollectionOperationsAddMethod() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
       Map<String, String> m = new HashMap<String, String>();
       m.put(key1, value1);
@@ -151,19 +142,8 @@ public class APINonTxTest extends SingleCacheManagerTest {
       List newObjCol = new ArrayList();
       newObjCol.add(newObj);
       for (Collection col : collections) {
-         try {
-            col.add(newObj);
-            assert false : "Should have thrown a UnsupportedOperationException";
-         } catch (UnsupportedOperationException uoe) {
-         } catch (ClassCastException e) {
-            // Ignore class cast in expired filtered set because
-            // you cannot really add an Object type instance.
-         }
-         try {
-            col.addAll(newObjCol);
-            assert false : "Should have thrown a UnsupportedOperationException";
-         } catch (UnsupportedOperationException uoe) {
-         }
+         expectException(UnsupportedOperationException.class, () -> col.add(newObj));
+         expectException(UnsupportedOperationException.class, () -> col.addAll(newObjCol));
       }
    }
 
@@ -193,17 +173,17 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Set<Object> keys = cache.keySet();
       keys.remove(key1);
 
-      assertEquals(2, cache.size());
+      assertCacheSize(2);
 
       Collection<Object> values = cache.values();
       values.remove(value2);
 
-      assertEquals(1, cache.size());
+      assertCacheSize(1);
 
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       entries.remove(new ImmortalCacheEntry(key3, value3));
 
-      assertEquals(0, cache.size());
+      assertCacheIsEmpty();
    }
 
    public void testClearMethodOfKeyCollection() {
@@ -217,7 +197,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Set<Object> keys = cache.keySet();
       keys.clear();
 
-      assertEquals(0, cache.size());
+      assertCacheIsEmpty();
    }
 
    public void testClearMethodOfValuesCollection() {
@@ -231,7 +211,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Collection<Object> values = cache.values();
       values.clear();
 
-      assertEquals(0, cache.size());
+      assertCacheIsEmpty();
    }
 
    public void testClearMethodOfEntryCollection() {
@@ -245,7 +225,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       entries.clear();
 
-      assertEquals(0, cache.size());
+      assertCacheIsEmpty();
    }
 
    public void testRemoveAllMethodOfKeyCollection() {
@@ -264,7 +244,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Collection<Object> keys = cache.keySet();
       keys.removeAll(keyCollection);
 
-      assertEquals(1, cache.size());
+      assertCacheSize(1);
    }
 
    public void testRemoveAllMethodOfValuesCollection() {
@@ -283,7 +263,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Collection<Object> values = cache.values();
       values.removeAll(valueCollection);
 
-      assertEquals(1, cache.size());
+      assertCacheSize(1);
    }
 
    public void testRemoveAllMethodOfEntryCollection() {
@@ -302,7 +282,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       entries.removeAll(entryCollection);
 
-      assertEquals(1, cache.size());
+      assertCacheSize(1);
    }
 
    public void testRetainAllMethodOfKeyCollection() {
@@ -322,12 +302,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Collection<Object> keys = cache.keySet();
       keys.retainAll(keyCollection);
 
-      assertEquals(2, cache.size());
+      assertCacheSize(2);
    }
 
    public void testRetainAllMethodOfValuesCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -342,12 +322,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Collection<Object> values = cache.values();
       values.retainAll(valueCollection);
 
-      assertEquals(2, cache.size());
+      assertCacheSize(2);
    }
 
    public void testRetainAllMethodOfEntryCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -362,12 +342,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       entries.retainAll(entryCollection);
 
-      assertEquals(2, cache.size());
+      assertCacheSize(2);
    }
 
    public void testEntrySetValueFromEntryCollections() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -380,7 +360,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
          entry.setValue(newObj);
       }
 
-      assertEquals(3, cache.size());
+      assertCacheSize(3);
 
       assertEquals(newObj, cache.get(key1));
       assertEquals(newObj, cache.get(key2));
@@ -389,12 +369,13 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testKeyValueEntryCollections() {
       String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
       cache.putAll(m);
-      assert 3 == cache.size() && 3 == cache.keySet().size() && 3 == cache.values().size() && 3 == cache.entrySet().size();
+
+      assertCacheSize(3);
 
       Set expKeys = new HashSet();
       expKeys.add(key1);
@@ -411,142 +392,114 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       Set<Object> keys = cache.keySet();
       for (Object key : keys) {
-         assert expKeys.remove(key);
+         assertTrue(expKeys.remove(key));
       }
-      assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
+      assertTrue(expKeys.isEmpty(), "Did not see keys " + expKeys + " in iterator!");
 
       Collection<Object> values = cache.values();
       for (Object value : values) {
-         assert expValues.remove(value);
+         assertTrue(expValues.remove(value));
       }
-      assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
+      assertTrue(expValues.isEmpty(), "Did not see keys " + expValues + " in iterator!");
 
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       for (Map.Entry entry : entries) {
-         assert expKeyEntries.remove(entry.getKey());
-         assert expValueEntries.remove(entry.getValue());
+         assertTrue(expKeyEntries.remove(entry.getKey()));
+         assertTrue(expValueEntries.remove(entry.getValue()));
       }
-      assert expKeyEntries.isEmpty() : "Did not see keys " + expKeyEntries + " in iterator!";
-      assert expValueEntries.isEmpty() : "Did not see keys " + expValueEntries + " in iterator!";
+      assertTrue(expKeyEntries.isEmpty(), "Did not see keys " + expKeyEntries + " in iterator!");
+      assertTrue(expValueEntries.isEmpty(), "Did not see keys " + expValueEntries + " in iterator!");
    }
 
    public void testSizeAndContents() throws Exception {
       String key = "key", value = "value";
-      int size = 0;
 
-      assert cache.isEmpty();
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert !cache.containsKey(key);
-      assert !cache.keySet().contains(key);
-      assert !cache.values().contains(value);
+      assertCacheIsEmpty();
+      assertFalse(cache.containsKey(key));
+      assertFalse(cache.keySet().contains(key));
+      assertFalse(cache.values().contains(value));
 
       cache.put(key, value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.containsKey(key);
-      assert !cache.isEmpty();
-      assert cache.containsKey(key);
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      assertCacheSize(1);
 
-      assert cache.remove(key).equals(value);
+      assertTrue(cache.containsKey(key));
+      assertTrue(cache.containsKey(key));
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
 
-      assert cache.isEmpty();
-      size = 0;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert !cache.containsKey(key);
-      assert !cache.keySet().contains(key);
-      assert !cache.values().contains(value);
+      assertEquals(value, cache.remove(key));
 
-      Map<String, String> m = new HashMap<String, String>();
+      assertTrue(cache.isEmpty());
+      assertCacheIsEmpty();
+
+      assertFalse(cache.containsKey(key));
+      assertFalse(cache.keySet().contains(key));
+      assertFalse(cache.values().contains(value));
+
+      Map<String, String> m = new HashMap<>();
       m.put("1", "one");
       m.put("2", "two");
       m.put("3", "three");
       cache.putAll(m);
 
-      assert cache.get("1").equals("one");
-      assert cache.get("2").equals("two");
-      assert cache.get("3").equals("three");
-      size = 3;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
+      assertEquals("one", cache.get("1"));
+      assertEquals("two", cache.get("2"));
+      assertEquals("three", cache.get("3"));
+      assertCacheSize(3);
 
-      m = new HashMap<String, String>();
+      m = new HashMap<>();
       m.put("1", "newvalue");
       m.put("4", "four");
 
       cache.putAll(m);
 
-      assert cache.get("1").equals("newvalue");
-      assert cache.get("2").equals("two");
-      assert cache.get("3").equals("three");
-      assert cache.get("4").equals("four");
-      size = 4;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
+      assertEquals("newvalue", cache.get("1"));
+      assertEquals("two", cache.get("2"));
+      assertEquals("three", cache.get("3"));
+      assertEquals("four", cache.get("4"));
+
+      assertCacheSize(4);
    }
 
    public void testConcurrentMapMethods() {
 
-      assert cache.putIfAbsent("A", "B") == null;
-      assert cache.putIfAbsent("A", "C").equals("B");
-      assert cache.get("A").equals("B");
+      assertNull(cache.putIfAbsent("A", "B"));
+      assertEquals("B", cache.putIfAbsent("A", "C"));
+      assertEquals("B", cache.get("A"));
 
-      assert !cache.remove("A", "C");
-      assert cache.containsKey("A");
-      assert cache.remove("A", "B");
-      assert !cache.containsKey("A");
+      assertFalse(cache.remove("A", "C"));
+      assertTrue(cache.containsKey("A"));
+      assertTrue(cache.remove("A", "B"));
+      assertFalse(cache.containsKey("A"));
 
       cache.put("A", "B");
 
-      assert !cache.replace("A", "D", "C");
-      assert cache.get("A").equals("B");
-      assert cache.replace("A", "B", "C");
-      assert cache.get("A").equals("C");
+      assertFalse(cache.replace("A", "D", "C"));
+      assertEquals("B", cache.get("A"));
+      assertTrue(cache.replace("A", "B", "C"));
+      assertEquals("C", cache.get("A"));
 
-      assert cache.replace("A", "X").equals("C");
-      assert cache.replace("X", "A") == null;
-      assert !cache.containsKey("X");
+      assertEquals("C", cache.replace("A", "X"));
+      assertNull(cache.replace("X", "A"));
+      assertFalse(cache.containsKey("X"));
    }
 
-   @Test(expectedExceptions = NullPointerException.class)
    public void testPutNullKeyParameter() {
-      cache.put(null, null);
+      expectException(NullPointerException.class, () -> cache.put(null, null));
    }
 
-   @Test(expectedExceptions = NullPointerException.class)
    public void testPutNullValueParameter() {
-      cache.put("hello", null);
+      expectException(NullPointerException.class, () -> cache.put("hello", null));
    }
 
    public void testReplaceNullKeyParameter() {
-      try {
-         cache.replace(null, "X");
-         fail();
-      } catch (NullPointerException npe) {
-         assertEquals("Null keys are not supported!", npe.getMessage());
-      }
-
-      try {
-         cache.replace(null, "X", "Y");
-         fail();
-      } catch (NullPointerException npe) {
-         assertEquals("Null keys are not supported!", npe.getMessage());
-      }
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.replace(null, "X"));
+      expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.replace(null, "X", "Y"));
    }
 
    public void testReplaceNullValueParameter() {
-      try {
-         cache.replace("hello", null, "X");
-         fail();
-      } catch (NullPointerException npe) {
-         assertEquals("Null values are not supported!", npe.getMessage());
-      }
-
-      try {
-         cache.replace("hello", "X", null);
-         fail();
-      } catch (NullPointerException npe) {
-         assertEquals("Null values are not supported!", npe.getMessage());
-      }
+      expectException(NullPointerException.class, "Null values are not supported!", () -> cache.replace("hello", null, "X"));
+      expectException(NullPointerException.class, "Null values are not supported!", () -> cache.replace("hello", "X", null));
    }
 
    public void testPutIfAbsentLockCleanup() {
@@ -556,6 +509,23 @@ public class APINonTxTest extends SingleCacheManagerTest {
       // This call should fail.
       cache.putForExternalRead("key", "value2");
       assertNoLocks(cache);
-      assert cache.get("key").equals("value");
+      assertEquals("value", cache.get("key"));
+   }
+
+   private void assertCacheIsEmpty() {
+      assertCacheSize(0);
+   }
+
+   private void assertCacheSize(int expectedSize) {
+      assertEquals(expectedSize, cache.size());
+      assertEquals(expectedSize, cache.keySet().size());
+      assertEquals(expectedSize, cache.values().size());
+      assertEquals(expectedSize, cache.entrySet().size());
+
+      boolean isEmpty = expectedSize == 0;
+      assertEquals(isEmpty, cache.isEmpty());
+      assertEquals(isEmpty, cache.keySet().isEmpty());
+      assertEquals(isEmpty, cache.values().isEmpty());
+      assertEquals(isEmpty, cache.entrySet().isEmpty());
    }
 }
