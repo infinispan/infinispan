@@ -1370,7 +1370,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Received unsolicited state from node %s for segment %d of cache %s", id = 396)
    void ignoringUnsolicitedState(Address node, int segment, String cacheName);
 
-   @Message(value = "Could not migrate data for cache %s, check remote store config in the target cluster", id = 397)
+   @Message(value = "Could not migrate data for cache %s, check remote store config in the target cluster. Make sure only one remote store is present and is pointing to the source cluster", id = 397)
    CacheException couldNotMigrateData(String name);
 
    @Message(value ="CH Factory '%s' cannot restore a persisted CH of class '%s'", id = 398)

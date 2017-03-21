@@ -1,25 +1,12 @@
 package org.infinispan.persistence.remote.upgrade;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.Cache;
-import org.infinispan.client.hotrod.MetadataValue;
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.VersionUtils;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.context.Flag;
-import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -58,44 +45,12 @@ public class HotRodMigratorHelper {
       return subLists;
    }
 
-   static void gracefulShutdown(ExecutorService executorService) {
+   static void awaitTermination(ExecutorService executorService) {
       try {
          executorService.shutdown();
-         while (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
-         }
+         executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
-         throw new CacheException(e);
-      }
-   }
-
-   static void migrateEntriesWithMetadata(RemoteCache<Object, Object> sourceCache, Cache<Object, Object> destCache,
-                                          ExecutorService executorService, byte[] ignoreKey, AtomicInteger counter,
-                                          Set<Integer> segments, int readBatch) {
-      try (CloseableIterator<Map.Entry<Object, MetadataValue<Object>>> iterator = sourceCache.retrieveEntriesWithMetadata(segments, readBatch)) {
-         while (iterator.hasNext()) {
-            Map.Entry<Object, MetadataValue<Object>> entry = iterator.next();
-            if (!Arrays.equals((byte[]) entry.getKey(), ignoreKey)) {
-               MetadataValue<Object> metadataValue = entry.getValue();
-               int lifespan = metadataValue.getLifespan();
-               int maxIdle = metadataValue.getMaxIdle();
-               long version = metadataValue.getVersion();
-               long created = metadataValue.getCreated();
-               long lastUsed = metadataValue.getLastUsed();
-               Metadata metadata = new EmbeddedMetadata.Builder()
-                       .version(new NumericVersion(version))
-                       .lifespan(lifespan, TimeUnit.SECONDS)
-                       .maxIdle(maxIdle, TimeUnit.SECONDS)
-                       .build();
-               InternalMetadataImpl internalMetadata = new InternalMetadataImpl(metadata, created, lastUsed);
-               executorService.submit(() -> {
-                  destCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put(entry.getKey(), entry.getValue().getValue(), internalMetadata);
-                  int currentCount = counter.incrementAndGet();
-                  if (log.isDebugEnabled() && currentCount % 100 == 0)
-                     log.debugf(">>    Migrated %s entries\n", currentCount);
-               });
-
-            }
-         }
+         Thread.currentThread().interrupt();
       }
    }
 

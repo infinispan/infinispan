@@ -2,18 +2,15 @@ package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.DEFAULT_READ_BATCH_SIZE;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS;
-import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.gracefulShutdown;
-import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.migrateEntriesWithMetadata;
+import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.awaitTermination;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.range;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.split;
 import static org.infinispan.persistence.remote.upgrade.HotRodMigratorHelper.supportsIteration;
 
-import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -64,6 +61,9 @@ public class HotRodTargetMigrator implements TargetMigrator {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       PersistenceManager loaderManager = cr.getComponent(PersistenceManager.class);
       Set<RemoteStore> stores = loaderManager.getStores(RemoteStore.class);
+      if (stores.size() != 1) {
+         throw log.couldNotMigrateData(cache.getName());
+      }
       Marshaller marshaller = new MigrationMarshaller();
       byte[] knownKeys;
       try {
@@ -71,85 +71,90 @@ public class HotRodTargetMigrator implements TargetMigrator {
       } catch (Exception e) {
          throw new CacheException(e);
       }
-      for (RemoteStore store : stores) {
-         final RemoteCache<Object, Object> storeCache = store.getRemoteCache();
-         if (!supportsIteration(store.getConfiguration().protocolVersion())) {
-            if (storeCache.containsKey(knownKeys)) {
-               RemoteStoreConfiguration storeConfig = store.getConfiguration();
-               if (!storeConfig.hotRodWrapping()) {
-                  throw log.remoteStoreNoHotRodWrapping(cache.getName());
-               }
-
-               Set<Object> keys;
-               try {
-                  keys = (Set<Object>) marshaller.objectFromByteBuffer((byte[]) storeCache.get(knownKeys));
-               } catch (Exception e) {
-                  throw new CacheException(e);
-               }
-
-               ExecutorService es = Executors.newFixedThreadPool(threads);
-               final AtomicInteger count = new AtomicInteger(0);
-               for (Object okey : keys) {
-                  final byte[] key = (byte[]) okey;
-                  es.submit(() -> {
-                     try {
-                        cache.get(key);
-                        int i = count.getAndIncrement();
-                        if (log.isDebugEnabled() && i % 100 == 0)
-                           log.debugf(">>    Moved %s keys\n", i);
-                     } catch (Exception e) {
-                        log.keyMigrationFailed(Util.toStr(key), e);
-                     }
-                  });
-
-               }
-               gracefulShutdown(es);
-               return count.longValue();
+      RemoteStore store = stores.iterator().next();
+      final RemoteCache<Object, Object> remoteSourceCache = store.getRemoteCache();
+      if (!supportsIteration(store.getConfiguration().protocolVersion())) {
+         if (remoteSourceCache.containsKey(knownKeys)) {
+            RemoteStoreConfiguration storeConfig = store.getConfiguration();
+            if (!storeConfig.hotRodWrapping()) {
+               throw log.remoteStoreNoHotRodWrapping(cache.getName());
             }
-            throw log.missingMigrationData(cache.getName());
 
-         } else {
+            Set<Object> keys;
+            try {
+               keys = (Set<Object>) marshaller.objectFromByteBuffer((byte[]) remoteSourceCache.get(knownKeys));
+            } catch (Exception e) {
+               throw new CacheException(e);
+            }
 
-            CacheTopologyInfo cacheTopologyInfo = storeCache.getCacheTopologyInfo();
-            Map<SocketAddress, Set<Integer>> remoteServers = cacheTopologyInfo.getSegmentsPerServer();
-            if (remoteServers.size() == 1) {
-               final AtomicInteger count = new AtomicInteger(0);
-               ExecutorService es = Executors.newFixedThreadPool(threads);
-               migrateEntriesWithMetadata(storeCache, cache, es, knownKeys, count, null, readBatch);
-               gracefulShutdown(es);
-               return count.get();
-            } else {
-               int numSegments = cacheTopologyInfo.getNumSegments();
-               List<Address> servers = cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getMembers();
-               List<List<Integer>> partitions = split(range(numSegments), servers.size());
-               DistributedExecutorService executor = new DefaultExecutorService(cache);
-               Iterator<Address> iterator = servers.iterator();
-               List<CompletableFuture<Integer>> futures = new ArrayList<>(servers.size());
-               for (List<Integer> partition : partitions) {
-                  Set<Integer> segmentSet = new HashSet<>();
-                  segmentSet.addAll(partition);
-                  DistributedTask<Integer> task = executor
+            ExecutorService es = Executors.newFixedThreadPool(threads);
+            final AtomicInteger count = new AtomicInteger(0);
+            for (Object okey : keys) {
+               final byte[] key = (byte[]) okey;
+               es.submit(() -> {
+                  try {
+                     cache.get(key);
+                     int i = count.getAndIncrement();
+                     if (log.isDebugEnabled() && i % 100 == 0)
+                        log.debugf(">>    Moved %s keys\n", i);
+                  } catch (Exception e) {
+                     log.keyMigrationFailed(Util.toStr(key), e);
+                  }
+               });
+
+            }
+            awaitTermination(es);
+            return count.longValue();
+         }
+         throw log.missingMigrationData(cache.getName());
+      } else {
+         DistributedExecutorService executor = new DefaultExecutorService(cache);
+         try {
+            CacheTopologyInfo sourceCacheTopologyInfo = remoteSourceCache.getCacheTopologyInfo();
+            if (sourceCacheTopologyInfo.getSegmentsPerServer().size() == 1) {
+               return migrateFromSingleServer(cache, readBatch, threads);
+            }
+            int sourceSegments = sourceCacheTopologyInfo.getNumSegments();
+            List<Address> targetServers = cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getMembers();
+
+            List<List<Integer>> partitions = split(range(sourceSegments), targetServers.size());
+            Iterator<Address> iterator = targetServers.iterator();
+            List<CompletableFuture<Integer>> futures = new ArrayList<>(targetServers.size());
+            for (List<Integer> partition : partitions) {
+               Set<Integer> segmentSet = new HashSet<>();
+               segmentSet.addAll(partition);
+               DistributedTask<Integer> task = executor
                      .createDistributedTaskBuilder(new MigrationTask(segmentSet, readBatch, threads))
                      .timeout(Long.MAX_VALUE, TimeUnit.NANOSECONDS)
                      .build();
-                  futures.add(executor.submit(iterator.next(), task));
-               }
-               return futures.stream().mapToInt(f -> {
-                  try {
-                     return f.get();
-                  } catch (InterruptedException e) {
-                     Thread.currentThread().interrupt();
-                     throw log.couldNotMigrateData(cache.getName());
-                  } catch (ExecutionException e) {
-                     throw new CacheException(e);
-                  }
-               }).sum();
+               futures.add(executor.submit(iterator.next(), task));
             }
+            return futures.stream().mapToInt(f -> {
+               try {
+                  return f.get();
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw log.couldNotMigrateData(cache.getName());
+               } catch (ExecutionException e) {
+                  throw new CacheException(e);
+               }
+            }).sum();
+
+         } finally {
+            executor.shutdownNow();
          }
       }
-      throw log.couldNotMigrateData(cache.getName());
    }
 
+   private long migrateFromSingleServer(Cache<Object, Object> cache, int readBatch, int threads) {
+      MigrationTask migrationTask = new MigrationTask(null, readBatch, threads);
+      migrationTask.setEnvironment(cache, null);
+      try {
+         return migrationTask.call();
+      } catch (Exception e) {
+         throw new CacheException(e);
+      }
+   }
 
    @Override
    public void disconnectSource(Cache<Object, Object> cache) throws CacheException {

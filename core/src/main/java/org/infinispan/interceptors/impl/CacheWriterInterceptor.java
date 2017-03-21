@@ -478,7 +478,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    void storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
       InternalCacheValue sv = getStoredValue(key, ctx);
       persistenceManager.writeToAllNonTxStores(new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller),
-                                               skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
+                                               skipSharedStores(ctx, key, command) ? PRIVATE : BOTH, command.getFlagsBitSet());
       if (trace) getLog().tracef("Stored entry %s under key %s", sv, key);
    }
 

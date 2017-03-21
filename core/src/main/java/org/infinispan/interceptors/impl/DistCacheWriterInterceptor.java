@@ -67,7 +67,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
          Object key = putKeyValueCommand.getKey();
-         if (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful())
+         if (!putKeyValueCommand.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE) && (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful()))
             return rv;
          if (!isProperWriter(rCtx, putKeyValueCommand, putKeyValueCommand.getKey()))
             return rv;

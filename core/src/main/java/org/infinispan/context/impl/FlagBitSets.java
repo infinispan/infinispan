@@ -37,6 +37,7 @@ public class FlagBitSets {
    public static final long OPERATION_MEMCACHED = EnumUtil.bitSetOf(Flag.OPERATION_MEMCACHED);
    public static final long SKIP_INDEX_CLEANUP = EnumUtil.bitSetOf(Flag.SKIP_INDEX_CLEANUP);
    public static final long COMMAND_RETRY = EnumUtil.bitSetOf(Flag.COMMAND_RETRY);
+   public static final long ROLLING_UPGRADE = EnumUtil.bitSetOf(Flag.ROLLING_UPGRADE);
 
    /**
     * Creates a copy of a Flag BitSet removing instances of FAIL_SILENTLY.
