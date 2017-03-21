@@ -155,4 +155,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Invalid boolean literal '%s'", id = 14037)
    ParsingException getInvalidBooleanLiteralException(String value);
+
+   @Message(value = "infinispan-query.jar module is in the classpath but has not been properly initialised!", id = 14038)
+   CacheException queryModuleNotInitialised();
 }
