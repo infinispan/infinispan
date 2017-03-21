@@ -169,7 +169,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (!command.hasFlag(Flag.ROLLING_UPGRADE) && (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful())) return returnValue;
       if (!isProperWriter(ctx, command, command.getKey())) return returnValue;
 
       Object key = command.getKey();
@@ -436,7 +436,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    void storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command) {
       InternalCacheValue sv = getStoredValue(key, ctx);
       persistenceManager.writeToAllStores(new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller),
-                                          skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
+                                          skipSharedStores(ctx, key, command) ? PRIVATE : BOTH, command.getFlags());
       if (trace) getLog().tracef("Stored entry %s under key %s", sv, key);
    }
 

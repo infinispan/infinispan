@@ -6,6 +6,7 @@ import java.util.concurrent.Executor;
 
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -57,6 +58,8 @@ public interface PersistenceManager extends Lifecycle {
    MarshalledEntry loadFromAllStores(Object key, InvocationContext context);
 
    void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode modes);
+
+   void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode modes, Set<Flag> flags);
 
    /**
     * Returns the store one configured with fetch persistent state, or null if none exist.

@@ -125,7 +125,7 @@ In  the following description we will refer to the Source and Target  clusters, 
 
 ..  _hotRodWrapping_ must be enabled ( _true_ )
 
-.. _read-only_ should be true
+.. _shared_ should be _true_
 
 
 .  Configure clients to point to the _Target Cluster_ instead of the _Source Cluster_ , and one by one, restart each client node.  Gradually, all requests will be handled by the _Target Cluster_ rather than the _Source Cluster_ . The _Target Cluster_ will lazily load data from the _Source Cluster_ on demand via the RemoteCacheStore. 

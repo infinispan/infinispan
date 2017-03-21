@@ -9,5 +9,6 @@ package org.infinispan.persistence.remote;
 public interface ExternalizerIds {
 
    Integer MIGRATION_TASK = 1900;
+   Integer REMOVED_FILTER = 1901;
 
 }
