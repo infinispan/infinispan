@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.internal.PrivateGlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -62,5 +64,10 @@ public class Configurations {
          }
       }
       return false;
+   }
+
+   public static boolean isEmbeddedMode(GlobalConfiguration globalConfiguration) {
+      PrivateGlobalConfiguration config = globalConfiguration.module(PrivateGlobalConfiguration.class);
+      return config == null || !config.isServerMode();
    }
 }

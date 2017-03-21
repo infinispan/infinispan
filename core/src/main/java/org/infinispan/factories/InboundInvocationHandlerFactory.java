@@ -1,5 +1,6 @@
 package org.infinispan.factories;
 
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.inboundhandler.NonTotalOrderPerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.NonTotalOrderTxPerCacheInboundInvocationHandler;
@@ -26,7 +27,7 @@ public class InboundInvocationHandlerFactory extends AbstractNamedCacheComponent
                componentType.cast(new TotalOrderTxPerCacheInboundInvocationHandler()) :
                componentType.cast(new NonTotalOrderTxPerCacheInboundInvocationHandler());
       } else {
-         return configuration.clustering().cacheMode().isDistributed() ?
+         return configuration.clustering().cacheMode().isDistributed() && Configurations.isEmbeddedMode(globalConfiguration) ?
                componentType.cast(new TrianglePerCacheInboundInvocationHandler()) :
                componentType.cast(new NonTotalOrderPerCacheInboundInvocationHandler());
       }
