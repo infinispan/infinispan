@@ -35,7 +35,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.security.Security;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Functionality common to both {@link org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl} and
@@ -46,9 +45,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author William Burns
  */
 public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
-
-   private static final Log log = LogFactory.getLog(AbstractListenerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    protected final Map<Class<? extends Annotation>, List<L>> listenersMap = new HashMap<>(16, 0.99f);
 
@@ -216,8 +212,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                   builder.setAnnotation(annotationClass);
                   L invocation = builder.build();
 
-                  if (trace)
-                     log.tracef("Add listener invocation %s for %s", invocation, annotationClass);
+                  getLog().tracef("Add listener invocation %s for %s", invocation, annotationClass);
 
                   getListenerCollectionForAnnotation(annotationClass).add(invocation);
                   foundMethods = true;
@@ -262,8 +257,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                   builder.setMethod(m);
                   builder.setAnnotation(annotationClass);
                   L invocation = builder.build();
-                  if (trace)
-                     log.tracef("Add listener invocation %s for %s", invocation, annotationClass);
+                  getLog().tracef("Add listener invocation %s for %s", invocation, annotationClass);
 
                   getListenerCollectionForAnnotation(annotationClass).add(invocation);
                   foundMethods = true;
@@ -373,6 +367,8 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                if (subject != null) {
                   try {
                      Security.doAs(subject, (PrivilegedExceptionAction<Void>) () -> {
+                        // Don't want to print out Subject as it could have sensitive information
+                        getLog().tracef("Invoking listener: %s passing event %s using subject", target, event);
                         method.invoke(target, event);
                         return null;
                      });
@@ -387,6 +383,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                      }
                   }
                } else {
+                  getLog().tracef("Invoking listener: %s passing event %s", target, event);
                   method.invoke(target, event);
                }
             } catch (InvocationTargetException exception) {
