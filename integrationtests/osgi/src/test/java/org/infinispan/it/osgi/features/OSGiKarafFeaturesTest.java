@@ -21,6 +21,7 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.Bundle;
@@ -44,7 +45,10 @@ public class OSGiKarafFeaturesTest {
 
    @Configuration
    public Option[] config() throws Exception {
-      return options(commonOptions());
+      return options(
+            commonOptions(),
+            KarafDistributionOption.editConfigurationFileExtend("etc/config.properties", "org.osgi.framework.executionenvironment", "JavaSE-1.8")
+      );
    }
 
    @ProbeBuilder
