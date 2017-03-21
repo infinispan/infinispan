@@ -135,4 +135,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = WARN)
    @Message(value = "Found undeclared indexable types in cache %s : %s. No indexes were created for these types because autodetection is not enabled for this cache.", id = 14029)
    void detectedUnknownIndexedEntities(String cacheName, String classNames);
+
+   @Message(value = "infinispan-query.jar module is in the classpath but has not been properly initialised!", id = 14038)
+   CacheException queryModuleNotInitialised();
 }
