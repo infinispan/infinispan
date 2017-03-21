@@ -27,9 +27,9 @@ import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -235,6 +235,13 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
       return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), entrySet) {
 
+         long calculateTimeoutSeconds() {
+            int minimum = 10;
+            int size = dataContainer.sizeIncludingExpired();
+            if (size < 10_000) return minimum;
+            return Math.round(Math.log1p(size) * 10);
+         }
+
          @Override
          public CloseableIterator<CacheEntry<K, V>> iterator() {
             CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
@@ -243,9 +250,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             // TODO: how to handle concurrent activation....
             return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                     // TODO: how to pass in key filter...
-                    new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
-                            new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048)), e -> e.getKey(),
-                    seenKeys);
+                  new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
+                        new CollectionKeyFilter<>(seenKeys), calculateTimeoutSeconds(), TimeUnit.SECONDS, 2048)), e -> e.getKey(),
+                  seenKeys);
          }
 
          @Override
