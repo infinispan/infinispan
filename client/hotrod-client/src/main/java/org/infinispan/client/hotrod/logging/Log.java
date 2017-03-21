@@ -182,7 +182,7 @@ public interface Log extends BasicLogger {
    @Message(value = "When enabling near caching, number of max entries must be configured", id = 4045)
    CacheConfigurationException nearCacheMaxEntriesUndefined();
 
-   @LogMessage(level = INFO)
+   @LogMessage(level = DEBUG)
    @Message(value = "Successfully closed remote iterator '%s'", id = 4046)
    void iterationClosed(String iterationId);
 
