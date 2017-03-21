@@ -1,6 +1,8 @@
 package org.infinispan.persistence.remote;
 
-import net.jcip.annotations.ThreadSafe;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -17,24 +19,24 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.TaskContextImpl;
-import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
-import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
-import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
-import org.infinispan.persistence.remote.logging.Log;
-import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
-import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
+import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
+import org.infinispan.persistence.remote.logging.Log;
+import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
+import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.FlagAffectedStore;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * Cache store that delegates the call to a infinispan cluster. Communication between this cache store and the remote
@@ -45,7 +47,6 @@ import java.util.concurrent.TimeUnit;
  * Purging elements is not possible, as HotRod does not support the fetching of all remote keys (this would be a
  * very costly operation as well). Purging takes place at the remote end (infinispan cluster).
  * <p/>
- *
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration
  * @see <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
@@ -53,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  */
 @ThreadSafe
 @ConfiguredBy(RemoteStoreConfiguration.class)
-public class RemoteStore implements AdvancedLoadWriteStore {
+public class RemoteStore implements AdvancedLoadWriteStore, FlagAffectedStore {
 
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -115,7 +116,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
             long created = value.getCreated();
             long lastUsed = value.getLastUsed();
             return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value.getValue(),
-                                    new InternalMetadataImpl(metadata, created, lastUsed));
+                  new InternalMetadataImpl(metadata, created, lastUsed));
          } else {
             return null;
          }
@@ -187,7 +188,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       if (millis > 0 && millis < 1000) {
          if (trace) {
             log.tracef("Adjusting %s time for (k,v): (%s, %s) from %d millis to 1 sec, as milliseconds are not supported by HotRod",
-                       desc ,key, millis);
+                  desc, key, millis);
          }
          return 1;
       }
@@ -250,5 +251,10 @@ public class RemoteStore implements AdvancedLoadWriteStore {
 
    public RemoteStoreConfiguration getConfiguration() {
       return configuration;
+   }
+
+   @Override
+   public boolean shouldWrite(Set commandFlags) {
+      return commandFlags == null || !commandFlags.contains(org.infinispan.context.Flag.ROLLING_UPGRADE);
    }
 }

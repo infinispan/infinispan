@@ -1,5 +1,6 @@
 package org.infinispan.persistence.manager;
 
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
@@ -79,6 +80,10 @@ public class PersistenceManagerStub implements PersistenceManager {
 
    @Override
    public void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode modes) {
+   }
+
+   @Override
+   public void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode modes, Set<Flag> flags) {
    }
 
    @Override

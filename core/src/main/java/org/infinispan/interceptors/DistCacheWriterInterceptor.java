@@ -73,7 +73,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
       Object key = command.getKey();
-      if (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      if (!command.hasFlag(Flag.ROLLING_UPGRADE) && (!isStoreEnabled(command) || ctx.isInTxScope() || !command.isSuccessful())) return returnValue;
       if (!isProperWriter(ctx, command, command.getKey())) return returnValue;
 
       storeEntry(ctx, key, command);
