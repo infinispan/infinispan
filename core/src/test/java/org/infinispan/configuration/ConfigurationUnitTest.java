@@ -216,12 +216,6 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       cb.clustering().hash().numSegments(0);
    }
 
-   public void testEnableVersioning() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.versioning().enable();
-      assert builder.build().versioning().enabled();
-   }
-
    public void testNoneIsolationLevel() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.locking().isolationLevel(IsolationLevel.NONE);
@@ -306,30 +300,18 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    @Test(expectedExceptions = CacheConfigurationException.class,
          expectedExceptionsMessageRegExp = "ISPN(\\d)*: Indexing can not be enabled on caches in Invalidation mode")
    public void testIndexingOnInvalidationCache() {
-      EmbeddedCacheManager ecm = null;
-      try {
-         ConfigurationBuilder c = new ConfigurationBuilder();
-         c.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
-         c.indexing().index(Index.ALL);
-         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
-         ecm.getCache();
-      } finally {
-         TestingUtil.killCacheManagers(ecm);
-      }
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
+      c.indexing().index(Index.ALL);
+      c.validate();
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp =
          "ISPN(\\d)*: Indexing can only be enabled if infinispan-query.jar is available on your classpath, and this jar has not been detected.")
    public void testIndexingRequiresOptionalModule() {
-      EmbeddedCacheManager ecm = null;
-      try {
-         ConfigurationBuilder c = new ConfigurationBuilder();
-         c.indexing().index(Index.ALL);
-         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
-         ecm.getCache();
-      } finally {
-         TestingUtil.killCacheManagers(ecm);
-      }
+      ConfigurationBuilder c = new ConfigurationBuilder();
+      c.indexing().index(Index.ALL);
+      c.validate(GlobalConfigurationBuilder.defaultClusteredBuilder().build());
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,

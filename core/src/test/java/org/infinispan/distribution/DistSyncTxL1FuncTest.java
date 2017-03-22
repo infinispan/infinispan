@@ -11,7 +11,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -29,6 +28,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -36,16 +36,16 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.mockito.AdditionalAnswers;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistSyncTxL1FuncTest")
@@ -65,7 +65,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
    @Override
    protected Class<? extends AsyncInterceptor> getDistributionInterceptorClass() {
-      return TxDistributionInterceptor.class;
+      return isVersioned() ? VersionedDistributionInterceptor.class : TxDistributionInterceptor.class;
    }
 
    @Override
@@ -74,7 +74,12 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
    }
 
    protected Class<? extends VisitableCommand> getCommitCommand() {
-      return CommitCommand.class;
+      return isVersioned() ? VersionedCommitCommand.class : CommitCommand.class;
+   }
+
+   private boolean isVersioned() {
+      return (lockingMode == null || lockingMode == LockingMode.OPTIMISTIC) &&
+            (isolationLevel == null || isolationLevel == IsolationLevel.REPEATABLE_READ);
    }
 
    @Override
@@ -202,12 +207,9 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       RpcManager realManager = nonOwnerCache.getAdvancedCache().getComponentRegistry().getComponent(RpcManager.class);
       RpcManager mockManager = mock(RpcManager.class, AdditionalAnswers.delegatesTo(realManager));
 
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-            throw new RemoteException("FAIL", new TimeoutException());
-         }
-         // Only throw exception on the first call just in case if test calls it more than once to fail properly
+      // Only throw exception on the first call just in case if test calls it more than once to fail properly
+      doAnswer(invocationOnMock -> {
+         throw new RemoteException("FAIL", new TimeoutException());
       }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager)
             .invokeRemotelyAsync(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
 
@@ -335,13 +337,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          ownerGetBarrier.await(10, TimeUnit.SECONDS);
 
          // This is async in the LastChance interceptor
-         eventually(new Condition() {
-
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return !isInL1(nonOwnerCache, key);
-            }
-         });
+         eventually(() -> !isInL1(nonOwnerCache, key));
 
          assertEquals(secondValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
       } finally {
@@ -381,13 +377,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       TestingUtil.replaceComponent(backupOwnerCache, RpcManager.class, crm2, true);
 
       try {
-         Future<String> future = fork(new Callable<String>() {
-
-            @Override
-            public String call() throws Exception {
-               return ownerCache.put(key, secondValue);
-            }
-         });
+         Future<String> future = fork(() -> ownerCache.put(key, secondValue));
 
          // wait until they all get there, but keep them blocked
          crm.waitForCommandToBlock(10, TimeUnit.SECONDS);

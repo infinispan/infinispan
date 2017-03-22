@@ -23,6 +23,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * @author Mircea Markus
@@ -56,7 +57,8 @@ public abstract class AbstractCrashTest extends MultipleCacheManagersTest {
             .clustering()
             .l1().disable()
             .hash().numOwners(3)
-            .stateTransfer().fetchInMemoryState(false);
+            .stateTransfer().fetchInMemoryState(false)
+            .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return c;
    }
 

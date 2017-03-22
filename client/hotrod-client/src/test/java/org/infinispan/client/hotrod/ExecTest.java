@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.utils.ScriptingUtils;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
@@ -62,7 +63,8 @@ public class ExecTest extends MultiHotRodServersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(mode, true);
       builder.dataContainer()
             .compatibility().enable()
-            .marshaller(new GenericJBossMarshaller());
+            .marshaller(new GenericJBossMarshaller())
+            .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       defineInAll(cacheName, builder);
    }
 
@@ -148,8 +150,8 @@ public class ExecTest extends MultiHotRodServersTest {
       assertEquals(2, results.size());
       assertEquals(3202, results.get(0).size());
       assertEquals(3202, results.get(1).size());
-      assertTrue(results.get(0).get("macbeth").equals(Long.valueOf(287)));
-      assertTrue(results.get(1).get("macbeth").equals(Long.valueOf(287)));
+      assertTrue(results.get(0).get("macbeth").equals(287L));
+      assertTrue(results.get(1).get("macbeth").equals(287L));
    }
 
    @Test(dataProvider = "CacheNameProvider")

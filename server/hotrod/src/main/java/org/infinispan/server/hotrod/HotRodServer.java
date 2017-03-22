@@ -26,7 +26,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
@@ -64,7 +63,6 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.HotRodChannelInitializer;
 import org.infinispan.server.hotrod.transport.TimeoutEnabledChannelInitializer;
 import org.infinispan.upgrade.RollingUpgradeManager;
-import org.infinispan.util.concurrent.IsolationLevel;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -147,8 +145,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       clientListenerRegistry = new ClientListenerRegistry(configuration);
 
       addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory());
-      loadFilterConverterFactories(ParamKeyValueFilterConverterFactory.class,
-            (name, f) -> addKeyValueFilterConverterFactory(name, (KeyValueFilterConverterFactory) f));
+      loadFilterConverterFactories(ParamKeyValueFilterConverterFactory.class, this::addKeyValueFilterConverterFactory);
       loadFilterConverterFactories(CacheEventFilterConverterFactory.class, this::addCacheEventFilterConverterFactory);
       loadFilterConverterFactories(CacheEventConverterFactory.class, this::addCacheEventConverterFactory);
       loadFilterConverterFactories(KeyValueFilterConverterFactory.class, this::addKeyValueFilterConverterFactory);
@@ -231,8 +228,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    protected void startDefaultCache() {
-      Cache<Object, Object> cache = cacheManager.getCache(configuration.defaultCacheName());
-      validateCacheConfiguration(cache.getCacheConfiguration());
       getCacheInstance(configuration.defaultCacheName(), cacheManager, true, true);
    }
 
@@ -242,17 +237,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       boolean authz = cacheManager.getCacheManagerConfiguration().security().authorization().enabled();
       for (String cacheName : cacheManager.getCacheNames()) {
-         AdvancedCache cache = getCacheInstance(cacheName, cacheManager, false, (!icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED) || authz));
-         Configuration cacheCfg = SecurityActions.getCacheConfiguration(cache);
-         validateCacheConfiguration(cacheCfg);
+         getCacheInstance(cacheName, cacheManager, false, (!icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED) || authz));
       }
-   }
-
-   private void validateCacheConfiguration(Configuration cacheCfg) {
-      IsolationLevel isolationLevel = cacheCfg.locking().isolationLevel();
-      if ((isolationLevel == IsolationLevel.REPEATABLE_READ || isolationLevel == IsolationLevel.SERIALIZABLE) &&
-            !cacheCfg.locking().writeSkewCheck())
-         throw log.invalidIsolationLevel(isolationLevel);
    }
 
    private void addSelfToTopologyView(EmbeddedCacheManager cacheManager) {

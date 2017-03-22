@@ -262,7 +262,7 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
          if (totalOrder) {
             builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
          }
-         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false)
+         builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED)
                .lockAcquisitionTimeout(0);
          builder.clustering().hash().numOwners(1);
          builder.transaction().recovery().disable();

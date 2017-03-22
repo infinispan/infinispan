@@ -2,19 +2,15 @@ package org.infinispan.server.hotrod
 
 import java.util.function.Consumer
 
-import test.HotRodTestingUtil._
+import org.infinispan.configuration.cache.{ClusterLoaderConfiguration, Configuration}
+import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.server.core.test.Stoppable
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
+import org.infinispan.server.hotrod.test.HotRodTestingUtil._
+import org.infinispan.test.AbstractInfinispanTest
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.testng.Assert._
 import org.testng.annotations.Test
-import org.infinispan.server.core.test.Stoppable
-import org.infinispan.configuration.cache.{Configuration, ConfigurationBuilder}
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration
-import org.infinispan.util.concurrent.IsolationLevel
-import org.infinispan.commons.CacheConfigurationException
-import org.infinispan.configuration.cache.VersioningScheme
-import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.test.AbstractInfinispanTest
 
 /**
  * Test to verify that configuration changes are reflected in backend caches.
@@ -49,20 +45,6 @@ class HotRodConfigurationTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test(expectedExceptions = Array(classOf[CacheConfigurationException]))
-   def testRepeatableReadIsolationLevelValidation() {
-      validateIsolationLevel(IsolationLevel.REPEATABLE_READ, false)
-   }
-
-   @Test(expectedExceptions = Array(classOf[CacheConfigurationException]))
-   def testSerializableIsolationLevelValidation() {
-      validateIsolationLevel(IsolationLevel.SERIALIZABLE, false)
-   }
-   
-   def testRepeatableReadIsolationLevelWithSkewCheckValidation() {
-      validateIsolationLevel(IsolationLevel.REPEATABLE_READ, true)
-   }
-
    private def withClusteredServer(builder: HotRodServerConfigurationBuilder) (assert: (Configuration, Long) => Unit) {
 
       Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration()), new Consumer[EmbeddedCacheManager] {
@@ -71,24 +53,6 @@ class HotRodConfigurationTest extends AbstractInfinispanTest {
                override def accept(server: HotRodServer): Unit = {
                   val cfg = cm.getCacheConfiguration(server.getConfiguration.topologyCacheName)
                   assert(cfg, cm.getCacheManagerConfiguration.transport().distributedSyncTimeout())
-               }
-            })
-         }
-      })
-   }
-
-   private def validateIsolationLevel(isolationLevel: IsolationLevel, writeSkew: Boolean) {
-      val hotRodBuilder = new HotRodServerConfigurationBuilder
-      val builder = new ConfigurationBuilder()
-      builder.locking().isolationLevel(isolationLevel).writeSkewCheck(writeSkew)
-      if (writeSkew) {
-        builder.versioning().enable().scheme(VersioningScheme.SIMPLE)
-      }
-
-      Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration(builder)), new Consumer[EmbeddedCacheManager] {
-         override def accept(cm: EmbeddedCacheManager): Unit = {
-            Stoppable.useServer(startHotRodServer(cm, serverPort, hotRodBuilder), new Consumer[HotRodServer] {
-               override def accept(server: HotRodServer): Unit = {
                }
             })
          }

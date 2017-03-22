@@ -24,7 +24,7 @@ public class RepeatableReadRemoteGetCountTest extends MultipleCacheManagersTest 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false);
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.clustering().hash().numOwners(1);
       createClusteredCaches(2, builder);
    }

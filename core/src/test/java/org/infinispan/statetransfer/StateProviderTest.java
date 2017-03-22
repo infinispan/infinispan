@@ -27,7 +27,6 @@ import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -104,9 +103,8 @@ public class StateProviderTest {
       cb.clustering().invocationBatching().enable()
             .clustering().cacheMode(CacheMode.DIST_SYNC)
             .clustering().stateTransfer().timeout(10000)
-            .versioning().enable().scheme(VersioningScheme.SIMPLE)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
-            .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       configuration = cb.build();
 
       mockExecutorService = mock(ExecutorService.class);

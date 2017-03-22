@@ -186,6 +186,10 @@ public class TransactionConfiguration {
       return transactionManagerLookup.get();
    }
 
+   /**
+    * @deprecated since 9.0. The transaction manager is only looked up once, during cache startup.
+    */
+   @Deprecated
    public TransactionConfiguration transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
       this.transactionManagerLookup.set(transactionManagerLookup);
       return this;

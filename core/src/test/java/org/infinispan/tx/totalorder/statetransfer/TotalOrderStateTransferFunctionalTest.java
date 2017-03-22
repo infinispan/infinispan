@@ -1,7 +1,6 @@
 package org.infinispan.tx.totalorder.statetransfer;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.statetransfer.StateTransferFunctionalTest;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -49,10 +48,9 @@ public class TotalOrderStateTransferFunctionalTest extends StateTransferFunction
          .useSynchronization(useSynchronization)
          .recovery().disable();
       if (writeSkew) {
-         configurationBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true);
-         configurationBuilder.versioning().enable().scheme(VersioningScheme.SIMPLE);
+         configurationBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       } else {
-         configurationBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false);
+         configurationBuilder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }
       configurationBuilder.clustering().stateTransfer().chunkSize(20);
    }

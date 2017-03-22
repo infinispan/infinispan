@@ -9,7 +9,6 @@ import javax.transaction.Transaction;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -28,17 +27,9 @@ public class VersionedReplStateTransferTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
 
-      builder
-            .clustering()
-               .cacheMode(CacheMode.REPL_SYNC)
-            .versioning()
-               .enable()
-               .scheme(VersioningScheme.SIMPLE)
-            .locking()
-               .isolationLevel(IsolationLevel.REPEATABLE_READ)
-               .writeSkewCheck(true)
-            .transaction()
-               .lockingMode(LockingMode.OPTIMISTIC);
+      builder.clustering().cacheMode(CacheMode.REPL_SYNC)
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
+            .transaction().lockingMode(LockingMode.OPTIMISTIC);
 
       amendConfig(builder);
 

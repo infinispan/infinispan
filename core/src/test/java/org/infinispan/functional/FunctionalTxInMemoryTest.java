@@ -38,7 +38,6 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
    public Object[] factory() {
       return new Object[]{
             new FunctionalTxInMemoryTest().transactional(true).lockingMode(LockingMode.OPTIMISTIC).isolationLevel(IsolationLevel.READ_COMMITTED),
-            new FunctionalTxInMemoryTest().transactional(true).lockingMode(LockingMode.OPTIMISTIC).isolationLevel(IsolationLevel.REPEATABLE_READ),
             new FunctionalTxInMemoryTest().transactional(true).lockingMode(LockingMode.PESSIMISTIC).isolationLevel(IsolationLevel.READ_COMMITTED),
             new FunctionalTxInMemoryTest().transactional(true).lockingMode(LockingMode.PESSIMISTIC).isolationLevel(IsolationLevel.REPEATABLE_READ),
       };
@@ -163,7 +162,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       assertEquals("a", cache(0, DIST).put(KEY, "b"));
       // read-write operation should execute locally instead
       assertEquals("b", method.action.eval(KEY, null, rw,
-            (Function<EntryView.ReadEntryView<Object, String>, String> & Serializable) e -> e.get(),
+            (Function<EntryView.ReadEntryView<Object, String>, String> & Serializable) EntryView.ReadEntryView::get,
             (BiConsumer<EntryView.WriteEntryView<String>, String> & Serializable) (e, prev) -> e.set(prev + "c"), getClass()));
       // make sure that the operation was executed in context
       assertEquals("bc", ro.eval(KEY, MarshallableFunctions.returnReadOnlyFindOrNull()).join());
@@ -204,7 +203,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       tm.begin();
       for (K key : keys) {
          try {
-            method.action.eval(key, ro, (Function<EntryView.ReadEntryView<K, String>, Object> & Serializable) view -> view.get());
+            method.action.eval(key, ro, (Function<EntryView.ReadEntryView<K, String>, Object> & Serializable) EntryView.ReadEntryView::get);
             fail("Should throw CacheException:NoSuchElementException");
          } catch (CacheException e) { // catches RemoteException, too
             // The first exception should cause the whole transaction to fail

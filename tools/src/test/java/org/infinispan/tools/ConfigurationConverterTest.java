@@ -375,7 +375,6 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(1000, config.locking().concurrencyLevel());
       assertEquals(20000, config.locking().lockAcquisitionTimeout());
       assertTrue(config.locking().useLockStriping());
-      assertTrue(config.locking().writeSkewCheck());
 
       config = cm.getCacheConfiguration("lockingWithJDBCLoader");
       assertEquals(1000, config.locking().lockAcquisitionTimeout());

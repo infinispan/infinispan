@@ -16,7 +16,6 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -49,8 +48,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       builder
-            .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .versioning().enable().scheme(VersioningScheme.SIMPLE)
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
       createClusteredCaches(2, cacheName, builder);
    }

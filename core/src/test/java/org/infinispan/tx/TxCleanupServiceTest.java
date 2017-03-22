@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
@@ -44,7 +44,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
    }
 
    public void testTransactionStateNotLost() throws Throwable {
-      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(cache(1), CommitCommand.class);
+      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(cache(1), VersionedCommitCommand.class);
       ccf.gate.close();
 
       final Map<Object, EmbeddedTransaction> keys2Tx = new HashMap<>(TX_COUNT);
@@ -86,7 +86,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
 
       final Map<Object, EmbeddedTransaction> migratedTx = new HashMap<>(TX_COUNT);
       for (Object key : keys2Tx.keySet()) {
-         if (keyMapsToNode(key, 2)) {
+         if (keyMapsToNode2(key)) {
             migratedTx.put(key, keys2Tx.get(key));
          }
       }
@@ -126,9 +126,9 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       }
    }
 
-   private boolean keyMapsToNode(Object key, int nodeIndex) {
+   private boolean keyMapsToNode2(Object key) {
       Address owner = owner(key);
-      return owner.equals(address(nodeIndex));
+      return owner.equals(address(2));
    }
 
    private Address owner(Object key) {

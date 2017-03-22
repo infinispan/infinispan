@@ -12,7 +12,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
@@ -23,7 +22,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -81,26 +79,20 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       backupOwnerInterceptor.blockCommit(true);
       handler.discardRemoteGet = true;
 
-      Future<Boolean> tx1 = fork(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            tm(2).begin();
-            assertEquals("Wrong value for tx1.", 1, cache(2).get(key));
-            cache(2).put(key, 2);
-            tm(2).commit();
-            return Boolean.TRUE;
-         }
+      Future<Boolean> tx1 = fork(() -> {
+         tm(2).begin();
+         assertEquals("Wrong value for tx1.", 1, cache(2).get(key));
+         cache(2).put(key, 2);
+         tm(2).commit();
+         return Boolean.TRUE;
       });
 
       //after this, the primary owner has committed the new value but still have the locks acquired.
       //in the backup owner, it still has the old value
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            Integer value = (Integer) cache(3).get(key);
-            return value != null && value == 2;
-         }
+      eventually(() -> {
+         Integer value = (Integer) cache(3).get(key);
+         return value != null && value == 2;
       });
 
       assertVersion("Wrong version in the primary owner", primaryOwnerDataContainer.get(key).getMetadata().version(),
@@ -111,15 +103,12 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       backupOwnerInterceptor.resetPrepare();
 
       //tx2 will read from the primary owner (i.e., the most recent value) and will commit.
-      Future<Boolean> tx2 = fork(new Callable<Boolean>() {
-         @Override
-         public Boolean call() throws Exception {
-            tm(3).begin();
-            assertEquals("Wrong value for tx2.", 2, cache(3).get(key));
-            cache(3).put(key, 3);
-            tm(3).commit();
-            return Boolean.TRUE;
-         }
+      Future<Boolean> tx2 = fork(() -> {
+         tm(3).begin();
+         assertEquals("Wrong value for tx2.", 2, cache(3).get(key));
+         cache(3).put(key, 3);
+         tm(3).commit();
+         return Boolean.TRUE;
       });
 
       //if everything works fine, it should ignore the value from the backup owner and only use the version returned by
@@ -149,12 +138,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
    @Override
    protected final void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
-      builder.locking()
-            .isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .writeSkewCheck(true);
-      builder.versioning()
-            .enabled(true)
-            .scheme(VersioningScheme.SIMPLE);
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       builder.clustering().hash().numSegments(60);
       createClusteredCaches(4, builder);
    }

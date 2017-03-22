@@ -42,6 +42,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -103,7 +104,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private CacheNotifier notifier;
    private StateTransferManager stateTransferManager;
    private boolean useRepeatableRead;
-   private boolean writeSkewCheck;
+   private boolean isVersioned;
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -118,7 +119,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // The entry must be in the context
          CacheEntry cacheEntry = rCtx.lookupEntry(dataCommand.getKey());
          cacheEntry.setSkipLookup(true);
-         if (writeSkewCheck && ((MVCCEntry) cacheEntry).isRead()) {
+         if (isVersioned && ((MVCCEntry) cacheEntry).isRead()) {
             addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataCommand.getKey());
          }
       }
@@ -132,9 +133,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
    };
 
-   private final InvocationSuccessAction commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> {
-      commitContextEntries(rCtx, null, null);
-   };
+   private final InvocationSuccessAction commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null, null);
 
    private final InvocationFinallyAction
          commitEntriesFinallyHandler = (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null);
@@ -168,7 +167,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       // isolation level makes no sense without transactions
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
-      writeSkewCheck = cacheConfiguration.locking().writeSkewCheck();
+      isVersioned = Configurations.isTxVersioned(cacheConfiguration);
       totalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
    }
 
@@ -419,7 +418,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             for (Map.Entry<Object, CacheEntry> keyEntry : txCtx.getLookedUpEntries().entrySet()) {
                CacheEntry cacheEntry = keyEntry.getValue();
                cacheEntry.setSkipLookup(true);
-               if (writeSkewCheck && ((MVCCEntry) cacheEntry).isRead()) {
+               if (isVersioned && ((MVCCEntry) cacheEntry).isRead()) {
                   addVersionRead(txCtx, cacheEntry, keyEntry.getKey());
                }
             }
@@ -640,7 +639,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          if (trace)
             log.tracef("The return value is %s", toStr(rv));
          if (useRepeatableRead) {
-            boolean addVersionRead = writeSkewCheck && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
+            boolean addVersionRead = isVersioned && writeCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD;
             TxInvocationContext txCtx = (TxInvocationContext) rCtx;
             for (Object key : writeCommand.getAffectedKeys()) {
                CacheEntry cacheEntry = rCtx.lookupEntry(key);
@@ -687,7 +686,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // The entry is not in context when the command's execution type does not contain origin
             if (cacheEntry != null) {
                cacheEntry.setSkipLookup(true);
-               if (writeSkewCheck && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD
+               if (isVersioned && dataWriteCommand.loadType() != VisitableCommand.LoadType.DONT_LOAD
                      && ((MVCCEntry) cacheEntry).isRead()) {
                   addVersionRead((TxInvocationContext) rCtx, cacheEntry, dataWriteCommand.getKey());
                }

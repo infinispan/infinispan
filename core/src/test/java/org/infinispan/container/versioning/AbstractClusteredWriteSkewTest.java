@@ -13,7 +13,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -363,17 +362,9 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
 
    private ConfigurationBuilder defaultConfigurationBuilder() {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      builder
-            .clustering()
-            .cacheMode(getCacheMode())
-            .versioning()
-            .enable()
-            .scheme(VersioningScheme.SIMPLE)
-            .locking()
-            .isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .writeSkewCheck(true)
-            .transaction()
-            .lockingMode(LockingMode.OPTIMISTIC);
+      builder.clustering().cacheMode(getCacheMode())
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
+            .transaction().lockingMode(LockingMode.OPTIMISTIC);
       return builder;
    }
 

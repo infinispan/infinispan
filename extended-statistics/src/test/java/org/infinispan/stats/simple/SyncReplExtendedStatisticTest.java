@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 public class SyncReplExtendedStatisticTest extends BaseNonTotalOrderClusteredExtendedStatisticsTest {
 
    public SyncReplExtendedStatisticTest() {
-      super(CacheMode.REPL_SYNC, false);
+      super(CacheMode.REPL_SYNC);
    }
 
    @Test(groups = "unstable", description = "To be fixed by ISPN-6468")

@@ -12,7 +12,6 @@ import java.util.concurrent.Callable;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -51,9 +50,8 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
    private ConfigurationBuilder defineConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .versioning().enable().scheme(VersioningScheme.SIMPLE)
-            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
-            .clustering().cacheMode(CacheMode.REPL_SYNC).sync()
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
+            .clustering().cacheMode(CacheMode.REPL_SYNC)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName(this.getClass().getName()).preload(true);
       return builder;
@@ -123,13 +121,10 @@ public class WriteSkewCacheLoaderFunctionalTest extends SingleCacheManagerTest {
             assertInCacheAndStore(cache, loader, "k" + i, "v" + i, LIFESPAN);
       }
 
-      withTx(cache.getAdvancedCache().getTransactionManager(), new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            assertEquals("v1", cache.get("k1"));
-            cache.put("k1", "new-v1");
-            return null;
-         }
+      withTx(cache.getAdvancedCache().getTransactionManager(), (Callable<Void>) () -> {
+         assertEquals("v1", cache.get("k1"));
+         cache.put("k1", "new-v1");
+         return null;
       });
    }
 

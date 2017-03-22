@@ -33,6 +33,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -57,7 +58,8 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
          .persistence()
             .addStore(CountingStoreConfigurationBuilder.class)
          .persistence()
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+         .locking().isolationLevel(IsolationLevel.READ_COMMITTED); //avoid versioning since we are storing directly in CacheStore
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
@@ -127,7 +129,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
       cache.containsKey("k1");
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
-      assert false == cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).containsKey("k3");
+      assert !cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).containsKey("k3");
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
       assert countingCS.numLoads == 2 : "Expected 2, was " + countingCS.numLoads;
 
@@ -142,7 +144,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
    }
 
    private CountingStore getCountingCacheStore() {
-      CountingStore countingCS = (CountingStore) TestingUtil.getFirstLoader(cache);
+      CountingStore countingCS = TestingUtil.getFirstLoader(cache);
       reset(cache, countingCS);
       return countingCS;
    }

@@ -18,7 +18,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -40,18 +39,9 @@ public abstract class AbstractWriteSkewStressTest extends MultipleCacheManagersT
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
 
-      builder
-            .clustering()
-            .cacheMode(getCacheMode())
-            .versioning()
-            .enable()
-            .scheme(VersioningScheme.SIMPLE)
-            .locking()
-            .isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
-            .writeSkewCheck(true)
-            .transaction()
-            .lockingMode(LockingMode.OPTIMISTIC);
+      builder.clustering().cacheMode(getCacheMode())
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ).lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
+            .transaction().lockingMode(LockingMode.OPTIMISTIC);
 
       decorate(builder);
 

@@ -101,7 +101,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    public AsyncInterceptorChain buildInterceptorChain() {
       TransactionMode transactionMode = configuration.transaction().transactionMode();
       boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
-              Configurations.isVersioningEnabled(configuration);
+              Configurations.isTxVersioned(configuration);
 
       AsyncInterceptorChain interceptorChain =
             new AsyncInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());

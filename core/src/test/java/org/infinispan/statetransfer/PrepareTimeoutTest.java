@@ -10,8 +10,8 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Arrays;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -70,7 +70,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
       sequencer.order("main:start", "backup:block_prepare", "backup:after_prepare", "main:check");
 
       advanceOnInterceptor(sequencer, cache(1), StateTransferInterceptor.class,
-            matchCommand(PrepareCommand.class).matchCount(0).build())
+            matchCommand(VersionedPrepareCommand.class).matchCount(0).build())
             .before("primary:block_prepare", "primary:resume_prepare").after("primary:after_prepare");
 
       advanceOnInterceptor(sequencer, cache(1), StateTransferInterceptor.class,
@@ -78,7 +78,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
             .after("primary:after_rollback");
 
       advanceOnInterceptor(sequencer, cache(2), StateTransferInterceptor.class,
-            matchCommand(PrepareCommand.class).matchCount(0).build())
+            matchCommand(VersionedPrepareCommand.class).matchCount(0).build())
             .before("backup:block_prepare", "backup:resume_prepare").after("backup:after_prepare");
 
       advanceOnInterceptor(sequencer, cache(2), StateTransferInterceptor.class,

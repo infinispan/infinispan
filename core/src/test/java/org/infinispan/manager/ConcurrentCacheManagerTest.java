@@ -2,7 +2,6 @@ package org.infinispan.manager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,8 +23,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "manager.ConcurrentCacheManagerTest")
 public class ConcurrentCacheManagerTest extends AbstractCacheTest {
-   static final int NUM_CACHES = 4;
-   static final int NUM_THREADS = 25;
+   private static final int NUM_CACHES = 4;
+   private static final int NUM_THREADS = 25;
 
    private EmbeddedCacheManager cacheManager;
 
@@ -33,7 +32,7 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
    protected void setup() throws Exception {
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager();
       for (int i = 0; i < NUM_CACHES; i++) {
-         manager.defineConfiguration("cache" + i, TestCacheManagerFactory.getDefaultCacheConfiguration(true).build());
+         manager.defineConfiguration("cache" + i, TestCacheManagerFactory.getDefaultCacheConfiguration(false).build());
       }
       cacheManager = manager;
    }
@@ -45,28 +44,25 @@ public class ConcurrentCacheManagerTest extends AbstractCacheTest {
 
    public void testConcurrentGetCacheCalls() throws Exception {
       final CyclicBarrier barrier = new CyclicBarrier(NUM_THREADS + 1);
-      List<Future<Void>> futures = new ArrayList<Future<Void>>(NUM_THREADS);
+      List<Future<Void>> futures = new ArrayList<>(NUM_THREADS);
       ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS, getTestThreadFactory("Worker"));
       for (int i = 0; i < NUM_THREADS; i++) {
          log.debug("Schedule execution");
          final String name = "cache" + (i % NUM_CACHES);
 
-         Future<Void> future = executorService.submit(new Callable<Void>(){
-            @Override
-            public Void call() throws Exception {
-               try {
-                  barrier.await();
-                  log.tracef("Creating cache %s", name);
-                  Cache<Object,Object> cache = cacheManager.getCache(name);
-                  cache.put("a", "b");
-                  return null;
-               } catch (Throwable t) {
-                  log.error("Got", t);
-                  throw new RuntimeException(t);
-               }  finally {
-                  log.debug("Wait for all execution paths to finish");
-                  barrier.await();
-               }
+         Future<Void> future = executorService.submit(() -> {
+            try {
+               barrier.await();
+               log.tracef("Creating cache %s", name);
+               Cache<Object,Object> cache = cacheManager.getCache(name);
+               cache.put("a", "b");
+               return null;
+            } catch (Throwable t) {
+               log.error("Got", t);
+               throw new RuntimeException(t);
+            }  finally {
+               log.debug("Wait for all execution paths to finish");
+               barrier.await();
             }
          });
          futures.add(future);

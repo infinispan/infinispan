@@ -456,7 +456,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assertEquals(1000, defaultCfg.locking().lockAcquisitionTimeout());
       assertEquals(100, defaultCfg.locking().concurrencyLevel());
-      assertEquals(IsolationLevel.READ_COMMITTED, defaultCfg.locking().isolationLevel());
+      assertEquals(IsolationLevel.REPEATABLE_READ, defaultCfg.locking().isolationLevel());
       if (!deprecated) {
          assertReaperAndTimeoutInfo(defaultCfg);
       }

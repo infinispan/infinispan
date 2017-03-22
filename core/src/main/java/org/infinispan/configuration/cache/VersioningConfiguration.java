@@ -7,10 +7,12 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 /**
  * This configuration element controls whether entries are versioned. Versioning is necessary, for example, when
  * using optimistic transactions in a clustered environment, to be able to perform write-skew checks.
+ * @deprecated since 9.0. Infinispan automatically enable versioning when needed.
  */
+@Deprecated
 public class VersioningConfiguration {
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().autoPersist(false).build();
-   public static final AttributeDefinition<VersioningScheme> SCHEME = AttributeDefinition.builder("scheme", VersioningScheme.NONE).immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", true).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<VersioningScheme> SCHEME = AttributeDefinition.builder("scheme", VersioningScheme.SIMPLE).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(VersioningConfiguration.class, ENABLED, SCHEME);
@@ -18,7 +20,7 @@ public class VersioningConfiguration {
 
    private final Attribute<Boolean> enabled;
    private final Attribute<VersioningScheme> scheme;
-   private AttributeSet attributes;
+   private final AttributeSet attributes;
 
    VersioningConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();

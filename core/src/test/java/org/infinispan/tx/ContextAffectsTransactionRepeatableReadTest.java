@@ -1,6 +1,9 @@
 package org.infinispan.tx;
 
+import javax.transaction.RollbackException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.Exceptions;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -15,5 +18,14 @@ public class ContextAffectsTransactionRepeatableReadTest extends ContextAffectsT
    @Override
    protected void configure(ConfigurationBuilder builder) {
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+   }
+
+   @Override
+   protected void safeCommit(boolean throwWriteSkew) throws Exception {
+      if (throwWriteSkew) {
+         Exceptions.expectException(RollbackException.class, tm()::commit);
+      } else {
+         tm().commit();
+      }
    }
 }

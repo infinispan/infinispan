@@ -7,7 +7,7 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.concurrent.Future;
 
-import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -40,7 +40,7 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
       EmbeddedTransaction tx1 = (EmbeddedTransaction) tm(0).suspend();
       tx1.runPrepare();
 
-      advanceOnInboundRpc(ss, cache(1), matchCommand(PrepareCommand.class).build())
+      advanceOnInboundRpc(ss, cache(1), matchCommand(VersionedPrepareCommand.class).build())
             .before("block_prepare", "resume_prepare");
 
       Future<EmbeddedTransaction> tx2Future = fork(() -> {

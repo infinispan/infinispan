@@ -13,7 +13,6 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -104,8 +103,7 @@ public class DistWriteSkewAtomicMapAPITest extends DistRepeatableReadAtomicMapAP
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.OPTIMISTIC)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis())
-            .isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
-            .versioning().enable().scheme(VersioningScheme.SIMPLE)
+            .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .clustering().hash().numOwners(2)
             .stateTransfer().fetchInMemoryState(false);
       return configurationBuilder;

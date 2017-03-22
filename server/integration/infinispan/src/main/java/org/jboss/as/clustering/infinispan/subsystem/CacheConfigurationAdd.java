@@ -60,7 +60,6 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.SitesConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.configuration.cache.StorageType;
@@ -428,11 +427,6 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 .useSynchronization(!txMode.isXAEnabled())
                 .recovery().enabled(txMode.isRecoveryEnabled())
         ;
-
-        if (mode.isSynchronous() && lockingMode == LockingMode.OPTIMISTIC && isolationLevel == IsolationLevel.REPEATABLE_READ) {
-            builder.locking().writeSkewCheck(true);
-            builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
-        }
         if (batching) {
             builder.transaction().transactionMode(org.infinispan.transaction.TransactionMode.TRANSACTIONAL).invocationBatching().enable();
         } else {

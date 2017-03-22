@@ -552,7 +552,7 @@ public class Parser60 implements ConfigurationParser {
                builder.locking().useLockStriping(Boolean.parseBoolean(value));
                break;
             case WRITE_SKEW_CHECK:
-               builder.locking().writeSkewCheck(Boolean.parseBoolean(value));
+               //ignored
                break;
             case SUPPORTS_CONCURRENT_UPDATES:
                builder.locking().supportsConcurrentUpdates(Boolean.parseBoolean(value));

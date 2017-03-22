@@ -17,6 +17,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -58,6 +59,7 @@ public class LocalConditionalCommandTest extends SingleCacheManagerTest {
             .fetchPersistentState(false)
             .purgeOnStartup(true)
             .shared(shared);
+      builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return builder;
    }
 

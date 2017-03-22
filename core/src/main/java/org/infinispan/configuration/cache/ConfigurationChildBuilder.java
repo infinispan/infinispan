@@ -44,6 +44,10 @@ public interface ConfigurationChildBuilder {
 
    TransactionConfigurationBuilder transaction();
 
+   /**
+    * @deprecated since 9.0. Infinispan automatically enables versioning when needed.
+    */
+   @Deprecated
    VersioningConfigurationBuilder versioning();
 
    UnsafeConfigurationBuilder unsafe();

@@ -7,6 +7,7 @@ import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -44,7 +45,7 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
    }
 
    public void testBelatedTransactionDoesntLeak() throws Throwable {
-      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1), PrepareCommand.class);
+      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1), VersionedPrepareCommand.class);
       ccf.gate.close();
 
       Cache receiver = cache(1);
@@ -52,23 +53,15 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
       advancedCache(1).addInterceptor(interceptor, 1);
 
       final Object key = getKeyForCache(1);
-      fork(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               cache(0).put(key, "v");
-            } catch (Throwable e) {
-               //possible as the node is being killed
-            }
+      fork(() -> {
+         try {
+            cache(0).put(key, "v");
+         } catch (Throwable e) {
+            //possible as the node is being killed
          }
       });
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return ccf.blockTypeCommandsReceived.get() == 1;
-         }
-      });
+      eventuallyEquals(1, ccf.blockTypeCommandsReceived::get);
 
       killMember(0);
 
@@ -88,7 +81,7 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
 
    private static class BlockingPrepareInterceptor extends CommandInterceptor {
 
-      public final CountDownLatch prepareExecuted = new CountDownLatch(1);
+      final CountDownLatch prepareExecuted = new CountDownLatch(1);
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

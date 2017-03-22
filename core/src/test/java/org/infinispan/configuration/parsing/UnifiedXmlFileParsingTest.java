@@ -488,7 +488,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.unsafe().unreliableReturnValues());
 
       c = cm.getCacheConfiguration("write-skew");
-      assertTrue(c.locking().writeSkewCheck());
       assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
       assertTrue(c.versioning().enabled());
       assertEquals(VersioningScheme.SIMPLE, c.versioning().scheme());

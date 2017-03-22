@@ -4,11 +4,13 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 
+import javax.transaction.RollbackException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockTestBase;
+import org.infinispan.test.Exceptions;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
 
@@ -92,8 +94,7 @@ public class RepeatableReadLockTest extends LockTestBase {
       assertEquals("v", cache.get("k"));
 
       tm.resume(reader);
-      Object o = cache.get("k");
-      assertNull("found value " + o, o);
+      assertEquals(null, cache.get("k"));
       tm.commit();
 
       assertNotNull(cache.get("k"));
@@ -115,11 +116,11 @@ public class RepeatableReadLockTest extends LockTestBase {
       assertEquals(cache.get("a"), "v2");
 
       tm.resume(tx);
-      assertNull("expected null but received " + cache.get("a"), cache.get("a"));
+      assertEquals(null, cache.get("a"));
       cache.remove("a");
-      tm.commit();
+      Exceptions.expectException(RollbackException.class, tm::commit);
 
-      assertNull("expected null but received " + cache.get("a"), cache.get("a"));
+      assertEquals(cache.get("a"), "v2");
    }
 
    @Override

@@ -13,7 +13,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
@@ -33,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 5.3
  */
-@Test(groups = "functional", testName = "tx.totalorder.simple.BaseSimpleTotalOrderTest")
+@Test(groups = "functional")
 public abstract class BaseSimpleTotalOrderTest extends MultipleCacheManagersTest {
 
    private static final String KEY_1 = "key_1";
@@ -311,12 +310,9 @@ public abstract class BaseSimpleTotalOrderTest extends MultipleCacheManagersTest
    protected final void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, true);
       dcc.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
-      dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(writeSkew);
+      dcc.locking().isolationLevel(writeSkew ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED);
       dcc.transaction().useSynchronization(useSynchronization);
       dcc.clustering().hash().numOwners(2);
-      if (writeSkew) {
-         dcc.versioning().enable().scheme(VersioningScheme.SIMPLE);
-      }
       dcc.transaction().recovery().disable();
       createCluster(dcc, clusterSize);
       waitForClusterToForm();

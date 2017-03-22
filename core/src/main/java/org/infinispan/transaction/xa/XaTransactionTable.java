@@ -9,6 +9,7 @@ import javax.transaction.xa.Xid;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -44,8 +45,7 @@ public class XaTransactionTable extends TransactionTable {
    @SuppressWarnings("unused")
    public void startXidMapping() {
       //in distributed mode with write skew check, we only allow 2 phases!!
-      this.onePhaseTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder() &&
-            !(configuration.clustering().cacheMode().isDistributed() && configuration.locking().writeSkewCheck());
+      this.onePhaseTotalOrder = Configurations.isOnePhaseTotalOrderCommit(configuration);
 
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
       xid2LocalTx = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);

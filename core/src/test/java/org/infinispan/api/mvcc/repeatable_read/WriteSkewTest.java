@@ -7,11 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -30,10 +26,10 @@ import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.atomic.FineGrainedAtomicMap;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -57,9 +53,10 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    @BeforeClass
    public void setUp() {
       ConfigurationBuilder configurationBuilder = createConfigurationBuilder();
+      configurationBuilder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       // The default cache is NOT write skew enabled.
       cacheManager = TestCacheManagerFactory.createCacheManager(configurationBuilder);
-      configurationBuilder.locking().writeSkewCheck(true).versioning().enable().scheme(VersioningScheme.SIMPLE);
+      configurationBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
    }
 
@@ -116,77 +113,60 @@ public class WriteSkewTest extends AbstractInfinispanTest {
     * same key to create a write skew. The second put() is only needed to avoid optimizations done by
     * OptimisticLockingInterceptor for single modification transactions and force it reach the code path that triggers
     * ISPN-2092.
-    *
-    * @throws Exception
     */
    public void testCheckWriteSkewWithMultipleModifications() throws Exception {
       final CountDownLatch latch1 = new CountDownLatch(1);
       final CountDownLatch latch2 = new CountDownLatch(1);
       final CountDownLatch latch3 = new CountDownLatch(1);
 
-      Future<Void> t1 = fork(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            latch1.await();
+      Future<Void> t1 = fork(() -> {
+         latch1.await();
 
-            tm.begin();
+         tm.begin();
+         try {
             try {
-               try {
-                  cache.get("k1");
-                  cache.put("k1", "v1");
-                  cache.put("k2", "thread 1");
-               } finally {
-                  latch2.countDown();
-               }
-               latch3.await();
-               commit(); //this is expected to fail
-               fail("Commit should have failed!");
-            } catch (Exception e) {
-               // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
-               if (tm.getTransaction() != null) {
-                  try {
-                     tm.rollback();
-                  } catch (SystemException e1) {
-                     log.error("Failed to rollback", e1);
-                  }
-               }
-
-               // Check that we got the proper exception
-               assertTrue(e instanceof RollbackException);
+               cache.get("k1");
+               cache.put("k1", "v1");
+               cache.put("k2", "thread 1");
+            } finally {
+               latch2.countDown();
             }
-            return null;
+            latch3.await();
+            Exceptions.expectException(RollbackException.class, this::commit);
+         } catch (Exception e) {
+            log.error("Unexpected exception in transaction 1", e);
+            tm.rollback();
          }
+         return null;
       });
 
-      Future<Void> t2 = fork(new Callable<Void>() {
-         public Void call() throws Exception {
-            latch2.await();
+      Future<Void> t2 = fork(() -> {
+         latch2.await();
 
-            tm.begin();
+         tm.begin();
+         try {
             try {
-               try {
-                  cache.get("k1");
-                  cache.put("k1", "v2");
-                  cache.put("k3", "thread 2");
-                  commit();
-               } finally {
-                  latch3.countDown();
-               }
-            } catch (Exception e) {
-               // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
-               if (tm.getTransaction() != null) {
-                  try {
-                     tm.rollback();
-                  } catch (SystemException e1) {
-                     log.error("Failed to rollback", e1);
-                  }
-               }
-
-               // Pass the exception to the main thread
-               throw e;
+               cache.get("k1");
+               cache.put("k1", "v2");
+               cache.put("k3", "thread 2");
+               commit();
+            } finally {
+               latch3.countDown();
             }
-            return null;
+         } catch (Exception e) {
+            // the TX is most likely rolled back already, but we attempt a rollback just in case it isn't
+            if (tm.getTransaction() != null) {
+               try {
+                  tm.rollback();
+               } catch (SystemException e1) {
+                  log.error("Failed to rollback", e1);
+               }
+            }
+
+            // Pass the exception to the main thread
+            throw e;
          }
+         return null;
       });
 
       latch1.countDown();
@@ -231,20 +211,18 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    public void testDontFailOnImmediateRemovalOfAtomicMaps() throws Exception {
       final String key = "key1";
       final String subKey = "subK";
-      TestingUtil.withTx(tm, new Callable<Object>() {
-         public Object call() {
-            FineGrainedAtomicMap<String, String> fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-            fineGrainedAtomicMap.put(subKey, "some value");
-            fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-            fineGrainedAtomicMap.get(subKey);
-            fineGrainedAtomicMap.put(subKey, "v");
-            fineGrainedAtomicMap.put(subKey + 2, "v2");
-            fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
-            Object object = fineGrainedAtomicMap.get(subKey);
-            assertEquals("Wrong FGAM sub-key value.", "v", object);
-            AtomicMapLookup.removeAtomicMap(cache, key);
-            return null;
-         }
+      TestingUtil.withTx(tm, () -> {
+         FineGrainedAtomicMap<String, String> fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+         fineGrainedAtomicMap.put(subKey, "some value");
+         fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+         fineGrainedAtomicMap.get(subKey);
+         fineGrainedAtomicMap.put(subKey, "v");
+         fineGrainedAtomicMap.put(subKey + 2, "v2");
+         fineGrainedAtomicMap = AtomicMapLookup.getFineGrainedAtomicMap(cache, key);
+         Object object = fineGrainedAtomicMap.get(subKey);
+         assertEquals("Wrong FGAM sub-key value.", "v", object);
+         AtomicMapLookup.removeAtomicMap(cache, key);
+         return null;
       });
    }
 
@@ -371,7 +349,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
 
       int nbWriters = 10;
       CyclicBarrier barrier = new CyclicBarrier(nbWriters + 1);
-      List<Future<Void>> futures = new ArrayList<Future<Void>>(nbWriters);
+      List<Future<Void>> futures = new ArrayList<>(nbWriters);
       for (int i = 0; i < nbWriters; i++) {
          log.debug("Schedule execution");
          Future<Void> future = fork(new EntryWriter(barrier));
@@ -385,56 +363,36 @@ public class WriteSkewTest extends AbstractInfinispanTest {
    }
 
 
-   private void doTest(final boolean allowWriteSkew) throws Exception {
+   private void doTest(final boolean disabledWriteSkewCheck) throws Exception {
       final String key = "k";
-      final Set<Exception> w1exceptions = new HashSet<Exception>();
-      final Set<Exception> w2exceptions = new HashSet<Exception>();
       final CountDownLatch w1Signal = new CountDownLatch(1);
       final CountDownLatch w2Signal = new CountDownLatch(1);
       final CountDownLatch threadSignal = new CountDownLatch(2);
 
       cache.put(key, "v");
 
-      Future<Void> w1 = fork(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            try {
-               tm.begin();
-               assertEquals("Wrong value in Writer-1 for key " + key + ".", "v", cache.get(key));
-               threadSignal.countDown();
-               w1Signal.await();
-               cache.put(key, "v2");
-               commit();
-            } catch (Exception e) {
-               w1exceptions.add(e);
-               // Tx should be rolled back already, but we're being extra cautious
-               if (tm.getTransaction() != null) {
-                  tm.rollback();
-               }
-            }
-            return null;
-         }
+      Future<Void> w1 = fork(() -> {
+         tm.begin();
+         assertEquals("Wrong value in Writer-1 for key " + key + ".", "v", cache.get(key));
+         threadSignal.countDown();
+         w1Signal.await();
+         cache.put(key, "v2");
+         commit();
+         return null;
       });
 
-      Future<Void> w2 = fork(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            try {
-               tm.begin();
-               assertEquals("Wrong value in Writer-2 for key " + key + ".", "v", cache.get(key));
-               threadSignal.countDown();
-               w2Signal.await();
-               cache.put(key, "v3");
-               commit();
-            } catch (Exception e) {
-               w2exceptions.add(e);
-               // Tx should be rolled back already, but we're being extra cautious
-               if (tm.getTransaction() != null) {
-                  tm.rollback();
-               }
-            }
-            return null;
+      Future<Void> w2 = fork(() -> {
+         tm.begin();
+         assertEquals("Wrong value in Writer-2 for key " + key + ".", "v", cache.get(key));
+         threadSignal.countDown();
+         w2Signal.await();
+         cache.put(key, "v3");
+         if (disabledWriteSkewCheck) {
+            commit();
+         } else {
+            Exceptions.expectException(RollbackException.class, this::commit);
          }
+         return null;
       });
 
       threadSignal.await(10, SECONDS);
@@ -446,32 +404,19 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       w2Signal.countDown();
       w2.get(10, SECONDS);
 
-      if (allowWriteSkew) {
-         // should have no exceptions!!
-         throwExceptions(w1exceptions);
-         throwExceptions(w2exceptions);
+      if (disabledWriteSkewCheck) {
          assertEquals("W2 should have overwritten W1's work!", "v3", cache.get(key));
          assertNoLocks();
       } else {
-         Collection<Exception> combined = new HashSet<Exception>(w1exceptions);
-         combined.addAll(w2exceptions);
-         assertFalse("Exceptions are expected!", combined.isEmpty());
-         assertEquals("Expects one exception.", 1, combined.size());
-         assertTrue("Wrong exception type.", combined.iterator().next() instanceof RollbackException);
-      }
-   }
-
-   private void throwExceptions(Collection<Exception> exceptions) throws Exception {
-      Iterator<Exception> iterator = exceptions.iterator();
-      if (iterator.hasNext()) {
-         throw iterator.next();
+         assertEquals("W2 should *not* have overwritten W1's work!", "v2", cache.get(key));
+         assertNoLocks();
       }
    }
 
    protected class EntryWriter implements Callable<Void> {
       private final CyclicBarrier barrier;
 
-      public EntryWriter(CyclicBarrier barrier) {
+      EntryWriter(CyclicBarrier barrier) {
          this.barrier = barrier;
       }
 

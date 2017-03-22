@@ -27,6 +27,7 @@ import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -69,6 +70,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
             .fetchPersistentState(false)
             .purgeOnStartup(true)
             .shared(shared);
+      builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return builder;
    }
 

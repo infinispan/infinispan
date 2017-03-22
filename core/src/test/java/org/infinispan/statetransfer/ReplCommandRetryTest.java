@@ -8,7 +8,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -35,6 +34,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -67,6 +67,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
          configurationBuilder.customInterceptors().addInterceptor()
                .after(EntryWrappingInterceptor.class).interceptor(new DelayInterceptor(commandToBlock));
       }
+      configurationBuilder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return configurationBuilder;
    }
 
@@ -81,13 +82,10 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 2, c1, c2);
 
-      Future<Object> f = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            log.tracef("Initiating a put command on %s", c1);
-            c1.put("k", "v");
-            return null;
-         }
+      Future<Object> f = fork(() -> {
+         log.tracef("Initiating a put command on %s", c1);
+         c1.put("k", "v");
+         return null;
       });
 
       // The command is replicated to c2, and blocks in the DelayInterceptor on c2
@@ -170,18 +168,15 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       int initialTopologyId = extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
 
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, true));
-      final Cache c2 = cm2.getCache();
+      final Cache<String, String> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 2, c1, c2);
 
-      Future<Object> f = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            // The LockControlCommand wouldn't be replicated if we initiated the transaction on the primary owner (c1)
-            log.tracef("Initiating a transaction on backup owner %s", c2);
-            c2.put("k", "v");
-            return null;
-         }
+      Future<Object> f = fork(() -> {
+         // The LockControlCommand wouldn't be replicated if we initiated the transaction on the primary owner (c1)
+         log.tracef("Initiating a transaction on backup owner %s", c2);
+         c2.put("k", "v");
+         return null;
       });
 
       // The prepare command is replicated to cache c1, and it blocks in the DelayInterceptor

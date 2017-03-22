@@ -4,10 +4,11 @@ import javax.transaction.RollbackException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -35,17 +36,12 @@ public class ReplicationTxExceptionTest extends MultipleCacheManagersTest {
    }
 
    public void testReplicationFailure() throws Exception {
-      controlledRpcManager.failFor(PrepareCommand.class);
+      controlledRpcManager.failFor(VersionedPrepareCommand.class);
       try {
          TransactionManager tm = cache(0).getAdvancedCache().getTransactionManager();
          tm.begin();
          cache(0).put("k0", "v");
-         try {
-            tm.commit();
-            assert false;
-         } catch (RollbackException e) {
-            //expected
-         }
+         Exceptions.expectException(RollbackException.class, tm::commit);
       } finally {
          controlledRpcManager.stopFailing();
       }

@@ -25,6 +25,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "expiry.AutoCommitExpiryTest")
@@ -75,7 +76,8 @@ public abstract class AutoCommitExpiryTest extends SingleCacheManagerTest {
             .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .autoCommit(autoCommit);
+            .autoCommit(autoCommit)
+            .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
 
       timeService = new ControlledTimeService(0);

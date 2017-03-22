@@ -31,7 +31,6 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
 
    public FunctionalWriteSkewInMemoryTest() {
       transactional(true).lockingMode(LockingMode.OPTIMISTIC).isolationLevel(IsolationLevel.REPEATABLE_READ);
-      writeSkewCheck(true);
    }
 
    @Override
@@ -86,12 +85,12 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
 
    enum ReadOp {
       READ(true, (cache, key, ro, rw) ->
-            ro.eval(key, (Serializable & Function<EntryView.ReadEntryView, Object>) v -> v.get()).get(10, TimeUnit.SECONDS)),
+            ro.eval(key, (Serializable & Function<EntryView.ReadEntryView, Object>) EntryView.ReadEntryView::get).get(10, TimeUnit.SECONDS)),
       READ_MANY(true, (cache, key, ro, rw) ->
-            ro.evalMany(Collections.singleton(key), (Serializable & Function<EntryView.ReadEntryView, Object>) v -> v.get()).findAny().get()),
-      READ_WRITE_KEY(true, (cache, key, ro, rw) -> rw.eval(key, (Serializable & Function<EntryView.ReadWriteEntryView, Object>) v -> v.get()).get()),
+            ro.evalMany(Collections.singleton(key), (Serializable & Function<EntryView.ReadEntryView, Object>) EntryView.ReadEntryView::get).findAny().get()),
+      READ_WRITE_KEY(true, (cache, key, ro, rw) -> rw.eval(key, (Serializable & Function<EntryView.ReadWriteEntryView, Object>) EntryView.ReadEntryView::get).get()),
       READ_WRITE_KEY_VALUE(true, (cache, key, ro, rw) -> rw.eval(key, null, (Serializable & BiFunction<Object, EntryView.ReadWriteEntryView, Object>) (value, v) -> v.get()).get()),
-      READ_WRITE_MANY(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singleton(key), (Serializable & Function<EntryView.ReadWriteEntryView, Object>) v -> v.get()).findAny().get()),
+      READ_WRITE_MANY(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singleton(key), (Serializable & Function<EntryView.ReadWriteEntryView, Object>) EntryView.ReadEntryView::get).findAny().get()),
       READ_WRITE_MANY_ENTRIES(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singletonMap(key, null), (Serializable & BiFunction<Object, EntryView.ReadWriteEntryView, Object>) (value, v) -> v.get()).findAny().get()),
       GET(false, (cache, key, ro, rw) -> cache.get(key))
       ;

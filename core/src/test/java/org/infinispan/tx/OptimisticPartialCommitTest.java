@@ -6,19 +6,15 @@ import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.InvocationMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -50,8 +46,7 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       configuration.clustering().cacheMode(CacheMode.DIST_SYNC);
       configuration.clustering().hash().numSegments(2).numOwners(2).consistentHashFactory(controlledCHFactory);
       configuration.transaction().lockingMode(LockingMode.OPTIMISTIC)
-            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
-            .versioning().enable().scheme(VersioningScheme.SIMPLE);
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       for (int i = 0; i < 4; i++) {
          addClusterEnabledCacheManager(configuration, new TransportFlags().withFD(true));
       }
@@ -84,18 +79,15 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       advanceOnGlobalComponentMethod(ss, manager(0), ClusterTopologyManager.class, stateAppliedOn0Matcher)
             .after("after_state_applied_on_1");
 
-      Future<Object> txFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            tm(0).begin();
-            try {
-               cache(0).put(k1, "v1_1");
-               cache(0).put(k2, "v2_1");
-            } finally {
-               tm(0).commit();
-            }
-            return null;
+      Future<Object> txFuture = fork(() -> {
+         tm(0).begin();
+         try {
+            cache(0).put(k1, "v1_1");
+            cache(0).put(k2, "v2_1");
+         } finally {
+            tm(0).commit();
          }
+         return null;
       });
 
       ss.advance("before_kill_3");
@@ -127,15 +119,12 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
             "after_state_applied_on_1", "before_commit_on_2", "after_commit_on_2", "after_commit_on_1");
 
       advanceOnInterceptor(ss, cache(1), StateTransferInterceptor.class,
-            new CommandMatcher() {
-               @Override
-               public boolean accept(ReplicableCommand command) {
-                  if (!(command instanceof VersionedCommitCommand))
-                     return false;
-                  GlobalTransaction gtx = ((VersionedCommitCommand) command).getGlobalTransaction();
-                  LocalTransaction tx = transactionTable(1).getLocalTransaction(gtx);
-                  return tx.getStateTransferFlag() == null;
-               }
+            command -> {
+               if (!(command instanceof VersionedCommitCommand))
+                  return false;
+               GlobalTransaction gtx = ((VersionedCommitCommand) command).getGlobalTransaction();
+               LocalTransaction tx = transactionTable(1).getLocalTransaction(gtx);
+               return tx.getStateTransferFlag() == null;
             }).after("after_commit_on_1");
       advanceOnInterceptor(ss, cache(2), StateTransferInterceptor.class,
             matchCommand(VersionedCommitCommand.class).matchCount(0).build())
@@ -146,18 +135,15 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       advanceOnGlobalComponentMethod(ss, manager(0), ClusterTopologyManager.class, stateAppliedOn0Matcher)
             .after("after_state_applied_on_1");
 
-      Future<Object> txFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            tm(0).begin();
-            try {
-               cache(1).put(k1, "v1_1");
-               cache(1).put(k2, "v2_1");
-            } finally {
-               tm(0).commit();
-            }
-            return null;
+      Future<Object> txFuture = fork(() -> {
+         tm(0).begin();
+         try {
+            cache(1).put(k1, "v1_1");
+            cache(1).put(k2, "v2_1");
+         } finally {
+            tm(0).commit();
          }
+         return null;
       });
 
       ss.advance("before_kill_3");

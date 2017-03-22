@@ -51,6 +51,7 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 
@@ -86,6 +87,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       builderUsed.clustering().cacheMode(cacheMode);
       if (tx) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+         builderUsed.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }
       // Due to ISPN-5507 we can end up waiting 30 seconds for the test to complete with expiration tests
       builderUsed.transaction().cacheStopTimeout(100, TimeUnit.MILLISECONDS);

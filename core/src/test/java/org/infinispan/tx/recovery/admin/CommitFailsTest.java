@@ -14,6 +14,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -34,6 +35,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configuration = defaultRecoveryConfig();
       configuration.transaction().autoCommit(false);
+      configuration.locking().isolationLevel(IsolationLevel.READ_COMMITTED); //skip WSC exceptions
       createCluster(configuration, 3);
       waitForClusterToForm();
 
@@ -89,13 +91,13 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       runTest(where);
    }
 
-   private void assertAllHaveValue(Object key, String newValue) throws Exception {
+   private void assertAllHaveNewValue(Object key) throws Exception {
       for (Cache c : caches()) {
-         Object actual = null;
+         Object actual;
          TestingUtil.getTransactionManager(c).begin();
          actual = c.get(key);
          TestingUtil.getTransactionManager(c).commit();
-         assertEquals(actual, newValue);
+         assertEquals(actual, "newValue");
       }
    }
 
@@ -107,7 +109,7 @@ public class CommitFailsTest extends AbstractRecoveryTest {
       assertCleanup(0);
       assertCleanup(1);
       assertCleanup(2);
-      assertAllHaveValue(key, "newValue");
+      assertAllHaveNewValue(key);
       assertCleanup(0, 1, 2);
    }
 

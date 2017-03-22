@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -25,12 +26,13 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "container.offheap.OffHeapBoundedSingleNodeTest")
 public class OffHeapBoundedSingleNodeTest extends OffHeapSingleNodeTest {
 
-   protected static final int COUNT = 100;
+   private static final int COUNT = 100;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
       dcc.memory().storageType(StorageType.OFF_HEAP).size(COUNT).evictionType(EvictionType.COUNT);
+      dcc.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       // Only start up the 1 cache
       addClusterEnabledCacheManager(dcc);
    }

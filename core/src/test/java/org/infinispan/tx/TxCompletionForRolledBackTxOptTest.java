@@ -5,8 +5,8 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.fail;
 
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
-import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -46,7 +46,7 @@ public class TxCompletionForRolledBackTxOptTest extends MultipleCacheManagersTes
       assertNull(cache(0).get(k1));
       assertNull(cache(0).get(k2));
 
-      assertEquals(cf.received(PrepareCommand.class), 1);
+      assertEquals(cf.received(VersionedPrepareCommand.class), 1);
       assertEquals(cf.received(RollbackCommand.class), 1);
       assertEquals(cf.received(TxCompletionNotificationCommand.class), 0);
    }
