@@ -12,6 +12,8 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
@@ -484,6 +486,11 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       public String toString() {
          return entries.toString();
       }
+
+      @Override
+      public Spliterator<InternalCacheEntry<K, V>> spliterator() {
+         return Spliterators.spliterator(this, Spliterator.DISTINCT | Spliterator.CONCURRENT);
+      }
    }
 
    /**
@@ -499,6 +506,11 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       @Override
       public int size() {
          return entries.size();
+      }
+
+      @Override
+      public Spliterator<V> spliterator() {
+         return Spliterators.spliterator(this, Spliterator.CONCURRENT);
       }
    }
 
