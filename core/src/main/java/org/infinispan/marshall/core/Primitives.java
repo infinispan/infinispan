@@ -86,7 +86,7 @@ final class Primitives {
             out.writeByte((byte) obj);
             break;
          case ID_CHAR_OBJ:
-            out.writeChar((int) obj);
+            out.writeChar((char) obj);
             break;
          case ID_DOUBLE_OBJ:
             out.writeDouble((double) obj);
