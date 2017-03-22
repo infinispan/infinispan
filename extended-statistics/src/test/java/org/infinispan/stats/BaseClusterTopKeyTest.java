@@ -16,7 +16,6 @@ import javax.transaction.Transaction;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.stats.topK.CacheUsageInterceptor;
@@ -218,8 +217,7 @@ public abstract class BaseClusterTopKeyTest extends AbstractTopKeyTest {
          builder.customInterceptors().addInterceptor()
                .before(TxInterceptor.class)
                .interceptor(new CacheUsageInterceptor());
-         builder.versioning().enabled(true).scheme(VersioningScheme.SIMPLE);
-         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
+         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
                 .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
          addClusterEnabledCacheManager(builder);
       }

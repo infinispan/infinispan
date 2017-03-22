@@ -5,7 +5,6 @@ import static org.testng.Assert.assertNull;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -45,8 +44,7 @@ public class VersionedConditionalOperationsTest extends MultipleCacheManagersTes
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, true);
-      dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true);
-      dcc.versioning().enable().scheme(VersioningScheme.SIMPLE);
+      dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       createCluster(dcc, clusterSize);
       waitForClusterToForm();
    }

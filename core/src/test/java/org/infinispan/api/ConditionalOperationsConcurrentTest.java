@@ -20,7 +20,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
@@ -86,9 +85,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, transactional);
       dcc.transaction().lockingMode(lockingMode);
       if (writeSkewCheck) {
-         dcc.transaction().locking().writeSkewCheck(true);
          dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-         dcc.transaction().versioning().enable().scheme(VersioningScheme.SIMPLE);
       }
       createCluster(dcc, nodes);
       waitForClusterToForm();
@@ -196,16 +193,13 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
             //not all threads might finish at the same block, so make sure none stays waiting for us when we exit
             quit.set(true);
             barrier.reset();
-         } catch (InterruptedException e) {
+         } catch (InterruptedException | RuntimeException e) {
             log.error("Caught exception", e);
             fail(e);
          } catch (BrokenBarrierException e) {
             log.error("Caught exception", e);
             //just quit
             print("Broken barrier!");
-         } catch (RuntimeException e) {
-            log.error("Caught exception", e);
-            fail(e);
          } finally {
             int andGet = liveWorkers.decrementAndGet();
             barrier.reset();

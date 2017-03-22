@@ -134,7 +134,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
             .writeFileListAsynchronously(writeFileListAsync)
             .deleteOperationsExecutor(isAsync ? new WithinThreadExecutor() : deletesExecutor.getExecutor());
       if (chunkSize != null) {
-         directoryBuildContext.chunkSize(chunkSize.intValue());
+         directoryBuildContext.chunkSize(chunkSize);
       }
       if (indexWriterLockFactory != null) {
          directoryBuildContext.overrideWriteLocker(indexWriterLockFactory);
@@ -161,7 +161,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
                   builder
                         .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
                         .stateTransfer().awaitInitialTransfer(true).timeout(480000)
-                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500)
                   ;
                } else {
                   builder.simpleCache(true);
@@ -181,7 +181,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
                   builder
                         .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(25000)
                         .stateTransfer().awaitInitialTransfer(true).timeout(480000)
-                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500)
                   ;
                } else {
                   builder.simpleCache(true);
@@ -201,7 +201,7 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
                   builder
                         .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(25000)
                         .stateTransfer().awaitInitialTransfer(true).timeout(480000)
-                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500).writeSkewCheck(false)
+                        .locking().useLockStriping(false).lockAcquisitionTimeout(10000).concurrencyLevel(500)
                   ;
                } else {
                   builder.simpleCache(true);

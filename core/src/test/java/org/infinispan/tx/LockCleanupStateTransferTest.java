@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
-import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -53,7 +53,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
    }
 
    public void testBelatedCommit() throws Throwable {
-      testLockReleasedCorrectly(CommitCommand.class);
+      testLockReleasedCorrectly(VersionedCommitCommand.class);
    }
 
    public void testBelatedTxCompletionNotificationCommand() throws Throwable {
@@ -100,7 +100,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
 
       final Set<Object> migratedKeys = new HashSet<>(KEY_SET_SIZE);
       for (Object key : keys) {
-         if (keyMapsToNode(key, 2)) {
+         if (keyMapsToNode(key)) {
             migratedKeys.add(key);
          }
       }
@@ -145,9 +145,9 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       }
    }
 
-   private boolean keyMapsToNode(Object key, int nodeIndex) {
+   private boolean keyMapsToNode(Object key) {
       Address owner = owner(key);
-      return owner.equals(address(nodeIndex));
+      return owner.equals(address(2));
    }
 
    private Address owner(Object key) {

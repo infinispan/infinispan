@@ -144,8 +144,7 @@ public class TestCacheManagerFactory {
    }
 
    private static void amendJTA(ConfigurationBuilder builder) {
-      org.infinispan.configuration.cache.Configuration c = builder.build();
-      if (c.transaction().transactionMode().equals(TransactionMode.TRANSACTIONAL) && c.transaction().transactionManagerLookup() == null) {
+      if (builder.transaction().transactionMode() == TransactionMode.TRANSACTIONAL && builder.transaction().transactionManagerLookup() == null) {
          builder.transaction().transactionManagerLookup(Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
       }
    }
@@ -384,11 +383,7 @@ public class TestCacheManagerFactory {
          try {
             Marshaller marshaller = Util.getInstanceStrict(MARSHALLER, Thread.currentThread().getContextClassLoader());
             builder.serialization().marshaller(marshaller);
-         } catch (ClassNotFoundException e) {
-            // No-op, stick to GlobalConfiguration default.
-         } catch (InstantiationException e) {
-            // No-op, stick to GlobalConfiguration default.
-         } catch (IllegalAccessException e) {
+         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             // No-op, stick to GlobalConfiguration default.
          }
       }

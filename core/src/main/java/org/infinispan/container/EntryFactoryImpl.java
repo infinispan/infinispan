@@ -5,6 +5,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.VersionedRepeatableReadEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
@@ -62,9 +63,7 @@ public class EntryFactoryImpl implements EntryFactory {
             && configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
       isL1Enabled = configuration.clustering().l1().enabled();
       // Write-skew check implies isolation level = REPEATABLE_READ && locking mode = OPTIMISTIC
-      useVersioning =
-            configuration.transaction().transactionMode().isTransactional() &&
-            configuration.locking().writeSkewCheck();
+      useVersioning = Configurations.isTxVersioned(configuration);
    }
 
    @Override

@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -26,6 +27,7 @@ public class APITxTest extends APINonTxTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
+      c.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       cm.defineConfiguration("test", c.build());
       cache = cm.getCache("test");

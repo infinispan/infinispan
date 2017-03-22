@@ -12,7 +12,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -107,16 +106,11 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
             .transactionProtocol(TransactionProtocol.TOTAL_ORDER)
             .useSynchronization(false)
             .recovery().disable();
-      dcc.locking()
-            .isolationLevel(IsolationLevel.REPEATABLE_READ)
-            .writeSkewCheck(true);
+      dcc.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       dcc.clustering().hash()
             .numOwners(1)
             .numSegments(60);
       dcc.clustering().remoteTimeout(1, TimeUnit.SECONDS);
-      dcc.versioning()
-            .enable()
-            .scheme(VersioningScheme.SIMPLE);
       createCluster(dcc, 2);
       waitForClusterToForm();
    }

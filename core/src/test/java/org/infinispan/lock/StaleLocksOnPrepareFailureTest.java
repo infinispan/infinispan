@@ -1,12 +1,12 @@
 package org.infinispan.lock;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
 
-   public static final int NUM_CACHES = 10;
+   private static final int NUM_CACHES = 10;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -33,18 +33,14 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
    }
 
    public void testModsCommit() throws Exception {
-      doTest(true);
-   }
-
-   private void doTest(boolean mods) throws Exception {
       Cache<Object, Object> c1 = cache(0);
       Cache<Object, Object> c2 = cache(NUM_CACHES /2);
 
       // force the prepare command to fail on c2
       FailInterceptor interceptor = new FailInterceptor();
-      interceptor.failFor(PrepareCommand.class);
+      interceptor.failFor(VersionedPrepareCommand.class);
       AsyncInterceptorChain ic = c2.getAdvancedCache().getAsyncInterceptorChain();
-      ic.addInterceptorBefore(interceptor, TxDistributionInterceptor.class);
+      ic.addInterceptorBefore(interceptor, VersionedDistributionInterceptor.class);
 
       MagicKey k1 = new MagicKey("k1", c1);
 

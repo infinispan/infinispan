@@ -7,6 +7,10 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
+/**
+ * @deprecated since 9.0. Infinispan automatically enable versioning when needed.
+ */
+@Deprecated
 public class VersioningConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<VersioningConfiguration> {
 
    private final AttributeSet attributes;

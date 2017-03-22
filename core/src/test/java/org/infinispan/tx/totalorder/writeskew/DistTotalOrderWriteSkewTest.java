@@ -5,7 +5,6 @@ import static org.testng.Assert.assertEquals;
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.versioning.DistWriteSkewTest;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -43,7 +42,6 @@ public class DistTotalOrderWriteSkewTest extends DistWriteSkewTest {
    protected void decorate(ConfigurationBuilder builder) {
       builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER)
             .recovery().disable();
-      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
-            .versioning().enable().scheme(VersioningScheme.SIMPLE);
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
    }
 }

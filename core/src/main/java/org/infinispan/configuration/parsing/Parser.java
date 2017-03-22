@@ -50,7 +50,6 @@ import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
@@ -1686,15 +1685,12 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseVersioning(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      builder.versioning().enable();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case VERSIONING_SCHEME:
-               builder.versioning().scheme(VersioningScheme.valueOf(value));
+               log.ignoredAttribute("versioning", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1773,7 +1769,7 @@ public class Parser implements ConfigurationParser {
                break;
             }
             case WRITE_SKEW_CHECK: {
-               builder.locking().writeSkewCheck(Boolean.valueOf(value));
+               log.ignoredAttribute("write skew attribute", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
                break;
             }
             default: {

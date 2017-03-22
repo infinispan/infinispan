@@ -3,7 +3,6 @@ package org.infinispan.api;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -14,7 +13,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
@@ -50,9 +48,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, true);
       dcc.transaction().lockingMode(lockingMode);
       if (writeSkewCheck) {
-         dcc.transaction().locking().writeSkewCheck(true);
          dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-         dcc.transaction().versioning().enable().scheme(VersioningScheme.SIMPLE);
       }
       createCluster(dcc, NODES_NUM);
       waitForClusterToForm();
@@ -86,14 +82,11 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
          controller.awaitCommit.close();
          controller.blockCommit.close();
 
-         final Future<Boolean> tx1 = fork(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-               tm(1).begin();
-               cache(1).put(key, "tx1");
-               tm(1).commit();
-               return Boolean.TRUE;
-            }
+         final Future<Boolean> tx1 = fork(() -> {
+            tm(1).begin();
+            cache(1).put(key, "tx1");
+            tm(1).commit();
+            return Boolean.TRUE;
          });
 
          //await tx1 commit on cache1... the commit will be blocked!
@@ -102,24 +95,21 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
          controller.awaitCommit.await(30, TimeUnit.SECONDS);
          controller.blockRemoteGet.close();
 
-         final Future<Boolean> tx2 = fork(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-               tm(2).begin();
-               switch (operation) {
-                  case REMOVE:
-                     cache(2).remove(key, "v1");
-                     break;
-                  case REPLACE:
-                     cache(2).replace(key, "v1", "tx2");
-                     break;
-                  case PUT:
-                     cache(2).putIfAbsent(key, "tx2");
-                     break;
-               }
-               tm(2).commit();
-               return Boolean.TRUE;
+         final Future<Boolean> tx2 = fork(() -> {
+            tm(2).begin();
+            switch (operation) {
+               case REMOVE:
+                  cache(2).remove(key, "v1");
+                  break;
+               case REPLACE:
+                  cache(2).replace(key, "v1", "tx2");
+                  break;
+               case PUT:
+                  cache(2).putIfAbsent(key, "tx2");
+                  break;
             }
+            tm(2).commit();
+            return Boolean.TRUE;
          });
 
          //tx2 will not prepare the transaction remotely since the operation should fail.

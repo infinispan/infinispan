@@ -29,6 +29,7 @@ import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.AbstractControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -102,7 +103,7 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
             .useSynchronization(false)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .recovery().disable();
-      builder.locking().lockAcquisitionTimeout(1, TimeUnit.MINUTES);
+      builder.locking().lockAcquisitionTimeout(1, TimeUnit.MINUTES).isolationLevel(IsolationLevel.READ_COMMITTED);
       builder.clustering()
             .remoteTimeout(1, TimeUnit.MINUTES)
             .hash().numOwners(1).numSegments(1)

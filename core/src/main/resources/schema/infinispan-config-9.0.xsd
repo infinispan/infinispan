@@ -799,7 +799,7 @@
     <xs:attribute name="write-skew" type="xs:boolean" default="${Locking.writeSkewCheck}">
       <xs:annotation>
         <xs:documentation>
-          This setting is only applicable in the case of REPEATABLE_READ. When write skew check is set to false, if the writer at commit time discovers that the working entry and the underlying entry have different versions, the working entry will overwrite the underlying entry. If true, such version conflict - known as a write-skew - will throw an Exception. Defaults to false.
+          (Deprecated) This setting is only applicable in the case of REPEATABLE_READ. When write skew check is set to false, if the writer at commit time discovers that the working entry and the underlying entry have different versions, the working entry will overwrite the underlying entry. If true, such version conflict - known as a write-skew - will throw an Exception. Defaults to false.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -1043,7 +1043,7 @@
     <xs:attribute name="scheme" type="tns:versioning-scheme" default="${Versioning.scheme}">
       <xs:annotation>
         <xs:documentation>
-          The scheme to use when versioning entries. Can be either SIMPLE or NONE. Defaults to NONE
+          (Deprecated) The scheme to use when versioning entries. Can be either SIMPLE or NONE. Defaults to NONE
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

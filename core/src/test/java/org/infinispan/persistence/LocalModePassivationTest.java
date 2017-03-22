@@ -49,17 +49,13 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       this.passivationEnabled = passivationEnabled;
    }
 
-   protected void configureConfiguration(ConfigurationBuilder cb) {
-
-   }
-
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .memory().storageType(StorageType.BINARY).size(150)
-            .locking().useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED)
+            .locking().useLockStriping(false).isolationLevel(IsolationLevel.READ_COMMITTED)
             .persistence()
                .passivation(passivationEnabled)
                .addStore(DummyInMemoryStoreConfigurationBuilder.class)
@@ -68,8 +64,6 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
                .ignoreModifications(false)
                .preload(false)
                .purgeOnStartup(false);
-
-      configureConfiguration(builder);
 
       return TestCacheManagerFactory.createCacheManager(builder);
    }
@@ -164,7 +158,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
       assertEquals(numKeys, entrySet.size());
 
-      Map<Object, Object> map = new HashMap<Object, Object>(entrySet.size());
+      Map<Object, Object> map = new HashMap<>(entrySet.size());
       for (Map.Entry<Object, Object> entry : entrySet) {
          map.put(entry.getKey(), entry.getValue());
       }
@@ -187,7 +181,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       assertEquals(dc.size(), entrySet.size());
 
       Set<InternalCacheEntry> entries = dc.entrySet();
-      Map<Object, Object> map = new HashMap<Object, Object>(entrySet.size());
+      Map<Object, Object> map = new HashMap<>(entrySet.size());
       for (Map.Entry<Object, Object> entry : entrySet) {
          map.put(entry.getKey(), entry.getValue());
       }

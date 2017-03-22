@@ -15,7 +15,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -64,8 +63,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
 
       if (isOptimistic) {
          builder.transaction().lockingMode(LockingMode.OPTIMISTIC)
-               .locking().writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ)
-               .versioning().enable().scheme(VersioningScheme.SIMPLE);
+               .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       } else {
          builder.transaction().lockingMode(LockingMode.PESSIMISTIC);
       }

@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * Helper configuration methods.
@@ -21,13 +22,16 @@ public class Configurations {
    }
 
    public static boolean isOnePhaseTotalOrderCommit(Configuration cfg) {
-      return cfg.transaction().transactionProtocol().isTotalOrder() && !isVersioningEnabled(cfg);
+      return cfg.transaction().transactionMode().isTransactional() &&
+            cfg.transaction().transactionProtocol().isTotalOrder() &&
+            !isTxVersioned(cfg);
    }
 
-   public static boolean isVersioningEnabled(Configuration cfg) {
-      return cfg.locking().writeSkewCheck() &&
+   public static boolean isTxVersioned(Configuration cfg) {
+      return cfg.transaction().transactionMode().isTransactional() &&
             cfg.transaction().lockingMode() == LockingMode.OPTIMISTIC &&
-            cfg.versioning().enabled();
+            cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ &&
+            !cfg.clustering().cacheMode().isInvalidation(); //invalidation can't use versions
    }
 
    public static boolean noDataLossOnJoiner(Configuration configuration) {

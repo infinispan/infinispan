@@ -9,6 +9,18 @@ This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 8.x to 9.0
 
+=== Default transaction mode changed
+
+The default configuration for transactional caches changed from `READ_COMMITTED` and `OPTIMISTIC` locking to `REPEATABLE_READ` and `OPTIMISTIC` locking with `write-skew` enabled.
+
+Also, using the `REPEATABLE_READ` isolation level and `OPTIMISTIC` locking without `write-skew` enabled is no longer allowed.
+To help with the upgrade, `write-skew` will be automatically enabled in this case.
+
+The following configuration has been deprecated:
+
+* `write-skew`: as said, it is automatically enabled.
+* `<versioning>` and its attributes. It is automatically enabled and configured when needed.
+
 === Removed eagerLocking and eagerLockingSingleNode configuration settings
 Both were deprecated since version 5.1.
 `eagerLocking(true)` can be replaced with `lockingMode(LockingMode.PESSIMISTIC)`,

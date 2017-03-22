@@ -5,7 +5,6 @@ import static org.testng.Assert.assertNull;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -15,9 +14,7 @@ public class SimpleConditionalOperationsWriteSkewTest extends MultipleCacheManag
 
    protected ConfigurationBuilder getConfig() {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
-      dcc.transaction().locking().writeSkewCheck(true);
       dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-      dcc.transaction().versioning().enable().scheme(VersioningScheme.SIMPLE);
       return dcc;
    }
 

@@ -74,7 +74,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Start
    public void start() {
-      isVersioned = Configurations.isVersioningEnabled(configuration);
+      isVersioned = Configurations.isTxVersioned(configuration);
    }
 
    @Override

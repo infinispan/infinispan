@@ -35,7 +35,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -64,12 +63,10 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    private static final String VALUE_4 = "value_4";
    private final List<ControlledPerCacheInboundInvocationHandler> inboundHandlerList = new ArrayList<>(NUM_NODES);
    private final CacheMode mode;
-   private final boolean writeSkew;
    private final boolean totalOrder;
 
-   protected BaseClusteredExtendedStatisticTest(CacheMode mode, boolean writeSkew, boolean totalOrder) {
+   protected BaseClusteredExtendedStatisticTest(CacheMode mode, boolean totalOrder) {
       this.mode = mode;
-      this.writeSkew = writeSkew;
       this.totalOrder = totalOrder;
    }
 
@@ -286,11 +283,8 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
          if (totalOrder) {
             builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
          }
-         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(writeSkew);
+         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
          builder.clustering().hash().numOwners(1);
-         if (writeSkew) {
-            builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
-         }
          builder.transaction().recovery().disable();
          builder.customInterceptors().addInterceptor().interceptor(new ExtendedStatisticInterceptor())
                .position(InterceptorConfiguration.Position.FIRST);

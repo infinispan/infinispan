@@ -4,16 +4,13 @@ import static org.infinispan.configuration.cache.LockingConfiguration.CONCURRENC
 import static org.infinispan.configuration.cache.LockingConfiguration.ISOLATION_LEVEL;
 import static org.infinispan.configuration.cache.LockingConfiguration.LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.configuration.cache.LockingConfiguration.USE_LOCK_STRIPING;
-import static org.infinispan.configuration.cache.LockingConfiguration.WRITE_SKEW_CHECK;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -54,6 +51,10 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    public LockingConfigurationBuilder isolationLevel(IsolationLevel isolationLevel) {
       attributes.attribute(ISOLATION_LEVEL).set(isolationLevel);
       return this;
+   }
+
+   public IsolationLevel isolationLevel() {
+      return attributes.attribute(ISOLATION_LEVEL).get();
    }
 
    /**
@@ -98,28 +99,15 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     * to false, if the writer at commit time discovers that the working entry and the underlying
     * entry have different versions, the working entry will overwrite the underlying entry. If true,
     * such version conflict - known as a write-skew - will throw an Exception.
+    * @deprecated since 9.0. It will be automatically enabled for OPTIMISTIC and REPEATABLE_READ transactions
     */
+   @Deprecated
    public LockingConfigurationBuilder writeSkewCheck(boolean b) {
-      attributes.attribute(WRITE_SKEW_CHECK).set(b);
       return this;
    }
 
    @Override
    public void validate() {
-      if (attributes.attribute(WRITE_SKEW_CHECK).get()) {
-         if (attributes.attribute(ISOLATION_LEVEL).get() != IsolationLevel.REPEATABLE_READ)
-            throw new CacheConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache");
-         if (transaction().lockingMode() != LockingMode.OPTIMISTIC)
-            throw new CacheConfigurationException("Write-skew checking only allowed with OPTIMISTIC transactions");
-         if (!versioning().enabled() || versioning().scheme()!= VersioningScheme.SIMPLE)
-            throw new CacheConfigurationException(
-                  "Write-skew checking requires versioning to be enabled and versioning scheme 'SIMPLE' to be configured");
-         if (clustering().cacheMode() != CacheMode.DIST_SYNC && clustering().cacheMode() != CacheMode.REPL_SYNC
-               && clustering().cacheMode() != CacheMode.LOCAL)
-            throw new CacheConfigurationException("Write-skew checking is only supported in REPL_SYNC, DIST_SYNC and LOCAL modes.  "
-                  + clustering().cacheMode() + " cannot be used with write-skew checking");
-      }
-
       Attribute<IsolationLevel> isolationLevel = attributes.attribute(ISOLATION_LEVEL);
       if (getBuilder().clustering().cacheMode().isClustered() && isolationLevel.get() == IsolationLevel.NONE)
          isolationLevel.set(IsolationLevel.READ_COMMITTED);

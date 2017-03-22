@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -32,14 +31,14 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
    public void setup() throws Exception {
       ConfigurationBuilder sourceStoreBuilder = new ConfigurationBuilder();
       sourceStoreBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
-            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true).versioning().scheme(VersioningScheme.SIMPLE).enable()
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName("sourceStore");
 
       ConfigurationBuilder targetStoreBuilder = new ConfigurationBuilder();
       targetStoreBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
-            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true).versioning().scheme(VersioningScheme.SIMPLE).enable()
+            .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .storeName("targetStore");

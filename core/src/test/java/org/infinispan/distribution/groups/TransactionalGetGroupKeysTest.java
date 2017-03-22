@@ -29,16 +29,10 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
       return new Object[] {
          new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
          new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(false).isolationLevel(IsolationLevel.REPEATABLE_READ),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).totalOrder(true).isolationLevel(IsolationLevel.REPEATABLE_READ),
          new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
          new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(false).isolationLevel(IsolationLevel.REPEATABLE_READ),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER).totalOrder(true).isolationLevel(IsolationLevel.REPEATABLE_READ),
          new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false).isolationLevel(IsolationLevel.READ_COMMITTED),
          new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true).isolationLevel(IsolationLevel.READ_COMMITTED),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(false).isolationLevel(IsolationLevel.REPEATABLE_READ),
-         new TransactionalGetGroupKeysTest(TestCacheFactory.NON_OWNER).totalOrder(true).isolationLevel(IsolationLevel.REPEATABLE_READ),
       };
    }
 
@@ -51,7 +45,7 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    }
 
    public void testGetGroupsInTransaction() throws SystemException, NotSupportedException, HeuristicRollbackException, HeuristicMixedException, RollbackException {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches());
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
       initCache(testCache.primaryOwner);
 
       final TransactionManager tm = tm(testCache.testCache);
@@ -70,7 +64,7 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    }
 
    public void testGetGroupsWithConcurrentPut() throws Exception {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches());
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
       initCache(testCache.primaryOwner);
 
       final TransactionManager tm = tm(testCache.testCache);
@@ -98,7 +92,7 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    }
 
    public void testGetGroupsWithConcurrentRemove() throws Exception {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches());
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
       initCache(testCache.primaryOwner);
 
       final TransactionManager tm = tm(testCache.testCache);
@@ -125,7 +119,7 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    }
 
    public void testGetGroupsWithConcurrentReplace() throws Exception {
-      final TestCache testCache = createTestCacheAndReset(GROUP, this.<GroupKey, String>caches());
+      final TestCache testCache = createTestCacheAndReset(GROUP, this.caches());
       initCache(testCache.primaryOwner);
 
       final TransactionManager tm = tm(testCache.testCache);
@@ -163,8 +157,7 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
    @Override
    protected ConfigurationBuilder amendConfiguration(ConfigurationBuilder builder) {
       super.amendConfiguration(builder);
-      builder.locking().isolationLevel(isolationLevel).writeSkewCheck(false);
-      builder.versioning().disable();
+      builder.locking().isolationLevel(isolationLevel);
       builder.transaction().transactionProtocol(totalOrder ? TransactionProtocol.TOTAL_ORDER : TransactionProtocol.DEFAULT);
       builder.transaction().recovery().disable();
       return builder;

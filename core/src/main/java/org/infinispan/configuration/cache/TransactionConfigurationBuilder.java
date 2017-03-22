@@ -154,6 +154,10 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   public TransactionManagerLookup transactionManagerLookup() {
+      return attributes.attribute(TRANSACTION_MANAGER_LOOKUP).get();
+   }
+
    /**
     * Configure Transaction Synchronization Registry lookup directly using an instance of
     * TransactionManagerLookup. Calling this method marks the cache as transactional.
@@ -168,7 +172,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
-   TransactionMode transactionMode() {
+   public TransactionMode transactionMode() {
       if (attributes.attribute(TRANSACTION_MODE).isModified()) {
          return attributes.attribute(TRANSACTION_MODE).get();
       } else {

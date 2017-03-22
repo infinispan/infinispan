@@ -9,7 +9,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.Arrays;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,6 +39,7 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -96,25 +96,22 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       killMember(1);
 
       final int currentTopologyId = TestingUtil.extractComponentRegistry(primaryOwnerCache).getStateTransferManager().getCacheTopology().getTopologyId();
-      Future<Object> secondCommitFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            // Wait for the commit command to block replaying the prepare on the new backup
-            sequencer.advance("sim:before_extra_commit");
-            // And try to run another commit command
-            CommitCommand command = new CommitCommand(ByteString.fromString(newBackupOwnerCache.getName()), gtx);
-            command.setTopologyId(currentTopologyId);
-            CommandsFactory cf = TestingUtil.extractCommandsFactory(newBackupOwnerCache);
-            cf.initializeReplicableCommand(command, true);
-            try {
-               command.invoke();
-            } catch (Throwable throwable) {
-               throw new CacheException(throwable);
-            }
-
-            sequencer.advance("sim:after_extra_commit");
-            return null;
+      Future<Object> secondCommitFuture = fork(() -> {
+         // Wait for the commit command to block replaying the prepare on the new backup
+         sequencer.advance("sim:before_extra_commit");
+         // And try to run another commit command
+         CommitCommand command = new CommitCommand(ByteString.fromString(newBackupOwnerCache.getName()), gtx);
+         command.setTopologyId(currentTopologyId);
+         CommandsFactory cf = TestingUtil.extractCommandsFactory(newBackupOwnerCache);
+         cf.initializeReplicableCommand(command, true);
+         try {
+            command.invoke();
+         } catch (Throwable throwable) {
+            throw new CacheException(throwable);
          }
+
+         sequencer.advance("sim:after_extra_commit");
+         return null;
       });
 
       checkIfTransactionExists(newBackupOwnerCache);
@@ -152,6 +149,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       builder.clustering()
             .hash().numOwners(3).numSegments(1).consistentHashFactory(consistentHashFactory)
             .stateTransfer().fetchInMemoryState(true);
+      builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       createClusteredCaches(4, builder);
    }
 

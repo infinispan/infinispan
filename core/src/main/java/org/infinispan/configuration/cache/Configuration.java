@@ -79,7 +79,7 @@ public class Configuration {
       this.sitesConfiguration = sitesConfiguration;
       this.compatibilityConfiguration = compatibilityConfiguration;
       this.memoryConfiguration = memoryConfiguration;
-      Map<Class<?>, Object> modulesMap = new HashMap<Class<?>, Object>();
+      Map<Class<?>, Object> modulesMap = new HashMap<>();
       for(Object module : modules) {
          modulesMap.put(module.getClass(), module);
       }
@@ -177,6 +177,10 @@ public class Configuration {
       return sitesConfiguration;
    }
 
+   /**
+    * @deprecated since 9.0. Infinispan automatically enables versioning when needed.
+    */
+   @Deprecated
    public VersioningConfiguration versioning() {
       return versioningConfiguration;
    }

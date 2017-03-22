@@ -15,12 +15,12 @@ import org.infinispan.util.concurrent.IsolationLevel;
  */
 public class LockingConfiguration {
    public static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder("concurrencyLevel", 32).immutable().build();
-   public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder("isolationLevel", IsolationLevel.READ_COMMITTED).xmlName("isolation").immutable().build();
+   public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder("isolationLevel", IsolationLevel.REPEATABLE_READ).xmlName("isolation").immutable().build();
    public static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder("lockAcquisitionTimeout", TimeUnit.SECONDS.toMillis(10)).xmlName("acquire-timeout").build();
    public static final AttributeDefinition<Boolean> USE_LOCK_STRIPING = AttributeDefinition.builder("striping", false).immutable().build();
-   public static final AttributeDefinition<Boolean> WRITE_SKEW_CHECK = AttributeDefinition.builder("writeSkewCheck", false).xmlName("write-skew").immutable().build();
+   public static final AttributeDefinition<Boolean> WRITE_SKEW_CHECK = AttributeDefinition.builder("writeSkewCheck", true).xmlName("write-skew").immutable().build();
 
-   static final AttributeSet attributeDefinitionSet() {
+   static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(LockingConfiguration.class, CONCURRENCY_LEVEL, ISOLATION_LEVEL, LOCK_ACQUISITION_TIMEOUT, USE_LOCK_STRIPING, WRITE_SKEW_CHECK);
    }
 
@@ -28,7 +28,6 @@ public class LockingConfiguration {
    private final Attribute<IsolationLevel> isolationLevel;
    private final Attribute<Long> lockAcquisitionTimeout;
    private final Attribute<Boolean> useLockStriping;
-   private final Attribute<Boolean> writeSkewCheck;
 
    private final AttributeSet attributes;
 
@@ -39,7 +38,6 @@ public class LockingConfiguration {
       isolationLevel = attributes.attribute(ISOLATION_LEVEL);
       lockAcquisitionTimeout = attributes.attribute(LOCK_ACQUISITION_TIMEOUT);
       useLockStriping = attributes.attribute(USE_LOCK_STRIPING);
-      writeSkewCheck = attributes.attribute(WRITE_SKEW_CHECK);
    }
 
    /**
@@ -99,9 +97,11 @@ public class LockingConfiguration {
     * to false, if the writer at commit time discovers that the working entry and the underlying
     * entry have different versions, the working entry will overwrite the underlying entry. If true,
     * such version conflict - known as a write-skew - will throw an Exception.
+    * @deprecated since 9.0.
     */
+   @Deprecated
    public boolean writeSkewCheck() {
-      return writeSkewCheck.get();
+      return true;
    }
 
    public AttributeSet attributes() {

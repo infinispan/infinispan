@@ -20,6 +20,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
@@ -29,14 +30,13 @@ public class InterpreterTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
-      c.jmxStatistics().enable().dataContainer().invocationBatching().enable();
+      c.jmxStatistics().enable().dataContainer().invocationBatching().enable().locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return TestCacheManagerFactory.createCacheManager(c);
    }
 
    private Interpreter getInterpreter() {
       GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(this.cacheManager);
-      Interpreter interpreter = gcr.getComponent(Interpreter.class);
-      return interpreter;
+      return gcr.getComponent(Interpreter.class);
    }
 
    private Map<String, String> execute(Interpreter interpreter, String sessionId, String commands) throws Exception {
@@ -60,10 +60,10 @@ public class InterpreterTest extends SingleCacheManagerTest {
       assertTrue(((MyClass) o).b);
       execute(interpreter, sessionId, "put 'f' 0.5;");
       Double f = (Double) cache.get("f");
-      assertEquals(0.5, f.doubleValue());
+      assertEquals(0.5, f);
       execute(interpreter, sessionId, "put 'l' 1000l;");
       Long l = (Long) cache.get("l");
-      assertEquals(1000l, l.longValue());
+      assertEquals(1000L, l.longValue());
    }
 
    public void testPutIfAbsent() throws Exception {

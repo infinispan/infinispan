@@ -81,7 +81,7 @@ public class TransactionCoordinator {
 
    @Start
    public void start() {
-      if (Configurations.isVersioningEnabled(configuration)) {
+      if (Configurations.isTxVersioned(configuration)) {
          // We need to create versioned variants of PrepareCommand and CommitCommand
          commandCreator = new CommandCreator() {
             @Override
@@ -253,7 +253,7 @@ public class TransactionCoordinator {
       return use1PcForAutoCommitTransactions && localTransaction.isImplicitTransaction();
    }
 
-   private static interface CommandCreator {
+   private interface CommandCreator {
       CommitCommand createCommitCommand(GlobalTransaction gtx);
       PrepareCommand createPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit);
    }

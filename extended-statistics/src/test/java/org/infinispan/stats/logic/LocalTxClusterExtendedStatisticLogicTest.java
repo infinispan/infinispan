@@ -208,7 +208,7 @@ public class LocalTxClusterExtendedStatisticLogicTest extends SingleCacheManager
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
-      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(false)
+      builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .lockAcquisitionTimeout(0);
       builder.clustering().hash().numOwners(1);
       builder.transaction().recovery().disable();

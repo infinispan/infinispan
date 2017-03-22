@@ -16,8 +16,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "stats.BaseNonTotalOrderClusteredExtendedStatisticsTest")
 public abstract class BaseNonTotalOrderClusteredExtendedStatisticsTest extends BaseClusteredExtendedStatisticTest {
 
-   protected BaseNonTotalOrderClusteredExtendedStatisticsTest(CacheMode mode, boolean writeSkew) {
-      super(mode, writeSkew, false);
+   protected BaseNonTotalOrderClusteredExtendedStatisticsTest(CacheMode mode) {
+      super(mode, false);
    }
 
    @Override

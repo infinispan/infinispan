@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -20,6 +21,7 @@ public class InvalidationFailureTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       config.clustering().l1().enable().hash().numOwners(1);
+      config.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       createCluster(config, 2);
       manager(0).defineConfiguration("second", config.build());
       manager(1).defineConfiguration("second", config.build());

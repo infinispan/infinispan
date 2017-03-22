@@ -106,6 +106,8 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
          // we also need to use repeatable read for tests to work when we dont have reliable return values, since the
          // tests repeatedly queries changes
          configuration.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+      } else {
+         configuration.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }
       if (transactional) {
          configuration.invocationBatching().enable();

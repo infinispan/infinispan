@@ -121,7 +121,7 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       for (int i = 0; i < NUM_NODES; ++i) {
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
          builder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
-         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)//.writeSkewCheck(true)
+         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)//
                .lockAcquisitionTimeout(60000); //the timeout are triggered by the TimeService!
          builder.transaction().recovery().disable();
          builder.transaction().lockingMode(LockingMode.PESSIMISTIC);

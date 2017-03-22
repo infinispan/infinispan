@@ -37,7 +37,6 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.stats.CacheStatisticCollector;
@@ -134,11 +133,10 @@ public class OptimisticLockingTxClusterExtendedStatisticLogicTest extends Multip
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
          builder.clustering().hash().numSegments(1)
                .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
-         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ).writeSkewCheck(true)
+         builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
                .lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
          builder.transaction().recovery().disable();
          builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
-         builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
          extendedStatisticInterceptors[i] = new ExtendedStatisticInterceptor();
          builder.customInterceptors().addInterceptor().interceptor(extendedStatisticInterceptors[i])
                .after(TxInterceptor.class);

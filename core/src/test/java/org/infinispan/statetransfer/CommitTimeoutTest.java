@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Arrays;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -16,6 +15,7 @@ import javax.transaction.RollbackException;
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -35,14 +35,13 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 public class CommitTimeoutTest extends MultipleCacheManagersTest {
 
-   public static final String TEST_KEY = "key";
-   public static final String TX1_VALUE = "value1";
-   public static final String TX2_VALUE = "value2";
-   private ControlledConsistentHashFactory consistentHashFactory;
+   private static final String TEST_KEY = "key";
+   private static final String TX1_VALUE = "value1";
+   private static final String TX2_VALUE = "value2";
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      consistentHashFactory = new ControlledConsistentHashFactory(1, 2);
+      ControlledConsistentHashFactory consistentHashFactory = new ControlledConsistentHashFactory(1, 2);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
@@ -73,7 +72,7 @@ public class CommitTimeoutTest extends MultipleCacheManagersTest {
       sequencer.order("tx1:after_rollback_on_backup", "tx2:begin", "tx2:end", "tx1:resume_commit_on_backup");
 
       advanceOnInterceptor(sequencer, cache(2), StateTransferInterceptor.class,
-            matchCommand(CommitCommand.class).matchCount(0).build())
+            matchCommand(VersionedCommitCommand.class).matchCount(0).build())
             .before("tx1:block_commit_on_backup", "tx1:resume_commit_on_backup").after("tx1:after_commit_on_backup");
 
       advanceOnInterceptor(sequencer, cache(1), StateTransferInterceptor.class,
@@ -144,17 +143,14 @@ public class CommitTimeoutTest extends MultipleCacheManagersTest {
             .before("tx1:block_rollback_on_backup").after("tx1:after_rollback_on_backup");
 
       assertEquals(Arrays.asList(address(1), address(2)), advancedCache(0).getDistributionManager().locate(TEST_KEY));
-      Future<Object> lockCheckFuture = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            sequencer.enter("tx1:resume_rollback_on_backup");
-            try {
-               assertTrue(TestingUtil.extractLockManager(cache(1)).isLocked(TEST_KEY));
-            } finally {
-               sequencer.exit("tx1:resume_rollback_on_backup");
-            }
-            return null;
+      Future<Object> lockCheckFuture = fork(() -> {
+         sequencer.enter("tx1:resume_rollback_on_backup");
+         try {
+            assertTrue(TestingUtil.extractLockManager(cache(1)).isLocked(TEST_KEY));
+         } finally {
+            sequencer.exit("tx1:resume_rollback_on_backup");
          }
+         return null;
       });
 
 

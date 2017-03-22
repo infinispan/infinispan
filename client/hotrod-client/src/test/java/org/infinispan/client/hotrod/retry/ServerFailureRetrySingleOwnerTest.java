@@ -18,6 +18,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -38,7 +39,8 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numOwners(1).numSegments(1)
             .consistentHashFactory(new ControlledConsistentHashFactory(0))
-            .transaction().transactionMode(TransactionMode.TRANSACTIONAL).useSynchronization(true);
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL).useSynchronization(true)
+            .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return builder;
    }
 
@@ -48,14 +50,11 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       assertNull(remoteCache.putIfAbsent(key, 1));
       final VersionedValue versioned = remoteCache.getVersioned(key);
       assertEquals(1, versioned.getValue());
-      withListener(listener, new Runnable() {
-         @Override
-         public void run() {
-            assertFalse(listener.errorInduced);
-            assertEquals(true, remoteCache.replaceWithVersion(key, 2, versioned.getVersion()));
-            assertTrue(listener.errorInduced);
-            assertEquals(2, remoteCache.get(key));
-         }
+      withListener(listener, () -> {
+         assertFalse(listener.errorInduced);
+         assertEquals(true, remoteCache.replaceWithVersion(key, 2, versioned.getVersion()));
+         assertTrue(listener.errorInduced);
+         assertEquals(2, remoteCache.get(key));
       });
    }
 
@@ -65,14 +64,11 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       assertNull(remoteCache.putIfAbsent(key, 1));
       final VersionedValue versioned = remoteCache.getVersioned(key);
       assertEquals(1, versioned.getValue());
-      withListener(listener, new Runnable() {
-         @Override
-         public void run() {
-            assertFalse(listener.errorInduced);
-            assertEquals(true, remoteCache.removeWithVersion(key, versioned.getVersion()));
-            assertTrue(listener.errorInduced);
-            assertNull(remoteCache.get(key));
-         }
+      withListener(listener, () -> {
+         assertFalse(listener.errorInduced);
+         assertEquals(true, remoteCache.removeWithVersion(key, versioned.getVersion()));
+         assertTrue(listener.errorInduced);
+         assertNull(remoteCache.get(key));
       });
    }
 
@@ -80,14 +76,11 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       final ErrorInducingListener listener = new ErrorInducingListener();
       final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.putIfAbsent(key, 1));
-      withListener(listener, new Runnable() {
-         @Override
-         public void run() {
-            assertFalse(listener.errorInduced);
-            assertEquals(1, remoteCache.remove(key));
-            assertTrue(listener.errorInduced);
-            assertNull(remoteCache.get(key));
-         }
+      withListener(listener, () -> {
+         assertFalse(listener.errorInduced);
+         assertEquals(1, remoteCache.remove(key));
+         assertTrue(listener.errorInduced);
+         assertNull(remoteCache.get(key));
       });
    }
 
@@ -95,28 +88,22 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       final ErrorInducingListener listener = new ErrorInducingListener();
       final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.putIfAbsent(key, 1));
-      withListener(listener, new Runnable() {
-         @Override
-         public void run() {
-            assertFalse(listener.errorInduced);
-            assertEquals(1, remoteCache.replace(key, 2));
-            assertTrue(listener.errorInduced);
-            assertEquals(2, remoteCache.get(key));
-         }
+      withListener(listener, () -> {
+         assertFalse(listener.errorInduced);
+         assertEquals(1, remoteCache.replace(key, 2));
+         assertTrue(listener.errorInduced);
+         assertEquals(2, remoteCache.get(key));
       });
    }
 
    public void testRetryPutIfAbsent() {
       final ErrorInducingListener listener = new ErrorInducingListener();
       final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
-      withListener(listener, new Runnable() {
-         @Override
-         public void run() {
-            assertFalse(listener.errorInduced);
-            assertNull(remoteCache.putIfAbsent(key, 1));
-            assertTrue(listener.errorInduced);
-            assertEquals(1, remoteCache.get(key));
-         }
+      withListener(listener, () -> {
+         assertFalse(listener.errorInduced);
+         assertNull(remoteCache.putIfAbsent(key, 1));
+         assertTrue(listener.errorInduced);
+         assertEquals(1, remoteCache.get(key));
       });
    }
 
@@ -124,28 +111,22 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       final ErrorInducingListener listener = new ErrorInducingListener();
       final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.put(key, 1));
-      withListener(listener, new Runnable() {
-         @Override
-         public void run() {
-            assertFalse(listener.errorInduced);
-            assertEquals(1, remoteCache.put(key, 2));
-            assertTrue(listener.errorInduced);
-            assertEquals(2, remoteCache.get(key));
-         }
+      withListener(listener, () -> {
+         assertFalse(listener.errorInduced);
+         assertEquals(1, remoteCache.put(key, 2));
+         assertTrue(listener.errorInduced);
+         assertEquals(2, remoteCache.get(key));
       });
    }
 
    public void testRetryPutOnEmpty() {
       final ErrorInducingListener listener = new ErrorInducingListener();
       final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
-      withListener(listener, new Runnable() {
-         @Override
-         public void run() {
-            assertFalse(listener.errorInduced);
-            assertNull(remoteCache.put(key, 1));
-            assertTrue(listener.errorInduced);
-            assertEquals(1, remoteCache.get(key));
-         }
+      withListener(listener, () -> {
+         assertFalse(listener.errorInduced);
+         assertNull(remoteCache.put(key, 1));
+         assertTrue(listener.errorInduced);
+         assertEquals(1, remoteCache.get(key));
       });
    }
 

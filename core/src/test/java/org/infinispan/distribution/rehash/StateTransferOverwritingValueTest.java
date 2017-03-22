@@ -8,7 +8,6 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -29,8 +28,7 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -70,6 +68,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       if (lockingMode != null) {
          c.transaction().lockingMode(lockingMode);
       }
+      c.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return c;
    }
 
@@ -137,13 +136,8 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       int rebalanceTopologyId = preJoinTopologyId + 1;
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache0.getRpcManager().getMembers().size() == 2 &&
-                  cache1.getRpcManager().getMembers().size() == 2;
-         }
-      });
+      eventually(() -> cache0.getRpcManager().getMembers().size() == 2 &&
+            cache1.getRpcManager().getMembers().size() == 2);
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
@@ -156,12 +150,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
       // The put command will be blocked on cache1 just before committing the entry.
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return op.perform(cache0, key);
-         }
-      });
+      Future<Object> future = fork(() -> op.perform(cache0, key));
 
       // Wait for the entry to be wrapped on cache1
       beforeCommitCache1Barrier.await(10, TimeUnit.SECONDS);
@@ -205,16 +194,13 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       ClusterTopologyManager spyManager = spy(ctm);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object[] arguments = invocation.getArguments();
-            Address source = (Address) arguments[1];
-            int topologyId = (Integer) arguments[2];
-            checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
-            return invocation.callRealMethod();
-         }
+      doAnswer(invocation -> {
+         Object[] arguments = invocation.getArguments();
+         Address source = (Address) arguments[1];
+         int topologyId = (Integer) arguments[2];
+         checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
+         checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+         return invocation.callRealMethod();
       }).when(spyManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
             anyInt());
       TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
