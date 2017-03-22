@@ -3,6 +3,9 @@ package org.infinispan.container;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -54,72 +57,73 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       Thread.sleep(100);
 
       InternalCacheEntry entry = dc.get("k");
-      assert entry.getClass().equals(transienttype());
-      assert entry.getLastUsed() <= System.currentTimeMillis();
+      assertNotNull(entry);
+      assertEquals(transienttype(), entry.getClass());
+      assertTrue(entry.getLastUsed() <= System.currentTimeMillis());
       long entryLastUsed = entry.getLastUsed();
       Thread.sleep(100);
       entry = dc.get("k");
-      assert entry.getLastUsed() > entryLastUsed;
+      assertTrue(entry.getLastUsed() > entryLastUsed);
       dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(0, TimeUnit.MINUTES).build());
 
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(100, TimeUnit.MINUTES).build());
       Thread.sleep(100);
-      assert dc.size() == 1;
+      assertEquals(1, dc.size());
 
       entry = dc.get("k");
-      assert entry != null : "Entry should not be null!";
-      assert entry.getClass().equals(mortaltype()) : "Expected "+mortaltype()+", was " + entry.getClass().getSimpleName();
-      assert entry.getCreated() <= System.currentTimeMillis();
+      assertNotNull(entry);
+      assertEquals(mortaltype(), entry.getClass());
+      assertTrue(entry.getCreated() <= System.currentTimeMillis());
 
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(0, TimeUnit.MINUTES).build());
       Thread.sleep(10);
-      assert dc.get("k") == null;
-      assert dc.size() == 0;
+      assertNull(dc.get("k"));
+      assertEquals(0, dc.size());
 
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(0, TimeUnit.MINUTES).build());
       Thread.sleep(100);
-      assert dc.size() == 0;
+      assertEquals(0, dc.size());
    }
 
    public void testResetOfCreationTime() throws Exception {
       long now = System.currentTimeMillis();
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1000, TimeUnit.SECONDS).build());
       long created1 = dc.get("k").getCreated();
-      assert created1 >= now;
+      assertTrue(created1 >= now);
       Thread.sleep(100);
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(1000, TimeUnit.SECONDS).build());
       long created2 = dc.get("k").getCreated();
-      assert created2 > created1 : "Expected " + created2 + " to be greater than " + created1;
+      assertTrue("Expected " + created2 + " to be greater than " + created1, created2 > created1);
    }
 
    public void testUpdatingLastUsed() throws Exception {
       long idle = 600000;
       dc.put("k", "v", new EmbeddedMetadata.Builder().build());
       InternalCacheEntry ice = dc.get("k");
-      assert ice.getClass().equals(immortaltype());
-      assert ice.toInternalCacheValue().getExpiryTime() == -1;
-      assert ice.getMaxIdle() == -1;
-      assert ice.getLifespan() == -1;
+      assertEquals(immortaltype(), ice.getClass());
+      assertEquals(-1, ice.toInternalCacheValue().getExpiryTime());
+      assertEquals(-1, ice.getMaxIdle());
+      assertEquals(-1, ice.getLifespan());
       dc.put("k", "v", new EmbeddedMetadata.Builder().maxIdle(idle, TimeUnit.MILLISECONDS).build());
       long oldTime = System.currentTimeMillis();
       Thread.sleep(100); // for time calc granularity
       ice = dc.get("k");
-      assert ice.getClass().equals(transienttype());
-      assert ice.toInternalCacheValue().getExpiryTime() > -1;
-      assert ice.getLastUsed() > oldTime;
+      assertEquals(transienttype(), ice.getClass());
+      assertTrue(ice.toInternalCacheValue().getExpiryTime() > -1);
+      assertTrue(ice.getLastUsed() > oldTime);
       Thread.sleep(100); // for time calc granularity
-      assert ice.getLastUsed() < System.currentTimeMillis();
-      assert ice.getMaxIdle() == idle;
-      assert ice.getLifespan() == -1;
+      assertTrue(ice.getLastUsed() < System.currentTimeMillis());
+      assertEquals(idle, ice.getMaxIdle());
+      assertEquals(-1, ice.getLifespan());
 
       oldTime = System.currentTimeMillis();
       Thread.sleep(100); // for time calc granularity
-      assert dc.get("k") != null;
+      assertNotNull(dc.get("k"));
 
       // check that the last used stamp has been updated on a get
-      assert ice.getLastUsed() > oldTime;
+      assertTrue(ice.getLastUsed() > oldTime);
       Thread.sleep(100); // for time calc granularity
-      assert ice.getLastUsed() < System.currentTimeMillis();
+      assertTrue(ice.getLastUsed() < System.currentTimeMillis());
    }
 
    protected Class<? extends InternalCacheEntry> mortaltype() {
@@ -169,7 +173,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
    private void assertContainerEntry(Class<? extends InternalCacheEntry> type,
                                      String expectedValue) {
-      assert dc.containsKey("k");
+      assertTrue(dc.containsKey("k"));
       InternalCacheEntry entry = dc.get("k");
       assertEquals(type, entry.getClass());
       assertEquals(expectedValue, entry.getValue());
@@ -188,9 +192,9 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add("k3");
       expected.add("k4");
 
-      for (Object o : dc.keySet()) assert expected.remove(o);
+      for (Object o : dc.keySet()) assertTrue(expected.remove(o));
 
-      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+      assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
    }
 
    public void testContainerIteration() {
@@ -207,10 +211,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add("k4");
 
       for (InternalCacheEntry ice : dc) {
-         assert expected.remove(ice.getKey());
+         assertTrue(expected.remove(ice.getKey()));
       }
 
-      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+      assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
    }
 
    public void testKeys() {
@@ -226,9 +230,9 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add("k3");
       expected.add("k4");
 
-      for (Object o : dc.keySet()) assert expected.remove(o);
+      for (Object o : dc.keySet()) assertTrue(expected.remove(o));
 
-      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+      assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
    }
 
    public void testValues() {
@@ -244,9 +248,9 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add("v3");
       expected.add("v4");
 
-      for (Object o : dc.values()) assert expected.remove(o);
+      for (Object o : dc.values()) assertTrue(expected.remove(o));
 
-      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+      assertTrue("Did not see keys " + expected + " in iterator!", expected.isEmpty());
    }
 
    public void testEntrySet() {
@@ -256,16 +260,16 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       dc.put("k4", "v4", new EmbeddedMetadata.Builder()
             .maxIdle(100, TimeUnit.MINUTES).lifespan(100, TimeUnit.MINUTES).build());
 
-      Set expected = new HashSet();
+      Set<Map.Entry> expected = new HashSet<>();
       expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k1")));
       expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k2")));
       expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k3")));
       expected.add(CoreImmutables.immutableInternalCacheEntry(dc.get("k4")));
 
-      Set actual = new HashSet();
-      for (Map.Entry o : dc.entrySet()) actual.add(o);
+      Set<Map.Entry> actual = new HashSet<>();
+      for (Map.Entry o : dc.entrySet()) assertTrue(actual.add(o));
 
-      assert actual.equals(expected) : "Expected to see keys " + expected + " but only saw " + actual;
+      assertEquals("Expected to see keys " + expected + " but only saw " + actual, expected, actual);
    }
 
    public void testGetDuringKeySetLoop() {
@@ -277,6 +281,6 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
          i++;
       }
 
-      assert i == 10 : "Expected the loop to run 10 times, only ran " + i;
+      assertEquals(10, i);
    }
 }
