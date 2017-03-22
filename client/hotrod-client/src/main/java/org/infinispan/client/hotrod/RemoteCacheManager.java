@@ -323,43 +323,42 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       return HotRodConstants.DEFAULT_CACHE_NAME_BYTES;
    }
 
-}
+   private static class RemoteCacheKey {
 
-class RemoteCacheKey {
+      final String cacheName;
+      final boolean forceReturnValue;
 
-   final String cacheName;
-   final boolean forceReturnValue;
+      RemoteCacheKey(String cacheName, boolean forceReturnValue) {
+         this.cacheName = cacheName;
+         this.forceReturnValue = forceReturnValue;
+      }
 
-   RemoteCacheKey(String cacheName, boolean forceReturnValue) {
-      this.cacheName = cacheName;
-      this.forceReturnValue = forceReturnValue;
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof RemoteCacheKey)) return false;
+
+         RemoteCacheKey that = (RemoteCacheKey) o;
+
+         if (forceReturnValue != that.forceReturnValue) return false;
+         return !(cacheName != null ? !cacheName.equals(that.cacheName) : that.cacheName != null);
+      }
+
+      @Override
+      public int hashCode() {
+         int result = cacheName != null ? cacheName.hashCode() : 0;
+         result = 31 * result + (forceReturnValue ? 1 : 0);
+         return result;
+      }
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof RemoteCacheKey)) return false;
+   private static class RemoteCacheHolder {
+      final RemoteCacheImpl<?, ?> remoteCache;
+      final boolean forceReturnValue;
 
-      RemoteCacheKey that = (RemoteCacheKey) o;
-
-      if (forceReturnValue != that.forceReturnValue) return false;
-      return !(cacheName != null ? !cacheName.equals(that.cacheName) : that.cacheName != null);
-   }
-
-   @Override
-   public int hashCode() {
-      int result = cacheName != null ? cacheName.hashCode() : 0;
-      result = 31 * result + (forceReturnValue ? 1 : 0);
-      return result;
-   }
-}
-
-class RemoteCacheHolder {
-   final RemoteCacheImpl<?, ?> remoteCache;
-   final boolean forceReturnValue;
-
-   RemoteCacheHolder(RemoteCacheImpl<?, ?> remoteCache, boolean forceReturnValue) {
-      this.remoteCache = remoteCache;
-      this.forceReturnValue = forceReturnValue;
+      RemoteCacheHolder(RemoteCacheImpl<?, ?> remoteCache, boolean forceReturnValue) {
+         this.remoteCache = remoteCache;
+         this.forceReturnValue = forceReturnValue;
+      }
    }
 }
