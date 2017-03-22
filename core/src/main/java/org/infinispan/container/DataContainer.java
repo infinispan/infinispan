@@ -99,12 +99,16 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * Returns a set of keys in the container. When iterating through the container using this method, clients should
     * never call {@link #get(Object)} method but instead {@link #peek(Object)}, in order to avoid changing the order of
     * the underlying collection as a side of effect of iterating through it.
-    *
+    * <p>
+    * This set of keys will include expired entries. If you wish to only retrieve non expired keys please use the
+    * {@link DataContainer#entrySet()} method and retrieve keys from there.
     * @return a set of keys
     */
    Set<K> keySet();
 
    /**
+    * This returns all values in the container including expired entries. If you wish to only receive values that
+    * are not expired it is recommended to use {@link DataContainer#entrySet()} and pull values from there directly.
     * @return a set of values contained in the container
     */
    Collection<V> values();
@@ -116,7 +120,10 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * <p/>
     * If a client needs to iterate through a mutable set of mutable cache entries, it should iterate the container
     * itself rather than iterating through the return of entrySet().
-    *
+    * <p>
+    * This set is a read only backed view of the entries underneath. This set will only show non expired entries when
+    * invoked. The size method of the set will count expired entries for the purpose of having a O(1) time cost compared
+    * to O(N) if it is to not count expired entries.
     * @return a set of immutable cache entries
     */
    Set<InternalCacheEntry<K, V>> entrySet();
