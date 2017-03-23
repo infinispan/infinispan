@@ -18,7 +18,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -26,7 +25,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -156,7 +154,6 @@ public class OutboundTransferTask implements Runnable {
          AdvancedCacheLoader stProvider = persistenceManager.getStateTransferProvider();
          if (stProvider != null) {
             try {
-               CollectionKeyFilter filter = new CollectionKeyFilter(new ReadOnlyDataContainerBackedKeySet(dataContainer));
                AdvancedCacheLoader.CacheLoaderTask task = (me, taskContext) -> {
                   int segmentId = keyPartitioner.getSegment(me.getKey());
                   if (segments.contains(segmentId)) {
@@ -168,7 +165,7 @@ public class OutboundTransferTask implements Runnable {
                      }
                   }
                };
-               stProvider.process(filter, task, new WithinThreadExecutor(), true, true);
+               stProvider.process(k -> !dataContainer.containsKey(k), task, new WithinThreadExecutor(), true, true);
             } catch (CacheException e) {
                log.failedLoadingKeysFromCacheStore(e);
             }

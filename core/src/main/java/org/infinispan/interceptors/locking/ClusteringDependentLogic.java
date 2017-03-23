@@ -189,7 +189,8 @@ public interface ClusteringDependentLogic {
 
       private void commitClearCommand(DataContainer<Object, Object> dataContainer, ClearCacheEntry<Object, Object> cacheEntry,
                                       InvocationContext context, FlagAffectedCommand command) {
-         List<InternalCacheEntry<Object, Object>> copyEntries = new ArrayList<>(dataContainer.entrySet());
+         List<InternalCacheEntry<Object, Object>> copyEntries = new ArrayList<>(dataContainer.sizeIncludingExpired());
+         dataContainer.iterator().forEachRemaining(copyEntries::add);
          cacheEntry.commit(dataContainer, null);
          for (InternalCacheEntry entry : copyEntries) {
             notifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), false, context, command);

@@ -12,7 +12,9 @@ import org.infinispan.container.DataContainer;
  *
  * @author Manik Surtani
  * @since 4.1
+ * @deprecated DataContainer keySet method will be removed in the future. See {@link DataContainer#keySet()}
  */
+@Deprecated
 public class ReadOnlyDataContainerBackedKeySet implements Set<Object> {
 
    final DataContainer container;

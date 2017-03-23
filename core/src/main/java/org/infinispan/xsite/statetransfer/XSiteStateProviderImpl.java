@@ -38,7 +38,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.RetryOnFailureXSiteCommand;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -276,10 +275,9 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                if (debug) {
                   log.debugf("[X-Site State Transfer - %s] start Persistence iteration", xSiteBackup.getSiteName());
                }
-               KeyFilter<Object> filter = new CacheLoaderFilter<>(new ReadOnlyDataContainerBackedKeySet(dataContainer));
                StateTransferCacheLoaderTask task = new StateTransferCacheLoaderTask(xSiteBackup, chunk, this);
                try {
-                  stProvider.process(filter, task, EXECUTOR_SERVICE, true, true);
+                  stProvider.process(k -> shouldSendKey(k) && !dataContainer.containsKey(k), task, EXECUTOR_SERVICE, true, true);
                   if (canceled) {
                      log.debugf("[X-Site State Transfer - %s] State transfer canceled!", xSiteBackup.getSiteName());
                      return;
@@ -318,18 +316,6 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
                "origin=" + origin +
                ", canceled=" + canceled +
                '}';
-      }
-   }
-
-   private class CacheLoaderFilter<K> extends CollectionKeyFilter<K> {
-
-      public CacheLoaderFilter(Collection<? extends K> rejectedKeys) {
-         super(rejectedKeys);
-      }
-
-      @Override
-      public boolean accept(K key) {
-         return shouldSendKey(key) && super.accept(key);
       }
    }
 
