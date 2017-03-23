@@ -1,8 +1,8 @@
 package org.infinispan.interceptors.impl;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
@@ -57,8 +57,8 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -707,7 +707,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       private final TxInvocationContext<LocalTransaction> ctx;
       // We store all the not yet seen context entries here.  We rely on the fact that the cache entry reference is updated
       // if a change occurs in between iterations to see updates.
-      private final List<CacheEntry> contextEntries;
+      private final Deque<CacheEntry> contextEntries;
       private final Set<Object> seenContextKeys = new HashSet<>();
       private final CloseableIterator<E> realIterator;
 
@@ -718,7 +718,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                                                TxInvocationContext<LocalTransaction> ctx) {
          this.realIterator = realIterator;
          this.ctx = ctx;
-         contextEntries = new ArrayList<>(ctx.getLookedUpEntries().values());
+         contextEntries = new ArrayDeque<>(ctx.getLookedUpEntries().values());
       }
 
       @Override
@@ -754,7 +754,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
          // We first have to exhaust all of our context entries
          CacheEntry<K, V> entry;
          while (returnedValue == null && !contextEntries.isEmpty() &&
-                 (entry = contextEntries.remove(0)) != null) {
+                 (entry = contextEntries.poll()) != null) {
             seenContextKeys.add(entry.getKey());
             if (!ctx.isEntryRemovedInContext(entry.getKey()) && !entry.isNull()) {
                returnedValue = fromEntry(entry);
