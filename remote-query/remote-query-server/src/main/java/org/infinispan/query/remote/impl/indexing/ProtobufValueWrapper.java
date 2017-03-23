@@ -12,8 +12,8 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 
 /**
- * This is used to wrap binary values encoded with Protocol Buffers. ProtobufValueWrapperFieldBridge is used as a
- * class bridge to allow indexing of the binary payload.
+ * This is used to wrap binary values encoded with Protocol Buffers. {@link ProtobufValueWrapperFieldBridge} is used as
+ * a class bridge to allow indexing of the binary payload.
  *
  * @author anistor@redhat.com
  * @since 6.0

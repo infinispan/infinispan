@@ -36,9 +36,9 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 9.0
  */
-final class FilterExpressionBuilder<TypeMetadata> {
+final class ExpressionBuilder<TypeMetadata> {
 
-   private static final Log log = Logger.getMessageLogger(Log.class, FilterExpressionBuilder.class.getName());
+   private static final Log log = Logger.getMessageLogger(Log.class, ExpressionBuilder.class.getName());
 
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
@@ -50,7 +50,7 @@ final class FilterExpressionBuilder<TypeMetadata> {
     */
    private final Deque<LazyBooleanExpr> stack = new ArrayDeque<>();
 
-   FilterExpressionBuilder(ObjectPropertyHelper<TypeMetadata> propertyHelper) {
+   ExpressionBuilder(ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.propertyHelper = propertyHelper;
    }
 

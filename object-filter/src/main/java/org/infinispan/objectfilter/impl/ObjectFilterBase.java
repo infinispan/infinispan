@@ -8,7 +8,7 @@ import java.util.Set;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.logging.Log;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.jboss.logging.Logger;
 
 /**
@@ -19,11 +19,11 @@ abstract class ObjectFilterBase<TypeMetadata> implements ObjectFilter {
 
    private static final Log log = Logger.getMessageLogger(Log.class, ObjectFilterBase.class.getName());
 
-   protected final FilterParsingResult<TypeMetadata> parsingResult;
+   protected final IckleParsingResult<TypeMetadata> parsingResult;
 
    protected final Map<String, Object> namedParameters;
 
-   protected ObjectFilterBase(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
+   protected ObjectFilterBase(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
       this.parsingResult = parsingResult;
       this.namedParameters = namedParameters != null ? Collections.unmodifiableMap(namedParameters) : null;
    }

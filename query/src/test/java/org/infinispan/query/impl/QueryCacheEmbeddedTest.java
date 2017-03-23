@@ -12,7 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.impl.LuceneQueryParsingResult;
@@ -68,7 +68,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
 
       // ensure the QueryCreator gets invoked
       int invoked[] = {0};
-      FilterParsingResult created = queryCache.get(queryString, null, FilterParsingResult.class, (qs, acc) -> {
+      IckleParsingResult created = queryCache.get(queryString, null, IckleParsingResult.class, (qs, acc) -> {
          invoked[0]++;
          return null;
       });
@@ -85,11 +85,11 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       // ensure the query cache has it now: one FilterParsingResult and one LuceneQueryParsingResult
       assertEquals(2, internalCache.size());
       Set<Class<?>> cacheValueClasses = internalCache.entrySet().stream().map(e -> e.getValue().getClass()).collect(Collectors.toSet());
-      Set<Class<?>> expectedCachedValueClasses = Sets.newLinkedHashSet(FilterParsingResult.class, LuceneQueryParsingResult.class);
+      Set<Class<?>> expectedCachedValueClasses = Sets.newLinkedHashSet(IckleParsingResult.class, LuceneQueryParsingResult.class);
       assertEquals(expectedCachedValueClasses, cacheValueClasses);
 
       // ensure the QueryCreator does not get invoked now
-      FilterParsingResult cached = queryCache.get(queryString, null, FilterParsingResult.class, (qs, acc) -> {
+      IckleParsingResult cached = queryCache.get(queryString, null, IckleParsingResult.class, (qs, acc) -> {
          throw new AssertionError("QueryCreator should not be invoked now");
       });
       assertNotNull(cached);

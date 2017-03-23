@@ -20,7 +20,7 @@ import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.jboss.logging.Logger;
 
 /**
- * Transform the parsed tree into a {@link FilterParsingResult} containing the {@link
+ * Transform the parsed tree into a {@link IckleParsingResult} containing the {@link
  * org.infinispan.objectfilter.impl.syntax.BooleanExpr}s representing the WHERE and HAVING clauses of the query.
  *
  * @author Adrian Nistor
@@ -54,9 +54,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private AggregationFunction aggregationFunction;
 
-   private final FilterExpressionBuilder<TypeMetadata> whereBuilder;
+   private final ExpressionBuilder<TypeMetadata> whereBuilder;
 
-   private final FilterExpressionBuilder<TypeMetadata> havingBuilder;
+   private final ExpressionBuilder<TypeMetadata> havingBuilder;
 
    /**
     * Persister space: keep track of aliases and entity names.
@@ -84,8 +84,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    QueryRendererDelegateImpl(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.queryString = queryString;
       this.propertyHelper = propertyHelper;
-      this.whereBuilder = new FilterExpressionBuilder<>(propertyHelper);
-      this.havingBuilder = new FilterExpressionBuilder<>(propertyHelper);
+      this.whereBuilder = new ExpressionBuilder<>(propertyHelper);
+      this.havingBuilder = new ExpressionBuilder<>(propertyHelper);
    }
 
    /**
@@ -518,7 +518,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       if (sortFields == null) {
          sortFields = new ArrayList<>(5);
       }
-      sortFields.add(new FilterParsingResult.SortFieldImpl<>(property, isAscending));
+      sortFields.add(new IckleParsingResult.SortFieldImpl<>(property, isAscending));
    }
 
    /**
@@ -615,8 +615,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
    }
 
-   public FilterParsingResult<TypeMetadata> getResult() {
-      return new FilterParsingResult<>(
+   public IckleParsingResult<TypeMetadata> getResult() {
+      return new IckleParsingResult<>(
             queryString,
             Collections.unmodifiableSet(new HashSet<>(namedParameters.keySet())),
             whereBuilder.build(),

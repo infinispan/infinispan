@@ -14,19 +14,19 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test for {@link FilterExpressionBuilder}.
+ * Test for {@link ExpressionBuilder}.
  *
  * @author anistor@redhat.com
  * @since 9.0
  */
-public class FilterExpressionBuilderTest {
+public class ExpressionBuilderTest {
 
-   private FilterExpressionBuilder<Class<?>> builder;
+   private ExpressionBuilder<Class<?>> builder;
 
    @Before
    public void setup() {
       ReflectionPropertyHelper propertyHelper = new ReflectionPropertyHelper(new ReflectionEntityNamesResolver(null));
-      builder = new FilterExpressionBuilder<>(propertyHelper);
+      builder = new ExpressionBuilder<>(propertyHelper);
    }
 
    @Test
