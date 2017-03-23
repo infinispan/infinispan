@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -45,7 +46,7 @@ abstract class CacheConfigurationChildResource extends SimpleResourceDefinition 
     CacheConfigurationChildResource(PathElement path, String resourceKey, RestartableResourceDefinition resource,
             AttributeDefinition[] attributes) {
         super(path, new InfinispanResourceDescriptionResolver(resourceKey),
-                new RestartCacheResourceAdd(resource.getPathElement().getKey(), resource.getServiceInstaller(), attributes),
+                new RestartCacheResourceAdd(resource.getPathElement().getKey(), resource.getServiceInstaller(), CacheServiceName.CONFIGURATION, attributes),
                 new RestartCacheResourceRemove(resource.getPathElement().getKey(), resource.getServiceInstaller()));
         this.resource = resource;
         this.attributes = attributes;
@@ -54,8 +55,8 @@ abstract class CacheConfigurationChildResource extends SimpleResourceDefinition 
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         if (attributes != null) {
-            final OperationStepHandler restartCacheWriteHandler = new RestartCacheWriteAttributeHandler(resource
-                    .getPathElement().getKey(), resource.getServiceInstaller(), attributes);
+            final OperationStepHandler restartCacheWriteHandler = new RestartServiceWriteAttributeHandler(resource
+                    .getPathElement().getKey(), resource.getServiceInstaller(), CacheServiceName.CONFIGURATION, attributes);
             for (AttributeDefinition attr : attributes) {
                 resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
             }

@@ -28,41 +28,40 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RestartParentWriteAttributeHandler;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 
-public class RestartCacheWriteAttributeHandler extends RestartParentWriteAttributeHandler {
+public class RestartServiceWriteAttributeHandler extends RestartParentWriteAttributeHandler {
     private final RestartableServiceHandler serviceInstaller;
+    private final CacheServiceName serviceNameResolver;
 
-    public RestartCacheWriteAttributeHandler(String parentKeyName, RestartableServiceHandler serviceInstaller, AttributeDefinition... definitions) {
+    public RestartServiceWriteAttributeHandler(String parentKeyName, RestartableServiceHandler serviceInstaller, CacheServiceName serviceNameResolver, AttributeDefinition... definitions) {
         super(parentKeyName, definitions);
         this.serviceInstaller = serviceInstaller;
+        this.serviceNameResolver = serviceNameResolver;
     }
 
     @Override
-    protected void recreateParentService(OperationContext context, PathAddress cacheAddress, ModelNode cacheModel) throws OperationFailedException {
-        recreateParentService(context, cacheAddress, cacheModel, null);
-    }
-
-    @Override
-    protected void recreateParentService(OperationContext context, PathAddress cacheAddress, ModelNode cacheModel,
-            ServiceVerificationHandler verificationHandler) throws OperationFailedException {
-        PathAddress containerAddress = cacheAddress.subAddress(0, cacheAddress.size()-1) ;
+    protected void recreateParentService(OperationContext context, PathAddress serviceAddress, ModelNode model) throws OperationFailedException {
+        int containerPosition = PathAddressUtils.indexOfKey(serviceAddress, CacheContainerResource.CONTAINER_PATH.getKey());
+        PathAddress containerAddress = serviceAddress.subAddress(0, containerPosition + 1) ;
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
-        ModelNode operation = Util.createAddOperation(cacheAddress);
-
-        serviceInstaller.installRuntimeServices(context, operation, containerModel, cacheModel);
+        ModelNode operation = Util.createAddOperation(serviceAddress);
+        serviceInstaller.installRuntimeServices(context, operation, containerModel, model);
     }
 
     @Override
     protected ServiceName getParentServiceName(PathAddress parentAddress) {
-        int position = parentAddress.size();
-        PathAddress cacheAddress = parentAddress.subAddress(position - 1);
-        PathAddress containerAddress = parentAddress.subAddress(position - 2, position - 1);
-        return CacheServiceName.CACHE.getServiceName(containerAddress.getLastElement().getValue(), cacheAddress.getLastElement().getValue());
+        int containerPosition = PathAddressUtils.indexOfKey(parentAddress, CacheContainerResource.CONTAINER_PATH.getKey());
+        String containerName = parentAddress.getElement(containerPosition).getValue();
+        int resourceOffset = containerPosition + 1;
+        if (parentAddress.getElement(resourceOffset).equals(CacheContainerConfigurationsResource.PATH)) {
+            resourceOffset++;
+        }
+        String resourceName = parentAddress.getElement(resourceOffset).getValue();
+        return serviceNameResolver.getServiceName(containerName, resourceName);
     }
 
     @Override

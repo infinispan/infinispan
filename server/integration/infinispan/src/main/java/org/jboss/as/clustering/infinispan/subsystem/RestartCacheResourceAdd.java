@@ -42,11 +42,13 @@ import org.jboss.msc.service.ServiceName;
 public class RestartCacheResourceAdd extends RestartParentResourceAddHandler {
     private final AttributeDefinition[] attributes;
     private final RestartableServiceHandler parentServiceHandler;
+    private final CacheServiceName serviceNameResolver;
 
-    RestartCacheResourceAdd(String parentKeyName, RestartableServiceHandler parentServiceHandler, AttributeDefinition[] attributes) {
+    RestartCacheResourceAdd(String parentKeyName, RestartableServiceHandler parentServiceHandler, CacheServiceName serviceNameResolver, AttributeDefinition[] attributes) {
         super(parentKeyName);
         this.attributes = attributes;
         this.parentServiceHandler = parentServiceHandler;
+        this.serviceNameResolver = serviceNameResolver;
     }
 
     @Override
@@ -57,21 +59,25 @@ public class RestartCacheResourceAdd extends RestartParentResourceAddHandler {
     }
 
     @Override
-    protected void recreateParentService(OperationContext context, PathAddress cacheAddress, ModelNode cacheModel) throws OperationFailedException {
-        PathAddress containerAddress = cacheAddress.subAddress(0, cacheAddress.size() - 1);
+    protected void recreateParentService(OperationContext context, PathAddress resourceAddress, ModelNode resourceModel) throws OperationFailedException {
+        int containerPosition = PathAddressUtils.indexOfKey(resourceAddress, CacheContainerResource.CONTAINER_PATH.getKey());
+        PathAddress containerAddress = resourceAddress.subAddress(0, containerPosition + 1);
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
-        ModelNode operation = Util.createAddOperation(cacheAddress);
+        ModelNode operation = Util.createAddOperation(resourceAddress);
 
-        parentServiceHandler.installRuntimeServices(context, operation, containerModel, cacheModel);
+        parentServiceHandler.installRuntimeServices(context, operation, containerModel, resourceModel);
     }
 
     @Override
     protected ServiceName getParentServiceName(PathAddress parentAddress) {
-        int position = parentAddress.size();
-        PathAddress cacheAddress = parentAddress.subAddress(position - 1);
-        PathAddress containerAddress = parentAddress.subAddress(position - 2, position - 1);
-        return CacheServiceName.CACHE.getServiceName(containerAddress.getLastElement().getValue(), cacheAddress.getLastElement()
-                .getValue());
+        int containerPosition = PathAddressUtils.indexOfKey(parentAddress, CacheContainerResource.CONTAINER_PATH.getKey());
+        String containerName = parentAddress.getElement(containerPosition).getValue();
+        int resourceOffset = containerPosition + 1;
+        if (parentAddress.getElement(resourceOffset).equals(CacheContainerConfigurationsResource.PATH)) {
+            resourceOffset++;
+        }
+        String resourceName = parentAddress.getElement(resourceOffset).getValue();
+        return serviceNameResolver.getServiceName(containerName, resourceName);
     }
 
     @Override
