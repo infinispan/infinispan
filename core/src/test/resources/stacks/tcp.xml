@@ -5,9 +5,11 @@
    <TCP_NIO2
          bind_addr="${jgroups.tcp.address:127.0.0.1}"
          bind_port="${jgroups.tcp.port:7800}"
-         port_range="30"
+         port_range="2"
+         sock_conn_timeout="300"
          recv_buf_size="20m"
          send_buf_size="640k"
+         max_send_buffers="100"
          enable_diagnostics="false"
          bundler_type="no-bundler"
 
