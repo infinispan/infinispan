@@ -52,12 +52,12 @@ import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.logging.Log;
 import org.jboss.logging.Logger;
 
 /**
- * An *Expr {@link Visitor} that transforms a {@link FilterParsingResult} into a {@link LuceneQueryParsingResult}.
+ * An *Expr {@link Visitor} that transforms a {@link IckleParsingResult} into a {@link LuceneQueryParsingResult}.
  * <p>
  * NOTE: This is not stateless, not threadsafe, so it can only be used for a single transformation at a time.
  *
@@ -105,7 +105,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       this.searchFactory = searchFactory;
    }
 
-   public LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, Class<?> targetedType) {
+   public LuceneQueryParsingResult<TypeMetadata> transform(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, Class<?> targetedType) {
       this.namedParameters = namedParameters;
       queryBuilder = queryContextBuilder.forEntity(targetedType).get();
       entityType = parsingResult.getTargetEntityMetadata();

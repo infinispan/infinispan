@@ -27,7 +27,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    @Test
    public void testWhereTautology() {
       String queryString = "FROM org.infinispan.objectfilter.test.model.Person WHERE true";
-      FilterParsingResult<TypeMetadata> result = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<TypeMetadata> result = IckleParser.parse(queryString, propertyHelper);
       assertEquals(ConstantBooleanExpr.TRUE, result.getWhereClause());
       assertNull(result.getHavingClause());
    }
@@ -35,7 +35,7 @@ public abstract class AbstractParsingTest<TypeMetadata> {
    @Test
    public void testWhereContradiction() {
       String queryString = "FROM org.infinispan.objectfilter.test.model.Person WHERE false";
-      FilterParsingResult<TypeMetadata> result = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<TypeMetadata> result = IckleParser.parse(queryString, propertyHelper);
       assertEquals(ConstantBooleanExpr.FALSE, result.getWhereClause());
       assertNull(result.getHavingClause());
    }

@@ -13,7 +13,7 @@ public final class IckleParser {
    private IckleParser() {
    }
 
-   public static <TypeMetadata> FilterParsingResult<TypeMetadata> parse(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
+   public static <TypeMetadata> IckleParsingResult<TypeMetadata> parse(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       QueryResolverDelegateImpl resolverDelegate = new QueryResolverDelegateImpl<>(propertyHelper);
       QueryRendererDelegateImpl<TypeMetadata> rendererDelegate = new QueryRendererDelegateImpl<>(queryString, propertyHelper);
       queryParser.parseQuery(queryString, resolverDelegate, rendererDelegate);

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
@@ -23,7 +23,7 @@ final class DelegatingQuery<TypeMetadata> extends BaseQuery {
 
    private final QueryEngine<TypeMetadata> queryEngine;
 
-   private final FilterParsingResult<TypeMetadata> parsingResult;
+   private final IckleParsingResult<TypeMetadata> parsingResult;
 
    /**
     * The actual query object to which execution will be delegated.

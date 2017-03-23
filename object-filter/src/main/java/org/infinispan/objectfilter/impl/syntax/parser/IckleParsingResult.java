@@ -12,7 +12,7 @@ import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterParsingResult<TypeMetadata> {
+public final class IckleParsingResult<TypeMetadata> {
 
    static final class SortFieldImpl<TypeMetadata> implements SortField {
 
@@ -51,14 +51,14 @@ public final class FilterParsingResult<TypeMetadata> {
    private final SortField[] sortFields;
 
    //todo [anistor] make package local
-   public FilterParsingResult(String queryString,
-                              Set<String> parameterNames,
-                              BooleanExpr whereClause,
-                              BooleanExpr havingClause,
-                              String targetEntityName, TypeMetadata targetEntityMetadata,
-                              PropertyPath[] projectedPaths, Class<?>[] projectedTypes,
-                              PropertyPath[] groupBy,
-                              SortField[] sortFields) {
+   public IckleParsingResult(String queryString,
+                             Set<String> parameterNames,
+                             BooleanExpr whereClause,
+                             BooleanExpr havingClause,
+                             String targetEntityName, TypeMetadata targetEntityMetadata,
+                             PropertyPath[] projectedPaths, Class<?>[] projectedTypes,
+                             PropertyPath[] groupBy,
+                             SortField[] sortFields) {
       this.queryString = queryString;
       this.parameterNames = parameterNames;
       this.whereClause = whereClause;

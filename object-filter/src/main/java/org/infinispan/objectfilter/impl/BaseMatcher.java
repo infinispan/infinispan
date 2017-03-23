@@ -15,7 +15,7 @@ import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextVisitor;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.dsl.Query;
@@ -133,7 +133,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(String queryString, List<FieldAccumulator> acc) {
-      final FilterParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, propertyHelper);
+      final IckleParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, propertyHelper);
       disallowGroupingAndAggregations(parsingResult);
 
       // if the query is a contradiction just return an ObjectFilter that rejects everything
@@ -191,7 +191,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters,
                                             FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
-      FilterParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<TypeMetadata> parsingResult = IckleParser.parse(queryString, propertyHelper);
       disallowGroupingAndAggregations(parsingResult);
       disallowFullText(parsingResult);
 
@@ -209,7 +209,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       }
    }
 
-   private void disallowFullText(FilterParsingResult<TypeMetadata> parsingResult) {
+   private void disallowFullText(IckleParsingResult<TypeMetadata> parsingResult) {
       if (parsingResult.getWhereClause() != null) {
          if (parsingResult.getWhereClause().acceptVisitor(FullTextVisitor.INSTANCE)) {
             throw log.getFiltersCannotUseFullTextSearchException();
@@ -217,7 +217,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
       }
    }
 
-   private void disallowGroupingAndAggregations(FilterParsingResult<TypeMetadata> parsingResult) {
+   private void disallowGroupingAndAggregations(IckleParsingResult<TypeMetadata> parsingResult) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw log.getFiltersCannotUseGroupingOrAggregationException();
       }

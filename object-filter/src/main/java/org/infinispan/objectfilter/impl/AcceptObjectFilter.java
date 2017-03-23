@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 /**
  * A filter that accepts all inputs of a given type. Does not support sorting and projections.
@@ -22,7 +22,7 @@ final class AcceptObjectFilter<TypeMetadata, AttributeMetadata, AttributeId exte
    AcceptObjectFilter(Map<String, Object> namedParameters,
                       BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
                       MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
-                      FilterParsingResult<TypeMetadata> parsingResult) {
+                      IckleParsingResult<TypeMetadata> parsingResult) {
       super(parsingResult, namedParameters);
       this.matcher = matcher;
       this.metadataAdapter = metadataAdapter;

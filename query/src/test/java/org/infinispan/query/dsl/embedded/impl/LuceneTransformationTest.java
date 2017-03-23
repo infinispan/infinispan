@@ -11,7 +11,7 @@ import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.testsupport.junit.SearchFactoryHolder;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.query.dsl.embedded.impl.model.Employee;
@@ -748,9 +748,9 @@ public class LuceneTransformationTest {
       ExtendedSearchIntegrator searchFactory = factoryHolder.getSearchFactory();
       HibernateSearchPropertyHelper propertyHelper = new HibernateSearchPropertyHelper(searchFactory, new ReflectionEntityNamesResolver(null));
 
-      FilterParsingResult<Class<?>> filterParsingResult = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<Class<?>> ickleParsingResult = IckleParser.parse(queryString, propertyHelper);
 
       LuceneQueryMaker<Class<?>> luceneQueryMaker = new LuceneQueryMaker<>(searchFactory, propertyHelper.getDefaultFieldBridgeProvider());
-      return luceneQueryMaker.transform(filterParsingResult, namedParameters, filterParsingResult.getTargetEntityMetadata());
+      return luceneQueryMaker.transform(ickleParsingResult, namedParameters, ickleParsingResult.getTargetEntityMetadata());
    }
 }

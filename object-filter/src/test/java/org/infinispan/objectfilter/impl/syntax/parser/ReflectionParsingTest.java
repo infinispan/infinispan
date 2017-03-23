@@ -23,7 +23,7 @@ public class ReflectionParsingTest extends AbstractParsingTest<Class<?>> {
    @Test
    public void testParsingResult() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
-      FilterParsingResult<Class<?>> result = IckleParser.parse(queryString, propertyHelper);
+      IckleParsingResult<Class<?>> result = IckleParser.parse(queryString, propertyHelper);
 
       assertNotNull(result.getWhereClause());
 
