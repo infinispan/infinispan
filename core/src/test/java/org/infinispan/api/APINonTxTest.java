@@ -14,6 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -22,6 +25,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -527,5 +531,105 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertEquals(isEmpty, cache.keySet().isEmpty());
       assertEquals(isEmpty, cache.values().isEmpty());
       assertEquals(isEmpty, cache.entrySet().isEmpty());
+   }
+
+   public void testGetOrDefault() {
+      cache.put("A", "B");
+
+      assertEquals("K", cache.getOrDefault("Not there", "K"));
+   }
+
+   public void testMerge() throws Exception {
+      cache.put("A", "B");
+
+      // replace
+      cache.merge("A", "C", (oldValue, newValue) -> "" + oldValue + newValue);
+      assertEquals("BC", cache.get("A"));
+
+      // remove if null value after remapping
+      cache.merge("A", "C", (oldValue, newValue) -> null);
+      assertEquals(null, cache.get("A"));
+
+      // put if absent
+      cache.merge("F", "42", (oldValue, newValue) -> "" + oldValue + newValue);
+      assertEquals("42", cache.get("F"));
+   }
+
+   public void testForEach() {
+      cache.put("A", "B");
+      cache.put("C", "D");
+
+      List<String> values = new ArrayList<>();
+      BiConsumer<? super Object, ? super Object> collectKeyValues = (k, v) -> values.add("hello_" + k.toString() + v.toString());
+
+      cache.forEach(collectKeyValues);
+
+      assertEquals(2, values.size());
+      assertEquals("hello_AB", values.get(0));
+      assertEquals("hello_CD", values.get(1));
+   }
+
+   public void testComputeIfAbsent() {
+      Function mappingFunction = k -> k + " world";
+      assertEquals("hello world", cache.computeIfAbsent("hello", mappingFunction));
+      assertEquals("hello world", cache.get("hello"));
+
+      Function functionAfterPut = k -> k + " happy";
+      // hello already exists so nothing should happen
+      assertEquals("hello world", cache.computeIfAbsent("hello", functionAfterPut));
+      assertEquals("hello world", cache.get("hello"));
+
+      Function functionMapsToNull = k -> null;
+      assertNull( cache.computeIfAbsent("kaixo", functionMapsToNull), "with function mapping to null returns null");
+      assertNull(cache.get("kaixo"), "the key does not exist");
+   }
+
+   public void testComputeIfPresent() {
+      BiFunction mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      cache.put("es", "hola");
+
+      assertEquals("hello_es:hola", cache.computeIfPresent("es", mappingFunction));
+      assertEquals("hello_es:hola", cache.get("es"));
+
+      BiFunction mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
+      assertNull(cache.computeIfPresent("fr", mappingForNotPresentKey), "unexisting key should return null");
+      assertNull(cache.get("fr"), "unexisting key should return null");
+
+      BiFunction mappingToNull = (k, v) -> null;
+      assertNull(cache.computeIfPresent("es", mappingToNull), "mapping to null returns null");
+      assertNull(cache.get("es"), "the key is removed");
+   }
+
+   public void testCompute() {
+      BiFunction mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      cache.put("es", "hola");
+
+      assertEquals("hello_es:hola", cache.compute("es", mappingFunction));
+      assertEquals("hello_es:hola", cache.get("es"));
+
+      BiFunction mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
+      assertEquals("absent_fr:null", cache.compute("fr", mappingForNotPresentKey));
+      assertEquals("absent_fr:null", cache.get("fr"));
+
+      BiFunction mappingToNull = (k, v) -> null;
+      assertNull(cache.compute("es", mappingToNull), "mapping to null returns null");
+      assertNull(cache.get("es"), "the key is removed");
+   }
+
+   public void testReplaceAll() {
+      BiFunction mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      cache.put("es", "hola");
+      cache.put("cz", "ahoj");
+
+      cache.replaceAll(mappingFunction);
+
+      assertEquals("hello_es:hola", cache.get("es"));
+      assertEquals("hello_cz:ahoj", cache.get("cz"));
+
+      BiFunction mappingToNull = (k, v) -> null;
+      expectException(NullPointerException.class, () -> cache.replaceAll(mappingToNull));
+
+      assertEquals("hello_es:hola", cache.get("es"));
+      assertEquals("hello_cz:ahoj", cache.get("cz"));
    }
 }

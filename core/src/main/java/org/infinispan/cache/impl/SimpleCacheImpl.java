@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -13,6 +14,7 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -1139,7 +1141,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       if (hasListeners && newValue != null) {
          cacheNotifier.notifyCacheEntryCreated(key, newValueRef.get(), defaultMetadata, false, ImmutableContext.INSTANCE, null);
       }
-      return returnEntry.getValue();
+      return returnEntry == null ? null : returnEntry.getValue();
    }
 
    @Override
@@ -1209,7 +1211,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
-         V newValue = remappingFunction.apply(oldValue, value);
+         V newValue = oldValue == null ? value : remappingFunction.apply(oldValue, value);
          return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, ref, hasListeners);
       });
       return notifyAndReturn(ref, hasListeners);
@@ -1276,6 +1278,42 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    // This method can be called only from dataContainer.compute()'s action!
    private V getValue(InternalCacheEntry<K, V> entry) {
       return isNull(entry) ? null : entry.getValue();
+   }
+
+   @Override
+   public void forEach(BiConsumer<? super K, ? super V> action) {
+      for (Iterator<InternalCacheEntry<K, V>> it = dataContainer.iterator(); it.hasNext(); ) {
+         InternalCacheEntry<K, V> ice = it.next();
+         action.accept(ice.getKey(), ice.getValue());
+      }
+   }
+
+   @Override
+   public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+      boolean hasListeners = this.hasListeners;
+      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
+      for (Iterator<InternalCacheEntry<K, V>> it = dataContainer.iterator(); it.hasNext(); ) {
+         InternalCacheEntry<K, V> ice = it.next();
+         getDataContainer().compute(ice.getKey(), (k, oldEntry, factory) -> {
+            V oldValue = getValue(oldEntry);
+            if (oldValue != null) {
+               V newValue = function.apply(k, oldValue);
+               Objects.requireNonNull(newValue, NULL_VALUES_NOT_SUPPORTED);
+               if (hasListeners) {
+                  cacheNotifier.notifyCacheEntryModified(k, newValue, defaultMetadata, oldValue, oldEntry.getMetadata(),
+                        true, ImmutableContext.INSTANCE, null);
+               }
+               ref.set(k, newValue, oldValue, oldEntry.getMetadata());
+               return factory.update(oldEntry, newValue, defaultMetadata);
+            } else {
+               return null;
+            }
+         });
+         if (hasListeners) {
+            cacheNotifier.notifyCacheEntryModified(ref.getKey(), ref.getNewValue(), defaultMetadata, ref.getOldValue(),
+                  ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
+         }
+      }
    }
 
    protected static class ValueAndMetadata<V> {
