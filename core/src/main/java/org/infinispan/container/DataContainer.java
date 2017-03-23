@@ -38,7 +38,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * moved to the end of the chain.
     * <p/>
     * This method should be used instead of {@link #get(Object)}} when called while iterating through the data container
-    * using methods like {@link #keySet()} to avoid changing the underlying collection's order.
+    * using methods like {@link #iterator()} to avoid changing the underlying collection's order.
     *
     * @param k key under which entry is stored
     * @return entry, if it exists, or null if not
@@ -101,12 +101,16 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * the underlying collection as a side of effect of iterating through it.
     *
     * @return a set of keys
+    * @deprecated Please use iterator method if bulk operations are required.
     */
+   @Deprecated
    Set<K> keySet();
 
    /**
     * @return a set of values contained in the container
+    * @deprecated Please use iterator method if bulk operations are required.
     */
+   @Deprecated
    Collection<V> values();
 
    /**
@@ -118,7 +122,9 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * itself rather than iterating through the return of entrySet().
     *
     * @return a set of immutable cache entries
+    * @deprecated Please use iterator method if bulk operations are required.
     */
+   @Deprecated
    Set<InternalCacheEntry<K, V>> entrySet();
 
    /**

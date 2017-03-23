@@ -169,6 +169,10 @@ bounded ConcurrentMap.
 Store as Binary configuration is now deprecated and will be removed in a future release. This is replaced by
 the new memory configuration.
 
+=== DataContainer collection methods are deprecated
+The keySet, entrySet and values methods on DataContainer have been deprecated. These behavior of these methods
+are very inconsistent and will be removed later. It is recommended to update references to use iterator or
+iteratorIncludingExpired methods intead.
 
 == Upgrading from 8.1 to 8.2
 === Entry Retriever is deprecated

@@ -142,17 +142,13 @@ public class SingletonCacheWriter extends DelegatingCacheWriter {
    /**
     * Pushes the state of a specific cache by reading the cache's data and putting in the cache store.
     */
-   protected void pushState(final Cache cache) throws Exception {
-      DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      Set<Object> keys = dc.keySet();
-      for (Object k : keys) {
-         InternalCacheEntry entry = dc.get(k);
-         if (entry != null) {
-            MarshalledEntry me = ctx.getMarshalledEntryFactory().newMarshalledEntry(entry.getKey(), entry.getValue(),
-                                                             internalMetadata(entry));
-            write(me);
-         }
-      }
+   protected void pushState(final Cache<?, ?> cache) throws Exception {
+      DataContainer<?, ?> dc = cache.getAdvancedCache().getDataContainer();
+      dc.iterator().forEachRemaining(entry -> {
+         MarshalledEntry me = ctx.getMarshalledEntryFactory().newMarshalledEntry(entry.getKey(), entry.getValue(),
+               internalMetadata(entry));
+         write(me);
+      });
    }
 
 

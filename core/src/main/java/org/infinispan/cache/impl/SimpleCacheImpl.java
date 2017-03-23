@@ -450,13 +450,15 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public void clear() {
       DataContainer<K, V> dataContainer = getDataContainer();
       boolean hasListeners = this.hasListeners;
-      ArrayList<InternalCacheEntry<K, V>> copyEntries = null;
+      ArrayList<InternalCacheEntry<K, V>> copyEntries;
       if (hasListeners) {
          copyEntries = new ArrayList<>(dataContainer.sizeIncludingExpired());
-         for (InternalCacheEntry<K, V> entry : dataContainer.entrySet()) {
+         dataContainer.iterator().forEachRemaining(entry -> {
             copyEntries.add(entry);
             cacheNotifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), true, ImmutableContext.INSTANCE, null);
-         }
+         });
+      } else {
+         copyEntries = null;
       }
       dataContainer.clear();
       if (hasListeners) {
@@ -1467,7 +1469,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null, getStreamSupplier(false)),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null, getStreamSupplier(true)),
                  true, componentRegistry);
       }
    }
