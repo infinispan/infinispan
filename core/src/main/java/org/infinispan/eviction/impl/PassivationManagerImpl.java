@@ -99,13 +99,14 @@ public class PassivationManagerImpl implements PassivationManager {
       if (enabled && !skipOnStop) {
          long start = timeService.time();
          log.passivatingAllEntries();
+         long count = 0;
          for (InternalCacheEntry e : container) {
+            count++;
             if (trace) log.tracef("Passivating %s", e.getKey());
             persistenceManager.writeToAllNonTxStores(marshalledEntryFactory.newMarshalledEntry(e.getKey(), e.getValue(),
                                                                                                internalMetadata(e)), BOTH);
          }
-         log.passivatedEntries(container.size(),
-                               Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
+         log.passivatedEntries(count, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       }
    }
 

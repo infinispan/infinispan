@@ -29,7 +29,8 @@ public class ReadOnlyDataContainerBackedKeySet implements Set<Object> {
 
    @Override
    public boolean isEmpty() {
-      return container.size() == 0;
+      // We don't check size since it isn't constant and most likely allocates an iterator anyways.
+      return !container.iterator().hasNext();
    }
 
    @Override
