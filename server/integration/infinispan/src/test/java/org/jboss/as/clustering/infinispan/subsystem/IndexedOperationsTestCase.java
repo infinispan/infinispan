@@ -1,5 +1,8 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.controller.client.helpers.ClientConstants.ADD;
+import static org.jboss.as.controller.client.helpers.ClientConstants.COMPOSITE;
+import static org.jboss.as.controller.client.helpers.ClientConstants.STEPS;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NAME;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
@@ -11,6 +14,8 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUC
 import java.io.IOException;
 
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.client.helpers.ClientConstants;
+import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.subsystem.test.KernelServices;
 import org.jboss.dmr.ModelNode;
 import org.junit.Assert;
@@ -37,5 +42,50 @@ public class IndexedOperationsTestCase extends OperationTestCaseBase {
       ModelNode result = servicesA.executeOperation(readOp);
       Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
       Assert.assertEquals(Indexing.LOCAL.toString(), result.get(RESULT).asString());
+   }
+
+   @Test
+   public void testIndexingPropertiesNoRestart() throws Exception {
+
+      // Parse and install the XML into the controller
+      String subsystemXml = getSubsystemXml() ;
+      KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
+
+      final ModelNode composite = new ModelNode();
+      composite.get(ClientConstants.OP).set(COMPOSITE);
+      composite.get(ClientConstants.OP_ADDR).setEmptyList();
+
+      final ModelNode steps = composite.get(STEPS);
+
+      final ModelNode configAddOp = steps.add();
+      configAddOp.get(ClientConstants.OP).set(ADD);
+
+      configAddOp.get(ClientConstants.OP_ADDR).set(PathAddress.pathAddress(InfinispanExtension.SUBSYSTEM_PATH)
+            .append("cache-container", "indexing")
+            .append("configurations", "CONFIGURATIONS")
+            .append("local-cache-configuration", "manualIndexingCacheConfig").toModelNode());
+      configAddOp.get("template").set(true);
+
+      PathAddress indexingAddress = PathAddress.pathAddress(configAddOp.get(ClientConstants.OP_ADDR)).append(ModelKeys.INDEXING, ModelKeys.INDEXING_NAME);
+      ModelNode indexingAdd = Util.createAddOperation(indexingAddress);
+      indexingAdd.get(ModelKeys.INDEXING).set("LOCAL");
+      indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("default.directory_provider").set("ram");
+      indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("hibernate.search.jmx_enabled").set("true");
+      indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("lucene_version").set("LUCENE_CURRENT");
+      indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("hibernate.search.indexing_strategy").set("manual");
+      steps.add(indexingAdd);
+
+
+      final ModelNode cacheAddOp = steps.add();
+      cacheAddOp.get(ClientConstants.OP).set(ADD);
+      cacheAddOp.get(ClientConstants.OP_ADDR).set(PathAddress.pathAddress(InfinispanExtension.SUBSYSTEM_PATH)
+            .append("cache-container", "indexing")
+            .append("local-cache", "manualIndexingCache").toModelNode());
+      cacheAddOp.get("configuration").set("manualIndexingCacheConfig");
+
+      ModelNode result = servicesA.executeOperation(composite);
+      Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
+
+      assertServerState(servicesA, "running");
    }
 }

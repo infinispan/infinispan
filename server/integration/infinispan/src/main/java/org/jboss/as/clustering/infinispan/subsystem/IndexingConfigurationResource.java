@@ -47,6 +47,7 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
     static final StringListAttributeDefinition INDEXED_ENTITIES = new StringListAttributeDefinition.Builder(ModelKeys.INDEXED_ENTITIES)
           .setAllowNull(true)
           .setAllowExpression(false)
+          .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
           .build();
 
     static final SimpleMapAttributeDefinition INDEXING_PROPERTIES = new SimpleMapAttributeDefinition.Builder(ModelKeys.INDEXING_PROPERTIES, true)
@@ -66,6 +67,7 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
                   }
               }
           })
+          .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
           .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {INDEXING, INDEXING_AUTO_CONFIG, INDEXED_ENTITIES, INDEXING_PROPERTIES};

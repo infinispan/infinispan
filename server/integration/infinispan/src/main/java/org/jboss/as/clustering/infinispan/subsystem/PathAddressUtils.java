@@ -22,4 +22,12 @@ public class PathAddressUtils {
         return -1;
     }
 
+    public static int indexOfKey(PathAddress address, String key) {
+        for(int i=0; i < address.size(); i++) {
+            if (address.getElement(i).getKey().equals(key))
+                return i;
+        }
+        return -1;
+    }
+
 }
