@@ -19,8 +19,24 @@ as well as inspecting single resources or entire subtrees. It is also possible t
 they are applied as a single operation.
 
 === Console
+You can use the web console to perform management operations on servers running in either standalone or domain mode.
+The console only supports a subset of the operations provided by the CLI, however you can perform the following
+actions:
 
-TODO
+* View/Edit Cache Container Configuration
+* Execute Tasks across Containers
+* View/Edit Cache Configurations
+* Create/Destroy Cache Instances
+* View Cluster/Server/Cache Statistics
+* View event logs
+* Start/Stop servers/clusters (domain mode only)
+
+To access the console start your server(s) in the required mode, navigate to `http://localhost:9990` and enter your user credentials.
+If you would like to contribute to the development of the console, the source code can be found
+link:https://github.com/infinispan/infinispan-management-console[here].
+
+NOTE: Before you can use the web console, you must first setup at least one user account via the `./bin/add-user.sh` script.
+Detailed instructions of this process are presented in your browser if you attempt to access the console before creating any user accounts.
 
 === JMX
 
