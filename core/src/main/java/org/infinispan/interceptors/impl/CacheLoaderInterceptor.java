@@ -506,7 +506,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
-         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().size());
+         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
          // TODO: how to handle concurrent activation....
          return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                // TODO: how to pass in key filter...
@@ -547,7 +547,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       @Override
       public CloseableIterator<K> iterator() {
          CloseableIterator<K> iterator = Closeables.iterator(keySet.stream());
-         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().size());
+         Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().sizeIncludingExpired());
          // TODO: how to handle concurrent activation....
          return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(new SupplierFunction<>(
                new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,

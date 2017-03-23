@@ -40,7 +40,7 @@ public class ValueCacheCollection<K, V> extends AbstractCloseableIteratorCollect
 
    @Override
    public CloseableSpliterator<V> spliterator() {
-      return Closeables.spliterator(iterator(), cache.getAdvancedCache().getDataContainer().size(),
+      return Closeables.spliterator(iterator(), cache.getAdvancedCache().getDataContainer().sizeIncludingExpired(),
               Spliterator.CONCURRENT | Spliterator.NONNULL);
    }
 

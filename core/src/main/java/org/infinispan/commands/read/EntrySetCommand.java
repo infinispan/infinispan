@@ -83,7 +83,7 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       @Override
       public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
          DataContainer<K, V> dc = cache.getAdvancedCache().getDataContainer();
-         return Closeables.spliterator(Closeables.iterator(new DataContainerRemoveIterator<>(cache, dc)), dc.size(),
+         return Closeables.spliterator(Closeables.iterator(new DataContainerRemoveIterator<>(cache, dc)), dc.sizeIncludingExpired(),
                  Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
       }
 
