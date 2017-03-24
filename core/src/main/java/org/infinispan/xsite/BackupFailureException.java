@@ -2,6 +2,7 @@ package org.infinispan.xsite;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.infinispan.remoting.RpcException;
 
@@ -41,12 +42,11 @@ public class BackupFailureException extends RpcException {
    }
 
    @Override
-   public String toString() {
+   public String getMessage() {
       if(failures == null || failures.isEmpty())
          return super.toString();
-      StringBuilder sb=new StringBuilder("The local cache " + localCacheName + " failed to backup data to the remote sites:\n");
-      for(Map.Entry<String,Throwable> entry: failures.entrySet())
-         sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
-      return sb.toString();
+      return "The local cache " + localCacheName + " failed to backup data to the remote sites:\n" +
+            failures.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue())
+                    .collect(Collectors.joining("\n"));
    }
 }
