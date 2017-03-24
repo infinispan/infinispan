@@ -57,7 +57,7 @@
 
       <version.java>1.8</version.java>
 
-      <version.maven-compiler-plugin>3.5.1</version.maven-compiler-plugin>
+      <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
 
       <version.caffeine>2.4.0</version.caffeine>
       <version.protostream>4.0.0.Alpha9</version.protostream>
