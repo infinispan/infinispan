@@ -1220,7 +1220,6 @@
                 <artifactId>maven-scala-plugin</artifactId>
                 <version>${version.maven.scala}</version>
                 <executions>
-
                    <execution>
                       <id>compile</id>
                       <phase>none</phase>
@@ -1616,7 +1615,7 @@
       <profile>
          <id>jigsaw</id>
          <activation>
-            <jdk>[1.9,)</jdk>
+            <jdk>[9,)</jdk>
          </activation>
          <build>
             <pluginManagement>
@@ -1628,8 +1627,8 @@
                         <!-- fork is needed so compiler args can be used -->
                         <fork>true</fork>
                         <compilerArgs>
-                           <arg>-J-addmods</arg>
-                           <arg>-Jjava.annotations.common</arg>
+                           <arg>-J--add-modules</arg>
+                           <arg>-Jjava.xml.ws.annotation</arg>
                         </compilerArgs>
                      </configuration>
                   </plugin>
