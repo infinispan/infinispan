@@ -10,7 +10,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * This process starts by removing all existing indexes, and then a distributed
  * task is executed to rebuild the indexes. This task can take a long time to run,
  * depending on data size, used stores, indexing complexity.
- *
+ * <p>
  * While reindexing is being performed queries should not be executed as they
  * will very likely miss many or all results.
  *
@@ -27,5 +27,7 @@ public interface MassIndexer {
     * @return {@link CompletableFuture}
     */
    CompletableFuture<Void> startAsync();
+
+   CompletableFuture<Void> reindex(Object... keys);
 
 }

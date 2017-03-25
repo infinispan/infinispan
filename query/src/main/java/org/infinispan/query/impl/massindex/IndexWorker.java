@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -30,21 +31,23 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  */
 public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
-   protected Cache<Object, Object> cache;
-   protected TypeConverter typeConverter;
    protected final Class<?> entity;
    private final boolean flush;
    private final boolean clean;
    private final boolean primaryOwner;
+   protected Cache<Object, Object> cache;
+   protected TypeConverter typeConverter;
    protected IndexUpdater indexUpdater;
-
+   private Set<Object> everywhereKeys;
+   private Set<Object> keys = new HashSet<>();
    private ClusteringDependentLogic clusteringDependentLogic;
 
-   public IndexWorker(Class<?> entity, boolean flush, boolean clean, boolean primaryOwner) {
+   public IndexWorker(Class<?> entity, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
       this.entity = entity;
       this.flush = flush;
       this.clean = clean;
       this.primaryOwner = primaryOwner;
+      this.everywhereKeys = everywhereKeys;
    }
 
    @Override
@@ -54,6 +57,10 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
       this.typeConverter = componentRegistry.getComponent(TypeConverter.class);
+      if (everywhereKeys != null && everywhereKeys.size() > 0)
+         keys.addAll(everywhereKeys);
+      if (inputKeys != null && inputKeys.size() > 0)
+         keys.addAll(inputKeys);
    }
 
    protected void preIndex() {
@@ -79,29 +86,33 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    @Override
    @SuppressWarnings("unchecked")
    public Void call() throws Exception {
-      preIndex();
-      KeyValueFilter filter = getFilter();
-      try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
-              .cacheEntrySet().stream()) {
-         Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
-         while (iterator.hasNext()) {
-            CacheEntry<Object, Object> next = iterator.next();
-            Object value = extractValue(next.getValue());
-            if (value != null && value.getClass().equals(entity))
-               indexUpdater.updateIndex(next.getKey(), value);
+      if (keys == null || keys.size() == 0) {
+         preIndex();
+         KeyValueFilter filter = getFilter();
+         try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
+               .cacheEntrySet().stream()) {
+            Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
+            while (iterator.hasNext()) {
+               CacheEntry<Object, Object> next = iterator.next();
+               Object value = extractValue(next.getValue());
+               if (value != null && value.getClass().equals(entity))
+                  indexUpdater.updateIndex(next.getKey(), value);
+            }
          }
+         postIndex();
+      } else {
+         Set<Class<?>> classSet = new HashSet<>();
+         for (Object key : keys) {
+            Object value = extractValue(cache.get(key));
+            if (value != null) {
+               indexUpdater.updateIndex(key, value);
+               classSet.add(value.getClass());
+            }
+         }
+         for (Class<?> clazz : classSet)
+            indexUpdater.flush(clazz);
       }
-      postIndex();
       return null;
-   }
-
-
-   private class PrimaryOwnersKeyValueFilter implements KeyValueFilter {
-
-      @Override
-      public boolean accept(Object key, Object value, Metadata metadata) {
-         return clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
-      }
    }
 
    public static class Externalizer extends AbstractExternalizer<IndexWorker> {
@@ -117,16 +128,25 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
          output.writeBoolean(worker.flush);
          output.writeBoolean(worker.clean);
          output.writeBoolean(worker.primaryOwner);
+         output.writeObject(worker.everywhereKeys);
       }
 
       @Override
       public IndexWorker readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new IndexWorker((Class<?>) input.readObject(), input.readBoolean(), input.readBoolean(), input.readBoolean());
+         return new IndexWorker((Class<?>) input.readObject(), input.readBoolean(), input.readBoolean(), input.readBoolean(), (Set<Object>) input.readObject());
       }
 
       @Override
       public Integer getId() {
          return ExternalizerIds.INDEX_WORKER;
+      }
+   }
+
+   private class PrimaryOwnersKeyValueFilter implements KeyValueFilter {
+
+      @Override
+      public boolean accept(Object key, Object value, Metadata metadata) {
+         return clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
       }
    }
 
