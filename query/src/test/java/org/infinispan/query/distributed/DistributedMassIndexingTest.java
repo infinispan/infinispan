@@ -17,6 +17,7 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -26,14 +27,13 @@ import org.testng.annotations.Test;
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 3;
-   protected List<Cache> caches = new ArrayList<>(NUM_NODES);
-
-   protected static final String[] neededCacheNames = new String[] {
-      "default",
-      "LuceneIndexesMetadata",
-      "LuceneIndexesData",
-      "LuceneIndexesLocking",
+   protected static final String[] neededCacheNames = new String[]{
+         "default",
+         "LuceneIndexesMetadata",
+         "LuceneIndexesData",
+         "LuceneIndexesLocking",
    };
+   protected List<Cache> caches = new ArrayList<>(NUM_NODES);
 
    protected String getConfigurationFile() {
       return "dynamic-indexing-distribution.xml";
@@ -69,6 +69,14 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       verifyFindsCar(2, "megane");
    }
 
+   public void testPartiallyReindex() throws Exception {
+      caches.get(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F1NUM"), new Car("megane", "white", 300));
+      Search.getSearchManager(cache(0)).getMassIndexer().reindex(key("F1NUM")).get();
+      verifyFindsCar(1, "megane");
+      caches.get(0).remove(key("F1NUM"));
+      verifyFindsCar(0, "megane");
+   }
+
    protected Object key(String keyId) {
       //Used to verify remoting is fine with non serializable keys
       return new NonSerializableKeyType(keyId);
@@ -81,7 +89,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
    }
 
    protected void verifyFindsCar(int expectedCount, String carMake) throws Exception {
-      for (Cache cache: caches) {
+      for (Cache cache : caches) {
          StaticTestingErrorHandler.assertAllGood(cache);
          verifyFindsCar(cache, expectedCount, carMake);
       }
@@ -93,5 +101,22 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       Query fullTextQuery = carQueryBuilder.keyword().onField("make").matching(carMake).createQuery();
       CacheQuery<Car> cacheQuery = searchManager.getQuery(fullTextQuery, Car.class);
       assertEquals(expectedCount, cacheQuery.getResultSize());
+   }
+
+   @Override
+   protected boolean cleanupAfterTest() {
+      return false;
+   }
+
+   @Override
+   protected boolean cleanupAfterMethod() {
+      return true;
+   }
+
+   @BeforeMethod
+   @Override
+   public void createBeforeMethod() throws Throwable {
+      caches.clear();
+      super.createBeforeMethod();
    }
 }

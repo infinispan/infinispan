@@ -4,8 +4,10 @@ import static org.infinispan.query.impl.massindex.MassIndexStrategyFactory.calcu
 
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
@@ -57,6 +59,72 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       return executeInternal(true);
    }
 
+   private void addFutureListToFutures(List<CompletableFuture<Void>> futures, List<CompletableFuture<Void>> futureList) {
+      futureList.forEach(f -> futures.add(f.exceptionally(t -> {
+         if (t instanceof InterruptedException) {
+            Thread.currentThread().interrupt();
+            return null;
+         } else if (t instanceof CompletionException) {
+            Throwable cause = t.getCause();
+            throw LOG.errorExecutingMassIndexer(cause);
+         } else {
+            throw LOG.errorExecutingMassIndexer(t);
+         }
+      })));
+   }
+
+   @Override
+   public CompletableFuture<Void> reindex(Object... keys) {
+      List<CompletableFuture<Void>> futures = new ArrayList<>();
+      Set<Object> everywhereSet = new HashSet<>();
+      Set<Object> primeownerSet = new HashSet<>();
+      for (Object key : keys) {
+         if (cache.containsKey(key)) {
+            Class<?> indexedType = cache.get(key).getClass();
+            EntityIndexBinding indexBinding = searchIntegrator.getIndexBinding(indexedType);
+            MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
+            IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
+            switch (indexingStrategy) {
+               case ALL:
+                  everywhereSet.add(key);
+                  break;
+               case PRIMARY_OWNER:
+                  primeownerSet.add(key);
+                  break;
+            }
+         } else {
+            LOG.warn("cache contains no mapping for the key");
+         }
+      }
+      if (everywhereSet.size() > 0) {
+         IndexWorker indexWorkEverywhere =
+               new IndexWorker(null, false, false, false, everywhereSet);
+
+         DistributedTask<Void> taskEverywhere = executor
+               .createDistributedTaskBuilder(indexWorkEverywhere)
+               .timeout(0, TimeUnit.NANOSECONDS)
+               .build();
+
+         List<CompletableFuture<Void>> futureList = executor.submitEverywhere(taskEverywhere);
+         addFutureListToFutures(futures, futureList);
+      }
+      if (primeownerSet.size() > 0) {
+         IndexWorker indexWorkEverywhere =
+               new IndexWorker(null, false, false, false, null);
+
+         DistributedTask<Void> taskEverywhere = executor
+               .createDistributedTaskBuilder(indexWorkEverywhere)
+               .timeout(0, TimeUnit.NANOSECONDS)
+               .build();
+
+         List<CompletableFuture<Void>> futureList = executor.submitEverywhere(taskEverywhere, primeownerSet.toArray());
+         addFutureListToFutures(futures, futureList);
+      }
+      CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(
+            new CompletableFuture[futures.size()]));
+      return compositeFuture;
+   }
+
    private CompletableFuture<Void> executeInternal(boolean asyncFlush) {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
       Deque<Class<?>> toFlush = new LinkedList<>();
@@ -76,28 +144,18 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
 
          IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
          IndexWorker indexWork =
-                 new IndexWorker(indexedType, workerFlush, workerClean, indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER);
+               new IndexWorker(indexedType, workerFlush, workerClean, indexingStrategy == IndexingExecutionMode.PRIMARY_OWNER, null);
 
          DistributedTask<Void> task = executor
-                 .createDistributedTaskBuilder(indexWork)
-                 .timeout(0, TimeUnit.NANOSECONDS)
-                 .build();
+               .createDistributedTaskBuilder(indexWork)
+               .timeout(0, TimeUnit.NANOSECONDS)
+               .build();
 
          List<CompletableFuture<Void>> futureList = executor.submitEverywhere(task);
-         futureList.forEach(f -> futures.add(f.exceptionally(t -> {
-            if (t instanceof InterruptedException) {
-               Thread.currentThread().interrupt();
-               return null;
-            } else if (t instanceof CompletionException) {
-               Throwable cause = t.getCause();
-               throw LOG.errorExecutingMassIndexer(cause);
-            } else {
-               throw LOG.errorExecutingMassIndexer(t);
-            }
-         })));
+         addFutureListToFutures(futures, futureList);
       }
       CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(
-              new CompletableFuture[futures.size()]));
+            new CompletableFuture[futures.size()]));
       BiConsumer<Void, Throwable> consumer = (v, t) -> {
          for (Class<?> type : toFlush) {
             indexUpdater.flush(type);
