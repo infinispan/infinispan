@@ -103,6 +103,12 @@
          <optional>true</optional>
       </dependency>
 
+      <dependency>
+        <groupId>org.apache.karaf.features</groupId>
+        <artifactId>framework</artifactId>
+        <type>kar</type>
+        <scope>provided</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -215,6 +221,15 @@
                   </goals>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.karaf.tooling</groupId>
+            <artifactId>karaf-maven-plugin</artifactId>
+            <configuration>
+               <features>
+                  <feature>infinispan-core</feature>
+               </features>
+            </configuration>
          </plugin>
       </plugins>
    </build>

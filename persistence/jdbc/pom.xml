@@ -65,6 +65,13 @@
          <artifactId>metainf-services</artifactId>
          <optional>true</optional>
       </dependency>
+      
+      <dependency>
+        <groupId>org.apache.karaf.features</groupId>
+        <artifactId>framework</artifactId>
+        <type>kar</type>
+        <scope>provided</scope>
+      </dependency>
    </dependencies>
 
    <build>
@@ -167,6 +174,15 @@
 
             <configuration>
                <threadCount>1</threadCount>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.karaf.tooling</groupId>
+            <artifactId>karaf-maven-plugin</artifactId>
+            <configuration>
+               <features>
+                  <feature>infinispan-cachestore-jdbc</feature>
+               </features>
             </configuration>
          </plugin>
       </plugins>
