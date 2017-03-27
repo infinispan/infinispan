@@ -3,7 +3,7 @@
    <cache-container default-cache="default">
       <transport cluster="Infinispan-Query-Cluster" />
       <distributed-cache name="default" mode="SYNC">
-         <indexing index="LOCAL">
+         <indexing index="PRIMARY_OWNER">
             <indexed-entities>
                <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
             </indexed-entities>
