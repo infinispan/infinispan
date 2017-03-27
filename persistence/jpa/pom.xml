@@ -153,6 +153,12 @@
          <scope>provided</scope>
       </dependency>
       <dependency>
+        <groupId>org.apache.karaf.features</groupId>
+        <artifactId>framework</artifactId>
+        <type>kar</type>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
          <optional>true</optional>
@@ -238,6 +244,15 @@
                         <db.username>${db.username}</db.username>
                         <db.password>${db.password}</db.password>
                      </systemPropertyVariables>
+                  </configuration>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.karaf.tooling</groupId>
+                  <artifactId>karaf-maven-plugin</artifactId>
+                  <configuration>
+                     <features>
+                        <feature>${project.artifactId}</feature>
+                     </features>
                   </configuration>
                </plugin>
             </plugins>
