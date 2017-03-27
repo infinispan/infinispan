@@ -91,6 +91,8 @@
       <version.hibernate_dep.hibernate-commons-annotations>5.0.1.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.hibernate_dep.jandex>2.0.0.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javassist>3.20.0-GA</version.hibernate_dep.javassist>
+      <version.felix>3.2.2</version.felix>
+      <version.karaf-maven-plugin>4.0.4</version.karaf-maven-plugin>
 
       <uberjar.deps.optional>true</uberjar.deps.optional>
    </properties>
@@ -518,6 +520,20 @@
             <artifactId>slf4j-jboss-logging</artifactId>
             <version>${version.slf4j-jboss-logging}</version>
          </dependency>
+
+         <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.framework</artifactId>
+            <version>${version.felix}</version>
+         </dependency>
+
+         <dependency>
+           <groupId>org.apache.karaf.features</groupId>
+           <artifactId>framework</artifactId>
+           <version>${version.karaf}</version>
+           <type>kar</type>
+           <scope>provided</scope>
+         </dependency>
       </dependencies>
    </dependencyManagement>
 
@@ -536,6 +552,40 @@
                   </excludes>
                   <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
                </configuration>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.karaf.tooling</groupId>
+               <artifactId>karaf-maven-plugin</artifactId>
+               <version>${version.karaf-maven-plugin}</version>
+               <configuration>
+                  <descriptors>
+                     <descriptor>file://${project.build.directory}/classes/features.xml</descriptor>
+                     <!-- ideally, those profiles should be referenced in the features file -->
+                     <descriptor>mvn:org.apache.karaf.features/framework/${version.karaf}/xml/features</descriptor>
+                     <descriptor>mvn:org.apache.karaf.features/enterprise/${version.karaf}/xml/features</descriptor>
+                  </descriptors>
+                  <distribution>org.apache.karaf.features:framework</distribution>
+                  <javase>1.8</javase>
+                  <framework>
+                     <feature>framework</feature>
+                  </framework>
+               </configuration>
+               <executions>
+                  <execution>
+                     <id>validate</id>
+                     <phase>process-resources</phase>
+                     <goals>
+                        <goal>verify</goal>
+                     </goals>
+                  </execution>
+               </executions>
+               <dependencies>
+                  <dependency>
+                     <groupId>org.apache.maven.wagon</groupId>
+                     <artifactId>wagon-http-lightweight</artifactId>
+                     <version>2.8</version>
+                  </dependency>
+               </dependencies>
             </plugin>
          </plugins>
       </pluginManagement>
