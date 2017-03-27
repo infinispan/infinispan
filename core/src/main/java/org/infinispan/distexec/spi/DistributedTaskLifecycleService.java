@@ -2,6 +2,7 @@ package org.infinispan.distexec.spi;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.ServiceConfigurationError;
 import java.util.concurrent.Callable;
@@ -30,10 +31,10 @@ public final class DistributedTaskLifecycleService {
       return service;
    }
 
-   public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputCache) {
+   public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputCache, Collection<K> inputKeys) {
       try {
          for (DistributedTaskLifecycle l : lifecycles) {
-            l.onPreExecute(task, inputCache);
+            l.onPreExecute(task, inputCache, inputKeys);
          }
       } catch (ServiceConfigurationError serviceError) {
          log.errorReadingProperties(new IOException(
