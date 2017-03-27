@@ -1,5 +1,7 @@
 package org.infinispan.cdi.embedded;
 
+import java.util.Collection;
+
 import org.infinispan.Cache;
 import org.infinispan.distexec.DistributedExecutorService;
 
@@ -22,6 +24,7 @@ public class ContextInputCache {
     * details and design decisions made
     */
    private static ThreadLocal<Cache<?, ?>> contextualCache = new ThreadLocal<Cache<?, ?>>();
+   private static ThreadLocal<Collection<?>> contextualKeys = new ThreadLocal<>();
 
    public static <K, V> void set(Cache<K, V> input) {
       contextualCache.set(input);
@@ -32,8 +35,17 @@ public class ContextInputCache {
       return (Cache<K, V>) contextualCache.get();
    }
 
+   public static <K> void setKeys(Collection<K> inputKeys) {
+      contextualKeys.set(inputKeys);
+   }
+
+   public static <K> Collection<K> getKeys(){
+      return (Collection<K>) contextualKeys.get();
+   }
+
    public static void clean() {
       contextualCache.remove();
+      contextualKeys.remove();
    }
 
 }

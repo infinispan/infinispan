@@ -1,5 +1,6 @@
 package org.infinispan.cdi.embedded;
 
+import java.util.Collection;
 import java.util.concurrent.Callable;
 
 import javax.enterprise.context.spi.CreationalContext;
@@ -20,8 +21,8 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
    }
 
    @Override
-   public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputDataCache) {
-      delegate.onPreExecute(task, inputDataCache);
+   public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputDataCache, Collection<K> inputKeys) {
+      delegate.onPreExecute(task, inputDataCache, inputKeys);
    }
 
    @Override
@@ -32,7 +33,7 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
    static class NoCDIDistributedTaskLifecycle implements DistributedTaskLifecycle {
 
       @Override
-      public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputDataCache) {
+      public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputDataCache, Collection<K> inputKeys) {
       }
 
       @Override
@@ -43,11 +44,12 @@ public class DelegatingDistributedTaskLifecycle implements DistributedTaskLifecy
    static class CDIDistributedTaskLifecycle implements DistributedTaskLifecycle {
 
       @Override
-      public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputDataCache) {
+      public <T, K, V> void onPreExecute(Callable<T> task, Cache<K, V> inputDataCache, Collection<K> inputKeys) {
          BeanManager bm = CDIHelper.getBeanManager();
          if (bm == null)
             return;
          ContextInputCache.set(inputDataCache);
+         ContextInputCache.setKeys(inputKeys);
          preInject(bm, task);
          if (task instanceof RunnableAdapter) {
             preInject(bm, ((RunnableAdapter) task).getTask());

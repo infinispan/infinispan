@@ -1060,7 +1060,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                DistributedTaskLifecycleService lifecycle = DistributedTaskLifecycleService.getInstance();
                try {
                   // hook into lifecycle
-                  lifecycle.onPreExecute(getCommand().getCallable(), cache);
+                  lifecycle.onPreExecute(getCommand().getCallable(), cache, Collections.unmodifiableCollection(getInputKeys()));
                   cancellationService.register(Thread.currentThread(), getCommand().getUUID());
                   getCommand().invokeAsync().whenComplete((rv, t) -> {
                      if (t != null) {

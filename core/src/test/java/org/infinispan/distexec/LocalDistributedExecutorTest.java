@@ -80,14 +80,25 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
     * Helper public method (used by CDI module), disabled as some IDEs invoke it as a test method
     *
     * @param call
+    * @param keys
     * @throws Exception
     */
    @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
-   public void basicInvocation(Callable<Integer> call) throws Exception {
+   public void basicInvocation(Callable<Integer> call, Object... keys) throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      Future<Integer> future = des.submit(call);
+      Future<Integer> future = des.submit(call, keys);
       Integer r = future.get();
       assert r == 1;
+   }
+
+
+   /**
+    * Helper public method (used by CDI module), disabled as some IDEs invoke it as a test method
+    *
+    */
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
+   public void addEntries(Map<Object,Object> entries) {
+      getCache().putAll(entries);
    }
 
    /**
