@@ -75,6 +75,21 @@
          <artifactId>wildfly-controller</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
+
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-api</artifactId>
+         <optional>${uberjar.deps.optional}</optional>
+         <scope>compile</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.karaf.features</groupId>
+        <artifactId>framework</artifactId>
+        <type>kar</type>
+        <scope>provided</scope>
+      </dependency>
+
    </dependencies>
 
    <build>
@@ -332,6 +347,35 @@
                   </configuration>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>2.3</version>
+            <executions>
+               <execution>
+                  <id>attach-sources</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>2.4</version>
+            <executions>
+               <execution>
+                  <id>build-test-jar</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.karaf.tooling</groupId>
+            <artifactId>karaf-maven-plugin</artifactId>
+            <configuration>
+               <features>
+                  <feature>infinispan-remote</feature>
+               </features>
+            </configuration>
          </plugin>
       </plugins>
    </build>
