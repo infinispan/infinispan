@@ -95,7 +95,7 @@
       <module.skipTestComponentMetaDataProcessing>true</module.skipTestComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
 
-      <version.ant>1.9.4</version.ant>
+      <version.ant>1.10.1</version.ant>
       <version.antlr>3.4</version.antlr>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
       <version.apache.ds>2.0.0-M20</version.apache.ds>
@@ -181,7 +181,8 @@
       <version.org.wildfly.core>2.2.0.Final</version.org.wildfly.core>
       <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
-      <version.org.wildfly.maven-plugin>1.1.0.Alpha5</version.org.wildfly.maven-plugin>
+      <version.org.wildfly.maven-plugin>1.1.0.Final</version.org.wildfly.maven-plugin>
+      <version.org.wildfly.cli>1.0.1.Final</version.org.wildfly.cli>
 
       <version.javassist>3.20.0-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
@@ -194,7 +195,6 @@
       <version.pax.url>2.5.2</version.pax.url>
       <version.karaf>3.0.8</version.karaf>
       <version.pax.exam>4.10.0</version.pax.exam>
-      <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
@@ -1077,6 +1077,13 @@
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-antrun-plugin</artifactId>
                <version>1.8</version>
+               <dependencies>
+                  <dependency>
+                     <groupId>org.apache.ant</groupId>
+                     <artifactId>ant</artifactId>
+                     <version>${version.ant}</version>
+                  </dependency>
+               </dependencies>
             </plugin>
             <plugin>
                <groupId>org.apache.felix</groupId>
@@ -1086,8 +1093,8 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-assembly-plugin</artifactId>
-               <version>2.4</version>
-            </plugin>
+               <version>3.0.0</version>
+           </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
@@ -1137,12 +1144,17 @@
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-source-plugin</artifactId>
+               <version>${version.maven.source}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-surefire-plugin</artifactId>
                <version>${version.maven.surefire}</version>
             </plugin>
             <plugin>
                <artifactId>maven-war-plugin</artifactId>
-               <version>2.1.1</version>
+               <version>2.4</version>
                <configuration>
                   <attachClasses>false</attachClasses>
                </configuration>
@@ -1196,6 +1208,19 @@
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>${version.org.wildfly.maven-plugin}</version>
+                <dependencies>
+                   <dependency>
+                      <groupId>org.wildfly.core</groupId>
+                      <artifactId>wildfly-cli</artifactId>
+                      <version>${version.org.wildfly.cli}</version>
+                      <exclusions>
+                         <exclusion>
+                            <groupId>sun.jdk</groupId>
+                            <artifactId>jconsole</artifactId>
+                         </exclusion>
+                      </exclusions>
+                   </dependency>
+                </dependencies>
              </plugin>
              <plugin>
                 <groupId>com.github.alexcojocaru</groupId>
@@ -1599,7 +1624,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-source-plugin</artifactId>
-                  <version>${version.maven.source}</version>
                   <executions>
                      <execution>
                         <id>attach-sources</id>
@@ -1855,7 +1879,7 @@
                      <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant-nodeps</artifactId>
-                        <version>${version.ant-nodeps}</version>
+                        <version>${version.ant}</version>
                      </dependency>
                   </dependencies>
                   <executions>
