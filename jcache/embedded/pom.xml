@@ -170,28 +170,6 @@
                <scope>test</scope>
             </dependency>
          </dependencies>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.scala-tools</groupId>
-                  <artifactId>maven-scala-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>default</id>
-                        <phase>none</phase>
-                     </execution>
-                     <execution>
-                        <id>compile</id>
-                        <phase>none</phase>
-                     </execution>
-                     <execution>
-                        <id>test-compile</id>
-                        <phase>none</phase>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
       </profile>
       <profile>
          <id>smoke</id>

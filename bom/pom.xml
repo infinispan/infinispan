@@ -707,21 +707,6 @@
                                     <ignore />
                                  </action>
                               </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.scala-tools</groupId>
-                                    <artifactId>maven-scala-plugin</artifactId>
-                                    <versionRange>[2.15.2,)</versionRange>
-                                    <goals>
-                                       <goal>testCompile</goal>
-                                       <goal>compile</goal>
-                                       <goal>script</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
                            </pluginExecutions>
                         </lifecycleMappingMetadata>
                      </configuration>

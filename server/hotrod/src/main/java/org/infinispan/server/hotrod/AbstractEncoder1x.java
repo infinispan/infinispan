@@ -33,7 +33,7 @@ import io.netty.buffer.ByteBuf;
  * @author Galder Zamarreño
  * @since 5.1
  */
-abstract class AbstractEncoder1x implements VersionedEncoder {
+public abstract class AbstractEncoder1x implements VersionedEncoder {
 
    protected final Log log = LogFactory.getLog(getClass(), Log.class);
    protected final boolean trace = log.isTraceEnabled();

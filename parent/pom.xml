@@ -1216,38 +1216,6 @@
                </configuration>
              </plugin>
              <plugin>
-                <groupId>org.scala-tools</groupId>
-                <artifactId>maven-scala-plugin</artifactId>
-                <version>${version.maven.scala}</version>
-                <executions>
-                   <execution>
-                      <id>compile</id>
-                      <phase>none</phase>
-                      <goals>
-                         <goal>compile</goal>
-                      </goals>
-                   </execution>
-                   <execution>
-                      <id>test-compile</id>
-                      <phase>none</phase>
-                      <goals>
-                         <goal>testCompile</goal>
-                      </goals>
-                   </execution>
-                   <execution>
-                      <phase>none</phase>
-                      <goals>
-                         <goal>compile</goal>
-                      </goals>
-                   </execution>
-                </executions>
-                <configuration>
-                   <jvmArgs>
-                      <jvmArg>-Xmx256m</jvmArg>
-                   </jvmArgs>
-                </configuration>
-             </plugin>
-             <plugin>
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>${version.org.wildfly.maven-plugin}</version>
@@ -1629,6 +1597,8 @@
                         <compilerArgs>
                            <arg>-J--add-modules</arg>
                            <arg>-Jjava.xml.ws.annotation</arg>
+                           <!--<arg>-J&#45;&#45;add-opens</arg>-->
+                           <!--<arg>jdk.unsupported/sun.misc=ALL-UNNAMED</arg>-->
                         </compilerArgs>
                      </configuration>
                   </plugin>
