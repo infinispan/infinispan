@@ -24,6 +24,12 @@
       <maven.compiler.source>1.8</maven.compiler.source>
       <server.output.dir.prefix>infinispan-server</server.output.dir.prefix>
 
+      <!-- Override plugin versions defined in the JBoss parent POM to work with JDK9-->
+      <version.source.plugin>3.0.0</version.source.plugin>
+      <version.compiler.plugin>3.6.1</version.compiler.plugin>
+      <version.jar.plugin>3.0.2</version.jar.plugin>
+      <version.assembly.plugin>3.0.0</version.assembly.plugin>
+
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.apache.ds>2.0.0-M16</version.apache.ds>
       <version.com.github.relaxng.relaxngDatatype>2011.1</version.com.github.relaxng.relaxngDatatype>
