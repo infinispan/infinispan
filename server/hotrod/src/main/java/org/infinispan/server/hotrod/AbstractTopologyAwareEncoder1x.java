@@ -29,7 +29,7 @@ import io.netty.buffer.ByteBuf;
  * @author Galder Zamarreño
  * @since 5.2
  */
-abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
+public abstract class AbstractTopologyAwareEncoder1x extends AbstractEncoder1x {
 
    @Override
    protected AbstractHashDistAwareResponse createHashDistAwareResp(int topologyId,

@@ -17,7 +17,6 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +77,7 @@ import io.netty.util.concurrent.Future;
  * @since 4.1
  */
 public class HotRodClient {
+   private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
    final static AtomicLong idCounter = new AtomicLong();
 
    final String host;
@@ -87,6 +87,10 @@ public class HotRodClient {
    final byte protocolVersion;
    final SSLEngine sslEngine;
    final Channel ch;
+
+   Map<Long, Op> idToOp = new ConcurrentHashMap<>();
+   private EventLoopGroup eventLoopGroup =
+         new NioEventLoopGroup(1, new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName() + "-Client"));
 
    public HotRodClient(String host, int port, String defaultCacheName, int rspTimeoutSeconds, byte protocolVersion) {
       this(host, port, defaultCacheName, rspTimeoutSeconds, protocolVersion, null);
@@ -107,12 +111,6 @@ public class HotRodClient {
    public String defaultCacheName() {
       return defaultCacheName;
    }
-
-   Map<Long, Op> idToOp = new ConcurrentHashMap<>();
-   SaslClient saslClient = null;
-   private EventLoopGroup eventLoopGroup =
-         new NioEventLoopGroup(1, new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName() + "-Client"));
-   private static final Log log = LogFactory.getLog(HotRodClient.class, Log.class);
 
    private Channel initializeChannel() {
       Bootstrap bootstrap = new Bootstrap();
@@ -386,7 +384,7 @@ public class HotRodClient {
    }
 
    public TestAuthResponse auth(SaslClient sc) throws SaslException {
-      saslClient = sc;
+      SaslClient saslClient = sc;
       byte[] saslResponse = saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : new byte[0];
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       AuthOp op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, saslClient.getMechanismName(), saslResponse);
@@ -1117,59 +1115,5 @@ class ServerNode {
    ServerNode(String host, int port) {
       this.host = host;
       this.port = port;
-   }
-}
-
-class TestTopologyAwareResponse extends AbstractTestTopologyAwareResponse {
-   protected TestTopologyAwareResponse(int topologyId, Collection<ServerAddress> members) {
-      super(topologyId, members);
-   }
-}
-
-class TestHashDistAware10Response extends AbstractTestTopologyAwareResponse {
-
-   final Map<ServerAddress, List<Integer>> hashIds;
-   final int numOwners;
-   final byte hashFunction;
-   final int hashSpace;
-
-   protected TestHashDistAware10Response(int topologyId, Collection<ServerAddress> members, Map<ServerAddress,
-         List<Integer>> hashIds, int numOwners, byte hashFunction, int hashSpace) {
-      super(topologyId, members);
-      this.hashIds = hashIds;
-      this.numOwners = numOwners;
-      this.hashFunction = hashFunction;
-      this.hashSpace = hashSpace;
-   }
-}
-
-class TestHashDistAware11Response extends AbstractTestTopologyAwareResponse {
-
-   final Map<ServerAddress, Integer> membersToHash;
-   final int numOwners;
-   final byte hashFunction;
-   final int hashSpace;
-   final int numVirtualNodes;
-
-   protected TestHashDistAware11Response(int topologyId, Map<ServerAddress, Integer> membersToHash, int numOwners,
-                                         byte hashFunction, int hashSpace, int numVirtualNodes) {
-      super(topologyId, membersToHash.keySet());
-      this.membersToHash = membersToHash;
-      this.numOwners = numOwners;
-      this.hashFunction = hashFunction;
-      this.hashSpace = hashSpace;
-      this.numVirtualNodes = numVirtualNodes;
-   }
-}
-
-class TestHashDistAware20Response extends AbstractTestTopologyAwareResponse {
-   final List<Iterable<ServerAddress>> segments;
-   final byte hashFunction;
-
-   protected TestHashDistAware20Response(int topologyId, Collection<ServerAddress> members,
-                                         List<Iterable<ServerAddress>> segments, byte hashFunction) {
-      super(topologyId, members);
-      this.segments = segments;
-      this.hashFunction = hashFunction;
    }
 }

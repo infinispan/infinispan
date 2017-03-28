@@ -19,7 +19,6 @@ import org.testng.annotations.Test;
  * @author gustavonalle
  * @since 8.0
  */
-@Test(groups = "functional")
 public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
 
    protected final int SERVERS = 3;

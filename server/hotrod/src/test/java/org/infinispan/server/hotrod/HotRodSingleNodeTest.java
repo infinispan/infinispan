@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.test;
+package org.infinispan.server.hotrod;
 
 import static org.infinispan.server.core.test.ServerTestingUtil.killServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -6,28 +6,31 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.Test;
 
-import io.netty.util.concurrent.Future;
 
+/**
+ * Base test class for single node Hot Rod tests.
+ *
+ * @author Galder Zamarreño
+ * @since 4.1
+ */
 public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
-   public final String cacheName = "HotRodCache";
+   protected String cacheName = "HotRodCache";
    protected HotRodServer hotRodServer;
-   HotRodClient hotRodClient;
-   AdvancedCache<byte[], byte[]> advancedCache;
-   private final String hotRodJmxDomain = getClass().getSimpleName();
+   protected HotRodClient hotRodClient;
+   protected AdvancedCache<byte[], byte[]> advancedCache;
+   private String hotRodJmxDomain = getClass().getSimpleName();
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() {
+   public EmbeddedCacheManager createCacheManager() {
       EmbeddedCacheManager cacheManager = createTestCacheManager();
-      Cache<byte[], byte[]> cache = cacheManager.getCache(cacheName);
-      advancedCache = cache.getAdvancedCache();
+      advancedCache = cacheManager.<byte[], byte[]>getCache(cacheName).getAdvancedCache();
       return cacheManager;
    }
 
@@ -39,7 +42,9 @@ public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {
-      return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
+      return TestCacheManagerFactory.createCacheManager(
+            new GlobalConfigurationBuilder().nonClusteredDefault().defaultCacheName(cacheName),
+            hotRodCacheConfiguration());
    }
 
    protected HotRodServer createStartHotRodServer(EmbeddedCacheManager cacheManager) {
@@ -47,10 +52,11 @@ public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    }
 
    @AfterClass(alwaysRun = true)
-   public void destroyAfterClass() {
+   @Override
+   protected void destroyAfterClass() {
       log.debug("Test finished, close cache, client and Hot Rod server");
       super.destroyAfterClass();
-      shutdownClient().awaitUninterruptibly();
+      shutdownClient();
       killServer(hotRodServer);
    }
 
@@ -66,8 +72,8 @@ public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       return hotRodJmxDomain;
    }
 
-   protected Future<?> shutdownClient() {
-      return killClient(hotRodClient);
+   protected void shutdownClient() {
+      killClient(hotRodClient);
    }
 
    protected HotRodClient connectClient() {
