@@ -98,6 +98,7 @@
       <version.ant>1.10.1</version.ant>
       <version.antlr>3.4</version.antlr>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
+      <version.maven.antrun>1.8</version.maven.antrun>
       <version.apache.ds>2.0.0-M20</version.apache.ds>
       <version.arquillian>1.1.5.Final</version.arquillian>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
@@ -1076,7 +1077,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-antrun-plugin</artifactId>
-               <version>1.8</version>
+               <version>${version.maven.antrun}</version>
                <dependencies>
                   <dependency>
                      <groupId>org.apache.ant</groupId>

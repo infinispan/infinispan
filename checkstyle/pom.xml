@@ -12,6 +12,10 @@
    <name>Infinispan Checkstyle Rules</name>
    <description>Contains the definitions for the Infinispan commons code style and conventions</description>
 
+   <properties>
+      <version.maven.source>3.0.0</version.maven.source>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>com.puppycrawl.tools</groupId>
@@ -37,6 +41,7 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-source-plugin</artifactId>
+                  <version>${version.maven.source}</version>
                   <executions>
                      <execution>
                         <id>attach-sources</id>

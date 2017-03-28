@@ -823,6 +823,31 @@
             <skipTests>true</skipTests>
          </properties>
       </profile>
+
+      <profile>
+         <id>jigsaw</id>
+         <activation>
+            <jdk>[9,)</jdk>
+         </activation>
+         <build>
+            <pluginManagement>
+               <plugins>
+                  <plugin>
+                     <groupId>org.apache.maven.plugins</groupId>
+                     <artifactId>maven-compiler-plugin</artifactId>
+                     <configuration>
+                        <!-- fork is needed so compiler args can be used -->
+                        <fork>true</fork>
+                        <compilerArgs>
+                           <arg>-J--add-modules</arg>
+                           <arg>-Jjava.xml.ws.annotation</arg>
+                        </compilerArgs>
+                     </configuration>
+                  </plugin>
+               </plugins>
+            </pluginManagement>
+         </build>
+      </profile>
    </profiles>
 
 </project>
