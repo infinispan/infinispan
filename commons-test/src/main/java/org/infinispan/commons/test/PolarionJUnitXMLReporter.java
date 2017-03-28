@@ -189,7 +189,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       document.pop();
 
       // Reset output directory
-      Utils.writeUtf8File(suite.getOutputDirectory().replaceAll("/Surefire suite", ""),
+      Utils.writeUtf8File(suite.getOutputDirectory().replaceAll(".Surefire suite", ""),
             generateFileName(suite) + ".xml", document.toXML());
    }
 
