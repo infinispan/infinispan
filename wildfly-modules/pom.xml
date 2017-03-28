@@ -16,7 +16,7 @@
       <dependency>
          <groupId>org.apache.ant</groupId>
          <artifactId>ant</artifactId>
-         <version>1.9.9</version>
+         <version>${version.ant}</version>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -269,7 +269,16 @@
    <build>
       <plugins>
          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
+            <version>${version.maven.antrun}</version>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.ant</groupId>
+                  <artifactId>ant</artifactId>
+                  <version>${version.ant}</version>
+               </dependency>
+            </dependencies>
             <executions>
                <execution>
                   <id>build-dist-dir</id>
