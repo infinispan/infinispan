@@ -33,7 +33,7 @@ import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
@@ -157,9 +157,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
 
       // Add self to topology cache last, after everything is initialized
-      GlobalConfiguration globalConfig = cacheManager.getCacheManagerConfiguration();
-      isClustered = globalConfig.transport().transport() != null;
-      if (isClustered) {
+      if (Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {
          defineTopologyCacheConfig(cacheManager);
          if (log.isDebugEnabled())
             log.debugf("Externally facing address is %s:%d", configuration.proxyHost(), configuration.proxyPort());
@@ -409,6 +407,11 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       }
       if (topologyChangeListener != null) {
          SecurityActions.removeListener(addressCache, topologyChangeListener);
+      }
+      if (Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {
+         InternalCacheRegistry internalCacheRegistry = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+         if (internalCacheRegistry != null)
+            internalCacheRegistry.unregisterInternalCache(configuration.topologyCacheName());
       }
       if (distributedExecutorService != null) {
          distributedExecutorService.shutdownNow();

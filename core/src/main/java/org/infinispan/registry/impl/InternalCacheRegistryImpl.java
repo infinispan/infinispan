@@ -75,6 +75,18 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    }
 
    @Override
+   public synchronized void unregisterInternalCache(String name) {
+      if (isInternalCache(name)) {
+         Cache<Object, Object> cache = cacheManager.getCache(name, false);
+         if (cache != null)
+            cache.stop();
+         internalCaches.remove(name);
+         privateCaches.remove(name);
+         SecurityActions.undefineConfiguration(cacheManager, name);
+      }
+   }
+
+   @Override
    public boolean isInternalCache(String name) {
       return internalCaches.containsKey(name);
    }
