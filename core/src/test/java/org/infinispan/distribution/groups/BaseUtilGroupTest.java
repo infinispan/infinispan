@@ -123,7 +123,7 @@ public abstract class BaseUtilGroupTest extends MultipleCacheManagersTest {
                DistributionInfo distributionInfo = distributionManager.getCacheTopology().getDistribution(groupName);
                if (primaryOwner == null && distributionInfo.isPrimary()) {
                   primaryOwner = cache;
-               } else if (nonOwner == null && distributionInfo.isWriteOwner()) {
+               } else if (nonOwner == null && !distributionInfo.isWriteOwner()) {
                   nonOwner = cache.getAdvancedCache();
                }
                if (primaryOwner != null && nonOwner != null) {
