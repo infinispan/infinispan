@@ -136,8 +136,7 @@ link:{javadocroot}/org/infinispan/tree/TreeCache.html[TreeCache] should be consi
 
 ==== Which JVMs (JDKs) does Infinispan work with?
 Infinispan is developed and primarily tested against Oracle Java SE 8.
-It should work with most Java SE 9 implementations, including those from IBM, HP, Apple, Oracle, and OpenJDK.
-We also build/test against JDK 9.
+It should work with most Java SE 8 implementations, including those from IBM, HP, Apple, Oracle, and OpenJDK.
 
 ==== Does Infinispan store data by value or by reference?
 
@@ -616,4 +615,30 @@ version=281483566645249}]
 
 ==== How do I retrieve the clustering physical address?
 You can retrieve the physical address via link:{javadocroot}/org/infinispan/remoting/transport/Transport.html#getPhysicalAddresses[`AdvancedCache.getRpcManager().getTransport().getPhysicalAddresses()`]
+
+=== Security questions
+
+==== Using Kerberos with the IBM JDK
+
+When using Kerberos/GSSAPI authentication over Hot Rod, the IBM JDK implementation sometimes fail to authenticate with the following exception:
+
+----
+com.ibm.security.krb5.KrbException, status code: 101
+    message: Invalid option in ticket request
+    at com.ibm.security.krb5.KrbTgsReq.<init>(KrbTgsReq.java:62)
+    at com.ibm.security.krb5.KrbTgsReq.<init>(KrbTgsReq.java:145)
+    at com.ibm.security.krb5.internal.k.b(k.java:179)
+    at com.ibm.security.krb5.internal.k.a(k.java:215)
+----
+
+A possible workaround is to perform a login/logout/login on the LoginContext, before using the Subject:
+
+----
+LoginContext lc = ...;
+lc.login();
+lc.logout();
+lc = ...;
+lc.login();
+lc.getSubject();
+----
 

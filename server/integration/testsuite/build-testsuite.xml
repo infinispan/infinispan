@@ -15,6 +15,9 @@
     <property name="zip.dist.old" value="false" />
     <property name="trace" value="none"/>
     <property name="new.server.schema.version" value="${new.server.schema.version}"/>
+    <condition property="jdk.vendor.qualifier" value="-ibm" else="">
+        <contains string="${java.vendor}" substring="IBM" />
+    </condition>
 
     <filterset id="commonFilters" begintoken="${" endtoken="}">
         <filter token="rocksdb.compression" value="${rocksdb.compression}" />
@@ -207,7 +210,7 @@
                 <transform-rest-sec cacheContainer="security" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-cert.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" addSecRealm="${other.parts}/client-cert-realm.xml" addVault="${other.parts}/vault.xml" filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-cert.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" addSecRealm="${other.parts}/client-cert-realm.xml" addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec authMethod="CLIENT_CERT" cacheContainer="security" securityRealm="ClientCertRealm" modifyCertSecRealm="true" in="@{in}"/>
             </rest-sec>
@@ -221,7 +224,7 @@
             modifyInfinispan="${infinispan.parts}/default-repl.xml"
             infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"
             addEncrypt="${other.parts}/jgroups-encrypt.xml"
-            addVault="${other.parts}/vault.xml"
+            addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml"
             filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-filecs.xml" modifyInfinispan="${infinispan.parts}/filecachestore.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-eviction.xml" modifyInfinispan="${infinispan.parts}/eviction.xml"/>
@@ -286,60 +289,60 @@
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl.xml"
                    addSecRealm="${other.parts}/ldap-security-realm-with-ssl.xml"
                    addConnection="${other.parts}/ldap-connection-ssl.xml"
-                   addVault="${other.parts}/vault.xml" />
+                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-auth-krb.xml"
                    modifyInfinispan="${infinispan.parts}/clustered-secured.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
-                   addKrbSecDomain="${other.parts}/kerberos-security-domain.xml" />
+                   addKrbSecDomain="${other.parts}/kerberos-security-domain${jdk.vendor.qualifier}.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-authz-ldap.xml"
                    modifyInfinispan="${infinispan.parts}/clustered-secured-ldap-roles.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth-krb-authz-ldap.xml"
                    addSecRealm="${other.parts}/ldap-authz-security-realm.xml"
                    addConnection="${other.parts}/ldap-connection.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
-                   addKrbSecDomain="${other.parts}/kerberos-security-domain.xml"/>
+                   addKrbSecDomain="${other.parts}/kerberos-security-domain${jdk.vendor.qualifier}.xml"/>
         <transform in="clustered.xml" out="testsuite/hotrod-auth-external-ssl.xml"
                    modifyInfinispan="${infinispan.parts}/clustered-secured-external.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth-external.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-external-realm.xml"
                    addSecRealm="${other.parts}/client-cert-realm.xml"
-                   addVault="${other.parts}/vault.xml" />
+                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-0.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml"
-                   addVault="${other.parts}/vault.xml"/>
+                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-1.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-md5-1.xml"
-                   addVault="${other.parts}/vault.xml"/>
+                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-0.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-krb-0.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
-                   addKrbSecDomain="${other.parts}/kerberos-sec-domain-node0.xml" />
+                   addKrbSecDomain="${other.parts}/kerberos-sec-domain-node0${jdk.vendor.qualifier}.xml" />
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-1.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-krb-1.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
-                   addKrbSecDomain="${other.parts}/kerberos-sec-domain-node1.xml" />
+                   addKrbSecDomain="${other.parts}/kerberos-sec-domain-node1${jdk.vendor.qualifier}.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-no-auth.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-no-auth.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-no-auth.xml"
-                   addVault="${other.parts}/vault.xml" />
+                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-with-sni.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
                    restEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
-                   addVault="${other.parts}/vault.xml" />
+                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
         <transform in="standalone.xml" out="testsuite/rest-ssl-with-sni.xml"
                    restEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
-                   addVault="${other.parts}/vault.xml" />
+                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-with-multitenancy.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
