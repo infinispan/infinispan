@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.distribution.ch.impl.AffinityPartitioner;
 import org.infinispan.query.blackbox.ClusteredCacheTest;
 import org.infinispan.query.test.Person;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -45,4 +46,11 @@ public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCach
         cache2 = caches.get(1);
     }
 
+    @AfterMethod
+    @Override
+    protected void clearContent() throws Throwable {
+        // super.clearContent() clears the data container and the stores of all the non-private caches.
+        // Invoke clear() instead to clear the indexes stored in elasticsearch.
+        cache(0).clear();
+    }
 }
