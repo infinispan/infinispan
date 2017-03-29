@@ -58,4 +58,17 @@ class SybaseTableManager extends AbstractTableManager {
       }
       return deleteRowSql;
    }
+
+   @Override
+   public String getUpsertRowSql() {
+      if (upsertRowSql == null) {
+         upsertRowSql = String.format("MERGE INTO %1$s AS t " +
+                     "USING (SELECT ? %2$s, ? %3$s, ? %4$s) AS tmp " +
+                     "ON (t.%4$s = tmp.%4$s) " +
+                     "WHEN MATCHED THEN UPDATE SET t.%2$s = tmp.%2$s, t.%3$s = tmp.%3$s " +
+                     "WHEN NOT MATCHED THEN INSERT VALUES (tmp.%4$s, tmp.%2$s, tmp.%3$s)",
+               this.getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+      }
+      return upsertRowSql;
+   }
 }
