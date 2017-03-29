@@ -48,11 +48,18 @@ public class HotRodKrbAuthIT extends HotRodSaslAuthTestBase {
    }
 
    protected Subject getSubject(String login, String password) throws LoginException {
-      String krbLogin = System.getProperty("java.vendor").contains("IBM") ? "/ibm_jaas_krb_login.conf" : "/jaas_krb_login.conf";
+      boolean isIBMJDK = System.getProperty("java.vendor").contains("IBM");
+      String krbLogin = isIBMJDK ? "/ibm_jaas_krb_login.conf" : "/jaas_krb_login.conf";
       System.setProperty("java.security.auth.login.config", HotRodKrbAuthIT.class.getResource(krbLogin)
             .getPath());
       System.setProperty("java.security.krb5.conf", HotRodKrbAuthIT.class.getResource("/krb5.conf").getPath());
       LoginContext lc = new LoginContext("HotRodKrbClient", new SimpleLoginHandler(login + "@" + KRB_REALM, password));
+      if (isIBMJDK) {
+         // workaround for IBM JDK: the first negotiation always fails, so let's do a dummy login/logout round.
+         lc.login();
+         lc.logout();
+         lc = new LoginContext("HotRodKrbClient", new SimpleLoginHandler(login + "@" + KRB_REALM, password));
+      }
       lc.login();
       return lc.getSubject();
    }

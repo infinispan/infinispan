@@ -1,0 +1,9 @@
+                <security-domain name="hotrod-service" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="useKeytab" value="${jboss.server.config.dir}/hotrod_service.keytab"/>
+                            <module-option name="principal" value="hotrod/node0@INFINISPAN.ORG"/>
+                            <module-option name="credsType" value="acceptor" />
+                        </login-module>
+                    </authentication>
+                </security-domain>
