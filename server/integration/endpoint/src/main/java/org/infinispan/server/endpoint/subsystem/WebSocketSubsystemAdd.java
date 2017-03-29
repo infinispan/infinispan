@@ -65,7 +65,6 @@ class WebSocketSubsystemAdd extends ProtocolServiceSubsystemAdd {
       String cacheContainerName = getCacheContainerName(operation);
       EndpointUtils.addCacheContainerDependency(builder, cacheContainerName, service.getCacheManager());
       EndpointUtils.addSocketBindingDependency(context, builder, getSocketBindingName(operation), service.getSocketBinding());
-      EndpointUtils.addCacheDependency(builder, cacheContainerName, null);
       builder.install();
    }
 
