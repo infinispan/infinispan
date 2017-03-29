@@ -70,4 +70,8 @@ public class Configurations {
       PrivateGlobalConfiguration config = globalConfiguration.module(PrivateGlobalConfiguration.class);
       return config == null || !config.isServerMode();
    }
+
+   public static boolean isClustered(GlobalConfiguration globalConfiguration) {
+      return globalConfiguration.transport().transport() != null;
+   }
 }
