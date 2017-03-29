@@ -20,7 +20,7 @@
             <security-realm name="ApplicationRealm">
                 <authentication>
                     <local default-user="$local" allowed-users="*" skip-group-loading="true" />
-                    <truststore path="ca.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
+                    <truststore path="truststore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
                     <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
                 </authentication>
                 <authorization>
@@ -28,7 +28,7 @@
                 </authorization>
                 <server-identities>
                     <ssl>
-                       <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" />
+                       <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" alias="server" key-password="secret" generate-self-signed-certificate-host="localhost"/>
                     </ssl>
                 </server-identities>
             </security-realm>

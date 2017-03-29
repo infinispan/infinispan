@@ -369,6 +369,30 @@ Both Hot Rod and REST protocols support encryption using SSL/TLS with optional T
 When using SNI support there might be multiple Security Realms configured.
 ====
 
+It is also possible to generate development certificates on server startup. In order to do this, just specify `generate-self-signed-certificate-host`
+in the keystore element as shown below:
+
+.Generating Keystore automatically
+[source,xml]
+----
+<security-realm name="ApplicationRealm">
+    <server-identities>
+        <ssl>
+            <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" generate-self-signed-certificate-host="localhost"/>
+        </ssl>
+    </server-identities>
+</security-realm>
+----
+
+[NOTE]
+====
+There are three basic principles of automatically generated keystores that need be remembered:
+
+- They shouldn't be used on a production environment
+- They are generated when necessary (e.g. while obtaining the first connection from the client)
+- They contain also certificates so they might be used in a Hot Rod client directly
+====
+
 Next modify the +<hotrod-connector>+ and/or +<rest-connector>+ elements in the endpoint subsystem to require encryption.
 Optionally add SNI configuration:
 
