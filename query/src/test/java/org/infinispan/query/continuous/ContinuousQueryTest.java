@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.continuous.ContinuousQueryTest")
 public class ContinuousQueryTest extends SingleCacheManagerTest {
 
-   protected ControlledTimeService timeService = new ControlledTimeService(0);
+   protected ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

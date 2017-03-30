@@ -119,7 +119,7 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
          TestCacheManagerFactory.createCacheManager(false)) {
          @Override
          public void call() {
-            ControlledTimeService timeService = new ControlledTimeService(0);
+            ControlledTimeService timeService = new ControlledTimeService();
             TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
             JCacheManager jCacheManager = createJCacheManager(cm, this);
 

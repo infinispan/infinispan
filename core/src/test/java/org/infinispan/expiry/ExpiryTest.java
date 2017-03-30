@@ -43,7 +43,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    @BeforeMethod
    public void setUp() {
       cm = TestCacheManagerFactory.createCacheManager(false);
-      timeService = new ControlledTimeService(0);
+      timeService = new ControlledTimeService();
       TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
    }
 

@@ -57,7 +57,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
    private RemoteCache<String, User> remoteCache;
 
-   private ControlledTimeService timeService = new ControlledTimeService(0);
+   private ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
    protected void createCacheManagers() throws Throwable {
