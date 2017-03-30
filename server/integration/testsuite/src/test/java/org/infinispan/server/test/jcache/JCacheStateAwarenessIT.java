@@ -25,10 +25,15 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType;
+import org.infinispan.server.test.category.SingleNode;
+import org.infinispan.server.test.util.ManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
@@ -48,28 +53,48 @@ import org.junit.runner.RunWith;
  *
  */
 @RunWith(Arquillian.class)
-@WithRunningServer({ @RunningServer(name = "cachecontainer") })
+@Category(SingleNode.class)
 public class JCacheStateAwarenessIT {
 
    private static final String enableStatisticsTestCacheName = "enableStatisticsTestCache";
    private static final String enableManagementTestCacheName = "enableManagementTestCache";
    private static final String getCacheNamesTestCacheName = "getCacheNamesTestCache";
    private static final String getCacheTestCacheName = "getCacheTestCache";
+   private static final String cacheContainer = "local";
+   private static final String cacheTemplate = "localCacheConfiguration";
 
    private static final String testKey = "testKey";
    private static final String testValue = "testValue";
 
    private static final String cachingProvider = "org.infinispan.jcache.remote.JCachingProvider";
 
-   final int managementPort = 9999;
-
-   @InfinispanResource("cachecontainer")
+   @InfinispanResource("container1")
    private RemoteInfinispanServer server1;
    private RemoteCacheManager rcm1;
 
    private CachingProvider jcacheProvider;
    private CacheManager cacheManager;
    private MBeanServer mBeanServer;
+
+   @BeforeClass
+   public static void beforeClass() throws Exception {
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.addCacheConfiguration(cacheTemplate, cacheContainer, ManagementClient.CacheTemplate.LOCAL);
+      client.addLocalCache(enableStatisticsTestCacheName, cacheContainer, cacheTemplate);
+      client.addLocalCache(enableManagementTestCacheName, cacheContainer, cacheTemplate);
+      client.addLocalCache(getCacheNamesTestCacheName, cacheContainer, cacheTemplate);
+      client.addLocalCache(getCacheTestCacheName, cacheContainer, cacheTemplate);
+   }
+
+   @AfterClass
+   public static void afterClass() throws Exception {
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.removeCache(enableStatisticsTestCacheName, cacheContainer, ManagementClient.CacheType.LOCAL);
+      client.removeCache(enableManagementTestCacheName, cacheContainer, ManagementClient.CacheType.LOCAL);
+      client.removeCache(getCacheNamesTestCacheName, cacheContainer, ManagementClient.CacheType.LOCAL);
+      client.removeCache(getCacheTestCacheName, cacheContainer, ManagementClient.CacheType.LOCAL);
+      client.removeCacheConfiguration(cacheTemplate, cacheContainer, ManagementClient.CacheTemplate.LOCAL);
+   }
 
    @Before
    public void setUp() {

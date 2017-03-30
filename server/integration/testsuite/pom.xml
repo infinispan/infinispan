@@ -329,9 +329,11 @@
         <suite.queries.phase>integration-test</suite.queries.phase>
         <suite.rollups.manual.phase>none</suite.rollups.manual.phase>
         <suite.rollups.manual.dist.phase>none</suite.rollups.manual.dist.phase>
+        <suite.singlenode.config>standalone.xml</suite.singlenode.config>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
+        <suite.singlenode.phase>integration-test</suite.singlenode.phase>
         <suite.client.local.phase>integration-test</suite.client.local.phase>
         <suite.client.local.domain.phase>none</suite.client.local.domain.phase>
         <suite.client.dist.phase>integration-test</suite.client.dist.phase>
@@ -347,6 +349,7 @@
             org.infinispan.server.test.category.Queries
         </suite.manual.exclude.groups>
         <suite.client.arq.domain>suite-client-domain</suite.client.arq.domain>
+        <groups.singlenode>org.infinispan.server.test.category.SingleNode</groups.singlenode>
         <groups.client.local>
             org.infinispan.server.test.category.HotRodSingleNode,
             org.infinispan.server.test.category.RESTSingleNode
@@ -682,18 +685,18 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>suite-client-local</id>
-                        <phase>${suite.client.local.phase}</phase>
+                        <id>suite-singlenode</id>
+                        <phase>${suite.singlenode.phase}</phase>
                         <goals>
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
                             <reportNameSuffix>localmode-${default.transport.stack}</reportNameSuffix>
-                            <groups>${groups.client.local}</groups>
+                            <groups>${groups.singlenode}</groups>
                             <excludedGroups>${groups.unstable}</excludedGroups>
                             <systemPropertyVariables>
                                 <clustering.mode>local</clustering.mode>
-                                <arquillian.launch>suite-client-local</arquillian.launch>
+                                <arquillian.launch>suite-singlenode</arquillian.launch>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -922,6 +925,7 @@
                 </property>
             </activation>
             <properties>
+                <suite.singlenode.phase>none</suite.singlenode.phase>
                 <suite.queries.phase>none</suite.queries.phase>
                 <suite.manual.phase>none</suite.manual.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>

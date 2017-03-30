@@ -68,20 +68,20 @@ public class HotRodRemoteCacheDomainIT extends AbstractRemoteCacheIT {
         ManagementClient client = ManagementClient.getInstance();
         client.enableJmx();
         if (isDistributedMode()) {
-            testCache = "distTestCache";
+            TEST_CACHE = "distTestCache";
             client.addDistributedCacheConfiguration("distCacheConfiguration", "clustered");
-            client.addDistributedCache(testCache, "clustered", "distCacheConfiguration");
+            client.addDistributedCache(TEST_CACHE, "clustered", "distCacheConfiguration");
         } else if (isLocalMode()) {
             final String targetContainer = "local";
-            testCache = "localTestCache";
-            client.addCacheContainer(targetContainer, testCache);
+            TEST_CACHE = "localTestCache";
+            client.addCacheContainer(targetContainer, TEST_CACHE);
             client.addConfigurations(targetContainer);
             client.addSocketBinding("hotrod-local", "clustered-sockets", 11223);
-            client.addLocalCache(testCache, targetContainer, "localCacheConfiguration");
-            client.addHotRodEndpoint("hotrodLocal", targetContainer, testCache, "hotrod-local");
+            client.addLocalCache(TEST_CACHE, targetContainer, "localCacheConfiguration");
+            client.addHotRodEndpoint("hotrodLocal", targetContainer, TEST_CACHE, "hotrod-local");
         } else {
-            testCache = "replTestCache";
-            client.addReplicatedCache(testCache, "clustered", "replicated");
+            TEST_CACHE = "replTestCache";
+            client.addReplicatedCache(TEST_CACHE, "clustered", "replicated");
         }
     }
 
@@ -89,18 +89,18 @@ public class HotRodRemoteCacheDomainIT extends AbstractRemoteCacheIT {
     public static void afterClass() throws Exception {
         ManagementClient client = ManagementClient.getInstance();
         if (isDistributedMode()) {
-            client.removeDistributedCache(testCache, "clustered");
+            client.removeDistributedCache(TEST_CACHE, "clustered");
             client.removeDistributedCacheConfiguration("distCacheConfiguration", "clustered");
         } else if (isLocalMode()) {
             final String targetContainer = "local";
             client.removeHotRodEndpoint("hotrodLocal");
-            client.removeLocalCache(testCache, targetContainer);
+            client.removeLocalCache(TEST_CACHE, targetContainer);
             client.removeDistributedCacheConfiguration("localCacheConfiguration", "local");
             client.removeSocketBinding("hotrod-local", "clustered-sockets");
             client.removeConfigurations(targetContainer);
             client.removeCacheContainer(targetContainer);
         } else {
-            client.removeReplicatedCache(testCache, "clustered");
+            client.removeReplicatedCache(TEST_CACHE, "clustered");
         }
         client.disableJmx();
     }

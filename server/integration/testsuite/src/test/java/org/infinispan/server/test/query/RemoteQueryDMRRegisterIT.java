@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.category.Queries;
+import org.infinispan.server.test.category.SingleNode;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.clustering.infinispan.subsystem.InfinispanExtension;
@@ -31,7 +32,7 @@ import org.junit.runner.RunWith;
  *
  * @author William Burns
  */
-@Category(Queries.class)
+@Category({SingleNode.class})
 @RunWith(Arquillian.class)
 public class RemoteQueryDMRRegisterIT extends RemoteQueryIT {
 

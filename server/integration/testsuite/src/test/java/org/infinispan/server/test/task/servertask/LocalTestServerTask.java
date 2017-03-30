@@ -26,12 +26,12 @@ public class LocalTestServerTask implements ServerTask {
    @Override
    @SuppressWarnings("unchecked")
    public Object call() throws IOException, ClassNotFoundException {
-      Cache<Object, Object> cache = (Cache<Object, Object>) taskContext.getCache().get();
+      Cache<Object, Object> cache = (Cache<Object, Object>) taskContext.getCache().get().getCacheManager().getCache(CACHE_NAME);
       Map.Entry<Object, Object> entry = cache.entrySet().iterator().next();
 
       assert taskContext.getMarshaller().isPresent();
-      String existingKey = (String) taskContext.getMarshaller().get().objectFromByteBuffer((byte[]) entry.getKey());
-      String existingValue = (String) taskContext.getMarshaller().get().objectFromByteBuffer((byte[]) entry.getValue());
+      String existingKey = (String) entry.getKey();
+      String existingValue = (String) entry.getValue();
 
       cache.getCacheManager().getCache(CACHE_NAME).put(existingKey, MODIFIED_PREFIX + existingValue);
 

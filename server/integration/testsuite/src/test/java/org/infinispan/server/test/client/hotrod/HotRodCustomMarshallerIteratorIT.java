@@ -33,6 +33,8 @@ import org.infinispan.protostream.sampledomain.marshallers.GenderMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.UserMarshaller;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.server.test.category.HotRodSingleNode;
+import org.infinispan.server.test.category.SingleNode;
+import org.infinispan.server.test.util.ManagementClient;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -43,6 +45,7 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -54,12 +57,14 @@ import org.junit.runner.RunWith;
  * @since 8.0
  */
 @RunWith(Arquillian.class)
-@Category(HotRodSingleNode.class)
+@Category({SingleNode.class})
 public class HotRodCustomMarshallerIteratorIT {
 
    private static final String TO_STRING_FILTER_CONVERTER_FACTORY_NAME = "to-string-filter-converter";
    private static final String PARAM_FILTER_CONVERTER_FACTORY_NAME = "param-filter-converter";
-   private static final String CACHE_NAME = "default";
+   private static final String TEST_CACHE_NAME = "TEST_CACHE";
+   private static final String CACHE_TEMPLATE = "localCacheConfiguration";
+   private static final String CACHE_CONTAINER = "local";
    private static RemoteCacheManager remoteCacheManager;
 
    private RemoteCache<Integer, User> remoteCache;
@@ -73,6 +78,23 @@ public class HotRodCustomMarshallerIteratorIT {
       return createFilterMarshallerArchive();
    }
 
+   @BeforeClass
+   public static void beforeClass() throws Exception {
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.addCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+      client.addCache(TEST_CACHE_NAME, CACHE_CONTAINER, CACHE_TEMPLATE, ManagementClient.CacheType.LOCAL);
+   }
+
+   @AfterClass
+   public static void afterClass() throws Exception {
+      if (remoteCacheManager != null) {
+         remoteCacheManager.stop();
+      }
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.removeCache(TEST_CACHE_NAME, CACHE_CONTAINER, ManagementClient.CacheType.LOCAL);
+      client.removeCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+   }
+
    @Before
    public void setup() throws IOException {
       RemoteCacheManagerFactory remoteCacheManagerFactory = new RemoteCacheManagerFactory();
@@ -82,14 +104,7 @@ public class HotRodCustomMarshallerIteratorIT {
                    .port(server1.getHotrodEndpoint().getPort())
                    .marshaller(new CustomProtoStreamMarshaller());
       remoteCacheManager = remoteCacheManagerFactory.createManager(clientBuilder);
-      remoteCache = remoteCacheManager.getCache(CACHE_NAME);
-   }
-
-   @AfterClass
-   public static void release() {
-      if (remoteCacheManager != null) {
-         remoteCacheManager.stop();
-      }
+      remoteCache = remoteCacheManager.getCache(TEST_CACHE_NAME);
    }
 
    private static Archive<?> createFilterMarshallerArchive() throws IOException {

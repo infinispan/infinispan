@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,11 @@ import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.test.category.Queries;
+import org.infinispan.server.test.category.SingleNode;
+import org.infinispan.server.test.util.ManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -29,19 +34,41 @@ import org.junit.runner.RunWith;
  * @author Adrian Nistor
  * @author Martin Gencur
  */
-@Category(Queries.class)
+@Category({SingleNode.class})
 @RunWith(Arquillian.class)
 public class RemoteQueryIT extends RemoteQueryBaseIT {
 
-    @InfinispanResource("remote-query-1")
+    private static final String CACHE_TEMPLATE = "localTestCacheConfiguration";
+    private static final String CACHE_CONTAINER = "local";
+    private static final String TEST_CACHE = "localtestcache";
+
+    @InfinispanResource("container1")
     protected RemoteInfinispanServer server;
 
     public RemoteQueryIT() {
-        super("clustered", "localtestcache");
+        super(CACHE_CONTAINER, TEST_CACHE);
     }
 
     protected RemoteQueryIT(String cacheContainerName, String cacheName) {
         super(cacheContainerName, cacheName);
+    }
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        ManagementClient client = ManagementClient.getStandaloneInstance();
+        client.addCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+        Map<String, String> properties = new HashMap<>();
+        properties.put("default.directory_provider", "ram");
+        properties.put("lucene_version", "LUCENE_CURRENT");
+        client.enableIndexingForConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL, ManagementClient.IndexingType.ALL, properties);
+        client.addCache(TEST_CACHE, CACHE_CONTAINER, CACHE_TEMPLATE, ManagementClient.CacheType.LOCAL);
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        ManagementClient client = ManagementClient.getStandaloneInstance();
+        client.removeCache(TEST_CACHE, CACHE_CONTAINER, ManagementClient.CacheType.LOCAL);
+        client.removeCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
     }
 
     @Override

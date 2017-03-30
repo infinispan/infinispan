@@ -605,52 +605,6 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
-        <container qualifier="eviction" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/standalone-eviction.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Djgroups.join_timeout=2000
-                </property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11222 8080</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-            </configuration>
-        </container>
-        <container qualifier="standalone-customtask" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/standalone-customtask.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Djgroups.join_timeout=2000
-                </property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11222 8080</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-                <property name="startupTimeoutInSeconds">60000</property>
-            </configuration>
-        </container>
-        <container qualifier="standalone-customcs" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/standalone-customcs.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Djgroups.join_timeout=2000
-                </property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11222 8080</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-            </configuration>
-        </container>
         <container qualifier="expiration-1" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
@@ -1040,36 +994,6 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
-        <container qualifier="hotrodSslWithSni" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/hotrod-ssl-with-sni.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
-                </property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11222 8080</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-            </configuration>
-        </container>
-        <container qualifier="restSslWithSni" mode="manual">
-            <configuration>
-                <property name="javaHome">${server.jvm}</property>
-                <property name="jbossHome">${server1.dist}</property>
-                <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/rest-ssl-with-sni.xml</property>
-                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
-                      -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
-                      -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
-                </property>
-                <property name="managementPort">9990</property>
-                <property name="waitForPorts">11222 8080</property>
-                <property name="jmxDomain">${server.jmx.domain}</property>
-            </configuration>
-        </container>
         <container qualifier="hotrodSslWithMultitenancy" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
@@ -1136,13 +1060,13 @@
         </container>
     </group>
 
-    <group qualifier="suite-client-local">
+    <group qualifier="suite-singlenode">
         <container qualifier="container1" mode="suite">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">${suite.client.local.config}</property>
+                <property name="serverConfig">${suite.singlenode.config}</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
@@ -1157,7 +1081,7 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
-                <property name="serverConfig">${suite.client.local.config}</property>
+                <property name="serverConfig">${suite.singlenode.config}</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000

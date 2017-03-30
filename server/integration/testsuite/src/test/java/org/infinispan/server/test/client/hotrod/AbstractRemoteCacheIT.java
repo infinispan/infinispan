@@ -67,7 +67,7 @@ import org.junit.Test;
  */
 public abstract class AbstractRemoteCacheIT {
     private static final Log log = LogFactory.getLog(AbstractRemoteCacheIT.class);
-    protected static String testCache = "default";
+    protected static String TEST_CACHE = "TEST_CACHE";
     protected static RemoteCacheManager remoteCacheManager = null;
     protected RemoteCache remoteCache;
     protected final int ASYNC_OPS_ENTRY_LOAD = 10;
@@ -80,7 +80,7 @@ public abstract class AbstractRemoteCacheIT {
             Configuration config = createRemoteCacheManagerConfiguration();
             remoteCacheManager = new RemoteCacheManager(config, true);
         }
-        remoteCache = remoteCacheManager.getCache(testCache);
+        remoteCache = remoteCacheManager.getCache(TEST_CACHE);
         remoteCache.clear();
     }
 
@@ -159,7 +159,7 @@ public abstract class AbstractRemoteCacheIT {
     private long numEntriesOnServer(int serverIndex) {
         return getServers().get(serverIndex).
                 getCacheManager(isLocalMode() ? "local" : "clustered").
-                getCache(testCache).getNumberOfEntries();
+                getCache(TEST_CACHE).getNumberOfEntries();
     }
 
     @Test
@@ -309,7 +309,7 @@ public abstract class AbstractRemoteCacheIT {
     @Test
     public void testGetName() {
         // in hotrod protocol specification, the default cache is identified by an empty string
-        assertEquals(testCache, remoteCache.getName());
+        assertEquals(TEST_CACHE, remoteCache.getName());
     }
 
     @Test

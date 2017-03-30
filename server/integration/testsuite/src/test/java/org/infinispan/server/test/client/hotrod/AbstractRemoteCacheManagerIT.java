@@ -53,7 +53,7 @@ public abstract class AbstractRemoteCacheManagerIT {
     private static final String IPV6_REGEX = "\\A\\[(.*)\\]:([0-9]+)\\z";
     private static final String IPV4_REGEX = "\\A([^:]+):([0-9]+)\\z";
 
-    protected static String testCache = "default";
+    protected static String TEST_CACHE = "testCache";
 
     private static final Log log = LogFactory.getLog(AbstractRemoteCacheManagerIT.class);
 
@@ -92,7 +92,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         assertTrue(rcm.isStarted());
         assertFalse(rcm2.isStarted());
 
-        RemoteCache rc = rcm.getCache(testCache);
+        RemoteCache rc = rcm.getCache(TEST_CACHE);
         assertEqualConfiguration(conf, rc);
     }
 
@@ -103,7 +103,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         RemoteCacheManager rcm2 = new RemoteCacheManager(conf, false);
         assertTrue(rcm.isStarted());
         assertFalse(rcm2.isStarted());
-        RemoteCache rc = rcm.getCache(testCache);
+        RemoteCache rc = rcm.getCache(TEST_CACHE);
         assertEqualConfiguration(conf, rc);
     }
 
@@ -112,7 +112,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         ConfigurationBuilder confBuilder = new ConfigurationBuilder();
         addServers(confBuilder);
         RemoteCacheManager rcm = new RemoteCacheManager(confBuilder.build());
-        RemoteCache rc = rcm.getCache(testCache);
+        RemoteCache rc = rcm.getCache(TEST_CACHE);
 
         ConfigurationBuilder builder = new ConfigurationBuilder();
         addServers(builder);
@@ -206,7 +206,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         Configuration cfg = createRemoteCacheManagerConfigurationBuilder().build();
 
         RemoteCacheManager rcm = new RemoteCacheManager(cfg);
-        RemoteCache rc = rcm.getCache(testCache);
+        RemoteCache rc = rcm.getCache(TEST_CACHE);
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
 
         // the factory used to create all remote operations for this class
@@ -272,7 +272,7 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .build();
 
         RemoteCacheManager rcm = new RemoteCacheManager(cfg);
-        RemoteCache rc = rcm.getCache(testCache);
+        RemoteCache rc = rcm.getCache(TEST_CACHE);
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         // the factory used to create all remote operations for this class
         OperationsFactory of = getOperationsFactoryField(rci);

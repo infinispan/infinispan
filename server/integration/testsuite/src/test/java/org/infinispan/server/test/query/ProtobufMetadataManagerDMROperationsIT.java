@@ -18,6 +18,8 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.category.Queries;
+import org.infinispan.server.test.category.SingleNode;
+import org.infinispan.server.test.util.ManagementClient;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.as.clustering.infinispan.subsystem.InfinispanExtension;
@@ -27,23 +29,28 @@ import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.dmr.ModelNode;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Exercise all DMR ops exposed for ProtobufMetadataManager.
  *
  * @author anistor@redhat.com
  */
-@Category(Queries.class)
+@Category({SingleNode.class})
 @RunWith(Arquillian.class)
 public class ProtobufMetadataManagerDMROperationsIT {
 
-   private static final String containerName = "clustered";
+   private static final String containerName = "local";
 
-   @InfinispanResource("remote-query-1")
+   @InfinispanResource("container1")
    protected RemoteInfinispanServer server;
 
    private ModelControllerClient controller;

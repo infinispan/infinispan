@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -22,10 +24,14 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.test.category.Queries;
+import org.infinispan.server.test.category.SingleNode;
+import org.infinispan.server.test.util.ManagementClient;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -35,18 +41,38 @@ import org.junit.runner.RunWith;
  *
  * @author Adrian Nistor
  */
-@Category(Queries.class)
+@Category({SingleNode.class})
 @RunWith(Arquillian.class)
 public class RemoteQueryWithProtostreamAnnotationsIT {
 
-   private final String cacheName = "localtestcache";
+   private static final String CACHE_TEMPLATE = "localTestCacheConfiguration";
+   private static final String CACHE_CONTAINER = "local";
+   private static final String TEST_CACHE = "localtestcache";
 
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Integer, AnnotatedUser> remoteCache;
    private RemoteCacheManagerFactory rcmFactory;
 
-   @InfinispanResource("remote-query-1")
+   @InfinispanResource("container1")
    protected RemoteInfinispanServer server;
+
+   @BeforeClass
+   public static void beforeClass() throws Exception {
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.addCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+      Map<String, String> properties = new HashMap<>();
+      properties.put("default.directory_provider", "ram");
+      properties.put("lucene_version", "LUCENE_CURRENT");
+      client.enableIndexingForConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL, ManagementClient.IndexingType.ALL, properties);
+      client.addCache(TEST_CACHE, CACHE_CONTAINER, CACHE_TEMPLATE, ManagementClient.CacheType.LOCAL);
+   }
+
+   @AfterClass
+   public static void afterClass() throws Exception {
+      ManagementClient client = ManagementClient.getStandaloneInstance();
+      client.removeCache(TEST_CACHE, CACHE_CONTAINER, ManagementClient.CacheType.LOCAL);
+      client.removeCacheConfiguration(CACHE_TEMPLATE, CACHE_CONTAINER, ManagementClient.CacheTemplate.LOCAL);
+   }
 
    @ProtoDoc("@Indexed")
    @ProtoMessage(name = "User")
@@ -134,7 +160,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
             .port(server.getHotrodEndpoint().getPort())
             .marshaller(new ProtoStreamMarshaller());
       remoteCacheManager = rcmFactory.createManager(clientBuilder);
-      remoteCache = remoteCacheManager.getCache(cacheName);
+      remoteCache = remoteCacheManager.getCache(TEST_CACHE);
 
       //initialize client-side serialization context
       SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
