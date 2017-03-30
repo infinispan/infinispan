@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.0.0.Final</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -224,9 +224,7 @@
                             <overWrite>false</overWrite>
                             <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
                         </artifactItem>
-                        <!-- Order matters: it might happen that both the Infinispan and the Hibernate Search modules
-                            contain the same org.apache.lucene modules. The Infinispan "edition" contains a superset of the Lucene libraries,
-                            so make sure these overwrite the other one. See also HSEARCH-2578 -->
+                        
                         <artifactItem>
                            <groupId>org.infinispan</groupId>
                            <artifactId>infinispan-wildfly-modules</artifactId>
