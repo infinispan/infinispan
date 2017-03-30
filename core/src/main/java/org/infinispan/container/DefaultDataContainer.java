@@ -375,6 +375,11 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       return new EntryIterator(entries.values().iterator(), true, false);
    }
 
+   @Override
+   public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpiredAndTombstones() {
+      return new EntryIterator(entries.values().iterator(), true, true);
+   }
+
    private final class DefaultEvictionListener implements EvictionListener<K, InternalCacheEntry<K, V>> {
 
       @Override

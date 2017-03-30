@@ -468,6 +468,11 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
+      public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpiredAndTombstones() {
+         return delegate.iteratorIncludingExpiredAndTombstones();
+      }
+
+      @Override
       public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action)
             throws InterruptedException {
          throw new UnsupportedOperationException();
