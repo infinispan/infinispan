@@ -94,12 +94,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.scala-lang</groupId>
-         <artifactId>scala-library</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-query-dsl</artifactId>
          <optional>true</optional>
