@@ -118,23 +118,29 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertStores(1);
       cache.put("key", "value");
       assertStores(2);
+
+      assertCurrentNumberOfEntries(1);
+      cache.evict("key");
+      assertCurrentNumberOfEntriesInMemory(0);
       assertCurrentNumberOfEntries(1);
 
-      Map<String, String> toAdd = new HashMap<String, String>();
+      Map<String, String> toAdd = new HashMap<>();
       toAdd.put("key", "value");
       toAdd.put("key2", "value2");
       cache.putAll(toAdd);
       assertStores(4);
-      assertCurrentNumberOfEntries(1);
+      assertCurrentNumberOfEntriesInMemory(1);
+      assertCurrentNumberOfEntries(2);
 
       resetStats();
 
-      toAdd = new HashMap<String, String>();
+      toAdd = new HashMap<>();
       toAdd.put("key3", "value3");
       toAdd.put("key4", "value4");
       cache.putAll(toAdd);
       assertStores(2);
-      assertCurrentNumberOfEntries(1);
+      assertCurrentNumberOfEntriesInMemory(1);
+      assertCurrentNumberOfEntries(4);
    }
 
    public void testStoresPutForExternalRead() throws Exception {
@@ -241,4 +247,8 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assert expectedValue == advanced.getStats().getCurrentNumberOfEntries();
    }
 
+   private void assertCurrentNumberOfEntriesInMemory(float expectedValue) throws Exception {
+      assertAttributeValue("NumberOfEntriesInMemory", expectedValue);
+      assert expectedValue == advanced.getStats().getCurrentNumberOfEntriesInMemory();
+   }
 }

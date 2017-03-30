@@ -281,22 +281,34 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          displayType = DisplayType.SUMMARY
    )
    public int getNumberOfEntries() {
-      int result = -1;
-      if (getStatisticsEnabled()) {
-         result = calculateNumberOfEntries();
+      int result = statisticsEnabled ? 0 : -1;
+      if (statisticsEnabled) {
+         for (Stats stats : getEnabledStats()) {
+            int numOfEntries = stats.getCurrentNumberOfEntries();
+            if (numOfEntries > 0) {
+               result += numOfEntries;
+            }
+         }
       }
       return result;
    }
 
-   protected int calculateNumberOfEntries() {
-      int totalNumberOfEntries = 0;
-      for (Stats stats : getEnabledStats()) {
-         int numOfEntries = stats.getCurrentNumberOfEntries();
-         if (numOfEntries > 0) {
-            totalNumberOfEntries += numOfEntries;
+   @ManagedAttribute(
+         description = "Cache container total number of entries currently in-memory for all caches in this cache container",
+         displayName = "Cache container total number of in-memory cache entries",
+         displayType = DisplayType.SUMMARY
+   )
+   public int getCurrentNumberOfEntriesInMemory() {
+      int result = statisticsEnabled ? 0 : -1;
+      if (statisticsEnabled) {
+         for (Stats stats : getEnabledStats()) {
+            int numOfEntries = stats.getCurrentNumberOfEntriesInMemory();
+            if (numOfEntries > 0) {
+               result += numOfEntries;
+            }
          }
       }
-      return totalNumberOfEntries;
+      return result;
    }
 
    @ManagedAttribute(

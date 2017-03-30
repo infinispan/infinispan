@@ -1,5 +1,24 @@
 package org.infinispan.stats.impl;
 
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME;
+import static org.infinispan.stats.impl.StatKeys.EVICTIONS;
+import static org.infinispan.stats.impl.StatKeys.HITS;
+import static org.infinispan.stats.impl.StatKeys.MISSES;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES_IN_MEMORY;
+import static org.infinispan.stats.impl.StatKeys.OFF_HEAP_MEMORY_USED;
+import static org.infinispan.stats.impl.StatKeys.REMOVE_HITS;
+import static org.infinispan.stats.impl.StatKeys.REMOVE_MISSES;
+import static org.infinispan.stats.impl.StatKeys.RETRIEVALS;
+import static org.infinispan.stats.impl.StatKeys.STORES;
+import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_RESET;
+import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.stats.Stats;
@@ -14,21 +33,12 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class StatsImpl implements Stats {
-   final long timeSinceReset;
-   final long timeSinceStart;
-   final int currentNumberOfEntries;
-   final long totalNumberOfEntries;
-   final long offHeapMemoryUsed;
-   final long retrievals;
-   final long stores;
-   final long hits;
-   final long misses;
-   final long removeHits;
-   final long removeMisses;
-   final long evictions;
-   final long averageReadTime;
-   final long averageWriteTime;
-   final long averageRemoveTime;
+
+   private static String[] Attributes = new String[]{TIME_SINCE_RESET, TIME_SINCE_START, NUMBER_OF_ENTRIES, NUMBER_OF_ENTRIES_IN_MEMORY,
+         OFF_HEAP_MEMORY_USED, RETRIEVALS, STORES, HITS, MISSES, REMOVE_HITS, REMOVE_MISSES, EVICTIONS, AVERAGE_READ_TIME,
+         AVERAGE_REMOVE_TIME, AVERAGE_WRITE_TIME};
+
+   private final Map<String, Long> statsMap = new HashMap<>();
    final CacheMgmtInterceptor mgmtInterceptor;
    final Stats source;
 
@@ -37,37 +47,24 @@ public class StatsImpl implements Stats {
       source = null;
 
       if (mgmtInterceptor.getStatisticsEnabled()) {
-         timeSinceReset = mgmtInterceptor.getTimeSinceReset();
-         timeSinceStart = mgmtInterceptor.getTimeSinceStart();
-         currentNumberOfEntries = mgmtInterceptor.getNumberOfEntries();
-         totalNumberOfEntries = mgmtInterceptor.getStores();
-         offHeapMemoryUsed = mgmtInterceptor.getOffHeapMemoryUsed();
-         retrievals = mgmtInterceptor.getHits() + mgmtInterceptor.getMisses();
-         stores = mgmtInterceptor.getStores();
-         hits = mgmtInterceptor.getHits();
-         misses = mgmtInterceptor.getMisses();
-         removeHits = mgmtInterceptor.getRemoveHits();
-         removeMisses = mgmtInterceptor.getRemoveMisses();
-         evictions = mgmtInterceptor.getEvictions();
-         averageReadTime = mgmtInterceptor.getAverageReadTime();
-         averageWriteTime = mgmtInterceptor.getAverageWriteTime();
-         averageRemoveTime = mgmtInterceptor.getAverageRemoveTime();
+         statsMap.put(TIME_SINCE_RESET, mgmtInterceptor.getTimeSinceReset());
+         statsMap.put(TIME_SINCE_START, mgmtInterceptor.getTimeSinceStart());
+         statsMap.put(NUMBER_OF_ENTRIES, (long) mgmtInterceptor.getNumberOfEntries());
+         statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, (long) mgmtInterceptor.getNumberOfEntriesInMemory());
+         statsMap.put(OFF_HEAP_MEMORY_USED, mgmtInterceptor.getOffHeapMemoryUsed());
+         statsMap.put(RETRIEVALS, mgmtInterceptor.getHits() + mgmtInterceptor.getMisses());
+         statsMap.put(STORES, mgmtInterceptor.getStores());
+         statsMap.put(HITS, mgmtInterceptor.getHits());
+         statsMap.put(MISSES, mgmtInterceptor.getMisses());
+         statsMap.put(REMOVE_HITS, mgmtInterceptor.getRemoveHits());
+         statsMap.put(REMOVE_MISSES, mgmtInterceptor.getRemoveMisses());
+         statsMap.put(EVICTIONS, mgmtInterceptor.getEvictions());
+         statsMap.put(AVERAGE_READ_TIME, mgmtInterceptor.getAverageReadTime());
+         statsMap.put(AVERAGE_REMOVE_TIME, mgmtInterceptor.getAverageRemoveTime());
+         statsMap.put(AVERAGE_WRITE_TIME, mgmtInterceptor.getAverageWriteTime());
       } else {
-         timeSinceReset = -1;
-         timeSinceStart = -1;
-         currentNumberOfEntries = -1;
-         totalNumberOfEntries = -1;
-         offHeapMemoryUsed = -1;
-         retrievals = -1;
-         stores = -1;
-         hits = -1;
-         misses = -1;
-         removeHits = -1;
-         removeMisses = -1;
-         evictions = -1;
-         averageReadTime = -1;
-         averageWriteTime = -1;
-         averageRemoveTime = -1;
+         for (String key : Attributes)
+            statsMap.put(key, -1L);
       }
    }
 
@@ -75,113 +72,105 @@ public class StatsImpl implements Stats {
       mgmtInterceptor = null;
       source = other;
       if (other != null) {
-         timeSinceReset = other.getTimeSinceReset();
-         timeSinceStart = other.getTimeSinceStart();
-         currentNumberOfEntries = other.getCurrentNumberOfEntries();
-         totalNumberOfEntries = other.getTotalNumberOfEntries();
-         offHeapMemoryUsed = other.getOffHeapMemoryUsed();
-         retrievals = other.getRetrievals();
-         stores = other.getStores();
-         hits = other.getHits();
-         misses = other.getMisses();
-         removeHits = other.getRemoveHits();
-         removeMisses = other.getRemoveMisses();
-         evictions = other.getEvictions();
-         averageReadTime = other.getAverageReadTime();
-         averageWriteTime = other.getAverageWriteTime();
-         averageRemoveTime = other.getAverageRemoveTime();
+         statsMap.put(TIME_SINCE_RESET, other.getTimeSinceReset());
+         statsMap.put(TIME_SINCE_START, other.getTimeSinceStart());
+         statsMap.put(NUMBER_OF_ENTRIES, (long) other.getCurrentNumberOfEntries());
+         statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, (long) other.getCurrentNumberOfEntriesInMemory());
+         statsMap.put(OFF_HEAP_MEMORY_USED, other.getOffHeapMemoryUsed());
+         statsMap.put(RETRIEVALS, other.getHits() + other.getMisses());
+         statsMap.put(STORES, other.getStores());
+         statsMap.put(HITS, other.getHits());
+         statsMap.put(MISSES, other.getMisses());
+         statsMap.put(REMOVE_HITS, other.getRemoveHits());
+         statsMap.put(REMOVE_MISSES, other.getRemoveMisses());
+         statsMap.put(EVICTIONS, other.getEvictions());
+         statsMap.put(AVERAGE_READ_TIME, other.getAverageReadTime());
+         statsMap.put(AVERAGE_REMOVE_TIME, other.getAverageRemoveTime());
+         statsMap.put(AVERAGE_WRITE_TIME, other.getAverageWriteTime());
       } else {
-         timeSinceReset = -1;
-         timeSinceStart = -1;
-         currentNumberOfEntries = -1;
-         totalNumberOfEntries = -1;
-         offHeapMemoryUsed = -1;
-         retrievals = -1;
-         stores = -1;
-         hits = -1;
-         misses = -1;
-         removeHits = -1;
-         removeMisses = -1;
-         evictions = -1;
-         averageReadTime = -1;
-         averageWriteTime = -1;
-         averageRemoveTime = -1;
+         for (String key : Attributes)
+            statsMap.put(key, -1L);
       }
    }
 
    @Override
    public long getTimeSinceStart() {
-      return timeSinceStart;
+      return statsMap.get(TIME_SINCE_START);
    }
 
    @Override
    public long getTimeSinceReset() {
-      return timeSinceReset;
+      return statsMap.get(TIME_SINCE_RESET);
    }
 
    @Override
    public int getCurrentNumberOfEntries() {
-      return currentNumberOfEntries;
+      return Math.toIntExact(statsMap.get(NUMBER_OF_ENTRIES));
+   }
+
+   @Override
+   public int getCurrentNumberOfEntriesInMemory() {
+      return Math.toIntExact(statsMap.get(NUMBER_OF_ENTRIES_IN_MEMORY));
    }
 
    @Override
    public long getTotalNumberOfEntries() {
-      return totalNumberOfEntries;
+      return statsMap.get(STORES);
    }
 
    @Override
    public long getOffHeapMemoryUsed() {
-      return 0;
+      return statsMap.get(OFF_HEAP_MEMORY_USED);
    }
 
    @Override
    public long getRetrievals() {
-      return retrievals;
+      return statsMap.get(RETRIEVALS);
    }
 
    @Override
    public long getStores() {
-      return stores;
+      return statsMap.get(STORES);
    }
 
    @Override
    public long getHits() {
-      return hits;
+      return statsMap.get(HITS);
    }
 
    @Override
    public long getMisses() {
-      return misses;
+      return statsMap.get(MISSES);
    }
 
    @Override
    public long getRemoveHits() {
-      return removeHits;
+      return statsMap.get(REMOVE_HITS);
    }
 
    @Override
    public long getRemoveMisses() {
-      return removeMisses;
+      return statsMap.get(REMOVE_MISSES);
    }
 
    @Override
    public long getEvictions() {
-      return evictions;
+      return statsMap.get(EVICTIONS);
    }
 
    @Override
    public long getAverageReadTime() {
-      return averageReadTime;
+      return statsMap.get(AVERAGE_READ_TIME);
    }
 
    @Override
    public long getAverageWriteTime() {
-      return averageWriteTime;
+      return statsMap.get(AVERAGE_WRITE_TIME);
    }
 
    @Override
    public long getAverageRemoveTime() {
-      return averageRemoveTime;
+      return statsMap.get(AVERAGE_REMOVE_TIME);
    }
 
    @Override

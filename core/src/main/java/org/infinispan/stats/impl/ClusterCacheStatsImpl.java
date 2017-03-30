@@ -1,5 +1,27 @@
 package org.infinispan.stats.impl;
 
+import static org.infinispan.stats.impl.StatKeys.ACTIVATIONS;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME;
+import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_LOADS;
+import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_MISSES;
+import static org.infinispan.stats.impl.StatKeys.CACHE_WRITER_STORES;
+import static org.infinispan.stats.impl.StatKeys.EVICTIONS;
+import static org.infinispan.stats.impl.StatKeys.HITS;
+import static org.infinispan.stats.impl.StatKeys.INVALIDATIONS;
+import static org.infinispan.stats.impl.StatKeys.MISSES;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES_IN_MEMORY;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_LOCKS_AVAILABLE;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_LOCKS_HELD;
+import static org.infinispan.stats.impl.StatKeys.OFF_HEAP_MEMORY_USED;
+import static org.infinispan.stats.impl.StatKeys.PASSIVATIONS;
+import static org.infinispan.stats.impl.StatKeys.REMOVE_HITS;
+import static org.infinispan.stats.impl.StatKeys.REMOVE_MISSES;
+import static org.infinispan.stats.impl.StatKeys.STORES;
+import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,33 +58,6 @@ import org.infinispan.util.logging.LogFactory;
 
 @MBean(objectName = "ClusterCacheStats", description = "General cluster statistics such as timings, hit/miss ratio, etc.")
 public class ClusterCacheStatsImpl extends AbstractClusterStats implements ClusterCacheStats {
-
-   private static final String TIME_SINCE_START = "timeSinceStart";
-   private static final String REMOVE_MISSES = "removeMisses";
-   private static final String REMOVE_HITS = "removeHits";
-   private static final String AVERAGE_WRITE_TIME = "averageWriteTime";
-   private static final String AVERAGE_READ_TIME = "averageReadTime";
-   private static final String AVERAGE_REMOVE_TIME = "averageRemoveTime";
-   private static final String EVICTIONS = "evictions";
-   private static final String HITS = "hits";
-   private static final String MISSES = "misses";
-   private static final String NUMBER_OF_ENTRIES = "numberOfEntries";
-   private static final String OFF_HEAP_MEMORY_USED = "offHeapMemoryUsed";
-   private static final String STORES = "stores";
-
-   //LockManager
-   private static final String NUMBER_OF_LOCKS_HELD = "numberOfLocksHeld";
-   private static final String NUMBER_OF_LOCKS_AVAILABLE = "numberOfLocksAvailable";
-
-   //Invalidation/passivation/activation
-   private static final String INVALIDATIONS = "invalidations";
-   private static final String PASSIVATIONS = "passivations";
-   private static final String ACTIVATIONS = "activations";
-
-   //cache loaders
-   private static final String CACHE_LOADER_LOADS = "cacheLoaderLoads";
-   private static final String CACHE_LOADER_MISSES = "cacheLoaderMisses";
-   private static final String CACHE_WRITER_STORES = "cacheWriterStores";
 
    private static String[] LONG_ATTRIBUTES = new String[]{EVICTIONS, HITS, MISSES, OFF_HEAP_MEMORY_USED, REMOVE_HITS,
          REMOVE_MISSES, INVALIDATIONS, PASSIVATIONS, ACTIVATIONS, CACHE_LOADER_LOADS, CACHE_LOADER_MISSES, CACHE_WRITER_STORES,
@@ -114,10 +109,11 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       putIntAttributes(responseList, NUMBER_OF_LOCKS_HELD);
       putIntAttributes(responseList, NUMBER_OF_LOCKS_AVAILABLE);
 
-      long numberOfEntries = getCacheMode(cache).isReplicated() ?
-            cache.getStats().getCurrentNumberOfEntries() :
-            addLongAttributes(responseList, NUMBER_OF_ENTRIES);
-      statsMap.put(NUMBER_OF_ENTRIES, numberOfEntries);
+      long numberOfEntriesInMemory = getCacheMode(cache).isReplicated() ?
+            cache.getStats().getCurrentNumberOfEntriesInMemory() :
+            (long) addDoubleAttributes(responseList, NUMBER_OF_ENTRIES_IN_MEMORY);
+      statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, numberOfEntriesInMemory);
+      statsMap.put(NUMBER_OF_ENTRIES, cache.size());
 
       updateTimeSinceStart(responseList);
       updateRatios(responseList);
@@ -193,11 +189,19 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       return getStatAsLong(MISSES);
    }
 
-   @ManagedAttribute(description = "Cluster wide total number of entries currently in the cache",
+   @ManagedAttribute(description = "Cluster wide total number of entries currently in the cache, including passivated entries",
          displayName = "Cluster wide total number of current cache entries",
          displayType = DisplayType.SUMMARY)
    public int getNumberOfEntries() {
       return getStatAsInt(NUMBER_OF_ENTRIES);
+   }
+
+   @Override
+   @ManagedAttribute(description = "Cluster wide total number of entries currently stored in-memory",
+         displayName = "Cluster wide total number of in-memory cache entries",
+         displayType = DisplayType.SUMMARY)
+   public int getCurrentNumberOfEntriesInMemory() {
+      return getStatAsInt(NUMBER_OF_ENTRIES_IN_MEMORY);
    }
 
    @ManagedAttribute(description = "Cluster wide read/writes ratio for the cache",
@@ -403,7 +407,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
       @Override
       public Map<String, Number> call() throws Exception {
-
          Map<String, Number> map = new HashMap<>();
          Stats stats = remoteCache.getStats();
          map.put(AVERAGE_READ_TIME, stats.getAverageReadTime());
@@ -412,13 +415,13 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          map.put(EVICTIONS, stats.getEvictions());
          map.put(HITS, stats.getHits());
          map.put(MISSES, stats.getMisses());
-         final CacheMode cacheMode = getCacheMode(remoteCache);
-         //for replicated caches, we don't need to send the number of entries since it is the same in all the nodes.
-         if (cacheMode.isDistributed()) {
-            map.put(NUMBER_OF_ENTRIES, stats.getCurrentNumberOfEntries() / numOwners());
-         } else if (!cacheMode.isReplicated()) {
-            map.put(NUMBER_OF_ENTRIES, stats.getCurrentNumberOfEntries());
+
+         if (!getCacheMode(remoteCache).isReplicated()) {
+            double numberOfEntriesInMemory = stats.getCurrentNumberOfEntriesInMemory();
+            numberOfEntriesInMemory /= remoteCache.getCacheConfiguration().clustering().hash().numOwners();
+            map.put(NUMBER_OF_ENTRIES_IN_MEMORY, numberOfEntriesInMemory);
          }
+
          map.put(OFF_HEAP_MEMORY_USED, stats.getOffHeapMemoryUsed());
          map.put(STORES, stats.getStores());
          map.put(REMOVE_HITS, stats.getRemoveHits());
@@ -481,10 +484,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       @Override
       public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
          remoteCache = cache.getAdvancedCache();
-      }
-
-      private int numOwners() {
-         return remoteCache.getCacheConfiguration().clustering().hash().numOwners();
       }
    }
 }
