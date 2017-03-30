@@ -49,6 +49,7 @@ import org.kohsuke.MetaInfServices;
  * @since 6.0
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
+@SuppressWarnings("unused")
 public final class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);

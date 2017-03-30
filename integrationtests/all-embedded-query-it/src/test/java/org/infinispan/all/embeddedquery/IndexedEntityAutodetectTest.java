@@ -13,8 +13,6 @@ import org.junit.Test;
 /**
  * Tests that undeclared indexed entities are autodetected.
  *
- * TODO [anistor] remove this test in infinispan 9.0
- *
  * @author anistor@redhat.com
  * @since 8.2
  */
