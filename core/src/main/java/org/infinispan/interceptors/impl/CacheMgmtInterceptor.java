@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -19,6 +20,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
@@ -40,6 +42,7 @@ import org.infinispan.util.concurrent.StripedCounters;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
+   private AdvancedCache cache;
    private DataContainer dataContainer;
    private TimeService timeService;
    private OffHeapMemoryAllocator allocator;
@@ -50,7 +53,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Inject
    @SuppressWarnings("unused")
-   public void setDependencies(DataContainer dataContainer, TimeService timeService, OffHeapMemoryAllocator allocator) {
+   public void setDependencies(AdvancedCache cache, DataContainer dataContainer, TimeService timeService, OffHeapMemoryAllocator allocator) {
+      this.cache = cache;
       this.dataContainer = dataContainer;
       this.timeService = timeService;
       this.allocator = allocator;
@@ -344,12 +348,21 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Number of entries currently in memory including expired entries",
+         description = "Number of entries in the cache including passivated entries",
          displayName = "Number of current cache entries",
          displayType = DisplayType.SUMMARY
    )
    public int getNumberOfEntries() {
-      return dataContainer.sizeIncludingExpired();
+      return cache.withFlags(Flag.CACHE_MODE_LOCAL).size();
+   }
+
+   @ManagedAttribute(
+         description = "Number of entries currently in-memory excluding expired entries",
+         displayName = "Number of in-memory cache entries",
+         displayType = DisplayType.SUMMARY
+   )
+   public int getNumberOfEntriesInMemory() {
+      return dataContainer.size();
    }
 
    @ManagedAttribute(

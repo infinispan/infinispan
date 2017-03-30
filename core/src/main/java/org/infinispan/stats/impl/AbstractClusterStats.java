@@ -139,6 +139,18 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
       return total;
    }
 
+   double addDoubleAttributes(List<Map<String, Number>> responseList, String attribute) {
+      double total = 0;
+      for (Map<String, Number> m : responseList) {
+         Number value = m.get(attribute);
+         double doubleValue = value.doubleValue();
+         if (doubleValue > -1) {
+            total += doubleValue;
+         }
+      }
+      return total;
+   }
+
    int addIntAttributes(List<Map<String, Number>> responseList, String attribute) {
       int total = 0;
       for (Map<String, Number> m : responseList) {
