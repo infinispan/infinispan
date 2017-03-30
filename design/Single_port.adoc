@@ -1,0 +1,121 @@
+= Single port support for Infinispan Server
+
+The main goal of a single port support for Infinispan Server is to expose some (if not all) endpoints with a single port.
+The functionality is targeted mainly (but not limited to) for Cloud environments (where exposing everything as a single port is very convenient).
+
+== Single port from technical perspective
+
+The single port implementation requires a mechanism for switching communication protocols. Such mechanism has already been invented
+and implemented in HTTP/1.1 and HTTP/2+TLS/ALPN. Other protocols such as Hot Rod, Web Sockets or Memcached don't support it. In other words
+the client will have only one chance to negotiate protocol (switch from HTTP to a custom protocol).
+
+=== Switching from HTTP/1.0
+
+https://svn.tools.ietf.org/svn/wg/httpbis/specs/rfc7230.html#header.upgrade[Not supported]:
+
+> A server must ignore an Upgrade header field that is received in an HTTP/1.0 request.
+
+=== Switching from HTTP/1.1
+
+HTTP/1.1 supports so called https://svn.tools.ietf.org/svn/wg/httpbis/specs/rfc7230.html#header.upgrade[Upgrade Header], which allows to re-negotiate
+protocol for the same HTTP connection. The re-negotiate request might be sent either by the client or the server.
+
+.Shortened description of the switching procedure
+...................................
+The client sends the Upgrade header with a list of supported protocols. The server responds with `101` Switching protocols and its own list of protocols.
+After choosing destination protocol, the client starts sending messages using negotiated connection details.
+...................................
+
+More information: https://issues.jboss.org/browse/ISPN-6676
+
+=== Switching from HTTP/2.0
+
+HTTP/2.0 supports only backwards-compatible HTTP/1.1 Upgrade procedure. With HTTP/2, negotiating destination protocol happens during connection initialization -
+during https://http2.github.io/http2-spec/#rfc.section.3.2[TLS handshake]. The procedure requires ALPN support.
+
+.Shortened TLS+ALPN handshake procedure
+...................................
+   Client                                              Server
+
+   ClientHello                     -------->       ServerHello
+     (ALPN extension &                               (ALPN extension &
+      list of protocols)                              selected protocol)
+                                                   Certificate*
+                                                   ServerKeyExchange*
+                                                   CertificateRequest*
+                                   <--------       ServerHelloDone
+   Certificate*
+   ClientKeyExchange
+   CertificateVerify*
+   [ChangeCipherSpec]
+   Finished                        -------->
+                                                   [ChangeCipherSpec]
+                                   <--------       Finished
+   Application Data                <------->       Application Data
+...................................
+
+Unfortunately ALPN support has been scheduled for JDK9 (http://openjdk.java.net/jeps/244[JEP244]). Luckily,
+https://github.com/undertow-io/undertow/blob/master/core/src/main/java/io/undertow/protocols/ssl/ALPNHackSSLEngine.java[Undertow] as well as
+http://netty.io/wiki/requirements-for-4.x.html#tls-with-jdk-jetty-alpnnpn[Netty] implemented some hacks to support it. However with Netty
+we still need to modify the boot classpath, which is pretty bad. We might consider using Undertow hack for JDK8.
+
+More information: https://issues.jboss.org/browse/ISPN-6899
+
+== Rewriting REST Server
+
+Our REST implementation is based on https://github.com/resteasy/Resteasy/tree/master/server-adapters/resteasy-netty[RestEasy Netty].
+Unfortunately this needs to be changed in the near future because there are plans for intelligent HTTP/2 clients (with topology
+information). An early prototype might be found https://github.com/AntonGabov/infinispan/blob/topologyId/server/rest/src/main/scala/org/infinispan/rest/http2/Http2Handler.java[here].
+
+Once the REST Server is rewritten into pure Netty, we could start implementing the single port support.
+
+== Single port support - the implementation
+
+The single port implementation will be based on the https://github.com/infinispan/infinispan/tree/master/server/router[multi-tenant router].
+
+As a reminder, the multi-tenant router (or shorter, the router) allows to redirect requests from a single endpoint (might be called frontend)
+into multiple `CacheContainer`s and `Cache`s (might be called backends).
+
+The implementation will be slightly altered to support both https://netty.io/4.1/api/io/netty/handler/codec/http/HttpServerUpgradeHandler.html[HTTP/1.1 Upgrade]
+and https://github.com/netty/netty/blob/4.1/handler/src/main/java/io/netty/handler/ssl/ApplicationProtocolConfig.java[HTTP/2+TLS/ALPN].
+
+Once the implementation is ready, the server endpoint will need to be altered to support new configuration elements. An exemplary
+configuration will look like the following:
+
+.Router configuration
+----
+<router-connector name="router" hotrod-socket-binding="..." rest-socket-binding="..." single-port-socket-binding="...">
+   <multi-tenancy>
+      ... existing multi-tenancy support ...
+   </multi-tenancy>
+   <single-port>
+      <rest name="rest-1">
+      <hotrod name="hotrod-2">
+   </single-port>
+</router-connector>
+----
+
+Note that it is perfectly possible to use the single port functionality next to with multi-tenancy (but the same port
+which will be used for single-port won't support multi-tenancy). Another interesting
+aspect is that REST connector is not necessary for the switching. Since the switching logic will be included
+inside the Router, it will be possible to have a single port only with Hot Rod endpoint. In that case a client will need
+to connect using HTTP/1.1 or TLS/ALPN and switch to Hot Rod client.
+
+== Limitations
+
+There are number of features which won't be available after initial implementation:
+
+* Embedding a Router endpoint inside a single port. Even though recursion might seem like a good idea, it may lead to deadlock
+  during server startup (Router `A` depends on `B` whereas Router `B` depends on `A`). As a side effect, the single port endpoints
+  will not support multi-tenancy at the same time.
+* Authentication won't be implemented in the Router. Since the authentication mechanisms are slightly different for
+  Hot Rod and REST, it would hard to implement all of them in the Router.
+* In order to make the implementation simple, switching from HTTP/1.1 to HTTP/2 in the REST interface will also be
+  implemented by the Router.
+
+== TODO list
+
+* [ ] Refactor REST interface to Netty
+* [ ] (Optional) Implement missing authentication mechanisms for REST
+* [ ] Implement switching logic in the Router
+* [ ] Implement multi-protocol Hot Rod client
