@@ -79,9 +79,6 @@
       <version.netty>4.1.9.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.rocksdb>5.1.2</version.rocksdb>
-      <version.scala.major>2.11</version.scala.major>
-      <version.scala>${version.scala.major}.7</version.scala>
-      <version.scala.xml>1.0.2</version.scala.xml>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.xstream>1.4.9</version.xstream>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
@@ -480,16 +477,6 @@
             <groupId>org.rocksdb</groupId>
             <artifactId>rocksdbjni</artifactId>
             <version>${version.rocksdb}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>${version.scala}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-xml_${version.scala.major}</artifactId>
-            <version>${version.scala.xml}</version>
          </dependency>
          <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
