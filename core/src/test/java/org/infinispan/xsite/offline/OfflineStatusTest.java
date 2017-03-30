@@ -182,7 +182,7 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
    }
 
    private static TestContext createNew(long minWait, int afterFailures) {
-      ControlledTimeService t = new ControlledTimeService(0);
+      ControlledTimeService t = new ControlledTimeService();
       ListenerImpl l = new ListenerImpl();
       TakeOfflineConfiguration c = new TakeOfflineConfigurationBuilder(null, null)
             .afterFailures(afterFailures)

@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 public class ExpirationFunctionalTest extends SingleCacheManagerTest {
 
    protected final int SIZE = 10;
-   protected ControlledTimeService timeService = new ControlledTimeService(0);
+   protected ControlledTimeService timeService = new ControlledTimeService();
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);

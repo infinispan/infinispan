@@ -80,7 +80,7 @@ public abstract class AutoCommitExpiryTest extends SingleCacheManagerTest {
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
 
-      timeService = new ControlledTimeService(0);
+      timeService = new ControlledTimeService();
       TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
       return cm;
    }

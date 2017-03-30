@@ -105,7 +105,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
     * To be overridden if the store requires special time handling
     */
    protected ControlledTimeService getTimeService() {
-      return new ControlledTimeService(0);
+      return new ControlledTimeService();
    }
 
    /**

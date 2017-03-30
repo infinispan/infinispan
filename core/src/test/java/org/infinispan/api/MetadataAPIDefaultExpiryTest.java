@@ -21,7 +21,7 @@ public class MetadataAPIDefaultExpiryTest extends SingleCacheManagerTest {
 
    public static final int EXPIRATION_TIMEOUT = 1000;
 
-   private final ControlledTimeService controlledTimeService = new ControlledTimeService(0);
+   private final ControlledTimeService controlledTimeService = new ControlledTimeService();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

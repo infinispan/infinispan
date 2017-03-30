@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 @Test(testName = "org.infinispan.jcache.AbstractTwoCachesExpirationTest", groups = "functional")
 public abstract class AbstractTwoCachesExpirationTest extends MultipleCacheManagersTest {
 
-   protected final ControlledTimeService controlledTimeService = new ControlledTimeService(0);
+   protected final ControlledTimeService controlledTimeService = new ControlledTimeService();
    protected static final int EXPIRATION_TIMEOUT = 1000;
 
    @Test

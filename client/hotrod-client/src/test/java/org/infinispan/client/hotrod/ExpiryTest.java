@@ -34,7 +34,7 @@ public class ExpiryTest extends MultiHotRodServersTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       builder.expiration().lifespan(EXPIRATION_TIMEOUT);
       createHotRodServers(1, builder);
-      timeService = new ControlledTimeService(0);
+      timeService = new ControlledTimeService();
       TestingUtil.replaceComponent(cacheManagers.get(0), TimeService.class, timeService, true);
    }
 

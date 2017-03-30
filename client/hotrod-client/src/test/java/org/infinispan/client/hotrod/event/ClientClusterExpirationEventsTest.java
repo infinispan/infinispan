@@ -58,9 +58,10 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
    }
 
    private void injectTimeServices() {
-      ts0 = new ControlledTimeService(0);
+      long now = System.currentTimeMillis();
+      ts0 = new ControlledTimeService(now);
       TestingUtil.replaceComponent(server(0).getCacheManager(), TimeService.class, ts0, true);
-      ts1 = new ControlledTimeService(0);
+      ts1 = new ControlledTimeService(now);
       TestingUtil.replaceComponent(server(1).getCacheManager(), TimeService.class, ts1, true);
    }
 
