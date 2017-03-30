@@ -88,6 +88,7 @@ import org.kohsuke.MetaInfServices;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
+@SuppressWarnings("unused")
 public class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
@@ -147,7 +148,6 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, IndexingConfiguration indexingConfiguration) {
       if (indexingConfiguration.indexedEntities().isEmpty()) {
-         // todo [anistor] remove dependency on QueryKnownClasses in infinispan 9.0
          // indexed classes are autodetected and propagated across cluster via this cache
          cacheManager.addCacheDependency(cacheStarting, QueryKnownClasses.QUERY_KNOWN_CLASSES_CACHE_NAME);
       }

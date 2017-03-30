@@ -199,11 +199,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             throw log.invalidConfigurationIndexingWithInvalidation();
          }
          if (indexedEntities().isEmpty() && !getBuilder().template()) {
-            //TODO [anistor] This warning will become a CacheConfigurationException in infinispan 9; do nothing if there are some programmatically defined entity mappings
+            //TODO [anistor] This does not take into account eventual programmatically defined entity mappings
             log.noIndexableClassesDefined();
          }
       }
-      //TODO [anistor] Infinispan 9 must not allow definition of indexed entities or properties if indexing not enabled
+      //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled
    }
 
    @Override

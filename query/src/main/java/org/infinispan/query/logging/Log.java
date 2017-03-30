@@ -125,11 +125,10 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "The property path '%s' cannot be projected because it is multi-valued", id = 14027)
    ParsingException multivaluedPropertyCannotBeProjected(String propertyPath);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Detected an undeclared indexed entity class in cache %s: %s. Autodetection support will be removed in Infinispan 9.0.", id = 14028)
+   @LogMessage(level = INFO)
+   @Message(value = "Autodetected a new indexed entity type in cache %s: %s.", id = 14028)
    void detectedUnknownIndexedEntity(String cacheName, String className);
 
-   //todo [anistor] This should become a CacheException in Infinispan 9.0
    @LogMessage(level = WARN)
    @Message(value = "Found undeclared indexable types in cache %s : %s. No indexes were created for these types because autodetection is not enabled for this cache.", id = 14029)
    void detectedUnknownIndexedEntities(String cacheName, String classNames);
