@@ -8,6 +8,7 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -34,9 +35,9 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    public RemoveExpiredCommand(Object key, Object value, Long lifespan, CacheNotifier notifier,
-                               CommandInvocationId commandInvocationId, Object providedResult) {
+                               CommandInvocationId commandInvocationId, Object providedResult, InvocationManager invocationManager, boolean synchronous) {
       //valueEquivalence can be null because this command never compares values.
-      super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, commandInvocationId, providedResult);
+      super(key, value, notifier, EnumUtil.EMPTY_BIT_SET, commandInvocationId, providedResult, invocationManager, synchronous);
       this.lifespan = lifespan;
    }
 
@@ -83,7 +84,7 @@ public class RemoveExpiredCommand extends RemoveCommand {
          log.trace("Nothing to remove since the entry doesn't exist in the context or it is already removed");
       }
       successful = false;
-      recordInvocation(e, Boolean.FALSE);
+      recordInvocation(ctx, e, Boolean.FALSE);
       return false;
    }
 

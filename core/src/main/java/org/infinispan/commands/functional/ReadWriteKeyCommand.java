@@ -9,6 +9,7 @@ import java.io.ObjectOutput;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
@@ -25,8 +26,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    private Function<ReadWriteEntryView<K, V>, R> f;
 
    public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f,
-                              CommandInvocationId id, Params params) {
-      super(key, id, params);
+                              CommandInvocationId id, Params params, InvocationManager invocationManager, boolean synchronous) {
+      super(key, id, params, invocationManager, synchronous);
       this.f = f;
    }
 
@@ -35,7 +36,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    }
 
    public ReadWriteKeyCommand(ReadWriteKeyCommand<K, V, R> other) {
-      super((K) other.getKey(), other.commandInvocationId, other.getParams());
+      super((K) other.getKey(), other.commandInvocationId, other.getParams(), other.invocationManager, other.synchronous);
       this.f = other.f;
    }
 
@@ -78,7 +79,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       }
 
       R ret = snapshot(f.apply(EntryViews.readWrite(e)));
-      recordInvocation(e, ret);
+      recordInvocation(ctx, e, ret);
       return ret;
    }
 

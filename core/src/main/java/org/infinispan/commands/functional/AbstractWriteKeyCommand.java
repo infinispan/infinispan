@@ -3,6 +3,7 @@ package org.infinispan.commands.functional;
 import static org.infinispan.commons.util.Util.toStr;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.functional.impl.Params;
@@ -12,8 +13,8 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    Params params;
    boolean successful = true;
 
-   public AbstractWriteKeyCommand(K key, CommandInvocationId id, Params params) {
-      super(key, EnumUtil.EMPTY_BIT_SET, id, null);
+   public AbstractWriteKeyCommand(K key, CommandInvocationId id, Params params, InvocationManager invocationManager, boolean synchronous) {
+      super(key, EnumUtil.EMPTY_BIT_SET, id, null, invocationManager, synchronous);
       this.params = params;
    }
 

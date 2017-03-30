@@ -110,7 +110,11 @@ public interface Metadata {
 
       Builder invocations(InvocationRecord invocations);
 
-      Builder noInvocations();
+      default Builder noInvocations() {
+         return invocations(null);
+      }
+
+      InvocationRecord invocations();
 
       /**
        * Build a metadata instance.

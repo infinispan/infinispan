@@ -504,4 +504,6 @@ public interface CommandsFactory {
    BackupWriteRpcCommand buildBackupWriteRpcCommand(DataWriteCommand command);
 
    BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command);
+
+   ForgetInvocationsCommand buildForgetInvocationsCommand();
 }

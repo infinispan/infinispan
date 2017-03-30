@@ -243,7 +243,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          log.tracef("Store %s in container", copy);
 
       entries.compute(k, (key, entry) -> {
-         if (copy != null) {
+         // With passivation, when we're storing a tombstone we need to call onRemove that will remove the entry
+         // from shared stores as well (onUpdate modifies only private stores).
+         if (copy != null && copy.getValue() != null) {
             activator.onUpdate(key, entry == null);
          } else {
             activator.onRemove(key, entry == null);

@@ -140,9 +140,8 @@ public class EmbeddedMetadata implements Metadata {
       }
 
       @Override
-      public Metadata.Builder noInvocations() {
-         records = null;
-         return this;
+      public InvocationRecord invocations() {
+         return records;
       }
 
       @Override

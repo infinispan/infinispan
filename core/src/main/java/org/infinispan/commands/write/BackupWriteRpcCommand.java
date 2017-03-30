@@ -6,10 +6,12 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -47,6 +49,8 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    private transient InvocationContextFactory invocationContextFactory;
    private transient AsyncInterceptorChain interceptorChain;
    private transient CacheNotifier cacheNotifier;
+   private transient InvocationManager invocationManager;
+   private transient Configuration configuration;
 
    //for org.infinispan.commands.CommandIdUniquenessTest
    public BackupWriteRpcCommand() {
@@ -87,10 +91,12 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    }
 
    public void init(InvocationContextFactory invocationContextFactory, AsyncInterceptorChain interceptorChain,
-                    CacheNotifier cacheNotifier) {
+                    CacheNotifier cacheNotifier, InvocationManager invocationManager, Configuration configuration) {
       this.invocationContextFactory = invocationContextFactory;
       this.interceptorChain = interceptorChain;
       this.cacheNotifier = cacheNotifier;
+      this.invocationManager = invocationManager;
+      this.configuration = configuration;
    }
 
    @Override
@@ -102,13 +108,15 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
             // checks. In case this is a write-only backup owner, the check would fail as we just wrap null into context.
          case REPLACE:
             command = new PutKeyValueCommand(key, value, false, cacheNotifier, metadata, flags,
-                  commandInvocationId, providedResult);
+                  commandInvocationId, providedResult, invocationManager, configuration.clustering().cacheMode().isSynchronous());
             break;
          case REMOVE:
-            command = new RemoveCommand(key, null, cacheNotifier, flags, commandInvocationId, providedResult);
+            command = new RemoveCommand(key, null, cacheNotifier, flags, commandInvocationId, providedResult,
+                  invocationManager, configuration.clustering().cacheMode().isSynchronous());
             break;
          case REMOVE_EXPIRED:
-            command = new RemoveExpiredCommand(key, value, null, cacheNotifier, commandInvocationId, providedResult);
+            command = new RemoveExpiredCommand(key, value, null, cacheNotifier, commandInvocationId, providedResult,
+                  invocationManager, configuration.clustering().cacheMode().isSynchronous());
             break;
          default:
             throw new IllegalStateException();

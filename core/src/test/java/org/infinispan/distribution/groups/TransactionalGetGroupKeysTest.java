@@ -107,10 +107,6 @@ public class TransactionalGetGroupKeysTest extends GetGroupKeysTest {
 
       testCache.primaryOwner.remove(key(1));
 
-      if (isolationLevel == IsolationLevel.READ_COMMITTED && factory != TestCacheFactory.NON_OWNER) {
-         expectedGroupSet.remove(key(1));
-      }
-
       tm.resume(tx);
       groupKeySet = testCache.testCache.getGroup(GROUP);
       tm.commit();

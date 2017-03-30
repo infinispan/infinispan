@@ -178,6 +178,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          PrimaryOwnerClassifier<Container, Item> filter = new PrimaryOwnerClassifier<>(cacheTopology, items.size(), helper);
          items.forEach(filter::add);
          CountDownCompletableFuture allFuture = new CountDownCompletableFuture(ctx, filter.primaries.size());
+         if (isSynchronous(command)) {
+            allFuture.thenRun(() -> invocationManager.notifyCompleted(command.getCommandInvocationId(), filter.keysBySegment()));
+         }
 
          Container localItems = filter.primaries.remove(rpcManager.getAddress());
          if (localItems != null) {
@@ -244,8 +247,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (!command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES)) {
             results = new Object[items.size()];
          }
-         MergingCompletableFuture<Object> allFuture
-               = new MergingCompletableFuture<>(ctx, filter.primaries.size(), results, helper::transformResult);
+         MergingCompletableFuture<Object> allFuture = new MergingCompletableFuture<>(ctx, filter.primaries.size(),
+               results, helper::transformResult);
+         if (isSynchronous(command)) {
+            allFuture.thenRun(() -> invocationManager.notifyCompleted(command.getCommandInvocationId(), filter.keysBySegment()));
+         }
          MutableInt offset = new MutableInt();
 
          Container localItems = filter.primaries.remove(rpcManager.getAddress());
@@ -386,7 +392,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                } else {
                   if (completedResults == null) {
                      completedResults = new HashMap<>();
-                     countDown = new CountDownCompletableFuture(ctx, 1);
+                     // 2: one for the current key, one to not let the counter drop to zero before we iterate all keys
+                     countDown = new CountDownCompletableFuture(ctx, 2);
                   } else {
                      countDown.increment();
                   }
@@ -396,13 +403,18 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
                   Map<Object, Object> cr = completedResults;
                   CountDownCompletableFuture cd = countDown;
-                  rpcManager.invokeRemotelyAsync(info.primaryAsList(), clusteredGetCommand, defaultSyncOptions).thenApply(
-                        responses -> handleStrictOrderingResponse(responses, ctx, command, key, info, lastInvocationId, r -> {
-                           synchronized (cr) {
-                              cr.put(key, r);
+                  rpcManager.invokeRemotelyAsync(info.primaryAsList(), clusteredGetCommand, defaultSyncOptions).thenAccept(
+                        responses -> {
+                           try {
+                              handleStrictOrderingResponse(responses, ctx, command, key, info, lastInvocationId, r -> {
+                                 synchronized (cr) {
+                                    cr.put(key, r);
+                                 }
+                              });
+                           } finally {
+                              cd.countDown();
                            }
-                           cd.countDown();
-                        })
+                        }
                   );
                }
             }
@@ -416,6 +428,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             if (metadata != null) {
                InvocationRecord invocationRecord = metadata.invocation(command.getCommandInvocationId());
                if (invocationRecord != null) {
+                  invocationRecord.touch(timeService.wallClockTime());
                   command.setCompleted(key);
                   if (completedResults == null) {
                      completedResults = new HashMap<>();
@@ -435,10 +448,12 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          return invokeNext(ctx, command);
       } else {
          Container container = helper.newContainer();
-         for (Item item : helper.getItems(command)) {
-            Object key = helper.item2key(item);
-            if (!completedResults.containsKey(key)) {
-               helper.accumulate(container, item);
+         synchronized (completedResults) {
+            for (Item item : helper.getItems(command)) {
+               Object key = helper.item2key(item);
+               if (!completedResults.containsKey(key)) {
+                  helper.accumulate(container, item);
+               }
             }
          }
          C copy = helper.copyForBackup(command, container);
@@ -448,6 +463,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          if (countDown == null) {
             return invokeNextThenApply(ctx, copy, mergeResults);
          } else {
+            // We've started with value 2 in the counter
+            countDown.countDown();
             return makeStage(asyncInvokeNext(ctx, copy, countDown)).thenApply(ctx, copy, mergeResults);
          }
       }

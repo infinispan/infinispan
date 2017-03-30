@@ -82,8 +82,7 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       cache3.put("a12", "b3");
       cache3.put("a13", "b4");
 
-      // As stats account for expired entries and tombstones, too, we still see number of entries being 8
-      assertAttributeValue(mBeanServer, nodeStats, "NumberOfEntries", 8);
+      assertAttributeValue(mBeanServer, nodeStats, "NumberOfEntries", 7);
       assertAttributeValue(mBeanServer, nodeStats, "Stores", 8);
       assertAttributeValue(mBeanServer, nodeStats, "Evictions", 0);
       assertAttributeValueGreaterThanOrEqual(mBeanServer, nodeStats, "AverageWriteTime", 0);

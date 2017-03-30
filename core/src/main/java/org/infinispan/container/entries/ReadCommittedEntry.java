@@ -135,7 +135,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
          if (isEvicted()) {
             container.evict(key);
-         } else if (!isValid()) {
+         } else if (!isValid() || (value == null && (metadata == null || metadata.lastInvocation() == null))) {
             container.remove(key);
          } else {
             assert !isRemoved() || value == null;

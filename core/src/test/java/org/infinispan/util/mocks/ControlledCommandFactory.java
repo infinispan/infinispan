@@ -24,6 +24,7 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
+import org.infinispan.commands.ForgetInvocationsCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -471,5 +472,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command) {
       return actual.buildBackupPutMapRpcCommand(command);
+   }
+
+   @Override
+   public ForgetInvocationsCommand buildForgetInvocationsCommand() {
+      return actual.buildForgetInvocationsCommand();
    }
 }

@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CreateCacheCommand;
+import org.infinispan.commands.ForgetInvocationsCommand;
 import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
@@ -79,7 +80,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                XSiteStateTransferControlCommand.class, XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
                ClusteredGetAllCommand.class,
                StreamRequestCommand.class, StreamSegmentResponseCommand.class, StreamResponseCommand.class,
-               BackupWriteRpcCommand.class, BackupPutMapRpcCommand.class);
+               BackupWriteRpcCommand.class, BackupPutMapRpcCommand.class,
+               ForgetInvocationsCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

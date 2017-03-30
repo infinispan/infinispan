@@ -91,6 +91,14 @@ public class MagicKey implements Serializable, ExternalPojo {
       unique = counter.getAndIncrement();
    }
 
+   public MagicKey(String name, MagicKey other) {
+      this.name = name;
+      this.address = other.address;
+      this.segment = other.segment;
+      this.hashcode = other.hashcode;
+      this.unique = counter.getAndIncrement();
+   }
+
    private int findSegment(int numSegments, Predicate<Integer> predicate) {
       // use random offset so that we don't use only lower segments
       int offset = ThreadLocalRandom.current().nextInt(numSegments);

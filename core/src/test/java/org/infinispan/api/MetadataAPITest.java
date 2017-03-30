@@ -381,8 +381,8 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       }
 
       @Override
-      public Builder noInvocations() {
-         return this;
+      public InvocationRecord invocations() {
+         return null;
       }
 
       @Override

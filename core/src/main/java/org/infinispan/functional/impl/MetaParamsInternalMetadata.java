@@ -170,14 +170,13 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
       @Override
       public Metadata.Builder invocations(InvocationRecord invocations) {
-         params.add(InvocationRecords.of(invocations));
+         params.replace(InvocationRecords.class, ignored -> InvocationRecords.of(invocations));
          return this;
       }
 
       @Override
-      public Metadata.Builder noInvocations() {
-         params.remove(InvocationRecords.class);
-         return this;
+      public InvocationRecord invocations() {
+         return params.find(InvocationRecords.class).flatMap(InvocationRecords::lastInvocation).orElse(null);
       }
 
       @Override

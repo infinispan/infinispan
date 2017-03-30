@@ -8,10 +8,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -44,6 +46,8 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
    private transient InvocationContextFactory invocationContextFactory;
    private transient AsyncInterceptorChain interceptorChain;
    private transient CacheNotifier cacheNotifier;
+   private transient InvocationManager invocationManager;
+   private transient Configuration configuration;
 
    public BackupPutMapRpcCommand() {
       super(null);
@@ -74,10 +78,12 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
    }
 
    public void init(InvocationContextFactory invocationContextFactory, AsyncInterceptorChain interceptorChain,
-         CacheNotifier cacheNotifier) {
+                    CacheNotifier cacheNotifier, InvocationManager invocationManager, Configuration configuration) {
       this.invocationContextFactory = invocationContextFactory;
       this.interceptorChain = interceptorChain;
       this.cacheNotifier = cacheNotifier;
+      this.invocationManager = invocationManager;
+      this.configuration = configuration;
    }
 
    @Override
@@ -127,7 +133,8 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      PutMapCommand command = new PutMapCommand(map, cacheNotifier, metadata, flags, commandInvocationId, null);
+      PutMapCommand command = new PutMapCommand(map, cacheNotifier, metadata, flags, commandInvocationId, null,
+            invocationManager, configuration.clustering().cacheMode().isSynchronous());
       command.addFlags(FlagBitSets.SKIP_LOCKING);
       command.setTopologyId(topologyId);
       command.setForwarded(true);

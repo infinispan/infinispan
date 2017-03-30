@@ -1,15 +1,21 @@
 package org.infinispan.metadata;
 
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.ForgetInvocationsCommand;
 import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -21,10 +27,11 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.util.AbstractControlledRpcManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -52,6 +59,8 @@ public class InvocationsNotReplicatedTest extends MultipleCacheManagersTest {
    public void testGet() {
       MagicKey key = new MagicKey(cache(0), cache(1));
 
+      DropForgetInvocations.install(cache(2));
+
       cache(2).put(key, "value");
       assertInvoked(cache(0), key, true);
       assertInvoked(cache(1), key, false);
@@ -64,6 +73,8 @@ public class InvocationsNotReplicatedTest extends MultipleCacheManagersTest {
 
    public void testGetCacheEntry() {
       MagicKey key = new MagicKey(cache(0), cache(1));
+
+      DropForgetInvocations.install(cache(2));
 
       cache(2).put(key, "value");
       assertInvoked(cache(0), key, true);
@@ -80,6 +91,8 @@ public class InvocationsNotReplicatedTest extends MultipleCacheManagersTest {
    public void testGetAll() {
       MagicKey key = new MagicKey(cache(0), cache(1));
 
+      DropForgetInvocations.install(cache(2));
+
       cache(2).put(key, "value");
       assertInvoked(cache(0), key, true);
       assertInvoked(cache(1), key, false);
@@ -91,10 +104,10 @@ public class InvocationsNotReplicatedTest extends MultipleCacheManagersTest {
       checkingRpcManager.assertPositiveResponses();
    }
 
-
-   @Test(enabled = false, description = "Fails due to ISPN-7610")
    public void testGetAllCacheEntries() {
       MagicKey key = new MagicKey(cache(0), cache(1));
+
+      DropForgetInvocations.install(cache(2));
 
       cache(2).put(key, "value");
       assertInvoked(cache(0), key, true);
@@ -118,14 +131,33 @@ public class InvocationsNotReplicatedTest extends MultipleCacheManagersTest {
       assertEquals(authoritative, invocation.isAuthoritative());
    }
 
+   private static class DropForgetInvocations extends AbstractControlledRpcManager {
+      private static DropForgetInvocations install(Cache cache) {
+         return wrapComponent(cache, RpcManager.class, DropForgetInvocations::new);
+      }
+
+      public DropForgetInvocations(RpcManager realOne) {
+         super(realOne);
+      }
+
+      @Override
+      public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
+         if (rpc instanceof ForgetInvocationsCommand) {
+            // Drop invalidation commands to make sure the record is in place
+            return CompletableFutures.completedEmptyMap();
+         }
+         return super.invokeRemotelyAsync(recipients, rpc, options);
+      }
+   }
+
    private static class CheckingRpcManager extends AbstractControlledRpcManager {
       int responsesChecked = 0;
       Cache cache;
 
       private static CheckingRpcManager install(Cache cache) {
-         RpcManager original = TestingUtil.extractComponent(cache, RpcManager.class);
+         RpcManager original = extractComponent(cache, RpcManager.class);
          CheckingRpcManager checkingRpcManager = new CheckingRpcManager(cache, original);
-         TestingUtil.replaceComponent(cache, RpcManager.class, checkingRpcManager, true);
+         replaceComponent(cache, RpcManager.class, checkingRpcManager, true);
          return checkingRpcManager;
       }
 
@@ -155,7 +187,7 @@ public class InvocationsNotReplicatedTest extends MultipleCacheManagersTest {
       }
 
       public void uninstall() {
-         TestingUtil.replaceComponent(cache, RpcManager.class, realOne, true);
+         replaceComponent(cache, RpcManager.class, realOne, true);
       }
 
       public void assertPositiveResponses() {

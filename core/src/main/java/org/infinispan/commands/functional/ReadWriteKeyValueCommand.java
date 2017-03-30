@@ -9,6 +9,7 @@ import java.io.ObjectOutput;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.container.entries.MVCCEntry;
@@ -29,14 +30,14 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
 
    public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
-                                   CommandInvocationId id, Params params) {
-      super(key, id, params);
+                                   CommandInvocationId id, Params params, InvocationManager invocationManager, boolean synchronous) {
+      super(key, id, params, invocationManager, synchronous);
       this.value = value;
       this.f = f;
    }
 
    public ReadWriteKeyValueCommand(ReadWriteKeyValueCommand<K, V, R> other) {
-      super((K) other.getKey(), other.commandInvocationId, other.getParams());
+      super((K) other.getKey(), other.commandInvocationId, other.getParams(), other.invocationManager, other.synchronous);
       this.value = other.value;
       this.f = other.f;
    }
@@ -86,7 +87,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       }
 
       R ret = snapshot(f.apply(value, EntryViews.readWrite(e)));
-      recordInvocation(e, ret);
+      recordInvocation(ctx, e, ret);
       return ret;
    }
 

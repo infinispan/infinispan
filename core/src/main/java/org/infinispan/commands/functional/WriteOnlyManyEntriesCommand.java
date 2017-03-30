@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
@@ -24,20 +25,17 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries,
                                       BiConsumer<V, WriteEntryView<V>> f, Params params,
-                                      CommandInvocationId commandInvocationId) {
-      super(commandInvocationId);
+                                      CommandInvocationId commandInvocationId, InvocationManager invocationManager, boolean synchronous) {
+      super(commandInvocationId, invocationManager, synchronous);
       this.entries = entries;
       this.f = f;
       this.params = params;
    }
 
    public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V> command) {
-      this.commandInvocationId = command.commandInvocationId;
+      super(command);
       this.entries = command.entries;
       this.f = command.f;
-      this.params = command.params;
-      this.flags = command.flags;
-      this.topologyId = command.topologyId;
    }
 
    public WriteOnlyManyEntriesCommand() {
@@ -91,7 +89,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
             throw new IllegalStateException();
          }
          f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry));
-         recordInvocation(cacheEntry, null);
+         recordInvocation(ctx, cacheEntry, null);
       }
       return null;
    }

@@ -8,6 +8,7 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
@@ -36,16 +37,18 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    protected Object value;
 
    public RemoveCommand(Object key, Object value, CacheNotifier notifier, long flagsBitSet,
-                        CommandInvocationId commandInvocationId, Object providedResult) {
-      super(key, flagsBitSet, commandInvocationId, providedResult);
+                        CommandInvocationId commandInvocationId, Object providedResult, InvocationManager invocationManager, boolean synchronous) {
+      super(key, flagsBitSet, commandInvocationId, providedResult, invocationManager, synchronous);
       this.value = value;
       //noinspection unchecked
       this.notifier = notifier;
    }
 
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier notifier, InvocationManager invocationManager, boolean isCacheAsync) {
       //noinspection unchecked
       this.notifier = notifier;
+      this.invocationManager = invocationManager;
+      this.synchronous = isCacheAsync;
    }
 
    public RemoveCommand() {
@@ -197,7 +200,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       } else {
          result = prevValue;
       }
-      recordInvocation(e, result);
+      recordInvocation(ctx, e, result);
       return result;
    }
 }

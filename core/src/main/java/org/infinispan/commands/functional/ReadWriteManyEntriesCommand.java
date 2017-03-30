@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -34,8 +35,10 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    private int topologyId = -1;
    boolean isForwarded = false;
 
-   public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId);
+   public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries,
+                                      BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params,
+                                      CommandInvocationId commandInvocationId, InvocationManager invocationManager, boolean synchronous) {
+      super(commandInvocationId, invocationManager, synchronous);
       this.entries = entries;
       this.f = f;
       this.params = params;
@@ -45,12 +48,9 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    }
 
    public ReadWriteManyEntriesCommand(ReadWriteManyEntriesCommand command) {
-      this.commandInvocationId = command.commandInvocationId;
+      super(command);
       this.entries = command.entries;
       this.f = command.f;
-      this.params = command.params;
-      this.flags = command.flags;
-      this.topologyId = command.topologyId;
       this.lastInvocationIds = command.lastInvocationIds;
    }
 
@@ -132,7 +132,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
             throw new IllegalStateException();
          }
          R r = snapshot(f.apply(v, EntryViews.readWrite(entry)));
-         recordInvocation(entry, r);
+         recordInvocation(ctx, entry, r);
          returns.add(r);
       });
       return returns;

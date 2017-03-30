@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
@@ -11,6 +14,27 @@ import org.infinispan.commons.io.ExposedByteArrayInputStream;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 
+/**
+ * This class can produce chains, not requiring any other object instances to represent the collection nor nodes.
+ *
+ * While entries in datacontainer are updated under DC's lock, the instances of this class are shared across different
+ * {@link org.infinispan.metadata.Metadata} instances and therefore these need to be safe under concurrent access
+ * for these operations:
+ *
+ * a) attaching a new record on the beginning of the chain: if the next node is removed concurrently, the operation
+ *    results in the invalidated entry staying in the chain. As such record would be invalidated by setting timestamp
+ *    to {@link Long#MIN_VALUE}, the record should be removed after next purge.
+ * b) removing record from the list: concurrent removal could set {@link #next} to a node further down the chain, but
+ *    all the nodes in between must be already invalid
+ * c) iterating through the list
+ *
+ * There are three sources of invocation invalidations:
+ * 1) primary/backup writer checks expiration
+ * 2) expiration thread checks expiration
+ * 3) originator-triggered invalidation
+ *
+ * There can't be any concurrent 1) expirations, and 2) should occur in single thread, too
+ */
 public final class InvocationRecord {
    // Set if this command was written when the node was primary owner of given entry
    private static final int AUTHORITATIVE = 1;
@@ -22,9 +46,9 @@ public final class InvocationRecord {
    // TODO: maybe it would be better to store previous value and metadata and let the command run again
    public final Object returnValue;
    private byte flags;
-   private long timestamp;
+   private volatile long timestamp;
    // Allows chaining instead of storing in separate collection
-   private InvocationRecord next;
+   private volatile InvocationRecord next;
 
    public InvocationRecord(CommandInvocationId id, Object returnValue, boolean authoritative, boolean created, boolean modified, boolean removed, long timestamp, InvocationRecord next) {
       this(id, returnValue, (byte) ((authoritative ? AUTHORITATIVE : 0) + (created ? CREATED : 0) + (modified ? MODIFIED : 0) + (removed ? REMOVED : 0)), timestamp, next);
@@ -32,6 +56,7 @@ public final class InvocationRecord {
 
    private InvocationRecord(CommandInvocationId id, Object returnValue, byte flags, long timestamp, InvocationRecord next) {
       assert id != CommandInvocationId.DUMMY_INVOCATION_ID;
+      assert timestamp != 0; // probably an error
       assertDoesNotRepeat(id);
       this.id = id;
       this.flags = flags;
@@ -39,6 +64,44 @@ public final class InvocationRecord {
       this.returnValue = returnValue;
       this.next = next;
    }
+
+   public static boolean hasExpired(InvocationRecord record, long limitTime) {
+      return findFirst(record, r -> r.timestamp < limitTime, r -> Boolean.TRUE, () -> Boolean.FALSE);
+   }
+
+   public static InvocationRecord purgeExpired(InvocationRecord record, long limitTime) {
+      return purge(record, r -> r.timestamp < limitTime);
+
+   }
+
+   public static InvocationRecord purgeCompleted(InvocationRecord record, Predicate<CommandInvocationId> purgeFilter) {
+      return purge(record, r -> purgeFilter.test(r.getId()));
+   }
+
+   private static InvocationRecord purge(InvocationRecord record, Predicate<InvocationRecord> purgeFilter) {
+      // this could be implemented using recursion but Java does not have tail-recursion loop optimization
+      InvocationRecord first = record, prev;
+      while (first != null && purgeFilter.test(first)) {
+         first.timestamp = Long.MIN_VALUE;
+         first = first.next;
+      }
+      prev = first;
+      if (first == null) {
+         return null;
+      }
+      record = first.next;
+      while (record != null) {
+         if (purgeFilter.test(record)) {
+            record.timestamp = Long.MIN_VALUE;
+            prev.next = record.next;
+         } else {
+            prev = record;
+         }
+         record = record.next;
+      }
+      return first;
+   }
+
 
    private boolean assertDoesNotRepeat(CommandInvocationId id) {
       assert next == null || (!id.equals(next.id) && next.assertDoesNotRepeat(id));
@@ -73,43 +136,56 @@ public final class InvocationRecord {
       return timestamp;
    }
 
-   public static InvocationRecord lookup(InvocationRecord record, CommandInvocationId id) {
+   public void touch(long timestamp) {
+      this.timestamp = timestamp;
+   }
+
+   // Only for testing purposes
+   public int numRecords() {
+      InvocationRecord record = this;
+      int numRecords = 0;
+      for (; record != null; ++numRecords) record = record.next;
+      return numRecords;
+   }
+
+   private static <T> T findFirst(InvocationRecord record, Predicate<InvocationRecord> predicate, Function<InvocationRecord, T> whenFound, Supplier<T> whenNotFound) {
+      // Actual invocations should be inlined
       while (record != null) {
-         if (id.equals(record.id)) {
-            return record;
+         if (predicate.test(record)) {
+            return whenFound.apply(record);
          }
          record = record.next;
       }
-      return null;
+      return whenNotFound.get();
+   }
+
+   public static InvocationRecord lookup(InvocationRecord record, CommandInvocationId id) {
+      return findFirst(record, r -> id.equals(r.id), Function.identity(), () -> null);
    }
 
    public static Optional<InvocationRecord> find(InvocationRecord record, CommandInvocationId id) {
-      while (record != null) {
-         if (id.equals(record.id)) {
-            return Optional.of(record);
-         }
-         record = record.next;
-      }
-      return Optional.empty();
+      return findFirst(record, r -> id.equals(r.id), Optional::of, Optional::empty);
    }
 
    @Override
    public String toString() {
       StringBuilder sb = new StringBuilder();
       InvocationRecord record = this;
+      int numRecords = 0;
       do {
          if (record != this) {
             sb.append(", ");
          }
-         sb.append('[').append(id.getAddress()).append(':').append(id.getId())
+         sb.append('[').append(record.id.getAddress()).append(':').append(record.id.getId())
                .append(':')
-               .append((flags & AUTHORITATIVE) == AUTHORITATIVE ? 'A' : 'N')
+               .append((record.flags & AUTHORITATIVE) == AUTHORITATIVE ? 'A' : 'N')
                .append(cmrType())
-               .append(':').append(timestamp)
-               .append(" -> ").append(returnValue).append(']');
+               .append(':').append(record.timestamp)
+               .append(" -> ").append(record.returnValue).append(']');
          record = record.next;
+         ++numRecords;
       } while (record != null);
-      return sb.toString();
+      return sb.insert(0, numRecords).toString();
    }
 
    private char cmrType() {

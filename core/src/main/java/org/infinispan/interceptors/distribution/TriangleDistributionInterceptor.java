@@ -201,6 +201,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             }
             return null;
          });
+         collector.getFuture().thenRun(() -> invocationManager.notifyCompleted(command.getCommandInvocationId(), filter.keysBySegment()));
       } else {
          forwardToPrimaryOwners(command, filter);
          localResult = null;
@@ -218,7 +219,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          Map<Object, Object> finalCompletedResults = completedResults;
          sendToBackups(command, cacheTopology, finalCompletedResults, backupFilter);
 
-         PutMapCommand localCopy = new PutMapCommand(command).withMap(localEntries);
+         PutMapCommand localCopy = new PutMapCommand(command, false).withMap(localEntries);
          if (sync) {
             return invokeNextAndHandle(ctx, localCopy, (rCtx, rCommand, rv, throwable) -> {
                if (throwable != null) {
@@ -314,14 +315,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          if (dwCommand.isSuccessful()) {
             // If the command has been successful, we're going to update backups and
             // we don't have to worry about ISPN-3918
-            return localPrimarySendToBackupsAndReturn(dwCommand, distributionInfo, rv);
+            return localPrimarySendToBackupsAndReturn(context, dwCommand, distributionInfo, rv);
          } else {
             return handleUnsuccessfulWriteOnPrimary(rCtx, rv, dwCommand.getKey(), distributionInfo);
          }
       });
    }
 
-   private Object localPrimarySendToBackupsAndReturn(DataWriteCommand command, DistributionInfo distributionInfo, Object rv) {
+   private Object localPrimarySendToBackupsAndReturn(InvocationContext ctx, DataWriteCommand command, DistributionInfo distributionInfo, Object rv) {
       final CommandInvocationId id = command.getCommandInvocationId();
       Collection<Address> backupOwners = distributionInfo.writeBackups();
       if (!command.isSuccessful() || backupOwners.isEmpty()) {
@@ -339,6 +340,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          checkTopologyId(topologyId, collector);
          collector.primaryResult(rv, true);
          sendToBackups(distributionInfo, command, backupOwners, provideResult, rv);
+         collector.getFuture().thenRun(() -> invocationManager.notifyCompleted(command.getCommandInvocationId(), command.getKey(), distributionInfo.segmentId()));
          return asyncValue(collector.getFuture());
       } else {
          sendToBackups(distributionInfo, command, backupOwners, provideResult, rv);
@@ -359,14 +361,14 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       return invokeNextThenApply(context, command, (rCtx, rCommand, rv) -> {
          DataWriteCommand dwCommand = (DataWriteCommand) rCommand;
          if (rCommand.isSuccessful()) {
-            return remotePrimarySendToBackupsAndReturn(dwCommand, distributionInfo, rv);
+            return remotePrimarySendToBackupsAndReturn(rCtx, dwCommand, distributionInfo, rv);
          } else {
             return handleUnsuccessfulWriteOnPrimary(rCtx, rv, dwCommand.getKey(), distributionInfo);
          }
       });
    }
 
-   private Object remotePrimarySendToBackupsAndReturn(DataWriteCommand command, DistributionInfo distributionInfo, Object rv) {
+   private Object remotePrimarySendToBackupsAndReturn(InvocationContext ctx, DataWriteCommand command, DistributionInfo distributionInfo, Object rv) {
       Collection<Address> backupOwners = distributionInfo.writeBackups();
       if (!command.isSuccessful() || backupOwners.isEmpty()) {
          if (trace) {
@@ -413,6 +415,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          //if we don't, the collector may wait forever (==timeout) for non-existing acknowledges.
          checkTopologyId(topologyId, collector);
          forwardToPrimary(command, distributionInfo, collector);
+         collector.getFuture().thenRun(() -> invocationManager.notifyCompleted(
+               command.getCommandInvocationId(), command.getKey(), distributionInfo.segmentId()));
          return asyncValue(collector.getFuture());
       } else {
          rpcManager.sendTo(distributionInfo.primary(), command, DeliverOrder.NONE);
@@ -457,8 +461,8 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       }
 
       @Override
-      public void add(Map.Entry<Object, Object> item, DistributionInfo distributionInfo) {
-         super.add(item, distributionInfo);
+      public void add(Object key, Map.Entry<Object, Object> item, DistributionInfo distributionInfo) {
+         super.add(key, item, distributionInfo);
          for (Address backup : distributionInfo.writeBackups()) {
             backups.computeIfAbsent(backup, address -> new HashSet<>(entryCount)).add(distributionInfo.segmentId());
          }

@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
@@ -35,20 +36,17 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    private Map<K, CommandInvocationId> lastInvocationIds;
 
    public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params,
-                               CommandInvocationId commandInvocationId) {
-      super(commandInvocationId);
+                               CommandInvocationId commandInvocationId, InvocationManager invocationManager, boolean synchronous) {
+      super(commandInvocationId, invocationManager, synchronous);
       this.keys = keys;
       this.f = f;
       this.params = params;
    }
 
    public ReadWriteManyCommand(ReadWriteManyCommand command) {
-      this.commandInvocationId = command.commandInvocationId;
+      super(command);
       this.keys = command.keys;
       this.f = command.f;
-      this.params = command.params;
-      this.flags = command.flags;
-      this.topologyId = command.topologyId;
       this.lastInvocationIds = command.lastInvocationIds;
    }
 
@@ -132,7 +130,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
          // Could be that the key is not local, 'null' is how this is signalled
          if (entry != null) {
             R r = snapshot(f.apply(EntryViews.readWrite(entry)));
-            recordInvocation(entry, r);
+            recordInvocation(ctx, entry, r);
             returns.add(r);
          }
       });
@@ -157,6 +155,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       sb.append(", isForwarded=").append(isForwarded);
       sb.append(", topologyId=").append(topologyId);
       sb.append(", commandInvocationId=").append(commandInvocationId);
+      sb.append(", lastInvocations=").append(lastInvocationIds);
       sb.append('}');
       return sb.toString();
    }

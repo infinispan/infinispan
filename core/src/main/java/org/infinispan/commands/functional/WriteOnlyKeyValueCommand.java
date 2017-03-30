@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
@@ -22,8 +23,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    private V value;
 
    public WriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f,
-                                   CommandInvocationId id, Params params) {
-      super(key, id, params);
+                                   CommandInvocationId id, Params params, InvocationManager invocationManager, boolean synchronous) {
+      super(key, id, params, invocationManager, synchronous);
       this.f = f;
       this.value = value;
    }
@@ -70,7 +71,7 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       if (e == null) return null;
 
       f.accept(value, EntryViews.writeOnly(e));
-      recordInvocation(e, null);
+      recordInvocation(ctx, e, null);
       return null;
    }
 

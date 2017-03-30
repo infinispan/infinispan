@@ -16,6 +16,8 @@ import java.util.Set;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
@@ -39,17 +41,9 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    private transient CacheNotifier<Object, Object> notifier;
    private Metadata metadata;
    private boolean isForwarded = false;
+   private boolean synchronous;
+   private transient InvocationManager invocationManager;
    private transient Set<Object> completedKeys = null;
-
-   public CommandInvocationId getCommandInvocationId() {
-      return commandInvocationId;
-   }
-
-   @Override
-   public void setAuthoritative(boolean authoritative) {
-      // noop, we can already use isForwarded
-   }
-
    private CommandInvocationId commandInvocationId;
 
    public PutMapCommand() {
@@ -58,12 +52,14 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
    @SuppressWarnings("unchecked")
    public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, long flagsBitSet,
-                        CommandInvocationId commandInvocationId, Map<?, ?> providedResults) {
+                        CommandInvocationId commandInvocationId, Map<?, ?> providedResults, InvocationManager invocationManager, boolean synchronous) {
       this.map = (Map<Object, Object>) map;
       this.notifier = notifier;
       this.metadata = metadata;
       this.commandInvocationId = commandInvocationId;
       this.providedResults = providedResults;
+      this.invocationManager = invocationManager;
+      this.synchronous = synchronous;
       setFlagsBitSet(flagsBitSet);
    }
 
@@ -81,17 +77,31 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
             CommandInvocationId.generateIdFrom(command.commandInvocationId) :
             command.commandInvocationId;
       this.setTopologyId(getTopologyId());
+      this.invocationManager = command.invocationManager;
+      this.synchronous = command.synchronous;
       setFlagsBitSet(command.getFlagsBitSet());
    }
 
-   public void init(CacheNotifier<Object, Object> notifier) {
+   public void init(CacheNotifier<Object, Object> notifier, InvocationManager invocationManager, boolean synchronous) {
       this.notifier = notifier;
+      this.invocationManager = invocationManager;
+      this.synchronous = synchronous;
    }
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitPutMapCommand(ctx, this);
    }
+
+   public CommandInvocationId getCommandInvocationId() {
+      return commandInvocationId;
+   }
+
+   @Override
+   public void setAuthoritative(boolean authoritative) {
+      // noop, we can already use isForwarded
+   }
+
 
    @Override
    public Collection<?> getKeysToLock() {
@@ -133,8 +143,9 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
          // Even though putAll() returns void, QueryInterceptor reads the previous values
          // TODO The previous values are not correct if the entries exist only in a store
+         Object returnValue = null;
          if (previousValues != null) {
-            Object returnValue = previousValue;
+            returnValue = previousValue;
             if (providedResults != null) {
                // the value might be null, so we have to check using contains
                if (providedResults.containsKey(key)) {
@@ -160,15 +171,23 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
             if (this.metadata.version() == null && previousMetadata != null && previousMetadata.version() != null) {
                builder = builder.version(previousMetadata.version());
             }
+            if (previousMetadata != null) {
+               builder.invocations(previousMetadata.lastInvocation());
+            }
          } else if (previousMetadata != null) {
             builder = previousMetadata.builder();
          } else {
             builder = new EmbeddedMetadata.Builder();
          }
-         if (commandInvocationId != null) {
-            builder = builder.invocation(commandInvocationId, null, !isForwarded, contextEntry.isCreated(),
+         // TODO: explain when id can be null
+         /** See {@link InvocationManager#notifyCompleted(CommandInvocationId, Object, int)} to check why we don't store on origin */
+         if (!(ctx.isOriginLocal() && synchronous) && commandInvocationId != null && invocationManager != null) {
+            long now = invocationManager.wallClockTime();
+            InvocationRecord purged = InvocationRecord.purgeExpired(builder.invocations(), now - invocationManager.invocationTimeout());
+            builder = builder.invocations(purged).invocation(commandInvocationId,
+                  isReturnValueExpected() ? returnValue : null, !isForwarded, contextEntry.isCreated(),
                   !contextEntry.isCreated() && !contextEntry.isRemoved(),
-                  contextEntry.isRemoved(), 0);
+                  contextEntry.isRemoved(), now);
             contextEntry.setMetadata(builder.build());
          } else if (metadata != null) {
             contextEntry.setMetadata(builder.build());

@@ -224,8 +224,8 @@ public class ScriptMetadata implements Metadata {
       }
 
       @Override
-      public Metadata.Builder noInvocations() {
-         return this;
+      public InvocationRecord invocations() {
+         return null;
       }
 
       @Override

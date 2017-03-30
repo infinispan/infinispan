@@ -351,6 +351,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          } else {
             InvocationRecord record;
             if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+               record.touch(timeService.wallClockTime());
                return record.returnValue;
             }
          }
@@ -371,6 +372,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          K key = e.getKey();
          if (ctx.isOriginLocal() || dm.getCacheTopology().isWriteOwner(key)) {
             CacheEntry entry = ctx.lookupEntry(key);
+            InvocationRecord record;
             if (entry == null) {
                if (command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL) || command.hasAnyFlag(
                      FlagBitSets.SKIP_REMOTE_LOOKUP) || !needsPreviousValue(ctx, command)) {
@@ -382,7 +384,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                   remoteGets.add(remoteGet(ctx, key, true, command.getTopologyId(), command.getFlagsBitSet()));
                }
                filtered.put(key, e.getValue());
-            } else if (entry.getMetadata() == null || entry.getMetadata().invocation(command.getCommandInvocationId()) == null) {
+            } else if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+               record.touch(timeService.wallClockTime());
+            } else {
                filtered.put(key, e.getValue());
             }
          }
@@ -401,10 +405,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       for (K key : keys) {
          if (ctx.isOriginLocal() || dm.getCacheTopology().isWriteOwner(key)) {
             CacheEntry entry = ctx.lookupEntry(key);
+            InvocationRecord record;
             if (entry == null) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                filtered.add(key);
-            } else if (entry.getMetadata() == null || entry.getMetadata().invocation(command.getCommandInvocationId()) == null) {
+            } else if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+               record.touch(timeService.wallClockTime());
+            } else {
                filtered.add(key);
             }
          }
@@ -443,6 +450,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
          InvocationRecord record;
          if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+            record.touch(timeService.wallClockTime());
             return record.returnValue;
          }
          // It's possible that this is not an owner, but the entry was loaded from L1 - let the command run
@@ -457,6 +465,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
          InvocationRecord record;
          if (entry.getMetadata() != null && (record = entry.getMetadata().invocation(command.getCommandInvocationId())) != null) {
+            record.touch(timeService.wallClockTime());
             return record.returnValue;
          }
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) ->

@@ -10,6 +10,7 @@ import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
@@ -40,8 +41,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
                              CacheNotifier notifier, Metadata metadata, long flagsBitSet,
-                             CommandInvocationId commandInvocationId, Object providedResult) {
-      super(key, flagsBitSet, commandInvocationId, providedResult);
+                             CommandInvocationId commandInvocationId, Object providedResult, InvocationManager invocationManager, boolean synchronous) {
+      super(key, flagsBitSet, commandInvocationId, providedResult, invocationManager, synchronous);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       //noinspection unchecked
@@ -54,9 +55,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       }
    }
 
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier notifier, InvocationManager invocationManager, boolean isCacheAsync) {
       //noinspection unchecked
       this.notifier = notifier;
+      this.invocationManager = invocationManager;
+      this.synchronous = isCacheAsync;
    }
 
    public Object getValue() {
@@ -248,7 +251,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       if (hasAnyFlag(FlagBitSets.WITH_INVOCATION_RECORDS)) {
          e.setMetadata(metadata);
       } else {
-         recordInvocation(e, result, Metadatas.merged(e.getMetadata(), metadata));
+         recordInvocation(ctx, e, result, Metadatas.merged(e.getMetadata(), metadata));
       }
 
       if (e.isCreated()) {

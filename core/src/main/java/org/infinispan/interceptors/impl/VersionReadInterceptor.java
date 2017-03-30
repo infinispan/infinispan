@@ -80,7 +80,7 @@ public class VersionReadInterceptor extends DDAsyncInterceptor {
          return;
       }
       EntryVersion version = entry.getMetadata() == null ? null : entry.getMetadata().version();
-      if (version == null) {
+      if (entry.getValue() == null || version == null) {
          if (trace) log.tracef("Adding non-existent version read for key %s", entry.getKey());
          version = versionGenerator.nonExistingVersion();
       } else {

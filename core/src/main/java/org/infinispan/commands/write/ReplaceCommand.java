@@ -7,6 +7,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
@@ -35,8 +36,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    public ReplaceCommand(Object key, Object oldValue, Object newValue,
                          CacheNotifier notifier, Metadata metadata, long flagsBitSet,
-                         CommandInvocationId commandInvocationId, Object providedResult) {
-      super(key, flagsBitSet, commandInvocationId, providedResult);
+                         CommandInvocationId commandInvocationId, Object providedResult, InvocationManager invocationManager, boolean synchronous) {
+      super(key, flagsBitSet, commandInvocationId, providedResult, invocationManager, synchronous);
       this.oldValue = oldValue;
       this.newValue = newValue;
       //noinspection unchecked
@@ -44,9 +45,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       this.metadata = metadata;
    }
 
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier notifier, InvocationManager invocationManager, boolean isCacheAsync) {
       //noinspection unchecked
       this.notifier = notifier;
+      this.invocationManager = invocationManager;
+      this.synchronous = isCacheAsync;
    }
 
    @Override
@@ -71,7 +74,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
          e.setValue(newValue);
 
          Object result = hasAnyFlag(FlagBitSets.PROVIDED_RESULT) ? providedResult : (oldValue != null ? Boolean.TRUE : prevValue);
-         recordInvocation(e, result, Metadatas.merged(prevMetadata, metadata));
+         recordInvocation(ctx, e, result, Metadatas.merged(prevMetadata, metadata));
          notifier.notifyCacheEntryModified(key, newValue, e.getMetadata(), prevValue, prevMetadata, true, ctx, this);
          return result;
       } else {

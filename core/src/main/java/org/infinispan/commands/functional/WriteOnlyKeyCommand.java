@@ -6,6 +6,7 @@ import java.io.ObjectOutput;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
@@ -21,8 +22,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    private Consumer<WriteEntryView<V>> f;
 
    public WriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f,
-                              CommandInvocationId id, Params params) {
-      super(key, id, params);
+                              CommandInvocationId id, Params params, InvocationManager invocationManager, boolean synchronous) {
+      super(key, id, params, invocationManager, synchronous);
       this.f = f;
    }
 
@@ -75,7 +76,7 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
       if (e == null) return null;
 
       f.accept(EntryViews.writeOnly(e));
-      recordInvocation(e, null);
+      recordInvocation(ctx, e, null);
       return null;
    }
 

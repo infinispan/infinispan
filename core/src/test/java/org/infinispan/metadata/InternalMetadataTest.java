@@ -141,8 +141,8 @@ public class InternalMetadataTest {
       }
 
       @Override
-      public Builder noInvocations() {
-         return this;
+      public InvocationRecord invocations() {
+         return null;
       }
 
       @Override

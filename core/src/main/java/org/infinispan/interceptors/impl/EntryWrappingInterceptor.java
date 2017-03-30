@@ -64,6 +64,7 @@ import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -767,6 +768,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
       if (entry.isChanged()) {
          if (trace) log.tracef("About to commit entry %s", entry);
+         if (ctx.isInTxScope()) {
+            // In transactional mode we don't need to store invocation records; we keep these only
+            // to prevent applying the commands again upon multiple prepare commands.
+            Metadata metadata = entry.getMetadata();
+            if (metadata != null) {
+               entry.setMetadata(metadata.builder().noInvocations().build());
+            }
+         }
          commitContextEntry(entry, ctx, command, stateTransferFlag, l1Invalidation);
 
          return true;

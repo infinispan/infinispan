@@ -4,8 +4,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -16,19 +19,37 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
 
    CommandInvocationId commandInvocationId;
    boolean isForwarded = false;
+   boolean synchronous;
    int topologyId = -1;
    Params params;
    // TODO: this is used for the non-modifying read-write commands. Move required flags to Params
    // and make sure that ClusteringDependentLogic checks them.
    long flags;
+   transient InvocationManager invocationManager;
    transient Set<Object> completedKeys;
    transient boolean authoritative;
 
-   protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId) {
+   protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId, InvocationManager invocationManager, boolean synchronous) {
       this.commandInvocationId = commandInvocationId;
+      this.invocationManager = invocationManager;
+      this.synchronous = synchronous;
+   }
+
+   protected AbstractWriteManyCommand(AbstractWriteManyCommand<K, V> command) {
+      this.commandInvocationId = command.commandInvocationId;
+      this.params = command.params;
+      this.flags = command.flags;
+      this.topologyId = command.topologyId;
+      this.invocationManager = command.invocationManager;
+      this.synchronous = command.synchronous;
    }
 
    protected AbstractWriteManyCommand() {
+   }
+
+   public void init(InvocationManager invocationManager, boolean synchronous) {
+      this.invocationManager = invocationManager;
+      this.synchronous = synchronous;
    }
 
    @Override
@@ -130,8 +151,8 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
       return completedKeys != null && completedKeys.contains(key);
    }
 
-   protected void recordInvocation(CacheEntry e, Object result) {
-      if (commandInvocationId == null) {
+   protected void recordInvocation(InvocationContext ctx, CacheEntry e, Object result) {
+      if ((synchronous && ctx.isOriginLocal()) || commandInvocationId == null || invocationManager == null) {
          return;
       }
       Metadata metadata = e.getMetadata();
@@ -142,9 +163,11 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
          builder = metadata.builder();
       }
       if (e.isRemoved()) {
-         builder = builder.maxIdle(-1).lifespan(-1).version(null);
+         builder = builder.maxIdle(-1).lifespan(invocationManager.invocationTimeout()).version(null);
       }
-      e.setMetadata(builder.invocation(commandInvocationId, result, authoritative,
-            e.isCreated(), !e.isCreated() && !e.isRemoved(), e.isRemoved(), 0).build());
+      long now = invocationManager.wallClockTime();
+      InvocationRecord purged = InvocationRecord.purgeExpired(builder.invocations(), now - invocationManager.invocationTimeout());
+      e.setMetadata(builder.invocations(purged).invocation(commandInvocationId, isReturnValueExpected() ? result : null, authoritative,
+            e.isCreated(), !e.isCreated() && !e.isRemoved(), e.isRemoved(), now).build());
    }
 }

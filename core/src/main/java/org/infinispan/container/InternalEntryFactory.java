@@ -104,16 +104,17 @@ public interface InternalEntryFactory {
     * may be more appropriate to suit the new metadata values.  As such, one should consider the {@link InternalCacheEntry}
     * passed in as a parameter as passed by value and not by reference.
     *
-    * @param cacheEntry original internal cache entry
-    * @param metadata new metadata
     * @param <K> The key type for the entry
     * @param <V> The value type for the entry
+    * @param cacheEntry original internal cache entry
+    * @param metadata new metadata
+    * @param preserveTimestamps
     * @return a new InternalCacheEntry instance
     */
-   <K, V> InternalCacheEntry<K, V> update(InternalCacheEntry<K, V> cacheEntry, Metadata metadata);
+   <K, V> InternalCacheEntry<K, V> update(InternalCacheEntry<K, V> cacheEntry, Metadata metadata, boolean preserveTimestamps);
 
    /**
-    * Similar to {@link #update(org.infinispan.container.entries.InternalCacheEntry, org.infinispan.metadata.Metadata)}
+    * Similar to {@link #update(InternalCacheEntry, Metadata, boolean)}
     * but it also updates the {@link org.infinispan.container.entries.InternalCacheEntry} value.
     * <p/>
     * If the same internal cache entry is returned and if it is a mortal cache entry, the returned instance needs to be
@@ -139,7 +140,7 @@ public interface InternalEntryFactory {
    <V> InternalCacheValue<V> createValue(CacheEntry<?, V> cacheEntry, boolean includeInvocationRecords);
 
    /**
-    * Creates a copy of this cache entry and synchronizes serializes the copy process with the {@link #update(org.infinispan.container.entries.InternalCacheEntry, org.infinispan.metadata.Metadata)}.
+    * Creates a copy of this cache entry and synchronizes serializes the copy process with the {@link #update(InternalCacheEntry, Metadata, boolean)}.
     * This is requires so that readers of the entry will get an consistent snapshot of the value red.
     * @param <K> The key type for the entry
     * @param <V> The value type for the entry
