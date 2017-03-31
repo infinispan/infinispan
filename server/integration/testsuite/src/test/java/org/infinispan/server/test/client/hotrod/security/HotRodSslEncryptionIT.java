@@ -35,7 +35,7 @@ import org.junit.runner.RunWith;
 public class HotRodSslEncryptionIT {
 
    protected static final String DEFAULT_TRUSTSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator
-           + "truststore_client.jks";
+           + "ca.jks";
    protected static final String DEFAULT_TRUSTSTORE_PASSWORD = "secret";
 
    protected static RemoteCache<String, String> remoteCache = null;

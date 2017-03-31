@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 public class RESTClientWithSniEncryptionIT {
 
    protected static final String DEFAULT_TRUSTSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator
-           + "truststore_client.jks";
+           + "ca.jks";
    protected static final String DEFAULT_TRUSTSTORE_PASSWORD = "secret";
 
 
@@ -60,7 +60,7 @@ public class RESTClientWithSniEncryptionIT {
          //when
          rest.put(rest.toSsl(rest.fullPathKey("test")), "test", "text/plain");
 
-         fail();
+         fail("REST PUT operation should have failed with SSLHandshakeException");
       } catch (javax.net.ssl.SSLHandshakeException ignoreMe) {
          //then
       }

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 @WithRunningServer(@RunningServer(name = "hotrodAuthLdapOverSsl"))
 public class HotRodPlainAuthLdapOverSslIT extends HotRodSaslAuthTestBase {
 
-   private static final String KEYSTORE_NAME = "keystore_client.jks";
+   private static final String KEYSTORE_NAME = "keystore_server.jks";
    private static final String KEYSTORE_PASSWORD = "secret";
 
    private static ApacheDsLdap ldap;

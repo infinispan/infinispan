@@ -301,7 +301,7 @@
         <start.jboss.as.manually>false</start.jboss.as.manually>
 
         <server.jvm>${env.JAVA_HOME}</server.jvm>
-        <resources.dir>${basedir}/src/test/resources</resources.dir>
+        <resources.dir>${project.build.testOutputDirectory}</resources.dir>
 
         <jvm.memory.args>-Xmx512m</jvm.memory.args>
         <jvm.x64.args />
@@ -371,6 +371,20 @@
             org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.UnstableClientLocal,
             org.infinispan.server.test.category.UnstableClientClustered,org.infinispan.server.test.category.UnstableQueries
         </groups.unstable>
+
+        <!-- KeyStore properties -->
+        <ca.dname>CN=CA,OU=Infinispan,O=JBoss,L=Red Hat</ca.dname>
+        <ca.alias>infinispan-ca</ca.alias>
+        <ca.keystore>${project.build.testOutputDirectory}/ca.jks</ca.keystore>
+        <server.dname>CN=HotRod,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW</server.dname>
+        <server.alias>hotrod</server.alias>
+        <server.keystore>${project.build.testOutputDirectory}/keystore_server.jks</server.keystore>
+        <client1.dname>CN=Client1,OU=Infinispan,O=JBoss,L=Red Hat</client1.dname>
+        <client1.alias>client1</client1.alias>
+        <client2.dname>CN=Client2,OU=Infinispan,O=JBoss,L=Red Hat</client2.dname>
+        <client2.alias>client2</client2.alias>
+        <client.keystore>${project.build.testOutputDirectory}/keystore_client.jks</client.keystore>
+        <cluster.keystore>${project.build.testOutputDirectory}/cluster.jks</cluster.keystore>
     </properties>
 
     <build>
@@ -397,6 +411,220 @@
             </testResource>
         </testResources>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>keytool-maven-plugin</artifactId>
+                <version>1.5</version>
+                <!-- Vaults -->
+                <executions>
+                    <execution>
+                        <id>ispn-vault</id>
+                        <goals>
+                            <goal>generateSecretKey</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>ispn-vault</alias>
+                            <storetype>JCEKS</storetype>
+                            <keystore>${project.build.testOutputDirectory}/vault/vault.keystore</keystore>
+                            <keyalg>AES</keyalg>
+                            <keysize>128</keysize>
+                        </configuration>
+                    </execution>
+                    <!-- CA -->
+                    <execution>
+                        <id>ca</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${ca.alias}</alias>
+                            <dname>${ca.dname}</dname>
+                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
+                            <ext>bc:c</ext>
+                        </configuration>
+                    </execution>
+                    <!-- Server -->
+                    <execution>
+                        <id>server</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${server.alias}</alias>
+                            <dname>${server.dname}</dname>
+                            <keystore>${server.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-certreq</id>
+                        <goals>
+                            <goal>generateCertificateRequest</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${server.alias}</alias>
+                            <dname>${server.dname}</dname>
+                            <file>${project.build.testOutputDirectory}/server.csr</file>
+                            <keystore>${server.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-gencert</id>
+                        <goals>
+                            <goal>generateCertificate</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${ca.alias}</alias>
+                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
+                            <infile>${project.build.testOutputDirectory}/server.csr</infile>
+                            <outfile>${project.build.testOutputDirectory}/server.cer</outfile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-import-ca</id>
+                        <goals>
+                            <goal>importKeystore</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <srcalias>${ca.alias}</srcalias>
+                            <srckeystore>${project.build.testOutputDirectory}/ca.jks</srckeystore>
+                            <destkeystore>${server.keystore}</destkeystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-signed-import</id>
+                        <goals>
+                            <goal>importCertificate</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${server.alias}</alias>
+                            <file>${project.build.testOutputDirectory}/server.cer</file>
+                            <keystore>${server.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-no-ca</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${server.alias}</alias>
+                            <dname>${server.dname}</dname>
+                            <keystore>${project.build.testOutputDirectory}/keystore_server_no_ca.jks</keystore>
+                        </configuration>
+                    </execution>
+                    <!-- Client -->
+                    <execution>
+                        <id>client-import-ca</id>
+                        <goals>
+                            <goal>importKeystore</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <srcalias>${ca.alias}</srcalias>
+                            <srckeystore>${project.build.testOutputDirectory}/ca.jks</srckeystore>
+                            <destkeystore>${client.keystore}</destkeystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client1</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${client1.alias}</alias>
+                            <dname>${client1.dname}</dname>
+                            <keystore>${client.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client1-certreq</id>
+                        <goals>
+                            <goal>generateCertificateRequest</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${client1.alias}</alias>
+                            <dname>${client1.dname}</dname>
+                            <file>${project.build.testOutputDirectory}/client1.csr</file>
+                            <keystore>${client.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client1-gencert</id>
+                        <goals>
+                            <goal>generateCertificate</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${ca.alias}</alias>
+                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
+                            <infile>${project.build.testOutputDirectory}/client1.csr</infile>
+                            <outfile>${project.build.testOutputDirectory}/client1.cer</outfile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client1-signed-import</id>
+                        <goals>
+                            <goal>importCertificate</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${client1.alias}</alias>
+                            <file>${project.build.testOutputDirectory}/client1.cer</file>
+                            <keystore>${client.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <!-- A client certificate which is NOT signed by the CA -->
+                    <execution>
+                        <id>client2</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${client2.alias}</alias>
+                            <dname>${client2.dname}</dname>
+                            <keystore>${client.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <!-- Cluster key for JGroups encryption -->
+                    <execution>
+                        <id>cluster</id>
+                        <goals>
+                            <goal>generateSecretKey</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>cluster</alias>
+                            <keystore>${cluster.keystore}</keystore>
+                            <keyalg>DESEDE</keyalg>
+                            <keysize>168</keysize>
+                            <storetype>JCEKS</storetype>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <keyalg>RSA</keyalg>
+                    <keysize>2048</keysize>
+                    <noprompt>true</noprompt>
+                    <storepass>secret</storepass>
+                    <keypass>secret</keypass>
+                    <srcstorepass>secret</srcstorepass>
+                    <deststorepass>secret</deststorepass>
+                    <trustcacerts>true</trustcacerts>
+                    <validity>365</validity>
+                    <verbose>true</verbose>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -461,7 +689,7 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
-                        <phase>generate-resources</phase>
+                        <phase>process-test-resources</phase>
                         <configuration>
                             <skip>${skipTests}</skip>
                             <target>

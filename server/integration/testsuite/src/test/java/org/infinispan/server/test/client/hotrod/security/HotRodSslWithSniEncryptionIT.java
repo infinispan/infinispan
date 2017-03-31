@@ -3,9 +3,6 @@ package org.infinispan.server.test.client.hotrod.security;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.infinispan.arquillian.core.InfinispanResource;
@@ -16,9 +13,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.test.category.Security;
-import org.infinispan.server.test.util.ITestUtils;
 import org.infinispan.server.test.util.security.SecurityConfigurationHelper;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.After;

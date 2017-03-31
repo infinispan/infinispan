@@ -337,16 +337,16 @@ public class ExampleConfigsIT {
     @WithRunningServer({@RunningServer(name = "standalone-hotrod-ssl")})
     public void testSSLHotRodConfig() throws Exception {
         RemoteInfinispanMBeans s = createRemotes("standalone-hotrod-ssl", "local", DEFAULT_CACHE_NAME);
-        RemoteCache<Object, Object> c = createCache(s, securityConfig("keystore_client.jks", "truststore_client.jks", s.server));
+        RemoteCache<Object, Object> c = createCache(s, securityConfig("keystore_client.jks", "ca.jks", s.server));
         doPutGet(s, c);
         try {
-            doPutGet(s, createCache(s, securityConfig("keystore_server.jks", "truststore_client.jks", s.server)));
-            Assert.fail();
+            doPutGet(s, createCache(s, securityConfig("keystore_server_no_ca.jks", "ca.jks", s.server)));
+            Assert.fail("Should have failed to write");
         } catch (TransportException e) {
             // ok
         }
         try {
-            doPutGet(s, createCache(s, securityConfig("keystore_client.jks", "truststore_server.jks", s.server)));
+            doPutGet(s, createCache(s, securityConfig("keystore_server_no_ca.jks", "ca.jks", s.server)));
             Assert.fail();
         } catch (TransportException e) {
             // ok

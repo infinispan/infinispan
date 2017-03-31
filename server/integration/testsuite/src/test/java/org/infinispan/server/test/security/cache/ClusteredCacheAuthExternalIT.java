@@ -43,7 +43,7 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 @Category({ Security.class })
 @WithRunningServer({@RunningServer(name="hotrodAuthExternalClustered-2")})
-public class ClusteredCacheAuthExteranlIT {
+public class ClusteredCacheAuthExternalIT {
 
     private static final String SASL_MECH = "EXTERNAL";
     private static final String ARQ_NODE_1_ID = "hotrodAuthExternalClustered";
@@ -63,6 +63,7 @@ public class ClusteredCacheAuthExteranlIT {
     public void initRCM() {
         controller.start(ARQ_NODE_1_ID);
         final SecurityConfigurationHelper cb = new SecurityConfigurationHelper(SASL_MECH).forIspnServer(server1).withServerName(TEST_SERVER_NAME).withDefaultSsl();
+        cb.security().ssl().keyAlias("client1");
         rcm = new RemoteCacheManager(cb.forExternalAuth().build(), true);
         controller.stop(ARQ_NODE_1_ID);
         isInitialized = true;
