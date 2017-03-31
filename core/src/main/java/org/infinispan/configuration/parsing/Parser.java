@@ -75,6 +75,7 @@ import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.marshalling.ClassResolver;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -147,6 +148,10 @@ public class Parser implements ConfigurationParser {
             }
             case VERSION: {
                builder.serialization().version(value);
+               break;
+            }
+            case CLASS_RESOLVER_CLASS: {
+               builder.serialization().classResolver(Util.<ClassResolver>getInstance(value, holder.getClassLoader()));
                break;
             }
             default: {

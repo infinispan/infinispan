@@ -507,6 +507,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="class-resolver" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Fully qualified name of the class resolver to use. It must implement org.jboss.marshalling.ClassResolver. Sometimes, a custom class resolver (e.g., org.jboss.marshalling.ContextClassResolver) might do the job instead of full blown marshaller.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="jmx">

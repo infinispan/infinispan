@@ -331,6 +331,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          if (attributes.attribute(SerializationConfiguration.VERSION).isModified()) {
             writer.writeAttribute(Attribute.VERSION, Version.decodeVersion(serialization.version()));
          }
+         attributes.write(writer, SerializationConfiguration.CLASS_RESOLVER, Attribute.CLASS_RESOLVER_CLASS);
          writeAdvancedSerializers(writer, globalConfiguration);
          writer.writeEndElement();
       }
