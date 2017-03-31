@@ -14,8 +14,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.server.hotrod.metadata.HotRodMetadata;
 import org.infinispan.server.hotrod.test.TestClientListener;
 import org.infinispan.server.hotrod.test.TestCustomEvent;
 import org.infinispan.server.hotrod.test.TestKeyEvent;
@@ -193,7 +194,8 @@ public class EventLogListener extends TestClientListener {
    }
 
    private long serverDataVersion(byte[] k, Cache cache) {
-      return ((NumericVersion) cache.getAdvancedCache().getCacheEntry(k).getMetadata().version()).getVersion();
+      Metadata metadata = cache.getAdvancedCache().getCacheEntry(k).getMetadata();
+      return metadata instanceof HotRodMetadata ? ((HotRodMetadata) metadata).hotRodVersion().getVersion() : 0;
    }
 
 }

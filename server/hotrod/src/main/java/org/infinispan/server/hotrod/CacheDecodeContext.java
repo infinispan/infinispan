@@ -3,29 +3,28 @@ package org.infinispan.server.hotrod;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.NumericVersionGenerator;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
-import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.hotrod.metadata.HotRodMetadata;
+import org.infinispan.server.hotrod.metadata.HotRodMetadata.HotRodMetadataBuilder;
 import org.infinispan.util.logging.LogFactory;
 
 /**
  * Invokes operations against the cache based on the state kept during decoding process
  */
 public final class CacheDecodeContext {
-   static final long MillisecondsIn30days = 60 * 60 * 24 * 30 * 1000l;
+   private static final long MillisecondsIn30days = 60 * 60 * 24 * 30 * 1000L;
    static final Log log = LogFactory.getLog(CacheDecodeContext.class, Log.class);
    static final boolean isTrace = log.isTraceEnabled();
 
@@ -95,7 +94,7 @@ public final class CacheDecodeContext {
       if (prev != null)
          return successResp(prev);
       else
-         return notExecutedResp(prev);
+         return notExecutedResp(null);
    }
 
    void obtainCache(EmbeddedCacheManager cacheManager, boolean loopback) throws RequestParsingException {
@@ -131,16 +130,18 @@ public final class CacheDecodeContext {
       this.cache = decoder.getOptimizedCache(header, cache, server.getCacheConfiguration(cacheName));
    }
 
-   Metadata buildMetadata() {
-      EmbeddedMetadata.Builder metadata = new EmbeddedMetadata.Builder();
-      metadata.version(generateVersion(server.getCacheRegistry(header.cacheName), cache));
+   HotRodMetadata buildMetadata() {
+      HotRodMetadataBuilder builder = new HotRodMetadataBuilder();
+      builder.hotRodVersion(generateVersion(server.getCacheRegistry(header.cacheName)));
       if (params.lifespan.duration != ServerConstants.EXPIRATION_DEFAULT) {
-         metadata.lifespan(toMillis(params.lifespan, header));
+         builder.lifespan(toMillis(params.lifespan));
       }
       if (params.maxIdle.duration != ServerConstants.EXPIRATION_DEFAULT) {
-         metadata.maxIdle(toMillis(params.maxIdle, header));
+         builder.maxIdle(toMillis(params.maxIdle));
       }
-      return metadata.build();
+      HotRodMetadata metadata = builder.build();
+      log.tracef("buildMetadata=%s", metadata);
+      return metadata;
    }
 
    Response get() {
@@ -150,17 +151,17 @@ public final class CacheDecodeContext {
    Response getKeyMetadata() {
       CacheEntry<byte[], byte[]> ce = cache.getCacheEntry(key);
       if (ce != null) {
-         EntryVersion entryVersion = ce.getMetadata().version();
-         long version = extractVersion(entryVersion);
+         Metadata metadata = ce.getMetadata();
+         long version = extractVersion(metadata);
          byte[] v = ce.getValue();
-         int lifespan = ce.getLifespan() < 0 ? -1 : (int) ce.getLifespan() / 1000;
-         int maxIdle = ce.getMaxIdle() < 0 ? -1 : (int) ce.getMaxIdle() / 1000;
+         int lifespan = metadata.lifespan() < 0 ? -1 : (int) metadata.lifespan() / 1000;
+         int maxIdle = metadata.maxIdle() < 0 ? -1 : (int) metadata.maxIdle() / 1000;
          if (header.op == HotRodOperation.GET_WITH_METADATA) {
             return new GetWithMetadataResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
                   header.op, OperationStatus.Success, header.topologyId, v, version,
                   ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
          } else {
-            int offset = ((Integer) operationDecodeContext).intValue();
+            int offset = (Integer) operationDecodeContext;
             return new GetStreamResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
                   header.op, OperationStatus.Success, header.topologyId, v, offset, version,
                   ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
@@ -189,6 +190,12 @@ public final class CacheDecodeContext {
       return version;
    }
 
+   static long extractVersion(Metadata metadata) {
+      return metadata != null && metadata instanceof HotRodMetadata ?
+            ((HotRodMetadata) metadata).hotRodVersion().getVersion() :
+            0;
+   }
+
    Response containsKey() {
       if (cache.containsKey(key))
          return successResp(null);
@@ -200,8 +207,7 @@ public final class CacheDecodeContext {
       CacheEntry<byte[], byte[]> entry = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key);
       if (entry != null) {
          byte[] prev = entry.getValue();
-         NumericVersion streamVersion = new NumericVersion(params.streamVersion);
-         if (entry.getMetadata().version().equals(streamVersion)) {
+         if (((HotRodMetadata)entry.getMetadata()).hotRodVersion().getVersion() == params.streamVersion) {
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             boolean replaced = cache.replace(key, prev, (byte[]) operationDecodeContext, buildMetadata());
             if (replaced)
@@ -220,10 +226,7 @@ public final class CacheDecodeContext {
          // Generate new version only if key not present
          prev = cache.putIfAbsent(key, (byte[]) operationDecodeContext, buildMetadata());
       }
-      if (prev == null)
-         return successResp(prev);
-      else
-         return notExecutedResp(prev);
+      return prev == null ? successResp(null) : notExecutedResp(prev);
    }
 
    Response put() {
@@ -232,19 +235,17 @@ public final class CacheDecodeContext {
       return successResp(prev);
    }
 
-   EntryVersion generateVersion(ComponentRegistry registry, Cache<byte[], byte[]> cache) {
-      VersionGenerator cacheVersionGenerator = registry.getVersionGenerator();
-      if (cacheVersionGenerator == null) {
-         // It could be null, for example when not running in compatibility mode.
-         // The reason for that is that if no other component depends on the
-         // version generator, the factory does not get invoked.
-         NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
-               .clustered(registry.getComponent(RpcManager.class) != null);
-         registry.registerComponent(newVersionGenerator, VersionGenerator.class);
-         return newVersionGenerator.generateNew();
-      } else {
-         return cacheVersionGenerator.generateNew();
+   private NumericVersion generateVersion(ComponentRegistry registry) {
+      NumericVersionGenerator generator;
+      synchronized (registry) {
+         generator = registry.getComponent(NumericVersionGenerator.class, "HOT_ROD_VERSION_GENERATOR");
+         if (generator == null) {
+            NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator().clustered(registry.getComponent(RpcManager.class) != null);
+            registry.registerComponent(newVersionGenerator, "HOT_ROD_VERSION_GENERATOR");
+            generator = newVersionGenerator;
+         }
       }
+      return generator.generateNew();
    }
 
    Response remove() {
@@ -259,8 +260,7 @@ public final class CacheDecodeContext {
       CacheEntry<byte[], byte[]> entry = cache.getCacheEntry(key);
       if (entry != null) {
          byte[] prev = entry.getValue();
-         NumericVersion streamVersion = new NumericVersion(params.streamVersion);
-         if (entry.getMetadata().version().equals(streamVersion)) {
+         if (((HotRodMetadata)entry.getMetadata()).hotRodVersion().getVersion() == params.streamVersion) {
             boolean removed = cache.remove(key, prev);
             if (removed)
                return successResp(prev);
@@ -346,7 +346,7 @@ public final class CacheDecodeContext {
     * <p>
     * Otherwise it's just considered number of seconds from now and it's returned in milliseconds unit.
     */
-   static long toMillis(ExpirationParam param, HotRodHeader h) {
+   static long toMillis(ExpirationParam param) {
       if (param.duration > 0) {
          long milliseconds = param.unit.toTimeUnit().toMillis(param.duration);
          if (milliseconds > MillisecondsIn30days) {

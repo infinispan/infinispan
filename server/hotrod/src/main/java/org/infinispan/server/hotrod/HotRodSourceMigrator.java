@@ -9,8 +9,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.metadata.EmbeddedMetadata.Builder;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.server.hotrod.metadata.HotRodMetadata;
 import org.infinispan.upgrade.SourceMigrator;
 
 /**
@@ -49,7 +49,7 @@ class HotRodSourceMigrator implements SourceMigrator {
 
          // we cannot store the Set as it is; it will break if attempting to be read via Hot Rod.  This should be wrapped
          // in a CacheValue.
-         Metadata metadata = new Builder().version(new NumericVersion(1)).build();
+         Metadata metadata = new HotRodMetadata.HotRodMetadataBuilder().hotRodVersion(new NumericVersion(1)).build();
          cache.put(bak, marshaller.objectToByteBuffer(copy), metadata);
       } catch (InterruptedException | IOException e) {
          throw new CacheException(e);

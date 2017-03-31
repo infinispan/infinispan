@@ -35,7 +35,7 @@ public class ConverterEntryMapper<K, V> implements RemovableFunction<CacheEntry<
       V value = e.getValue();
       Object newValue = converter.unboxValue(value);
       if (key != newKey || value != newValue) {
-         return (CacheEntry<K, V>) entryFactory.create(newKey, newValue, e.getMetadata().version(), e.getCreated(),
+         return (CacheEntry<K, V>) entryFactory.create(newKey, newValue, e.getMetadata(), e.getCreated(),
                e.getLifespan(), e.getLastUsed(), e.getMaxIdle());
       }
       return e;

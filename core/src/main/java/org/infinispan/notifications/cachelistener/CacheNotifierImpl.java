@@ -919,9 +919,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                for (int i = 0; i < extraCount; ++i) {
                   try {
                      decs.take().get();
-                  } catch (InterruptedException e) {
-                     throw new CacheListenerException(e);
-                  } catch (ExecutionException e) {
+                  } catch (InterruptedException | ExecutionException e) {
                      throw new CacheListenerException(e);
                   }
                }
@@ -1142,9 +1140,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                for (int i = 0; i < extraCount; ++i) {
                   try {
                      decs.take().get();
-                  } catch (InterruptedException e) {
-                     throw new CacheListenerException(e);
-                  } catch (ExecutionException e) {
+                  } catch (InterruptedException | ExecutionException e) {
                      throw new CacheListenerException(e);
                   }
                }
@@ -1321,7 +1317,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 //               returnValue = new NonClusteredListenerInvocation(invocation, handler, filter, converter, annotation,
 //                                                                onlyPrimary, identifier, sync);
                returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, annotation,
-                                                                  onlyPrimary, clustered, identifier, sync, observation, filterAnnotations);
+                                                                  onlyPrimary, false, identifier, sync, observation, filterAnnotations);
             }
          } else {
             // If no includeCurrentState just use the base listener invocation which immediately passes all notifications
@@ -1355,11 +1351,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       @Override
       public DelegatingCacheEntryListenerInvocation<K, V> build() {
          DelegatingCacheEntryListenerInvocation<K, V> invocation = provider.interceptListenerInvocation(super.build());
-         List<DelegatingCacheEntryListenerInvocation<K, V>> invocations = listeners.get(invocation.getAnnotation());
-         if (invocations == null) {
-            invocations = new ArrayList<>(2);
-            listeners.put(invocation.getAnnotation(), invocations);
-         }
+         List<DelegatingCacheEntryListenerInvocation<K, V>> invocations = listeners.computeIfAbsent(invocation.getAnnotation(), k -> new ArrayList<>(2));
          invocations.add(invocation);
          return invocation;
       }
@@ -1648,9 +1640,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          for (Future<?> future : futures) {
             try {
                future.get();
-            } catch (InterruptedException e) {
-               throw new CacheListenerException(e);
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                throw new CacheListenerException(e);
             }
          }

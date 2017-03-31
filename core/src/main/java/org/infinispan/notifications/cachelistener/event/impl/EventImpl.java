@@ -61,7 +61,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    public static <K, V> EventImpl<K, V> createEvent(Cache<K, V> cache, Type type) {
-      EventImpl<K, V> e = new EventImpl<K,V>();
+      EventImpl<K, V> e = new EventImpl<>();
       e.cache = cache;
       e.type = type;
       return e;
@@ -271,17 +271,19 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
             ", transactionSuccessful=" + transactionSuccessful +
             ", entries=" + entries +
             ", created=" + created +
+            ", metadata=" + metadata +
+            ", oldMetadata=" + oldMetadata +
             '}';
    }
 
    @Override
    public Collection<Address> getMembersAtStart() {
-      return consistentHashAtStart != null ? consistentHashAtStart.getMembers() : Collections.<Address>emptySet();
+      return consistentHashAtStart != null ? consistentHashAtStart.getMembers() : Collections.emptySet();
    }
 
    @Override
    public Collection<Address> getMembersAtEnd() {
-      return consistentHashAtEnd != null ? consistentHashAtEnd.getMembers() : Collections.<Address>emptySet();
+      return consistentHashAtEnd != null ? consistentHashAtEnd.getMembers() : Collections.emptySet();
    }
 
    @Override
