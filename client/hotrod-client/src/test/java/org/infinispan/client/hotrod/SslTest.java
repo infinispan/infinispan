@@ -51,7 +51,7 @@ public class SslTest extends SingleCacheManagerTest {
 
       ClassLoader tccl = Thread.currentThread().getContextClassLoader();
       String serverKeyStore = tccl.getResource(altCertPassword ? "keystore_server_alt_cert_password.jks" : "keystore_server.jks").getPath();
-      String serverTrustStore = tccl.getResource("truststore_server.jks").getPath();
+      String serverTrustStore = tccl.getResource("ca.jks").getPath();
       org.infinispan.server.core.configuration.SslConfigurationBuilder serverSSLConfig = serverBuilder.ssl()
             .enabled(sslServer)
             .keyStoreFileName(serverKeyStore)
@@ -68,7 +68,7 @@ public class SslTest extends SingleCacheManagerTest {
       log.info("Started server on port: " + hotrodServer.getPort());
 
       String clientKeyStore = tccl.getResource(altCertPassword ? "keystore_client_alt_cert_password.jks" : "keystore_client.jks").getPath();
-      String clientTrustStore = tccl.getResource("truststore_client.jks").getPath();
+      String clientTrustStore = tccl.getResource("ca.jks").getPath();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       SslConfigurationBuilder clientSSLConfig = clientBuilder
             .addServer()

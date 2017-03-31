@@ -1,7 +1,7 @@
             <security-realm name="SSLRealm1">
                 <server-identities>
                     <ssl>
-                        <keystore path="keystore_client.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
+                        <keystore path="keystore_server_no_ca.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
                     </ssl>
                 </server-identities>
             </security-realm>

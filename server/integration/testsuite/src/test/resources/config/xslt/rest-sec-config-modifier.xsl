@@ -101,31 +101,6 @@
         </xsl:copy>
     </xsl:template>
 
-    <!-- New connector definition -->
-    <xsl:variable name="newHttpsConnector">
-        <connector name="https" protocol="HTTP/1.1" scheme="https" socket-binding="https" enable-lookups="false" secure="true">
-            <ssl name="myssl"
-                 keystore-type="JKS"
-                 password="changeit"
-                 key-alias="test"
-                 truststore-type="JKS"
-                 verify-client="want"
-                 certificate-key-file="${{jboss.server.config.dir}}/server.keystore"
-                 ca-certificate-file="${{jboss.server.config.dir}}/server.keystore"
-                    />
-        </connector>
-    </xsl:variable>
-
-    <!-- Add another connector -->
-    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsW)]/*[local-name()='connector'][position()=last()]">
-        <xsl:if test="$modifyCertSecRealm != 'false'">
-            <xsl:copy>
-                <xsl:apply-templates select="@*|node()"/>
-            </xsl:copy>
-            <xsl:copy-of select="$newHttpsConnector"/>
-        </xsl:if>
-    </xsl:template>
-
     <!-- Copy everything else. -->
     <xsl:template match="@*|node()">
         <xsl:copy>

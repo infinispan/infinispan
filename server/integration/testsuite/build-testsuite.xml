@@ -96,6 +96,7 @@
         <copy todir="${server1.dist}/standalone/configuration/examples">
             <fileset dir="${server1.dist}/docs/examples/configs" includes="standalone* clustered*"/>
         </copy>
+
         <copy todir="${server1.dist}/standalone/configuration" overwrite="true">
             <fileset dir="${resources.dir}">
                 <include name="*.jks" />
@@ -105,11 +106,18 @@
                 <include name="*.conf"/>
             </fileset>
         </copy>
+
+        <vault alias="ispn-vault" block="keystore" attribute="password" secret="secret"/>
+        <vault alias="ispn-vault" block="node0_md5" attribute="passwd_hash" secret="9833a158b3d5b5d729e0942422a699e8"/>
+        <vault alias="ispn-vault" block="node1_md5" attribute="passwd_hash" secret="192f232a72633ebb5ce2156fa787417d"/>
+        <vault alias="ispn-vault" block="krb_admin" attribute="password" secret="strongPassword"/>
+
         <copy todir="${server1.dist}/standalone/configuration/vault" overwrite="true">
             <fileset dir="${resources.dir}/vault">
                 <include name="*" />
             </fileset>
         </copy>
+
         <copy todir="${server1.dist}/domain/configuration/examples">
             <fileset dir="${server1.dist}/docs/examples/configs" includes="domain*" />
         </copy>
@@ -208,7 +216,7 @@
                 <transform-rest-sec cacheContainer="security" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="standalone.xml" out="testsuite/rest-sec-cert.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" addSecRealm="${other.parts}/client-cert-realm.xml" addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" filtering="true">
+        <transform in="standalone.xml" out="testsuite/rest-sec-cert.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" addSecRealm="${other.parts}/client-cert-realm.xml" addVault="${other.parts}/vault.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec authMethod="CLIENT_CERT" cacheContainer="security" securityRealm="ClientCertRealm" modifyCertSecRealm="true" in="@{in}"/>
             </rest-sec>
@@ -222,7 +230,7 @@
             modifyInfinispan="${infinispan.parts}/default-repl.xml"
             infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"
             addEncrypt="${other.parts}/jgroups-encrypt.xml"
-            addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml"
+            addVault="${other.parts}/vault.xml"
             filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-filecs.xml" modifyInfinispan="${infinispan.parts}/filecachestore.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-eviction.xml" modifyInfinispan="${infinispan.parts}/eviction.xml"/>
@@ -287,7 +295,7 @@
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl.xml"
                    addSecRealm="${other.parts}/ldap-security-realm-with-ssl.xml"
                    addConnection="${other.parts}/ldap-connection-ssl.xml"
-                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
+                   addVault="${other.parts}/vault.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-auth-krb.xml"
                    modifyInfinispan="${infinispan.parts}/clustered-secured.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml"
@@ -305,17 +313,17 @@
                    hotrodAuth="${infinispan.parts}/hotrod-auth-external.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-external-realm.xml"
                    addSecRealm="${other.parts}/client-cert-realm.xml"
-                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
+                   addVault="${other.parts}/vault.xml" />
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-0.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml"
-                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml"/>
+                   addVault="${other.parts}/vault.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-1.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-md5-1.xml"
-                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml"/>
+                   addVault="${other.parts}/vault.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-0.xml"
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
                    addJGroupsSasl="${other.parts}/jgroups-sasl-krb-0.xml"
@@ -329,18 +337,18 @@
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-no-auth.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-no-auth.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-no-auth.xml"
-                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
+                   addVault="${other.parts}/vault.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-with-sni.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
                    restEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
-                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
+                   addVault="${other.parts}/vault.xml" />
         <transform in="standalone.xml" out="testsuite/rest-ssl-with-sni.xml"
                    restEncrypt="${infinispan.parts}/hotrod-ssl-with-sni.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
-                   addVault="${other.parts}/vault${jdk.vendor.qualifier}.xml" />
+                   addVault="${other.parts}/vault.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-ssl-with-multitenancy.xml"
                    addSecRealm="${other.parts}/hotrod-ssl-realm-with-sni1.xml"
                    addSecRealm2="${other.parts}/hotrod-ssl-realm-with-sni2.xml"
@@ -479,4 +487,44 @@
             <move file="@{transformDir}/@{in}-transformed-jdbc" tofile="@{transformDir}/@{in}-transformed"/>
         </sequential>
     </macrodef>
+
+    <macrodef name="vault" description="create/modify vault">
+        <attribute name="keystore" default="${resources.dir}/vault/vault.keystore" />
+        <attribute name="storepass" default="secret" />
+        <attribute name="alias" />
+        <attribute name="block" />
+        <attribute name="attribute"/>
+        <attribute name="secret"/>
+        <attribute name="iteration" default="23"/>
+        <attribute name="salt" default="12345678"/>
+        <sequential>
+            <echo message="Updating vault '@{keystore}' entry '@{attribute}'..."/>
+            <dirname property="vault.dir" file="@{keystore}"/>
+            <mkdir dir="${vault.dir}" />
+            <java jar="${server1.dist}/jboss-modules.jar" fork="true" failonerror="true">
+                <arg value="-mp"/>
+                <arg value="${server1.dist}/modules"/>
+                <arg value="org.jboss.as.vault-tool"/>
+                <arg value="--keystore"/>
+                <arg value="@{keystore}"/>
+                <arg value="--keystore-password"/>
+                <arg value="@{storepass}"/>
+                <arg value="--alias"/>
+                <arg value="@{alias}"/>
+                <arg value="--vault-block"/>
+                <arg value="@{block}"/>
+                <arg value="--attribute"/>
+                <arg value="@{attribute}"/>
+                <arg value="--sec-attr"/>
+                <arg value="@{secret}"/>
+                <arg value="--enc-dir"/>
+                <arg value="${resources.dir}/vault"/>
+                <arg value="--iteration"/>
+                <arg value="@{iteration}"/>
+                <arg value="--salt"/>
+                <arg value="@{salt}"/>
+            </java>
+        </sequential>
+    </macrodef>
+
 </project>

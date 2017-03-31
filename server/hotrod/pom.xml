@@ -14,7 +14,8 @@
    <description>Infinispan Hot Rod Server</description>
 
    <properties>
-         <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+      <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+      <certificate.dname>CN=HotRod_1,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW</certificate.dname>
    </properties>
 
    <dependencies>
@@ -56,6 +57,109 @@
 
    <build>
       <plugins>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>keytool-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>password_server</id>
+                  <goals>
+                     <goal>generateKeyPair</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <alias>default</alias>
+                     <keystore>${project.build.testOutputDirectory}/password_server_keystore.jks</keystore>
+                     <dname>${certificate.dname}</dname>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>default_server</id>
+                  <goals>
+                     <goal>generateKeyPair</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <alias>default</alias>
+                     <keystore>${project.build.testOutputDirectory}/default_server_keystore.jks</keystore>
+                     <dname>${certificate.dname}</dname>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>sni_server</id>
+                  <goals>
+                     <goal>generateKeyPair</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <alias>sni</alias>
+                     <keystore>${project.build.testOutputDirectory}/sni_server_keystore.jks</keystore>
+                     <dname>${certificate.dname}</dname>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>notrust_clients</id>
+                  <goals>
+                     <goal>generateKeyPair</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <alias>sni</alias>
+                     <keystore>${project.build.testOutputDirectory}/no_trusted_clients_keystore.jks</keystore>
+                     <dname>${certificate.dname}</dname>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>password_truststore</id>
+                  <goals>
+                     <goal>importKeystore</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <srckeystore>${project.build.testOutputDirectory}/password_server_keystore.jks</srckeystore>
+                     <srcstorepass>secret</srcstorepass>
+                     <destkeystore>${project.build.testOutputDirectory}/password_client_truststore.jks</destkeystore>
+                     <deststorepass>secret</deststorepass>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>default_truststore</id>
+                  <goals>
+                     <goal>importKeystore</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <srckeystore>${project.build.testOutputDirectory}/default_server_keystore.jks</srckeystore>
+                     <srcstorepass>secret</srcstorepass>
+                     <destkeystore>${project.build.testOutputDirectory}/default_client_truststore.jks</destkeystore>
+                     <deststorepass>secret</deststorepass>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>sni_truststore</id>
+                  <goals>
+                     <goal>importKeystore</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <srckeystore>${project.build.testOutputDirectory}/sni_server_keystore.jks</srckeystore>
+                     <srcstorepass>secret</srcstorepass>
+                     <destkeystore>${project.build.testOutputDirectory}/sni_client_truststore.jks</destkeystore>
+                     <deststorepass>secret</deststorepass>
+                  </configuration>
+               </execution>
+            </executions>
+            <configuration>
+               <storepass>secret</storepass>
+               <keypass>secret</keypass>
+               <keysize>2048</keysize>
+               <keyalg>RSA</keyalg>
+               <validity>365</validity>
+               <noprompt>true</noprompt>
+               <trustcacerts>true</trustcacerts>
+               <verbose>true</verbose>
+            </configuration>
+         </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>

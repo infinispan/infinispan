@@ -3,14 +3,10 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 
 import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -58,14 +54,14 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
                .principalRoleMapper(new CommonNameRoleMapper())
                .role("admin")
                   .permission(AuthorizationPermission.ALL)
-               .role("HotRod")
+               .role("HotRodClient1")
                   .permission(AuthorizationPermission.READ)
                   .permission(AuthorizationPermission.WRITE)
                .role("RodHot")
                   .permission(AuthorizationPermission.READ)
                   .permission(AuthorizationPermission.WRITE);
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.security().authorization().enable().role("HotRod").role("admin");
+      builder.security().authorization().enable().role("HotRodClient1").role("admin");
       cacheManager = TestCacheManagerFactory.createCacheManager(global, builder);
       cacheManager.getCache();
       org.infinispan.configuration.cache.ConfigurationBuilder unauthorizedBuilder = hotRodCacheConfiguration();
@@ -78,43 +74,34 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
 
    @Override
    protected void setup() throws Exception {
-      Security.doAs(ADMIN, new PrivilegedExceptionAction<Object>() {
-
-         @Override
-         public Void run() throws Exception {
-            cacheManager = createCacheManager();
-            if (cache == null) cache = cacheManager.getCache();
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedExceptionAction<Object>) () -> {
+         cacheManager = createCacheManager();
+         if (cache == null) cache = cacheManager.getCache();
+         return null;
       });
       hotrodServer = new HotRodServer();
       HotRodServerConfigurationBuilder serverBuilder = HotRodTestingUtil.getDefaultHotRodConfiguration();
 
-      ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-      String keyStoreFileName = tccl.getResource("keystore.jks").getPath();
-      String trustStoreFileName = tccl.getResource("truststore.jks").getPath();
+      ClassLoader cl = SslAuthenticationTest.class.getClassLoader();
       SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
       serverBuilder
             .ssl()
-            .enable()
-            .requireClientAuth(true)
-            .keyStoreFileName(keyStoreFileName)
-            .keyStorePassword("secret".toCharArray())
-            .trustStoreFileName(trustStoreFileName)
-            .trustStorePassword("secret".toCharArray());
+               .enable()
+               .requireClientAuth(true)
+               .keyStoreFileName(cl.getResource("keystore_server.jks").getPath())
+               .keyStorePassword("secret".toCharArray())
+               .keyAlias("hotrod")
+               .trustStoreFileName(cl.getResource("ca.jks").getPath())
+               .trustStorePassword("secret".toCharArray());
       serverBuilder
             .authentication()
-            .enable()
-            .serverName("localhost")
-            .addAllowedMech("EXTERNAL")
-            .serverAuthenticationProvider(sap);
-      Security.doAs(ADMIN, new PrivilegedExceptionAction<Object>() {
-
-         @Override
-         public Void run() throws Exception {
-            hotrodServer.start(serverBuilder.build(), cacheManager);
-            return null;
-         }
+               .enable()
+               .serverName("localhost")
+               .addAllowedMech("EXTERNAL")
+               .serverAuthenticationProvider(sap);
+      Security.doAs(ADMIN, (PrivilegedExceptionAction<Object>) () -> {
+         hotrodServer.start(serverBuilder.build(), cacheManager);
+         return null;
       });
 
       log.info("Started server on port: " + hotrodServer.getPort());
@@ -122,28 +109,24 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder
             .addServer()
-            .host("127.0.0.1")
-            .port(hotrodServer.getPort())
+               .host("127.0.0.1")
+               .port(hotrodServer.getPort())
             .socketTimeout(3000)
             .connectionPool()
-            .maxActive(1)
+               .maxActive(1)
+               .timeBetweenEvictionRuns(2000)
             .security()
-            .authentication()
-            .enable()
-            .saslMechanism("EXTERNAL")
-            .callbackHandler(new CallbackHandler() {
-               @Override
-               public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-               }
-            })
-            .ssl()
-            .enable()
-            .keyStoreFileName(keyStoreFileName)
-            .keyStorePassword("secret".toCharArray())
-            .trustStoreFileName(trustStoreFileName)
-            .trustStorePassword("secret".toCharArray())
-            .connectionPool()
-            .timeBetweenEvictionRuns(2000);
+               .authentication()
+                  .enable()
+                  .saslMechanism("EXTERNAL")
+               .ssl()
+                  .enable()
+                  .keyStoreFileName(cl.getResource("keystore_client.jks").getPath())
+                  .keyStorePassword("secret".toCharArray())
+                  .keyAlias("client1")
+                  .trustStoreFileName(cl.getResource("ca.jks").getPath())
+                  .trustStorePassword("secret".toCharArray());
+
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
    }
 
@@ -156,12 +139,9 @@ public class SslAuthenticationTest extends SingleCacheManagerTest {
 
    @Override
    protected void clearContent() {
-      Security.doAs(ADMIN, new PrivilegedAction<Object>() {
-         @Override
-         public Void run() {
-            cacheManager.getCache().clear();
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedAction<Object>) () -> {
+         cacheManager.getCache().clear();
+         return null;
       });
    }
 

@@ -12,7 +12,7 @@ import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.server.test.util.ITestUtils;
 
 /**
- * SaslConfigurationBuilder is a convenient class for various security tests which provides remote configuration
+ * SecurityConfigurationHelper is a convenient class for various security tests which provides remote configuration
  * builders for various means of authentication.
  *
  * @author vjuranek
@@ -25,7 +25,7 @@ public class SecurityConfigurationHelper extends ConfigurationBuilder {
             + "keystore_client.jks";
     public static final String DEFAULT_KEYSTORE_PASSWORD = "secret";
     public static final String DEFAULT_TRUSTSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator
-            + "truststore_client.jks";
+            + "ca.jks";
     public static final String DEFAULT_TRUSTSTORE_PASSWORD = "secret";
 
     private final String saslMech;

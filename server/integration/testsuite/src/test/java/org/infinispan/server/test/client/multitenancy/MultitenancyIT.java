@@ -5,8 +5,6 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.server.test.category.ClientSingleNode;
-import org.infinispan.server.test.category.RESTSingleNode;
 import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.security.SecurityConfigurationHelper;

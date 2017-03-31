@@ -3,12 +3,12 @@
                 <security>
                     <authorization>
                         <common-name-role-mapper />
-                        <role name="HotRod" permissions="READ" />
+                        <role name="Client1" permissions="READ" />
                     </authorization>
                 </security>
                 <distributed-cache name="testcache" remote-timeout="30000" >
                     <security>
-                        <authorization roles="HotRod" enabled="true" />
+                        <authorization roles="Client1" enabled="true" />
                     </security>
                 </distributed-cache>
                 <transport lock-timeout="240000"/>
