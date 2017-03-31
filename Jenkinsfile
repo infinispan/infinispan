@@ -13,7 +13,7 @@ pipeline {
             steps {
                 script {
                   def mvnHome = tool 'Maven'
-                  sh "${mvnHome}/bin/mvn clean package"
+                  sh "${mvnHome}/bin/mvn clean package -Dmaven.test.failure.ignore=true"
                 }
             }
         }
@@ -26,7 +26,7 @@ pipeline {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
                     script {
                         def mvnHome = tool 'Maven'
-                        sh "${mvnHome}/bin/mvn deploy -s $MAVEN_SETTINGS"
+                        sh "${mvnHome}/bin/mvn deploy -s $MAVEN_SETTINGS -DskipTests"
                     }  
                 }
             }
