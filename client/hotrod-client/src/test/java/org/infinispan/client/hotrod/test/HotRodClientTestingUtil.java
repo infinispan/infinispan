@@ -26,9 +26,9 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.server.core.ServerMetadata;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.server.hotrod.metadata.HotRodMetadata;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.LogFactory;
@@ -198,7 +198,7 @@ public class HotRodClientTestingUtil {
       }
 
       Metadata meta = cache.getAdvancedCache().getCacheEntry(lookupKey).getMetadata();
-      return meta instanceof HotRodMetadata ? ((HotRodMetadata) meta).hotRodVersion().getVersion() : 0;
+      return meta instanceof ServerMetadata ? ((ServerMetadata) meta).streamVersion() : 0;
    }
 
    public static byte[] toBytes(Object key) {

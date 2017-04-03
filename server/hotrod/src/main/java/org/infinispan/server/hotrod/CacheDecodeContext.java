@@ -15,6 +15,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.server.core.ServerConstants;
+import org.infinispan.server.core.ServerMetadata;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.metadata.HotRodMetadata;
 import org.infinispan.server.hotrod.metadata.HotRodMetadata.HotRodMetadataBuilder;
@@ -132,7 +133,7 @@ public final class CacheDecodeContext {
 
    HotRodMetadata buildMetadata() {
       HotRodMetadataBuilder builder = new HotRodMetadataBuilder();
-      builder.hotRodVersion(generateVersion(server.getCacheRegistry(header.cacheName)));
+      builder.streamVersion(generateVersion(server.getCacheRegistry(header.cacheName)));
       if (params.lifespan.duration != ServerConstants.EXPIRATION_DEFAULT) {
          builder.lifespan(toMillis(params.lifespan));
       }
@@ -191,8 +192,8 @@ public final class CacheDecodeContext {
    }
 
    static long extractVersion(Metadata metadata) {
-      return metadata != null && metadata instanceof HotRodMetadata ?
-            ((HotRodMetadata) metadata).hotRodVersion().getVersion() :
+      return metadata instanceof ServerMetadata ?
+            ((ServerMetadata) metadata).streamVersion() :
             0;
    }
 
@@ -207,7 +208,7 @@ public final class CacheDecodeContext {
       CacheEntry<byte[], byte[]> entry = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key);
       if (entry != null) {
          byte[] prev = entry.getValue();
-         if (((HotRodMetadata)entry.getMetadata()).hotRodVersion().getVersion() == params.streamVersion) {
+         if (isSameVersion(entry.getMetadata(), params.streamVersion)) {
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             boolean replaced = cache.replace(key, prev, (byte[]) operationDecodeContext, buildMetadata());
             if (replaced)
@@ -235,17 +236,17 @@ public final class CacheDecodeContext {
       return successResp(prev);
    }
 
-   private NumericVersion generateVersion(ComponentRegistry registry) {
+   private long generateVersion(ComponentRegistry registry) {
       NumericVersionGenerator generator;
       synchronized (registry) {
-         generator = registry.getComponent(NumericVersionGenerator.class, "HOT_ROD_VERSION_GENERATOR");
+         generator = registry.getComponent(NumericVersionGenerator.class, "STREAM_VERSION_GENERATOR");
          if (generator == null) {
             NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator().clustered(registry.getComponent(RpcManager.class) != null);
-            registry.registerComponent(newVersionGenerator, "HOT_ROD_VERSION_GENERATOR");
+            registry.registerComponent(newVersionGenerator, "STREAM_VERSION_GENERATOR");
             generator = newVersionGenerator;
          }
       }
-      return generator.generateNew();
+      return generator.generateNew().getVersion();
    }
 
    Response remove() {
@@ -260,7 +261,7 @@ public final class CacheDecodeContext {
       CacheEntry<byte[], byte[]> entry = cache.getCacheEntry(key);
       if (entry != null) {
          byte[] prev = entry.getValue();
-         if (((HotRodMetadata)entry.getMetadata()).hotRodVersion().getVersion() == params.streamVersion) {
+         if (isSameVersion(entry.getMetadata(), params.streamVersion)) {
             boolean removed = cache.remove(key, prev);
             if (removed)
                return successResp(prev);
@@ -358,5 +359,11 @@ public final class CacheDecodeContext {
       } else {
          return param.duration;
       }
+   }
+
+   private static boolean isSameVersion(Metadata metadata, long version) {
+      return metadata instanceof ServerMetadata ?
+            ((ServerMetadata) metadata).streamVersion() == version :
+            metadata.version() instanceof NumericVersion && ((NumericVersion) metadata.version()).getVersion() == version;
    }
 }

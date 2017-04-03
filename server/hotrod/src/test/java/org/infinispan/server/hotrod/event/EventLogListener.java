@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.server.core.ServerMetadata;
 import org.infinispan.server.hotrod.metadata.HotRodMetadata;
 import org.infinispan.server.hotrod.test.TestClientListener;
 import org.infinispan.server.hotrod.test.TestCustomEvent;
@@ -195,7 +196,7 @@ public class EventLogListener extends TestClientListener {
 
    private long serverDataVersion(byte[] k, Cache cache) {
       Metadata metadata = cache.getAdvancedCache().getCacheEntry(k).getMetadata();
-      return metadata instanceof HotRodMetadata ? ((HotRodMetadata) metadata).hotRodVersion().getVersion() : 0;
+      return metadata instanceof ServerMetadata ? ((ServerMetadata) metadata).streamVersion() : 0;
    }
 
 }

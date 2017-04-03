@@ -4,14 +4,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.core.ExternalizerIds;
+import org.infinispan.server.core.ServerMetadata;
 
 /**
  * // TODO: Document this
@@ -19,22 +20,22 @@ import org.infinispan.server.core.ExternalizerIds;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class HotRodMetadata implements Metadata {
+public class HotRodMetadata implements ServerMetadata {
 
-   public static final AdvancedExternalizer<HotRodMetadata> EXTERNALIZER = new Externalzier();
+   public static final AdvancedExternalizer<HotRodMetadata> EXTERNALIZER = new Externalizer();
    private static final long NOT_SET = -2;
    private static final long DISABLE = -1;
    private final long lifespan;
    private final long maxIdle;
    private final EntryVersion version;
    //TODO [pruivo] can a long replace the NumericVersion?
-   private final NumericVersion hotRodVersion;
+   private final long streamVersion;
 
-   private HotRodMetadata(long lifespan, long maxIdle, EntryVersion version, NumericVersion hotRodVersion) {
+   private HotRodMetadata(long lifespan, long maxIdle, EntryVersion version, long streamVersion) {
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
       this.version = version;
-      this.hotRodVersion = hotRodVersion;
+      this.streamVersion = streamVersion;
    }
 
    @Override
@@ -52,10 +53,6 @@ public class HotRodMetadata implements Metadata {
       return version;
    }
 
-   public NumericVersion hotRodVersion() {
-      return hotRodVersion;
-   }
-
    @Override
    public HotRodMetadataBuilder builder() {
       HotRodMetadataBuilder builder = new HotRodMetadataBuilder();
@@ -66,7 +63,7 @@ public class HotRodMetadata implements Metadata {
          builder.maxIdle(maxIdle);
       }
       builder.version(version);
-      builder.hotRodVersion(hotRodVersion);
+      builder.streamVersion(streamVersion);
       return builder;
    }
 
@@ -76,7 +73,7 @@ public class HotRodMetadata implements Metadata {
             "lifespan=" + lifespan +
             ", maxIdle=" + maxIdle +
             ", version=" + version +
-            ", hotRodVersion=" + hotRodVersion +
+            ", streamVersion=" + streamVersion +
             '}';
    }
 
@@ -89,8 +86,8 @@ public class HotRodMetadata implements Metadata {
 
       return lifespan == metadata.lifespan &&
             maxIdle == metadata.maxIdle &&
-            (version != null ? version.equals(metadata.version) : metadata.version == null) &&
-            (hotRodVersion != null ? hotRodVersion.equals(metadata.hotRodVersion) : metadata.hotRodVersion == null);
+            streamVersion == metadata.streamVersion &&
+            Objects.equals(version, metadata.version);
    }
 
    @Override
@@ -98,8 +95,13 @@ public class HotRodMetadata implements Metadata {
       int result = (int) (lifespan ^ (lifespan >>> 32));
       result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
       result = 31 * result + (version != null ? version.hashCode() : 0);
-      result = 31 * result + (hotRodVersion != null ? hotRodVersion.hashCode() : 0);
+      result = 31 * result + (int) (streamVersion ^ (streamVersion >>> 32));
       return result;
+   }
+
+   @Override
+   public long streamVersion() {
+      return streamVersion;
    }
 
    public static class HotRodMetadataBuilder implements Builder {
@@ -107,7 +109,7 @@ public class HotRodMetadata implements Metadata {
       private long lifespan = NOT_SET;
       private long maxIdle = NOT_SET;
       private EntryVersion version;
-      private NumericVersion hotRodVersion;
+      private Long streamVersion;
 
       public HotRodMetadataBuilder() {
       }
@@ -142,7 +144,7 @@ public class HotRodMetadata implements Metadata {
 
       @Override
       public HotRodMetadata build() {
-         return new HotRodMetadata(lifespan, maxIdle, version, hotRodVersion);
+         return new HotRodMetadata(lifespan, maxIdle, version, streamVersion == null ? 0 : streamVersion);
       }
 
       @Override
@@ -156,14 +158,14 @@ public class HotRodMetadata implements Metadata {
          if (version == null) {
             version = metadata.version();
          }
-         if (metadata instanceof HotRodMetadata && hotRodVersion == null) {
-            this.hotRodVersion = ((HotRodMetadata) metadata).hotRodVersion();
+         if (metadata instanceof ServerMetadata && streamVersion == null) {
+            this.streamVersion = ((ServerMetadata) metadata).streamVersion();
          }
          return this;
       }
 
-      public HotRodMetadataBuilder hotRodVersion(NumericVersion version) {
-         hotRodVersion = version;
+      public HotRodMetadataBuilder streamVersion(long version) {
+         streamVersion = version;
          return this;
       }
 
@@ -173,12 +175,12 @@ public class HotRodMetadata implements Metadata {
                "lifespan=" + lifespan +
                ", maxIdle=" + maxIdle +
                ", version=" + version +
-               ", hotRodVersion=" + hotRodVersion +
+               ", streamVersion=" + streamVersion +
                '}';
       }
    }
 
-   private static class Externalzier implements AdvancedExternalizer<HotRodMetadata> {
+   private static class Externalizer implements AdvancedExternalizer<HotRodMetadata> {
 
       @Override
       public Set<Class<? extends HotRodMetadata>> getTypeClasses() {
@@ -195,12 +197,12 @@ public class HotRodMetadata implements Metadata {
          output.writeLong(object.lifespan);
          output.writeLong(object.maxIdle);
          output.writeObject(object.version);
-         output.writeObject(object.hotRodVersion);
+         output.writeLong(object.streamVersion);
       }
 
       @Override
       public HotRodMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new HotRodMetadata(input.readLong(), input.readLong(), (EntryVersion) input.readObject(), (NumericVersion) input.readObject());
+         return new HotRodMetadata(input.readLong(), input.readLong(), (EntryVersion) input.readObject(), input.readLong());
       }
    }
 }
