@@ -3,10 +3,12 @@ package org.infinispan.scripting.utils;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import jdk.nashorn.api.scripting.ScriptUtils;
+
 public class JSArrays {
    @SuppressWarnings("restriction")
-   public static <T> Stream<T> stream(jdk.nashorn.internal.objects.NativeArray array) {
-      T[] objectArray = (T[]) array.asObjectArray();
-      return Arrays.stream(objectArray, 0, objectArray.length);
+   public static Stream<Object> stream(Object array) {
+      Object[] objectArray = (Object[]) ScriptUtils.convert(array, Object[].class);
+      return Arrays.stream(objectArray);
    }
 }
