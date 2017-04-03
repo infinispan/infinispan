@@ -20,6 +20,7 @@
 package org.infinispan.topology;
 
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -61,7 +62,7 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
          return;
       }
 
-      if (!cacheStatus.hasJoiners() && isBalanced(cacheStatus.getCacheTopology().getCurrentCH())) {
+      if (!cacheStatus.hasJoiners() && isBalanced(cacheStatus)) {
          log.tracef("Not triggering rebalance for cache %s, no joiners and the current consistent hash is already balanced",
                cacheName);
          return;
@@ -84,15 +85,21 @@ public class DefaultRebalancePolicy implements RebalancePolicy {
       clusterTopologyManager.triggerRebalance(cacheName);
    }
 
-   public boolean isBalanced(ConsistentHash ch) {
-      int numSegments = ch.getNumSegments();
-      for (int i = 0; i < numSegments; i++) {
-         int actualNumOwners = Math.min(ch.getMembers().size(), ch.getNumOwners());
-         if (ch.locateOwnersForSegment(i).size() != actualNumOwners) {
-            return false;
-         }
-      }
-      return true;
+   public boolean isBalanced(ClusterCacheStatus cacheStatus) {
+       if(cacheStatus == null){
+           return true;
+       }
+       synchronized(cacheStatus){
+           CacheTopology cacheTopology = cacheStatus.getCacheTopology();
+           ConsistentHashFactory chFactory = cacheStatus.getJoinInfo().getConsistentHashFactory();
+           ConsistentHash currentCH = cacheTopology.getCurrentCH();
+           ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, cacheStatus.getMembers());
+           ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
+           if (balancedCH.equals(currentCH)) {
+              return true;
+           }
+           return false;
+       }
    }
 
    @Override

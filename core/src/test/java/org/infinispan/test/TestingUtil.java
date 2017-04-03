@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -84,6 +85,9 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.ClusterCacheStatus;
+import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.DefaultRebalancePolicy;
 import org.infinispan.topology.RebalancePolicy;
 import org.infinispan.transaction.TransactionTable;
@@ -170,6 +174,7 @@ public class TestingUtil {
       return null;
    }
 
+
    public static void waitForRehashToComplete(Cache... caches) {
       int gracetime = 90000; // 90 seconds
       long giveup = System.currentTimeMillis() + gracetime;
@@ -180,7 +185,7 @@ public class TestingUtil {
          while (true) {
             CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
             boolean rebalanceInProgress = stateTransferManager.isStateTransferInProgress();
-            boolean chIsBalanced = !rebalanceInProgress && rebalancePolicy.isBalanced(cacheTopology.getCurrentCH());
+            boolean chIsBalanced = !rebalanceInProgress && rebalancePolicy.isBalanced(getCacheStatus(c));
             boolean chContainsAllMembers = cacheTopology.getCurrentCH().getMembers().size() == caches.length;
             if (chIsBalanced && chContainsAllMembers)
                break;
@@ -207,6 +212,20 @@ public class TestingUtil {
          }
          log.trace("Node " + cacheAddress + " finished state transfer.");
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private static ClusterCacheStatus getCacheStatus(Cache cache){
+        ClusterTopologyManager ctm = extractComponent(cache, ClusterTopologyManager.class);
+        try {
+            Field mapField = ClusterTopologyManagerImpl.class.getDeclaredField("cacheStatusMap");
+            mapField.setAccessible(true);
+            ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = (ConcurrentMap<String, ClusterCacheStatus>) mapField.get(ctm);
+            return cacheStatusMap.get(cache.getName());
+        } catch (Exception e) {
+            log.errorf("Failed to get cache %s status.");
+            throw new IllegalStateException(e);
+        }
    }
 
    public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
