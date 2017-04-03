@@ -84,6 +84,7 @@
 
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <forkJvmArgs>-Xmx2G</forkJvmArgs>
+      <jigsawForkJvmArgs></jigsawForkJvmArgs>
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter,org.infinispan.commons.test.skip.SkipOnOsListener</testNGListeners>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
@@ -1406,7 +1407,7 @@
                   </property>
                </properties>
 
-               <argLine>${forkJvmArgs} -Dsun.nio.ch.bugLevel</argLine>
+               <argLine>${forkJvmArgs} ${jigsawForkJvmArgs} -Dsun.nio.ch.bugLevel</argLine>
             </configuration>
          </plugin>
 
@@ -1593,6 +1594,17 @@
          <activation>
             <jdk>[9,)</jdk>
          </activation>
+         <properties>
+            <jigsawForkJvmArgs>
+               --add-opens java.base/java.lang=ALL-UNNAMED
+               --add-opens java.base/java.util=ALL-UNNAMED
+               --add-opens java.base/java.io=ALL-UNNAMED
+               --add-opens java.base/java.lang.invoke=ALL-UNNAMED
+               --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+               --add-opens java.base/java.util.concurrent=ALL-UNNAMED
+               --add-opens java.base/java.time=ALL-UNNAMED
+            </jigsawForkJvmArgs>
+         </properties>
          <build>
             <pluginManagement>
                <plugins>
@@ -1605,8 +1617,6 @@
                         <compilerArgs>
                            <arg>-J--add-modules</arg>
                            <arg>-Jjava.xml.ws.annotation</arg>
-                           <!--<arg>-J&#45;&#45;add-opens</arg>-->
-                           <!--<arg>jdk.unsupported/sun.misc=ALL-UNNAMED</arg>-->
                         </compilerArgs>
                      </configuration>
                   </plugin>

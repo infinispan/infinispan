@@ -829,6 +829,16 @@
          <activation>
             <jdk>[9,)</jdk>
          </activation>
+         <properties>
+            <jigsawForkJvmArgs>
+               --add-opens java.base/java.lang=ALL-UNNAMED
+               --add-opens java.base/java.util=ALL-UNNAMED
+               --add-opens java.base/java.io=ALL-UNNAMED
+               --add-opens java.base/java.lang.invoke=ALL-UNNAMED
+               --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+               --add-opens java.base/java.util.concurrent=ALL-UNNAMED
+            </jigsawForkJvmArgs>
+         </properties>
          <build>
             <pluginManagement>
                <plugins>
