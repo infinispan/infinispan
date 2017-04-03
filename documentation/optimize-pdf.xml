@@ -29,7 +29,7 @@
         <check-version version="${gsversion}" major="9" minor="10" property="havegs"/>
     </target>
 
-    <scriptdef name="check-version" language="javascript">
+    <scriptdef name="check-version" language="groovy" >
         <attribute name="version" />
         <attribute name="major" />
         <attribute name="minor" />
