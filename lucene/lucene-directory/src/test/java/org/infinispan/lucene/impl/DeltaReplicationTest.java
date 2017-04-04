@@ -1,8 +1,7 @@
 package org.infinispan.lucene.impl;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.replaceField;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -26,7 +25,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.lucene.FileListCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
@@ -93,12 +91,8 @@ public class DeltaReplicationTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   private InboundInvocationHandlerDecorator replaceOn(Cache cache) {
-      InboundInvocationHandlerDecorator decorator = new InboundInvocationHandlerDecorator(
-            extractComponent(cache, PerCacheInboundInvocationHandler.class));
-      replaceComponent(cache, PerCacheInboundInvocationHandler.class, decorator, true);
-      replaceField(decorator, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
-      return decorator;
+   private InboundInvocationHandlerDecorator replaceOn(Cache cache0) {
+      return wrapInboundInvocationHandler(cache0, InboundInvocationHandlerDecorator::new);
    }
 
    private void writeSingleDocument(Directory dir) throws IOException {

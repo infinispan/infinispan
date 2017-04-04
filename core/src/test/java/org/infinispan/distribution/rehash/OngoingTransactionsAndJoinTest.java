@@ -3,7 +3,7 @@ package org.infinispan.distribution.rehash;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.replaceField;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -23,7 +23,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
@@ -63,11 +62,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
    public void testRehashOnJoin() throws InterruptedException {
       Cache<Object, Object> firstNode = cache(0);
       final CountDownLatch txsStarted = new CountDownLatch(3), txsReady = new CountDownLatch(3), joinEnded = new CountDownLatch(1), rehashStarted = new CountDownLatch(1);
-      ListeningHandler listeningHandler = new ListeningHandler(extractComponent(firstNode, PerCacheInboundInvocationHandler.class), txsReady, joinEnded, rehashStarted);
-      replaceComponent(firstNode, PerCacheInboundInvocationHandler.class, listeningHandler, true);
-      replaceField(listeningHandler, "inboundInvocationHandler", firstNode.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
-
-      assert firstNode.getAdvancedCache().getComponentRegistry().getComponent(PerCacheInboundInvocationHandler.class) instanceof ListeningHandler;
+      wrapInboundInvocationHandler(firstNode, original -> new ListeningHandler(original, txsReady, joinEnded, rehashStarted));
 
       for (int i = 0; i < 10; i++) firstNode.put("OLD" + i, "value");
 

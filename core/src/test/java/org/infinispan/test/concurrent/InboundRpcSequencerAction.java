@@ -1,15 +1,12 @@
 package org.infinispan.test.concurrent;
 
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.replaceField;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -47,10 +44,8 @@ public class InboundRpcSequencerAction {
 
    private void replaceInboundInvocationHandler() {
       if (ourHandler == null) {
-         PerCacheInboundInvocationHandler handler = extractComponent(cache, PerCacheInboundInvocationHandler.class);
-         ourHandler = new SequencerPerCacheInboundInvocationHandler(handler, stateSequencer, matcher);
-         replaceComponent(cache, PerCacheInboundInvocationHandler.class, ourHandler, true);
-         replaceField(ourHandler, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
+         ourHandler = wrapInboundInvocationHandler(cache, handler ->
+               new SequencerPerCacheInboundInvocationHandler(handler, stateSequencer, matcher));
       }
    }
 
