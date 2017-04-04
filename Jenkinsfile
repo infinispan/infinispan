@@ -5,7 +5,7 @@ pipeline {
     stages {
         stage('Cleanup') {
             steps{
-                step([$class: 'WsCleanup'])
+                deleteDir()
             }
         }
         
