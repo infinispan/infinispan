@@ -76,9 +76,20 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
                  purgeCandidates.hasNext();) {
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.canExpire()) {
-                  if (ExpiryHelper.isExpiredMortal(e.getLifespan(), e.getCreated(), currentTimeMillis)) {
-                     handleLifespanExpireEntry(e, true);
-                  } else if (ExpiryHelper.isExpiredTransient(e.getMaxIdle(), e.getLastUsed(), currentTimeMillis)) {
+                  // Have to synchronize on the entry to make sure we see the value and metadata at the same time
+                  boolean expiredMortal;
+                  boolean expiredTransient;
+                  V value;
+                  long lifespan;
+                  synchronized (e) {
+                     value = e.getValue();
+                     lifespan = e.getLifespan();
+                     expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, e.getCreated(), currentTimeMillis);
+                     expiredTransient = ExpiryHelper.isExpiredTransient(e.getMaxIdle(), e.getLastUsed(), currentTimeMillis);
+                  }
+                  if (expiredMortal) {
+                     handleLifespanExpireEntry(e.getKey(), value, lifespan, true);
+                  } else if (expiredTransient) {
                      super.handleInMemoryExpiration(e, currentTimeMillis);
                   }
                }
@@ -97,17 +108,15 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       }
    }
 
-   void handleLifespanExpireEntry(InternalCacheEntry<K, V> entry, boolean sync) {
-      K key = entry.getKey();
+   void handleLifespanExpireEntry(K key, V value, long lifespan, boolean sync) {
       // The most used case will be a miss so no extra read before
       if (expiring.putIfAbsent(key, key) == null) {
-         long lifespan = entry.getLifespan();
          if (trace) {
             log.tracef("Submitting expiration removal for key %s which had lifespan of %s", toStr(key), lifespan);
          }
          Runnable runnable = () -> {
             try {
-               removeExpired(key, entry.getValue(), lifespan);
+               removeExpired(key, value, lifespan);
             } finally {
                expiring.remove(key);
             }
@@ -150,12 +159,18 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
       // We need to synchronize on the entry since {@link InternalCacheEntry} locks the entry when doing an update
       // so we can see both the new value and the metadata
+      boolean expiredMortal;
+      V value;
+      long lifespan;
       synchronized (entry) {
-         if (ExpiryHelper.isExpiredMortal(entry.getLifespan(), entry.getCreated(), currentTime)) {
-            handleLifespanExpireEntry(entry, false);
-         } else {
-            super.handleInMemoryExpiration(entry, currentTime);
-         }
+         value = entry.getValue();
+         lifespan = entry.getLifespan();
+         expiredMortal = ExpiryHelper.isExpiredMortal(lifespan, entry.getCreated(), currentTime);
+      }
+      if (expiredMortal) {
+         handleLifespanExpireEntry(entry.getKey(), value, lifespan, false);
+      } else {
+         super.handleInMemoryExpiration(entry, currentTime);
       }
    }
 
