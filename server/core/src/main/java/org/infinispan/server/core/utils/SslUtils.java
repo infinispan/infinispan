@@ -28,9 +28,16 @@ public class SslUtils {
       if (sslEngineConfiguration.sslContext() != null) {
          return sslEngineConfiguration.sslContext();
       }
-      return SslContextFactory.getContext(sslEngineConfiguration.keyStoreFileName(),
-            sslEngineConfiguration.keyStorePassword(), sslEngineConfiguration.keyStoreCertificatePassword(),
-            sslEngineConfiguration.trustStoreFileName(), sslEngineConfiguration.trustStorePassword());
+      return SslContextFactory.getContext(
+            sslEngineConfiguration.keyStoreFileName(),
+            sslEngineConfiguration.keyStoreType(),
+            sslEngineConfiguration.keyStorePassword(),
+            sslEngineConfiguration.keyStoreCertificatePassword(),
+            sslEngineConfiguration.keyAlias(),
+            sslEngineConfiguration.trustStoreFileName(),
+            sslEngineConfiguration.keyStoreType(),
+            sslEngineConfiguration.trustStorePassword(),
+            sslEngineConfiguration.protocol(), null);
    }
 
    public static JdkSslContext createSslContext(SSLContext sslContext, ClientAuth clientAuth) {

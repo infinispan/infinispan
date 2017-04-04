@@ -39,10 +39,13 @@ public class ConfigurationProperties {
    public static final String PROTOCOL_VERSION = "infinispan.client.hotrod.protocol_version";
    public static final String USE_SSL = "infinispan.client.hotrod.use_ssl";
    public static final String KEY_STORE_FILE_NAME = "infinispan.client.hotrod.key_store_file_name";
+   public static final String KEY_STORE_TYPE = "infinispan.client.hotrod.key_store_type";
    public static final String KEY_STORE_PASSWORD = "infinispan.client.hotrod.key_store_password";
    public static final String SNI_HOST_NAME = "infinispan.client.hotrod.sni_host_name";
+   public static final String KEY_ALIAS = "infinispan.client.hotrod.key_alias";
    public static final String KEY_STORE_CERTIFICATE_PASSWORD = "infinispan.client.hotrod.key_store_certificate_password";
    public static final String TRUST_STORE_FILE_NAME = "infinispan.client.hotrod.trust_store_file_name";
+   public static final String TRUST_STORE_TYPE = "infinispan.client.hotrod.trust_store_type";
    public static final String TRUST_STORE_PASSWORD = "infinispan.client.hotrod.trust_store_password";
    public static final String SSL_PROTOCOL = "infinispan.client.hotrod.ssl_protocol";
    public static final String SSL_CONTEXT = "infinispan.client.hotrod.ssl_context";
@@ -152,12 +155,24 @@ public class ConfigurationProperties {
       return props.getProperty(KEY_STORE_FILE_NAME, null);
    }
 
+   public String getKeyStoreType() {
+      return props.getProperty(KEY_STORE_TYPE, null);
+   }
+
    public String getKeyStorePassword() {
       return props.getProperty(KEY_STORE_PASSWORD, null);
    }
 
+   public String getKeyAlias() {
+      return props.getProperty(KEY_ALIAS, null);
+   }
+
    public String getTrustStoreFileName() {
       return props.getProperty(TRUST_STORE_FILE_NAME, null);
+   }
+
+   public String getTrustStoreType() {
+      return props.getProperty(TRUST_STORE_TYPE, null);
    }
 
    public String getTrustStorePassword() {
