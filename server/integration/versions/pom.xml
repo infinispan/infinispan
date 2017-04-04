@@ -23,6 +23,8 @@
       <maven.compiler.target>1.8</maven.compiler.target>
       <maven.compiler.source>1.8</maven.compiler.source>
       <server.output.dir.prefix>infinispan-server</server.output.dir.prefix>
+      <forkJvmArgs></forkJvmArgs>
+      <jigsawForkJvmArgs></jigsawForkJvmArgs>
 
       <!-- Override plugin versions defined in the JBoss parent POM to work with JDK9-->
       <version.source.plugin>3.0.0</version.source.plugin>
@@ -771,6 +773,7 @@
                <artifactId>maven-surefire-plugin</artifactId>
                <configuration>
                   <trimStackTrace>false</trimStackTrace>
+                  <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                </configuration>
             </plugin>
          </plugins>
@@ -825,18 +828,46 @@
       </profile>
 
       <profile>
+         <id>customForkJvmArgs</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+            <property>
+               <name>env.MAVEN_FORK_OPTS</name>
+            </property>
+         </activation>
+         <properties>
+            <forkJvmArgs>${env.MAVEN_FORK_OPTS}</forkJvmArgs>
+         </properties>
+      </profile>
+      <profile>
          <id>jigsaw</id>
          <activation>
             <jdk>[9,)</jdk>
          </activation>
          <properties>
+            <!--
+              java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
+                core externalizers for JDK types
+              java.nio, jdk.internal.ref: Netty, server/hotrod
+              com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
+              java.text, java.awt.font: XStream, server/rest
+              java.security: Wildfly, server/integration/*
+            -->
             <jigsawForkJvmArgs>
-               --add-opens java.base/java.lang=ALL-UNNAMED
-               --add-opens java.base/java.util=ALL-UNNAMED
-               --add-opens java.base/java.io=ALL-UNNAMED
-               --add-opens java.base/java.lang.invoke=ALL-UNNAMED
-               --add-opens java.base/java.lang.reflect=ALL-UNNAMED
-               --add-opens java.base/java.util.concurrent=ALL-UNNAMED
+               --add-opens=java.base/java.lang=ALL-UNNAMED
+               --add-opens=java.base/java.util=ALL-UNNAMED
+               --add-opens=java.base/java.io=ALL-UNNAMED
+               --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+               --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+               --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+               --add-opens=java.base/java.time=ALL-UNNAMED
+               --add-opens=java.base/java.nio=ALL-UNNAMED
+               --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
+               --add-modules=java.xml.bind
+               --add-opens=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
+               --add-opens=java.base/java.text=ALL-UNNAMED
+               --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
+               --add-opens=java.base/java.security=ALL-UNNAMED
             </jigsawForkJvmArgs>
          </properties>
          <build>
