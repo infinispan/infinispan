@@ -25,6 +25,7 @@ import org.infinispan.commons.logging.LogFactory;
  */
 public class SslContextFactory {
    private static final Log log = LogFactory.getLog(SslContextFactory.class);
+   private static final String DEFAULT_KEYSTORE_TYPE = "JKS";
    private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
    private static final String CLASSPATH_RESOURCE = "classpath:";
 
@@ -42,24 +43,38 @@ public class SslContextFactory {
 
    public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword,
                                        String trustStoreFileName, char[] trustStorePassword, String sslProtocol) {
-      return getContext(keyStoreFileName, keyStorePassword, keyStoreCertificatePassword, trustStoreFileName, trustStorePassword, DEFAULT_SSL_PROTOCOL, null);
+      return getContext(keyStoreFileName, DEFAULT_KEYSTORE_TYPE, keyStorePassword, keyStoreCertificatePassword, null, trustStoreFileName, DEFAULT_KEYSTORE_TYPE, trustStorePassword, sslProtocol, null);
    }
 
-   public static SSLContext getContext(String keyStoreFileName, char[] keyStorePassword, char[] keyStoreCertificatePassword,
-                                       String trustStoreFileName, char[] trustStorePassword, String sslProtocol, ClassLoader classLoader) {
+   public static SSLContext getContext(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword,
+                                       String keyAlias, String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String sslProtocol,
+                                       ClassLoader classLoader) {
       try {
          KeyManager[] keyManagers = null;
          if (keyStoreFileName != null) {
-            KeyStore ks = KeyStore.getInstance("JKS");
+            KeyStore ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
             loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
+            char[] keyPassword = keyStoreCertificatePassword == null ? keyStorePassword : keyStoreCertificatePassword;
+            if (keyAlias != null) {
+               if (ks.containsAlias(keyAlias) && ks.isKeyEntry(keyAlias)) {
+                  KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyPassword);
+                  KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
+                  // Recreate the keystore with just one key
+                  ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
+                  ks.load(null);
+                  ks.setEntry(keyAlias, entry, passParam);
+               } else {
+                  throw log.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
+               }
+            }
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(ks, keyStoreCertificatePassword == null ? keyStorePassword : keyStoreCertificatePassword);
+            kmf.init(ks, keyPassword);
             keyManagers = kmf.getKeyManagers();
          }
 
          TrustManager[] trustManagers = null;
          if (trustStoreFileName != null) {
-            KeyStore ks = KeyStore.getInstance("JKS");
+            KeyStore ks = KeyStore.getInstance(trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE);
             loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             tmf.init(ks);
@@ -98,5 +113,4 @@ public class SslContextFactory {
          Util.close(is);
       }
    }
-
 }
