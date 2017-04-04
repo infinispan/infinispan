@@ -88,7 +88,7 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
       if (entry instanceof InternalCacheEntry) {
          return entryFactory.create(newKey, newValue, (InternalCacheEntry) entry);
       } else {
-         return entryFactory.create(newKey, newValue, entry.getMetadata().version(), entry.getCreated(),
+         return entryFactory.create(newKey, newValue, entry.getMetadata(), entry.getCreated(),
                entry.getLifespan(), entry.getLastUsed(), entry.getMaxIdle());
       }
    }
