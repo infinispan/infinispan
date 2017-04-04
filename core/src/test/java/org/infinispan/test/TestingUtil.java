@@ -36,6 +36,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -1561,11 +1562,10 @@ public class TestingUtil {
       return wrap;
    }
 
-   public static <T extends PerCacheInboundInvocationHandler> T wrapPerCacheInboundInvocationHandler(
-         Cache<?, ?> cache, WrapFactory<PerCacheInboundInvocationHandler, T, Cache<?, ?>> factory, boolean rewire) {
+   public static <T extends PerCacheInboundInvocationHandler> T wrapInboundInvocationHandler(Cache cache, Function<PerCacheInboundInvocationHandler, T> ctor) {
       PerCacheInboundInvocationHandler current = extractComponent(cache, PerCacheInboundInvocationHandler.class);
-      T wrap = factory.wrap(cache, current);
-      replaceComponent(cache, PerCacheInboundInvocationHandler.class, wrap, rewire);
+      T wrap = ctor.apply(current);
+      replaceComponent(cache, PerCacheInboundInvocationHandler.class, wrap, true);
       replaceField(wrap, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
       return wrap;
    }

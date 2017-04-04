@@ -1,9 +1,7 @@
 package org.infinispan.stats;
 
-import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.replaceField;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.lang.reflect.Method;
@@ -35,7 +33,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -398,16 +395,8 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
 
    private void replaceAllPerCacheInboundInvocationHandler() {
       for (Cache<?, ?> cache : caches()) {
-         inboundHandlerList.add(replacePerCacheInboundInvocationHandler(cache));
+         inboundHandlerList.add(wrapInboundInvocationHandler(cache, ControlledPerCacheInboundInvocationHandler::new));
       }
-   }
-
-   private ControlledPerCacheInboundInvocationHandler replacePerCacheInboundInvocationHandler(Cache<?, ?> cache) {
-      ControlledPerCacheInboundInvocationHandler handler = new ControlledPerCacheInboundInvocationHandler(
-            extractComponent(cache, PerCacheInboundInvocationHandler.class));
-      replaceComponent(cache, PerCacheInboundInvocationHandler.class, handler, true);
-      replaceField(handler, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
-      return handler;
    }
 
    protected enum Operation {
