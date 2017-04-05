@@ -15,8 +15,8 @@ pipeline {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
                     script {
                         def mvnHome = tool 'Maven'
-                        sh "${mvnHome}/bin/mvn clean install -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true"
-                        junit allowEmptyResults: true, testDataPublishers: [[$class: 'JUnitFlakyTestDataPublisher']], testResults: '**/target/*-reports/*.xml'
+                        sh "${mvnHome}/bin/mvn clean install -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -pl commons -pl license "
+                        junit testResults: '**/target/*-reports/*.xml'
                     }
                 }
             }
