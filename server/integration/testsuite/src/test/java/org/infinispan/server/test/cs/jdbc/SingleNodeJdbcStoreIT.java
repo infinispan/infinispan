@@ -183,14 +183,14 @@ public class SingleNodeJdbcStoreIT {
         }
         stringCache.put("k3", "v3");
         //now a key would be evicted and stored in store
-        assertTrue(2 >= server.getCacheManager(stringMBeans.managerName).getCache(stringMBeans.cacheName).getNumberOfEntries());
+        assertTrue(2 >= server.getCacheManager(stringMBeans.managerName).getCache(stringMBeans.cacheName).getNumberOfEntriesInMemory());
         if (tableExists) {
             assertEquals(1, stringDB.stringTable.getAllKeys().size());
         }
     }
 
     public void testRestartStringStoreAfter(boolean killed) throws Exception {
-        assertEquals(0, server.getCacheManager(stringMBeans.managerName).getCache(stringMBeans.cacheName).getNumberOfEntries());
+        assertEquals(0, server.getCacheManager(stringMBeans.managerName).getCache(stringMBeans.cacheName).getNumberOfEntriesInMemory());
 
         assertNotNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k1")));
         if (killed) {
