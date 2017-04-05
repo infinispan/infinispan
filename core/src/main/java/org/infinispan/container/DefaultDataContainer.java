@@ -243,9 +243,12 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    @Override
    public boolean containsKey(Object k) {
       InternalCacheEntry<K, V> ice = peek(k);
-      if (ice != null && ice.canExpire() && ice.isExpired(timeService.wallClockTime())) {
-         entries.remove(k);
-         ice = null;
+      if (ice != null && ice.canExpire()) {
+         long currentTimeMillis = timeService.wallClockTime();
+         if (ice.isExpired(currentTimeMillis)) {
+            expirationManager.handleInMemoryExpiration(ice, currentTimeMillis);
+            ice = null;
+         }
       }
       return ice != null;
    }
