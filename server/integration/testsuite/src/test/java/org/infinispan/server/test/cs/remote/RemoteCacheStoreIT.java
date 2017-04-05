@@ -80,8 +80,8 @@ public class RemoteCacheStoreIT {
         rc1.put("k1", "v1");
         rc1.put("k2", "v2");
         rc1.put("k3", "v3");
-        assertEquals(0, server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntries());
-        assertEquals(2, server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(READONLY_CACHE_NAME).getNumberOfEntries());
+        assertEquals(0, server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntriesInMemory());
+        assertEquals(2, server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(READONLY_CACHE_NAME).getNumberOfEntriesInMemory());
         assertNull(rc1.get("k1"));
         assertEquals("v2", rc1.get("k2"));
         assertEquals("v3", rc1.get("k3"));
@@ -106,8 +106,8 @@ public class RemoteCacheStoreIT {
         assertEquals(0, server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntries());
         mc.set("k3", "v3");
         // now k1 evicted and stored in store
-        assertEquals(2, server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(LOCAL_CACHE_NAME).getNumberOfEntries());
-        assertEquals(1, server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntries());
+        assertEquals(2, server1.getCacheManager(LOCAL_CACHE_MANAGER).getCache(LOCAL_CACHE_NAME).getNumberOfEntriesInMemory());
+        assertEquals(1, server2.getCacheManager(LOCAL_CACHE_MANAGER).getDefaultCache().getNumberOfEntriesInMemory());
         // retrieve from store to cache and remove from store, another key must be evicted (k2)
         assertEquals("v1", mc.get("k1"));
         assertEquals("v2", mc.get("k2"));

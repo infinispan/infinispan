@@ -44,18 +44,18 @@ public class StringBasedStoreInvalidationCacheSyncIT extends AbstractJdbcStoreMu
         mc1.set("key", "value");
         assertEquals("value", mc1.get("key"));
         assertNotNull(dbServer1.stringTable.getValueByKey("key")); //stored in DB
-        assertEquals(0, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries()); //not replicated
+        assertEquals(0, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntriesInMemory()); //not replicated
         assertEquals("value", mc2.get("key")); //load from DB
 
         mc1.set("key", "newValue1");
         assertEquals("newValue1", mc1.get("key"));
-        assertEquals(0, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries()); //invalidated/removed
+        assertEquals(0, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntriesInMemory()); //invalidated/removed
         assertEquals("newValue1", mc2.get("key")); //load from DB
 
 
         mc2.set("key", "newValue2");
         assertEquals("newValue2", mc2.get("key"));
-        assertEquals(0, server1.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries()); //invalidated/removed
+        assertEquals(0, server1.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntriesInMemory()); //invalidated/removed
         assertEquals("newValue2", mc1.get("key")); //load from DB
     }
 
@@ -75,8 +75,8 @@ public class StringBasedStoreInvalidationCacheSyncIT extends AbstractJdbcStoreMu
     public void testRemoveNonExistentEntry() throws Exception {
         mc1.set("key", "value");
         assertEquals("value", mc1.get("key"));
-        assertEquals(1, server1.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
-        assertEquals(0, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries()); //not replicated
+        assertEquals(1, server1.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntriesInMemory());
+        assertEquals(0, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntriesInMemory()); //not replicated
 
         mc2.delete("key"); //delete from the other cache (the entry is not here)
         assertEquals(null, mc1.get("key"));

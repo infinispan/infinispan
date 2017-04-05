@@ -7,7 +7,7 @@
                 <distributed-cache
                     name="memcachedCache"
                     owners="1"
-                    l1-lifespan="2000">
+                    l1-lifespan="20000">
                 </distributed-cache>
             </cache-container>
         </subsystem>
