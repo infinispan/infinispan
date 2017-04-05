@@ -29,7 +29,7 @@ public class AbstractHotRodRollingUpgradesIT {
 
    @ArquillianResource
    protected ContainerController controller;
-   
+
    protected RemoteCacheManagerFactory rcmFactory;
 
    @Before
