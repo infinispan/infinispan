@@ -3,6 +3,13 @@
 pipeline {
     agent any
     stages {
+        stage('Prepare') {
+            steps {
+                script {
+                    sh "bash -x cleanup.sh"
+                }
+            }
+        }
         
         stage('SCM Checkout') {
             steps {
