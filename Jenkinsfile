@@ -6,7 +6,7 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    sh "bash -x cleanup.sh"
+                    sh returnStdout: true, script: 'cleanup.sh'
                 }
             }
         }
