@@ -74,14 +74,6 @@
          <artifactId>wildfly-controller</artifactId>
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
-
-      <dependency>
-         <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-api</artifactId>
-         <optional>${uberjar.deps.optional}</optional>
-         <scope>compile</scope>
-      </dependency>
-
    </dependencies>
 
    <build>
