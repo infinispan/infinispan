@@ -251,8 +251,11 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
    }
 
    static RequestOptions constructRequestOptions(ResponseMode mode, boolean rsvp, DeliverOrder deliverOrder,
-                                                 long timeout) {
+                                                 long timeout, boolean noRelay) {
       RequestOptions options = new RequestOptions(mode, timeout);
+      if (noRelay) {
+         options.setFlags(Message.Flag.NO_RELAY.value());
+      }
       encodeDeliverMode(options, deliverOrder);
       return rsvp ? options.setFlags(Message.Flag.RSVP.value()) : options;
    }
@@ -276,7 +279,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
 
       // Replay capability requires responses from all members!
       Buffer buf = marshallCall(command);
-      RequestOptions options = constructRequestOptions(mode, rsvp, deliverOrder, timeout);
+      RequestOptions options = constructRequestOptions(mode, rsvp, deliverOrder, timeout, true);
       CompletableFuture<Response> request = sendMessageWithFuture(destination, buf, options);
       if (mode == ResponseMode.GET_NONE) return null;
 
@@ -370,7 +373,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
       boolean rsvp = isRsvpCommand(command);
 
       Buffer buf = marshallCall(command);
-      RequestOptions opts = constructRequestOptions(mode, rsvp, deliverOrder, timeout);
+      RequestOptions opts = constructRequestOptions(mode, rsvp, deliverOrder, timeout, true);
       Collection<Address> realDest = dests;
       if (deliverOrder == DeliverOrder.TOTAL) {
          opts.anycasting(true).useAnycastAddresses(true);

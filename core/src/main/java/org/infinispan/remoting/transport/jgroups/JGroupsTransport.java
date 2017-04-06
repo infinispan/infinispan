@@ -272,15 +272,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    @Override
    public void waitForView(int viewId) throws InterruptedException {
-      waitForView(viewId, Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-   }
-
-   private boolean waitForView(int viewId, long timeout, TimeUnit timeUnit) throws InterruptedException {
       if (channel == null)
-         return false;
+         return;
 
       log.tracef("Waiting on view %d being accepted", viewId);
-      long remainingNanos = timeUnit.toNanos(timeout);
+      long remainingNanos = Long.MAX_VALUE;
       viewUpdateLock.lock();
       try {
          while (channel != null && getViewId() < viewId && remainingNanos > 0) {
@@ -289,7 +285,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       } finally {
          viewUpdateLock.unlock();
       }
-      return remainingNanos > 0;
    }
 
    @Override
@@ -783,7 +778,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    private static RequestOptions asyncRequestOptions(boolean rsvp, DeliverOrder deliverOrder) {
-      return constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0);
+      return constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0, true);
    }
 
    private void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
@@ -883,11 +878,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          SiteMaster recipient = new SiteMaster(xsb.getSiteName());
          if (xsb.isSync()) {
             RequestOptions sync = constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL,
-                  false, DeliverOrder.NONE, xsb.getTimeout());
+                  false, DeliverOrder.NONE, xsb.getTimeout(), false);
             syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(recipient, buf.getBuf(), buf.getOffset(), buf.getLength(), sync));
          } else {
             RequestOptions async = constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE,
-                  false, DeliverOrder.PER_SENDER, xsb.getTimeout());
+                  false, DeliverOrder.PER_SENDER, xsb.getTimeout(), false);
             dispatcher.sendMessage(recipient, buf.getBuf(), buf.getOffset(), buf.getLength(), async);
          }
       }
