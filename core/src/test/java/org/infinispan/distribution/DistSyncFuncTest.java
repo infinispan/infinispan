@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.ClearCommand;
@@ -119,15 +120,8 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
 
-      eventually(() -> {
-         try {
-            assertOnAllCachesAndOwnership("k1", "value2");
-         } catch (AssertionError e) {
-            log.debugf("Assertion failed once", e);
-            return false;
-         }
-         return true;
-      });
+      asyncWait("k1", PutKeyValueCommand.class);
+      assertOnAllCachesAndOwnership("k1", "value2");
 
       if (testRetVals) assertNull(retval);
    }
@@ -166,7 +160,9 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       Object retval = getFirstNonOwner("k1").replace("k1", "value2");
       if (testRetVals) assertEquals("value", retval);
 
-      asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
+      // Replace going to backup owners becomes PKVC
+      asyncWait("k1", cmd -> Stream.of(ReplaceCommand.class, PutKeyValueCommand.class)
+            .anyMatch(clazz -> clazz.isInstance(cmd)), getSecondNonOwner("k1"));
 
       assertOnAllCachesAndOwnership("k1", "value2");
 
@@ -189,7 +185,8 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       assertFalse(extractComponent(nonOwner, DistributionManager.class).getCacheTopology().isWriteOwner("k1"));
       retval = nonOwner.replace("k1", "value", "value2");
-      asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", cmd -> Stream.of(ReplaceCommand.class, PutKeyValueCommand.class)
+            .anyMatch(clazz -> clazz.isInstance(cmd)), getSecondNonOwner("k1"));
       if (testRetVals) assertTrue(retval,"Should have replaced");
 
       assertOnAllCachesAndOwnership("k1", "value2");

@@ -63,7 +63,7 @@ public class InvalidateL1Command extends InvalidateCommand {
       return COMMAND_ID;
    }
 
-   public void init( DistributionManager dm, CacheNotifier n, DataContainer dc) {
+   public void init(DistributionManager dm, CacheNotifier n, DataContainer dc) {
       super.init(n);
       this.dm = dm;
       this.dataContainer = dc;

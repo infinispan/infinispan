@@ -22,7 +22,9 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    private Map<? extends K, ? extends V> entries;
    private BiConsumer<V, WriteEntryView<V>> f;
 
-   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
+   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries,
+                                      BiConsumer<V, WriteEntryView<V>> f, Params params,
+                                      CommandInvocationId commandInvocationId) {
       super(commandInvocationId);
       this.entries = entries;
       this.f = f;
@@ -35,6 +37,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       this.f = command.f;
       this.params = command.params;
       this.flags = command.flags;
+      this.topologyId = command.topologyId;
    }
 
    public WriteOnlyManyEntriesCommand() {
@@ -65,7 +68,6 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
-      output.writeInt(topologyId);
       output.writeLong(flags);
    }
 
@@ -76,7 +78,6 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
-      topologyId = input.readInt();
       flags = input.readLong();
    }
 
@@ -90,6 +91,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
             throw new IllegalStateException();
          }
          f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry));
+         recordInvocation(cacheEntry, null);
       }
       return null;
    }
@@ -125,6 +127,8 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       sb.append("entries=").append(entries);
       sb.append(", f=").append(f.getClass().getName());
       sb.append(", isForwarded=").append(isForwarded);
+      sb.append(", topologyId=").append(topologyId);
+      sb.append(", commandInvocationId=").append(commandInvocationId);
       sb.append('}');
       return sb.toString();
    }

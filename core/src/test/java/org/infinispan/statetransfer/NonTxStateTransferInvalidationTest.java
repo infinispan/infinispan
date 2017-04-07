@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashSet;
@@ -63,11 +64,9 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
          log.tracef("Checking key: %s", key);
          // check them directly in data container
          InternalCacheEntry d0 = advancedCache(0).getDataContainer().get(key);
-         InternalCacheEntry d1 = advancedCache(1).getDataContainer().get(key);
-         InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
          assertEquals(key, d0.getValue());
-         assertNull(d1);
-         assertNull(d2);
+         assertFalse(advancedCache(1).getDataContainer().containsKey(key));
+         assertFalse(advancedCache(2).getDataContainer().containsKey(key));
       }
    }
 

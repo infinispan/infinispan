@@ -88,21 +88,18 @@ public class CommandAckCollector {
 
    /**
     * Creates a collector for {@link org.infinispan.commands.write.PutMapCommand}.
-    *
-    * @param id         the id from {@link CommandInvocationId#getId()}.
-    * @param primary    a primary owners collection..
+    *  @param id         the id from {@link CommandInvocationId#getId()}.
     * @param backups    a map between a backup owner and its segments affected.
     * @param topologyId the current topology id.
     */
-   public Collector<Map<Object, Object>> createMultiKeyCollector(long id, Collection<Address> primary,
-         Map<Address, Collection<Integer>> backups, int topologyId) {
+   public Collector<Map<Object, Object>> createMultiKeyCollector(long id, Map<Address, Collection<Integer>> backups, int topologyId) {
       if (backups.isEmpty()) {
          return new PrimaryOwnerOnlyCollector<>();
       }
       MultiKeyCollector collector = new MultiKeyCollector(id, backups, topologyId);
       collectorMap.put(id, collector);
       if (trace) {
-         log.tracef("Created new collector for %s. Primary=%s. BackupSegments=%s", id, primary, backups);
+         log.tracef("Created new collector for %s. BackupSegments=%s", id, backups);
       }
       return collector;
    }

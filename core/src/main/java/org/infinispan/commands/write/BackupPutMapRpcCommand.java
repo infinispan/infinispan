@@ -39,9 +39,11 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
    private long flags;
    private int topologyId;
    private long sequence;
-   private InvocationContextFactory invocationContextFactory;
-   private AsyncInterceptorChain interceptorChain;
-   private CacheNotifier cacheNotifier;
+   private Map<Object, Object> providedResults;
+
+   private transient InvocationContextFactory invocationContextFactory;
+   private transient AsyncInterceptorChain interceptorChain;
+   private transient CacheNotifier cacheNotifier;
 
    public BackupPutMapRpcCommand() {
       super(null);
@@ -107,16 +109,17 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
    public void writeTo(ObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallMap(map, output);
+      MarshallUtil.marshallMap(providedResults, output);
       output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
       output.writeLong(sequence);
-
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
       map = MarshallUtil.unmarshallMap(input, HashMap::new);
+      providedResults = MarshallUtil.unmarshallMap(input, HashMap::new);
       metadata = (Metadata) input.readObject();
       flags = input.readLong();
       sequence = input.readLong();
@@ -124,9 +127,8 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      PutMapCommand command = new PutMapCommand(map, cacheNotifier, metadata, flags, commandInvocationId);
+      PutMapCommand command = new PutMapCommand(map, cacheNotifier, metadata, flags, commandInvocationId, null);
       command.addFlags(FlagBitSets.SKIP_LOCKING);
-      command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
       command.setTopologyId(topologyId);
       command.setForwarded(true);
       InvocationContext invocationContext = invocationContextFactory
@@ -152,5 +154,9 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
 
    public void setSequence(long sequence) {
       this.sequence = sequence;
+   }
+
+   public void setProvidedResults(Map<Object, Object> providedResults) {
+      this.providedResults = providedResults;
    }
 }

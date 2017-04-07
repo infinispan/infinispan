@@ -1,6 +1,7 @@
 package org.infinispan.eviction.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -61,9 +62,8 @@ public class ManualEvictionWithPassivationAndSizeBasedAndConcurrentOperationsInP
    @Override
    protected void assertNotInMemory(Object key, Object value) {
       DataContainer container = cache.getAdvancedCache().getDataContainer();
-      InternalCacheEntry entry = container.get(key);
+      assertFalse("Key " + key + " exists in data container", container.containsKey(key));
       CacheLoader<Object, Object> loader = TestingUtil.getFirstLoader(cache);
-      assertNull("Key " + key + " exists in data container", entry);
       MarshalledEntry<Object, Object> entryLoaded = loader.load(key);
       assertNotNull("Key " + key + " does not exist in cache loader", entryLoaded);
       assertEquals("Wrong value for key " + key + " in cache loader", value, entryLoaded.getValue());

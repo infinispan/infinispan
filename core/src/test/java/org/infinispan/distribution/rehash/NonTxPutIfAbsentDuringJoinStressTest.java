@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -51,34 +50,32 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
       return c;
    }
 
+   // This test is unstable not only during topology change, but get() after putIfAbsent()
+   // may return null even without it when a
    @Test(groups = "unstable", description = "See ISPN-3918")
    public void testNodeJoiningDuringPutIfAbsent() throws Exception {
       Future[] futures = new Future[NUM_WRITERS];
       for (int i = 0; i < NUM_WRITERS; i++) {
          final int writerIndex = i;
-         futures[i] = fork(new Callable() {
-            @Override
-            public Object call() throws Exception {
-               while (!stop) {
-                  for (int j = 0; j < NUM_KEYS; j++) {
-                     Cache<Object, Object> cache = cache(writerIndex % NUM_ORIGINATORS);
-                     String key = "key_" + j;
-                     String value = "value_" + j + "_" + writerIndex;
-                     Object oldValue = cache.putIfAbsent(key, value);
-                     Object newValue = cache.get(key);
-                     if (oldValue == null) {
-                        // succeeded
-                        log.tracef("Successfully inserted value %s for key %s", value, key);
-                        assertEquals(value, newValue);
-                        boolean isFirst = insertedValues.putIfAbsent(key, value) == null;
-                        assertTrue("A second putIfAbsent succeeded for " + key, isFirst);
-                     } else {
-                        // failed
-                        assertEquals(oldValue, newValue);
-                     }
+         futures[i] = fork(() -> {
+            while (!stop) {
+               for (int j = 0; j < NUM_KEYS; j++) {
+                  Cache<Object, Object> cache = cache(writerIndex % NUM_ORIGINATORS);
+                  String key = "key_" + j;
+                  String value = "value_" + j + "_" + writerIndex;
+                  Object oldValue = cache.putIfAbsent(key, value);
+                  Object newValue = cache.get(key);
+                  if (oldValue == null) {
+                     // succeeded
+                     log.tracef("Successfully inserted value %s for key %s", value, key);
+                     assertEquals(value, newValue);
+                     boolean isFirst = insertedValues.putIfAbsent(key, value) == null;
+                     assertTrue("A second putIfAbsent succeeded for " + key, isFirst);
+                  } else {
+                     // failed
+                     assertEquals(oldValue, newValue);
                   }
                }
-               return null;
             }
          });
       }

@@ -86,10 +86,10 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
          //this might happen if the value was fetched from a cache loader
          if (rv instanceof MVCCEntry) {
             MVCCEntry mvccEntry = (MVCCEntry) rv;
-            return entryFactory.createValue(mvccEntry);
+            return entryFactory.createValue(mvccEntry, command.hasAnyFlag(FlagBitSets.WITH_INVOCATION_RECORDS));
          } else if (rv instanceof InternalCacheEntry) {
             InternalCacheEntry internalCacheEntry = (InternalCacheEntry) rv;
-            return internalCacheEntry.toInternalCacheValue();
+            return internalCacheEntry.toInternalCacheValue(command.hasAnyFlag(FlagBitSets.WITH_INVOCATION_RECORDS));
          } else { // null or Response
             return rv;
          }

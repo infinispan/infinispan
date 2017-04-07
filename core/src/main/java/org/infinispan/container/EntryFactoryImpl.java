@@ -69,6 +69,9 @@ public class EntryFactoryImpl implements EntryFactory {
    @Override
    public final void wrapEntryForReading(InvocationContext ctx, Object key, boolean isOwner) {
       if (!isOwner && !isL1Enabled) {
+         if (trace) {
+            log.tracef("Owner: %s, L1: %s", isOwner, isL1Enabled);
+         }
          return;
       }
       CacheEntry cacheEntry = getFromContext(ctx, key);
@@ -151,6 +154,9 @@ public class EntryFactoryImpl implements EntryFactory {
             MVCCEntry mvccEntry = createWrappedEntry(key, externalEntry);
             if (isRead) {
                mvccEntry.setRead();
+            }
+            if (mvccEntry.isNull()) {
+               mvccEntry.setCreated(true);
             }
             ctx.putLookedUpEntry(key, mvccEntry);
             if (trace)

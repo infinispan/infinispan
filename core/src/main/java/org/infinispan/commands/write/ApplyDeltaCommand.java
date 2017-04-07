@@ -34,7 +34,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      super(deltaAwareValueKey, EnumUtil.bitSetOf(Flag.DELTA_WRITE), commandInvocationId);
+      super(deltaAwareValueKey, EnumUtil.bitSetOf(Flag.DELTA_WRITE), commandInvocationId, null);
 
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("At least one key to be locked needs to be specified");
@@ -62,6 +62,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       } else {
          throw new IllegalStateException();
       }
+      recordInvocation(contextEntry, null);
       return null;
    }
 
@@ -150,16 +151,6 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    @Override
    public boolean isConditional() {
       return false;
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // Do nothing
    }
 
    @Override

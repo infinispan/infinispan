@@ -41,8 +41,8 @@ public class MetadataImmortalCacheEntry extends ImmortalCacheEntry implements Me
    }
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
-      return new MetadataImmortalCacheValue(value, metadata);
+   public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
+      return new MetadataImmortalCacheValue(value, includeInvocationRecords ? metadata : metadata.builder().noInvocations().build());
    }
 
    @Override

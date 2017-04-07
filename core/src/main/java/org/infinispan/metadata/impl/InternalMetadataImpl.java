@@ -7,6 +7,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -52,6 +54,16 @@ public class InternalMetadataImpl implements InternalMetadata {
    @Override
    public EntryVersion version() {
       return actual.version();
+   }
+
+   @Override
+   public InvocationRecord lastInvocation() {
+      return actual.lastInvocation();
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return actual.invocation(id);
    }
 
    @Override

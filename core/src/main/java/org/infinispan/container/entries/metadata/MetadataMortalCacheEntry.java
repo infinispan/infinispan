@@ -105,8 +105,8 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
    }
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
-      return new MetadataMortalCacheValue(value, metadata, created);
+   public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
+      return new MetadataMortalCacheValue(value, includeInvocationRecords ? metadata : metadata.builder().noInvocations().build(), created);
    }
 
    @Override

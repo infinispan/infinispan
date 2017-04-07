@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
-import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,7 +9,6 @@ import java.util.Collection;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.test.ReplListener;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.MulticastInvalidationFuncTest")
@@ -30,8 +30,8 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest<Object
       // Put an object in from a non-owner, this will cause an L1 record to be created there
 
       nonOwner.put(KEY1, "foo");
-      assertNull(nonOwner.getAdvancedCache().getDataContainer().get(KEY1));
-      Assert.assertEquals(owner.getAdvancedCache().getDataContainer().get(KEY1).getValue(), "foo");
+      assertFalse(nonOwner.getAdvancedCache().getDataContainer().containsKey(KEY1));
+      assertEquals("foo", owner.getAdvancedCache().getDataContainer().get(KEY1).getValue());
 
       // Check that all nodes (except the one we put to) are notified
       // but only if the transport is multicast-capable
@@ -55,7 +55,6 @@ public class MulticastInvalidationFuncTest extends BaseDistFunctionalTest<Object
          rl.waitForRpc();
       }
 
-      Assert.assertNull(nonOwner.getAdvancedCache().getDataContainer().get(KEY1));
+      assertFalse(nonOwner.getAdvancedCache().getDataContainer().containsKey(KEY1));
    }
-
 }

@@ -1,7 +1,7 @@
 package org.infinispan.container.versioning;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.testng.AssertJUnit.assertFalse;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -51,8 +51,8 @@ public class SimpleConditionalOperationsWriteSkewTest extends MultipleCacheManag
       assertEquals(advancedCache(1).getDataContainer().get(k).getValue(), "0");
 
       cache(0).remove(k, "0");
-      assertNull(advancedCache(0).getDataContainer().get(k));
-      assertNull(advancedCache(1).getDataContainer().get(k));
+      assertFalse(advancedCache(0).getDataContainer().containsKey(k));
+      assertFalse(advancedCache(1).getDataContainer().containsKey(k));
    }
 
    public void testPutIfAbsentFromMainOwner() {

@@ -129,6 +129,7 @@ public class VersionedDistStateTransferTest extends MultipleCacheManagersTest {
       if (readConsistentHash.isKeyLocalToNode(address, hello)) {
          InternalCacheEntry ice = c.getAdvancedCache().getDataContainer().get(hello);
          assertNotNull("Entry not found on owner cache " + c, ice);
+         assertNotNull("Entry not found on owner cache " + c, ice.getValue());
          assertNotNull("Version is null on owner cache " + c, ice.getMetadata().version());
       }
    }

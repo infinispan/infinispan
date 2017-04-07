@@ -305,6 +305,10 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
             log.tracef("Transaction %s read %s with version %s", getGlobalTransaction().globalId(), key, version);
          }
          versionsSeenMap.put(key, (IncrementableEntryVersion) version);
+      } else {
+         if (trace) {
+            log.tracef("Ignoring version read %s as already contains %s", version, versionsSeenMap.get(key));
+         }
       }
    }
 

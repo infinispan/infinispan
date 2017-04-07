@@ -82,8 +82,13 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
     * <p/>
     *
     * @return a new InternalCacheValue encapsulating this InternalCacheEntry's value and expiration information.
+    * @param includeInvocationRecords
     */
-   InternalCacheValue<V> toInternalCacheValue();
+   InternalCacheValue<V> toInternalCacheValue(boolean includeInvocationRecords);
+
+   default InternalCacheValue<V> toInternalCacheValue() {
+      return toInternalCacheValue(false);
+   }
 
    InternalCacheEntry<K, V> clone();
 }

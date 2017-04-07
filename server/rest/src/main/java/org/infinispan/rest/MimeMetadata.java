@@ -7,6 +7,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
@@ -21,9 +23,11 @@ import org.jboss.marshalling.util.IdentityIntMap;
  */
 public class MimeMetadata implements Metadata {
    protected final String contentType;
+   protected final InvocationRecord records;
 
-   public MimeMetadata(String contentType) {
+   public MimeMetadata(String contentType, InvocationRecord records) {
       this.contentType = Objects.requireNonNull(contentType);
+      this.records = records;
    }
 
    @Override
@@ -42,8 +46,18 @@ public class MimeMetadata implements Metadata {
    }
 
    @Override
+   public InvocationRecord lastInvocation() {
+      return records;
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return InvocationRecord.lookup(records, id);
+   }
+
+   @Override
    public Builder builder() {
-      return new MimeMetadataBuilder().contentType(contentType);
+      return new MimeMetadataBuilder().contentType(contentType).invocations(records);
    }
 
    public String contentType() {
@@ -92,20 +106,21 @@ public class MimeMetadata implements Metadata {
       @Override
       public MimeMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String contentType = input.readUTF();
+         InvocationRecord records = InvocationRecord.readListFrom(input);
          int number = input.readUnsignedByte();
          switch (number) {
             case Immortal:
-               return new MimeMetadata(contentType);
+               return new MimeMetadata(contentType, records);
             case Expirable:
                long lifespan = input.readLong();
                long maxIdle = input.readLong();
-               return new MimeExpirableMetadata(contentType, lifespan, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
+               return new MimeExpirableMetadata(contentType, records, lifespan, TimeUnit.MILLISECONDS, maxIdle, TimeUnit.MILLISECONDS);
             case LifespanExpirable:
                lifespan = input.readLong();
-               return new MimeLifespanExpirableMetadata(contentType, lifespan, TimeUnit.MILLISECONDS);
+               return new MimeLifespanExpirableMetadata(contentType, records, lifespan, TimeUnit.MILLISECONDS);
             case MaxIdleExpirable:
                maxIdle = input.readLong();
-               return new MimeMaxIdleExpirableMetadata(contentType, maxIdle, TimeUnit.MILLISECONDS);
+               return new MimeMaxIdleExpirableMetadata(contentType, records, maxIdle, TimeUnit.MILLISECONDS);
             default:
                throw new IllegalArgumentException("Unsupported type: " + number);
          }
@@ -114,6 +129,7 @@ public class MimeMetadata implements Metadata {
       @Override
       public void writeObject(ObjectOutput output, MimeMetadata meta) throws IOException {
          output.writeUTF(meta.contentType);
+         InvocationRecord.writeListTo(output, meta.records);
          int number = numbers.get(meta.getClass(), -1);
          output.write(number);
          switch (number) {
@@ -149,9 +165,9 @@ class MimeExpirableMetadata extends MimeMetadata {
    private final long maxIdleTime;
    private final TimeUnit maxIdleUnit;
 
-   public MimeExpirableMetadata(String contentType, long lifespanTime, TimeUnit lifespanUnit, long maxIdleTime,
+   public MimeExpirableMetadata(String contentType, InvocationRecord records, long lifespanTime, TimeUnit lifespanUnit, long maxIdleTime,
                                 TimeUnit maxIdleUnit) {
-      super(contentType);
+      super(contentType, records);
       this.lifespanTime = lifespanTime;
       this.lifespanUnit = Objects.requireNonNull(lifespanUnit);
       this.maxIdleTime = maxIdleTime;
@@ -170,7 +186,7 @@ class MimeExpirableMetadata extends MimeMetadata {
 
    @Override
    public Builder builder() {
-      return new MimeMetadataBuilder().contentType(contentType).lifespan(lifespanTime, lifespanUnit).maxIdle(maxIdleTime, maxIdleUnit);
+      return super.builder().lifespan(lifespanTime, lifespanUnit).maxIdle(maxIdleTime, maxIdleUnit);
    }
 
    @Override
@@ -213,8 +229,8 @@ class MimeLifespanExpirableMetadata extends MimeMetadata {
    private final long lifespanTime;
    private final TimeUnit lifespanUnit;
 
-   MimeLifespanExpirableMetadata(String contentType, long lifespanTime, TimeUnit lifespanUnit) {
-      super(contentType);
+   MimeLifespanExpirableMetadata(String contentType, InvocationRecord records, long lifespanTime, TimeUnit lifespanUnit) {
+      super(contentType, records);
       this.lifespanTime = lifespanTime;
       this.lifespanUnit = Objects.requireNonNull(lifespanUnit);
    }
@@ -226,7 +242,7 @@ class MimeLifespanExpirableMetadata extends MimeMetadata {
 
    @Override
    public Builder builder() {
-      return new MimeMetadataBuilder().contentType(contentType).lifespan(lifespanTime, lifespanUnit);
+      return super.builder().lifespan(lifespanTime, lifespanUnit);
    }
 
    @Override
@@ -263,8 +279,8 @@ class MimeMaxIdleExpirableMetadata extends MimeMetadata {
    private final long maxIdleTime;
    private final TimeUnit maxIdleUnit;
 
-   public MimeMaxIdleExpirableMetadata(String contentType, long maxIdleTime, TimeUnit maxIdleUnit) {
-      super(contentType);
+   public MimeMaxIdleExpirableMetadata(String contentType, InvocationRecord records, long maxIdleTime, TimeUnit maxIdleUnit) {
+      super(contentType, records);
       this.maxIdleTime = maxIdleTime;
       this.maxIdleUnit = Objects.requireNonNull(maxIdleUnit);
    }
@@ -276,7 +292,7 @@ class MimeMaxIdleExpirableMetadata extends MimeMetadata {
 
    @Override
    public Builder builder() {
-      return new MimeMetadataBuilder().contentType(contentType).maxIdle(maxIdleTime, maxIdleUnit);
+      return super.builder().maxIdle(maxIdleTime, maxIdleUnit);
    }
 
    @Override

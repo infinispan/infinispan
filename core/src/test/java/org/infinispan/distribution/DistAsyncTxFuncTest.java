@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
@@ -49,7 +50,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
    }
 
    @Override
-   protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... cachesOnWhichKeyShouldInval) {
+   protected void asyncWait(Object key, Predicate<VisitableCommand> command, Cache<?, ?>... cachesOnWhichKeyShouldInval) {
       if (cachesOnWhichKeyShouldInval == null) cachesOnWhichKeyShouldInval = new Cache[0];
       List<Cache<?, ?>> cachesOnWhichKeyShouldInvalList = new ArrayList(Arrays.asList(cachesOnWhichKeyShouldInval));
       if (key == null) {
@@ -60,7 +61,8 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
          for (Cache<?, ?> c : getOwners(key)) {
             log.info("Analysing cache " + addressOf(c) + ".  Listeners are avbl for caches " + listenerCaches);
             if (cachesOnWhichKeyShouldInvalList.remove(c)) {
-               listenerLookup.get(c).expect(command, InvalidateL1Command.class);
+               Predicate<VisitableCommand> isInvalidateL1 = InvalidateL1Command.class::isInstance;
+               listenerLookup.get(c).expect(command, isInvalidateL1);
             } else {
                listenerLookup.get(c).expect(command);
             }

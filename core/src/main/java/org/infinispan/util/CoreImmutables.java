@@ -111,7 +111,7 @@ public class CoreImmutables extends Immutables {
       }
 
       @Override
-      public InternalCacheValue<V> toInternalCacheValue() {
+      public InternalCacheValue<V> toInternalCacheValue(boolean includeInvocationRecords) {
          return new CoreImmutables.ImmutableInternalCacheValue(this);
       }
 

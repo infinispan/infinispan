@@ -12,7 +12,6 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -35,21 +34,20 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    private CacheNotifier<Object, Object> notifier;
    private boolean successful = true;
    private Metadata metadata;
-   private ValueMatcher valueMatcher;
 
    public PutKeyValueCommand() {
    }
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
                              CacheNotifier notifier, Metadata metadata, long flagsBitSet,
-                             CommandInvocationId commandInvocationId) {
-      super(key, flagsBitSet, commandInvocationId);
+                             CommandInvocationId commandInvocationId, Object providedResult) {
+      super(key, flagsBitSet, commandInvocationId, providedResult);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
-      this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
       //noinspection unchecked
       this.notifier = notifier;
       this.metadata = metadata;
+      this.providedResult = providedResult;
 
       if (value instanceof DeltaAware) {
          addFlags(FlagBitSets.DELTA_WRITE);
@@ -87,11 +85,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
       //noinspection unchecked
       MVCCEntry<Object, Object> e = (MVCCEntry) ctx.lookupEntry(key);
 
@@ -100,7 +93,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       }
 
       Object prevValue = e.getValue();
-      if (!valueMatcher.matches(prevValue, null, value)) {
+      if (!hasAnyFlag(FlagBitSets.DISABLE_CONDITION) && putIfAbsent && prevValue != null) {
          successful = false;
          return prevValue;
       }
@@ -118,7 +111,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       output.writeObject(key);
       output.writeObject(value);
       output.writeObject(metadata);
-      MarshallUtil.marshallEnum(valueMatcher, output);
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       output.writeBoolean(putIfAbsent);
@@ -129,7 +121,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       key = input.readObject();
       value = input.readObject();
       metadata = (Metadata) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       commandInvocationId = CommandInvocationId.readFrom(input);
       setFlagsBitSet(input.readLong());
       putIfAbsent = input.readBoolean();
@@ -178,19 +169,19 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public String toString() {
-      return new StringBuilder()
-            .append("PutKeyValueCommand{key=")
-            .append(toStr(key))
+      StringBuilder sb = new StringBuilder()
+            .append("PutKeyValueCommand{key=").append(toStr(key))
             .append(", value=").append(toStr(value))
             .append(", flags=").append(printFlags())
             .append(", commandInvocationId=").append(CommandInvocationId.show(commandInvocationId))
             .append(", putIfAbsent=").append(putIfAbsent)
-            .append(", valueMatcher=").append(valueMatcher)
             .append(", metadata=").append(metadata)
             .append(", successful=").append(successful)
-            .append(", topologyId=").append(getTopologyId())
-            .append("}")
-            .toString();
+            .append(", topologyId=").append(getTopologyId());
+      if (hasAnyFlag(FlagBitSets.PROVIDED_RESULT)) {
+         sb.append(", result=").append(providedResult);
+      }
+      return sb.append("}").toString();
    }
 
    @Override
@@ -201,16 +192,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    @Override
    public boolean isConditional() {
       return putIfAbsent;
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return valueMatcher;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      this.valueMatcher = valueMatcher;
    }
 
    @Override
@@ -232,12 +213,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       Object entryValue = e.getValue();
       Object o;
 
-      if (e.isCreated()) {
-         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
-      } else {
-         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
-      }
-
       if (value instanceof Delta) {
          // magic
          Delta dv = (Delta) value;
@@ -247,7 +222,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             e.setCreated(true);
             e.setValid(true);
             e.setValue(dv.merge(null));
-            Metadatas.updateMetadata(e, metadata);
          } else {
             DeltaAware toMergeWith = null;
             if (entryValue instanceof CopyableDeltaAware) {
@@ -256,12 +230,10 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
                toMergeWith = (DeltaAware) entryValue;
             }
             e.setValue(dv.merge(toMergeWith));
-            Metadatas.updateMetadata(e, metadata);
          }
          o = entryValue;
       } else {
          o = e.setValue(value);
-         Metadatas.updateMetadata(e, metadata);
          if (e.isRemoved()) {
             e.setCreated(true);
             e.setExpired(false);
@@ -271,7 +243,20 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          }
       }
       e.setChanged(true);
-      // Return the expected value when retrying a putIfAbsent command (i.e. null)
-      return valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW ? o : null;
+
+      Object result = hasAnyFlag(FlagBitSets.PROVIDED_RESULT) ? providedResult : o;
+      if (hasAnyFlag(FlagBitSets.WITH_INVOCATION_RECORDS)) {
+         e.setMetadata(metadata);
+      } else {
+         recordInvocation(e, result, Metadatas.merged(e.getMetadata(), metadata));
+      }
+
+      if (e.isCreated()) {
+         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
+      } else {
+         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
+      }
+
+      return result;
    }
 }

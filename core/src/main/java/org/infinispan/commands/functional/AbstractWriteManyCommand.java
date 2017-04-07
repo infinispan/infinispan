@@ -1,10 +1,15 @@
 package org.infinispan.commands.functional;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.commands.CommandInvocationId;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, FunctionalCommand<K, V>, RemoteLockCommand {
@@ -16,6 +21,8 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    // TODO: this is used for the non-modifying read-write commands. Move required flags to Params
    // and make sure that ClusteringDependentLogic checks them.
    long flags;
+   transient Set<Object> completedKeys;
+   transient boolean authoritative;
 
    protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId) {
       this.commandInvocationId = commandInvocationId;
@@ -43,16 +50,6 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // No-op
-   }
-
-   @Override
    public boolean isSuccessful() {
       return true;
    }
@@ -70,6 +67,16 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    @Override
    public void fail() {
       throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CommandInvocationId getCommandInvocationId() {
+      return commandInvocationId;
+   }
+
+   @Override
+   public void setAuthoritative(boolean authoritative) {
+      this.authoritative = authoritative;
    }
 
    @Override
@@ -104,5 +111,40 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    @Override
    public boolean hasSkipLocking() {
       return hasAnyFlag(FlagBitSets.SKIP_LOCKING);
+   }
+
+   /**
+    * The command has been already executed for this command, don't execute (e.g. persist into cache store) again
+    * @param key
+    */
+   @Override
+   public void setCompleted(Object key) {
+      if (completedKeys == null) {
+         completedKeys = new HashSet<>();
+      }
+      completedKeys.add(key);
+   }
+
+   @Override
+   public boolean isCompleted(Object key) {
+      return completedKeys != null && completedKeys.contains(key);
+   }
+
+   protected void recordInvocation(CacheEntry e, Object result) {
+      if (commandInvocationId == null) {
+         return;
+      }
+      Metadata metadata = e.getMetadata();
+      Metadata.Builder builder;
+      if (metadata == null) {
+         builder = new EmbeddedMetadata.Builder();
+      } else {
+         builder = metadata.builder();
+      }
+      if (e.isRemoved()) {
+         builder = builder.maxIdle(-1).lifespan(-1).version(null);
+      }
+      e.setMetadata(builder.invocation(commandInvocationId, result, authoritative,
+            e.isCreated(), !e.isCreated() && !e.isRemoved(), e.isRemoved(), 0).build());
    }
 }

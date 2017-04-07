@@ -1,7 +1,7 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -14,7 +14,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
@@ -66,9 +65,9 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
       // the listener is fired both in the first topology and then after the response from primary owner arrives
       // and the originator now has become the new primary owner.
       // Similar situation is possible with triangle algorithm (TODO pruivo: elaborate)
-      assertTrue(clusterListener.events.size() >= 2);
-      assertTrue(clusterListener.events.size() <= 3);
-      checkEvent(clusterListener.events.get(0), key, true, false);
+      assertTrue("Events: " + clusterListener.events, clusterListener.events.size() >= 2);
+      assertTrue("Events: " + clusterListener.events, clusterListener.events.size() <= 3);
+      checkEvent(clusterListener.events.get(0), key, false);
 
       Address cache0primary = cache0.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
       Address cache2primary = cache2.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
@@ -76,25 +75,19 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
       assertEquals(cache0primary, cache2primary);
       // This is possible after rebalance; when rebalancing, primary owner is always the old backup
 
-      checkEvent(clusterListener.events.get(1), key, false, true);
+      checkEvent(clusterListener.events.get(1), key, true);
       if (clusterListener.events.size() == 3) {
-         checkEvent(clusterListener.events.get(2), key, false, true);
+         checkEvent(clusterListener.events.get(2), key, true);
       }
    }
 
-   protected void checkEvent(CacheEntryEvent<Object, String> event, MagicKey key, boolean isCreated, boolean isRetried) {
+   protected void checkEvent(CacheEntryEvent<Object, String> event, MagicKey key, boolean isRetried) {
       CacheEntryCreatedEvent<Object, String> createEvent;
-      if (isCreated) {
-         assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
-         createEvent = (CacheEntryCreatedEvent<Object, String>)event;
-         assertEquals(createEvent.isCommandRetried(), isRetried);
-      } else {
-         assertEquals(event.getType(), Event.Type.CACHE_ENTRY_MODIFIED);
-         CacheEntryModifiedEvent<Object, String> modEvent = (CacheEntryModifiedEvent<Object, String>) event;
-         assertTrue(modEvent.isCommandRetried());
-      }
-      assertEquals(event.getKey(), key);
-      assertEquals(event.getValue(), FIRST_VALUE);
+      assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
+      createEvent = (CacheEntryCreatedEvent<Object, String>)event;
+      assertEquals(isRetried, createEvent.isCommandRetried());
+      assertEquals(key, event.getKey());
+      assertEquals(FIRST_VALUE, event.getValue());
    }
 
    protected void awaitForBackups(Cache<?, ?> cache) {

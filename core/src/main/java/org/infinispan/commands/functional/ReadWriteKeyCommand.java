@@ -1,5 +1,6 @@
 package org.infinispan.commands.functional;
 
+import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
@@ -9,26 +10,23 @@ import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
-// TODO: the command does not carry previous values to backup, so it can cause
-// the values on primary and backup owners to diverge in case of topology change
-public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
+public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> implements StrictOrderingCommand<K> {
 
    public static final byte COMMAND_ID = 50;
+   CommandInvocationId lastInvocationId;
 
    private Function<ReadWriteEntryView<K, V>, R> f;
 
    public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f,
-         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
-      super(key, valueMatcher, id, params);
+                              CommandInvocationId id, Params params) {
+      super(key, id, params);
       this.f = f;
    }
 
@@ -37,7 +35,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    }
 
    public ReadWriteKeyCommand(ReadWriteKeyCommand<K, V, R> other) {
-      super((K) other.getKey(), other.getValueMatcher(), other.commandInvocationId, other.getParams());
+      super((K) other.getKey(), other.commandInvocationId, other.getParams());
       this.f = other.f;
    }
 
@@ -50,20 +48,20 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(f);
-      MarshallUtil.marshallEnum(valueMatcher, output);
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
+      CommandInvocationId.writeTo(output, lastInvocationId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
+      lastInvocationId = CommandInvocationId.readFrom(input);
    }
 
    @Override
@@ -73,19 +71,15 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // It's not worth looking up the entry if we're never going to apply the change.
-      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
-         successful = false;
-         return null;
-      }
-
       CacheEntry<K, V> e = ctx.lookupEntry(key);
 
-      // Could be that the key is not local, 'null' is how this is signalled
-      if (e == null) return null;
+      if (e == null) {
+         throw new IllegalStateException();
+      }
 
-      R ret = f.apply(EntryViews.readWrite(e));
-      return snapshot(ret);
+      R ret = snapshot(f.apply(EntryViews.readWrite(e)));
+      recordInvocation(e, ret);
+      return ret;
    }
 
    @Override
@@ -101,5 +95,29 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    @Override
    public Mutation<K, V, ?> toMutation(K key) {
       return new Mutations.ReadWrite<>(f);
+   }
+
+   @Override
+   public CommandInvocationId getLastInvocationId(K key) {
+      assert key == this.key;
+      return lastInvocationId;
+   }
+
+   @Override
+   public void setLastInvocationId(K key, CommandInvocationId id) {
+      assert key == this.key;
+      this.lastInvocationId = id;
+   }
+
+   @Override
+   public String toString() {
+      return new StringBuilder("ReadWriteKeyCommand{key=").append(toStr(key))
+            .append(", f=").append(f)
+            .append(", flags=").append(printFlags())
+            .append(", successful=").append(successful)
+            .append(", commandInvocationId=").append(commandInvocationId)
+            .append(", lastInvocationId=").append(lastInvocationId)
+            .append("}")
+            .toString();
    }
 }

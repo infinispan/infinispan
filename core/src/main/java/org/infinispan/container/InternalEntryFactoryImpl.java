@@ -49,7 +49,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
    public InternalCacheEntry create(Object key, Object value, Metadata metadata) {
       long lifespan = metadata != null ? metadata.lifespan() : -1;
       long maxIdle = metadata != null ? metadata.maxIdle() : -1;
-      if (!isStoreMetadata(metadata, null)) {
+      if (!isStoreMetadata(metadata, null, false)) {
          if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
          if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan, timeService.wallClockTime());
          if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle, timeService.wallClockTime());
@@ -94,7 +94,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    @Override
    public InternalCacheEntry create(Object key, Object value, Metadata metadata, long created, long lifespan, long lastUsed, long maxIdle) {
-      if (!isStoreMetadata(metadata, null)) {
+      if (!isStoreMetadata(metadata, null, false)) {
          if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
          if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan, created);
          if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle, lastUsed);
@@ -111,27 +111,28 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
    }
 
    @Override
-   public InternalCacheValue createValue(CacheEntry cacheEntry) {
+   public InternalCacheValue createValue(CacheEntry cacheEntry, boolean includeInvocationRecords) {
       Metadata metadata = cacheEntry.getMetadata();
       long lifespan = cacheEntry.getLifespan();
       long maxIdle = cacheEntry.getMaxIdle();
-      if (!isStoreMetadata(metadata, null)) {
+      if (!isStoreMetadata(metadata, null, !includeInvocationRecords)) {
          if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheValue(cacheEntry.getValue());
          if (lifespan > -1 && maxIdle < 0) return new MortalCacheValue(cacheEntry.getValue(), -1, lifespan);
          if (lifespan < 0 && maxIdle > -1) return new TransientCacheValue(cacheEntry.getValue(), maxIdle, -1);
          return new TransientMortalCacheValue(cacheEntry.getValue(), -1, lifespan, maxIdle, -1);
       } else {
-         if (lifespan < 0 && maxIdle < 0) return new MetadataImmortalCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata());
-         if (lifespan > -1 && maxIdle < 0) return new MetadataMortalCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(), -1);
-         if (lifespan < 0 && maxIdle > -1) return new MetadataTransientCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(), -1);
-         return new MetadataTransientMortalCacheValue(cacheEntry.getValue(), cacheEntry.getMetadata(), -1, -1);
+         metadata = metadata.builder().noInvocations().build();
+         if (lifespan < 0 && maxIdle < 0) return new MetadataImmortalCacheValue(cacheEntry.getValue(), metadata);
+         if (lifespan > -1 && maxIdle < 0) return new MetadataMortalCacheValue(cacheEntry.getValue(), metadata, -1);
+         if (lifespan < 0 && maxIdle > -1) return new MetadataTransientCacheValue(cacheEntry.getValue(), metadata, -1);
+         return new MetadataTransientMortalCacheValue(cacheEntry.getValue(), metadata, -1, -1);
       }
    }
 
    @Override
    // TODO: Do we need this???
    public InternalCacheEntry create(Object key, Object value, Metadata metadata, long lifespan, long maxIdle) {
-      if (!isStoreMetadata(metadata, null)) {
+      if (!isStoreMetadata(metadata, null, false)) {
          if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheEntry(key, value);
          if (lifespan > -1 && maxIdle < 0) return new MortalCacheEntry(key, value, lifespan, timeService.wallClockTime());
          if (lifespan < 0 && maxIdle > -1) return new TransientCacheEntry(key, value, maxIdle, timeService.wallClockTime());
@@ -150,7 +151,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    @Override
    public InternalCacheEntry update(InternalCacheEntry ice, Metadata metadata) {
-      if (!isStoreMetadata(metadata, ice))
+      if (!isStoreMetadata(metadata, ice, false))
          return updateMetadataUnawareEntry(ice, metadata.lifespan(), metadata.maxIdle());
       else
          return updateMetadataAwareEntry(ice, metadata);
@@ -182,7 +183,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
 
    @Override
    public <K, V> InternalCacheEntry createL1(K key, V value, Metadata metadata) {
-      if (!isStoreMetadata(metadata, null)) {
+      if (!isStoreMetadata(metadata, null, false)) {
          return new L1InternalCacheEntry(key, value, metadata.lifespan(), timeService.wallClockTime());
       } else {
          return new L1MetadataInternalCacheEntry(key, value, metadata, timeService.wallClockTime());
@@ -193,7 +194,7 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
    public InternalCacheValue getValueFromCtxOrCreateNew(Object key, InvocationContext ctx) {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry instanceof InternalCacheEntry) {
-         return ((InternalCacheEntry) entry).toInternalCacheValue();
+         return ((InternalCacheEntry) entry).toInternalCacheValue(true);
       } else {
          if (ctx.isInTxScope()) {
             EntryVersionsMap updatedVersions =
@@ -208,16 +209,16 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
                            .lifespan(entry.getLifespan()).maxIdle(entry.getMaxIdle())
                            .version(version).build();
                      return create(entry.getKey(), entry.getValue(), metadata)
-                           .toInternalCacheValue();
+                           .toInternalCacheValue(true);
                   } else {
                      metadata = metadata.builder().version(version).build();
                      return create(entry.getKey(), entry.getValue(), metadata)
-                           .toInternalCacheValue();
+                           .toInternalCacheValue(true);
                   }
                }
             }
          }
-         return create(entry).toInternalCacheValue();
+         return create(entry).toInternalCacheValue(true);
       }
    }
 
@@ -371,11 +372,10 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
     * @return true if the entire metadata object needs to be stored, otherwise
     * simply store lifespan and/or maxIdle in existing cache entries
     */
-   private boolean isStoreMetadata(Metadata metadata, InternalCacheEntry ice) {
+   private boolean isStoreMetadata(Metadata metadata, InternalCacheEntry ice, boolean replicable) {
       return metadata != null
             && (ice == null || isEntryMetadataAware(ice))
-            && (metadata.version() != null
-                      || !(metadata instanceof EmbeddedMetadata));
+            && (metadata.version() != null || (!replicable && metadata.lastInvocation() != null) || !(metadata instanceof EmbeddedMetadata));
    }
 
 

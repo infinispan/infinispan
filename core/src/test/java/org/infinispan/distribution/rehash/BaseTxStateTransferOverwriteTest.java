@@ -69,8 +69,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
     * @param op
     * @return
     */
-   protected Class<? extends VisitableCommand> getVisitableCommand(TestWriteOperation op) {
-      return PrepareCommand.class;
+   protected Class<? extends VisitableCommand>[] getVisitableCommands(TestWriteOperation op) {
+      return new Class[] { PrepareCommand.class };
    }
 
    protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<? extends Object> callable) {
@@ -239,7 +239,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
                   log.tracef("Adding additional value on nonOwner value inserted: %s = %s", mk, value);
                }
                primaryOwnerCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(
-                     new BlockingInterceptor<>(cyclicBarrier, getVisitableCommand(op), true, false),
+                     new BlockingInterceptor(cyclicBarrier, getVisitableCommands(op), true, false),
                      StateTransferInterceptor.class);
                return op.perform(primaryOwnerCache, key);
             }
@@ -354,8 +354,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-                                                                         op.getCommandClass(), true, false);
+      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier,
+                                                                         op.getCommandClasses(), true, false);
       nonOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
 
       // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
@@ -436,8 +436,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Block on the interceptor right after ST which should now have the soon to be old topology id
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-                                                                         getVisitableCommand(op), false, false);
+      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier,
+                                                                         getVisitableCommands(op), false, false);
       primaryOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
 
       // Put/Replace/Remove from primary owner.  This will block before it is committing on remote nodes

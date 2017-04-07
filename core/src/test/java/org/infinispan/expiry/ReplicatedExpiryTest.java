@@ -9,6 +9,9 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
+import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
+import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -27,7 +30,8 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       c1.put("k", "v", lifespan, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().get("k");
 
-      assert ice instanceof MortalCacheEntry;
+      assert ice instanceof MortalCacheEntry || ice instanceof MetadataMortalCacheEntry;
+      assert ice.getValue() != null;
       assert ice.getLifespan() == lifespan;
       assert ice.getMaxIdle() == -1;
    }
@@ -39,7 +43,8 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       c1.put("k", "v", -1, MILLISECONDS, idle, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().get("k");
 
-      assert ice instanceof TransientCacheEntry;
+      assert ice instanceof TransientCacheEntry || ice instanceof MetadataTransientCacheEntry;
+      assert ice.getValue() != null;
       assert ice.getMaxIdle() == idle;
       assert ice.getLifespan() == -1;
    }
@@ -51,7 +56,8 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       long idle = 3000;
       c1.put("k", "v", lifespan, MILLISECONDS, idle, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().get("k");
-      assert ice instanceof TransientMortalCacheEntry;
+      assert ice instanceof TransientMortalCacheEntry || ice instanceof MetadataTransientMortalCacheEntry;
+      assert ice.getValue() != null;
       assert ice.getLifespan() == lifespan : "Expected " + lifespan + " but was " + ice.getLifespan();
       assert ice.getMaxIdle() == idle : "Expected " + idle + " but was " + ice.getMaxIdle();
    }

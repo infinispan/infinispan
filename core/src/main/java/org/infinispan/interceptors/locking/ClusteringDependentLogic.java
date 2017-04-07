@@ -89,6 +89,9 @@ public interface ClusteringDependentLogic {
       }
    }
 
+   void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
+                          InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata);
+
    /**
     * @return information about the location of keys.
     */
@@ -229,8 +232,9 @@ public interface ClusteringDependentLogic {
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder);
 
-      protected void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
-              InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      @Override
+      public void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
+                                    InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
          boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
          if (removed) {
             if (command instanceof RemoveCommand) {

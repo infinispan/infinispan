@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.remoting.transport.Address;
@@ -14,6 +15,7 @@ public class DistributionInfo {
    private final int segmentId;
    // The write CH always includes the read CH, and the primary owner is always in the read CH
    private final Address primary;
+   private final List<Address> primaryList;
    private final List<Address> readOwners;
    private final List<Address> writeOwners;
    private final Collection<Address> writeBackups;
@@ -22,11 +24,13 @@ public class DistributionInfo {
    private final boolean isReadOwner;
    private final boolean isWriteOwner;
    private final boolean isWriteBackup;
+   private final boolean anyWriteBackupNonReader;
 
    public DistributionInfo(int segmentId, Address primary, List<Address> readOwners, List<Address> writeOwners,
                            Collection<Address> writeBackups, Address localAddress) {
       this.segmentId = segmentId;
       this.primary = primary;
+      this.primaryList = Collections.singletonList(primary);
       this.readOwners = readOwners;
       this.writeOwners = writeOwners;
       this.writeBackups = writeBackups;
@@ -35,6 +39,7 @@ public class DistributionInfo {
       this.isReadOwner = readOwners.contains(localAddress);
       this.isWriteOwner = writeOwners.contains(localAddress);
       this.isWriteBackup = this.isWriteOwner && !this.isPrimary;
+      this.anyWriteBackupNonReader = !readOwners.containsAll(writeBackups);
    }
 
 
@@ -44,6 +49,10 @@ public class DistributionInfo {
 
    public Address primary() {
       return primary;
+   }
+
+   public List<Address> primaryAsList() {
+      return primaryList;
    }
 
    public List<Address> readOwners() {
@@ -72,6 +81,10 @@ public class DistributionInfo {
 
    public boolean isWriteBackup() {
       return isWriteBackup;
+   }
+
+   public boolean isAnyWriteBackupNonReader() {
+      return anyWriteBackupNonReader;
    }
 
    public Ownership readOwnership() {

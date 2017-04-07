@@ -42,6 +42,10 @@ public final class CommandInvocationId {
    }
 
    public static void writeTo(ObjectOutput output, CommandInvocationId commandInvocationId) throws IOException {
+      if (commandInvocationId == null) {
+         output.writeObject(null);
+         return;
+      }
       output.writeObject(commandInvocationId.address);
       if (commandInvocationId.address != null) {
          output.writeLong(commandInvocationId.id);

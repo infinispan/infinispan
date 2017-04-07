@@ -490,7 +490,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    InternalCacheValue getStoredValue(Object key, InvocationContext ctx) {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry instanceof InternalCacheEntry) {
-         return ((InternalCacheEntry) entry).toInternalCacheValue();
+         return ((InternalCacheEntry) entry).toInternalCacheValue(true);
       } else {
          if (ctx.isInTxScope()) {
             EntryVersionsMap updatedVersions =
@@ -503,16 +503,16 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                      // If no metadata passed, assumed embedded metadata
                      metadata = new EmbeddedMetadata.Builder().lifespan(entry.getLifespan()).maxIdle(entry.getMaxIdle())
                                                               .version(version).build();
-                     return entryFactory.create(entry.getKey(), entry.getValue(), metadata).toInternalCacheValue();
+                     return entryFactory.create(entry.getKey(), entry.getValue(), metadata).toInternalCacheValue(true);
                   } else {
                      metadata = metadata.builder().version(version).build();
-                     return entryFactory.create(entry.getKey(), entry.getValue(), metadata).toInternalCacheValue();
+                     return entryFactory.create(entry.getKey(), entry.getValue(), metadata).toInternalCacheValue(true);
                   }
                }
             }
          }
 
-         return entryFactory.create(entry).toInternalCacheValue();
+         return entryFactory.create(entry).toInternalCacheValue(true);
       }
    }
 }

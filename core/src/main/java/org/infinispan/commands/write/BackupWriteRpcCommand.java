@@ -36,15 +36,17 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    private Operation operation;
    private CommandInvocationId commandInvocationId;
    private Object key;
+   // If the backup owner does not posses the previous value, we need to provide the result from primary
+   private Object providedResult;
    private Object value;
    private Metadata metadata;
    private int topologyId;
    private long flags;
    private long sequence;
 
-   private InvocationContextFactory invocationContextFactory;
-   private AsyncInterceptorChain interceptorChain;
-   private CacheNotifier cacheNotifier;
+   private transient InvocationContextFactory invocationContextFactory;
+   private transient AsyncInterceptorChain interceptorChain;
+   private transient CacheNotifier cacheNotifier;
 
    //for org.infinispan.commands.CommandIdUniquenessTest
    public BackupWriteRpcCommand() {
@@ -59,8 +61,7 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
       return CACHED_VALUES[index];
    }
 
-   public void setWrite(CommandInvocationId id, Object key, Object value, Metadata metadata, long flags,
-         int topologyId) {
+   public void setWrite(CommandInvocationId id, Object key, Object value, Metadata metadata, long flags, int topologyId) {
       this.operation = Operation.WRITE;
       setCommonAttributes(id, key, flags, topologyId);
       this.value = value;
@@ -78,8 +79,7 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
       this.value = value;
    }
 
-   public void setReplace(CommandInvocationId id, Object key, Object value, Metadata metadata, long flags,
-         int topologyId) {
+   public void setReplace(CommandInvocationId id, Object key, Object value, Metadata metadata, long flags, int topologyId) {
       this.operation = Operation.REPLACE;
       setCommonAttributes(id, key, flags, topologyId);
       this.value = value;
@@ -87,7 +87,7 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    }
 
    public void init(InvocationContextFactory invocationContextFactory, AsyncInterceptorChain interceptorChain,
-         CacheNotifier cacheNotifier) {
+                    CacheNotifier cacheNotifier) {
       this.invocationContextFactory = invocationContextFactory;
       this.interceptorChain = interceptorChain;
       this.cacheNotifier = cacheNotifier;
@@ -97,24 +97,23 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    public CompletableFuture<Object> invokeAsync() throws Throwable {
       DataWriteCommand command;
       switch (operation) {
+         case WRITE:
+            // When a replace command succeeded on primary, we'll have to overwrite the value on backup without any
+            // checks. In case this is a write-only backup owner, the check would fail as we just wrap null into context.
+         case REPLACE:
+            command = new PutKeyValueCommand(key, value, false, cacheNotifier, metadata, flags,
+                  commandInvocationId, providedResult);
+            break;
          case REMOVE:
-            command = new RemoveCommand(key, null, cacheNotifier, flags, commandInvocationId);
+            command = new RemoveCommand(key, null, cacheNotifier, flags, commandInvocationId, providedResult);
             break;
          case REMOVE_EXPIRED:
-            command = new RemoveExpiredCommand(key, value, null, cacheNotifier, commandInvocationId);
-            break;
-         case WRITE:
-            command = new PutKeyValueCommand(key, value, false, cacheNotifier, metadata, flags,
-                  commandInvocationId);
-            break;
-         case REPLACE:
-            command = new ReplaceCommand(key, null, value, cacheNotifier, metadata, flags, commandInvocationId);
+            command = new RemoveExpiredCommand(key, value, null, cacheNotifier, commandInvocationId, providedResult);
             break;
          default:
             throw new IllegalStateException();
       }
       command.addFlags(FlagBitSets.SKIP_LOCKING);
-      command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
       command.setTopologyId(topologyId);
       InvocationContext invocationContext = invocationContextFactory
             .createRemoteInvocationContextForCommand(command, getOrigin());
@@ -161,6 +160,9 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
          default:
       }
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
+      if ((flags & FlagBitSets.PROVIDED_RESULT) != 0) {
+         output.writeObject(providedResult);
+      }
       output.writeLong(sequence);
    }
 
@@ -181,6 +183,9 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
          default:
       }
       this.flags = input.readLong();
+      if ((flags & FlagBitSets.PROVIDED_RESULT) != 0) {
+         providedResult = input.readObject();
+      }
       this.sequence = input.readLong();
    }
 
@@ -223,10 +228,15 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
       this.topologyId = topologyId;
    }
 
+   public void setProvidedResult(Object providedResult) {
+      this.providedResult = providedResult;
+      this.flags |= FlagBitSets.PROVIDED_RESULT;
+   }
+
    private enum Operation {
       WRITE,
-      REMOVE,
+      REPLACE,
       REMOVE_EXPIRED,
-      REPLACE
+      REMOVE
    }
 }

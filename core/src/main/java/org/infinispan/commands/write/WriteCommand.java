@@ -2,6 +2,7 @@ package org.infinispan.commands.write;
 
 import java.util.Collection;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -32,16 +33,6 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
    boolean isConditional();
 
    /**
-    * @return The current value matching policy.
-    */
-   ValueMatcher getValueMatcher();
-
-   /**
-    * @param valueMatcher The new value matching policy.
-    */
-   void setValueMatcher(ValueMatcher valueMatcher);
-
-   /**
     *
     * @return a collection of keys affected by this write command.  Some commands - such as ClearCommand - may return
     * an empty collection for this method.
@@ -61,6 +52,28 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
     * Make subsequent invocations of {@link #isSuccessful()} return <code>false</code>.
     */
    void fail();
+
+   /**
+    * @return Unique identifier for the operation this command belongs to.
+    */
+   CommandInvocationId getCommandInvocationId();
+
+   /**
+    * Mark if this command is currently executed on primary (authoritative) or backup (non-authoritative)
+    */
+   void setAuthoritative(boolean authoritative);
+
+   /**
+    * Mark the operation on this key as executed (when this command is a retry).
+    *
+    * @param key
+    */
+   void setCompleted(Object key);
+
+   /**
+    * @return True if this operation was already executed and should not be persisted or applied in any other way.
+    */
+   boolean isCompleted(Object key);
 
    /**
     * Indicates whether the command is write-only, meaning that it makes no

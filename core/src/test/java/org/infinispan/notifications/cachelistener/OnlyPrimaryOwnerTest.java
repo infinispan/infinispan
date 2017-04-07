@@ -32,6 +32,7 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -74,6 +75,10 @@ public class OnlyPrimaryOwnerTest {
       private static final TestAddress BACKUP = new TestAddress(1);
       private static final TestAddress NON_OWNER = new TestAddress(2);
       boolean isOwner, isPrimaryOwner;
+
+      @Override
+      public void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      }
 
       @Override
       public LocalizedCacheTopology getCacheTopology() {

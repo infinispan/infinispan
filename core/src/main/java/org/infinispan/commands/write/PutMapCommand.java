@@ -8,9 +8,11 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
@@ -19,8 +21,8 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
@@ -32,25 +34,36 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    public static final byte COMMAND_ID = 9;
 
    private Map<Object, Object> map;
-   private CacheNotifier<Object, Object> notifier;
+   // The map must support null values
+   private final Map<?, ?> providedResults;
+   private transient CacheNotifier<Object, Object> notifier;
    private Metadata metadata;
    private boolean isForwarded = false;
+   private transient Set<Object> completedKeys = null;
 
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
    }
 
+   @Override
+   public void setAuthoritative(boolean authoritative) {
+      // noop, we can already use isForwarded
+   }
+
    private CommandInvocationId commandInvocationId;
 
    public PutMapCommand() {
+      providedResults = null;
    }
 
    @SuppressWarnings("unchecked")
-   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, long flagsBitSet, CommandInvocationId commandInvocationId) {
+   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, long flagsBitSet,
+                        CommandInvocationId commandInvocationId, Map<?, ?> providedResults) {
       this.map = (Map<Object, Object>) map;
       this.notifier = notifier;
       this.metadata = metadata;
       this.commandInvocationId = commandInvocationId;
+      this.providedResults = providedResults;
       setFlagsBitSet(flagsBitSet);
    }
 
@@ -60,12 +73,14 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
 
    public PutMapCommand(PutMapCommand command, boolean generateNewId) {
       this.map = command.map;
+      this.providedResults = null;
       this.notifier = command.notifier;
       this.metadata = command.metadata;
       this.isForwarded = command.isForwarded;
       this.commandInvocationId = generateNewId ?
             CommandInvocationId.generateIdFrom(command.commandInvocationId) :
             command.commandInvocationId;
+      this.setTopologyId(getTopologyId());
       setFlagsBitSet(command.getFlagsBitSet());
    }
 
@@ -110,27 +125,53 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
          MVCCEntry<Object, Object> contextEntry = lookupMvccEntry(ctx, key);
-         if (contextEntry != null) {
-            Object newValue = e.getValue();
-            Object previousValue = contextEntry.getValue();
-            Metadata previousMetadata = contextEntry.getMetadata();
+         assert contextEntry != null;
 
-            // Even though putAll() returns void, QueryInterceptor reads the previous values
-            // TODO The previous values are not correct if the entries exist only in a store
-            if (previousValues != null) {
-               previousValues.put(key, previousValue);
+         Object newValue = e.getValue();
+         Object previousValue = contextEntry.getValue();
+         Metadata previousMetadata = contextEntry.getMetadata();
+
+         // Even though putAll() returns void, QueryInterceptor reads the previous values
+         // TODO The previous values are not correct if the entries exist only in a store
+         if (previousValues != null) {
+            Object returnValue = previousValue;
+            if (providedResults != null) {
+               // the value might be null, so we have to check using contains
+               if (providedResults.containsKey(key)) {
+                  returnValue = providedResults.get(key);
+               }
             }
+            previousValues.put(key, returnValue);
+         }
 
-            if (contextEntry.isCreated()) {
-               notifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, this);
-            } else {
-               notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue,
-                     previousMetadata, true, ctx, this);
+         if (contextEntry.isCreated()) {
+            notifier.notifyCacheEntryCreated(key, newValue, this.metadata, true, ctx, this);
+         } else {
+            notifier.notifyCacheEntryModified(key, newValue, this.metadata, previousValue,
+                  previousMetadata, true, ctx, this);
+         }
+
+         contextEntry.setValue(newValue);
+         contextEntry.setChanged(true);
+
+         Metadata.Builder builder;
+         if (this.metadata != null) {
+            builder = this.metadata.builder();
+            if (this.metadata.version() == null && previousMetadata != null && previousMetadata.version() != null) {
+               builder = builder.version(previousMetadata.version());
             }
-
-            contextEntry.setValue(newValue);
-            Metadatas.updateMetadata(contextEntry, metadata);
-            contextEntry.setChanged(true);
+         } else if (previousMetadata != null) {
+            builder = previousMetadata.builder();
+         } else {
+            builder = new EmbeddedMetadata.Builder();
+         }
+         if (commandInvocationId != null) {
+            builder = builder.invocation(commandInvocationId, null, !isForwarded, contextEntry.isCreated(),
+                  !contextEntry.isCreated() && !contextEntry.isRemoved(),
+                  contextEntry.isRemoved(), 0);
+            contextEntry.setMetadata(builder.build());
+         } else if (metadata != null) {
+            contextEntry.setMetadata(builder.build());
          }
       }
       return previousValues;
@@ -216,6 +257,8 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
       sb.append("}, flags=").append(printFlags())
          .append(", metadata=").append(metadata)
          .append(", isForwarded=").append(isForwarded)
+         .append(", commandInvocationId=").append(commandInvocationId)
+         .append(", topologyId=").append(getTopologyId())
          .append("}");
       return sb.toString();
    }
@@ -228,16 +271,6 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    @Override
    public boolean isConditional() {
       return false;
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // Do nothing
    }
 
    @Override
@@ -293,4 +326,18 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    public void setForwarded(boolean forwarded) {
       isForwarded = forwarded;
    }
+
+   @Override
+   public void setCompleted(Object key) {
+      if (completedKeys == null) {
+         completedKeys = new HashSet<>();
+      }
+      completedKeys.add(key);
+   }
+
+   @Override
+   public boolean isCompleted(Object key) {
+      return completedKeys != null && completedKeys.contains(key);
+   }
+
 }

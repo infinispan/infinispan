@@ -65,15 +65,15 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
          InternalCacheEntry d1 = advancedCache(1).getDataContainer().get(key);
          InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
          int c = 0;
-         if (d0 != null && !d0.isExpired(TIME_SERVICE.wallClockTime())) {
+         if (d0 != null && d0.getValue() != null && !d0.isExpired(TIME_SERVICE.wallClockTime())) {
             assertEquals(key, d0.getValue());
             c++;
          }
-         if (d1 != null && !d1.isExpired(TIME_SERVICE.wallClockTime())) {
+         if (d1 != null && d1.getValue() != null && !d1.isExpired(TIME_SERVICE.wallClockTime())) {
             assertEquals(key, d1.getValue());
             c++;
          }
-         if (d2 != null && !d2.isExpired(TIME_SERVICE.wallClockTime())) {
+         if (d2 != null && d2.getValue() != null && !d2.isExpired(TIME_SERVICE.wallClockTime())) {
             assertEquals(key, d2.getValue());
             c++;
          }

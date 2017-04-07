@@ -7,9 +7,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -23,8 +21,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    private Consumer<WriteEntryView<V>> f;
 
    public WriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f,
-         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
-      super(key, valueMatcher, id, params);
+                              CommandInvocationId id, Params params) {
+      super(key, id, params);
       this.f = f;
    }
 
@@ -40,7 +38,6 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(key);
       output.writeObject(f);
-      MarshallUtil.marshallEnum(valueMatcher, output);
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
@@ -50,7 +47,6 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
       f = (Consumer<WriteEntryView<V>>) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
@@ -79,6 +75,7 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
       if (e == null) return null;
 
       f.accept(EntryViews.writeOnly(e));
+      recordInvocation(e, null);
       return null;
    }
 

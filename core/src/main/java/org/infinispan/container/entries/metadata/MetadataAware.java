@@ -1,5 +1,7 @@
 package org.infinispan.container.entries.metadata;
 
+import java.util.Optional;
+
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -16,6 +18,10 @@ public interface MetadataAware {
     * @return a Metadata instance
     */
    Metadata getMetadata();
+
+   default Optional<Metadata> metadata() {
+      return Optional.ofNullable(getMetadata());
+   }
 
    /**
     * Set the metadata in the cache entry.

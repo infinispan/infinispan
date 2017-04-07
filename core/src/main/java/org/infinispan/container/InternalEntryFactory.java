@@ -131,11 +131,12 @@ public interface InternalEntryFactory {
    /**
     * Creates an {@link InternalCacheValue} based on the {@link InternalCacheEntry} passed in.
     *
-    * @param cacheEntry to use to generate a {@link InternalCacheValue}
     * @param <V> The value type
+    * @param cacheEntry to use to generate a {@link InternalCacheValue}
+    * @param includeInvocationRecords
     * @return an {@link InternalCacheValue}
     */
-   <V> InternalCacheValue<V> createValue(CacheEntry<?, V> cacheEntry);
+   <V> InternalCacheValue<V> createValue(CacheEntry<?, V> cacheEntry, boolean includeInvocationRecords);
 
    /**
     * Creates a copy of this cache entry and synchronizes serializes the copy process with the {@link #update(org.infinispan.container.entries.InternalCacheEntry, org.infinispan.metadata.Metadata)}.

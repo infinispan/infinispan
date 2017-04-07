@@ -7,7 +7,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -21,7 +23,7 @@ import org.infinispan.functional.impl.Params;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
-public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyCommand<K, V> {
+public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyCommand<K, V> implements StrictOrderingCommand<K> {
 
    public static final byte COMMAND_ID = 52;
 
@@ -30,8 +32,10 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
 
    private int topologyId = -1;
    boolean isForwarded = false;
+   private Map<K, CommandInvocationId> lastInvocationIds;
 
-   public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params, CommandInvocationId commandInvocationId) {
+   public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params,
+                               CommandInvocationId commandInvocationId) {
       super(commandInvocationId);
       this.keys = keys;
       this.f = f;
@@ -44,6 +48,8 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       this.f = command.f;
       this.params = command.params;
       this.flags = command.flags;
+      this.topologyId = command.topologyId;
+      this.lastInvocationIds = command.lastInvocationIds;
    }
 
    public ReadWriteManyCommand() {
@@ -70,8 +76,8 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
-      output.writeInt(topologyId);
       output.writeLong(flags);
+      MarshallUtil.marshallMap(lastInvocationIds, ObjectOutput::writeObject, CommandInvocationId::writeTo, output);
    }
 
    @Override
@@ -81,8 +87,8 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       f = (Function<ReadWriteEntryView<K, V>, R>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
-      topologyId = input.readInt();
       flags = input.readLong();
+      lastInvocationIds = MarshallUtil.unmarshallMap(input, in -> (K) in.readObject(), CommandInvocationId::readFrom, HashMap::new);
    }
 
    public boolean isForwarded() {
@@ -125,8 +131,9 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (entry != null) {
-            R r = f.apply(EntryViews.readWrite(entry));
-            returns.add(snapshot(r));
+            R r = snapshot(f.apply(EntryViews.readWrite(entry)));
+            recordInvocation(entry, r);
+            returns.add(r);
          }
       });
       return returns;
@@ -148,6 +155,8 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       sb.append("keys=").append(keys);
       sb.append(", f=").append(f);
       sb.append(", isForwarded=").append(isForwarded);
+      sb.append(", topologyId=").append(topologyId);
+      sb.append(", commandInvocationId=").append(commandInvocationId);
       sb.append('}');
       return sb.toString();
    }
@@ -161,5 +170,23 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    @Override
    public Mutation toMutation(K key) {
       return new Mutations.ReadWrite<>(f);
+   }
+
+   @Override
+   public CommandInvocationId getLastInvocationId(K key) {
+      if (lastInvocationIds == null) {
+         // if the command was executed on clear cache, last invocation id is not set at all
+         return null;
+      }
+      return lastInvocationIds.get(key);
+   }
+
+   @Override
+   public void setLastInvocationId(K key, CommandInvocationId id) {
+      if (lastInvocationIds == null) {
+         lastInvocationIds = new HashMap<>();
+      }
+      CommandInvocationId prev = lastInvocationIds.put(key, id);
+      assert prev == null || prev.equals(id);
    }
 }

@@ -272,8 +272,23 @@ public enum Flag {
    /**
     * Flag to identity that data is being written as part of a Rolling Upgrade.
     */
-   ROLLING_UPGRADE
+   ROLLING_UPGRADE,
 
+   /**
+    * Return value of this command is already determined. Internal use only.
+    */
+   PROVIDED_RESULT,
+
+   /**
+    * By default invocation records are not sent. If this is set, the last invocation record is included.
+    */
+   WITH_INVOCATION_RECORDS,
+
+   /**
+    * Disregard the condition in conditional commands. Used when replicating the command in transaction.
+    */
+   // TODO: this is specific to only few commands - should we rather add a boolean attribute there?
+   DISABLE_CONDITION,
    ;
 
    /**

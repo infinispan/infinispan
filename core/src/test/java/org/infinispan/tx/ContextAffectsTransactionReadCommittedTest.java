@@ -167,9 +167,13 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       cache.remove(1);
       tm().resume(suspended);
 
-      assertEquals(2, cache.size());
+      assertEquals(repeatableRead() ? 2 : 1, cache.size());
 
-      assertEquals("v1", cache.get(1));
+      if (repeatableRead()) {
+         assertEquals("v1", cache.get(1));
+      } else {
+         assertFalse(cache.containsKey(1));
+      }
       assertEquals("v2", cache.get(2));
       safeCommit(false);
    }
@@ -185,7 +189,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       tm().resume(suspended);
 
       Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
-      assertEquals(2, entrySet.size());
+      assertEquals(repeatableRead() ? 2 : 1, entrySet.size());
 
       for (Map.Entry<Object, Object> entry : entrySet) {
          Object key = entry.getKey();
@@ -199,7 +203,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
          }
       }
 
-      assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v1")));
+      assertEquals(repeatableRead(), entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v1")));
       assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(2, "v2")));
       safeCommit(false);
    }
@@ -215,9 +219,9 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       tm().resume(suspended);
 
       Set<Object> keySet = cache.keySet();
-      assertEquals(2, keySet.size());
+      assertEquals(repeatableRead() ? 2 : 1, keySet.size());
 
-      assertTrue(keySet.contains(1));
+      assertEquals(repeatableRead(), keySet.contains(1));
       assertTrue(keySet.contains(2));
       safeCommit(false);
    }
@@ -233,9 +237,9 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       tm().resume(suspended);
 
       Collection<Object> values = cache.values();
-      assertEquals(2, values.size());
+      assertEquals(repeatableRead() ? 2 : 1, values.size());
 
-      assertTrue(values.contains("v1"));
+      assertEquals(repeatableRead(), values.contains("v1"));
       assertTrue(values.contains("v2"));
       safeCommit(false);
    }
@@ -370,5 +374,9 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
    protected void safeCommit(boolean throwWriteSkew) throws Exception {
       tm().commit();
+   }
+
+   private boolean repeatableRead() {
+      return cache.getCacheConfiguration().locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
    }
 }

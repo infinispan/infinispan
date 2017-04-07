@@ -10,6 +10,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -24,6 +25,11 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
 
    public ClusteringDependentLogicDelegator(ClusteringDependentLogic clusteringDependentLogic) {
       this.clusteringDependentLogic = clusteringDependentLogic;
+   }
+
+   @Override
+   public void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      clusteringDependentLogic.notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
    }
 
    @Override
