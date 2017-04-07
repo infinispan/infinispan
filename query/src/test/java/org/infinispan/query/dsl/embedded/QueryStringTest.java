@@ -285,13 +285,22 @@ public class QueryStringTest extends AbstractQueryDslTest {
       assertEquals(6, list.size());
    }
 
-   public void testFullTextRange() throws Exception {
+   public void testFullTextRangeWildcard() throws Exception {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : [* to *]");
 
       List<Transaction> list = q.list();
       assertEquals(54, list.size());
+   }
+
+   public void testFullTextRange() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.create("from " + getModelFactory().getTransactionTypeName() + " t where t.amount : [23 to 45]");
+
+      List<Transaction> list = q.list();
+      assertEquals(2, list.size());
    }
 
    public void testFullTextPrefix() throws Exception {
