@@ -9,7 +9,6 @@ import java.util.Collections;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.notifications.cachelistener.CacheNotifier;

@@ -3,7 +3,6 @@ package org.infinispan.persistence.support;
 import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -16,7 +15,6 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.notifications.Listener;
