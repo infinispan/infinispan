@@ -6,16 +6,17 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.infinispan.functional.MetaParam;
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Experimental;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
 
 import net.jcip.annotations.NotThreadSafe;
 
@@ -50,94 +51,187 @@ import net.jcip.annotations.NotThreadSafe;
  * instances, they cannot act on the globally at the {@link MetaParams} level,
  * and hence there is no risk of users misusing {@link MetaParams}.
  *
+ * This class should not be accessible from user code, therefore it is package-protected.
+ *
  * @since 8.0
  */
 @NotThreadSafe
 @Experimental
-public final class MetaParams {
+final class MetaParams implements Iterable<MetaParam<?>> {
 
    private static final MetaParam<?>[] EMPTY_ARRAY = {};
    private MetaParam<?>[] metas;
+   private int length;
 
-   private MetaParams(MetaParam<?>[] metas) {
+   private MetaParams(MetaParam<?>[] metas, int length) {
       this.metas = metas;
+      this.length = length;
+      assert checkLength();
    }
 
    public boolean isEmpty() {
-      return metas.length == 0;
+      return length == 0;
    }
 
    public int size() {
-      return metas.length;
+      return length;
    }
 
    public MetaParams copy() {
-      return new MetaParams(Arrays.copyOf(metas, metas.length));
+      if (length == 0) {
+         return empty();
+      } else {
+         return new MetaParams(Arrays.copyOf(metas, metas.length), length);
+      }
    }
 
-   public <T> Optional<T> find(Class<T> type) {
+   public <T extends MetaParam> Optional<T> find(Class<T> type) {
       return Optional.ofNullable(findNullable(type));
    }
 
    @SuppressWarnings("unchecked")
-   private <T> T findNullable(Class<T> type) {
+   private <T extends MetaParam> T findNullable(Class<T> type) {
       for (MetaParam<?> meta : metas) {
-         if (meta.getClass().isAssignableFrom(type))
+         if (meta != null && meta.getClass().isAssignableFrom(type))
             return (T) meta;
       }
 
       return null;
    }
 
-   public void add(MetaParam.Writable meta) {
-      if (metas.length == 0)
+   public void add(MetaParam meta) {
+      assert meta != null;
+      if (metas.length == 0) {
          metas = new MetaParam[]{meta};
-      else {
-         boolean found = false;
+         length = 1;
+      } else {
+         int hole = -1;
          for (int i = 0; i < metas.length; i++) {
-            if (metas[i].getClass().isAssignableFrom(meta.getClass())) {
+            MetaParam<?> m = metas[i];
+            if (m == null) {
+               hole = i;
+            } else if (m.getClass().isAssignableFrom(meta.getClass())) {
                metas[i] = meta;
-               found = true;
+               assert checkLength();
+               return;
             }
          }
 
-         if (!found) {
+         ++length;
+         if (hole < 0) {
             MetaParam<?>[] newMetas = Arrays.copyOf(metas, metas.length + 1);
             newMetas[newMetas.length - 1] = meta;
             metas = newMetas;
+         } else {
+            metas[hole] = meta;
+         }
+         assert checkLength();
+      }
+   }
+
+   private boolean checkLength() {
+      int l = 0;
+      for (MetaParam meta : metas) {
+         if (meta != null) ++l;
+      }
+      return l == length;
+   }
+
+   public void addMany(MetaParam... metaParams) {
+      if (metas.length == 0) {
+         // Arrays in Java are covariant, therefore someone could pass MetaParam.Writable[] and
+         // we could try to store non-writable meta param in that array (or its copy) later.
+         if (metaParams.getClass().getComponentType() == MetaParam.class) {
+            metas = metaParams;
+         } else {
+            metas = Arrays.copyOf(metaParams, metaParams.length, MetaParam[].class);
+         }
+         length = (int) Stream.of(metas).filter(Objects::nonNull).count();
+      } else {
+         List<MetaParam<?>> notFound = new ArrayList<>(metaParams.length);
+         for (MetaParam newMeta : metaParams) {
+            updateExisting(newMeta, notFound);
+         }
+
+         if (!notFound.isEmpty()) {
+            MetaParam<?>[] newMetas = Arrays.copyOf(metas, metas.length + notFound.size());
+            int i = metas.length;
+            for (MetaParam<?> meta : notFound) {
+               newMetas[i++] = meta;
+            }
+            metas = newMetas;
+         }
+      }
+      assert checkLength();
+   }
+
+   private void updateExisting(MetaParam newMeta, List<MetaParam<?>> notFound) {
+      int hole = -1;
+      for (int i = 0; i < metas.length; i++) {
+         MetaParam<?> m = metas[i];
+         if (m == null) {
+            hole = i;
+         } else if (m.getClass().isAssignableFrom(newMeta.getClass())) {
+            metas[i] = newMeta;
+            return;
+         }
+      }
+      ++length;
+      if (hole < 0) {
+         notFound.add(newMeta);
+      } else {
+         metas[hole] = newMeta;
+      }
+   }
+
+   public <T extends MetaParam> void remove(Class<T> type) {
+      for (int i = 0; i < metas.length; ++i) {
+         MetaParam<?> m = metas[i];
+         if (m != null && m.getClass().isAssignableFrom(type)) {
+            metas[i] = null;
+            --length;
+            assert checkLength();
+            return;
          }
       }
    }
 
-   public void addMany(MetaParam.Writable... metaParams) {
-      if (metas.length == 0) metas = metaParams;
-      else {
-         List<MetaParam<?>> notFound = new ArrayList<>(metaParams.length);
-         for (MetaParam.Writable newMeta : metaParams) {
-            boolean found = false;
-            for (int i = 0; i < metas.length; i++) {
-               if (metas[i].getClass().isAssignableFrom(newMeta.getClass())) {
-                  metas[i] = newMeta;
-                  found = true;
-               }
+   public <T extends MetaParam> void replace(Class<T> type, Function<T, T> f) {
+      int hole = -1;
+      for (int i = 0; i < metas.length; ++i) {
+         MetaParam<?> m = metas[i];
+         if (m == null) {
+            hole = i;
+         } else if (m.getClass().isAssignableFrom(type)) {
+            T newMeta = f.apply((T) m);
+            assert newMeta == null || type.isInstance(newMeta);
+            if (newMeta == null) {
+               --length;
             }
-            if (!found)
-               notFound.add(newMeta);
-         }
-
-         if (!notFound.isEmpty()) {
-            List<MetaParam<?>> allMetasList = new ArrayList<>(Arrays.asList(metas));
-            allMetasList.addAll(notFound);
-            metas = allMetasList.toArray(new MetaParam[metas.length + notFound.size()]);
+            metas[i] = newMeta;
+            assert checkLength();
+            return;
          }
       }
+      T newMeta = f.apply(null);
+      if (newMeta == null) {
+         assert checkLength();
+         return;
+      } else if (hole < 0) {
+         ++length;
+         MetaParam<?>[] newMetas = Arrays.copyOf(metas, metas.length + 1);
+         newMetas[newMetas.length - 1] = newMeta;
+         metas = newMetas;
+      } else {
+         ++length;
+         metas[hole] = newMeta;
+      }
+      assert checkLength();
    }
 
    @Override
    public String toString() {
-      return "MetaParams{" +
-         "metas=" + Arrays.toString(metas) +
-         '}';
+      return "MetaParams{length=" + length + ", metas=" + Arrays.toString(metas) + '}';
    }
 
    /**
@@ -150,21 +244,25 @@ public final class MetaParams {
     * @return a collection of meta parameters without type duplicates
     */
    static MetaParams of(MetaParam... metas) {
-      return new MetaParams(filterDuplicates(metas));
+      metas = filterDuplicates(metas);
+      return new MetaParams(metas, metas.length);
    }
 
    static MetaParams of(MetaParam meta) {
-      return new MetaParams(new MetaParam[]{meta});
+      assert meta != null;
+      return new MetaParams(new MetaParam[]{meta}, 1);
    }
 
    static MetaParams empty() {
-      return new MetaParams(EMPTY_ARRAY);
+      return new MetaParams(EMPTY_ARRAY, 0);
    }
 
    private static MetaParam[] filterDuplicates(MetaParam... metas) {
       Map<Class<?>, MetaParam<?>> all = new HashMap<>();
-      for (MetaParam meta : metas)
+      for (MetaParam meta : metas) {
+         if (meta == null) continue;
          all.put(meta.getClass(), meta);
+      }
 
       return all.values().toArray(new MetaParam[all.size()]);
    }
@@ -172,40 +270,62 @@ public final class MetaParams {
    void merge(MetaParams other) {
       Map<Class<?>, MetaParam<?>> all = new HashMap<>();
       // Add other's metadata first, because we don't want to override those already present
-      for (MetaParam meta : other.metas)
+      for (MetaParam meta : other.metas) {
+         if (meta == null) continue;
          all.put(meta.getClass(), meta);
-      for (MetaParam meta : metas)
+      }
+      for (MetaParam meta : metas) {
+         if (meta == null) continue;
          all.put(meta.getClass(), meta);
+      }
 
 
       metas = all.values().toArray(new MetaParam[all.size()]);
    }
 
-   public static final class Externalizer extends AbstractExternalizer<MetaParams> {
-      @Override
-      public void writeObject(ObjectOutput oo, MetaParams o) throws IOException {
-         oo.writeInt(o.metas.length);
-         for (Object meta : o.metas) oo.writeObject(meta);
+   @Override
+   public Iterator<MetaParam<?>> iterator() {
+      return new It();
+   }
+
+   public static MetaParams readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      int length = input.readInt();
+      MetaParam[] metas = new MetaParam[length];
+      for (int i = 0; i < length; i++)
+         metas[i] = (MetaParam) input.readObject();
+
+      return new MetaParams(metas, metas.length);
+   }
+
+   public static void writeTo(ObjectOutput output, MetaParams params) throws IOException {
+      output.writeInt(params.size());
+      for (MetaParam meta : params) output.writeObject(meta);
+   }
+
+   private class It implements Iterator<MetaParam<?>> {
+      private int i = 0;
+
+      public It() {
+         skipNulls();
+      }
+
+      private void skipNulls() {
+         while (i < metas.length && metas[i] == null) ++i;
       }
 
       @Override
-      public MetaParams readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int length = input.readInt();
-         MetaParam[] metas = new MetaParam[length];
-         for (int i = 0; i < length; i++)
-            metas[i] = (MetaParam) input.readObject();
-
-         return MetaParams.of(metas);
+      public boolean hasNext() {
+         return i < metas.length;
       }
 
       @Override
-      public Set<Class<? extends MetaParams>> getTypeClasses() {
-         return Util.<Class<? extends MetaParams>>asSet(MetaParams.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.META_PARAMS;
+      public MetaParam<?> next() {
+         if (i >= metas.length) {
+            throw new NoSuchElementException();
+         }
+         MetaParam<?> meta = metas[i++];
+         skipNulls();
+         return meta;
       }
    }
 }

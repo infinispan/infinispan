@@ -96,7 +96,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    }
 
    @Override
-   public <T> Optional<T> findMetaParam(Class<T> type) {
+   public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
       return params.find(type);
    }
 
@@ -110,7 +110,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    public static class Builder implements Metadata.Builder {
       private final MetaParams params;
 
-      public Builder(MetaParams params) {
+      Builder(MetaParams params) {
          this.params = params;
       }
 
@@ -171,12 +171,12 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    public static final class Externalizer extends AbstractExternalizer<MetaParamsInternalMetadata> {
       @Override
       public void writeObject(ObjectOutput oo, MetaParamsInternalMetadata o) throws IOException {
-         oo.writeObject(o.params);
+         MetaParams.writeTo(oo, o.params);
       }
 
       @Override
       public MetaParamsInternalMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         MetaParams params = (MetaParams) input.readObject();
+         MetaParams params = MetaParams.readFrom(input);
          return new MetaParamsInternalMetadata(params);
       }
 

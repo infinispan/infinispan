@@ -110,7 +110,7 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> Optional<T> findMetaParam(Class<T> type) {
+      public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
@@ -157,7 +157,7 @@ public final class EntryViews {
 
       // TODO: Duplication
       @Override
-      public <T> Optional<T> findMetaParam(Class<T> type) {
+      public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
             return metaParamsMetadata.findMetaParam(type);
@@ -253,7 +253,7 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> Optional<T> findMetaParam(Class<T> type) {
+      public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
@@ -327,7 +327,7 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> Optional<T> findMetaParam(Class<T> type) {
+      public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = prevMetadata; // Use previous metadata
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
@@ -378,7 +378,7 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> Optional<T> findMetaParam(Class<T> type) {
+      public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          return Optional.empty();
       }
 
@@ -419,7 +419,7 @@ public final class EntryViews {
 
       // TODO: Duplication
       @Override
-      public <T> Optional<T> findMetaParam(Class<T> type) {
+      public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
             return metaParamsMetadata.findMetaParam(type);
