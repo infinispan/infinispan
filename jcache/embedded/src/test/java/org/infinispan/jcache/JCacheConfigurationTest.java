@@ -14,12 +14,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-/**
- * // TODO: Document this
- *
- * @author Galder Zamarreño
- * @since // TODO
- */
 @Test(groups = "functional", testName = "jcache.JCacheConfigurationTest")
 public class JCacheConfigurationTest extends AbstractInfinispanTest {
 
@@ -38,6 +32,16 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
    public void testJCacheManagerWherePathContainsFileSchema() throws IOException {
       withCachingProvider(provider -> new JCacheManager(
             URI.create("file:infinispan_uri.xml"),
+            provider.getClass().getClassLoader(),
+            provider,
+            null));
+   }
+
+   public void testJCacheManagerWherePathContainsFileSchemaAndAbsolutePath() throws Exception {
+      URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
+
+      withCachingProvider(provider -> new JCacheManager(
+            uri,
             provider.getClass().getClassLoader(),
             provider,
             null));
