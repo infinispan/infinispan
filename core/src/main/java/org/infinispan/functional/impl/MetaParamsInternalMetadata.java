@@ -102,7 +102,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    }
 
    @Override
-   public <T> Optional<T> findMetaParam(Class<T> type) {
+   public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
       return params.find(type);
    }
 

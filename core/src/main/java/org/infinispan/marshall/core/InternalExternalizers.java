@@ -56,7 +56,7 @@ import org.infinispan.filter.CompositeKeyValueFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.MetaParams;
+import org.infinispan.functional.impl.MetaParamsExternalizer;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.interceptors.distribution.VersionedResult;
 import org.infinispan.interceptors.distribution.VersionedResults;
@@ -202,7 +202,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new MetaParamExternalizers.LifespanExternalizer(), exts);
       addInternalExternalizer(new MetaParamExternalizers.EntryVersionParamExternalizer(), exts);
       addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer(), exts);
-      addInternalExternalizer(new MetaParams.Externalizer(), exts);
+      addInternalExternalizer(new MetaParamsExternalizer(), exts);
       addInternalExternalizer(new MetaParamsInternalMetadata.Externalizer(), exts);
       addInternalExternalizer(new MIMECacheEntry.Externalizer(), exts); // new
       addInternalExternalizer(new MortalCacheEntry.Externalizer(), exts);
