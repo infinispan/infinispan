@@ -384,9 +384,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          if (property.isEmpty()) {
             throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
          }
-         String from = lower != null ? (String) parameterValue(lower) : null;
-         String to = upper != null ? (String) parameterValue(upper) : null;
-         checkAnalyzed(property, true);
+         Object from = lower != null ? parameterValue(lower) : null;
+         Object to = upper != null ? parameterValue(upper) : null;
+         checkIndexed(property);
          whereBuilder.addFullTextRange(property, includeLower, from, to, includeUpper);
       } else if (phase == Phase.HAVING) {
          throw log.getFullTextQueriesNotAllowedInHavingClauseException();
@@ -404,6 +404,12 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          if (expectAnalyzed) {
             throw log.getFullTextQueryOnNotAalyzedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
          }
+      }
+   }
+
+   private void checkIndexed(PropertyPath<?> propertyPath) {
+      if (!fieldIndexingMetadata.isIndexed(propertyPath.asArrayPath())) {
+         throw log.getFullTextQueryOnNotIndexedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
       }
    }
 

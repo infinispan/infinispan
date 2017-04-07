@@ -96,4 +96,8 @@ public interface Log extends BasicLogger {
 
    @Message(id = 28526, value = "Invalid query: %s; Parser error messages: %s.")
    ParsingException getQuerySyntaxException(String query, List<?> parserErrorMessages);
+
+   @Message(id = 28527, value = "Full-text queries cannot be applied to property '%2$s' in type %1$s unless the property is indexed.")
+   ParsingException getFullTextQueryOnNotIndexedPropertyNotSupportedException(String typeName, String propertyName);
+
 }
