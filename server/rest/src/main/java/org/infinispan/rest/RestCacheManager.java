@@ -35,7 +35,7 @@ public class RestCacheManager {
    }
 
 
-   AdvancedCache<String, byte[]> getCache(String name) {
+   public AdvancedCache<String, byte[]> getCache(String name) {
       if (isCacheIgnored.test(name)) {
          throw new CacheUnavailableException("Cache with name '" + name + "' is temporarily unavailable.");
       }
@@ -60,44 +60,52 @@ public class RestCacheManager {
       }
    }
 
-   byte[] getEntry(String cacheName, String key) {
+   public byte[] getEntry(String cacheName, String key) {
       return getCache(cacheName).get(key);
    }
 
-   <V> CacheEntry<String, V> getInternalEntry(String cacheName, String key) {
+   public <V> CacheEntry<String, V> getInternalEntry(String cacheName, String key) {
       return getInternalEntry(cacheName, key, false);
    }
 
-   <V> CacheEntry<String, V> getInternalEntry(String cacheName, String key, boolean skipListener) {
+   public <V> CacheEntry<String, V> getInternalEntry(String cacheName, String key, boolean skipListener) {
       AdvancedCache<String, byte[]> cache =
             skipListener ? getCache(cacheName).withFlags(Flag.SKIP_LISTENER_NOTIFICATION) : getCache(cacheName);
 
       return (CacheEntry<String, V>) cache.getCacheEntry(key);
    }
 
-   public Address getNodeName() {
-      return instance.getAddress();
+   public String getNodeName() {
+      Address addressToBeReturned = instance.getAddress();
+      if (addressToBeReturned == null) {
+         return "0.0.0.0";
+      }
+      return addressToBeReturned.toString();
    }
 
 
-   String getServerAddress() {
+   public String getServerAddress() {
       Transport transport = instance.getTransport();
       if (transport instanceof JGroupsTransport) {
          return transport.getPhysicalAddresses().toString();
       }
-      return null;
+      return "0.0.0.0";
    }
 
-   String getPrimaryOwner(String cacheName, String key) {
+   public String getPrimaryOwner(String cacheName, String key) {
       DistributionManager dm = getCache(cacheName).getDistributionManager();
+      if (dm == null) {
+         //this is a local cache
+         return "0.0.0.0";
+      }
       return dm.getCacheTopology().getDistribution(key).primary().toString();
    }
 
-   EmbeddedCacheManager getInstance() {
+   public EmbeddedCacheManager getInstance() {
       return instance;
    }
 
-   void tryRegisterMigrationManager(Cache<String, byte[]> cache) {
+   public void tryRegisterMigrationManager(Cache<String, byte[]> cache) {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       RollingUpgradeManager migrationManager = cr.getComponent(RollingUpgradeManager.class);
       if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache));

@@ -139,7 +139,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    public int getPort() {
-      if(transport != null) {
+      if (transport != null) {
          return transport.getPort();
       }
       return configuration.port();
