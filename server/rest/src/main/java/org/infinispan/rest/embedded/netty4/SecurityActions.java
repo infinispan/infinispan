@@ -27,7 +27,7 @@ final class SecurityActions {
    }
 
    @SuppressWarnings("unchecked")
-   static <K, V> org.infinispan.Cache<K, V> getCache(final EmbeddedCacheManager cacheManager, String cacheName) {
+   public static <K, V> org.infinispan.Cache<K, V> getCache(final EmbeddedCacheManager cacheManager, String cacheName) {
       GetCacheAction action = new GetCacheAction(cacheManager, cacheName);
       return (org.infinispan.Cache<K, V>) doPrivileged(action);
    }

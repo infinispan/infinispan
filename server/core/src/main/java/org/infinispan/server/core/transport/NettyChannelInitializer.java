@@ -57,6 +57,9 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
          pipeline.addLast("sni", new SniHandler(domainMappingBuilder.build()));
       }
       if(decoder != null) {
+         //We can not use `decoder` here. Each invocation creates a new instance of decoder and it seems
+         //it can not be shared between pipelines.
+         //See https://issues.jboss.org/browse/ISPN-7765 for more details.
          pipeline.addLast("decoder", server.getDecoder());
       }
       if (encoder != null)
