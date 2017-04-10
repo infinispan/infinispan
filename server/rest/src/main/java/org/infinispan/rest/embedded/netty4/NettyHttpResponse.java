@@ -110,7 +110,7 @@ public class NettyHttpResponse implements HttpResponse {
       outputHeaders.entrySet().forEach(header -> headers.add(header.getKey(), header.getValue()));
 
       if (keepAlive) {
-         // Add keep alive and content length if needed
+         // Add keep alive and contentAsText length if needed
          headers.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
       }
       if (message == null)
