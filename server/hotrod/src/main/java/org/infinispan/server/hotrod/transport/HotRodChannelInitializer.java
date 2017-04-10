@@ -15,6 +15,7 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.logging.LoggingContextHandler;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelOutboundHandler;
 
 /**
@@ -29,8 +30,8 @@ public class HotRodChannelInitializer extends NettyChannelInitializer {
    protected final ExecutorService executor;
 
    public HotRodChannelInitializer(HotRodServer hotRodServer, NettyTransport transport, ChannelOutboundHandler encoder,
-                                   ExecutorService executor) {
-      super(hotRodServer, transport, encoder);
+                                   ChannelInboundHandler decoder, ExecutorService executor) {
+      super(hotRodServer, transport, encoder, decoder);
       this.hotRodServer = hotRodServer;
       this.transport = transport;
       this.executor = executor;
