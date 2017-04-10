@@ -6,6 +6,7 @@ import org.infinispan.server.core.configuration.SslConfiguration;
 import org.infinispan.server.core.utils.SslUtils;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.JdkSslContext;
@@ -25,11 +26,13 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
    protected final ProtocolServer<A> server;
    protected final NettyTransport transport;
    protected final ChannelOutboundHandler encoder;
+   protected final ChannelInboundHandler decoder;
 
-   public NettyChannelInitializer(ProtocolServer<A> server, NettyTransport transport, ChannelOutboundHandler encoder) {
+   public NettyChannelInitializer(ProtocolServer<A> server, NettyTransport transport, ChannelOutboundHandler encoder, ChannelInboundHandler decoder) {
       this.server = server;
       this.transport = transport;
       this.encoder = encoder;
+      this.decoder = decoder;
    }
 
    @Override
@@ -53,7 +56,9 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
 
          pipeline.addLast("sni", new SniHandler(domainMappingBuilder.build()));
       }
-      pipeline.addLast("decoder", server.getDecoder());
+      if(decoder != null) {
+         pipeline.addLast("decoder", server.getDecoder());
+      }
       if (encoder != null)
          pipeline.addLast("encoder", encoder);
    }

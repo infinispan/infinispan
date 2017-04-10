@@ -193,10 +193,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    @Override
    public ChannelInitializer<Channel> getInitializer() {
       if (configuration.idleTimeout() > 0)
-         return new NettyInitializers(Arrays.asList(new HotRodChannelInitializer(this, transport, getEncoder(),
+         return new NettyInitializers(Arrays.asList(new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(),
                getExecutor(getQualifiedName())), new TimeoutEnabledChannelInitializer<>(this)));
       else // Idle timeout logic is disabled with -1 or 0 values
-         return new NettyInitializers(new HotRodChannelInitializer(this, transport, getEncoder(),
+         return new NettyInitializers(new HotRodChannelInitializer(this, transport, getEncoder(), getDecoder(),
                getExecutor(getQualifiedName())));
    }
 
