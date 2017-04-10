@@ -52,7 +52,7 @@ pipeline {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
                     script {
                         def mvnHome = tool 'Maven'
-                        sh "${mvnHome}/bin/mvn clean install -s $MAVEN_SETTINGS -Ptest-CI,mongodb,nonParallel -Dinfinispan.test.jta.tm=jbosstm -DdefaultTestGroup=stress -DdefaultExcludedTestGroup=unstable,unstable_xsite -Dinfinispan.test.parallel.threads=1  -Dmaven.test.failure.ignore=true"
+                        sh "${mvnHome}/bin/mvn clean install -s $MAVEN_SETTINGS -Ptest-CI,mongodb,nonParallel -Dinfinispan.test.jta.tm=jbosstm -DdefaultExcludedTestGroup=unstable,functional,unit,arquillian -DdefaultExcludedTestGroup=unstable,unstable_xsite -Dinfinispan.test.parallel.threads=1 -Dmaven.test.failure.ignore=true -DskipOSGiTests=true"
                         junit testDataPublishers: [[$class: 'ClaimTestDataPublisher']], testResults: '**/target/*-reports/*.xml'
                     }
                 }
