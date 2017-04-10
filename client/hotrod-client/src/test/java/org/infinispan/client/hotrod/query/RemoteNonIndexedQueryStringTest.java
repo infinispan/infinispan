@@ -69,6 +69,12 @@ public class RemoteNonIndexedQueryStringTest extends RemoteQueryStringTest {
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
    @Override
+   public void testFullTextRangeWildcard() throws Exception {
+      super.testFullTextRangeWildcard();
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text queries.")
+   @Override
    public void testFullTextRange() throws Exception {
       super.testFullTextRange();
    }
