@@ -29,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationConsoleOption;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.AbstractUrlProvisionOption;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
@@ -65,6 +66,10 @@ public class IspnKarafOptions {
          result = logLevel(LogLevel.TRACE);
       }
       return result;
+   }
+
+   public static Option runWithoutConsole() {
+      return new KarafDistributionConfigurationConsoleOption(false, false);
    }
 
    public static Option karafContainer() throws Exception {
@@ -315,6 +320,7 @@ public class IspnKarafOptions {
       return composite(karafContainer(),
                        vmOptions("-Djava.net.preferIPv4Stack=true", "-Djgroups.bind_addr=127.0.0.1"),
                        verboseKaraf(),
+                       runWithoutConsole(),
                        junitBundles(),
                        keepRuntimeFolder(),
             /* Required for the @Category(Per{Suite,Class,Method}) annotations. */

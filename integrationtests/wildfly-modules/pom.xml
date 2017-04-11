@@ -26,7 +26,7 @@
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
       <mcast.ip>234.99.54.14</mcast.ip>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
-      <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+      <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args} ${jigsawForkJvmArgs}</server.jvm.args>
       <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
    </properties>
 
@@ -201,6 +201,7 @@
                      <value>${junitListener}</value>
                   </property>
                </properties>
+               <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
             </configuration>
             <executions>
                <execution>

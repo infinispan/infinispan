@@ -172,7 +172,7 @@
                            </excludes>
                         </filter>
                      </filters>
-                     <createSourcesJar>true</createSourcesJar>
+                     <createSourcesJar>${createSourcesJar}</createSourcesJar>
                      <relocations>
                         <relocation>
                            <pattern>org.apache.commons</pattern>
@@ -297,7 +297,7 @@
             <artifactId>build-helper-maven-plugin</artifactId>
             <executions>
                <execution>
-                  <id>attach-artifacts</id>
+                  <id>attach-feature-xml</id>
                   <phase>package</phase>
                   <goals>
                      <goal>attach-artifact</goal>
@@ -309,31 +309,25 @@
                            <type>xml</type>
                            <classifier>features</classifier>
                         </artifact>
+                     </artifacts>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>attach-source-jar</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>attach-artifact</goal>
+                  </goals>
+                  <configuration>
+                     <skipAttach>${skipCreateSourcesJar}</skipAttach>
+                     <artifacts>
                         <artifact>
-                           <file>target/${project.build.finalName}-shaded-sources.jar</file>
+                           <file>target/${intermediary_jar_name}-sources.jar</file>
                            <type>jar</type>
                            <classifier>sources</classifier>
                         </artifact>
                      </artifacts>
                   </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <artifactId>maven-source-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>attach-sources</id>
-                  <phase>none</phase>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <artifactId>maven-jar-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>build-test-jar</id>
-                  <phase>none</phase>
                </execution>
             </executions>
          </plugin>

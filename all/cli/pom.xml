@@ -42,7 +42,7 @@
                      <goal>shade</goal>
                   </goals>
                   <configuration>
-                     <createSourcesJar>true</createSourcesJar>
+                     <createSourcesJar>${createSourcesJar}</createSourcesJar>
 
                      <artifactSet>
                         <excludes>

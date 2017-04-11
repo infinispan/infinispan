@@ -67,6 +67,7 @@
                            <exclude>org.osgi:org.osgi.core:jar:</exclude>
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                            <exclude>org.hibernate.javax.persistence:hibernate-jpa-2.1-api:jar:</exclude>
+                           <exclude>org.infinispan:infinispan-license:jar:</exclude>
                         </excludes>
                      </artifactSet>
                      <filters>
@@ -89,7 +90,7 @@
                            </excludes>
                         </filter>
                      </filters>
-                     <createSourcesJar>true</createSourcesJar>
+                     <createSourcesJar>${createSourcesJar}</createSourcesJar>
                      <relocations>
                         <relocation>
                            <pattern>antlr</pattern>

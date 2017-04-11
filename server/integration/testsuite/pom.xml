@@ -272,6 +272,12 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-jcache-remote</artifactId>
         </dependency>
+       <dependency>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>org.apache.felix.gogo.runtime</artifactId>
+          <version>0.12.1</version>
+          <scope>test</scope>
+       </dependency>
     </dependencies>
 
     <properties>
@@ -327,7 +333,7 @@
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false
             -Djboss.default.multicast.address=${mcast.ip}
         </jvm.ip.stack>
-        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args} ${jigsawForkJvmArgs}</server.jvm.args>
         <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
         <suite.manual.phase>integration-test</suite.manual.phase>
         <suite.queries.phase>integration-test</suite.queries.phase>
@@ -838,7 +844,7 @@
 
                         <server.jmx.domain>jboss.datagrid-infinispan</server.jmx.domain>
                     </systemPropertyVariables>
-
+                    <argLine>${jigsawForkJvmArgs}</argLine>
                     <additionalClasspathElements>
                         <element>${driver.dir}/${driver.jar}</element>
                     </additionalClasspathElements>
