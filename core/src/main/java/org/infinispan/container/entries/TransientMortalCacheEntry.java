@@ -144,27 +144,6 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TransientMortalCacheEntry that = (TransientMortalCacheEntry) o;
-
-      if (created != that.created) return false;
-      if (lifespan != that.lifespan) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (int) (created ^ (created >>> 32));
-      result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
-      return result;
-   }
-
-   @Override
    public TransientMortalCacheEntry clone() {
       return (TransientMortalCacheEntry) super.clone();
    }
@@ -206,7 +185,7 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
       @Override
       public Set<Class<? extends TransientMortalCacheEntry>> getTypeClasses() {
-         return Util.<Class<? extends TransientMortalCacheEntry>>asSet(TransientMortalCacheEntry.class);
+         return Util.asSet(TransientMortalCacheEntry.class);
       }
    }
 }

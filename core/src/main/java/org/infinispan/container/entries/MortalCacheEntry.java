@@ -124,29 +124,6 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MortalCacheEntry that = (MortalCacheEntry) o;
-
-      if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null)
-         return false;
-      if (created != that.created) return false;
-      return lifespan == that.lifespan;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = key != null ? key.hashCode() : 0;
-      result = 31 * result + (value != null ? value.hashCode() : 0);
-      result = 31 * result + (int) (created ^ (created >>> 32));
-      result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
-      return result;
-   }
-
-   @Override
    public MortalCacheEntry clone() {
       return (MortalCacheEntry) super.clone();
    }
@@ -176,7 +153,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
       @Override
       public Set<Class<? extends MortalCacheEntry>> getTypeClasses() {
-         return Util.<Class<? extends MortalCacheEntry>>asSet(MortalCacheEntry.class);
+         return Util.asSet(MortalCacheEntry.class);
       }
    }
 

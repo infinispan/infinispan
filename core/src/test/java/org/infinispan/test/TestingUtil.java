@@ -16,6 +16,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.Principal;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -61,7 +62,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -85,7 +85,6 @@ import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
@@ -183,6 +182,7 @@ public class TestingUtil {
     * @return field value
     */
    public static <T> T extractField(Object target, String fieldName) {
+      //noinspection unchecked
       return (T) extractField(target.getClass(), target, fieldName);
    }
 
@@ -271,7 +271,7 @@ public class TestingUtil {
                   }
                   message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
                         "expected member list is %s, current member list is %s!",
-                        cacheAddress, Arrays.toString(addresses), cacheTopology.getCurrentCH().getMembers());
+                        cacheAddress, Arrays.toString(addresses), cacheTopology == null ? "N/A" : cacheTopology.getCurrentCH().getMembers());
                } else {
                   message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
                         "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getCacheManager().getAddress(),
@@ -324,8 +324,8 @@ public class TestingUtil {
    private static void viewsTimedOut(CacheContainer[] cacheContainers) {
       int length = cacheContainers.length;
       List<View> incompleteViews = new ArrayList<>(length);
-      for (int i = 0; i < length; i++) {
-         EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainers[i];
+      for (CacheContainer cacheContainer : cacheContainers) {
+         EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainer;
          if (cm.getMembers().size() != cacheContainers.length) {
             incompleteViews.add(((JGroupsTransport) cm.getTransport()).getChannel().getView());
             log.warnf("Manager %s has an incomplete view: %s", cm.getAddress(), cm.getMembers());
@@ -478,8 +478,8 @@ public class TestingUtil {
    public static boolean areCacheViewsComplete(Cache[] caches, boolean barfIfTooManyMembers) {
       int memberCount = caches.length;
 
-      for (int i = 0; i < memberCount; i++) {
-         EmbeddedCacheManager cacheManager = caches[i].getCacheManager();
+      for (Cache cache : caches) {
+         EmbeddedCacheManager cacheManager = cache.getCacheManager();
          if (!isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, barfIfTooManyMembers)) {
             return false;
          }
@@ -492,8 +492,8 @@ public class TestingUtil {
       if (cacheContainers == null) throw new NullPointerException("Cache Manager array is null");
       int memberCount = cacheContainers.length;
 
-      for (int i = 0; i < memberCount; i++) {
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cacheContainers[i];
+      for (CacheContainer cacheContainer : cacheContainers) {
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cacheContainer;
          if (!isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, barfIfTooManyMembers)) {
             return false;
          }
@@ -563,9 +563,9 @@ public class TestingUtil {
          }
       }
 
-      List<List<Address>> allViews = new ArrayList<List<Address>>(caches.length);
-      for (int i = 0; i < caches.length; i++) {
-         allViews.add(caches[i].getCacheManager().getMembers());
+      List<List<Address>> allViews = new ArrayList<>(caches.length);
+      for (Cache cache : caches) {
+         allViews.add(cache.getCacheManager().getMembers());
       }
 
       throw new RuntimeException(String.format(
@@ -576,8 +576,8 @@ public class TestingUtil {
    private static boolean areCacheViewsChanged(Cache[] caches, int finalViewSize) {
       int memberCount = caches.length;
 
-      for (int i = 0; i < memberCount; i++) {
-         EmbeddedCacheManager cacheManager = caches[i].getCacheManager();
+      for (Cache cache : caches) {
+         EmbeddedCacheManager cacheManager = cache.getCacheManager();
          if (!isCacheViewChanged(cacheManager.getMembers(), finalViewSize)) {
             return false;
          }
@@ -610,7 +610,7 @@ public class TestingUtil {
       }
    }
 
-   public static void sleepThreadInt(long sleeptime, String messageOnInterrupt) throws InterruptedException {
+   private static void sleepThreadInt(long sleeptime, String messageOnInterrupt) throws InterruptedException {
       try {
          Thread.sleep(sleeptime);
       }
@@ -695,14 +695,14 @@ public class TestingUtil {
    private static Set<String> getOrderedCacheNames(EmbeddedCacheManager cacheContainer) {
       Set<String> caches = new LinkedHashSet<>();
       try {
-         DependencyGraph graph = TestingUtil.extractField(cacheContainer, "cacheDependencyGraph");
+         DependencyGraph<String> graph = TestingUtil.extractField(cacheContainer, "cacheDependencyGraph");
          caches.addAll(graph.topologicalSort());
       } catch (Exception ignored) {
       }
       return caches;
    }
 
-   protected static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
+   private static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
       if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())
          return new HashSet<>();
 
@@ -738,7 +738,7 @@ public class TestingUtil {
    }
 
    public static <K, V> List<CacheLoader<K, V>> cachestores(List<Cache<K, V>> caches) {
-      List<CacheLoader<K, V>> l = new LinkedList<CacheLoader<K, V>>();
+      List<CacheLoader<K, V>> l = new LinkedList<>();
       for (Cache<K, V> c: caches)
          l.add(TestingUtil.getFirstLoader(c));
       return l;
@@ -798,13 +798,15 @@ public class TestingUtil {
                if (clear) {
                   try {
                      c.clear();
-                  } catch (Exception ignored) {}
+                  } catch (Exception e) {
+                     log.errorf(e, "Error clearing cache %s", c.getName());
+                  }
                }
                c.stop();
             }
          }
          catch (Throwable t) {
-
+            log.errorf(t, "Error killing cache %s", c.getName());
          }
       }
    }
@@ -853,8 +855,7 @@ public class TestingUtil {
     * @return component registry
     */
    public static ComponentRegistry extractComponentRegistry(Cache cache) {
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      return cr;
+      return cache.getAdvancedCache().getComponentRegistry();
    }
 
    public static GlobalComponentRegistry extractGlobalComponentRegistry(CacheContainer cacheContainer) {
@@ -1050,8 +1051,7 @@ public class TestingUtil {
       return old;
    }
 
-   public static CacheLoader getCacheLoader(Cache cache) {
-      PersistenceManager clm = extractComponent(cache, PersistenceManager.class);
+   public static <K, V> CacheLoader<K, V> getCacheLoader(Cache<K, V> cache) {
       if (cache.getCacheConfiguration().persistence().usingStores()) {
          return TestingUtil.getFirstLoader(cache);
       } else {
@@ -1065,15 +1065,15 @@ public class TestingUtil {
       StringBuilder builder = new StringBuilder(cache.getName() + "[");
       while (it.hasNext()) {
          CacheEntry ce = (CacheEntry) it.next();
-         builder.append(ce.getKey() + "=" + ce.getValue() + ",l=" + ce.getLifespan() + "; ");
+         builder.append(ce.getKey()).append("=").append(ce.getValue()).append(",l=").append(ce.getLifespan()).append("; ");
       }
       builder.append("]");
       return builder.toString();
    }
 
    public static <K> Set<K> getInternalKeys(Cache<K, ?> cache) {
-      DataContainer<K, ?> dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      Set<K> keys = new HashSet<K>();
+      DataContainer<K, ?> dataContainer = cache.getAdvancedCache().getDataContainer();
+      Set<K> keys = new HashSet<>();
       for (CacheEntry<K, ?> entry : dataContainer) {
          keys.add(entry.getKey());
       }
@@ -1081,8 +1081,8 @@ public class TestingUtil {
    }
 
    public static <V> Collection<V> getInternalValues(Cache<?, V> cache) {
-      DataContainer<?, V> dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-      Collection<V> values = new ArrayList<V>();
+      DataContainer<?, V> dataContainer = cache.getAdvancedCache().getDataContainer();
+      Collection<V> values = new ArrayList<>();
       for (CacheEntry<?, V> entry : dataContainer) {
          values.add(entry.getValue());
       }
@@ -1147,13 +1147,11 @@ public class TestingUtil {
    }
 
    public static String k(Method method, int index) {
-      return new StringBuilder().append("k").append(index).append('-')
-              .append(method.getName()).toString();
+      return "k" + index + '-' + method.getName();
    }
 
    public static String v(Method method, int index) {
-      return new StringBuilder().append("v").append(index).append('-')
-              .append(method.getName()).toString();
+      return "v" + index + '-' + method.getName();
    }
 
    public static String k(Method method) {
@@ -1227,7 +1225,7 @@ public class TestingUtil {
 
    public static boolean existsDomains(String... domains) {
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      Set<String> domainSet = new HashSet<String>(Arrays.asList(domains));
+      Set<String> domainSet = new HashSet<>(Arrays.asList(domains));
       for (String domain : mBeanServer.getDomains()) {
          if (domainSet.contains(domain)) return true;
       }
@@ -1288,19 +1286,16 @@ public class TestingUtil {
     * @return The callable to invoke.  Note as long as the provided callable is thread safe this callable will be as well
     */
    public static <T> Callable<T> withTxCallable(final TransactionManager tm, final Callable<? extends T> c) {
-      return new Callable<T>() {
-         @Override
-         public T call() throws Exception {
-            tm.begin();
-            try {
-               return c.call();
-            } catch (Exception e) {
-               tm.setRollbackOnly();
-               throw e;
-            } finally {
-               if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
-               else tm.rollback();
-            }
+      return () -> {
+         tm.begin();
+         try {
+            return c.call();
+         } catch (Exception e) {
+            tm.setRollbackOnly();
+            throw e;
+         } finally {
+            if (tm.getStatus() == Status.STATUS_ACTIVE) tm.commit();
+            else tm.rollback();
          }
       };
    }
@@ -1410,52 +1405,44 @@ public class TestingUtil {
       return (T) persistenceManager.getAllTxWriters().get(0);
    }
 
-   public static Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore cl, KeyFilter filter) {
-      final Set<MarshalledEntry> result = new HashSet<MarshalledEntry>();
-      cl.process(filter, new AdvancedCacheLoader.CacheLoaderTask() {
-         @Override
-         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            result.add(marshalledEntry);
-         }
-      }, new WithinThreadExecutor(), true, true);
+   public static <K> Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore<K, ?> cl, KeyFilter<K> filter) {
+      final Set<MarshalledEntry> result = new HashSet<>();
+      cl.process(filter, (marshalledEntry, taskContext) -> result.add(marshalledEntry), new WithinThreadExecutor(), true, true);
       return result;
    }
 
-   public static Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore cl) {
+   public static <K> Set<MarshalledEntry> allEntries(AdvancedLoadWriteStore<K, ?> cl) {
       return allEntries(cl, null);
    }
 
-   public static MarshalledEntry marshalledEntry(InternalCacheEntry ice, StreamingMarshaller marshaller) {
-      return new MarshalledEntryImpl(ice.getKey(), ice.getValue(), PersistenceUtil.internalMetadata(ice), marshaller);
+   public static <K, V> MarshalledEntry<K, V> marshalledEntry(InternalCacheEntry<K, V> ice, StreamingMarshaller marshaller) {
+      return new MarshalledEntryImpl<>(ice.getKey(), ice.getValue(), PersistenceUtil.internalMetadata(ice), marshaller);
    }
 
-   public static MarshalledEntry marshalledEntry(InternalCacheValue icv, StreamingMarshaller marshaller) {
+   /*public static MarshalledEntry marshalledEntry(InternalCacheValue icv, StreamingMarshaller marshaller) {
       return marshalledEntry(icv, marshaller);
-   }
+   }*/
 
    public static void outputPropertiesToXML(String outputFile, Properties properties) throws IOException {
       Properties sorted = new Properties() {
          @Override
          public Set<Object> keySet() {
-            return Collections.unmodifiableSet(new TreeSet<Object>(super.keySet()));
+            return Collections.unmodifiableSet(new TreeSet<>(super.keySet()));
          }
 
          @Override
          public synchronized Enumeration<Object> keys() {
-            return Collections.enumeration(new TreeSet<Object>(super.keySet()));
+            return Collections.enumeration(new TreeSet<>(super.keySet()));
          }
 
          @Override
          public Set<String> stringPropertyNames() {
-            return Collections.unmodifiableSet(new TreeSet<String>(super.stringPropertyNames()));
+            return Collections.unmodifiableSet(new TreeSet<>(super.stringPropertyNames()));
          }
       };
       sorted.putAll(properties);
-      OutputStream stream = new FileOutputStream(outputFile);
-      try {
+      try (OutputStream stream = new FileOutputStream(outputFile)) {
          sorted.storeToXML(stream, null);
-      } finally {
-         stream.close();
       }
    }
 
@@ -1463,7 +1450,7 @@ public class TestingUtil {
       AdvancedCache<K, V> advCache = cache.getAdvancedCache();
       PersistenceManager pm = advCache.getComponentRegistry().getComponent(PersistenceManager.class);
       StreamingMarshaller marshaller = extractGlobalMarshaller(advCache.getCacheManager());
-      pm.writeToAllNonTxStores(new MarshalledEntryImpl(key, value, null, marshaller), BOTH);
+      pm.writeToAllNonTxStores(new MarshalledEntryImpl<>(key, value, null, marshaller), BOTH);
    }
 
    public static <K, V> boolean deleteFromAllStores(K key, Cache<K, V> cache) {
@@ -1473,7 +1460,7 @@ public class TestingUtil {
    }
 
    public static Subject makeSubject(String... principals) {
-      Set<Principal> set = new HashSet<Principal>();
+      Set<Principal> set = new HashSet<>();
       for (String principal : principals) {
          set.add(new TestingUtil.TestPrincipal(principal));
       }
@@ -1604,5 +1591,9 @@ public class TestingUtil {
 
    public static boolean isTriangleAlgorithm(CacheMode cacheMode, boolean transactional) {
       return cacheMode.isDistributed() && !transactional;
+   }
+
+   public static <K,V> Map.Entry<K,V> createMapEntry(K key, V value) {
+      return new AbstractMap.SimpleEntry<>(key, value);
    }
 }

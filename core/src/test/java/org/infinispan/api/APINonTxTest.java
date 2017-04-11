@@ -2,6 +2,7 @@ package org.infinispan.api;
 
 import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.assertNoLocks;
+import static org.infinispan.test.TestingUtil.createMapEntry;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -20,10 +21,10 @@ import java.util.function.Function;
 
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -46,7 +47,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testConvenienceMethods() {
       String key = "key", value = "value";
-      Map<String, String> data = new HashMap<String, String>();
+      Map<String, String> data = new HashMap<>();
       data.put(key, value);
 
       assertNull(cache.get(key));
@@ -131,7 +132,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testUnsupportedKeyValueCollectionOperationsAddMethod() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -139,12 +140,13 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       Set<Object> keys = cache.keySet();
       Collection<Object> values = cache.values();
-      Collection[] collections = new Collection[]{keys, values};
+      //noinspection unchecked
+      Collection<Object>[] collections = new Collection[]{keys, values};
 
       Object newObj = new Object();
-      List newObjCol = new ArrayList();
+      List<Object> newObjCol = new ArrayList<>();
       newObjCol.add(newObj);
-      for (Collection col : collections) {
+      for (Collection<Object> col : collections) {
          expectException(UnsupportedOperationException.class, () -> col.add(newObj));
          expectException(UnsupportedOperationException.class, () -> col.addAll(newObjCol));
       }
@@ -153,7 +155,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testAddMethodsForEntryCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -161,13 +163,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
 
-      Map.Entry entry = new ImmortalCacheEntry("4", "four");
-      entries.add(entry);
+      entries.add(createMapEntry("4", "four"));
    }
 
    public void testRemoveMethodOfKeyValueEntryCollections() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -184,14 +185,14 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertCacheSize(1);
 
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
-      entries.remove(new ImmortalCacheEntry(key3, value3));
+      entries.remove(TestingUtil.<Object, Object>createMapEntry(key3, value3));
 
       assertCacheIsEmpty();
    }
 
    public void testClearMethodOfKeyCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -205,7 +206,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testClearMethodOfValuesCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -219,7 +220,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testClearMethodOfEntryCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -233,7 +234,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testRemoveAllMethodOfKeyCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -252,7 +253,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testRemoveAllMethodOfValuesCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -271,7 +272,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testRemoveAllMethodOfEntryCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -279,8 +280,8 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       List<Map.Entry> entryCollection = new ArrayList<>(2);
 
-      entryCollection.add(new ImmortalCacheEntry(key1, value1));
-      entryCollection.add(new ImmortalCacheEntry(key3, value3));
+      entryCollection.add(createMapEntry(key1, value1));
+      entryCollection.add(createMapEntry(key3, value3));
 
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       entries.removeAll(entryCollection);
@@ -290,7 +291,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testRetainAllMethodOfKeyCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
-      Map<String, String> m = new HashMap<String, String>();
+      Map<String, String> m = new HashMap<>();
       m.put(key1, value1);
       m.put(key2, value2);
       m.put(key3, value3);
@@ -338,9 +339,9 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       List<Map.Entry> entryCollection = new ArrayList<>(3);
 
-      entryCollection.add(new ImmortalCacheEntry(key1, value1));
-      entryCollection.add(new ImmortalCacheEntry(key3, value3));
-      entryCollection.add(new ImmortalCacheEntry("4", "5"));
+      entryCollection.add(createMapEntry(key1, value1));
+      entryCollection.add(createMapEntry(key3, value3));
+      entryCollection.add(createMapEntry("4", "5"));
 
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       entries.retainAll(entryCollection);
@@ -359,7 +360,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       Object newObj = new Object();
 
-      for (Map.Entry entry : entries) {
+      for (Map.Entry<Object, Object> entry : entries) {
          entry.setValue(newObj);
       }
 
@@ -380,12 +381,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       assertCacheSize(3);
 
-      Set expKeys = new HashSet();
+      Set<Object> expKeys = new HashSet<>();
       expKeys.add(key1);
       expKeys.add(key2);
       expKeys.add(key3);
 
-      Set expValues = new HashSet();
+      Set<Object> expValues = new HashSet<>();
       expValues.add(value1);
       expValues.add(value2);
       expValues.add(value3);
@@ -495,11 +496,13 @@ public class APINonTxTest extends SingleCacheManagerTest {
       expectException(NullPointerException.class, () -> cache.put("hello", null));
    }
 
+   @SuppressWarnings("ConstantConditions")
    public void testReplaceNullKeyParameter() {
       expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.replace(null, "X"));
       expectException(NullPointerException.class, "Null keys are not supported!", () -> cache.replace(null, "X", "Y"));
    }
 
+   @SuppressWarnings("ConstantConditions")
    public void testReplaceNullValueParameter() {
       expectException(NullPointerException.class, "Null values are not supported!", () -> cache.replace("hello", null, "X"));
       expectException(NullPointerException.class, "Null values are not supported!", () -> cache.replace("hello", "X", null));
@@ -569,54 +572,54 @@ public class APINonTxTest extends SingleCacheManagerTest {
    }
 
    public void testComputeIfAbsent() {
-      Function mappingFunction = k -> k + " world";
+      Function<Object, String> mappingFunction = k -> k + " world";
       assertEquals("hello world", cache.computeIfAbsent("hello", mappingFunction));
       assertEquals("hello world", cache.get("hello"));
 
-      Function functionAfterPut = k -> k + " happy";
+      Function<Object, String> functionAfterPut = k -> k + " happy";
       // hello already exists so nothing should happen
       assertEquals("hello world", cache.computeIfAbsent("hello", functionAfterPut));
       assertEquals("hello world", cache.get("hello"));
 
-      Function functionMapsToNull = k -> null;
+      Function<Object, String> functionMapsToNull = k -> null;
       assertNull( cache.computeIfAbsent("kaixo", functionMapsToNull), "with function mapping to null returns null");
       assertNull(cache.get("kaixo"), "the key does not exist");
    }
 
    public void testComputeIfPresent() {
-      BiFunction mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      BiFunction<Object, Object, String> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
       cache.put("es", "hola");
 
       assertEquals("hello_es:hola", cache.computeIfPresent("es", mappingFunction));
       assertEquals("hello_es:hola", cache.get("es"));
 
-      BiFunction mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
+      BiFunction<Object, Object, String> mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
       assertNull(cache.computeIfPresent("fr", mappingForNotPresentKey), "unexisting key should return null");
       assertNull(cache.get("fr"), "unexisting key should return null");
 
-      BiFunction mappingToNull = (k, v) -> null;
+      BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
       assertNull(cache.computeIfPresent("es", mappingToNull), "mapping to null returns null");
       assertNull(cache.get("es"), "the key is removed");
    }
 
    public void testCompute() {
-      BiFunction mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      BiFunction<Object, Object, String> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
       cache.put("es", "hola");
 
       assertEquals("hello_es:hola", cache.compute("es", mappingFunction));
       assertEquals("hello_es:hola", cache.get("es"));
 
-      BiFunction mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
+      BiFunction<Object, Object, String> mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
       assertEquals("absent_fr:null", cache.compute("fr", mappingForNotPresentKey));
       assertEquals("absent_fr:null", cache.get("fr"));
 
-      BiFunction mappingToNull = (k, v) -> null;
+      BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
       assertNull(cache.compute("es", mappingToNull), "mapping to null returns null");
       assertNull(cache.get("es"), "the key is removed");
    }
 
    public void testReplaceAll() {
-      BiFunction mappingFunction = (k, v) -> "hello_" + k + ":" + v;
+      BiFunction<Object, Object, String> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
       cache.put("es", "hola");
       cache.put("cz", "ahoj");
 
@@ -625,7 +628,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertEquals("hello_es:hola", cache.get("es"));
       assertEquals("hello_cz:ahoj", cache.get("cz"));
 
-      BiFunction mappingToNull = (k, v) -> null;
+      BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
       expectException(NullPointerException.class, () -> cache.replaceAll(mappingToNull));
 
       assertEquals("hello_es:hola", cache.get("es"));
