@@ -65,6 +65,7 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
 
    private Object handleLocalPrepareReturn(InvocationContext ctx, VisitableCommand command, Throwable t)
          throws Throwable {
+      assert t != null;
       // If we receive a RetryPrepareException it was because the prepare was delivered during a state transfer.
       // Remember that the REBALANCE_START and CH_UPDATE are totally ordered with the prepares and the
       // prepares are unblocked after the rebalance has finished.
