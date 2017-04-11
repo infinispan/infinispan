@@ -394,9 +394,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       for (Map.Entry<Address, List<Object>> pair : requestedKeys.entrySet()) {
          List<Object> keys = pair.getValue();
          ClusteredGetAllCommand clusteredGetAllCommand = cf.buildClusteredGetAllCommand(keys, command.getFlagsBitSet(), gtx);
-         rpcManager.invokeRemotelyAsync(Collections.singleton(pair.getKey()), clusteredGetAllCommand, defaultSyncOptions).whenComplete((responseMap, throwable) -> {
+         clusteredGetAllCommand.setTopologyId(command.getTopologyId());
+         rpcManager.invokeRemotelyAsync(Collections.singleton(pair.getKey()), clusteredGetAllCommand, syncIgnoreLeavers).whenComplete((responseMap, throwable) -> {
             if (throwable != null) {
                allFuture.completeExceptionally(throwable);
+            }
+            if (responseMap.isEmpty()) {
+               allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE);
             }
             Response response = getSingleSuccessfulResponseOrFail(responseMap, allFuture);
             if (response == null) return;
