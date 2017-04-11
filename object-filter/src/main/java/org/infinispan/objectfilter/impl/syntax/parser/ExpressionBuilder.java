@@ -67,7 +67,7 @@ final class ExpressionBuilder<TypeMetadata> {
       push(new FullTextRegexpExpr(makePropertyValueExpr(propertyPath), regexp));
    }
 
-   public void addFullTextRange(PropertyPath<?> propertyPath, boolean includeLower, String lower, String upper, boolean includeUpper) {
+   public void addFullTextRange(PropertyPath<?> propertyPath, boolean includeLower, Object lower, Object upper, boolean includeUpper) {
       push(new FullTextRangeExpr(makePropertyValueExpr(propertyPath), includeLower, lower, upper, includeUpper));
    }
 

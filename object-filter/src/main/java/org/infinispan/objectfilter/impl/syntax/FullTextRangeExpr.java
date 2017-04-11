@@ -10,13 +10,13 @@ public final class FullTextRangeExpr implements PrimaryPredicateExpr {
 
    private final boolean includeLower;
 
-   private final String lower;
+   private final Object lower;
 
    private final boolean includeUpper;
 
-   private final String upper;
+   private final Object upper;
 
-   public FullTextRangeExpr(ValueExpr leftChild, boolean includeLower, String lower, String upper, boolean includeUpper) {
+   public FullTextRangeExpr(ValueExpr leftChild, boolean includeLower, Object lower, Object upper, boolean includeUpper) {
       this.leftChild = leftChild;
       this.includeLower = includeLower;
       this.lower = lower;
@@ -32,11 +32,11 @@ public final class FullTextRangeExpr implements PrimaryPredicateExpr {
       return includeUpper;
    }
 
-   public String getLower() {
+   public Object getLower() {
       return lower;
    }
 
-   public String getUpper() {
+   public Object getUpper() {
       return upper;
    }
 
