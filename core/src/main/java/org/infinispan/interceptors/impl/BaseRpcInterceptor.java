@@ -56,7 +56,8 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected boolean defaultSynchronous;
    protected volatile RpcOptions singleTargetStaggeredOptions;
    protected volatile RpcOptions multiTargetStaggeredOptions;
-   protected RpcOptions defaultSyncOptions;
+   protected volatile RpcOptions defaultSyncOptions;
+   protected volatile RpcOptions syncIgnoreLeavers;
    protected RpcOptions defaultAsyncOptions;
 
    protected abstract Log getLog();
@@ -81,6 +82,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
       multiTargetStaggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE)
             .responseFilter(SUCCESSFUL_OR_EXCEPTIONAL).build();
       defaultSyncOptions = rpcManager.getDefaultRpcOptions(true);
+      syncIgnoreLeavers = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
    }
 
    protected RpcOptions getStaggeredOptions(int numTargets) {

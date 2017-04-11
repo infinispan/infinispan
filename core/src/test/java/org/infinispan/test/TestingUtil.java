@@ -1532,6 +1532,13 @@ public class TestingUtil {
       return wrap;
    }
 
+   public static <T, W extends T> W wrapComponent(Cache<?, ?> cache, Class<T> tClass, Function<T, W> ctor) {
+      T current = extractComponent(cache, tClass);
+      W wrap = ctor.apply(current);
+      replaceComponent(cache, tClass, wrap, true);
+      return wrap;
+   }
+
    public static <T extends PerCacheInboundInvocationHandler> T wrapInboundInvocationHandler(Cache cache, Function<PerCacheInboundInvocationHandler, T> ctor) {
       PerCacheInboundInvocationHandler current = extractComponent(cache, PerCacheInboundInvocationHandler.class);
       T wrap = ctor.apply(current);
