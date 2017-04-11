@@ -12,9 +12,9 @@ import java.util.Set;
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -65,7 +65,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       Map.Entry<Object, Object> entry = entrySet.iterator().next();
       assertEquals(1, entry.getKey());
       assertEquals("v1", entry.getValue());
-      assertTrue(entrySet.contains(new ImmortalCacheEntry(1, "v1")));
+      assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v1")));
       safeCommit(false);
    }
 
@@ -124,7 +124,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       Map.Entry<Object, Object> entry = entrySet.iterator().next();
       assertEquals(1, entry.getKey());
       assertEquals("v2", entry.getValue());
-      assertTrue(entrySet.contains(new ImmortalCacheEntry(1, "v2")));
+      assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v2")));
       safeCommit(true);
    }
 
@@ -199,8 +199,8 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
          }
       }
 
-      assertTrue(entrySet.contains(new ImmortalCacheEntry(1, "v1")));
-      assertTrue(entrySet.contains(new ImmortalCacheEntry(2, "v2")));
+      assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v1")));
+      assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(2, "v2")));
       safeCommit(false);
    }
 
@@ -271,7 +271,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       Map.Entry<Object, Object> entry = entrySet.iterator().next();
       assertEquals(2, entry.getKey());
       assertEquals("v2", entry.getValue());
-      assertTrue(entrySet.contains(new ImmortalCacheEntry(2, "v2")));
+      assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(2, "v2")));
       safeCommit(true);
    }
 
@@ -332,7 +332,7 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
       assertEquals(0, entrySet.size());
       assertFalse(entrySet.iterator().hasNext());
-      assertFalse(entrySet.contains(new ImmortalCacheEntry(1, "v2")));
+      assertFalse(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v2")));
       safeCommit(true);
    }
 

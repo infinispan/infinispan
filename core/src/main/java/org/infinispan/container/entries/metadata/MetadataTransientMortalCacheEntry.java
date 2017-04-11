@@ -134,29 +134,6 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
       this.metadata = metadata;
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MetadataTransientMortalCacheEntry that = (MetadataTransientMortalCacheEntry) o;
-
-      if (created != that.created) return false;
-      if (lastUsed != that.lastUsed) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
-      return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;
-
-   }
-
-   @Override
-   public int hashCode() {
-      int result = value != null ? value.hashCode() : 0;
-      result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
-      result = 31 * result + (int) (created ^ (created >>> 32));
-      result = 31 * result + (int) (lastUsed ^ (lastUsed >>> 32));
-      return result;
-   }
-
    public static class Externalizer extends AbstractExternalizer<MetadataTransientMortalCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, MetadataTransientMortalCacheEntry ice) throws IOException {
@@ -184,7 +161,7 @@ public class MetadataTransientMortalCacheEntry extends AbstractInternalCacheEntr
 
       @Override
       public Set<Class<? extends MetadataTransientMortalCacheEntry>> getTypeClasses() {
-         return Util.<Class<? extends MetadataTransientMortalCacheEntry>>asSet(MetadataTransientMortalCacheEntry.class);
+         return Util.asSet(MetadataTransientMortalCacheEntry.class);
       }
    }
 }

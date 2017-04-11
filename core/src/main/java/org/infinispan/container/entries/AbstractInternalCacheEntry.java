@@ -1,5 +1,8 @@
 package org.infinispan.container.entries;
 
+import java.util.Map;
+import java.util.Objects;
+
 import org.infinispan.container.DataContainer;
 import org.infinispan.metadata.Metadata;
 
@@ -134,5 +137,20 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       } catch (CloneNotSupportedException e) {
          throw new RuntimeException("Should never happen!", e);
       }
+   }
+
+   @Override
+   public final boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || !(o instanceof Map.Entry)) return false;
+
+      Map.Entry that = (Map.Entry) o;
+
+      return Objects.equals(getKey(), that.getKey()) && Objects.equals(getValue(), that.getValue());
+   }
+
+   @Override
+   public final int hashCode() {
+      return  31 * Objects.hashCode(getKey()) + Objects.hashCode(getValue());
    }
 }

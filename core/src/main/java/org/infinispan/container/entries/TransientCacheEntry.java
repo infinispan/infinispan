@@ -127,31 +127,6 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TransientCacheEntry that = (TransientCacheEntry) o;
-
-      if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null)
-         return false;
-      if (lastUsed != that.lastUsed) return false;
-      if (maxIdle != that.maxIdle) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = key != null ? key.hashCode() : 0;
-      result = 31 * result + (value != null ? value.hashCode() : 0);
-      result = 31 * result + (int) (lastUsed ^ (lastUsed >>> 32));
-      result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
-      return result;
-   }
-
-   @Override
    public TransientCacheEntry clone() {
       return (TransientCacheEntry) super.clone();
    }
@@ -181,7 +156,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
       @Override
       public Set<Class<? extends TransientCacheEntry>> getTypeClasses() {
-         return Util.<Class<? extends TransientCacheEntry>>asSet(TransientCacheEntry.class);
+         return Util.asSet(TransientCacheEntry.class);
       }
    }
 
