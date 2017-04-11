@@ -17,6 +17,7 @@
             <!--Needed for security domain configuration-->
             <property name="serverConfig">standalone.xml</property>
             <property name="javaVmArguments">
+                ${jigsawForkJvmArgs}
                 -Djboss.node.name=testnode -Djgroups.join_timeout=2000
             </property>
             <property name="managementPort">9990</property>
@@ -31,13 +32,15 @@
             <property name="jbossHome">${basedir}/target/node0/wildfly-${version.org.wildfly}</property>
             <!-- Needed for security domain configuration -->
             <property name="serverConfig">standalone-ha.xml</property>
-            <property name="javaVmArguments">-Djboss.node.name=node0
-                                             -Djboss.socket.binding.port-offset=100 
-                                             -Djava.net.preferIPv4Stack=true
-                                             -Dsasl.username=test_user
-                                             -Dsasl.password=test_password
-                                             -Dsasl.realm=test_realm
-                                             -Djgroups.join_timeout=2000
+            <property name="javaVmArguments">
+               ${jigsawForkJvmArgs}
+               -Djboss.node.name=node0
+               -Djboss.socket.binding.port-offset=100
+               -Djava.net.preferIPv4Stack=true
+               -Dsasl.username=test_user
+               -Dsasl.password=test_password
+               -Dsasl.realm=test_realm
+               -Djgroups.join_timeout=2000
             </property>
             <property name="managementAddress">${node0.mgmt.addr:127.0.0.1}</property>
             <property name="managementPort">10090</property>
@@ -51,12 +54,14 @@
          <configuration>
             <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
             <property name="serverConfig">standalone-ha.xml</property>
-            <property name="javaVmArguments">-Djboss.node.name=node1 
-                                             -Djboss.socket.binding.port-offset=200 
-                                             -Djava.net.preferIPv4Stack=true 
-                                             -Dsasl.username=joining_test_user 
-                                             -Dsasl.password=test_password 
-                                             -Dsasl.realm=test_realm
+            <property name="javaVmArguments">
+               ${jigsawForkJvmArgs}
+               -Djboss.node.name=node1
+               -Djboss.socket.binding.port-offset=200
+               -Djava.net.preferIPv4Stack=true
+               -Dsasl.username=joining_test_user
+               -Dsasl.password=test_password
+               -Dsasl.realm=test_realm
             </property>
             <property name="managementAddress">${node1.mgmt.addr:127.0.0.1}</property>
             <property name="managementPort">10190</property>
@@ -70,13 +75,15 @@
          <configuration>
             <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
             <property name="serverConfig">standalone-ha.xml</property>
-            <property name="javaVmArguments">-Djboss.node.name=node1 
-                                             -Djboss.socket.binding.port-offset=200 
-                                             -Djava.net.preferIPv4Stack=true
-                                             -Dsasl.username=test_user
-                                             -Dsasl.password=wrong_password
-                                             -Dsasl.realm=test_realm
-                                             -Djgroups.join_timeout=2000
+            <property name="javaVmArguments">
+               ${jigsawForkJvmArgs}
+               -Djboss.node.name=node1
+               -Djboss.socket.binding.port-offset=200
+               -Djava.net.preferIPv4Stack=true
+               -Dsasl.username=test_user
+               -Dsasl.password=wrong_password
+               -Dsasl.realm=test_realm
+               -Djgroups.join_timeout=2000
             </property>
             <property name="managementPort">10190</property>
          </configuration>
@@ -90,13 +97,15 @@
             <property name="jbossHome">${basedir}/target/node0/wildfly-${version.org.wildfly}</property>
             <!-- Needed for security domain configuration -->
             <property name="serverConfig">standalone-ha.xml</property>
-            <property name="javaVmArguments">-Djboss.node.name=node0
-                                             -Djboss.socket.binding.port-offset=100 
-                                             -Djava.net.preferIPv4Stack=true
-                                             -Dsasl.credentials.properties=${basedir}/target/test-classes/jgroups-simple-auth.properties
-                                             -Dsasl.local.principal=test_user
-                                             -Dsasl.realm=test_realm
-                                             -Djgroups.join_timeout=2000
+            <property name="javaVmArguments">
+               ${jigsawForkJvmArgs}
+               -Djboss.node.name=node0
+               -Djboss.socket.binding.port-offset=100
+               -Djava.net.preferIPv4Stack=true
+               -Dsasl.credentials.properties=${basedir}/target/test-classes/jgroups-simple-auth.properties
+               -Dsasl.local.principal=test_user
+               -Dsasl.realm=test_realm
+               -Djgroups.join_timeout=2000
             </property>
             <property name="managementPort">10090</property>
          </configuration>
@@ -109,13 +118,15 @@
          <configuration>
             <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
             <property name="serverConfig">standalone-ha.xml</property>
-            <property name="javaVmArguments">-Djboss.node.name=node1 
-                                             -Djboss.socket.binding.port-offset=200 
-                                             -Djava.net.preferIPv4Stack=true
-                                             -Dsasl.credentials.properties=${basedir}/target/test-classes/jgroups-simple-auth.properties
-                                             -Dsasl.local.principal=joining_test_user
-                                             -Dsasl.realm=test_realm
-                                             -Djgroups.join_timeout=2000
+            <property name="javaVmArguments">
+               ${jigsawForkJvmArgs}
+               -Djboss.node.name=node1
+               -Djboss.socket.binding.port-offset=200
+               -Djava.net.preferIPv4Stack=true
+               -Dsasl.credentials.properties=${basedir}/target/test-classes/jgroups-simple-auth.properties
+               -Dsasl.local.principal=joining_test_user
+               -Dsasl.realm=test_realm
+               -Djgroups.join_timeout=2000
             </property>
             <property name="managementPort">10190</property>
          </configuration>

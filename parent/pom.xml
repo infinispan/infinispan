@@ -189,6 +189,7 @@
       <version.javassist>3.20.0-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
+      <version.maven.shade>3.0.0</version.maven.shade>
       <version.maven.source>3.0.0</version.maven.source>
       <version.maven.surefire>2.18.1</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
@@ -1037,6 +1038,12 @@
          <version>${version.jacoco}</version>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-license</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
    </dependencies>
    <build>
       <directory>${buildDirectory}</directory>
@@ -1112,10 +1119,11 @@
                <artifactId>maven-failsafe-plugin</artifactId>
                <version>${version.maven.surefire}</version>
                <configuration>
-	              <systemPropertyVariables>
-	                 <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
-	              </systemPropertyVariables>
-	           </configuration>
+                  <systemPropertyVariables>
+                     <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
+                  </systemPropertyVariables>
+                  <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+               </configuration>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1142,7 +1150,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-shade-plugin</artifactId>
-               <version>2.4.3</version>
+               <version>${version.maven.shade}</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1598,12 +1606,13 @@
             <!--
               java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
                 core externalizers for JDK types
-              java.nio, jdk.internal.ref: Netty, server/hotrod
+              java.nio, jdk.internal.ref, sun.nio.ch: Netty, server/hotrod
               com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
               java.text, java.awt.font: XStream, server/rest
               java.security: Wildfly, server/integration/*
             -->
             <jigsawForkJvmArgs>
+               -Dsun.reflect.debugModuleAccessChecks=true
                --add-opens=java.base/java.lang=ALL-UNNAMED
                --add-opens=java.base/java.util=ALL-UNNAMED
                --add-opens=java.base/java.io=ALL-UNNAMED
@@ -1614,10 +1623,19 @@
                --add-opens=java.base/java.nio=ALL-UNNAMED
                --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
                --add-modules=java.xml.bind
-               --add-opens=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
+               --add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
                --add-opens=java.base/java.text=ALL-UNNAMED
                --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
                --add-opens=java.base/java.security=ALL-UNNAMED
+               --add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED
+               --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+               --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+               --add-exports=java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED
+               --add-exports=java.security.sasl/com.sun.security.sasl.ntlm=ALL-UNNAMED
+               --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED
+               --add-opens=java.management/javax.management=ALL-UNNAMED
+               --add-exports=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED
+               --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
             </jigsawForkJvmArgs>
          </properties>
          <build>
@@ -1644,6 +1662,10 @@
          <id>extras</id>
          <activation>
             <activeByDefault>true</activeByDefault>
+            <!-- activeByDefault is not enough to activate the profile in children projects -->
+            <property>
+               <name>maven.home</name>
+            </property>
          </activation>
          <build>
             <plugins>
@@ -1653,6 +1675,7 @@
                   <executions>
                      <execution>
                         <id>attach-sources</id>
+                        <phase>verify</phase>
                         <goals>
                            <goal>jar</goal>
                            <goal>test-jar</goal>
@@ -1664,7 +1687,6 @@
             </plugins>
          </build>
          <properties>
-
             <packaging>bundle</packaging>
          </properties>
       </profile>

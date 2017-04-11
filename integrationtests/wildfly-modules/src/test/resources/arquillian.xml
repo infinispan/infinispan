@@ -10,7 +10,9 @@
         <container qualifier="container.active-1" default="true">
             <configuration>
                 <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
-                <property name="javaVmArguments">-Djboss.socket.binding.port-offset=100 -Xmx512m -Djava.net.preferIPv4Stack=true
+                <property name="javaVmArguments">
+                    ${jigsawForkJvmArgs}
+                    -Djboss.socket.binding.port-offset=100 -Xmx512m -Djava.net.preferIPv4Stack=true
                     -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                 </property>
                 <!-- To debug the Arquillian managed application server: -->
@@ -24,7 +26,9 @@
         <container qualifier="container.active-2">
             <configuration>
                 <property name="jbossHome">${basedir}/target/node2/wildfly-${version.org.wildfly}</property>
-                <property name="javaVmArguments">-Djboss.socket.binding.port-offset=200 -Xmx512m
+                <property name="javaVmArguments">
+                    ${jigsawForkJvmArgs}
+                    -Djboss.socket.binding.port-offset=200 -Xmx512m
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>

@@ -125,6 +125,7 @@
                         <build.directory>${project.build.directory}</build.directory>
                     </systemPropertyVariables>
                     <trimStackTrace>false</trimStackTrace>
+                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                 </configuration>
                 <dependencies>
                     <dependency>

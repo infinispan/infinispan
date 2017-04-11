@@ -6,6 +6,7 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-integrationtests-parent</artifactId>
       <version>9.1.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-embedded-it</artifactId>
@@ -77,6 +78,7 @@
                                 <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                                 <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                             </systemPropertyVariables>
+                           <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                         </configuration>
                     </plugin>
                 </plugins>

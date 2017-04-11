@@ -12,11 +12,12 @@
                 <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
                 <!-- Needed for JMS tests -->
                 <property name="serverConfig">standalone-full-testqueues.xml</property>
-                <property name="javaVmArguments">-Xmx512m -Djava.net.preferIPv4Stack=true
+                <!-- Here you can add debug arguments, e.g. -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y -->
+                <property name="javaVmArguments">
+                    ${jigsawForkJvmArgs}
+                    -Xmx512m -Djava.net.preferIPv4Stack=true
                     -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions
                 </property>
-                <!-- To debug the Arquillian managed application server: -->
-                <!--<property name="javaVmArguments">-Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y -Xmx512m -Dorg.jboss.remoting-jmx.timeout=300  -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1</property>-->
             </configuration>
         </container>
         <!-- Copy of the above, except a port offset is applied and running from a different copy -->
@@ -25,12 +26,13 @@
                 <property name="jbossHome">${basedir}/target/node2/wildfly-${version.org.wildfly}</property>
                 <!-- Needed for JMS tests -->
                 <property name="serverConfig">standalone-full-testqueues.xml</property>
-                <property name="javaVmArguments">-Djboss.socket.binding.port-offset=10000 -Xmx512m
+                <property name="javaVmArguments">
+                    ${jigsawForkJvmArgs}
+                    -Djboss.socket.binding.port-offset=10000 -Xmx512m
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
                     -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions
                 </property>
                 <property name="managementPort">19990</property>
-                <!--<property name="javaVmArguments">-Xrunjdwp:transport=dt_socket,address=5006,server=y,suspend=y -Xmx512m -Dorg.jboss.remoting-jmx.timeout=300  -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1</property>-->
             </configuration>
         </container>
     </group>

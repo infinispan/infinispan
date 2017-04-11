@@ -1489,10 +1489,18 @@
 
     <container qualifier="suite-client-domain" default="true">
             <configuration>
+                <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
-                <property name="managementPort">9990</property>
                 <property name="allowConnectingToRunningServer">true</property>
                 <property name="containerModeMap">master:.*=suite</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
+                    -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
+                    -Djboss.socket.binding.port-offset=100
+                    -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">10090</property>
+                <property name="waitForPorts">11322 8180</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
     </container>
 
