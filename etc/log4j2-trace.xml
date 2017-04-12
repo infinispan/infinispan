@@ -19,8 +19,10 @@
 
   <Loggers>
     <Logger name="org.infinispan" level="TRACE"/>
+    <Logger name="org.infinispan.marshall" level="DEBUG"/>
+    <Logger name="org.infinispan.commons.marshall" level="DEBUG"/>
     <Logger name="com.mchange" level="WARN"/>
-    <Logger name="org.jgroups" level="DEBUG"/>
+    <Logger name="org.jgroups" level="TRACE"/>
     <Logger name="org.jgroups.protocols.pbcast.GMS" level="TRACE"/>
 
     <Root level="DEBUG">
