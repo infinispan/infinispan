@@ -201,6 +201,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       initChannelAndRPCDispatcher();
       addXSiteViewListener();
+      addSiteMasterPicker();
       startJGroupsChannelIfNeeded();
 
       waitForInitialNodes();
@@ -932,6 +933,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
       if (relay2 != null && relay2.getRouteStatusListener() == null) {
          relay2.setRouteStatusListener(new DefaultRouteStatusListener());
+      }
+   }
+
+   private void addSiteMasterPicker() {
+      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
+      if (relay2 != null) {
+         relay2.siteMasterPicker(new SiteMasterPickerImpl());
       }
    }
 

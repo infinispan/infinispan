@@ -1,6 +1,9 @@
 package org.infinispan.xsite;
 
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
+
+import java.lang.reflect.Field;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -11,6 +14,11 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.remoting.transport.jgroups.SiteMasterPickerImpl;
+import org.jgroups.protocols.relay.RELAY2;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus
@@ -32,6 +40,23 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
     * config element won't be used.
     */
    protected boolean implicitBackupCache = false;
+
+   @Test(groups = "xsite")
+   public void testSiteMasterPicked() throws NoSuchFieldException, IllegalAccessException {
+      for (TestSite testSite : sites) {
+         for (EmbeddedCacheManager cacheManager : testSite.cacheManagers) {
+            RELAY2 relay2 = getRELAY2(cacheManager);
+            Field field = relay2.getClass().getDeclaredField("site_master_picker");
+            field.setAccessible(true);
+            assertEquals(SiteMasterPickerImpl.class, field.get(relay2).getClass());
+         }
+      }
+   }
+
+   private RELAY2 getRELAY2(EmbeddedCacheManager cacheManager) {
+      JGroupsTransport transport = (JGroupsTransport) cacheManager.getTransport();
+      return transport.getChannel().getProtocolStack().findProtocol(RELAY2.class);
+   }
 
    @Override
    protected void createSites() {
