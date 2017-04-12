@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-bom</artifactId>
-   <version>9.0.1-SNAPSHOT</version>
+   <version>9.1.0-SNAPSHOT</version>
    <packaging>pom</packaging>
    <name>Infinispan BOM</name>
    <description>Infinispan BOM module</description>
@@ -52,8 +52,8 @@
    </issueManagement>
 
    <properties>
-      <infinispan.codename>Ruppaner</infinispan.codename>
-      <infinispan.core.schema.version>9.0</infinispan.core.schema.version>
+      <infinispan.codename>Ruppaner.1</infinispan.codename>
+      <infinispan.core.schema.version>9.1</infinispan.core.schema.version>
 
       <version.java>1.8</version.java>
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:9.0 http://www.infinispan.org/schemas/infinispan-config-9.0.xsd"
-      xmlns="urn:infinispan:config:9.0">
+      xsi:schemaLocation="urn:infinispan:config:9.1 http://www.infinispan.org/schemas/infinispan-config-9.1.xsd"
+      xmlns="urn:infinispan:config:9.1">
 
    <!--
       ******************************************************************************************************************
@@ -274,7 +274,7 @@
       A cache where data can be evicted if not used after some time, or if it exceeds certain capacity.
       As shown in this example, passivation can be configured so that whenever data is removed due
       eviction/expiration, this is in turn stored in a backend cache store. Afterwards, when data is
-      requested, the cache store will be checked and data will be activated and brought back to memory 
+      requested, the cache store will be checked and data will be activated and brought back to memory
    -->
    <!--
    <local-cache name="evictionAndPassivationCache">
@@ -294,11 +294,11 @@
    </local-cache>
    -->
 
-   <!-- 
+   <!--
       A cache configured with cache invalidation that instead of using state transfer to retrieve data on startup,
       it is configured with a cluster cache loader that allows it to query the cluster for data if not present
       locally. This type of cache loader is particularly interesting for situations where state transfer is a
-      lengthy process. 
+      lengthy process.
    -->
    <!--
    <invalidation-cache name="invalidatedWithClusterCacheLoaderCache" mode="SYNC" remote-timeout="20000">
