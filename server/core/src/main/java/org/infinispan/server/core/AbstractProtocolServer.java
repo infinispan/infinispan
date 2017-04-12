@@ -17,8 +17,6 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 
-import io.netty.channel.epoll.Epoll;
-
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
  *
@@ -141,6 +139,9 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    public int getPort() {
+      if(transport != null) {
+         return transport.getPort();
+      }
       return configuration.port();
    }
 
