@@ -6,7 +6,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
-@Test(groups = "stress", testName="org.infinispan.client.hotrod.stress.DistPutAllPerfTest")
+@Test(groups = "stress", testName="org.infinispan.client.hotrod.stress.DistPutAllPerfTest", timeOut = 30*60*1000)
 public class DistPutAllPerfTest extends AbstractPutAllPerfTest {
 
    @Override

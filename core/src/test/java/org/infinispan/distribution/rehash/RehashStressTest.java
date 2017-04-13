@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
 /**
  * @author esalter
  */
-@Test(groups = "stress", testName = "distribution.rehash.RehashStressTest")
+@Test(groups = "stress", testName = "distribution.rehash.RehashStressTest", timeOut = 30*60*1000)
 public class RehashStressTest extends AbstractInfinispanTest {
 
     @AfterMethod

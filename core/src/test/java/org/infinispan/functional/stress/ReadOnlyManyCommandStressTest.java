@@ -1,5 +1,11 @@
 package org.infinispan.functional.stress;
 
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.io.Serializable;
+import java.util.Set;
+import java.util.function.Function;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.GetAllCommandStressTest;
 import org.infinispan.commons.api.functional.EntryView;
@@ -11,13 +17,7 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
-import java.io.Serializable;
-import java.util.Set;
-import java.util.function.Function;
-
-import static org.testng.AssertJUnit.assertEquals;
-
-@Test(groups = "stress")
+@Test(groups = "stress", timeOut = 30*60*1000)
 @InCacheMode(CacheMode.DIST_SYNC)
 public class ReadOnlyManyCommandStressTest extends GetAllCommandStressTest {
 
