@@ -92,6 +92,25 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
       }
    }
 
+   public void testGetAllCacheEntriesWithBytes() {
+      Set<String> keys = new HashSet<>();
+      for (int i = 0; i < numEntries; ++i) {
+         String key = "key" + i;
+         advancedCache(i % numNodes).put(key, new byte[]{(byte) i});
+         keys.add(key);
+      }
+      List<Cache<String, byte[]>> caches = caches();
+      for (Cache<String, byte[]> cache : caches) {
+         Map<String, CacheEntry<String, byte[]>> map = cache.getAdvancedCache().getAllCacheEntries(keys);
+         assertEquals(map.size(), keys.size());
+         for (int i = 0; i < numEntries; ++i) {
+            CacheEntry<String, byte[]> entry = map.get("key" + i);
+            assertEquals(entry.getValue().length, 1);
+            assertEquals(entry.getValue()[0], i);
+         }
+      }
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, transactional);
