@@ -123,16 +123,16 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
       Map<K, CacheEntry<K, V>> entryMap = new HashMap<>(map.size());
       map.values().forEach(v -> {
          K originalKey = v.getKey();
-         K boxedKey = boxKey(originalKey);
+         K unboxedKey = unboxKey(originalKey);
          V originalValue = v.getValue();
-         V boxedValue = boxValue(originalValue);
+         V unboxedValue = unboxValue(originalValue);
          CacheEntry<K, V> entryToPut;
-         if (boxedKey != originalKey || boxedValue != originalValue) {
-            entryToPut = convertEntry(boxedKey, boxedValue, v);
+         if (unboxedKey != originalKey || unboxedValue != originalValue) {
+            entryToPut = convertEntry(unboxedKey, unboxedValue, v);
          } else {
             entryToPut = v;
          }
-         entryMap.put(boxedKey, entryToPut);
+         entryMap.put(unboxedKey, entryToPut);
       });
       return entryMap;
    }
