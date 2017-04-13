@@ -71,7 +71,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
          AssertJUnit.fail("Other cache manager should not be set!");
       }
       Cache otherCache = otherCacheManager.getCache();
-      TestingUtil.waitForRehashToComplete(cache, otherCache);
+      TestingUtil.waitForStableTopology(cache, otherCache);
    }
 
    @Override

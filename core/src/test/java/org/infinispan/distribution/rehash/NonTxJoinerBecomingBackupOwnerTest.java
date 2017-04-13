@@ -144,7 +144,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       sequencer.advance("write:end");
 
       // Wait for the topology to change everywhere
-      TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
+      TestingUtil.waitForStableTopology(cache0, cache1, cache2);
 
       // Stop blocking get commands and check the value on all the nodes
       sequencer.stop();

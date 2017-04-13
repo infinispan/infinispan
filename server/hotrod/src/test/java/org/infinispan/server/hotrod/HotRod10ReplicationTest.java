@@ -101,7 +101,7 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success);
       assertTopologyReceived(resp.topologyResponse, servers(), currentServerTopologyId());
 
-      resp = clients().get(1).ping(INTELLIGENCE_TOPOLOGY_AWARE, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount());
+      resp = clients().get(1).ping(INTELLIGENCE_TOPOLOGY_AWARE, ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse, null);
    }
@@ -121,7 +121,7 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
       assertTopologyReceived(resp.topologyResponse, servers(), currentServerTopologyId());
 
       resp = clients().get(0).put(k(m), 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE,
-                                  ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount());
+                                  ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse, null);
       assertSuccess(clients().get(1).get(k(m), 0), v(m, "v3-"));
@@ -129,7 +129,7 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
       HotRodServer newServer = startClusteredServer(servers().get(1).getPort() + 25);
       try {
          resp = clients().get(0).put(k(m), 0, 0, v(m, "v4-"), INTELLIGENCE_TOPOLOGY_AWARE,
-                                     ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount());
+                                     ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
          assertStatus(resp, Success);
          assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
          AbstractTestTopologyAwareResponse topoResp = resp.asTopologyAwareResponse();
@@ -140,11 +140,11 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients().get(1).get(k(m), 0), v(m, "v4-"));
       } finally {
          stopClusteredServer(newServer);
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName()), cache(1, cacheName()));
+         TestingUtil.waitForStableTopology(cache(0, cacheName()), cache(1, cacheName()));
       }
 
       resp = clients().get(0).put(k(m), 0, 0, v(m, "v5-"), INTELLIGENCE_TOPOLOGY_AWARE,
-                                  ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount() + 1);
+                                  ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount() + 2);
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
       AbstractTestTopologyAwareResponse topoResp1 = resp.asTopologyAwareResponse();
@@ -158,7 +158,7 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
             servers().get(1).getPort() + 25, true);
       try {
          resp = clients().get(0).put(k(m), 0, 0, v(m, "v6-"), INTELLIGENCE_TOPOLOGY_AWARE,
-                                     ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount() + 2);
+                                     ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount() + 4);
          assertStatus(resp, Success);
          assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
          AbstractTestTopologyAwareResponse topoResp2 = resp.asTopologyAwareResponse();
@@ -169,11 +169,11 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
          assertSuccess(clients().get(1).get(k(m), 0), v(m, "v6-"));
       } finally {
          stopClusteredServer(crashingServer);
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName()), cache(1, cacheName()));
+         TestingUtil.waitForStableTopology(cache(0, cacheName()), cache(1, cacheName()));
       }
 
       resp = clients().get(0).put(k(m), 0, 0, v(m, "v7-"), INTELLIGENCE_TOPOLOGY_AWARE,
-                                  ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount() + 3);
+                                  ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount() + 6);
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse.topologyId, currentServerTopologyId());
       AbstractTestTopologyAwareResponse topoResp3 = resp.asTopologyAwareResponse();

@@ -1,11 +1,14 @@
 package org.infinispan.tx.dld;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -26,6 +29,7 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
    private volatile Set<Class> blockBeforeFilter = Collections.emptySet();
    private volatile Set<Class> blockAfterFilter = Collections.emptySet();
    private volatile Set<Class> failFilter = Collections.emptySet();
+   private final ArrayList<BiConsumer<ReplicableCommand, Map<Address, Response>>> responseChecks = new ArrayList<>();
 
    public ControlledRpcManager(RpcManager realOne) {
       super(realOne);
@@ -76,18 +80,26 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
       }
    }
 
+   public void checkResponses(Consumer<Map<Address, Response>> checker) {
+      responseChecks.add((c, rsps) -> checker.accept(rsps));
+   }
+
+   public void checkResponses(BiConsumer<ReplicableCommand, Map<Address, Response>> checker) {
+      responseChecks.add(checker);
+   }
+
    protected void waitBefore(ReplicableCommand rpcCommand) {
       waitForReplicationLatch(rpcCommand, blockBeforeFilter);
    }
 
-   protected void waitAfter(ReplicableCommand rpcCommand) {
-      waitForReplicationLatch(rpcCommand, blockAfterFilter);
+   protected boolean waitAfter(ReplicableCommand rpcCommand) {
+      return waitForReplicationLatch(rpcCommand, blockAfterFilter);
    }
 
-   protected void waitForReplicationLatch(ReplicableCommand rpcCommand, Set<Class> filter) {
+   protected boolean waitForReplicationLatch(ReplicableCommand rpcCommand, Set<Class> filter) {
       Class cmdClass = getActualClass(rpcCommand);
       if (!filter.contains(cmdClass)) {
-         return;
+         return false;
       }
 
       try {
@@ -99,6 +111,7 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
          log.debugf("Replication trigger called, waiting for latch to open.");
          replicationLatch.await(30, TimeUnit.SECONDS);
          log.trace("Replication latch opened, continuing.");
+         return true;
       } catch (Exception e) {
          throw new RuntimeException("Unexpected exception!", e);
       }
@@ -113,7 +126,9 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
 
    @Override
    protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
-      waitAfter(command);
+      if (waitAfter(command)) {
+         responseChecks.forEach(check -> check.accept(command, responseMap));
+      }
       return responseMap;
    }
 

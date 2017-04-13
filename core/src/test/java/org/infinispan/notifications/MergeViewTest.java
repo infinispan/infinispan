@@ -53,7 +53,7 @@ public class MergeViewTest extends MultipleCacheManagersTest {
    public void testMergeViewHappens() {
       discard.setDiscardAll(false);
       TestingUtil.blockUntilViewsReceived(60000, cache(0), cache(1));
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
+      TestingUtil.waitForStableTopology(cache(0), cache(1));
 
       assert ml0.isMerged && ml1.isMerged;
 

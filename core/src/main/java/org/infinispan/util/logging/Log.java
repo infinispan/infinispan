@@ -726,8 +726,8 @@ public interface Log extends BasicLogger {
    void failedLoadingKeysFromCacheStore(@Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error during rebalance for cache %s on node %s", id = 195)
-   void rebalanceError(String cacheName, Address node, @Cause Throwable cause);
+   @Message(value = "Error during rebalance for cache %s on node %s, topology id = %d", id = 195)
+   void rebalanceError(String cacheName, Address node, int topologyId, @Cause Throwable cause);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed to recover cluster state after the current node became the coordinator (or after merge)", id = 196)
@@ -1560,4 +1560,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke defineConfiguration first and then getCache. Cache name was %s", id = 454)
    void warnAttemptToOverrideExistingConfiguration(String cacheName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failure during leaver transactions cleanup", id = 455)
+   void transactionCleanupError(@Cause Throwable e);
 }

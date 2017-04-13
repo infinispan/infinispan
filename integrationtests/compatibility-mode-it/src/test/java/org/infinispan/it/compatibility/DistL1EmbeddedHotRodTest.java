@@ -31,7 +31,7 @@ public class DistL1EmbeddedHotRodTest extends AbstractInfinispanTest {
 
       List<Cache<Integer, String>> caches = Arrays.asList(cacheFactory1.getEmbeddedCache(), cacheFactory2.getEmbeddedCache());
       TestingUtil.blockUntilViewsReceived(30000, caches);
-      TestingUtil.waitForRehashToComplete(caches);
+      TestingUtil.waitForStableTopology(caches);
 
       assertTrue(cacheFactory1.getHotRodCache().isEmpty());
       assertTrue(cacheFactory2.getHotRodCache().isEmpty());

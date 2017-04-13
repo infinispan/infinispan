@@ -123,8 +123,9 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       CheckPoint checkPoint = new CheckPoint();
       ControlledRpcManager blockingRpcManager0 = blockStateResponseCommand(cache0);
 
+      int rebalanceTopologyId = preJoinTopologyId + 1;
       // Block the rebalance confirmation on cache0
-      blockRebalanceConfirmation(manager(0), checkPoint);
+      blockRebalanceConfirmation(manager(0), checkPoint, rebalanceTopologyId);
 
       // Start the joiner
       log.tracef("Starting the cache on the joiner");
@@ -133,7 +134,6 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       addClusterEnabledCacheManager(c);
 
       final AdvancedCache<Object,Object> cache1 = advancedCache(1);
-      int rebalanceTopologyId = preJoinTopologyId + 1;
 
       // Wait for the write CH to contain the joiner everywhere
       eventually(() -> cache0.getRpcManager().getMembers().size() == 2 &&
@@ -175,7 +175,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       // Allow the rebalance confirmation to proceed and wait for the topology to change everywhere
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(0));
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(1));
-      TestingUtil.waitForRehashToComplete(cache0, cache1);
+      TestingUtil.waitForStableTopology(cache0, cache1);
 
       // Check the value on all the nodes
       assertEquals(op.getValue(), cache0.get(key));
@@ -190,7 +190,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       return controlledRpcManager;
    }
 
-   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint)
+   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint, int rebalanceTopologyId)
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       ClusterTopologyManager spyManager = spy(ctm);
@@ -198,10 +198,12 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
          Object[] arguments = invocation.getArguments();
          Address source = (Address) arguments[1];
          int topologyId = (Integer) arguments[2];
-         checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-         checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+         if (topologyId == rebalanceTopologyId) {
+            checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
+            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+         }
          return invocation.callRealMethod();
-      }).when(spyManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
+      }).when(spyManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), any(Throwable.class),
             anyInt());
       TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
    }

@@ -109,7 +109,7 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
 
       // Let cache 1 receive the tx from cache 0.
       checkpoint.trigger("resume_get_transactions_" + rebalanceTopologyId + "_from_" + address(1));
-      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
+      TestingUtil.waitForStableTopology(caches(CACHE_NAME));
 
       // Wait for the txs to finish and check the results
       DataContainer dataContainer0 = TestingUtil.extractComponent(cache0, DataContainer.class);

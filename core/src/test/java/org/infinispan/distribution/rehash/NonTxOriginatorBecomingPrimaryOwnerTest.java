@@ -77,7 +77,7 @@ public class NonTxOriginatorBecomingPrimaryOwnerTest extends MultipleCacheManage
          cache1.stop();
 
          // Wait for the new topology to be installed
-         TestingUtil.waitForRehashToComplete(cache0, cache2);
+         TestingUtil.waitForStableTopology(cache0, cache2);
 
          // Resume blocking new commands
          blockingInterceptor.suspend(false);
@@ -104,7 +104,7 @@ public class NonTxOriginatorBecomingPrimaryOwnerTest extends MultipleCacheManage
 
          // Prepare for the next iteration...
          cache1.start();
-         TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
+         TestingUtil.waitForStableTopology(cache0, cache1, cache2);
       }
    }
 }

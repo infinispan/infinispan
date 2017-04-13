@@ -1,6 +1,6 @@
 package org.infinispan.tx;
 
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStableTopology;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -65,7 +65,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
    public void killedNodeDoesNotBreakReplaceCommand() throws Exception {
       defineConfigurationOnAllManagers(TEST_CACHE, new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
       waitForClusterToForm(TEST_CACHE);
-      waitForRehashToComplete(caches(TEST_CACHE));
+      waitForStableTopology(caches(TEST_CACHE));
 
       final Object replaceKey = new MagicKey("X", cache(0, TEST_CACHE));
       final Object putKey = new MagicKey("Z", cache(1, TEST_CACHE));

@@ -11,8 +11,10 @@ import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 
 /**
- * This annotation should be used on methods that need to be notified when a rehash starts or ends.  This is only fired
- * in a {@link CacheMode#DIST_SYNC} or {@link CacheMode#DIST_ASYNC} configured cache.
+ * This annotation should be used on methods that need to be notified when a rehash starts or ends.
+ * A "rehash" (or "rebalance") is the interval during which nodes are transferring data between each
+ * other. When the event with pre = false is fired all nodes have received all data; Some nodes can
+ * still keep old data, though - old data cleanup is executed after this event is fired.
  * <p/>
  * Methods annotated with this annotation should accept a single parameter, a {@link DataRehashedEvent} otherwise a
  * {@link IncorrectListenerException} will be thrown when registering your listener.

@@ -74,7 +74,7 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
             matchCommand(VersionedCommitCommand.class).matchCount(0).build())
             .before("before_commit_on_2").after("after_commit_on_2");
 
-      InvocationMatcher stateAppliedOn0Matcher = matchMethodCall("handleRebalanceCompleted")
+      InvocationMatcher stateAppliedOn0Matcher = matchMethodCall("handleRebalancePhaseConfirm")
             .withParam(1, address(1)).build();
       advanceOnGlobalComponentMethod(ss, manager(0), ClusterTopologyManager.class, stateAppliedOn0Matcher)
             .after("after_state_applied_on_1");
@@ -130,7 +130,7 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
             matchCommand(VersionedCommitCommand.class).matchCount(0).build())
             .before("before_commit_on_2").after("after_commit_on_2");
 
-      InvocationMatcher stateAppliedOn0Matcher = matchMethodCall("handleRebalanceCompleted")
+      InvocationMatcher stateAppliedOn0Matcher = matchMethodCall("handleRebalancePhaseConfirm")
             .withParam(1, address(1)).build();
       advanceOnGlobalComponentMethod(ss, manager(0), ClusterTopologyManager.class, stateAppliedOn0Matcher)
             .after("after_state_applied_on_1");

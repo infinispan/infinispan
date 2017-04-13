@@ -263,7 +263,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       Cache<Object, Object> cache = caches.get(0);
       TestingUtil.blockUntilViewsReceived(30000, caches);
       if (cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
-         TestingUtil.waitForRehashToComplete(caches);
+         TestingUtil.waitForStableTopology(caches);
       }
    }
 
@@ -671,7 +671,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       cacheManagers.remove(cacheIndex);
       if (awaitRehash && caches.size() > 0) {
          TestingUtil.blockUntilViewsReceived(60000, false, caches);
-         TestingUtil.waitForRehashToComplete(caches);
+         TestingUtil.waitForStableTopology(caches);
       }
    }
 

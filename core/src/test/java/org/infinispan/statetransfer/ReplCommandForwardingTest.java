@@ -3,7 +3,7 @@ package org.infinispan.statetransfer;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.findInterceptor;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStableTopology;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -69,7 +69,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(PutKeyValueCommand.class));
       Cache<Object, Object> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 2, c1, c2);
+      waitForStateTransfer(initialTopologyId + 4, c1, c2);
 
       Future<Object> f = fork(() -> {
          log.tracef("Initiating a put command on %s", c1);
@@ -85,7 +85,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(PutKeyValueCommand.class));
       Cache<Object, Object> c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
+      waitForStateTransfer(initialTopologyId + 8, c1, c2, c3);
 
       // Unblock the replicated command on c2 and c1
       // Neither cache will forward the command to c3
@@ -110,7 +110,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
    }
 
    private void waitForStateTransfer(int expectedTopologyId, Cache... caches) {
-      waitForRehashToComplete(caches);
+      waitForStableTopology(caches);
       for (Cache c : caches) {
          CacheTopology cacheTopology = extractComponent(c, StateTransferManager.class).getCacheTopology();
          assertEquals(String.format("Wrong topology on cache %s, expected %d and got %s", c, expectedTopologyId,

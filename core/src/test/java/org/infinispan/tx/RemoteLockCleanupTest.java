@@ -54,7 +54,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
 
       TestingUtil.killCacheManagers(manager(1));
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0));
-      TestingUtil.waitForRehashToComplete(cache(0));
+      TestingUtil.waitForStableTopology(cache(0));
 
       eventually(new Condition() {
          @Override

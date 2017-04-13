@@ -74,7 +74,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
       assertEquals(100, cq.getResultSize());
 
       addClusterEnabledCacheManager(getDefaultConfiguration());
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2), cache(3));
+      TestingUtil.waitForStableTopology(cache(0), cache(1), cache(2), cache(3));
 
       sm = Search.getSearchManager(cache(3));
       qb = sm.buildQueryBuilderForClass(VeryLongIndexNamedClass.class).get();

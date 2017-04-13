@@ -51,7 +51,7 @@ public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
 
       HotRodClientTestingUtil.killServers(newServer);
       TestingUtil.killCacheManagers(newServer.getCacheManager());
-      TestingUtil.waitForRehashToComplete(cache(0));
+      TestingUtil.waitForStableTopology(cache(0));
 
       // Execute one more operation to guarantee topology update on the client
       remote.put(-1, "minus one");

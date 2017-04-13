@@ -51,7 +51,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
       }
 
       client = new HotRodClient("127.0.0.1", servers.get(0).getPort(), "", 60, (byte) 21);
-      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
+      TestingUtil.waitForStableTopology(cache(0), cache(1));
    }
 
    @AfterClass(alwaysRun = true)
@@ -74,27 +74,27 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    }
 
    public void testNewTopologySentAfterCleanMerge(Method m) {
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForStableTopology(caches());
       int initialTopology = advancedCache(0).getRpcManager().getTopologyId();
 
       expectCompleteTopology(client, initialTopology);
       PartitionDescriptor p0 = new PartitionDescriptor(0);
       PartitionDescriptor p1 = new PartitionDescriptor(1);
       splitCluster(p0.getNodes(), p1.getNodes());
-      TestingUtil.waitForRehashToComplete(cache(p1.node(0)));
-      TestingUtil.waitForRehashToComplete(cache(p0.node(0)));
+      TestingUtil.waitForStableTopology(cache(p1.node(0)));
+      TestingUtil.waitForStableTopology(cache(p0.node(0)));
       expectPartialTopology(client, initialTopology + 1);
       partition(0).merge(partition(1));
-      eventuallyExpectCompleteTopology(client, initialTopology + 6);
+      eventuallyExpectCompleteTopology(client, initialTopology + 8);
    }
 
    public void testNewTopologySentAfterOverlappingMerge(Method m) {
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForStableTopology(caches());
       int initialTopology = advancedCache(0).getRpcManager().getTopologyId();
       expectCompleteTopology(client, initialTopology);
       PartitionDescriptor p1 = new PartitionDescriptor(0);
       isolatePartition(p1.getNodes());
-      TestingUtil.waitForRehashToComplete(cache(p1.node(0)));
+      TestingUtil.waitForStableTopology(cache(p1.node(0)));
       eventuallyExpectPartialTopology(client, initialTopology + 1);
 
       partition(0).merge(partition(1));

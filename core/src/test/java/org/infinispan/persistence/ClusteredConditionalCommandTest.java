@@ -2,7 +2,7 @@ package org.infinispan.persistence;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getFirstWriter;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStableTopology;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -104,7 +104,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
 
    private void doTest(List<Cache<String, String>> cacheList, ConditionalOperation operation, Ownership ownership,
                        Flag flag, boolean shared) {
-      waitForRehashToComplete(cacheList);
+      waitForStableTopology(cacheList);
       final CacheHelper<String, String> cacheHelper = create(cacheList);
       final boolean skipLoad = flag == Flag.SKIP_CACHE_LOAD || flag == Flag.SKIP_CACHE_STORE;
       assertEmpty(cacheList);

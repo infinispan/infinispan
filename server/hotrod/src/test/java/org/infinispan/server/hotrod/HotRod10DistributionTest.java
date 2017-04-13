@@ -77,7 +77,7 @@ public class HotRod10DistributionTest extends HotRodMultiNodeTest {
       assertTopologyReceived(resp.topologyResponse, servers(), currentServerTopologyId());
 
       resp = client1.put(k(m), 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE,
-                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount());
+                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
       assertStatus(resp, Success);
       assertEquals(resp.topologyResponse, null);
       assertSuccess(client2.get(k(m), 0), v(m, "v3-"));
@@ -115,12 +115,12 @@ public class HotRod10DistributionTest extends HotRodMultiNodeTest {
          log.trace("Stopping new server");
          killClient(newClient);
          stopClusteredServer(newServer);
-         TestingUtil.waitForRehashToComplete(cache(0, cacheName()), cache(1, cacheName()));
+         TestingUtil.waitForStableTopology(cache(0, cacheName()), cache(1, cacheName()));
          log.trace("New server stopped");
       }
 
       resp = client2.put(k(m), 0, 0, v(m, "v8-"), INTELLIGENCE_HASH_DISTRIBUTION_AWARE,
-                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + nodeCount());
+                         ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount());
       assertStatus(resp, Success);
       assertHashTopology10Received(resp.topologyResponse, servers(), cacheName(), currentServerTopologyId());
 

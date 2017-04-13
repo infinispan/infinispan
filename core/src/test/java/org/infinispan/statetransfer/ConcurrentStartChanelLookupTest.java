@@ -3,7 +3,7 @@ package org.infinispan.statetransfer;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.blockUntilViewsReceived;
 import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
-import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
+import static org.infinispan.test.TestingUtil.waitForStableTopology;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.ByteArrayInputStream;
@@ -88,7 +88,7 @@ public class ConcurrentStartChanelLookupTest extends MultipleCacheManagersTest {
          Cache<String, String> c2r = cm2.getCache(CACHE_NAME);
 
          blockUntilViewsReceived(10000, cm1, cm2);
-         waitForRehashToComplete(c1r, c2r);
+         waitForStableTopology(c1r, c2r);
 
          c1r.put("key", "value");
          assertEquals("value", c2r.get("key"));

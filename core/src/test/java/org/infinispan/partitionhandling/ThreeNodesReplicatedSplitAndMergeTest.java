@@ -55,7 +55,7 @@ public class ThreeNodesReplicatedSplitAndMergeTest extends BasePartitionHandling
 
       splitCluster(p0.getNodes(), p1.getNodes());
 
-      TestingUtil.waitForRehashToComplete(cache(p0.node(0)), cache(p0.node(1)));
+      TestingUtil.waitForStableTopology(cache(p0.node(0)), cache(p0.node(1)));
       partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
       partition(1).assertAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
       assertStableTopologyMembers(allMembers, partitionHandlingManager(p1.node(0)));

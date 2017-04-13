@@ -70,7 +70,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
       participants = getAliveParticipants(indexToKill);
 
       TestingUtil.blockUntilViewsReceived(60000, false, participants);
-      TestingUtil.waitForRehashToComplete(participants);
+      TestingUtil.waitForStableTopology(participants);
 
       //one of the participants must not have a prepare on it
       boolean noLocks = false;

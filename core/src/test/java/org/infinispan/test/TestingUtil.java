@@ -223,9 +223,14 @@ public class TestingUtil {
             .findInterceptorExtending(interceptorToFind);
    }
 
-   public static void waitForRehashToComplete(Cache... caches) {
-      final int REHASH_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
-      final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REHASH_TIMEOUT_SECONDS);
+   /**
+    * Waits until pendingCH() is null on all caches, currentCH.getMembers() contains all caches provided as the param
+    * and all segments have numOwners owners.
+    * @param caches
+    */
+   public static void waitForStableTopology(Cache... caches) {
+      final int REBALANCE_TIMEOUT_SECONDS = 60; //Needs to be rather large to prevent sporadic failures on CI
+      final long giveup = System.nanoTime() + TimeUnit.SECONDS.toNanos(REBALANCE_TIMEOUT_SECONDS);
       for (Cache c : caches) {
          if (c instanceof SecureCacheImpl) {
             c = (Cache) extractField(SecureCacheImpl.class, c, "delegate");
@@ -286,8 +291,8 @@ public class TestingUtil {
       }
    }
 
-   public static void waitForRehashToComplete(Collection<? extends Cache> caches) {
-      waitForRehashToComplete(caches.toArray(new Cache[caches.size()]));
+   public static void waitForStableTopology(Collection<? extends Cache> caches) {
+      waitForStableTopology(caches.toArray(new Cache[caches.size()]));
    }
 
    /**

@@ -240,13 +240,13 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
          manager(KILLED_INDEX).stop();
       }
       if (waitForStateTransfer) {
-         TestingUtil.waitForRehashToComplete(originatorCache, otherCache);
+         TestingUtil.waitForStableTopology(originatorCache, otherCache);
       }
    }
 
    private void checkValue(Object key, String value) {
       if (!waitForStateTransfer) {
-         TestingUtil.waitForRehashToComplete(originatorCache, otherCache);
+         TestingUtil.waitForStableTopology(originatorCache, otherCache);
       }
       log.tracef("Checking key: %s", key);
       InternalCacheEntry d0 = advancedCache(ORIGINATOR_INDEX).getDataContainer().get(key);

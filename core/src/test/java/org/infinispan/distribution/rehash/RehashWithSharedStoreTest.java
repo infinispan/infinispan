@@ -64,7 +64,7 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest {
 
 
       TestingUtil.blockUntilViewsReceived(60000, false, caches);
-      TestingUtil.waitForRehashToComplete(caches);
+      TestingUtil.waitForStableTopology(caches);
 
 
       owners = getOwners(k);

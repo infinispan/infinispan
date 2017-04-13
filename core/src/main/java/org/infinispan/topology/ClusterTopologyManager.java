@@ -30,7 +30,7 @@ public interface ClusterTopologyManager {
    /**
     * Marks the rebalance as complete on the sender.
     */
-   void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
+   void handleRebalancePhaseConfirm(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
 
    void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed);
 

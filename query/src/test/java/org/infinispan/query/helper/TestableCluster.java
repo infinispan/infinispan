@@ -32,7 +32,7 @@ public class TestableCluster<K, V> {
       cacheManagers.add(cacheManager);
       Cache<K, V> cache = cacheManager.getCache();
       caches.add(cache);
-      waitForRehashToComplete(cache, caches);
+      waitForStableTopology(cache, caches);
       return cacheManager;
    }
 
@@ -55,12 +55,12 @@ public class TestableCluster<K, V> {
       TestingUtil.killCacheManagers(cacheManager);
       assertTrue(caches.remove(cache));
       assertTrue(cacheManagers.remove(cacheManager));
-      waitForRehashToComplete(cache, caches);
+      waitForStableTopology(cache, caches);
    }
 
-   private static <K, V> void waitForRehashToComplete(Cache<K, V> cache, List<Cache<K, V>> caches) {
+   private static <K, V> void waitForStableTopology(Cache<K, V> cache, List<Cache<K, V>> caches) {
       if (cache.getCacheConfiguration().clustering().cacheMode() != CacheMode.LOCAL) {
-         TestingUtil.waitForRehashToComplete(caches);
+         TestingUtil.waitForStableTopology(caches);
       }
    }
 

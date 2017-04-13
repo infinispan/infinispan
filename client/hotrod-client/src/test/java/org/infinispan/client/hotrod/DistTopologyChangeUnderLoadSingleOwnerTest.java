@@ -50,7 +50,7 @@ public class DistTopologyChangeUnderLoadSingleOwnerTest extends MultiHotRodServe
       EmbeddedCacheManager toKillCacheManager = cacheManagers.get(0);
       TestingUtil.killCacheManagers(toKillCacheManager);
       cacheManagers.remove(toKillCacheManager);
-      TestingUtil.waitForRehashToComplete(cache(0));
+      TestingUtil.waitForStableTopology(cache(0));
 
       // Start server
       addHotRodServer(getCacheConfiguration());
