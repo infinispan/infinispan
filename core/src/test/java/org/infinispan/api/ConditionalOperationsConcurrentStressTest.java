@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  * @see java.util.concurrent.ConcurrentMap#replace(Object, Object, Object)
  * @since 7.0
  */
-@Test(groups = "stress", testName = "api.ConditionalOperationsConcurrentStressTest")
+@Test(groups = "stress", testName = "api.ConditionalOperationsConcurrentStressTest", timeOut = 30*60*1000)
 public class ConditionalOperationsConcurrentStressTest extends ConditionalOperationsConcurrentTest {
    public ConditionalOperationsConcurrentStressTest() {
       super(3, 500, 4);

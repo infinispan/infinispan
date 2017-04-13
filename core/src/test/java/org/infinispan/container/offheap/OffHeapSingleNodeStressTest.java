@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 /**
  */
-@Test(groups = "stress", testName = "container.offheap.OffHeapSingleNodeStressTest")
+@Test(groups = "stress", testName = "container.offheap.OffHeapSingleNodeStressTest", timeOut = 30*60*1000)
 public class OffHeapSingleNodeStressTest extends OffHeapMultiNodeStressTest {
 
    @Override
