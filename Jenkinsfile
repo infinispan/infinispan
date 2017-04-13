@@ -49,11 +49,13 @@ pipeline {
                 branch 'master'
             }
             steps {
-                configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    script {
-                        def mvnHome = tool 'Maven'
-                        sh "${mvnHome}/bin/mvn clean install -s $MAVEN_SETTINGS -pl core,client/hotrod-client,persistence/leveldb,persistence/remote,persistence/soft-index,query -Ptest-CI,mongodb,nonParallel -Dinfinispan.test.jta.tm=jbosstm -DdefaultTestGroup=stress -DdefaultExcludedTestGroup=unstable,functional,unit,arquillian,unstable_xsite -Dinfinispan.test.parallel.threads=1 -Dmaven.test.failure.ignore=true || true"
-                        junit testDataPublishers: [[$class: 'ClaimTestDataPublisher']], testResults: '**/target/*-reports/*.xml'
+                timeout(time: 4, unit: 'HOURS') {
+                    configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
+                        script {
+                            def mvnHome = tool 'Maven'
+                            sh "${mvnHome}/bin/mvn clean install -s $MAVEN_SETTINGS -pl core,client/hotrod-client,persistence/leveldb,persistence/remote,persistence/soft-index,query -Ptest-CI,mongodb,nonParallel -Dinfinispan.test.jta.tm=jbosstm -DdefaultTestGroup=stress -DdefaultExcludedTestGroup=unstable,functional,unit,arquillian,unstable_xsite -Dinfinispan.test.parallel.threads=1 -Dmaven.test.failure.ignore=true || true"
+                            junit testDataPublishers: [[$class: 'ClaimTestDataPublisher']], testResults: '**/target/*-reports/*.xml'
+                        }
                     }
                 }
             }
