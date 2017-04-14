@@ -45,7 +45,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 8.0
  */
-@Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest", timeOut = 30*60*1000)
+@Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest", timeOut = 15*60*1000)
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
 public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();

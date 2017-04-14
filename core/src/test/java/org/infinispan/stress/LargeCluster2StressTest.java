@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
  * @since 7.2
  */
 @CleanupAfterTest
-@Test(groups = "stress", testName = "stress.LargeCluster2StressTest", timeOut = 30*60*1000)
+@Test(groups = "stress", testName = "stress.LargeCluster2StressTest", timeOut = 15*60*1000)
 public class LargeCluster2StressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_NODES = 10;

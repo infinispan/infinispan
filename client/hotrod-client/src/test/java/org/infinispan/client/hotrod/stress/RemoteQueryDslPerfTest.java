@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 7.2
  */
-@Test(groups = "stress", testName = "client.hotrod.stress.RemoteQueryDslPerfTest", timeOut = 30*60*1000)
+@Test(groups = "stress", testName = "client.hotrod.stress.RemoteQueryDslPerfTest", timeOut = 15*60*1000)
 public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
 
    protected HotRodServer hotRodServer;

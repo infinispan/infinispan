@@ -30,7 +30,7 @@ import org.infinispan.transaction.LockingMode;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
-@Test(groups = "stress", testName = "partitionhandling.PartitionStressTest", timeOut = 30*60*1000)
+@Test(groups = "stress", testName = "partitionhandling.PartitionStressTest", timeOut = 15*60*1000)
 public class PartitionStressTest extends MultipleCacheManagersTest {
 
    public static final int NUM_NODES = 4;
