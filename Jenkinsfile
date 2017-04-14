@@ -29,7 +29,7 @@ pipeline {
             }
         }
 
-        stage('Clear previous build') {
+        stage('Clear previous build 1') {
             //when {
               //  branch 'master'
             //}
@@ -58,7 +58,7 @@ pipeline {
             }
         }
         
-        stage('Clear previous build') {
+        stage('Clear previous build 2') {
             //when {
               //  branch 'master'
             //}
@@ -89,7 +89,7 @@ pipeline {
             }
         }
         
-        stage('Clear previous build') {
+        stage('Clear previous build 3') {
             //when {
               //  branch 'master'
             //}
