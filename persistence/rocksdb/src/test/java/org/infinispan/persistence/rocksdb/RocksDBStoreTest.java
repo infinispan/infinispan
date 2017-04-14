@@ -52,12 +52,12 @@ public class RocksDBStoreTest extends BaseStoreTest {
       return fcs;
    }
 
-   @Test(groups = "stress", timeOut = 30*60*1000)
+   @Test(groups = "stress", timeOut = 15*60*1000)
    public void testConcurrentWriteAndRestart() {
       concurrentWriteAndRestart(true);
    }
 
-   @Test(groups = "stress", timeOut = 30*60*1000)
+   @Test(groups = "stress", timeOut = 15*60*1000)
    public void testConcurrentWriteAndStop() {
       concurrentWriteAndRestart(true);
    }
