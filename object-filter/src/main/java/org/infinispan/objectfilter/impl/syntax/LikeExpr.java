@@ -1,5 +1,7 @@
 package org.infinispan.objectfilter.impl.syntax;
 
+import java.util.Map;
+
 /**
  * @author anistor@redhat.com
  * @since 7.0
@@ -13,10 +15,10 @@ public final class LikeExpr implements PrimaryPredicateExpr {
    public static final char DEFAULT_ESCAPE_CHARACTER = '\\';
 
    private final ValueExpr child;
-   private final String pattern;
+   private final Object pattern;
    private final char escapeChar = DEFAULT_ESCAPE_CHARACTER;
 
-   public LikeExpr(ValueExpr child, String pattern) {
+   public LikeExpr(ValueExpr child, Object pattern) {
       this.child = child;
       this.pattern = pattern;
    }
@@ -26,8 +28,20 @@ public final class LikeExpr implements PrimaryPredicateExpr {
       return child;
    }
 
-   public String getPattern() {
-      return pattern;
+   public String getPattern(Map<String, Object> namedParameters) {
+      if (pattern instanceof ConstantValueExpr.ParamPlaceholder) {
+         String paramName = ((ConstantValueExpr.ParamPlaceholder) pattern).getName();
+         if (namedParameters == null) {
+            throw new IllegalStateException("Missing value for parameter " + paramName);
+         }
+         String p = (String) namedParameters.get(paramName);
+         if (p == null) {
+            throw new IllegalStateException("Missing value for parameter " + paramName);
+         }
+         return p;
+      } else {
+         return (String) pattern;
+      }
    }
 
    public char getEscapeChar() {
