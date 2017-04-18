@@ -425,7 +425,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    @Override
    public Query visit(LikeExpr likeExpr) {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
-      StringBuilder lucenePattern = new StringBuilder(likeExpr.getPattern());
+      StringBuilder lucenePattern = new StringBuilder(likeExpr.getPatternAs(namedParameters));
       // transform 'Like' pattern into Lucene wildcard pattern
       boolean isEscaped = false;
       for (int i = 0; i < lucenePattern.length(); i++) {

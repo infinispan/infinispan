@@ -305,9 +305,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
       checkAnalyzed(property, false);
       if (phase == Phase.WHERE) {
-         whereBuilder.addLike(property, (String) pattern, escapeCharacter);
+         whereBuilder.addLike(property, pattern, escapeCharacter);
       } else if (phase == Phase.HAVING) {
-         havingBuilder.addLike(property, (String) pattern, escapeCharacter);
+         havingBuilder.addLike(property, pattern, escapeCharacter);
       } else {
          throw new IllegalStateException();
       }
