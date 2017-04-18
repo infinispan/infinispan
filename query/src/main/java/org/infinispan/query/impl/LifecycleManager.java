@@ -315,12 +315,25 @@ public class LifecycleManager extends AbstractModuleLifecycle {
                indexedEntities = new Class[0];
             }
          }
+         allowDynamicSortingByDefault(indexingProperties);
          // Set up the search factory for Hibernate Search first.
          SearchConfiguration config = new SearchableCacheConfiguration(indexedEntities, indexingProperties, uninitializedCacheManager, cr);
          searchFactory = new SearchIntegratorBuilder().configuration(config).buildSearchIntegrator();
          cr.registerComponent(searchFactory, SearchIntegrator.class);
       }
       return searchFactory;
+   }
+
+   /**
+    * Dynamic index uninverting is deprecated: using it will cause warnings to be logged,
+    * to encourage people to use the annotation org.hibernate.search.annotations.SortableField.
+    * The default in Hibernate Search is to throw an exception rather than logging a warning;
+    * we opt to be more lenient by default in the Infinispan use case, matching the behaviour
+    * of previous versions of Hibernate Search.
+    * @param indexingProperties
+    */
+   private void allowDynamicSortingByDefault(Properties indexingProperties) {
+      indexingProperties.putIfAbsent( Environment.INDEX_UNINVERTING_ALLOWED, Boolean.TRUE.toString() );
    }
 
    private Properties addProgrammaticMappings(Properties indexingProperties, ComponentRegistry cr) {
