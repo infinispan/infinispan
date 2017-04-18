@@ -46,7 +46,7 @@ public class RemoveClientListenerOperation extends HotRodOperation {
             transport.writeArray(listenerId);
             transport.flush();
             short status = readHeaderAndValidate(transport, params);
-            if (HotRodConstants.isSuccess(status))
+            if (HotRodConstants.isSuccess(status) || HotRodConstants.isNotExecuted(status))
                listenerNotifier.removeClientListener(listenerId);
          } finally {
             transportFactory.releaseTransport(transport);
