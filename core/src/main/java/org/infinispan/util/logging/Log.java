@@ -1121,10 +1121,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Starting cluster-wide rebalance for cache %s, topology %s", id = 310)
    void startRebalance(String cacheName, CacheTopology cacheTopology);
 
-   @LogMessage(level = DEBUG)
-   @Message(value = "Received a command from an outdated topology, returning the exception to caller", id = 311)
-   void outdatedTopology(@Cause Throwable oe);
-
    // Messages between 312 and 320 have been moved to the org.infinispan.util.logging.events.Messages class
 
    @LogMessage(level = WARN)

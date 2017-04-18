@@ -118,7 +118,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final ExceptionResponse outdatedTopology(OutdatedTopologyException exception) {
-      getLog().outdatedTopology(exception);
+      getLog().tracef("Topology changed, notifying the originator: %s", exception);
       return new ExceptionResponse(exception);
    }
 
