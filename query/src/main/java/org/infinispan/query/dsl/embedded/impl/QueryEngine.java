@@ -208,7 +208,8 @@ public class QueryEngine<TypeMetadata> {
             return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
          }
          if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
-            havingClause = SyntaxTreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityMetadata(), columns, propertyHelper));
+            havingClause = SyntaxTreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityMetadata(),
+                    columns, namedParameters, propertyHelper));
          }
       }
 
@@ -312,7 +313,7 @@ public class QueryEngine<TypeMetadata> {
     */
    private BooleanExpr swapVariables(BooleanExpr expr, TypeMetadata targetEntityMetadata,
                                      LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns,
-                                     ObjectPropertyHelper<TypeMetadata> propertyHelper) {
+                                     Map<String, Object> namedParameters, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       class PropertyReplacer extends ExprVisitor {
 
          @Override
@@ -355,7 +356,7 @@ public class QueryEngine<TypeMetadata> {
 
          @Override
          public BooleanExpr visit(LikeExpr likeExpr) {
-            return new LikeExpr(likeExpr.getChild().acceptVisitor(this), likeExpr.getPattern());
+            return new LikeExpr(likeExpr.getChild().acceptVisitor(this), likeExpr.getPattern(namedParameters));
          }
 
          @Override

@@ -93,7 +93,7 @@ final class ExpressionBuilder<TypeMetadata> {
       push(new OrExpr(children));
    }
 
-   public void addLike(PropertyPath<?> propertyPath, String patternValue, Character escapeCharacter) {
+   public void addLike(PropertyPath<?> propertyPath, Object patternValue, Character escapeCharacter) {
       // TODO [anistor] escapeCharacter is ignored for now
       push(new LikeExpr(makePropertyValueExpr(propertyPath), patternValue));
    }
