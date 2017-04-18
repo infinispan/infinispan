@@ -3,10 +3,9 @@ package org.infinispan.query.distributed;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
+import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
 
 /**
@@ -23,7 +22,8 @@ public class TopologyAwareDistMassIndexingTest extends DistributedMassIndexingTe
                      .clustering().stateTransfer().fetchInMemoryState(true).build();
                holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME).read(cacheCfg1);
                holder.newConfigurationBuilder(InfinispanIntegration.DEFAULT_LOCKING_CACHENAME).read(cacheCfg1);
-            });
+            },
+            Car.class);
 
       for(Object cache : caches) {
          Cache cacheObj = (Cache) cache;
