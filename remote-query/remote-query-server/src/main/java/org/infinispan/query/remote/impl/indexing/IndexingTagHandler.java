@@ -29,13 +29,13 @@ final class IndexingTagHandler implements TagHandler {
    private static final NullMarkerCodec NULL_TOKEN_CODEC = new LuceneStringNullMarkerCodec(new ToStringNullMarker(IndexingMetadata.DEFAULT_NULL_TOKEN));
 
    private static final LuceneOptions NOT_STORED_NOT_ANALYZED = new LuceneOptionsImpl(
-         new DocumentFieldMetadata.Builder(new BackReference<>(), new BackReference<>(), null, Store.NO, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
+         new DocumentFieldMetadata.Builder(BackReference.empty(), BackReference.empty(), null, null, Store.NO, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
                .indexNullAs(NULL_TOKEN_CODEC)
                .boost(1.0F)
                .build(), 1.0F, 1.0F);
 
    private static final LuceneOptions STORED_NOT_ANALYZED = new LuceneOptionsImpl(
-         new DocumentFieldMetadata.Builder(new BackReference<>(), new BackReference<>(), null, Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
+         new DocumentFieldMetadata.Builder(BackReference.empty(), BackReference.empty(), null, null, Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
                .indexNullAs(NULL_TOKEN_CODEC)
                .boost(1.0F)
                .build(), 1.0F, 1.0F);
