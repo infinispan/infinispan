@@ -1568,13 +1568,13 @@
                      <groupId>org.apache.maven.plugins</groupId>
                      <artifactId>maven-compiler-plugin</artifactId>
                      <configuration>
-                        
+
                         <fork>true</fork>
                         <compilerArgs>
                            <arg>-J--add-modules</arg>
                            <arg>-Jjava.xml.ws.annotation</arg>
-                           
-                           
+
+
                         </compilerArgs>
                      </configuration>
                   </plugin>
@@ -1640,19 +1640,9 @@
          <id>test-xsite</id>
          <properties>
             <defaultTestGroup>xsite</defaultTestGroup>
+            <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <threadCount>1</threadCount>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
       </profile>
       <profile>
          <id>test-unstable</id>
@@ -1667,8 +1657,8 @@
          <id>test-stress</id>
          <properties>
             <defaultTestGroup>stress</defaultTestGroup>
-
             <defaultExcludedTestGroup />
+            <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>

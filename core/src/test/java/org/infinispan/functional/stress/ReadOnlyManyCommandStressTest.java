@@ -17,7 +17,7 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
-@Test(groups = "stress", timeOut = 15*60*1000)
+@Test(groups = "stress", testName = "ReadOnlyManyCommandStressTest", timeOut = 15*60*1000)
 @InCacheMode(CacheMode.DIST_SYNC)
 public class ReadOnlyManyCommandStressTest extends GetAllCommandStressTest {
 
