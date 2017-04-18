@@ -31,6 +31,7 @@ public class AccountHS implements Account, Serializable, ExternalPojo {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @DateBridge(encoding=EncodingType.STRING, resolution=Resolution.MILLISECOND)
+   @SortableField
    private Date creationDate;
 
    public int getId() {
