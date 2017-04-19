@@ -98,39 +98,12 @@
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>unpack-es-plugins</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.elasticsearch.plugin</groupId>
-                                    <artifactId>delete-by-query</artifactId>
-                                    <version>${version.elasticsearch}</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/plugins/delete-by-query
-                                    </outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>com.github.alexcojocaru</groupId>
                 <artifactId>elasticsearch-maven-plugin</artifactId>
-                <version>2.3</version>
                 <configuration>
+                    <version>${version.elasticsearch}</version>
                     <skip>${skipTests}</skip>
-                    <clusterName>test</clusterName>
-                    <pluginsPath>${project.build.directory}/plugins/</pluginsPath>
+                    <clusterName>elasticTestCluster</clusterName>
                     <tcpPort>9300</tcpPort>
                     <httpPort>9200</httpPort>
                 </configuration>
@@ -139,7 +112,7 @@
                         <id>start-elasticsearch</id>
                         <phase>pre-integration-test</phase>
                         <goals>
-                            <goal>start</goal>
+                            <goal>runforked</goal>
                         </goals>
                     </execution>
                     <execution>
@@ -150,13 +123,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.elasticsearch</groupId>
-                        <artifactId>elasticsearch</artifactId>
-                        <version>${version.elasticsearch}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>
