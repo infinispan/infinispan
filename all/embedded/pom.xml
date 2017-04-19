@@ -285,6 +285,15 @@
                            <pattern>com.mchange</pattern>
                            <shadedPattern>infinispan.com.mchange</shadedPattern>
                         </relocation>
+                        <!-- Unfortunatelly because of https://issues.jboss.org/browse/ISPN-6093
+                             and https://bugzilla.redhat.com/show_bug.cgi?id=1266831 we cannot relocate
+                             logging module, otherwise some integration modules might miss it
+                             when both Uber jar as well as ISPN commons are on classpath
+                          -->
+                        <!-- <relocation>
+                           <pattern>org.jboss.logging</pattern>
+                           <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
+                        </relocation> -->
                      </relocations>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">

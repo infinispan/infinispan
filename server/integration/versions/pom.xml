@@ -42,12 +42,15 @@
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.apache.logging.log4j>2.3</version.org.apache.logging.log4j>
 
+      <!-- WildFly dependencies -->
       <version.org.wildfly>10.1.0.Final</version.org.wildfly>
       <version.org.wildfly.core>2.2.0.Final</version.org.wildfly.core>
       <version.org.wildfly.arquillian>1.1.0.Beta1</version.org.wildfly.arquillian>
       <version.remoting.jmx.wildfly>2.0.1.Final</version.remoting.jmx.wildfly>
       <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
+      <!-- JavaEE Spec dependencies -->
       <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.0.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
+      <!-- Infinispan Server dependencies -->
       <version.org.wildfly.extras.creaper>1.1.0</version.org.wildfly.extras.creaper>
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
@@ -80,6 +83,7 @@
             <scope>import</scope>
          </dependency>
 
+         <!-- Core Modules -->
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-parent</artifactId>
@@ -101,7 +105,7 @@
             <type>zip</type>
             <version>${version.org.wildfly}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-security</artifactId>
