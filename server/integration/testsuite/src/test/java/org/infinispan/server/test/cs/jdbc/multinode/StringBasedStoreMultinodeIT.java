@@ -54,7 +54,7 @@ public class StringBasedStoreMultinodeIT extends AbstractJdbcStoreMultinodeIT {
 
             startContainer(controller, CONTAINER2, CONFIG_FETCH_STATE_2);
             mc2 = createMemcachedClient(server2);
-            assertEquals(2, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
+            assertEquals(3, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
             assertEquals(1, dbServer2.stringTable.getAllKeys().size());
 
             String evictedKey = dbServer2.stringTable.getAllKeys().get(0);
