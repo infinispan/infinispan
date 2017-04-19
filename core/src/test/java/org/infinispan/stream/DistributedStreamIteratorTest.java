@@ -243,7 +243,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       checkPoint.awaitStrict("pre_iterator_invoked", 10, TimeUnit.SECONDS);
 
       // Now kill the cache - we should recover and get appropriate values
-      killMember(1, CACHE_NAME);
+      killMember(1, CACHE_NAME, false);
 
       // Now let them process the results
       checkPoint.triggerForever("pre_iterator_released");
