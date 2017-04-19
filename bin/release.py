@@ -9,17 +9,19 @@ import tempfile
 from datetime import *
 from multiprocessing import Process
 from utils import *
+from xml.etree.ElementTree import *
 
-try:
-  from xml.etree.ElementTree import ElementTree
-except:
-  prettyprint('''
-        Welcome to the Infinispan Release Script.
-        This release script requires that you use at least Python 2.5.0.  It appears
-        that you do not have the ElementTree XML APIs available, which are available
-        by default in Python 2.5.0.
-        ''', Levels.FATAL)
-  sys.exit(1)
+
+# TreeBuilder that preserves comments
+class CommentedTreeBuilder(TreeBuilder):
+  def __init__(self, *args, **kwargs):
+    super(CommentedTreeBuilder, self).__init__(*args, **kwargs)
+
+  def comment(self, data):
+    self.start(Comment, {})
+    self.data(data)
+    self.end(Comment)
+
 
 modules = []
 uploader = None
@@ -31,7 +33,8 @@ def get_modules(directory):
     f = directory + "/pom.xml"
     if settings['verbose']:
       print "Parsing %s to get a list of modules in project" % f
-    tree.parse(f)        
+    parser = XMLParser(target=CommentedTreeBuilder())
+    tree.parse(f, parser=parser)
     mods = tree.findall(".//{%s}module" % maven_pom_xml_namespace)
     for m in mods:
         modules.append(m.text)
@@ -101,7 +104,8 @@ def patch(pom_file, version):
   if settings['verbose']:
     prettyprint("Patching %s" % pom_file, Levels.DEBUG)
   tree = ElementTree()
-  tree.parse(pom_file)    
+  parser = XMLParser(target=CommentedTreeBuilder())
+  tree.parse(pom_file, parser=parser)
   need_to_write = False
   
   tags = []
@@ -162,7 +166,8 @@ def update_versions(base_dir, version):
 
 def get_module_name(pom_file):
   tree = ElementTree()
-  tree.parse(pom_file)
+  parser = XMLParser(target=CommentedTreeBuilder())
+  tree.parse(pom_file, parser=parser)
   return tree.findtext("./{%s}artifactId" % maven_pom_xml_namespace)
 
 
