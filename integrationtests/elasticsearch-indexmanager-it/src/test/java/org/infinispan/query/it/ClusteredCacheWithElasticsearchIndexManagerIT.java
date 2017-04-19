@@ -1,6 +1,5 @@
 package org.infinispan.query.it;
 
-import org.hibernate.search.elasticsearch.impl.ElasticsearchIndexManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -35,10 +34,8 @@ public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCach
         cacheCfg.clustering().hash().keyPartitioner(new AffinityPartitioner());
         cacheCfg.indexing()
                 .index(Index.LOCAL)
-                .addIndexedEntity(Person.class)
-                .addProperty("default.indexmanager", ElasticsearchIndexManager.class.getName())
-                .addProperty("default.elasticsearch.refresh_after_write", "true")
-                .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
+                .addIndexedEntity(Person.class);
+        ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
         List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
         cache1 = caches.get(0);
         cache2 = caches.get(1);

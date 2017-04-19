@@ -20,11 +20,8 @@ public class ElasticSearchMassIndexingIT extends DistributedMassIndexingTest {
     protected void createCacheManagers() throws Throwable {
         ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
         cacheCfg.indexing().index(Index.LOCAL)
-                .addIndexedEntity(Car.class)
-                .addProperty("default.indexmanager", "elasticsearch")
-                .addProperty("default.elasticsearch.refresh_after_write", "true")
-                .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
-                .addProperty("lucene_version", "LUCENE_CURRENT");
+                .addIndexedEntity(Car.class);
+        ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
         List<Cache<Object, Object>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
         defineConfigurationOnAllManagers("default", cacheCfg);
         ConfigurationBuilder indexCache = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
