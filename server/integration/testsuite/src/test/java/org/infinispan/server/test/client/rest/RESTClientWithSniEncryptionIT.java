@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
 @Category({Security.class})
-@WithRunningServer({@RunningServer(name = "restSslWithSni", config = "testsuite/rest-ssl-with-sni.xml")})
+@WithRunningServer({@RunningServer(name = "restSslWithSni")})
 public class RESTClientWithSniEncryptionIT {
 
    protected static final String DEFAULT_TRUSTSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator
@@ -33,7 +33,7 @@ public class RESTClientWithSniEncryptionIT {
    protected static final String DEFAULT_TRUSTSTORE_PASSWORD = "secret";
 
 
-   @InfinispanResource("hotrodSslWithSni")
+   @InfinispanResource("restSslWithSni")
    RemoteInfinispanServer ispnServer;
 
    RESTHelper rest;
