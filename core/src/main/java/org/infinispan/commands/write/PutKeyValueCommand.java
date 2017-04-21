@@ -223,6 +223,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       successful = false;
    }
 
+   @Override
+   public boolean isReturnValueExpected() {
+      return isConditional() || super.isReturnValueExpected();
+   }
+
    private Object performPut(MVCCEntry<Object, Object> e, InvocationContext ctx) {
       Object entryValue = e.getValue();
       Object o;
