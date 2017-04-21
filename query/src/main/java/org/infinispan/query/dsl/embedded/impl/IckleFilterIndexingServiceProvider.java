@@ -16,23 +16,23 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(FilterIndexingServiceProvider.class)
 @SuppressWarnings("unused")
-public class JPAFilterIndexingServiceProvider extends BaseJPAFilterIndexingServiceProvider {
+public class IckleFilterIndexingServiceProvider extends BaseJPAFilterIndexingServiceProvider {
 
    @Override
    public boolean supportsFilter(IndexedFilter<?, ?, ?> indexedFilter) {
-      return indexedFilter.getClass() == JPACacheEventFilterConverter.class;
+      return indexedFilter.getClass() == IckleCacheEventFilterConverter.class;
    }
 
    protected Matcher getMatcher(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getMatcher();
+      return ((IckleCacheEventFilterConverter) indexedFilter).filterAndConverter.getMatcher();
    }
 
    protected String getQueryString(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getQueryString();
+      return ((IckleCacheEventFilterConverter) indexedFilter).filterAndConverter.getQueryString();
    }
 
    protected Map<String, Object> getNamedParameters(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPACacheEventFilterConverter) indexedFilter).filterAndConverter.getNamedParameters();
+      return ((IckleCacheEventFilterConverter) indexedFilter).filterAndConverter.getNamedParameters();
    }
 
    @Override

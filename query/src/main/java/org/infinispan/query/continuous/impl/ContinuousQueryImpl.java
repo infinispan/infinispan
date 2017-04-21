@@ -46,8 +46,8 @@ public final class ContinuousQueryImpl<K, V> implements ContinuousQuery<K, V> {
    @Override
    public <C> void addContinuousQueryListener(String queryString, Map<String, Object> namedParameters, ContinuousQueryListener<K, C> listener) {
       EntryListener<K, V, C> entryListener = new EntryListener<>(listener);
-      JPAContinuousQueryCacheEventFilterConverter<K, V, ContinuousQueryResult<V>> filterConverter
-            = new JPAContinuousQueryCacheEventFilterConverter<>(queryString, namedParameters, ReflectionMatcher.class);
+      IckleContinuousQueryCacheEventFilterConverter<K, V, ContinuousQueryResult<V>> filterConverter
+            = new IckleContinuousQueryCacheEventFilterConverter<>(queryString, namedParameters, ReflectionMatcher.class);
       cache.addListener(entryListener, filterConverter, null);
       listeners.add(entryListener);
    }

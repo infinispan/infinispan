@@ -18,7 +18,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
@@ -28,16 +28,16 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Test(groups = "functional", testName = "query.dsl.embedded.JPAFilterAndConverterDistTest")
-public class JPAFilterAndConverterDistTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "query.dsl.embedded.IckleFilterAndConverterDistTest")
+public class IckleFilterAndConverterDistTest extends MultipleCacheManagersTest {
 
    protected final int numNodes;
 
-   protected JPAFilterAndConverterDistTest(int numNodes) {
+   protected IckleFilterAndConverterDistTest(int numNodes) {
       this.numNodes = numNodes;
    }
 
-   public JPAFilterAndConverterDistTest() {
+   public IckleFilterAndConverterDistTest() {
       this(3);
    }
 
@@ -61,7 +61,7 @@ public class JPAFilterAndConverterDistTest extends MultipleCacheManagersTest {
          cache.put(key, value);
       }
 
-      JPAFilterAndConverter filterAndConverter = new JPAFilterAndConverter<Object, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", null, ReflectionMatcher.class);
+      IckleFilterAndConverter filterAndConverter = new IckleFilterAndConverter<Object, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", null, ReflectionMatcher.class);
 
       Stream<CacheEntry<Object, Object>> stream = cache(0).getAdvancedCache().cacheEntrySet().stream();
       CloseableIterator<Map.Entry<Object, ObjectFilter.FilterResult>> iterator = Closeables.iterator(CacheFilters.filterAndConvert(stream, filterAndConverter).iterator());

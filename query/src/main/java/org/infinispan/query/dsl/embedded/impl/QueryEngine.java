@@ -35,8 +35,8 @@ import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.SyntaxTreePrinter;
 import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.query.CacheQuery;
@@ -672,8 +672,8 @@ public class QueryEngine<TypeMetadata> {
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
    }
 
-   protected final JPAFilterAndConverter createAndWireFilter(String queryString, Map<String, Object> namedParameters) {
-      JPAFilterAndConverter filter = createFilter(queryString, namedParameters);
+   protected final IckleFilterAndConverter createAndWireFilter(String queryString, Map<String, Object> namedParameters) {
+      IckleFilterAndConverter filter = createFilter(queryString, namedParameters);
 
       SecurityActions.doPrivileged(() -> {
          cache.getComponentRegistry().wireDependencies(filter);
@@ -683,8 +683,8 @@ public class QueryEngine<TypeMetadata> {
       return filter;
    }
 
-   protected JPAFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
-      return new JPAFilterAndConverter(queryString, namedParameters, matcherImplClass);
+   protected IckleFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
+      return new IckleFilterAndConverter(queryString, namedParameters, matcherImplClass);
    }
 
    /**

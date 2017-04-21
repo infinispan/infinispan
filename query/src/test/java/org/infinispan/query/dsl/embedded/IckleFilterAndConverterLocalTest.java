@@ -9,10 +9,10 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Test(groups = "functional", testName = "query.dsl.embedded.JPAFilterAndConverterLocalTest")
-public class JPAFilterAndConverterLocalTest extends JPAFilterAndConverterDistTest {
+@Test(groups = "functional", testName = "query.dsl.embedded.IckleFilterAndConverterLocalTest")
+public class IckleFilterAndConverterLocalTest extends IckleFilterAndConverterDistTest {
 
-   public JPAFilterAndConverterLocalTest() {
+   public IckleFilterAndConverterLocalTest() {
       super(1);
    }
 

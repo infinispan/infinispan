@@ -77,7 +77,7 @@ public final class FilterResultExternalizer extends AbstractExternalizer<FilterR
 
    @Override
    public Integer getId() {
-      return ExternalizerIds.JPA_FILTER_RESULT;
+      return ExternalizerIds.ICKLE_FILTER_RESULT;
    }
 
    @Override

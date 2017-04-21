@@ -42,7 +42,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.query.remote.impl.filter.JPACacheEventFilterConverterFactory;
+import org.infinispan.query.remote.impl.filter.IckleCacheEventFilterConverterFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -68,9 +68,9 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
       // Register the filter/converter factory. This should normally be discovered by the server via class path instead
       // of being added manually here, but this is ok in a test.
-      JPACacheEventFilterConverterFactory factory = new JPACacheEventFilterConverterFactory();
+      IckleCacheEventFilterConverterFactory factory = new IckleCacheEventFilterConverterFactory();
       for (int i = 0; i < NUM_NODES; i++) {
-         server(i).addCacheEventFilterConverterFactory(JPACacheEventFilterConverterFactory.FACTORY_NAME, factory);
+         server(i).addCacheEventFilterConverterFactory(IckleCacheEventFilterConverterFactory.FACTORY_NAME, factory);
       }
 
       remoteCache = client(0).getCache();

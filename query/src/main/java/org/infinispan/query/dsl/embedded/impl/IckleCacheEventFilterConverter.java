@@ -19,11 +19,11 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public class JPACacheEventFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C> implements IndexedFilter<K, V, C> {
+public class IckleCacheEventFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C> implements IndexedFilter<K, V, C> {
 
-   protected final JPAFilterAndConverter<K, V> filterAndConverter;
+   protected final IckleFilterAndConverter<K, V> filterAndConverter;
 
-   public JPACacheEventFilterConverter(JPAFilterAndConverter<K, V> filterAndConverter) {
+   public IckleCacheEventFilterConverter(IckleFilterAndConverter<K, V> filterAndConverter) {
       this.filterAndConverter = filterAndConverter;
    }
 
@@ -37,27 +37,27 @@ public class JPACacheEventFilterConverter<K, V, C> extends AbstractCacheEventFil
       return (C) filterAndConverter.filterAndConvert(key, newValue, newMetadata);
    }
 
-   public static final class Externalizer extends AbstractExternalizer<JPACacheEventFilterConverter> {
+   public static final class Externalizer extends AbstractExternalizer<IckleCacheEventFilterConverter> {
 
       @Override
-      public void writeObject(ObjectOutput output, JPACacheEventFilterConverter object) throws IOException {
+      public void writeObject(ObjectOutput output, IckleCacheEventFilterConverter object) throws IOException {
          output.writeObject(object.filterAndConverter);
       }
 
       @Override
-      public JPACacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         JPAFilterAndConverter filterAndConverter = (JPAFilterAndConverter) input.readObject();
-         return new JPACacheEventFilterConverter(filterAndConverter);
+      public IckleCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         IckleFilterAndConverter filterAndConverter = (IckleFilterAndConverter) input.readObject();
+         return new IckleCacheEventFilterConverter(filterAndConverter);
       }
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.JPA_CACHE_EVENT_FILTER_CONVERTER;
+         return ExternalizerIds.ICKLE_CACHE_EVENT_FILTER_CONVERTER;
       }
 
       @Override
-      public Set<Class<? extends JPACacheEventFilterConverter>> getTypeClasses() {
-         return Collections.singleton(JPACacheEventFilterConverter.class);
+      public Set<Class<? extends IckleCacheEventFilterConverter>> getTypeClasses() {
+         return Collections.singleton(IckleCacheEventFilterConverter.class);
       }
    }
 }
