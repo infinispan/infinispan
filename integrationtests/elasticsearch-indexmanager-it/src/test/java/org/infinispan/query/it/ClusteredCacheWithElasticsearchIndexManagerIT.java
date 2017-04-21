@@ -17,7 +17,6 @@ import java.util.List;
 @Test(groups = "functional", testName = "query.blackbox.ClusteredCacheWithElasticsearchIndexManagerIT")
 public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCacheTest {
 
-
     @Override
     public void testCombinationOfFilters() throws Exception {
         // Not supported by hibernate search
@@ -26,6 +25,11 @@ public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCach
     @Override
     public void testFullTextFilterOnOff() throws Exception {
         // Not supported by hibernate search
+    }
+
+    @Override
+    public void testSearchKeyTransformer() throws Exception {
+        // Will be fixed in Hibernate Search v. 5.8.0.Beta2 : see HSEARCH-2688
     }
 
     @Override
