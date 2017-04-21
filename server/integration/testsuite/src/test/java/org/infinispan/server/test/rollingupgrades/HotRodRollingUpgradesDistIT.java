@@ -40,6 +40,11 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
         // Target nodes
         final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
+
+        // Target nodes
+        final int managementPortServer2 = 10090;
+        MBeanServerConnectionProvider provider2;
+
         // Source node
         int managementPortServer3 = 10199;
         MBeanServerConnectionProvider provider3;
@@ -101,6 +106,9 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
             provider1 = new MBeanServerConnectionProvider(s1.server.getHotrodEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
 
+            provider2 = new MBeanServerConnectionProvider(s2.server.getHotrodEndpoint().getInetAddress().getHostName(),
+                  managementPortServer2);
+
             provider3 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer3);
 
             final ObjectName rollMan3 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
@@ -108,14 +116,17 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
 
             invokeOperation(provider3, rollMan3.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
-            final ObjectName rollMan1 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
+            final ObjectName rollManTarget = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered-new\"," + "component=RollingUpgradeManager");
 
-            invokeOperation(provider1, rollMan1.toString(), "synchronizeData", new Object[]{"hotrod"},
+            invokeOperation(provider1, rollManTarget.toString(), "synchronizeData", new Object[]{"hotrod"},
                     new String[]{"java.lang.String"});
 
-            invokeOperation(provider1, rollMan1.toString(), "disconnectSource", new Object[]{"hotrod"},
+            invokeOperation(provider1, rollManTarget.toString(), "disconnectSource", new Object[]{"hotrod"},
                     new String[]{"java.lang.String"});
+
+            invokeOperation(provider2, rollManTarget.toString(), "disconnectSource", new Object[]{"hotrod"},
+                  new String[]{"java.lang.String"});
 
             // is source (RemoteCacheStore) really disconnected?
             c3.put("disconnected", "source");
