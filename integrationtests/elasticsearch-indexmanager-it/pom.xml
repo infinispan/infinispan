@@ -75,10 +75,10 @@
                     <useFile>false</useFile>
                     <skip>${skipTests}</skip>
                     <properties>
-		                <property>
-		                   <name>usedefaultlisteners</name>
-		                   <value>false</value>
-		                </property>
+                        <property>
+                            <name>usedefaultlisteners</name>
+                            <value>false</value>
+                        </property>
                         <property>
                             <name>listener</name>
                             <value>${testNGListeners}</value>
