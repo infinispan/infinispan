@@ -11,7 +11,7 @@ package org.infinispan.query.impl.externalizers;
  */
 public interface ExternalizerIds {
 
-   Integer JPA_FILTER_AND_CONVERTER = 1600;
+   Integer ICKLE_FILTER_AND_CONVERTER = 1600;
 
    Integer LUCENE_QUERY_BOOLEAN = 1601;
 
@@ -33,17 +33,17 @@ public interface ExternalizerIds {
 
    Integer LUCENE_FIELD_SCORE_DOC = 1610;
 
-   Integer JPA_FILTER_RESULT = 1611;
+   Integer ICKLE_FILTER_RESULT = 1611;
 
    Integer LUCENE_QUERY_MATCH_ALL = 1612;
 
    Integer INDEX_WORKER = 1613;
 
-   Integer JPA_CACHE_EVENT_FILTER_CONVERTER = 1614;
+   Integer ICKLE_CACHE_EVENT_FILTER_CONVERTER = 1614;
 
    Integer LUCENE_BYTES_REF = 1615;
 
-   Integer JPA_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER = 1616;
+   Integer ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER = 1616;
 
-   Integer JPA_CONTINUOUS_QUERY_RESULT = 1617;
+   Integer ICKLE_CONTINUOUS_QUERY_RESULT = 1617;
 }

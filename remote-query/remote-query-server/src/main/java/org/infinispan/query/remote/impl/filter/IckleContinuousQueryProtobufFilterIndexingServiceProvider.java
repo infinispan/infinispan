@@ -9,7 +9,7 @@ import org.infinispan.notifications.cachelistener.filter.FilterIndexingServicePr
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.continuous.impl.JPAContinuousQueryFilterIndexingServiceProvider;
+import org.infinispan.query.continuous.impl.IckleContinuousQueryFilterIndexingServiceProvider;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 import org.kohsuke.MetaInfServices;
@@ -21,13 +21,13 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(FilterIndexingServiceProvider.class)
 @SuppressWarnings("unused")
-public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider extends JPAContinuousQueryFilterIndexingServiceProvider {
+public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider extends IckleContinuousQueryFilterIndexingServiceProvider {
 
    private SerializationContext serCtx;
 
    private boolean isCompatMode;
 
-   public JPAContinuousQueryProtobufFilterIndexingServiceProvider() {
+   public IckleContinuousQueryProtobufFilterIndexingServiceProvider() {
       super(ContinuousQueryResult.ResultType.JOINING, ContinuousQueryResult.ResultType.UPDATED, ContinuousQueryResult.ResultType.LEAVING);
    }
 
@@ -39,7 +39,7 @@ public final class JPAContinuousQueryProtobufFilterIndexingServiceProvider exten
 
    @Override
    public boolean supportsFilter(IndexedFilter<?, ?, ?> indexedFilter) {
-      return indexedFilter.getClass() == JPAContinuousQueryProtobufCacheEventFilterConverter.class;
+      return indexedFilter.getClass() == IckleContinuousQueryProtobufCacheEventFilterConverter.class;
    }
 
    @Override

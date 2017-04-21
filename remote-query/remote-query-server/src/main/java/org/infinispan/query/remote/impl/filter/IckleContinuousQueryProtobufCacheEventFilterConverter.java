@@ -19,7 +19,7 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
+import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.CompatibilityReflectionMatcher;
 import org.infinispan.query.remote.impl.ExternalizerIds;
@@ -30,7 +30,7 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends JPAContinuousQueryCacheEventFilterConverter<Object, Object, Object> {
+public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends IckleContinuousQueryCacheEventFilterConverter<Object, Object, Object> {
 
    private SerializationContext serCtx;
 
@@ -38,7 +38,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
    private boolean isCompatMode;
 
-   public JPAContinuousQueryProtobufCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+   public IckleContinuousQueryProtobufCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
       super(queryString, namedParameters, matcherImplClass);
    }
 
@@ -103,13 +103,13 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
 
    @Override
    public String toString() {
-      return "JPAContinuousQueryProtobufCacheEventFilterConverter{queryString='" + queryString + "'}";
+      return "IckleContinuousQueryProtobufCacheEventFilterConverter{queryString='" + queryString + "'}";
    }
 
-   public static final class Externalizer extends AbstractExternalizer<JPAContinuousQueryProtobufCacheEventFilterConverter> {
+   public static final class Externalizer extends AbstractExternalizer<IckleContinuousQueryProtobufCacheEventFilterConverter> {
 
       @Override
-      public void writeObject(ObjectOutput output, JPAContinuousQueryProtobufCacheEventFilterConverter filterAndConverter) throws IOException {
+      public void writeObject(ObjectOutput output, IckleContinuousQueryProtobufCacheEventFilterConverter filterAndConverter) throws IOException {
          output.writeUTF(filterAndConverter.queryString);
          Map<String, Object> namedParameters = filterAndConverter.namedParameters;
          if (namedParameters != null) {
@@ -125,7 +125,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
       }
 
       @Override
-      public JPAContinuousQueryProtobufCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public IckleContinuousQueryProtobufCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
@@ -138,17 +138,17 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends J
             }
          }
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new JPAContinuousQueryProtobufCacheEventFilterConverter(queryString, namedParameters, matcherImplClass);
+         return new IckleContinuousQueryProtobufCacheEventFilterConverter(queryString, namedParameters, matcherImplClass);
       }
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.JPA_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER;
+         return ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER;
       }
 
       @Override
-      public Set<Class<? extends JPAContinuousQueryProtobufCacheEventFilterConverter>> getTypeClasses() {
-         return Collections.singleton(JPAContinuousQueryProtobufCacheEventFilterConverter.class);
+      public Set<Class<? extends IckleContinuousQueryProtobufCacheEventFilterConverter>> getTypeClasses() {
+         return Collections.singleton(IckleContinuousQueryProtobufCacheEventFilterConverter.class);
       }
    }
 }

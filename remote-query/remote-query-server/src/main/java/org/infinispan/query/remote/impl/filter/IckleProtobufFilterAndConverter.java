@@ -15,7 +15,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.remote.impl.CompatibilityReflectionMatcher;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
@@ -26,13 +26,13 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<Object, Object> {
+public final class IckleProtobufFilterAndConverter extends IckleFilterAndConverter<Object, Object> {
 
    private boolean usesValueWrapper;
 
    private boolean isCompatMode;
 
-   public JPAProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {
+   public IckleProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {
       super(queryString, namedParameters, ProtobufMatcher.class);
    }
 
@@ -60,13 +60,13 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
 
    @Override
    public String toString() {
-      return "JPAProtobufFilterAndConverter{queryString='" + getQueryString() + "'}";
+      return "IckleProtobufFilterAndConverter{queryString='" + getQueryString() + "'}";
    }
 
-   public static final class Externalizer extends AbstractExternalizer<JPAProtobufFilterAndConverter> {
+   public static final class Externalizer extends AbstractExternalizer<IckleProtobufFilterAndConverter> {
 
       @Override
-      public void writeObject(ObjectOutput output, JPAProtobufFilterAndConverter filterAndConverter) throws IOException {
+      public void writeObject(ObjectOutput output, IckleProtobufFilterAndConverter filterAndConverter) throws IOException {
          output.writeUTF(filterAndConverter.getQueryString());
          Map<String, Object> namedParameters = filterAndConverter.getNamedParameters();
          if (namedParameters != null) {
@@ -81,7 +81,7 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
       }
 
       @Override
-      public JPAProtobufFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public IckleProtobufFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
@@ -93,17 +93,17 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
                namedParameters.put(paramName, paramValue);
             }
          }
-         return new JPAProtobufFilterAndConverter(queryString, namedParameters);
+         return new IckleProtobufFilterAndConverter(queryString, namedParameters);
       }
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.JPA_PROTOBUF_FILTER_AND_CONVERTER;
+         return ExternalizerIds.ICKLE_PROTOBUF_FILTER_AND_CONVERTER;
       }
 
       @Override
-      public Set<Class<? extends JPAProtobufFilterAndConverter>> getTypeClasses() {
-         return Collections.singleton(JPAProtobufFilterAndConverter.class);
+      public Set<Class<? extends IckleProtobufFilterAndConverter>> getTypeClasses() {
+         return Collections.singleton(IckleProtobufFilterAndConverter.class);
       }
    }
 }

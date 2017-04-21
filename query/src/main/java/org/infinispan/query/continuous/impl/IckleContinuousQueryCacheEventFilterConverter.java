@@ -27,7 +27,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C>
+public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C>
       implements IndexedFilter<K, V, C> {
 
    /**
@@ -57,7 +57,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
     */
    protected ObjectFilter objectFilter;
 
-   public JPAContinuousQueryCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+   public IckleContinuousQueryCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
       if (queryString == null || matcherImplClass == null) {
          throw new IllegalArgumentException("Arguments cannot be null");
       }
@@ -130,13 +130,13 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
 
    @Override
    public String toString() {
-      return "JPAContinuousQueryCacheEventFilterConverter{queryString='" + queryString + "'}";
+      return "IckleContinuousQueryCacheEventFilterConverter{queryString='" + queryString + "'}";
    }
 
-   public static final class Externalizer extends AbstractExternalizer<JPAContinuousQueryCacheEventFilterConverter> {
+   public static final class Externalizer extends AbstractExternalizer<IckleContinuousQueryCacheEventFilterConverter> {
 
       @Override
-      public void writeObject(ObjectOutput output, JPAContinuousQueryCacheEventFilterConverter filterAndConverter) throws IOException {
+      public void writeObject(ObjectOutput output, IckleContinuousQueryCacheEventFilterConverter filterAndConverter) throws IOException {
          output.writeUTF(filterAndConverter.queryString);
          Map<String, Object> namedParameters = filterAndConverter.namedParameters;
          if (namedParameters != null) {
@@ -152,7 +152,7 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
       }
 
       @Override
-      public JPAContinuousQueryCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public IckleContinuousQueryCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
@@ -165,17 +165,17 @@ public class JPAContinuousQueryCacheEventFilterConverter<K, V, C> extends Abstra
             }
          }
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new JPAContinuousQueryCacheEventFilterConverter(queryString, namedParameters, matcherImplClass);
+         return new IckleContinuousQueryCacheEventFilterConverter(queryString, namedParameters, matcherImplClass);
       }
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.JPA_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER;
+         return ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER;
       }
 
       @Override
-      public Set<Class<? extends JPAContinuousQueryCacheEventFilterConverter>> getTypeClasses() {
-         return Collections.singleton(JPAContinuousQueryCacheEventFilterConverter.class);
+      public Set<Class<? extends IckleContinuousQueryCacheEventFilterConverter>> getTypeClasses() {
+         return Collections.singleton(IckleContinuousQueryCacheEventFilterConverter.class);
       }
    }
 }

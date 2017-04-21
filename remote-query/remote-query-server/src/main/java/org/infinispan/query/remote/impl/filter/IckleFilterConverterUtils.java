@@ -13,7 +13,7 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 /**
  * @author gustavonalle
  */
-class JPAFilterConverterUtils {
+class IckleFilterConverterUtils {
 
    private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
 
@@ -25,7 +25,7 @@ class JPAFilterConverterUtils {
       }
    };
 
-   private JPAFilterConverterUtils() {
+   private IckleFilterConverterUtils() {
    }
 
    static String unmarshallQueryString(Object[] params) {

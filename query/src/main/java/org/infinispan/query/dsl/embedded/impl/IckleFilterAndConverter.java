@@ -28,7 +28,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> {
+public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> {
 
    /**
     * Optional cache for query objects.
@@ -57,7 +57,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
     */
    private ObjectFilter objectFilter;
 
-   public JPAFilterAndConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
+   public IckleFilterAndConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
       if (queryString == null || matcherImplClass == null) {
          throw new IllegalArgumentException("Arguments cannot be null");
       }
@@ -110,13 +110,13 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
 
    @Override
    public String toString() {
-      return "JPAFilterAndConverter{queryString='" + queryString + "'}";
+      return "IckleFilterAndConverter{queryString='" + queryString + "'}";
    }
 
-   public static final class JPAFilterAndConverterExternalizer extends AbstractExternalizer<JPAFilterAndConverter> {
+   public static final class IckleFilterAndConverterExternalizer extends AbstractExternalizer<IckleFilterAndConverter> {
 
       @Override
-      public void writeObject(ObjectOutput output, JPAFilterAndConverter filterAndConverter) throws IOException {
+      public void writeObject(ObjectOutput output, IckleFilterAndConverter filterAndConverter) throws IOException {
          output.writeUTF(filterAndConverter.queryString);
          Map<String, Object> namedParameters = filterAndConverter.namedParameters;
          if (namedParameters != null) {
@@ -132,7 +132,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
       }
 
       @Override
-      public JPAFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public IckleFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);
          Map<String, Object> namedParameters = null;
@@ -145,17 +145,17 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
             }
          }
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new JPAFilterAndConverter(queryString, namedParameters, matcherImplClass);
+         return new IckleFilterAndConverter(queryString, namedParameters, matcherImplClass);
       }
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.JPA_FILTER_AND_CONVERTER;
+         return ExternalizerIds.ICKLE_FILTER_AND_CONVERTER;
       }
 
       @Override
-      public Set<Class<? extends JPAFilterAndConverter>> getTypeClasses() {
-         return Collections.singleton(JPAFilterAndConverter.class);
+      public Set<Class<? extends IckleFilterAndConverter>> getTypeClasses() {
+         return Collections.singleton(IckleFilterAndConverter.class);
       }
    }
 
@@ -183,7 +183,7 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.JPA_FILTER_RESULT;
+         return ExternalizerIds.ICKLE_FILTER_RESULT;
       }
 
       @Override

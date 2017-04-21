@@ -67,7 +67,7 @@ public final class ContinuousQueryResultExternalizer extends AbstractExternalize
 
    @Override
    public Integer getId() {
-      return ExternalizerIds.JPA_CONTINUOUS_QUERY_RESULT;
+      return ExternalizerIds.ICKLE_CONTINUOUS_QUERY_RESULT;
    }
 
    @Override

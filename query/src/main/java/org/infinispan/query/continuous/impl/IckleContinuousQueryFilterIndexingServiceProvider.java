@@ -19,17 +19,17 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(FilterIndexingServiceProvider.class)
 @SuppressWarnings("unused")
-public class JPAContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilterIndexingServiceProvider {
+public class IckleContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilterIndexingServiceProvider {
 
    private final Object joiningEvent;
    private final Object updatedEvent;
    private final Object leavingEvent;
 
-   public JPAContinuousQueryFilterIndexingServiceProvider() {
+   public IckleContinuousQueryFilterIndexingServiceProvider() {
       this(ContinuousQueryResult.ResultType.JOINING, ContinuousQueryResult.ResultType.UPDATED, ContinuousQueryResult.ResultType.LEAVING);
    }
 
-   protected JPAContinuousQueryFilterIndexingServiceProvider(Object joiningEvent, Object updatedEvent, Object leavingEvent) {
+   protected IckleContinuousQueryFilterIndexingServiceProvider(Object joiningEvent, Object updatedEvent, Object leavingEvent) {
       this.joiningEvent = joiningEvent;
       this.updatedEvent = updatedEvent;
       this.leavingEvent = leavingEvent;
@@ -37,22 +37,22 @@ public class JPAContinuousQueryFilterIndexingServiceProvider extends BaseJPAFilt
 
    @Override
    public boolean supportsFilter(IndexedFilter<?, ?, ?> indexedFilter) {
-      return indexedFilter.getClass() == JPAContinuousQueryCacheEventFilterConverter.class;
+      return indexedFilter.getClass() == IckleContinuousQueryCacheEventFilterConverter.class;
    }
 
    @Override
    protected Matcher getMatcher(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPAContinuousQueryCacheEventFilterConverter) indexedFilter).getMatcher();
+      return ((IckleContinuousQueryCacheEventFilterConverter) indexedFilter).getMatcher();
    }
 
    @Override
    protected String getQueryString(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPAContinuousQueryCacheEventFilterConverter) indexedFilter).getQueryString();
+      return ((IckleContinuousQueryCacheEventFilterConverter) indexedFilter).getQueryString();
    }
 
    @Override
    protected Map<String, Object> getNamedParameters(IndexedFilter<?, ?, ?> indexedFilter) {
-      return ((JPAContinuousQueryCacheEventFilterConverter) indexedFilter).getNamedParameters();
+      return ((IckleContinuousQueryCacheEventFilterConverter) indexedFilter).getNamedParameters();
    }
 
    @Override

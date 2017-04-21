@@ -22,16 +22,16 @@ import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 
 /**
- * Adapter for {@link JPAProtobufFilterAndConverter} that produces binary values as a result of filter/conversion.
+ * Adapter for {@link IckleProtobufFilterAndConverter} that produces binary values as a result of filter/conversion.
  *
  * @author gustavonalle
  * @since 8.1
  */
-public final class JPABinaryProtobufFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, Object> {
+public final class IckleBinaryProtobufFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, Object> {
 
    private SerializationContext serCtx;
 
-   private final JPAProtobufFilterAndConverter delegate;
+   private final IckleProtobufFilterAndConverter delegate;
 
    @Inject
    @SuppressWarnings("unused")
@@ -40,11 +40,11 @@ public final class JPABinaryProtobufFilterAndConverter<K, V> extends AbstractKey
       serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
    }
 
-   public JPABinaryProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {
-      this.delegate = new JPAProtobufFilterAndConverter(queryString, namedParameters);
+   public IckleBinaryProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {
+      this.delegate = new IckleProtobufFilterAndConverter(queryString, namedParameters);
    }
 
-   private JPABinaryProtobufFilterAndConverter(JPAProtobufFilterAndConverter delegate) {
+   private IckleBinaryProtobufFilterAndConverter(IckleProtobufFilterAndConverter delegate) {
       this.delegate = delegate;
    }
 
@@ -67,27 +67,27 @@ public final class JPABinaryProtobufFilterAndConverter<K, V> extends AbstractKey
       }
    }
 
-   public static final class Externalizer extends AbstractExternalizer<JPABinaryProtobufFilterAndConverter> {
+   public static final class Externalizer extends AbstractExternalizer<IckleBinaryProtobufFilterAndConverter> {
 
       @Override
-      public void writeObject(ObjectOutput output, JPABinaryProtobufFilterAndConverter object) throws IOException {
+      public void writeObject(ObjectOutput output, IckleBinaryProtobufFilterAndConverter object) throws IOException {
          output.writeObject(object.delegate);
       }
 
       @Override
-      public JPABinaryProtobufFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         JPAProtobufFilterAndConverter delegate = (JPAProtobufFilterAndConverter) input.readObject();
-         return new JPABinaryProtobufFilterAndConverter(delegate);
+      public IckleBinaryProtobufFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         IckleProtobufFilterAndConverter delegate = (IckleProtobufFilterAndConverter) input.readObject();
+         return new IckleBinaryProtobufFilterAndConverter(delegate);
       }
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.JPA_BINARY_PROTOBUF_FILTER_AND_CONVERTER;
+         return ExternalizerIds.ICKLE_BINARY_PROTOBUF_FILTER_AND_CONVERTER;
       }
 
       @Override
-      public Set<Class<? extends JPABinaryProtobufFilterAndConverter>> getTypeClasses() {
-         return Collections.singleton(JPABinaryProtobufFilterAndConverter.class);
+      public Set<Class<? extends IckleBinaryProtobufFilterAndConverter>> getTypeClasses() {
+         return Collections.singleton(IckleBinaryProtobufFilterAndConverter.class);
       }
    }
 
