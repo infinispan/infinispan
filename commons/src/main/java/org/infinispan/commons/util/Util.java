@@ -472,17 +472,30 @@ public final class Util {
    }
 
    public static String toStr(Object o) {
-      if (o instanceof byte[]) {
-         return printArray((byte[]) o, false);
-      } else if (o == null) {
+      if (o == null) {
          return "null";
       } else if (o.getClass().isArray()) {
-         int length = Array.getLength(o);
-         if (length == 0) return "[]";
-
-         StringBuilder sb = new StringBuilder("[").append(Array.get(o, 0));
-         for (int i = 1; i < length; ++i) sb.append(", ").append(Array.get(o, i));
-         return sb.append("]").toString();
+         // as Java arrays are covariant, this cast is safe unless it's primitive
+         if (o.getClass().getComponentType().isPrimitive()) {
+            if (o instanceof byte[]) {
+               return printArray((byte[]) o, false);
+            } else if (o instanceof int[]) {
+               return Arrays.toString((int[]) o);
+            } else if (o instanceof long[]) {
+               return Arrays.toString((long[]) o);
+            } else if (o instanceof short[]) {
+               return Arrays.toString((short[]) o);
+            } else if (o instanceof double[]) {
+               return Arrays.toString((double[]) o);
+            } else if (o instanceof float[]) {
+               return Arrays.toString((float[]) o);
+            } else if (o instanceof char[]) {
+               return Arrays.toString((char[]) o);
+            } else if (o instanceof boolean[]) {
+               return Arrays.toString((boolean[]) o);
+            }
+         }
+         return Arrays.toString((Object[]) o);
       } else {
          return o.toString();
       }

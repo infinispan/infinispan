@@ -43,7 +43,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.WriteResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferInterceptor;
@@ -61,7 +62,8 @@ import org.infinispan.util.logging.LogFactory;
  * stored in L1). If it isn't available, a remote request is made. The {@link DataWriteCommand} is performed as follow:
  * <ul> <li>The command if forwarded to the primary owner of the key.</li> <li>The primary owner locks the key and
  * executes the operation; sends the {@link BackupWriteRpcCommand} to the backup owners; releases the lock; sends the
- * {@link WriteResponse} back to the originator.</li> <li>The backup owner applies the update and sends a {@link
+ * {@link SuccessfulResponse} or {@link UnsuccessfulResponse} back to the originator.</li>
+ * <li>The backup owner applies the update and sends a {@link
  * BackupAckCommand} back to the originator.</li> <li>The originator collects the ack from all the owners and
  * returns.</li> </ul> The {@link PutMapCommand} is performed in a similar way: <ul> <li>The subset of the map is split
  * by primary owner.</li> <li>The primary owner locks the key and executes the command; splits the keys by backup owner
@@ -421,11 +423,11 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
          if (throwable != null) {
             collector.primaryException(CompletableFutures.extractException(throwable));
          } else {
-            WriteResponse response = (WriteResponse) responses.values().iterator().next();
-            if (!response.isCommandSuccessful()) {
+            ValidResponse response = (ValidResponse) responses.values().iterator().next();
+            if (!response.isSuccessful()) {
                command.fail();
             }
-            collector.primaryResult(response.getReturnValue(), response.isCommandSuccessful());
+            collector.primaryResult(response.getResponseValue(), response.isSuccessful());
          }
          return null;
       });
