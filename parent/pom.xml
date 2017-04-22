@@ -189,7 +189,7 @@
       <version.javassist>3.20.0-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
-      <version.maven.shade>3.0.0</version.maven.shade>
+      <version.maven.shade>2.4.3</version.maven.shade>
       <version.maven.source>3.0.0</version.maven.source>
       <version.maven.surefire>2.18.1</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
