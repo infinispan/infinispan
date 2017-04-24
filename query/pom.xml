@@ -61,6 +61,7 @@
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-elasticsearch</artifactId>
+         <optional>true</optional>
       </dependency>
 
       <dependency>
