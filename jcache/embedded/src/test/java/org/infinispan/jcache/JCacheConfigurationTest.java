@@ -4,7 +4,6 @@ import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.net.URI;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -29,30 +28,30 @@ public class JCacheConfigurationTest extends AbstractInfinispanTest {
       });
    }
 
-   public void testJCacheManagerWherePathContainsFileSchema() throws IOException {
-      withCachingProvider(provider -> new JCacheManager(
-            URI.create("file:infinispan_uri.xml"),
-            provider.getClass().getClassLoader(),
-            provider,
-            null));
-   }
-
    public void testJCacheManagerWherePathContainsFileSchemaAndAbsolutePath() throws Exception {
       URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
-
-      withCachingProvider(provider -> new JCacheManager(
-            uri,
-            provider.getClass().getClassLoader(),
-            provider,
-            null));
+      withCachingProvider(provider -> {
+         JCacheManager jCacheManager = new JCacheManager(
+               uri,
+               provider.getClass().getClassLoader(),
+               provider,
+               null);
+         assertTrue(null != jCacheManager.getCache("foo"));
+      });
    }
 
-   public void testJCacheManagerWherePathContainsJarFileSchema() throws IOException {
-      withCachingProvider(provider -> new JCacheManager(
-            URI.create("jar:file:infinispan_uri.xml"),
-            provider.getClass().getClassLoader(),
-            provider,
-            null));
+   public void testJCacheManagerWherePathContainsJarFileSchema() throws Exception {
+      URI uri = JCacheConfigurationTest.class.getClassLoader().getResource("infinispan_uri.xml").toURI();
+      URI uriWithJarFileSchema = URI.create(uri.toString().replace("file", "jar:file"));
+
+      withCachingProvider(provider -> {
+         JCacheManager jCacheManager = new JCacheManager(
+               uriWithJarFileSchema,
+               provider.getClass().getClassLoader(),
+               provider,
+               null);
+         assertTrue(null != jCacheManager.getCache("foo"));
+      });
    }
 
 }

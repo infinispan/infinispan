@@ -62,10 +62,11 @@ public abstract class AbstractFileLookup implements FileLookup {
    public InputStream lookupFileStrict(URI uri, ClassLoader cl) throws FileNotFoundException {
       String scheme = uri.getScheme();
       switch (scheme) {
-         case "jar":
          case "file":
+            return new FileInputStream(new File(uri.getPath()));
+         case "jar":
             String uriAsString = uri.toString();
-            String fileName = uriAsString.substring(uriAsString.lastIndexOf(":"));
+            String fileName = uriAsString.substring(uriAsString.lastIndexOf(":") + 1);
             return new FileInputStream(new File(fileName));
          default:
             InputStream streamToBeReturned = getAsInputStreamFromClassLoader(uri.toString(), cl);
