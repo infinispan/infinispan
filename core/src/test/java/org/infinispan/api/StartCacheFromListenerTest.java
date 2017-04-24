@@ -84,4 +84,24 @@ public class StartCacheFromListenerTest extends MultipleCacheManagersTest {
 
       assertEquals("v", cacheManager.getCache("cacheStarting").get("k"));
    }
+
+   public void testStartSameCache() {
+      final EmbeddedCacheManager cacheManager = manager(0);
+      GlobalComponentRegistry registry = (GlobalComponentRegistry) TestingUtil.extractField(cacheManager, "globalComponentRegistry");
+      List<ModuleLifecycle> lifecycles = new LinkedList<>();
+      TestingUtil.replaceField(lifecycles, "moduleLifecycles", registry, GlobalComponentRegistry.class);
+      lifecycles.add(new AbstractModuleLifecycle() {
+         @Override
+         public void cacheStarted(ComponentRegistry cr,  String cacheName) {
+            Cache cache = cacheManager.getCache("single");
+            cache.put("k1", "v1");
+         }
+      });
+
+      Cache<Object, Object> some = cacheManager.getCache("single");
+      some.put("k2", "v2");
+
+      assertEquals("v1", cacheManager.getCache("single").get("k1"));
+      assertEquals("v2", cacheManager.getCache("single").get("k2"));
+   }
 }
