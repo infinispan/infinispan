@@ -1,6 +1,7 @@
 package org.infinispan.manager;
 
 import static org.infinispan.test.Exceptions.expectException;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
