@@ -309,7 +309,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.MARSHALLER)) {
          this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER, null, true));
       }
-      this.version(typed.getEnumProperty(ConfigurationProperties.PROTOCOL_VERSION, ProtocolVersion.class, protocolVersion, true));
+      this.version(ProtocolVersion.parseVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion.toString(), true)));
       this.servers.clear();
       this.addServers(typed.getProperty(ConfigurationProperties.SERVER_LIST, "", true));
       this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
