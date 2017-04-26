@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
@@ -30,7 +29,7 @@ class KeyValueVersionConverter implements CacheEventConverter<byte[], byte[], by
       if (newValue != null) {
          offset += UnsignedNumeric.writeUnsignedInt(out, offset, newValue.length);
          offset += putBytes(newValue, offset, out);
-         putLong(((NumericVersion) newMetadata.version()).getVersion(), offset, out);
+         putLong(CacheDecodeContext.extractVersion(newMetadata), offset, out);
       }
       return out;
    }

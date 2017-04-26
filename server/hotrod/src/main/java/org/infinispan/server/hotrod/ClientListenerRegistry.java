@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
@@ -36,8 +34,6 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -57,7 +53,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
 
@@ -67,10 +62,8 @@ import io.netty.channel.Channel;
  * @author Galder Zamarreño
  */
 class ClientListenerRegistry {
-   private final HotRodServerConfiguration configuration;
 
-   ClientListenerRegistry(HotRodServerConfiguration configuration) {
-      this.configuration = configuration;
+   ClientListenerRegistry() {
    }
 
    private final static Log log = LogFactory.getLog(ClientListenerRegistry.class, Log.class);
@@ -357,13 +350,7 @@ class ClientListenerRegistry {
       @CacheEntryExpired
       public void onCacheEvent(CacheEntryEvent<byte[], byte[]> event) {
          if (isSendEvent(event)) {
-            long version;
-            Metadata metadata;
-            if ((metadata = event.getMetadata()) != null && metadata.version() != null) {
-               version = ((NumericVersion) metadata.version()).getVersion();
-            } else {
-               version = 0;
-            }
+            long version = CacheDecodeContext.extractVersion(event.getMetadata());
             sendEvent(event.getKey(), event.getValue(), version, event);
          }
       }
@@ -518,8 +505,7 @@ class ClientListenerRegistry {
          Object value = converter.unboxValue(event.getValue());
          if (delegate.isSendEvent(event)) {
             // In compatibility mode, version could be null if stored via embedded
-            EntryVersion version = event.getMetadata().version();
-            long dataVersion = version == null ? 0 : ((NumericVersion) version).getVersion();
+            long dataVersion = CacheDecodeContext.extractVersion(event.getMetadata());
             delegate.sendEvent((byte[]) key, (byte[]) value, dataVersion, event);
          }
       }

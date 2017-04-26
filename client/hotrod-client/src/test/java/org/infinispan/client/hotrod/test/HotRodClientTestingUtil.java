@@ -23,10 +23,10 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.server.core.ServerMetadata;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -93,7 +93,7 @@ public class HotRodClientTestingUtil {
             }
          }
       }
-      if (server == null && lastError != null)
+      if (server == null)
          throw new AssertionError(lastError);
 
       return server;
@@ -119,7 +119,7 @@ public class HotRodClientTestingUtil {
    /**
     * Kills a group of remote cache managers.
     *
-    * @param rcm
+    * @param rcms
     *           the remote cache manager instances to kill
     */
    public static void killRemoteCacheManagers(RemoteCacheManager... rcms) {
@@ -198,7 +198,7 @@ public class HotRodClientTestingUtil {
       }
 
       Metadata meta = cache.getAdvancedCache().getCacheEntry(lookupKey).getMetadata();
-      return ((NumericVersion) meta.version()).getVersion();
+      return meta instanceof ServerMetadata ? ((ServerMetadata) meta).streamVersion() : 0;
    }
 
    public static byte[] toBytes(Object key) {
@@ -243,9 +243,7 @@ public class HotRodClientTestingUtil {
             r.nextBytes(dummy);
             attemptsLeft--;
          } while (!isFirstOwner(cache, marshaller.objectToByteBuffer(dummy)) && attemptsLeft >= 0);
-      } catch (IOException e) {
-         throw new AssertionError(e);
-      } catch (InterruptedException e) {
+      } catch (IOException | InterruptedException e) {
          throw new AssertionError(e);
       }
 
@@ -305,8 +303,8 @@ public class HotRodClientTestingUtil {
       byte[] dummy;
       Integer dummyInt;
       int attemptsLeft = 1000;
-      boolean primaryOwnerFound = false;
-      boolean binaryOwnerFound = false;
+      boolean primaryOwnerFound;
+      boolean binaryOwnerFound;
       do {
          dummyInt = r.nextInt();
          dummy = toBytes(dummyInt);
@@ -327,7 +325,7 @@ public class HotRodClientTestingUtil {
    }
 
    public static <T extends FailoverRequestBalancingStrategy> T getLoadBalancer(RemoteCacheManager client) {
-      TcpTransportFactory transportFactory = null;
+      TcpTransportFactory transportFactory;
       if (client instanceof InternalRemoteCacheManager) {
          transportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) client).getTransportFactory();
       } else {

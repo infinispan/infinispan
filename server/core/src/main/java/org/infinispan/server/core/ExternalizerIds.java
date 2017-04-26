@@ -25,5 +25,6 @@ public final class ExternalizerIds {
    public static final int KEY_VALUE_WITH_PREVIOUS_CONVERTER = 1110;
    public static final int ITERATION_FILTER = 1111;
    public static final int QUERY_ITERATION_FILTER = 1112;
+   public static final int HOT_ROD_METADATA = 1113;
 
 }

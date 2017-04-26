@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.core.ExternalizerIds.BINARY_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER;
 import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER_CONVERTER;
+import static org.infinispan.server.core.ExternalizerIds.HOT_ROD_METADATA;
 import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
 import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_VERSION_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_WITH_PREVIOUS_CONVERTER;
@@ -19,9 +20,10 @@ import org.infinispan.server.hotrod.ClientListenerRegistry.UnmarshallFilterConve
 import org.infinispan.server.hotrod.ClientListenerRegistry.UnmarshallFilterExternalizer;
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterExternalizer;
 import org.infinispan.server.hotrod.iteration.IterationFilter;
+import org.infinispan.server.hotrod.metadata.HotRodMetadata;
 
 /**
- * Module lifecycle callbacks implementation that enables module specific {@link org.infinispan.marshall.AdvancedExternalizer}
+ * Module lifecycle callbacks implementation that enables module specific {@link AdvancedExternalizer}
  * implementations to be registered.
  *
  * @author Galder Zamarreño
@@ -39,6 +41,7 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
       externalizers.put(BINARY_FILTER_CONVERTER, new UnmarshallFilterConverterExternalizer());
       externalizers.put(KEY_VALUE_WITH_PREVIOUS_CONVERTER, new KeyValueWithPreviousEventConverterExternalizer());
       externalizers.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());
+      externalizers.put(HOT_ROD_METADATA, HotRodMetadata.EXTERNALIZER);
    }
 
 }

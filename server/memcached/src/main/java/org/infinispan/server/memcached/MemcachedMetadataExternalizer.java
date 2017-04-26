@@ -35,6 +35,7 @@ public class MemcachedMetadataExternalizer extends AbstractExternalizer<Memcache
    @Override
    public void writeObject(ObjectOutput output, MemcachedMetadata object) throws IOException {
       output.writeLong(object.flags);
+      output.writeLong(object.streamVersion);
       output.writeObject(object.version);
       int number = numbers.get(object.getClass(), -1);
       output.write(number);
@@ -46,14 +47,15 @@ public class MemcachedMetadataExternalizer extends AbstractExternalizer<Memcache
    @Override
    public MemcachedMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       long flags = input.readLong();
+      long streamVersion = input.readLong();
       EntryVersion version = (EntryVersion) input.readObject();
       int number = input.readUnsignedByte();
       switch (number) {
          case Immortal:
-            return new MemcachedMetadata(flags, version);
+            return new MemcachedMetadata(flags, version, streamVersion);
          case Expirable:
             long lifespan = input.readLong();
-            return new MemcachedExpirableMetadata(flags, version, lifespan, TimeUnit.MILLISECONDS);
+            return new MemcachedExpirableMetadata(flags, version, lifespan, TimeUnit.MILLISECONDS, streamVersion);
          default:
             throw new IllegalArgumentException("Number " + number + " not supported!");
       }

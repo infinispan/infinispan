@@ -142,7 +142,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       // Initialize query-specific stuff
       queryFacades = loadQueryFacades();
-      clientListenerRegistry = new ClientListenerRegistry(configuration);
+      clientListenerRegistry = new ClientListenerRegistry();
 
       addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory());
       loadFilterConverterFactories(ParamKeyValueFilterConverterFactory.class, this::addKeyValueFilterConverterFactory);

@@ -75,9 +75,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    private EvictionManager evictionManager;
    private PassivationManager passivator;
    private ActivationManager activator;
-   private PersistenceManager pm;
    private TimeService timeService;
-   private CacheNotifier cacheNotifier;
    private ExpirationManager<K, V> expirationManager;
 
    public DefaultDataContainer(int concurrencyLevel) {
@@ -166,9 +164,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       this.passivator = passivator;
       this.entryFactory = entryFactory;
       this.activator = activator;
-      this.pm = clm;
       this.timeService = timeService;
-      this.cacheNotifier = cacheNotifier;
       this.expirationManager = expirationManager;
    }
 
@@ -294,8 +290,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    public int size() {
       int size = 0;
       // We have to loop through to make sure to remove expired entries
-      for (Iterator<InternalCacheEntry<K, V>> iter = iterator(); iter.hasNext(); ) {
-         iter.next();
+      for (InternalCacheEntry<K, V> ignored : this) {
          if (++size == Integer.MAX_VALUE) return Integer.MAX_VALUE;
       }
       return size;
@@ -469,10 +464,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          @SuppressWarnings("rawtypes")
          Map.Entry e = (Map.Entry) o;
          InternalCacheEntry ice = entries.get(e.getKey());
-         if (ice == null) {
-            return false;
-         }
-         return ice.getValue().equals(e.getValue());
+         return ice != null && ice.getValue().equals(e.getValue());
       }
 
       @Override

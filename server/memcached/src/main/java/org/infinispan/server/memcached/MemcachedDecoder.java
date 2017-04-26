@@ -52,14 +52,12 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.NumericVersionGenerator;
-import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.server.core.ServerMetadata;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.memcached.logging.JavaLog;
 import org.infinispan.stats.Stats;
@@ -121,6 +119,13 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    private ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
    protected RequestHeader header;
 
+
+   private static long extractVersion(Metadata metadata) {
+      return metadata instanceof ServerMetadata ?
+            ((ServerMetadata) metadata).streamVersion() :
+            0;
+   }
+
    @Override
    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
       try {
@@ -149,8 +154,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       CacheEntry<String, byte[]> entry = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key);
       if (entry != null) {
          byte[] prev = entry.getValue();
-         NumericVersion streamVersion = new NumericVersion(params.streamVersion);
-         if (entry.getMetadata().version().equals(streamVersion)) {
+         if (extractVersion(entry.getMetadata()) == params.streamVersion) {
             byte[] v = createValue();
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
             boolean replaced = cache.replace(key, prev, v, buildMetadata());
@@ -469,20 +473,18 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       return new MemcachedParameters(length, lifespan, -1, streamVersion, noReply, flags, "", 0);
    }
 
-   private EntryVersion generateVersion(Cache<String, byte[]> cache) {
+   private long generateVersion() {
       ComponentRegistry registry = getCacheRegistry();
-      VersionGenerator cacheVersionGenerator = registry.getComponent(VersionGenerator.class);
-      if (cacheVersionGenerator == null) {
-         // It could be null, for example when not running in compatibility mode.
-         // The reason for that is that if no other component depends on the
-         // version generator, the factory does not get invoked.
-         NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
-         .clustered(registry.getComponent(RpcManager.class) != null);
-         registry.registerComponent(newVersionGenerator, VersionGenerator.class);
-         return newVersionGenerator.generateNew();
-      } else {
-         return cacheVersionGenerator.generateNew();
+      NumericVersionGenerator generator;
+      synchronized (registry) {
+         generator = registry.getComponent(NumericVersionGenerator.class, "STREAM_VERSION_GENERATOR");
+         if (generator == null) {
+            NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator().clustered(registry.getComponent(RpcManager.class) != null);
+            registry.registerComponent(newVersionGenerator, "STREAM_VERSION_GENERATOR");
+            generator = newVersionGenerator;
+         }
       }
+      return generator.generateNew().getVersion();
    }
 
 
@@ -823,7 +825,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
 
    protected Metadata buildMetadata() {
       MemcachedMetadataBuilder metadata = new MemcachedMetadataBuilder();
-      metadata.version(generateVersion(cache));
+      metadata.streamVersion(generateVersion());
       metadata.flags(params.flags);
       if (params.lifespan > 0)
          metadata.lifespan(toMillis(params.lifespan));
@@ -994,7 +996,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    private ByteBuf buildSingleGetWithVersionResponse(String k, CacheEntry<String, byte[]> entry) {
       byte[] v = entry.getValue();
       // TODO: Would be nice for EntryVersion to allow retrieving the version itself...
-      byte[] version = String.valueOf(((NumericVersion) entry.getMetadata().version()).getVersion()).getBytes();
+      byte[] version = String.valueOf(extractVersion(entry.getMetadata())).getBytes();
       ByteBuf buf = buildGetHeaderBegin(k, entry, version.length + 1 + END_SIZE);
       buf.writeByte(SP); // 1
       buf.writeBytes(version); // version.length

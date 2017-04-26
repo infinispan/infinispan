@@ -387,7 +387,7 @@ class Encoder2x implements VersionedEncoder {
                      int maxIdle = ice.getMaxIdle() < 0 ? -1 : (int) (ice.getMaxIdle() / 1000);
                      long lastUsed = ice.getLastUsed();
                      long created = ice.getCreated();
-                     long dataVersion = CacheDecodeContext.extractVersion(ice.getMetadata().version());
+                     long dataVersion = CacheDecodeContext.extractVersion(ice.getMetadata());
                      writeMetadata(lifespan, maxIdle, created, lastUsed, dataVersion, buf);
                   } else {
                      buf.writeByte(0);

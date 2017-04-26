@@ -16,7 +16,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.core.transport.NettyTransport;
@@ -25,8 +24,6 @@ import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.TimeoutException;
 
 import io.netty.buffer.ByteBuf;
-
-;
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -146,7 +143,7 @@ public class Decoder10 implements VersionedDecoder {
                op, OperationStatus.Success, h.topologyId,
                entry.getValue());
       else if (entry != null && op == HotRodOperation.GET_WITH_VERSION) {
-         long version = ((NumericVersion) entry.getMetadata().version()).getVersion();
+         long version = CacheDecodeContext.extractVersion(entry.getMetadata());
          return new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
                h.clientIntel, op, OperationStatus.Success, h.topologyId,
                entry.getValue(), version);

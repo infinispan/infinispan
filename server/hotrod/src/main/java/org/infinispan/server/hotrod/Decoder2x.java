@@ -19,7 +19,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -254,13 +253,7 @@ class Decoder2x implements VersionedDecoder {
                return new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel, HotRodOperation.GET,
                      OperationStatus.Success, h.topologyId, entry.getValue());
             case GET_WITH_VERSION:
-               long version;
-               NumericVersion numericVersion = (NumericVersion) entry.getMetadata().version();
-               if (numericVersion != null) {
-                  version = numericVersion.getVersion();
-               } else {
-                  version = 0;
-               }
+               long version = CacheDecodeContext.extractVersion(entry.getMetadata());
                return new GetWithVersionResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                      HotRodOperation.GET_WITH_VERSION, OperationStatus.Success, h.topologyId, entry.getValue(),
                      version);

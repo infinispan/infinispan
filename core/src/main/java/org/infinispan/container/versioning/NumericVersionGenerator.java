@@ -69,13 +69,13 @@ public class NumericVersionGenerator implements VersionGenerator {
    }
 
    @Override
-   public IncrementableEntryVersion generateNew() {
+   public NumericVersion generateNew() {
       long counter = versionCounter.incrementAndGet();
       return createNumericVersion(counter);
 
    }
 
-   private IncrementableEntryVersion createNumericVersion(long counter) {
+   private NumericVersion createNumericVersion(long counter) {
       // Version counter occupies the least significant 4 bytes of the version
       return isClustered
             ? new NumericVersion(versionPrefix.get() | counter)
