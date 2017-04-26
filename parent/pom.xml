@@ -115,6 +115,7 @@
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.math>2.2</version.commons.math>
       <version.elasticsearch>5.3.0</version.elasticsearch>
+      <version.elasticsearch.plugin>5.7</version.elasticsearch.plugin>
       <version.geronimo.tm>3.1.1</version.geronimo.tm>
       <version.h2.driver>1.4.180</version.h2.driver>
       <version.h2.driver-within-wildfly>1.3.173</version.h2.driver-within-wildfly>
@@ -1195,6 +1196,11 @@
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>${version.org.wildfly.maven-plugin}</version>
+             </plugin>
+             <plugin>
+                <groupId>com.github.alexcojocaru</groupId>
+                <artifactId>elasticsearch-maven-plugin</artifactId>
+                <version>${version.elasticsearch.plugin}</version>
              </plugin>
          </plugins>
       </pluginManagement>
