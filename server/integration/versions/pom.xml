@@ -35,7 +35,7 @@
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.apache.ds>2.0.0-M16</version.apache.ds>
       <version.com.github.relaxng.relaxngDatatype>2011.1</version.com.github.relaxng.relaxngDatatype>
-      <version.com.github.ben-manes.caffeine>2.3.3</version.com.github.ben-manes.caffeine>
+      <version.com.github.ben-manes.caffeine>2.4.0</version.com.github.ben-manes.caffeine>
       <version.com.thoughtworks.paranamer>2.3</version.com.thoughtworks.paranamer>
       <version.commons.logging>1.1.1</version.commons.logging>
       <version.net.jcip.annotations>1.0</version.net.jcip.annotations>
