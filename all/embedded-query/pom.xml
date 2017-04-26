@@ -67,6 +67,7 @@
                            <exclude>org.osgi:org.osgi.core:jar:</exclude>
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                            <exclude>org.hibernate.javax.persistence:hibernate-jpa-2.1-api:jar:</exclude>
+                           <exclude>com.github.ben-manes.caffeine:caffeine:jar:</exclude>
                         </excludes>
                      </artifactSet>
                      <filters>
