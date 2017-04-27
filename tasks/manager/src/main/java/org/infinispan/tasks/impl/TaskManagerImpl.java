@@ -72,6 +72,7 @@ public class TaskManagerImpl implements TaskManager {
       this.useSecurity = cacheManager.getCacheManagerConfiguration().security().authorization().enabled();
    }
 
+   @Override
    public synchronized void registerTaskEngine(TaskEngine engine) {
       if (engines.contains(engine)) {
          throw log.duplicateTaskEngineRegistration(engine.getName());

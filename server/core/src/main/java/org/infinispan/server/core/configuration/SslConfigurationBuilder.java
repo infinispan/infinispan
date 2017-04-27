@@ -2,14 +2,11 @@ package org.infinispan.server.core.configuration;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.server.core.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  *
@@ -19,16 +16,16 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sebastian Łaskawiec
  * @since 5.3
  */
-public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>> implements Builder<SslConfiguration>, ProtocolServerConfigurationChildBuilder<T, S> {
-   private static final Log log = LogFactory.getLog(SslConfigurationBuilder.class, Log.class);
-   private final ProtocolServerConfigurationChildBuilder<T, S> parentConfigurationBuilder;
+public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
+      extends AbstractProtocolServerConfigurationChildBuilder<T, S>
+      implements Builder<SslConfiguration> {
    private boolean enabled = false;
    private boolean requireClientAuth = false;
    private SslEngineConfigurationBuilder defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);
    private Map<String, SslEngineConfigurationBuilder> sniDomains;
 
-   SslConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> parentConfigurationBuilder) {
-      this.parentConfigurationBuilder = parentConfigurationBuilder;
+   SslConfigurationBuilder(ProtocolServerConfigurationChildBuilder<T, S> builder) {
+      super(builder);
       sniDomains = new HashMap<>();
       defaultDomainConfigurationBuilder = new SslEngineConfigurationBuilder(this);
       sniDomains.put(SslConfiguration.DEFAULT_SNI_DOMAIN, defaultDomainConfigurationBuilder);
@@ -202,72 +199,7 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
    }
 
    @Override
-   public S defaultCacheName(String defaultCacheName) {
-      return parentConfigurationBuilder.defaultCacheName(defaultCacheName);
-   }
-
-   @Override
-   public S name(String name) {
-      return parentConfigurationBuilder.name(name);
-   }
-
-   @Override
-   public S host(String host) {
-      return parentConfigurationBuilder.host(host);
-   }
-
-   @Override
-   public S port(int port) {
-      return parentConfigurationBuilder.port(port);
-   }
-
-   @Override
-   public S idleTimeout(int idleTimeout) {
-      return parentConfigurationBuilder.idleTimeout(idleTimeout);
-   }
-
-   @Override
-   public S tcpNoDelay(boolean tcpNoDelay) {
-      return parentConfigurationBuilder.tcpNoDelay(tcpNoDelay);
-   }
-
-   @Override
-   public S recvBufSize(int recvBufSize) {
-      return parentConfigurationBuilder.recvBufSize(recvBufSize);
-   }
-
-   @Override
-   public S sendBufSize(int sendBufSize) {
-      return parentConfigurationBuilder.sendBufSize(sendBufSize);
-   }
-
-   @Override
-   public SslConfigurationBuilder ssl() {
-      return parentConfigurationBuilder.ssl();
-   }
-
-   @Override
-   public S workerThreads(int workerThreads) {
-      return parentConfigurationBuilder.workerThreads(workerThreads);
-   }
-
-   @Override
-   public S ignoredCaches(Set<String> ignoredCaches) {
-      return parentConfigurationBuilder.ignoredCaches(ignoredCaches);
-   }
-
-   @Override
-   public S startTransport(boolean startTransport) {
-      return parentConfigurationBuilder.startTransport(startTransport);
-   }
-
-   @Override
-   public T build() {
-      return parentConfigurationBuilder.build();
-   }
-
-   @Override
    public S self() {
-      return parentConfigurationBuilder.self();
+      return (S) this;
    }
 }

@@ -124,4 +124,10 @@ public interface Log extends org.infinispan.util.logging.Log {
    @LogMessage(level = WARN)
    @Message(value = "Native Epoll transport not available, using NIO instead: %s", id = 5028)
    void epollNotAvailable(String message);
+
+   @Message(value = "No task manager available to register the admin operations handler", id = 5029)
+   CacheConfigurationException cannotRegisterAdminOperationsHandler();
+
+   @Message(value = "Administration task '%s' invoked without required parameter '%s'", id = 5030)
+   NullPointerException missingRequiredAdminTaskParameter(String name, String parameter);
 }

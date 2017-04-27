@@ -1,6 +1,7 @@
 package org.infinispan.server.memcached.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
 
 /**
@@ -32,8 +33,15 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
    }
 
    @Override
+   public MemcachedServerConfigurationBuilder adminOperationsHandler(AdminOperationsHandler handler) {
+      // Ignore
+      return this;
+   }
+
+   @Override
    public MemcachedServerConfiguration create() {
-      return new MemcachedServerConfiguration(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, ignoredCaches, startTransport);
+      return new MemcachedServerConfiguration(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize,
+            ssl.create(), tcpNoDelay, workerThreads, ignoredCaches, startTransport, adminOperationsHandler);
    }
 
    public MemcachedServerConfiguration build(boolean validate) {

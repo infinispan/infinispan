@@ -20,8 +20,6 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    public static final int DEFAULT_PORT = 8080;
    public static final String DEFAILT_NAME = "rest";
 
-   private boolean startTransport = true;
-
    private ExtendedHeaders extendedHeaders = ExtendedHeaders.ON_DEMAND;
    private String contextPath = DEFAULT_CONTEXT_PATH;
 
@@ -35,12 +33,6 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
-   public RestServerConfigurationBuilder startTransport(boolean startTransport) {
-      this.startTransport = startTransport;
-      return this;
-   }
-
-
    public RestServerConfigurationBuilder contextPath(String contextPath) {
       this.contextPath = contextPath;
       return this;
@@ -53,7 +45,8 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public RestServerConfiguration create() {
-      return new RestServerConfiguration(defaultCacheName, name, extendedHeaders, host, port, ignoredCaches, ssl.create(), startTransport, contextPath);
+      return new RestServerConfiguration(defaultCacheName, name, extendedHeaders, host, port, ignoredCaches, ssl.create(),
+            startTransport, contextPath, adminOperationsHandler);
    }
 
    @Override
