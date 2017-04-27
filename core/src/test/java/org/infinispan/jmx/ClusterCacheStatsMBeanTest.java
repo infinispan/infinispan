@@ -54,6 +54,10 @@ public class ClusterCacheStatsMBeanTest extends AbstractClusterMBeanTest {
       //sleep so we pick up refreshed values after remove
       TestingUtil.sleepThread(AbstractClusterStats.DEFAULT_STALE_STATS_THRESHOLD + 1000);
 
+      assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "AverageWriteTime", 1);
+      assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "AverageReadTime", 1);
+      assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "AverageRemoveTime", 1);
+
       assertAttributeValue(mBeanServer, clusterStats, "HitRatio", 0.5);
       assertAttributeValue(mBeanServer, clusterStats, "RemoveHits", 1);
       assertAttributeValue(mBeanServer, clusterStats, "RemoveMisses", 0);

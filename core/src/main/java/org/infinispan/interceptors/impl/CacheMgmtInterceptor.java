@@ -94,12 +94,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          StripeB stripe = counters.stripeForCurrentThread();
-         long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          if (rv == null) {
-            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanoseconds);
             counters.increment(StripeB.missesFieldUpdater, stripe);
          } else {
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanoseconds);
             counters.increment(StripeB.hitsFieldUpdater, stripe);
          }
       });
@@ -114,7 +114,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+         long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          int requests = ((GetAllCommand) rCommand).getKeys().size();
          int hitCount = 0;
          for (Entry<Object, Object> entry : ((Map<Object, Object>) rv).entrySet()) {
@@ -127,11 +127,11 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          StripeB stripe = counters.stripeForCurrentThread();
          if (hitCount > 0) {
             counters.add(StripeB.hitsFieldUpdater, stripe, hitCount);
-            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalMilliseconds * hitCount / requests);
+            counters.add(StripeB.hitTimesFieldUpdater, stripe, intervalNanoseconds * hitCount / requests);
          }
          if (missCount > 0) {
             counters.add(StripeB.missesFieldUpdater, stripe, missCount);
-            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalMilliseconds * missCount / requests);
+            counters.add(StripeB.missTimesFieldUpdater, stripe, intervalNanoseconds * missCount / requests);
          }
       });
    }
@@ -144,11 +144,11 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-         final long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+         final long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
          final Map<Object, Object> data = ((PutMapCommand) rCommand).getMap();
          if (data != null && !data.isEmpty()) {
             StripeB stripe = counters.stripeForCurrentThread();
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
             counters.add(StripeB.storesFieldUpdater, stripe, data.size());
          }
       });
@@ -173,9 +173,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (command.isSuccessful()) {
-            long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+            long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
             StripeB stripe = counters.stripeForCurrentThread();
-            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalNanoseconds);
             counters.increment(StripeB.storesFieldUpdater, stripe);
          }
       });
@@ -205,9 +205,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private void increaseRemoveHits(long start) {
-      long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+      long intervalNanoseconds = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
       StripeB stripe = counters.stripeForCurrentThread();
-      counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalMilliseconds);
+      counters.add(StripeB.removeTimesFieldUpdater, stripe, intervalNanoseconds);
       counters.increment(StripeB.removeHitsFieldUpdater, stripe);
    }
 
@@ -306,9 +306,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Average number of milliseconds for a read operation on the cache",
+         description = "Average number of nanoseconds for a read operation on the cache",
          displayName = "Average read time",
-         units = Units.MILLISECONDS,
+         units = Units.NANOSECONDS,
          displayType = DisplayType.SUMMARY
    )
    @SuppressWarnings("unused")
@@ -320,9 +320,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Average number of milliseconds for a write operation in the cache",
+         description = "Average number of nanoseconds for a write operation in the cache",
          displayName = "Average write time",
-         units = Units.MILLISECONDS,
+         units = Units.NANOSECONDS,
          displayType = DisplayType.SUMMARY
    )
    @SuppressWarnings("unused")
@@ -334,9 +334,9 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Average number of milliseconds for a remove operation in the cache",
+         description = "Average number of nanoseconds for a remove operation in the cache",
          displayName = "Average remove time",
-         units = Units.MILLISECONDS,
+         units = Units.NANOSECONDS,
          displayType = DisplayType.SUMMARY
    )
    @SuppressWarnings("unused")
