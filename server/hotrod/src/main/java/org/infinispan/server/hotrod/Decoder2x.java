@@ -710,12 +710,12 @@ class Decoder2x implements VersionedDecoder {
    }
 }
 
-class ExecRequestContext {
+abstract class NamedParametricRequestContext<T> {
    private final String name;
    private final int paramSize;
-   private final Map<String, byte[]> params;
+   private final Map<String, T> params;
 
-   ExecRequestContext(String name, int paramSize, Map<String, byte[]> params) {
+   NamedParametricRequestContext(String name, int paramSize, Map<String, T> params) {
       this.name = name;
       this.paramSize = paramSize;
       this.params = params;
@@ -729,8 +729,20 @@ class ExecRequestContext {
       return paramSize;
    }
 
-   public Map<String, byte[]> getParams() {
+   public Map<String, T> getParams() {
       return params;
+   }
+}
+
+class ExecRequestContext extends NamedParametricRequestContext<byte[]> {
+   ExecRequestContext(String name, int paramSize, Map<String, byte[]> params) {
+      super(name, paramSize, params);
+   }
+}
+
+class AdminRequestContext extends NamedParametricRequestContext<String> {
+   AdminRequestContext(String name, int paramSize, Map<String, String> params) {
+      super(name, paramSize, params);
    }
 }
 

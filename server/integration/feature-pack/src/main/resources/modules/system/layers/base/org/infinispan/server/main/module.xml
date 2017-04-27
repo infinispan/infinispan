@@ -14,6 +14,7 @@
       <module name="javax.transaction.api" />
       <module name="org.apache.xerces" services="import" />
       <module name="org.infinispan" />
+      <module name="org.infinispan.tasks" services="import"/>
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" services="import"/>
       <module name="io.netty" />

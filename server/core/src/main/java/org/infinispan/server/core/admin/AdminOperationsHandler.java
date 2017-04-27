@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
@@ -40,7 +41,7 @@ public abstract class AdminOperationsHandler implements TaskEngine {
    }
 
    @Override
-   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context) {
+   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
       Class<? extends AdminServerTask> taskClass = tasks.get(taskName);
       AdminServerTask<T> task = Util.getInstance(taskClass);
       task.setTaskContext(context);
@@ -50,7 +51,7 @@ public abstract class AdminOperationsHandler implements TaskEngine {
          } catch (Exception e) {
             throw new CacheException(e);
          }
-      });
+      }, executor);
    }
 
    @Override
