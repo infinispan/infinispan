@@ -371,22 +371,19 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private void updateRatios(List<Map<String, Number>> responseList) {
       long totalHits = 0;
+      long totalRetrievals = 0;
       long sumOfAllReads = 0;
       long sumOfAllWrites = 0;
-      double hitRatio = 0;
-      double rwRatio = 0;
       for (Map<String, Number> m : responseList) {
-         totalHits += m.get(HITS).longValue();
-         sumOfAllReads += (totalHits + m.get(MISSES).longValue());
+         long hits = m.get(HITS).longValue();
+         long misses = m.get(MISSES).longValue();
+         totalHits += hits;
+         sumOfAllReads += (totalHits + misses);
          sumOfAllWrites += m.get(STORES).longValue();
+         totalRetrievals += (hits + misses);
       }
-      if (sumOfAllWrites > 0) {
-         rwRatio = (double) sumOfAllReads / sumOfAllWrites;
-         hitRatio = (double) totalHits / sumOfAllReads;
-      }
-
-      this.hitRatio = hitRatio;
-      this.readWriteRatio = rwRatio;
+      this.hitRatio = totalRetrievals > 0 ? (double) totalHits / totalRetrievals : 0;
+      this.readWriteRatio = sumOfAllWrites > 0 ? (double) sumOfAllReads / sumOfAllWrites : 0;
    }
 
    private static <T extends AsyncInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?, ?> cache,

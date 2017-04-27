@@ -4,6 +4,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
@@ -30,26 +31,32 @@ abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfig = new ConfigurationBuilder();
-      GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb1.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(jmxDomain)
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
-      CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(gcb1, defaultConfig,
-            new TransportFlags(), true);
-      cacheManager1.start();
-
-      GlobalConfigurationBuilder gcb2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb2.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(jmxDomain)
-            .mBeanServerLookup(new PerThreadMBeanServerLookup());
-      CacheContainer cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(gcb2, defaultConfig,
-            new TransportFlags(), true);
-      cacheManager2.start();
-
-      registerCacheManager(cacheManager1, cacheManager2);
+      CacheContainer c1 = createManager(defaultConfig);
+      CacheContainer c2 = createManager(defaultConfig);
+      CacheContainer c3 = createManager(defaultConfig);
+      registerCacheManager(c1, c2, c3);
 
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.REPL_SYNC).jmxStatistics().enable();
       defineConfigurationOnAllManagers(cachename, cb);
       waitForClusterToForm(cachename);
+   }
+
+   private CacheContainer createManager(ConfigurationBuilder builder) {
+      GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb1.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(jmxDomain)
+            .mBeanServerLookup(new PerThreadMBeanServerLookup());
+      CacheContainer cacheManager = TestCacheManagerFactory.createClusteredCacheManager(gcb1, builder,
+            new TransportFlags(), true);
+      cacheManager.start();
+      return cacheManager;
+   }
+
+   void assertAttributeValue(MBeanServer mBeanServer, ObjectName oName, String attrName, double expectedValue)
+         throws Exception {
+      String receivedVal = mBeanServer.getAttribute(oName, attrName).toString();
+      assert Double.parseDouble(receivedVal) == expectedValue : "expecting " + expectedValue + " for " + attrName
+            + ", but received " + receivedVal;
    }
 
    void assertAttributeValue(MBeanServer mBeanServer, ObjectName oName, String attrName, long expectedValue)

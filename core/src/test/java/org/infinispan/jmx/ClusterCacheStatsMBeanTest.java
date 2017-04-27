@@ -42,16 +42,19 @@ public class ClusterCacheStatsMBeanTest extends AbstractClusterMBeanTest {
       cache1.put("a3", "b3");
       cache1.put("a4", "b4");
 
+      assertAttributeValue(mBeanServer, clusterStats, "HitRatio", 0.0);
       assertAttributeValue(mBeanServer, clusterStats, "NumberOfEntries", 4);
       assertAttributeValue(mBeanServer, clusterStats, "Stores", 4);
       assertAttributeValue(mBeanServer, clusterStats, "Evictions", 0);
-      assertAttributeValueGreaterThanOrEqualTo(mBeanServer, clusterStats, "AverageWriteTime", 0);
 
       cache1.remove("a1");
+      cache1.get("a1");
+      cache1.get("a2");
 
       //sleep so we pick up refreshed values after remove
       TestingUtil.sleepThread(AbstractClusterStats.DEFAULT_STALE_STATS_THRESHOLD + 1000);
 
+      assertAttributeValue(mBeanServer, clusterStats, "HitRatio", 0.5);
       assertAttributeValue(mBeanServer, clusterStats, "RemoveHits", 1);
       assertAttributeValue(mBeanServer, clusterStats, "RemoveMisses", 0);
 
