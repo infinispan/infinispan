@@ -41,4 +41,11 @@ public interface TaskManager {
      * @return a list of {@link Task} elements
      */
    List<Task> getTasks();
+
+   /**
+    * Registers a new {@link TaskEngine}
+    *
+    * @param taskEngine an instance of the task engine that has to be registered with the task manager
+    */
+   void registerTaskEngine(TaskEngine taskEngine);
 }

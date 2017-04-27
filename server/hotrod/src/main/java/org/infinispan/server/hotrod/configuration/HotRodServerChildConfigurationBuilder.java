@@ -12,6 +12,9 @@ import org.infinispan.configuration.cache.SyncConfigurationBuilder;
  */
 public interface HotRodServerChildConfigurationBuilder {
 
+   /**
+    * Configures authentication for this endpoint
+    */
    AuthenticationConfigurationBuilder authentication();
 
    /**

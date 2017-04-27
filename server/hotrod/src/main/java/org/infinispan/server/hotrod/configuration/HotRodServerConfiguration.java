@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.configuration;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.configuration.SslConfiguration;
 
@@ -19,8 +20,10 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
    private final AuthenticationConfiguration authentication;
 
    HotRodServerConfiguration(String defaultCacheName, String proxyHost, int proxyPort, long topologyLockTimeout, long topologyReplTimeout, boolean topologyAwaitInitialTransfer, boolean topologyStateTransfer,
-         String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication, Set<String> ignoredCaches, boolean startTransport) {
-      super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads, ignoredCaches, startTransport);
+         String name, String host, int port, int idleTimeout, int recvBufSize, int sendBufSize, SslConfiguration ssl, boolean tcpNoDelay, int workerThreads, AuthenticationConfiguration authentication, Set<String> ignoredCaches,
+         boolean startTransport, AdminOperationsHandler adminOperationsHandler) {
+      super(defaultCacheName, name, host, port, idleTimeout, recvBufSize, sendBufSize, ssl, tcpNoDelay, workerThreads,
+            ignoredCaches, startTransport, adminOperationsHandler);
       this.proxyHost = proxyHost;
       this.proxyPort = proxyPort;
       this.topologyCacheName = TOPOLOGY_CACHE_NAME_PREFIX + (name.length() > 0 ? "_" + name : name);
@@ -65,10 +68,17 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
 
    @Override
    public String toString() {
-      return "HotRodServerConfiguration [proxyHost=" + proxyHost + ", proxyPort=" + proxyPort + ", topologyCacheName="
-            + topologyCacheName + ", topologyLockTimeout=" + topologyLockTimeout + ", topologyReplTimeout="
-            + topologyReplTimeout + ", topologyAwaitInitialTransfer=" + topologyAwaitInitialTransfer
-            + ", topologyStateTransfer=" + topologyStateTransfer + ", authentication=" + authentication
-            + ", ignoredCaches=" + ignoredCaches() + ", " + super.toString() + "]";
+      return "HotRodServerConfiguration[" +
+            "proxyHost='" + proxyHost + '\'' +
+            ", proxyPort=" + proxyPort +
+            ", topologyCacheName='" + topologyCacheName + '\'' +
+            ", topologyLockTimeout=" + topologyLockTimeout +
+            ", topologyReplTimeout=" + topologyReplTimeout +
+            ", topologyAwaitInitialTransfer=" + topologyAwaitInitialTransfer +
+            ", topologyStateTransfer=" + topologyStateTransfer +
+            ", authentication=" + authentication +
+            ", " + super.toString() +
+            ']';
    }
+
 }

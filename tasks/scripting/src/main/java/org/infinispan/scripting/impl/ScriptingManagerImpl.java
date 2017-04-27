@@ -39,7 +39,6 @@ import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
-import org.infinispan.tasks.impl.TaskManagerImpl;
 import org.infinispan.util.logging.LogFactory;
 
 
@@ -81,7 +80,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
       internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
-      ((TaskManagerImpl)taskManager).registerTaskEngine(new ScriptingTaskEngine(this));
+      taskManager.registerTaskEngine(new ScriptingTaskEngine(this));
    }
 
    Cache<String, String> getScriptCache() {

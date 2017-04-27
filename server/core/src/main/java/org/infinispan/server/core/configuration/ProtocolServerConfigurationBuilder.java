@@ -5,11 +5,12 @@ import java.util.Set;
 
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>> implements
-      ProtocolServerConfigurationChildBuilder<T, S>, Builder<T> {
+public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServerConfiguration, S extends ProtocolServerConfigurationChildBuilder<T, S>>
+      implements ProtocolServerConfigurationChildBuilder<T, S>, Builder<T> {
    private static final Log log = LogFactory.getLog(ProtocolServerConfigurationBuilder.class, Log.class);
    protected String defaultCacheName = BasicCacheContainer.DEFAULT_CACHE_NAME;
    protected String name = "";
@@ -23,6 +24,7 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    protected int workerThreads = 2 * Runtime.getRuntime().availableProcessors();
    protected Set<String> ignoredCaches = Collections.EMPTY_SET;
    protected boolean startTransport = true;
+   protected AdminOperationsHandler adminOperationsHandler;
 
    protected ProtocolServerConfigurationBuilder(int port) {
       this.port = port;
@@ -99,6 +101,19 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    }
 
    @Override
+   public S startTransport(boolean startTransport) {
+      this.startTransport = startTransport;
+      return this.self();
+   }
+
+   @Override
+   public S adminOperationsHandler(AdminOperationsHandler handler) {
+      this.adminOperationsHandler = handler;
+      return this.self();
+   }
+
+
+   @Override
    public void validate() {
       ssl.validate();
       if (idleTimeout < -1) {
@@ -116,12 +131,6 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    }
 
    @Override
-   public S startTransport(boolean startTransport) {
-      this.startTransport = startTransport;
-      return this.self();
-   }
-
-   @Override
    public Builder<?> read(T template) {
       this.defaultCacheName = template.defaultCacheName();
       this.name = template.name();
@@ -134,6 +143,8 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
       this.workerThreads = template.workerThreads();
       this.ssl.read(template.ssl());
       this.ignoredCaches = template.ignoredCaches();
+      this.startTransport = template.startTransport();
+      this.adminOperationsHandler = template.adminOperationsHandler();
       return this;
    }
 }
