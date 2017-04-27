@@ -182,7 +182,7 @@ for which the response is sent.
 +0x34+ = iterationNext (since 2.3) +
 +0x36+ = iterationEnd (since 2.3) +
 +0x38+ = getStream (since 2.6) +
-+0x40+ = putStream (since 2.6) +
++0x3A+ = putStream (since 2.6) +
 +0x50+ = error (since 1.0) +
 | Status                 | 1 byte     | Status of the response, possible values: +
 +0x00+ = No error +
@@ -1414,7 +1414,7 @@ Request (0x2B):
 |==============================================================================
 | Field Name          | Size       | Value
 | Header | variable | Request header
-| Script | string | Name of the script to execute
+| Script | string | Name of the task to execute
 | Parameter Count | vInt | The number of parameters
 | Parameter 1 Name | string | The name of the first parameter
 | Parameter 1 Length | vInt | The length of the first parameter
@@ -2058,3 +2058,47 @@ The function is still based on
 link:http://code.google.com/p/smhasher/wiki/MurmurHash3[wiki],
 but is also aware of the hash segments used in the server's
 link:https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/distribution/ch/ConsistentHash.java[ConsistentHash].
+
+==== Hot Rod Admin Tasks
+Admin operations are handled by the Exec operation with a set of well known tasks. Admin tasks are named according to the following rules:
+
+`@@context@name`
+
+All parameters are UTF-8 encoded strings.
+Parameters are specific to each task, with the exception of the *flags* parameter which is common to all commands.
+The *flags* parameter contains zero or more space-separated values which may affect the behaviour of the command.
+The following table lists all currently available flags
+
+.FLAGS
+[cols="3,10",options="header"]
+|==============================================================================
+| Flag | Description
+| persistent | Requests that the command's effect be made persistent into the server's configuration. If the server cannot comply with the request, the entire operation will fail with an error
+|==============================================================================
+
+===== Admin tasks
+
+.@@cache@create
+[cols="3,10,2",options="header"]
+|==============================================================================
+| Parameter       | Description | Required
+| name  | The name of the cache to create. | Yes
+| template | The name of the cache configuration template to use for the new cache.|No
+| flags | See the flags table above. |No
+|==============================================================================
+
+.@@cache@remove
+[cols="3,10,2",options="header"]
+|==============================================================================
+| Parameter       | Description | Required
+| name  | The name of the cache to remove. | Yes
+| flags | See the flags table above. |No
+|==============================================================================
+
+.@@cache@reindex
+[cols="3,10,2",options="header"]
+|==============================================================================
+| Parameter       | Description | Required
+| name  | The name of the cache to reindex. | Yes
+| flags | See the flags table above. |No, all flags will be ignored
+|==============================================================================

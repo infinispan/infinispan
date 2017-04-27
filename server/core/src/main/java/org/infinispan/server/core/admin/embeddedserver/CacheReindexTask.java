@@ -34,7 +34,7 @@ public class CacheReindexTask extends AdminServerTask<Void> {
 
       String name = requireParameter("name");
       Cache<Object, Object> cache = cacheManager.getCache(name);
-      Search.getSearchManager(cache).getMassIndexer().startAsync();
+      Search.getSearchManager(cache).getMassIndexer().start();
 
       return null;
    }
