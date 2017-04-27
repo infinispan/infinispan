@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.manager.ClusterExecutionPolicy;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
