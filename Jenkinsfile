@@ -2,6 +2,9 @@
 
 pipeline {
     agent any
+    options {
+        timeout(time: 4, unit: 'HOURS')
+    }
     stages {
         stage('Prepare') {
             steps {
