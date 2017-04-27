@@ -261,7 +261,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                    result.set(stats.getReadWriteRatio());
                    break;
                 case REMOVE_HITS:
-                   result.set(stats.getHits());
+                   result.set(stats.getRemoveHits());
                    break;
                 case REMOVE_MISSES:
                    result.set(stats.getRemoveMisses());
@@ -270,7 +270,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                    result.set(stats.getStores());
                    break;
                 case TIME_SINCE_RESET:
-                   result.set(stats.getTimeSinceStart());
+                   result.set(stats.getTimeSinceReset());
                    break;
                 case ONLINE_SITES:
                 case OFFLINE_SITES:
