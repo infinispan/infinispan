@@ -44,8 +44,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.InternalCacheFactory;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
