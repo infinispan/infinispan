@@ -163,7 +163,17 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
    }
 
    void putLongAttributesAverage(List<Map<String, Number>> responseList, String attribute) {
-      long average = addLongAttributes(responseList, attribute) / responseList.size();
+      long nonZeroValues = 0;
+      long total = 0;
+      for (Map<String, Number> m : responseList) {
+         Number value = m.get(attribute);
+         long longValue = value.longValue();
+         if (longValue > 0) {
+            total += longValue;
+            nonZeroValues++;
+         }
+      }
+      long average = nonZeroValues > 0 ? total / nonZeroValues : 0;
       statsMap.put(attribute, average);
    }
 
