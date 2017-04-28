@@ -439,6 +439,28 @@
                </execution>
             </executions>
          </plugin>
+
+         <!-- Delete the keystores before the keytool plugin runs -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>clean-key-stores</id>
+                  <phase>process-test-sources</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <tasks>
+                        <delete quiet="true">
+                           <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer"/>
+                        </delete>
+                     </tasks>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
 </project>
