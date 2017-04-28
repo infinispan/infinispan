@@ -692,6 +692,21 @@
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
+                    <!-- Delete the keystores before the keytool plugin runs -->
+                    <execution>
+                        <id>clean-key-stores</id>
+                        <phase>process-test-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <delete quiet="true">
+                                    <fileset dir="${project.build.testOutputDirectory}" includes="vault/*.keystore,*.jks,*.csr,*.cer"/>
+                                </delete>
+                            </tasks>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>generate-distros-and-configs</id>
                         <goals>
