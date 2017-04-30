@@ -1,9 +1,5 @@
 package org.infinispan.jcache.embedded;
 
-import javax.cache.expiry.Duration;
-import javax.cache.expiry.ExpiryPolicy;
-import javax.cache.integration.CacheLoader;
-
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.Expiration;
@@ -11,6 +7,10 @@ import org.infinispan.jcache.logging.Log;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
+
+import javax.cache.expiry.Duration;
+import javax.cache.expiry.ExpiryPolicy;
+import javax.cache.integration.CacheLoader;
 
 public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi.CacheLoader {
 
@@ -41,17 +41,17 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
 
    @Override
    public MarshalledEntry load(Object key) throws PersistenceException {
-      V value = loadKey(key);
+      V value = loadValue(key);
 
       if (value != null) {
          Duration expiry = Expiration.getExpiry(expiryPolicy, Expiration.Operation.CREATION);
          long now = ctx.getTimeService().wallClockTime(); // ms
          if (expiry == null || expiry.isEternal()) {
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(value, value, null);
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value, null);
          } else {
             long exp = now + expiry.getTimeUnit().toMillis(expiry.getDurationAmount());
             JCacheInternalMetadata meta = new JCacheInternalMetadata(now, exp);
-            return ctx.getMarshalledEntryFactory().newMarshalledEntry(value, value, meta);
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, value, meta);
          }
       }
 
@@ -59,7 +59,7 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
    }
 
    @SuppressWarnings("unchecked")
-   private V loadKey(Object key) {
+   private V loadValue(Object key) {
       try {
          return delegate.load((K) key);
       } catch (Exception e) {
