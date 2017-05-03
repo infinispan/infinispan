@@ -48,22 +48,18 @@ Declarative configuration is the most common approach to configuring Infinispan 
 In order to read XML configuration files one would typically construct an instance of DefaultCacheManager by pointing to an XML file containing Infinispan configuration.
 Once the configuration file is read you can obtain reference to the default cache instance.
 
-[source,java]
+[source, JAVA, indent=0]
+----
+include::{rootDir}/core/src/test/java/org/infinispan/configuration/ConfigurationUnitTest.java[tags=basic-example]
 ----
 
-EmbeddedCacheManager manager = new DefaultCacheManager("my-config-file.xml");
-Cache defaultCache = manager.getCache();
+or any other named instance specified in `configs/my-custom-config.xml`.
 
+[source, JAVA, indent=0]
+----
+include::{rootDir}/core/src/test/java/org/infinispan/configuration/ConfigurationUnitTest.java[tags=named-cache-retrieval]
 ----
 
-or any other named instance specified in `my-config-file.xml`.
-
-[source,java]
-----
-
-Cache someNamedCache = manager.getCache("someNamedCache");
-
-----
 The name of the default cache is defined in the `<cache-container>` element of the XML configuration file, and additional
 caches can be configured using the `<local-cache>`,`<distributed-cache>`,`<invalidation-cache>` or `<replicated-cache>` elements.
 
@@ -71,17 +67,7 @@ The following example shows the simplest possible configuration for each of the 
 
 [source,xml]
 ----
-
-<infinispan>
-   <cache-container default-cache="local">
-      <transport cluster="mycluster"/>
-      <local-cache name="local"/>
-      <invalidation-cache name="invalidation" mode="SYNC"/>
-      <replicated-cache name="repl-sync" mode="SYNC"/>
-      <distributed-cache name="dist-sync" mode="SYNC"/>
-   </cache-container>
-</infinispan>
-
+include::{rootDir}/core/src/test/resources/configs/my-custom-config.xml[tags=example]
 ----
 
 ==== Cache configuration templates
@@ -93,46 +79,14 @@ The following example shows how a configuration named `local-template` is used t
 
 [source,xml]
 ----
-
-<infinispan>
-   <cache-container default-cache="local">
-      <!-- template configurations -->
-      <local-cache-configuration name="local-template">
-         <expiration interval="10000" lifespan="10" max-idle="10"/>
-      </local-cache-configuration>
-
-      <!-- cache definitions -->
-      <local-cache name="local" configuration="local-template" />
-   </cache-container>
-</infinispan>
-
+include::{rootDir}/core/src/test/resources/configs/my-custom-config2.xml[tags=example]
 ----
 
 Templates can inherit from previously defined templates, augmenting and/or overriding some or all of the configuration elements:
 
 [source,xml]
 ----
-
-<infinispan>
-   <cache-container default-cache="local">
-      <!-- template configurations -->
-      <local-cache-configuration name="base-template">
-         <expiration interval="10000" lifespan="10" max-idle="10"/>
-      </local-cache-configuration>
-
-      <local-cache-configuration name="extended-template" configuration="base-template">
-         <expiration lifespan="20"/>
-         <memory>
-            <object size="2000"/>
-         </memory>
-      </local-cache-configuration>
-
-      <!-- cache definitions -->
-      <local-cache name="local" configuration="base-template" />
-      <local-cache name="local-bounded" configuration="extended-template" />
-   </cache-container>
-</infinispan>
-
+include::{rootDir}/core/src/test/resources/configs/my-custom-config3.xml[tags=example]
 ----
 
 In the above example, `base-template` defines a local cache with a specific _expiration_ configuration. The `extended-template`
@@ -153,10 +107,7 @@ Although every single aspect of Infinispan configuration could be set programmat
 
 [source,java]
 ----
-
-EmbeddedCacheManager manager = new DefaultCacheManager("my-config-file.xml");
-Cache defaultCache = manager.getCache();
-
+include::{rootDir}/core/src/test/java/org/infinispan/configuration/ConfigurationUnitTest.java[tags=basic-example]
 ----
 
 Let's assume that a new synchronously replicated cache is to be configured programmatically.
