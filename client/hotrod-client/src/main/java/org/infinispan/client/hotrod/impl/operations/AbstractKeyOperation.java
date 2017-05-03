@@ -4,7 +4,7 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -26,8 +26,8 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    protected final byte[] keyBytes;
 
    protected AbstractKeyOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence) {
-      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
       this.key = key;
       this.keyBytes = keyBytes;
    }
@@ -52,7 +52,7 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    }
 
    protected T returnPossiblePrevValue(Transport transport, short status) {
-      return (T) codec.returnPossiblePrevValue(transport, status, flags);
+      return (T) codec.returnPossiblePrevValue(transport, status, flags, cfg.serialWhitelist());
    }
 
    protected VersionedOperationResponse returnVersionedOperationResponse(Transport transport, HeaderParams params) {

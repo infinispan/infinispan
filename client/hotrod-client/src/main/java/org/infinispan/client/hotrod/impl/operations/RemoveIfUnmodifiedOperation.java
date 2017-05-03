@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -25,9 +26,9 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
 
    public RemoveIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory,
                                       Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
-                                      int flags, ClientIntelligence clientIntelligence,
+                                      int flags, Configuration cfg,
                                       long version) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, clientIntelligence);
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
       this.version = version;
    }
 

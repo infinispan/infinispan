@@ -4,7 +4,7 @@ import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -33,10 +33,10 @@ public class PutStreamOperation extends AbstractKeyOperation<OutputStream> {
 
    public PutStreamOperation(Codec codec, TransportFactory transportFactory,
                              Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
-                             int flags, ClientIntelligence clientIntelligence, long version,
+                             int flags, Configuration cfg, long version,
                              long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       super(codec, transportFactory, key, keyBytes, cacheName, topologyId,
-         flags, clientIntelligence);
+         flags, cfg);
       this.version = version;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

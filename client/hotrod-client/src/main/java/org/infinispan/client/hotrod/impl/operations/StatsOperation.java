@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -24,8 +25,8 @@ import net.jcip.annotations.Immutable;
 public class StatsOperation extends RetryOnFailureOperation<Map<String, String>> {
 
    public StatsOperation(Codec codec, TransportFactory transportFactory,
-                         byte[] cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence) {
-      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence);
+                         byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
    }
 
    @Override

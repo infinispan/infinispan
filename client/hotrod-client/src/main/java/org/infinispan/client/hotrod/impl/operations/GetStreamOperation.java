@@ -4,7 +4,7 @@ import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.VersionedMetadata;
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedMetadataImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -26,8 +26,8 @@ public class GetStreamOperation<T extends InputStream & VersionedMetadata> exten
    private boolean retryable;
 
    public GetStreamOperation(Codec codec, TransportFactory transportFactory,
-                             Object key, byte[] keyBytes, int offset, byte[] cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, clientIntelligence);
+                             Object key, byte[] keyBytes, int offset, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
       this.offset = offset;
       retryable = true;
    }

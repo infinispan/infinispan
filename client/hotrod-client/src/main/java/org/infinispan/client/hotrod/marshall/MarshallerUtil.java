@@ -2,13 +2,21 @@ package org.infinispan.client.hotrod.marshall;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
+import java.io.ObjectStreamClass;
 import java.io.ObjectStreamConstants;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 
@@ -22,7 +30,7 @@ public final class MarshallerUtil {
    private MarshallerUtil() {}
 
    @SuppressWarnings("unchecked")
-   public static <T> T bytes2obj(Marshaller marshaller, byte[] bytes, short status) {
+   public static <T> T bytes2obj(Marshaller marshaller, byte[] bytes, short status, List<String> whitelist) {
       if (bytes == null || bytes.length == 0) return null;
       try {
          Object ret = marshaller.objectFromByteBuffer(bytes);
@@ -33,12 +41,9 @@ public final class MarshallerUtil {
             // So, if the unmarshalled object is still a byte[], it could be a standard
             // serialized object, so check for stream magic
             if (ret instanceof byte[] && isJavaSerialized((byte[]) ret)) {
-               try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream((byte[]) ret))) {
-                  return (T) ois.readObject();
-               } catch (Exception ee) {
-                  if (log.isDebugEnabled())
-                     log.debugf("Standard deserialization not in use for %s", Util.printArray(bytes));
-               }
+               T ois = tryJavaDeserialize(bytes, (byte[]) ret, whitelist);
+               if (ois != null)
+                  return ois;
             }
          }
 
@@ -46,6 +51,18 @@ public final class MarshallerUtil {
       } catch (Exception e) {
          throw log.unableToUnmarshallBytes(Util.toHexString(bytes), e);
       }
+   }
+
+   public static <T> T tryJavaDeserialize(byte[] bytes, byte[] ret, List<String> whitelist) {
+      try (ObjectInputStream ois = new CheckedInputStream(new ByteArrayInputStream(ret), whitelist)) {
+         return (T) ois.readObject();
+      } catch (CacheException ce) {
+         throw ce;
+      } catch (Exception ee) {
+         if (log.isDebugEnabled())
+            log.debugf("Standard deserialization not in use for %s", Util.printArray(bytes));
+      }
+      return null;
    }
 
    private static boolean isJavaSerialized(byte[] bytes) {
@@ -70,6 +87,37 @@ public final class MarshallerUtil {
       } catch (InterruptedException ie) {
          Thread.currentThread().interrupt();
          return null;
+      }
+   }
+
+   private final static class CheckedInputStream extends ObjectInputStream {
+
+      private final List<String> whitelist;
+
+      public CheckedInputStream(InputStream in, List<String> whitelist) throws IOException {
+         super(in);
+         this.whitelist = whitelist;
+      }
+
+      @Override
+      protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+         //Enforce SerialKiller's whitelist
+         boolean safeClass = false;
+         for (String whiteRegExp : whitelist) {
+            Pattern whitePattern = Pattern.compile(whiteRegExp);
+            Matcher whiteMatcher = whitePattern.matcher(desc.getName());
+            if (whiteMatcher.find()) {
+               safeClass = true;
+
+               if (log.isTraceEnabled())
+                  log.tracef("Whitelist match: '%s'", desc.getName());
+            }
+         }
+
+         if (!safeClass)
+            throw log.classNotInWhitelist(desc.getName());
+
+         return super.resolveClass(desc);
       }
    }
 

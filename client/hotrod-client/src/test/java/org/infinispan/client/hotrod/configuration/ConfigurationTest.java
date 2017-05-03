@@ -15,6 +15,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_PROPERTIES_PREFIX;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_WHITELIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SNI_HOST_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SO_TIMEOUT;
@@ -35,7 +36,10 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
@@ -107,6 +111,7 @@ public class ConfigurationTest {
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".A", c -> c.security().authentication().saslProperties().get("A"));
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".B", c -> c.security().authentication().saslProperties().get("B"));
       OPTIONS.put(SASL_PROPERTIES_PREFIX + ".C", c -> c.security().authentication().saslProperties().get("C"));
+      OPTIONS.put(JAVA_SERIAL_WHITELIST, Configuration::serialWhitelist);
 
       TYPES.put(Boolean.class, b -> Boolean.toString((Boolean) b));
       TYPES.put(ExhaustedAction.class, e -> Integer.toString(((ExhaustedAction) e).ordinal()));
@@ -118,6 +123,15 @@ public class ConfigurationTest {
       TYPES.put(MyCallbackHandler.class, c -> c);
       TYPES.put(Subject.class, s -> s);
       TYPES.put(ProtocolVersion.class, p -> p.toString());
+      TYPES.put(mkClass(), l -> String.join(",", (List<String>) l));
+   }
+
+   private static Class<?> mkClass() {
+      try {
+         return Class.forName("java.util.Arrays$ArrayList");
+      } catch (ClassNotFoundException e) {
+         throw new RuntimeException(e);
+      }
    }
 
    CallbackHandler callbackHandler = new MyCallbackHandler();
@@ -184,7 +198,8 @@ public class ConfigurationTest {
                .callbackHandler(callbackHandler)
                .serverName("my-server-name")
                .clientSubject(clientSubject)
-               .saslProperties(saslProperties);
+               .saslProperties(saslProperties)
+         .addJavaSerialWhiteList(".*Person.*", ".*Employee.*");
 
       Configuration configuration = builder.build();
       validateConfiguration(configuration);
@@ -238,6 +253,7 @@ public class ConfigurationTest {
       p.setProperty(SASL_PROPERTIES_PREFIX + ".A", "1");
       p.setProperty(SASL_PROPERTIES_PREFIX + ".B", "2");
       p.setProperty(SASL_PROPERTIES_PREFIX + ".C", "3");
+      p.setProperty(JAVA_SERIAL_WHITELIST, ".*Person.*,.*Employee.*");
 
       Configuration configuration = builder.withProperties(p).build();
       validateConfiguration(configuration);
@@ -501,6 +517,7 @@ public class ConfigurationTest {
       assertEqualsConfig("2", SASL_PROPERTIES_PREFIX + ".B", configuration);
       assertEqualsConfig("3", SASL_PROPERTIES_PREFIX + ".C", configuration);
       assertEqualsConfig(ProtocolVersion.PROTOCOL_VERSION_13, PROTOCOL_VERSION, configuration);
+      assertEqualsConfig(Arrays.asList(".*Person.*", ".*Employee.*"), JAVA_SERIAL_WHITELIST, configuration);
    }
 
    private void validateSSLContextConfiguration(Configuration configuration) {
