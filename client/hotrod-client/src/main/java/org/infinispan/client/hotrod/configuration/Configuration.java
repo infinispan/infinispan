@@ -45,12 +45,13 @@ public class Configuration {
    private final int maxRetries;
    private final NearCacheConfiguration nearCache;
    private final List<ClusterConfiguration> clusters;
+   private final List<String> serialWhitelist;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
          boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
-         List<ClusterConfiguration> clusters) {
+         List<ClusterConfiguration> clusters, List<String> serialWhitelist) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyClass = balancingStrategyClass;
       this.balancingStrategy = balancingStrategy;
@@ -74,13 +75,14 @@ public class Configuration {
       this.valueSizeEstimate = valueSizeEstimate;
       this.nearCache = nearCache;
       this.clusters = clusters;
+      this.serialWhitelist = serialWhitelist;
    }
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
          boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
          Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
-         List<ClusterConfiguration> clusters) {
+         List<ClusterConfiguration> clusters, List<String> serialWhitelist) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyClass = balancingStrategyClass;
       this.balancingStrategy = balancingStrategy;
@@ -104,6 +106,7 @@ public class Configuration {
       this.valueSizeEstimate = valueSizeEstimate;
       this.nearCache = nearCache;
       this.clusters = clusters;
+      this.serialWhitelist = serialWhitelist;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -206,6 +209,10 @@ public class Configuration {
       return maxRetries;
    }
 
+   public List<String> serialWhitelist() {
+      return serialWhitelist;
+   }
+
    @Override
    public String toString() {
       return "Configuration [asyncExecutorFactory=" + asyncExecutorFactory + ", balancingStrategyClass=" + balancingStrategyClass + ", balancingStrategy=" + balancingStrategy + ",classLoader=" + classLoader + ", connectionPool="
@@ -213,6 +220,8 @@ public class Configuration {
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", pingOnStartup="
             + pingOnStartup + ", protocolVersion=" + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay + ", tcpKeepAlive=" + tcpKeepAlive
             + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
+            + ", serialWhiteList=" + serialWhitelist
             + "nearCache=" + nearCache + "]";
    }
+
 }

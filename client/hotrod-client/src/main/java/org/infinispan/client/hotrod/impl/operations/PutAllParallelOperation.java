@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -24,9 +25,10 @@ public class PutAllParallelOperation extends ParallelHotRodOperation<Void, PutAl
    private final TimeUnit maxIdleTimeUnit;
 
    public PutAllParallelOperation(Codec codec, TransportFactory transportFactory, Map<byte[], byte[]> map, byte[]
-         cacheName, AtomicInteger topologyId, int flags, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle,
+         cacheName, AtomicInteger topologyId, int flags, Configuration cfg, long lifespan,
+                                  TimeUnit lifespanTimeUnit, long maxIdle,
                                   TimeUnit maxIdleTimeUnit, ExecutorService executorService) {
-      super(codec, transportFactory, cacheName, topologyId, flags, executorService);
+      super(codec, transportFactory, cacheName, topologyId, flags, cfg, executorService);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;
@@ -50,7 +52,7 @@ public class PutAllParallelOperation extends ParallelHotRodOperation<Void, PutAl
 
       return splittedMaps.values().stream().map(
             mapSubset -> new PutAllOperation(codec, transportFactory, mapSubset, cacheName, topologyId, flags,
-                  lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit)).collect(Collectors.toList());
+                  cfg, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit)).collect(Collectors.toList());
    }
 
    @Override

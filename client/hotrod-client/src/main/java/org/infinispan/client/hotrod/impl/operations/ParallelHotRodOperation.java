@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.ParallelOperationException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -30,8 +31,8 @@ public abstract class ParallelHotRodOperation<T, SUBOP extends HotRodOperation> 
    protected final CompletionService<T> completionService;
 
    protected ParallelHotRodOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger
-         topologyId, int flags, ExecutorService executorService) {
-      super(codec, flags, cacheName, topologyId);
+         topologyId, int flags, Configuration cfg, ExecutorService executorService) {
+      super(codec, flags, cfg, cacheName, topologyId);
       this.transportFactory = transportFactory;
       this.completionService = new ExecutorCompletionService<>(executorService);
    }

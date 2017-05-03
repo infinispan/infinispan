@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -17,9 +18,10 @@ public class IterationEndOperation extends HotRodOperation {
    private final TransportFactory transportFactory;
    private final Transport transport;
 
-   protected IterationEndOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
-                                   String iterationId, TransportFactory transportFactory, Transport transport) {
-      super(codec, flags, cacheName, topologyId);
+   protected IterationEndOperation(Codec codec, int flags, Configuration cfg,  byte[] cacheName,
+                                   AtomicInteger topologyId, String iterationId, TransportFactory transportFactory,
+                                   Transport transport) {
+      super(codec, flags, cfg, cacheName, topologyId);
       this.iterationId = iterationId;
       this.transportFactory = transportFactory;
       this.transport = transport;

@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -43,10 +44,10 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
    public final byte[][] converterFactoryParams;
 
    protected AddClientListenerOperation(Codec codec, TransportFactory transportFactory,
-         String cacheName, AtomicInteger topologyId, int flags,
+         String cacheName, AtomicInteger topologyId, int flags, Configuration cfg,
          ClientListenerNotifier listenerNotifier, Object listener,
          byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
-      super(codec, transportFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags);
+      super(codec, transportFactory, RemoteCacheManager.cacheNameBytes(cacheName), topologyId, flags, cfg);
       this.listenerId = generateListenerId();
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
@@ -93,7 +94,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       Either<Short, ClientEvent> either;
       do {
          // Process state transfer related events or add listener response
-         either = codec.readHeaderOrEvent(dedicatedTransport, params, listenerId, listenerNotifier.getMarshaller());
+         either = codec.readHeaderOrEvent(dedicatedTransport, params, listenerId, listenerNotifier.getMarshaller(), cfg.serialWhitelist());
          switch(either.type()) {
             case LEFT:
                if (HotRodConstants.isSuccess(either.left()))

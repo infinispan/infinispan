@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.client.hotrod.MetadataValue;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -26,9 +27,10 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
    private static final Log log = LogFactory.getLog(GetWithMetadataOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   public GetWithMetadataOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
+   public GetWithMetadataOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes,
+                                   byte[] cacheName, AtomicInteger topologyId, int flags,
+                                   Configuration cfg) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
@@ -55,7 +57,7 @@ public class GetWithMetadataOperation<V> extends AbstractKeyOperation<MetadataVa
          if (trace) {
             log.tracef("Received version: %d", version);
          }
-         V value = codec.readUnmarshallByteArray(transport, status);
+         V value = codec.readUnmarshallByteArray(transport, status, cfg.serialWhitelist());
          result = new MetadataValueImpl<V>(creation, lifespan, lastUsed, maxIdle, version, value);
       }
       return result;

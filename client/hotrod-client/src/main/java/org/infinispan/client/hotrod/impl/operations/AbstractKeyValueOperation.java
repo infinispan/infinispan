@@ -1,6 +1,8 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
+
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -29,9 +31,9 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
    protected final TimeUnit maxIdleTimeUnit;
 
    protected AbstractKeyValueOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes, byte[] cacheName,
-                                       AtomicInteger topologyId, int flags, byte[] value,
+                                       AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;

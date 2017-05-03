@@ -16,6 +16,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import org.infinispan.client.hotrod.configuration.AuthenticationConfiguration;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.AuthMechListOperation;
 import org.infinispan.client.hotrod.impl.operations.AuthOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -34,12 +35,13 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    private static final byte[] EMPTY_BYTES = new byte[0];
    private static final String AUTH_INT = "auth-int";
    private static final String AUTH_CONF = "auth-conf";
-   private final AuthenticationConfiguration configuration;
+   private final AuthenticationConfiguration authConfiguration;
 
    public SaslTransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory,
-         AtomicInteger defaultCacheTopologyId, boolean pingOnStartup, AuthenticationConfiguration configuration) {
-      super(codec, tcpTransportFactory, defaultCacheTopologyId, pingOnStartup);
-      this.configuration = configuration;
+         AtomicInteger defaultCacheTopologyId, boolean pingOnStartup,
+         AuthenticationConfiguration authConfiguration, Configuration configuration) {
+      super(codec, tcpTransportFactory, defaultCacheTopologyId, pingOnStartup, configuration);
+      this.authConfiguration = authConfiguration;
    }
 
    @Override
@@ -50,34 +52,34 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
       }
 
       List<String> serverMechs = mechList(tcpTransport, defaultCacheTopologyId);
-      if (!serverMechs.contains(configuration.saslMechanism())) {
-         throw log.unsupportedMech(configuration.saslMechanism(), serverMechs);
+      if (!serverMechs.contains(authConfiguration.saslMechanism())) {
+         throw log.unsupportedMech(authConfiguration.saslMechanism(), serverMechs);
       }
 
       SaslClient saslClient;
-      if (configuration.clientSubject() != null) {
-         saslClient = Subject.doAs(configuration.clientSubject(), new PrivilegedExceptionAction<SaslClient>() {
+      if (authConfiguration.clientSubject() != null) {
+         saslClient = Subject.doAs(authConfiguration.clientSubject(), new PrivilegedExceptionAction<SaslClient>() {
             @Override
             public SaslClient run() throws Exception {
-               CallbackHandler callbackHandler = configuration.callbackHandler();
+               CallbackHandler callbackHandler = authConfiguration.callbackHandler();
                if (callbackHandler == null) {
                   callbackHandler = NoOpCallbackHandler.INSTANCE;
                }
-            return Sasl.createSaslClient(new String[] { configuration.saslMechanism() }, null, "hotrod",
-                     configuration.serverName(), configuration.saslProperties(), callbackHandler);
+            return Sasl.createSaslClient(new String[] { authConfiguration.saslMechanism() }, null, "hotrod",
+               authConfiguration.serverName(), authConfiguration.saslProperties(), callbackHandler);
             }
          });
       } else {
-         saslClient = Sasl.createSaslClient(new String[] { configuration.saslMechanism() }, null, "hotrod",
-               configuration.serverName(), configuration.saslProperties(), configuration.callbackHandler());
+         saslClient = Sasl.createSaslClient(new String[] { authConfiguration.saslMechanism() }, null, "hotrod",
+            authConfiguration.serverName(), authConfiguration.saslProperties(), authConfiguration.callbackHandler());
       }
 
       if (trace) {
-         log.tracef("Authenticating using mech: %s", configuration.saslMechanism());
+         log.tracef("Authenticating using mech: %s", authConfiguration.saslMechanism());
       }
       byte response[] = saslClient.hasInitialResponse() ? evaluateChallenge(saslClient, EMPTY_BYTES) : EMPTY_BYTES;
 
-      byte challenge[] = auth(tcpTransport, defaultCacheTopologyId, configuration.saslMechanism(), response);
+      byte challenge[] = auth(tcpTransport, defaultCacheTopologyId, authConfiguration.saslMechanism(), response);
       while (!saslClient.isComplete() && challenge != null) {
          response = evaluateChallenge(saslClient, challenge);
          if (response == null) {
@@ -105,9 +107,9 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    }
 
    private byte[] evaluateChallenge(final SaslClient saslClient, final byte[] challenge) throws SaslException {
-      if(configuration.clientSubject()!= null) {
+      if(authConfiguration.clientSubject()!= null) {
          try {
-            return Subject.doAs(configuration.clientSubject(), new PrivilegedExceptionAction<byte[]>() {
+            return Subject.doAs(authConfiguration.clientSubject(), new PrivilegedExceptionAction<byte[]>() {
                @Override
                public byte[] run() throws Exception {
                   return saslClient.evaluateChallenge(challenge);
@@ -127,12 +129,12 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    }
 
    private List<String> mechList(TcpTransport tcpTransport, AtomicInteger topologyId) {
-      AuthMechListOperation op = new AuthMechListOperation(codec, topologyId, tcpTransport);
+      AuthMechListOperation op = new AuthMechListOperation(codec, topologyId, configuration, tcpTransport);
       return op.execute();
    }
 
    private byte[] auth(TcpTransport tcpTransport, AtomicInteger topologyId, String mech, byte[] response) {
-      AuthOperation op = new AuthOperation(codec, topologyId, tcpTransport, mech, response);
+      AuthOperation op = new AuthOperation(codec, topologyId, configuration, tcpTransport, mech, response);
       return op.execute();
    }
 

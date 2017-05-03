@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -24,8 +25,8 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    public GetAllOperation(Codec codec, TransportFactory transportFactory,
                           Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
-                          int flags) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+                          int flags, Configuration cfg) {
+      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
       this.keys = keys;
    }
 
@@ -44,8 +45,8 @@ public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
       int size = transport.readVInt();
       Map<K, V> result = new HashMap<K, V>(size);
       for (int i = 0; i < size; ++i) {
-         K key = codec.readUnmarshallByteArray(transport, status);
-         V value = codec.readUnmarshallByteArray(transport, status);
+         K key = codec.readUnmarshallByteArray(transport, status, cfg.serialWhitelist());
+         V value = codec.readUnmarshallByteArray(transport, status, cfg.serialWhitelist());
          result.put(key, value);
       }
       return result;

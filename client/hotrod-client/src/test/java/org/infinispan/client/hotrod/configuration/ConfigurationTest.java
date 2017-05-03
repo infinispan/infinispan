@@ -15,6 +15,8 @@ import org.infinispan.client.hotrod.impl.transport.tcp.SaslTransportObjectFactor
 import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
+
 @Test(testName = "client.hotrod.configuration.ConfigurationTest", groups = "functional" )
 public class ConfigurationTest {
 
@@ -52,7 +54,8 @@ public class ConfigurationTest {
          .valueSizeEstimate(1024)
          .maxRetries(0)
          .tcpKeepAlive(true)
-         .transportFactory(SomeTransportfactory.class);
+         .transportFactory(SomeTransportfactory.class)
+         .addJavaSerialWhiteList(".*Person.*", ".*Employee.*");
 
       Configuration configuration = builder.build();
       validateConfiguration(configuration);
@@ -81,8 +84,8 @@ public class ConfigurationTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class,
-         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Invalid max_retries \\(value=-1\\). " +
-               "Value should be greater or equal than zero.")
+      expectedExceptionsMessageRegExp = "ISPN(\\d)*: Invalid max_retries \\(value=-1\\). " +
+         "Value should be greater or equal than zero.")
    public void testNegativeRetriesPerServer() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.maxRetries(-1);
@@ -180,6 +183,7 @@ public class ConfigurationTest {
       assertEquals(128, configuration.keySizeEstimate());
       assertEquals(1024, configuration.valueSizeEstimate());
       assertEquals(0, configuration.maxRetries());
+      assertEquals(Arrays.asList(".*Person.*", ".*Employee.*"), configuration.serialWhitelist());
    }
 
 }

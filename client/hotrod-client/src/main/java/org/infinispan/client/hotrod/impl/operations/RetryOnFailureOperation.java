@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
@@ -36,8 +37,8 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
    private boolean triedCompleteRestart = false;
 
    protected RetryOnFailureOperation(Codec codec, TransportFactory transportFactory,
-                                     byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, flags, cacheName, topologyId);
+                                     byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, flags, cfg, cacheName, topologyId);
       this.transportFactory = transportFactory;
    }
 

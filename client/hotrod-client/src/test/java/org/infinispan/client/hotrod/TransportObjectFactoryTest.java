@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -24,8 +26,9 @@ public class TransportObjectFactoryTest {
 
    public void testValidate() {
       Codec codec = mock(Codec.class);
+      Configuration configuration = new ConfigurationBuilder().build();
       TransportObjectFactory objectFactory = new TransportObjectFactory(codec, null,
-                                                                        new AtomicInteger(), false);
+                                                                        new AtomicInteger(), false, configuration);
       doThrow(new TransportException("induced!", null))
             .when(codec).writeHeader(any(Transport.class), any(HeaderParams.class));
 
