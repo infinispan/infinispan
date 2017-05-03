@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Set;
  */
 public interface KeyTracker {
 
-   boolean track(byte[] key, short status);
+   boolean track(byte[] key, short status, List<String> whitelist);
 
    void segmentsFinished(byte[] finishedSegments);
 

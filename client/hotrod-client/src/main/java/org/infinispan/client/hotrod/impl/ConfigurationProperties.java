@@ -43,6 +43,7 @@ public class ConfigurationProperties {
    public static final String TRUST_STORE_FILE_NAME = "infinispan.client.hotrod.trust_store_file_name";
    public static final String TRUST_STORE_PASSWORD = "infinispan.client.hotrod.trust_store_password";
    public static final String MAX_RETRIES = "infinispan.client.hotrod.max_retries";
+   public static final String JAVA_SERIAL_WHITELIST = "infinispan.client.hotrod.java_serial_whitelist";
 
    // defaults
 

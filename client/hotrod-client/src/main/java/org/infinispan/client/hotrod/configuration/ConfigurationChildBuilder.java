@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.configuration;
 
+import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
@@ -167,6 +168,12 @@ public interface ConfigurationChildBuilder {
     * Zero means no retry will made in case of a network failure. It defaults to 10.
     */
    ConfigurationBuilder maxRetries(int maxRetries);
+
+   /**
+    * List of regular expressions for classes that can be deserialized using standard Java deserialization
+    * when reading data that might have been stored with a different endpoint, e.g. REST.
+    */
+   ConfigurationBuilder addJavaSerialWhiteList(String... regEx);
 
    /**
     * Configures this builder using the specified properties

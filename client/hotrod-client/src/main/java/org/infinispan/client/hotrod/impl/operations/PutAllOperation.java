@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -27,8 +28,9 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
 
    public PutAllOperation(Codec codec, TransportFactory transportFactory,
                           Map<byte[], byte[]> map, byte[] cacheName, AtomicInteger topologyId,
-                          int flags, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+                          int flags, Configuration cfg,
+                          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;

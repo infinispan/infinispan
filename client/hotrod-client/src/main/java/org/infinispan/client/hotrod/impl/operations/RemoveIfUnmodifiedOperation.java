@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import net.jcip.annotations.Immutable;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -22,8 +23,10 @@ public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<Version
    private final long version;
 
    public RemoveIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, long version) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags);
+                                      Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
+                                      int flags, Configuration cfg,
+                                      long version) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
       this.version = version;
    }
 

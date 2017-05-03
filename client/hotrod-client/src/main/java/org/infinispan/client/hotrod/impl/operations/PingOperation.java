@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -27,12 +28,12 @@ public class PingOperation extends HotRodOperation {
 
    private final Transport transport;
 
-   public PingOperation(Codec codec, AtomicInteger topologyId, Transport transport) {
-      this(codec, topologyId, transport, DEFAULT_CACHE_NAME_BYTES);
+   public PingOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, Transport transport) {
+      this(codec, topologyId, cfg, transport, DEFAULT_CACHE_NAME_BYTES);
    }
 
-   public PingOperation(Codec codec, AtomicInteger topologyId, Transport transport, byte[] cacheName) {
-      super(codec, 0, cacheName, topologyId);
+   public PingOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, Transport transport, byte[] cacheName) {
+      super(codec, 0, cfg, cacheName, topologyId);
       this.transport = transport;
    }
 

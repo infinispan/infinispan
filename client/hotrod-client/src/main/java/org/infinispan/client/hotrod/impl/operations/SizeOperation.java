@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -12,8 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SizeOperation extends RetryOnFailureOperation<Integer> {
 
    protected SizeOperation(Codec codec, TransportFactory transportFactory,
-                           byte[] cacheName, AtomicInteger topologyId, int flags) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+                           byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
    }
 
    @Override

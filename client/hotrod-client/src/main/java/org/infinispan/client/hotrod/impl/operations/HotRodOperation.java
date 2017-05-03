@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -28,14 +29,17 @@ public abstract class HotRodOperation implements HotRodConstants {
 
    protected final Codec codec;
 
+   protected final Configuration cfg;
+
    private static final byte NO_TX = 0;
    private static final byte XA_TX = 1;
 
-   protected HotRodOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId) {
+   protected HotRodOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName, AtomicInteger topologyId) {
       this.flags = flags;
       this.cacheName = cacheName;
       this.topologyId = topologyId;
       this.codec = codec;
+      this.cfg = cfg;
    }
 
    public abstract Object execute();

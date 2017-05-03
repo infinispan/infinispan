@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -27,14 +28,15 @@ public class IterationNextOperation<E> extends HotRodOperation {
 
    private final String iterationId;
    private final Transport transport;
+   private final List<String> whitelist;
    private final KeyTracker segmentKeyTracker;
 
-   protected IterationNextOperation(Codec codec, int flags, byte[] cacheName, AtomicInteger topologyId,
-                                    String iterationId, Transport transport, KeyTracker segmentKeyTracker) {
-      super(codec, flags, cacheName, topologyId);
+   protected IterationNextOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName, AtomicInteger topologyId,
+                                    String iterationId, Transport transport, KeyTracker segmentKeyTracker, List<String> whitelist) {
+      super(codec, flags, cfg, cacheName, topologyId);
       this.iterationId = iterationId;
       this.transport = transport;
-
+      this.whitelist = whitelist;
       this.segmentKeyTracker = segmentKeyTracker;
    }
 
@@ -86,7 +88,7 @@ public class IterationNextOperation<E> extends HotRodOperation {
                value = new MetadataValueImpl<>(creation, lifespan, lastUsed, maxIdle, version, value);
             }
 
-            if (segmentKeyTracker.track(key, status)) {
+            if (segmentKeyTracker.track(key, status, whitelist)) {
                entries.add(new SimpleEntry<>(unmarshall(key, status), (E) value));
             }
          }
@@ -100,7 +102,7 @@ public class IterationNextOperation<E> extends HotRodOperation {
 
    private Object unmarshall(byte[] bytes, short status) {
       Marshaller marshaller = transport.getTransportFactory().getMarshaller();
-      return MarshallerUtil.bytes2obj(marshaller, bytes, status);
+      return MarshallerUtil.bytes2obj(marshaller, bytes, status, whitelist);
    }
 
 }

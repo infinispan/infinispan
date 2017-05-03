@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -21,8 +22,9 @@ public class AuthOperation extends HotRodOperation {
    private final String saslMechanism;
    private final byte[] response;
 
-   public AuthOperation(Codec codec, AtomicInteger topologyId, Transport transport, String saslMechanism, byte response[]) {
-      super(codec, 0, DEFAULT_CACHE_NAME_BYTES, topologyId);
+   public AuthOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, Transport transport,
+                        String saslMechanism, byte response[]) {
+      super(codec, 0,  cfg, DEFAULT_CACHE_NAME_BYTES, topologyId);
       this.transport = transport;
       this.saslMechanism = saslMechanism;
       this.response = response;

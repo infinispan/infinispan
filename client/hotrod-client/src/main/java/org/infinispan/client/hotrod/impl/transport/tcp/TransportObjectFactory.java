@@ -4,6 +4,7 @@ import java.net.SocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.logging.Log;
@@ -23,13 +24,15 @@ public class TransportObjectFactory
    protected final boolean pingOnStartup;
    protected volatile boolean firstPingExecuted = false;
    protected final Codec codec;
+   protected final Configuration configuration;
 
    public TransportObjectFactory(Codec codec, TcpTransportFactory tcpTransportFactory,
-         AtomicInteger defaultCacheTopologyId, boolean pingOnStartup) {
+         AtomicInteger defaultCacheTopologyId, boolean pingOnStartup, Configuration configuration) {
       this.tcpTransportFactory = tcpTransportFactory;
       this.defaultCacheTopologyId = defaultCacheTopologyId;
       this.pingOnStartup = pingOnStartup;
       this.codec = codec;
+      this.configuration = configuration;
    }
 
    @Override
@@ -48,7 +51,7 @@ public class TransportObjectFactory
    }
 
    protected PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
-      PingOperation po = new PingOperation(codec, topologyId, tcpTransport);
+      PingOperation po = new PingOperation(codec, topologyId, configuration, tcpTransport);
       return po.execute();
    }
 
