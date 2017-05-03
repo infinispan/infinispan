@@ -209,6 +209,15 @@
             </executions>
          </plugin>
          <plugin>
+            <groupId>org.apache.karaf.tooling</groupId>
+            <artifactId>karaf-maven-plugin</artifactId>
+            <configuration>
+               <features>
+                  <feature>infinispan-core</feature>
+               </features>
+            </configuration>
+         </plugin>
+         <plugin>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-defaults-maven-plugin</artifactId>
              <version>${project.version}</version>
@@ -221,15 +230,6 @@
                   </goals>
                </execution>
             </executions>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.karaf.tooling</groupId>
-            <artifactId>karaf-maven-plugin</artifactId>
-            <configuration>
-               <features>
-                  <feature>infinispan-core</feature>
-               </features>
-            </configuration>
          </plugin>
       </plugins>
    </build>

@@ -1279,6 +1279,40 @@
                     <artifactId>elasticsearch-maven-plugin</artifactId>
                     <version>${version.elasticsearch.plugin}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.karaf.tooling</groupId>
+                    <artifactId>karaf-maven-plugin</artifactId>
+                    <version>${version.karaf-maven-plugin}</version>
+                    <configuration>
+                        <descriptors>
+                            <descriptor>file://${project.build.directory}/classes/features.xml</descriptor>
+                            <!-- ideally, those profiles should be referenced in the features file -->
+                            <descriptor>mvn:org.apache.karaf.features/framework/${version.karaf}/xml/features</descriptor>
+                            <descriptor>mvn:org.apache.karaf.features/enterprise/${version.karaf}/xml/features</descriptor>
+                        </descriptors>
+                        <distribution>org.apache.karaf.features:framework</distribution>
+                        <javase>1.8</javase>
+                        <framework>
+                            <feature>framework</feature>
+                        </framework>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>validate</id>
+                            <phase>process-resources</phase>
+                            <goals>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.maven.wagon</groupId>
+                            <artifactId>wagon-http-lightweight</artifactId>
+                            <version>2.8</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -1393,8 +1427,7 @@
                             <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
                             <arguments>
                                 <argument>${project.build.outputDirectory}</argument>
-                                <argument>${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
-                            </argument>
+                                <argument>${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat</argument>
                             </arguments>
                             <systemProperties>
                                 <systemProperty>

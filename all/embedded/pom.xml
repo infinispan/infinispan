@@ -134,13 +134,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.karaf.features</groupId>
-        <artifactId>framework</artifactId>
-        <type>kar</type>
-        <scope>provided</scope>
-      </dependency>
-
-      <dependency>
          <groupId>com.mchange</groupId>
          <artifactId>c3p0</artifactId>
          <optional>${uberjar.deps.optional}</optional>
