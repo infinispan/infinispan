@@ -7,6 +7,7 @@ import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
 import java.util.Collection;
@@ -20,6 +21,7 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
@@ -252,4 +254,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot specify both a callback handler and a username for authentication", id = 4067)
    CacheConfigurationException callbackHandlerAndUsernameMutuallyExclusive();
+
+   @Message(value = "Class '%s' blocked by Java standard deserialization white list. Adjust the client configuration java serialization white list regular expression to include this class.", id = 4068)
+   CacheException classNotInWhitelist(String className);
+
 }

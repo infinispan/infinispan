@@ -127,12 +127,12 @@ public class SaslTransportObjectFactory extends TransportObjectFactory {
    }
 
    private List<String> mechList(TcpTransport tcpTransport, AtomicInteger topologyId) {
-      AuthMechListOperation op = new AuthMechListOperation(codec, topologyId, configuration.clientIntelligence(), tcpTransport);
+      AuthMechListOperation op = new AuthMechListOperation(codec, topologyId, configuration, tcpTransport);
       return op.execute();
    }
 
    private byte[] auth(TcpTransport tcpTransport, AtomicInteger topologyId, String mech, byte[] response) {
-      AuthOperation op = new AuthOperation(codec, topologyId, configuration.clientIntelligence(), tcpTransport, mech, response);
+      AuthOperation op = new AuthOperation(codec, topologyId, configuration, tcpTransport, mech, response);
       return op.execute();
    }
 

@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -68,6 +70,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
    private final NearCacheConfigurationBuilder nearCache;
+   private final List<String> whiteListRegExs = new ArrayList<>();
 
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<ClusterConfigurationBuilder>();
 
@@ -282,6 +285,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder addJavaSerialWhiteList(String... regEx) {
+      this.whiteListRegExs.addAll(Arrays.asList(regEx));
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
@@ -322,6 +331,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.maxRetries(typed.getIntProperty(ConfigurationProperties.MAX_RETRIES, maxRetries, true));
       this.security.ssl().withProperties(properties);
       this.security.authentication().withProperties(properties);
+
+      String serialWhitelist = typed.getProperty(ConfigurationProperties.JAVA_SERIAL_WHITELIST);
+      if (serialWhitelist != null) {
+         String[] classes = serialWhitelist.split(",");
+         Collections.addAll(this.whiteListRegExs, classes);
+      }
+
       return this;
    }
 
@@ -362,7 +378,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs);
    }
 
    @Override
@@ -405,6 +421,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.valueSizeEstimate = template.valueSizeEstimate();
       this.maxRetries = template.maxRetries();
       this.nearCache.read(template.nearCache());
+      this.whiteListRegExs.addAll(template.serialWhitelist());
+
       return this;
    }
 }

@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -21,9 +22,9 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
    private final long version;
 
    public ReplaceIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes, byte[] cacheName,
-                                       AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence, byte[] value,
+                                       AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, clientIntelligence, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       this.version = version;
    }
 

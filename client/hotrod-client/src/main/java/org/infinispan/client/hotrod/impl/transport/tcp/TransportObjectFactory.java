@@ -49,7 +49,7 @@ public class TransportObjectFactory
    }
 
    protected PingOperation.PingResult ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
-      PingOperation po = new PingOperation(codec, topologyId, configuration.clientIntelligence(), tcpTransport);
+      PingOperation po = new PingOperation(codec, topologyId, configuration, tcpTransport);
       return po.execute();
    }
 

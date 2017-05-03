@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -24,9 +24,9 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
    private final Map<String, byte[]> marshalledParams;
 
    protected ExecuteOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName,
-                              AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence,
+                              AtomicInteger topologyId, int flags, Configuration cfg,
                               String taskName, Map<String, byte[]> marshalledParams) {
-      super(codec, transportFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, clientIntelligence);
+      super(codec, transportFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, cfg);
       this.taskName = taskName;
       this.marshalledParams = marshalledParams;
    }
@@ -48,7 +48,7 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
       }
       transport.flush();
       short status = readHeaderAndValidate(transport, params);
-      return codec.readUnmarshallByteArray(transport, status);
+      return codec.readUnmarshallByteArray(transport, status, cfg.serialWhitelist());
    }
 
 }

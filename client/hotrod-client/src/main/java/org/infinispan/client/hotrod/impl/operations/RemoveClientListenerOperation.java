@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import java.net.SocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
@@ -29,9 +29,9 @@ public class RemoveClientListenerOperation extends HotRodOperation {
 
    protected RemoveClientListenerOperation(Codec codec, TransportFactory transportFactory,
                                            byte[] cacheName, AtomicInteger topologyId, int flags,
-                                           ClientIntelligence clientIntelligence,
+                                           Configuration cfg,
                                            ClientListenerNotifier listenerNotifier, Object listener) {
-      super(codec, flags, clientIntelligence, cacheName, topologyId);
+      super(codec, flags, cfg, cacheName, topologyId);
       this.transportFactory = transportFactory;
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;

@@ -61,6 +61,7 @@ public class ConfigurationProperties {
    public static final String SASL_PROPERTIES_PREFIX = "infinispan.client.hotrod.sasl_properties";
    public static final Pattern SASL_PROPERTIES_PREFIX_REGEX =
          Pattern.compile('^' + ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.');
+   public static final String JAVA_SERIAL_WHITELIST = "infinispan.client.hotrod.java_serial_whitelist";
 
    // defaults
 

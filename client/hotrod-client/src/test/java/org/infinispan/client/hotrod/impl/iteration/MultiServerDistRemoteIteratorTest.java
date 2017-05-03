@@ -45,7 +45,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
       List<Integer> finished = new ArrayList<>();
 
       @Override
-      public boolean track(byte[] key, short status) {
+      public boolean track(byte[] key, short status, List<String> whitelist) {
          return true;
       }
 

@@ -5,6 +5,7 @@ import static org.infinispan.test.TestingUtil.extractField;
 import static org.infinispan.test.TestingUtil.replaceField;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -102,11 +103,11 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
       private final IOException failWith = new IOException("Connection reset by peer");
 
       @Override
-      public ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller) {
+      public ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist) {
          if (failure) {
             throw new TransportException(failWith, transport.getRemoteSocketAddress());
          }
-         return super.readEvent(transport, expectedListenerId, marshaller);
+         return super.readEvent(transport, expectedListenerId, marshaller, whitelist);
       }
 
       private void induceFailure() {

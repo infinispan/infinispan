@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -23,10 +24,10 @@ public class PutOperation<V> extends AbstractKeyValueOperation<V> {
 
    public PutOperation(Codec codec, TransportFactory transportFactory,
                        Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
-                       int flags, ClientIntelligence clientIntelligence, byte[] value, long lifespan, TimeUnit lifespanTimeUnit,
+                       int flags, Configuration cfg, byte[] value, long lifespan, TimeUnit lifespanTimeUnit,
                        long maxIdle, TimeUnit maxIdleTimeUnit) {
       super(codec, transportFactory, key, keyBytes, cacheName, topologyId,
-         flags, clientIntelligence, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+         flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    @Override

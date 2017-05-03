@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.client.hotrod.configuration.ClientIntelligence;
+import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -21,8 +21,8 @@ import net.jcip.annotations.Immutable;
 public class RemoveOperation<V> extends AbstractKeyOperation<V> {
 
    public RemoveOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, clientIntelligence);
+         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
