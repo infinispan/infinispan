@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
@@ -257,6 +258,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       return cache.withFlags(flags);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withSubject(Subject subject) {
+      return cache.withSubject(subject);
    }
 
    @Override

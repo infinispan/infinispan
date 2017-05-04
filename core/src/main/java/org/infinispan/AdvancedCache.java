@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
@@ -13,6 +14,7 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -68,6 +70,14 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * to be applied.
     */
    AdvancedCache<K, V> withFlags(Flag... flags);
+
+   /**
+    * Performs any cache operations using the specified {@link Subject}. Only applies to caches with authorization
+    * enabled (see {@link ConfigurationBuilder#security()}).
+    * @param subject
+    * @return an {@link AdvancedCache} instance on which a real operation is to be invoked, using the specified subject
+    */
+   AdvancedCache<K, V> withSubject(Subject subject);
 
    /**
     * Adds a custom interceptor to the interceptor chain, at specified position, where the first interceptor in the

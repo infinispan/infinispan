@@ -11,6 +11,8 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.GlobalSecurityManager;
 
+import javax.security.auth.Subject;
+
 /**
  * AuthorizationManagerImpl. An implementation of the {@link AuthorizationManager} interface.
  *
@@ -39,11 +41,21 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
 
    @Override
    public void checkPermission(AuthorizationPermission perm) {
-      authzHelper.checkPermission(configuration, perm, null);
+      authzHelper.checkPermission(configuration, null, perm, null);
+   }
+
+   @Override
+   public void checkPermission(Subject subject, AuthorizationPermission perm) {
+      authzHelper.checkPermission(configuration, subject, perm, null);
    }
 
    @Override
    public void checkPermission(AuthorizationPermission perm, String role) {
-      authzHelper.checkPermission(configuration, perm, role);
+      authzHelper.checkPermission(configuration, null, perm, role);
+   }
+
+   @Override
+   public void checkPermission(Subject subject, AuthorizationPermission perm, String role) {
+      authzHelper.checkPermission(configuration, subject, perm, role);
    }
 }

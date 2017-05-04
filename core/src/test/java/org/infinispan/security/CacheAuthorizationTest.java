@@ -11,6 +11,7 @@ import java.util.Set;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -110,12 +111,7 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
       }
       final SecureCacheTestDriver driver = new SecureCacheTestDriver();
       final SecureCache<String, String> cache = (SecureCache<String, String>) Security.doAs(
-            ADMIN, new PrivilegedAction<Cache<String, String>>() {
-               @Override
-               public Cache<String, String> run() {
-                  return cacheManager.getCache();
-               }
-            });
+            ADMIN, (PrivilegedAction<Cache<String, String>>) () -> cacheManager.getCache());
       for (final String methodName : methodNames) {
          Class<? extends SecureCacheTestDriver> driverClass = driver.getClass();
          try {
@@ -141,29 +137,11 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
                      throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm.toString() ), e);
                   }
                } else {
-                  Security.doAs(SUBJECTS.get(perm), new PrivilegedExceptionAction<Void>() {
-                     @Override
-                     public Void run() throws Exception {
-                        try {
-                           method.invoke(driver, cache);
-                           if (!perm.implies(expectedPerm)) {
-                              throw new Exception(String.format("Expected SecurityException while invoking %s with permission %s",
-                                    methodName, perm.toString()));
-                           }
-                           return null;
-                        } catch (InvocationTargetException e) {
-                           Throwable cause = e.getCause();
-                           if (cause instanceof SecurityException) {
-                              if (perm.implies(expectedPerm)) {
-                                 throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm.toString() ), e);
-                              } else {
-                                 // We were expecting a security exception
-                                 return null;
-                              }
-                           } else throw new Exception("Unexpected non-SecurityException", e);
-                        }
-                     }
+                  Security.doAs(SUBJECTS.get(perm), (PrivilegedExceptionAction<Void>) () -> {
+                     invokeCacheMethod(driver, cache, methodName, method, expectedPerm, perm);
+                     return null;
                   });
+                  invokeCacheMethod(driver, cache.withSubject(SUBJECTS.get(perm)), methodName, method, expectedPerm, perm);
                }
             }
          } catch (NoSuchMethodException e) {
@@ -172,6 +150,25 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
                         "Class %s needs to declare a method with the following signature: public void %s(SecureCache<String, String> cache) {}\n",
                         driver.getClass().getName(), methodName), e);
          }
+      }
+   }
+
+   private void invokeCacheMethod(SecureCacheTestDriver driver, AdvancedCache<String, String> cache, String methodName, Method method, AuthorizationPermission expectedPerm, AuthorizationPermission perm) throws Exception {
+      try {
+         method.invoke(driver, cache);
+         if (!perm.implies(expectedPerm)) {
+            throw new Exception(String.format("Expected SecurityException while invoking %s with permission %s",
+                  methodName, perm.toString()));
+         }
+      } catch (InvocationTargetException e) {
+         Throwable cause = e.getCause();
+         if (cause instanceof SecurityException) {
+            if (perm.implies(expectedPerm)) {
+               throw new Exception(String.format("Unexpected SecurityException while invoking %s with permission %s", methodName, perm.toString() ), e);
+            } else {
+               // We were expecting a security exception
+            }
+         } else throw new Exception("Unexpected non-SecurityException", e);
       }
    }
 
