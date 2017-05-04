@@ -137,6 +137,13 @@
          <artifactId>mockito-all</artifactId>
          <scope>test</scope>
       </dependency>
+      
+      <dependency>
+        <groupId>org.apache.karaf.features</groupId>
+        <artifactId>framework</artifactId>
+        <type>kar</type>
+        <scope>provided</scope>
+      </dependency>
 
    </dependencies>
 
@@ -438,6 +445,15 @@
                   </configuration>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.karaf.tooling</groupId>
+            <artifactId>karaf-maven-plugin</artifactId>
+            <configuration>
+               <features>
+                  <feature>infinispan-client-hotrod,infinispan-client-hotrod-with-query,hotrod-client,hotrod-client-with-query</feature>
+               </features>
+            </configuration>
          </plugin>
       </plugins>
    </build>
