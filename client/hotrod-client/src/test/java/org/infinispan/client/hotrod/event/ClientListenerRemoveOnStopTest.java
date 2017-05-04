@@ -35,7 +35,7 @@ public class ClientListenerRemoveOnStopTest extends SingleHotRodServerTest {
    public void testRemoveListenerAfterStopAndRestart() {
       remoteCacheManager.start();
       final RemoteCache<Integer, String> rcache = remoteCacheManager.getCache();
-      final EventLogListener<Integer> eventListener1 = new EventLogListener<>(rcache);
+      final EventLogListener<Integer> eventListener1 = new EventLogListener<>(false);
       rcache.addClientListener(eventListener1);
       Set<Object> listeners = rcache.getListeners();
       assertEquals(1, listeners.size());
