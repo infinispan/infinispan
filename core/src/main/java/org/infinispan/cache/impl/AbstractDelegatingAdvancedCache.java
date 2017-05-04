@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
@@ -229,6 +230,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       } else {
          return this;
       }
+   }
+
+   @Override
+   public AdvancedCache<K, V> withSubject(Subject subject) {
+      return this.wrapper.wrap(cache.withSubject(subject));
    }
 
    @Override

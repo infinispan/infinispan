@@ -18,7 +18,6 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.partitionhandling.AvailabilityMode;
 
 public class SecureCacheTestDriver {
@@ -31,26 +30,10 @@ public class SecureCacheTestDriver {
    private CacheEventFilter<String, String> keyValueFilter;
 
    public SecureCacheTestDriver() {
-      interceptor = new CommandInterceptor() {
-      };
-      keyFilter = new KeyFilter<String>() {
-         @Override
-         public boolean accept(String key) {
-            return true;
-         }
-      };
-      keyValueFilter = new CacheEventFilter<String, String>() {
-         @Override
-         public boolean accept(String key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
-            return true;
-         }
-      };
-      converter = new CacheEventConverter<String, String, String>() {
-         @Override
-         public String convert(String key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
-            return null;
-         }
-      };
+      interceptor = new CommandInterceptor() { };
+      keyFilter = key -> true;
+      keyValueFilter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> true;
+      converter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> null;
       listener = new NullListener();
       metadata = new Metadata() {
 
@@ -675,5 +658,8 @@ public class SecureCacheTestDriver {
    public void testAddFilteredListener_Object_CacheEventFilter_CacheEventConverter_Set(SecureCache<String, String> cache) {
       cache.addFilteredListener(listener, keyValueFilter, converter, Collections.emptySet());
    }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithSubject_Subject(SecureCache<String, String> cache) {}
 
 }

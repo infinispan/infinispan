@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
@@ -948,6 +949,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       // the flags are mostly ignored
       return this;
+   }
+
+   @Override
+   public AdvancedCache<K, V> withSubject(Subject subject) {
+      return this; // NO-OP
    }
 
    @Override

@@ -54,24 +54,24 @@ public class AuthorizationHelper {
    }
 
    public void checkPermission(AuthorizationPermission perm) {
-      checkPermission(null, perm, null);
+      checkPermission(null, null, perm, null);
    }
 
    public void checkPermission(AuthorizationPermission perm, String role) {
-      checkPermission(null, perm, role);
+      checkPermission(null, null, perm, role);
    }
 
    public void checkPermission(AuthorizationConfiguration configuration, AuthorizationPermission perm) {
-      checkPermission(configuration, perm, null);
+      checkPermission(configuration, null, perm, null);
    }
 
-   public void checkPermission(AuthorizationConfiguration configuration, AuthorizationPermission perm,
+   public void checkPermission(AuthorizationConfiguration configuration, Subject subject, AuthorizationPermission perm,
          String role) {
       if (globalConfiguration.authorization().enabled()) {
          if (Security.isPrivileged()) {
             Security.checkPermission(perm.getSecurityPermission());
          } else {
-            Subject subject = Security.getSubject();
+            subject = subject != null ? subject : Security.getSubject();
             try {
                if (subject != null) {
                   if (checkSubjectPermissionAndRole(subject, configuration, perm, role)) {

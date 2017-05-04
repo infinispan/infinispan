@@ -22,9 +22,11 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.local.ValueCacheCollection;
 
+import javax.security.auth.Subject;
+
 /**
- * A decorator to a cache, which can be built with a specific {@link ClassLoader} and a set of {@link Flag}s.  This
- * {@link ClassLoader} and set of {@link Flag}s will be applied to all cache invocations made via this decorator.
+ * A decorator to a cache, which can be built with a specific set of {@link Flag}s.  This
+ * set of {@link Flag}s will be applied to all cache invocations made via this decorator.
  * <p/>
  * In addition to cleaner and more readable code, this approach offers a performance benefit to using
  * {@link AdvancedCache#withFlags(org.infinispan.context.Flag...)} API, thanks to
@@ -38,14 +40,19 @@ import org.infinispan.stream.impl.local.ValueCacheCollection;
  */
 public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
+   private static final Flag[] EMPTY_FLAGS = new Flag[0];
    private final long flags;
    private final CacheImpl<K, V> cacheImplementation;
+
+   public DecoratedCache(AdvancedCache<K, V> delegate) {
+      this(delegate, EMPTY_FLAGS);
+   }
 
    public DecoratedCache(AdvancedCache<K, V> delegate, Flag... flags) {
       super(delegate);
 
       if (flags == null)
-         throw new IllegalArgumentException("There is no point in using a DecoratedCache if Flags are set.");
+         throw new IllegalArgumentException("There is no point in using a DecoratedCache without specifying any Flags.");
 
       if (flags.length == 0)
          this.flags = EnumUtil.EMPTY_BIT_SET;
@@ -80,7 +87,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             //we already have all specified flags
             return this;
          } else {
-            return new DecoratedCache<>(this.cacheImplementation, EnumUtil.mergeBitSets(this.flags, newFlags));
+            return new DecoratedCache<>(cacheImplementation, EnumUtil.mergeBitSets(this.flags, newFlags));
          }
       }
    }

@@ -14,6 +14,8 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
@@ -732,4 +734,14 @@ public class TypeConverterDelegatingAdvancedCache<K, V> extends AbstractDelegati
       }
       return returned;
    }
+
+   @Override
+   public AdvancedCache<K, V> withSubject(Subject subject) {
+      AdvancedCache<K, V> returned = super.withSubject(subject);
+      if (returned != this && returned instanceof TypeConverterDelegatingAdvancedCache) {
+         ((TypeConverterDelegatingAdvancedCache) returned).entryFactory = this.entryFactory;
+      }
+      return returned;
+   }
+
 }
