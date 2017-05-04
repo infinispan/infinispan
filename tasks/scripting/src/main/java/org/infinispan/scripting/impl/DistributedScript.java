@@ -39,7 +39,7 @@ class DistributedScript<T> implements DistributedCallable<Object, Object, T>, Se
       scriptManager = (ScriptingManagerImpl) SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(ScriptingManager.class);
       bindings = new SimpleBindings();
       bindings.put("inputKeys", inputKeys);
-      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(metadata.dataType(), Optional.empty(), cache.getCacheManager());
+      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(metadata.dataType(), Optional.empty(), cache.getCacheManager(), null);
       bindings.put("cacheManager", dataTypedCacheManager);
       Cache<?, ?> c = cache.getCacheConfiguration().compatibility().enabled()
             ? cache : new DataTypedCache<>(dataTypedCacheManager, cache);

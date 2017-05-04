@@ -4,9 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.Security;
 
 /**
  * TaskContext. Defines the execution context of a task by specifying parameters, cache and
@@ -20,6 +23,7 @@ public class TaskContext {
    private Optional<Marshaller> marshaller = Optional.empty();
    private Optional<Cache<?, ?>> cache = Optional.empty();
    private Optional<Map<String, ?>> parameters = Optional.empty();
+   private Optional<Subject> subject = Optional.empty();
    private boolean logEvent;
 
    public TaskContext() {
@@ -56,6 +60,15 @@ public class TaskContext {
     */
    public TaskContext parameters(Map<String, ?> parameters) {
       this.parameters = Optional.of(parameters);
+      return this;
+   }
+
+   /**
+    * The subject to impersonate when running this task. If unspecified, the Subject (if any) will be retrieved
+    * via {@link Security#getSubject()}
+    */
+   public TaskContext subject(Subject subject) {
+      this.subject = Optional.ofNullable(subject);
       return this;
    }
 
@@ -112,10 +125,29 @@ public class TaskContext {
    }
 
    /**
+    * The optional {@link Subject} which is executing this task
+    * @return the {@link Subject}
+    */
+   public Optional<Subject> getSubject() {
+      return subject;
+   }
+
+   /**
     * Whether executing this task will generate an event in the event log
     * @return true if an event will be logged, false otherwise
     */
    public boolean isLogEvent() {
       return logEvent;
+   }
+
+   @Override
+   public String toString() {
+      return "TaskContext{" +
+            "marshaller=" + marshaller +
+            ", cache=" + cache +
+            ", parameters=" + parameters +
+            ", subject=" + subject +
+            ", logEvent=" + logEvent +
+            '}';
    }
 }
