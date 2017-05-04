@@ -186,7 +186,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
          .orElseGet(() -> new SimpleBindings());
 
       SimpleBindings systemBindings = new SimpleBindings();
-      DataTypedCacheManager cm = new DataTypedCacheManager(metadata.dataType(), context.getMarshaller(), cacheManager);
+      DataTypedCacheManager cm = new DataTypedCacheManager(metadata.dataType(), context.getMarshaller(), cacheManager, context.getSubject().orElse(null));
       systemBindings.put(SystemBindings.CACHE_MANAGER.toString(), cm);
       systemBindings.put(SystemBindings.SCRIPTING_MANAGER.toString(), this);
       context.getCache().ifPresent(cache -> {

@@ -2,6 +2,8 @@ package org.infinispan.scripting.impl;
 
 import java.util.Optional;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
@@ -16,11 +18,13 @@ public final class DataTypedCacheManager extends AbstractDelegatingEmbeddedCache
 
    final DataType dataType;
    final Optional<Marshaller> marshaller;
+   final Subject subject;
 
-   public DataTypedCacheManager(DataType dataType, Optional<Marshaller> marshaller, EmbeddedCacheManager cm) {
+   public DataTypedCacheManager(DataType dataType, Optional<Marshaller> marshaller, EmbeddedCacheManager cm, Subject subject) {
       super(cm);
       this.dataType = dataType;
       this.marshaller = marshaller;
+      this.subject = subject;
    }
 
    @Override
@@ -31,9 +35,10 @@ public final class DataTypedCacheManager extends AbstractDelegatingEmbeddedCache
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName) {
       Configuration cfg = super.getCacheConfiguration(cacheName);
+      Cache<K, V> cache = (Cache<K, V>) super.getCache(cacheName).getAdvancedCache().withSubject(subject);
       return cfg != null && cfg.compatibility().enabled()
-            ? super.getCache(cacheName)
-            : new DataTypedCache<>(this, super.getCache(cacheName));
+            ? cache
+            : new DataTypedCache<>(this, cache);
    }
 
 }

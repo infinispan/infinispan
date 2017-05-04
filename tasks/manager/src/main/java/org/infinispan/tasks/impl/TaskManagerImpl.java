@@ -79,14 +79,14 @@ public class TaskManagerImpl implements TaskManager {
          if (engine.handles(name)) {
             context.cacheManager(cacheManager);
             Address address = cacheManager.getAddress();
-            Optional<String> who;
-            if (useSecurity) {
-               Subject subject = Security.getSubject();
-               Principal userPrincipal = Security.getSubjectUserPrincipal(subject);
-               who = Optional.of(userPrincipal.getName());
-            } else {
-               who = Optional.empty();
-            }
+            Subject subject = context.getSubject().orElseGet(() -> {
+               if(useSecurity) {
+                  return Security.getSubject();
+               } else {
+                  return null;
+               }
+            });
+            Optional<String> who = Optional.ofNullable(subject == null ? null : Security.getSubjectUserPrincipal(subject).getName());
             TaskExecutionImpl exec = new TaskExecutionImpl(name, address == null ? "local" : address.toString(), who, context);
             exec.setStart(timeService.instant());
             runningTasks.put(exec.getUUID(), exec);
