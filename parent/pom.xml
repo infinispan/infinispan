@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.1.0-SNAPSHOT</version>
       <relativePath>../bom/pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-parent</artifactId>
@@ -84,6 +84,7 @@
 
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <forkJvmArgs>-Xmx2G</forkJvmArgs>
+      <jigsawForkJvmArgs></jigsawForkJvmArgs>
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter,org.infinispan.commons.test.skip.SkipOnOsListener</testNGListeners>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
@@ -95,9 +96,10 @@
       <module.skipTestComponentMetaDataProcessing>true</module.skipTestComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
 
-      <version.ant>1.9.4</version.ant>
+      <version.ant>1.10.1</version.ant>
       <version.antlr>3.4</version.antlr>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
+      <version.maven.antrun>1.8</version.maven.antrun>
       <version.apache.ds>2.0.0-M20</version.apache.ds>
       <version.arquillian>1.1.5.Final</version.arquillian>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
@@ -114,7 +116,8 @@
       <version.commons.io>2.5</version.commons.io>
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.math>2.2</version.commons.math>
-      <version.elasticsearch>2.4.4</version.elasticsearch>
+      <version.elasticsearch>5.3.0</version.elasticsearch>
+      <version.elasticsearch.plugin>5.7</version.elasticsearch.plugin>
       <version.geronimo.tm>3.1.1</version.geronimo.tm>
       <version.h2.driver>1.4.180</version.h2.driver>
       <version.h2.driver-within-wildfly>1.3.173</version.h2.driver-within-wildfly>
@@ -151,7 +154,7 @@
       <version.log4j>2.8.1</version.log4j>
       <version.lucene>5.5.4</version.lucene>
       <version.mc4j>1.2.6</version.mc4j>
-      <version.mockito>1.9.5</version.mockito>
+      <version.mockito>2.7.21</version.mockito>
       <version.mockito_dep.objenesis>1.4</version.mockito_dep.objenesis>
       <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
@@ -159,7 +162,6 @@
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
       <version.resteasy>3.1.0.Final</version.resteasy>
       <version.shrinkwrapResolver>2.2.4</version.shrinkwrapResolver>
-      <version.slf4j>1.7.21</version.slf4j>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.snappy>1.0.5</version.snappy>
       <version.solder>3.1.0.Final</version.solder>
@@ -176,17 +178,19 @@
       <version.jmh>1.12</version.jmh>
       <version.oauth.core>20090531</version.oauth.core>
 
+      <!-- When updating WildFly version, keep the property version.h2.driver-within-wildfly in synch -->
       <version.org.wildfly>10.1.0.Final</version.org.wildfly>
       <version.org.wildfly.core>2.2.0.Final</version.org.wildfly.core>
       <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
-      <version.org.wildfly.maven-plugin>1.1.0.Alpha5</version.org.wildfly.maven-plugin>
+      <version.org.wildfly.maven-plugin>1.1.0.Final</version.org.wildfly.maven-plugin>
+      <version.org.wildfly.cli>1.0.1.Final</version.org.wildfly.cli>
 
       <version.javassist>3.20.0-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
+      <version.maven.shade>2.4.3</version.maven.shade>
       <version.maven.source>3.0.0</version.maven.source>
-      <version.maven.scala>2.15.2</version.maven.scala>
       <version.maven.surefire>2.18.1</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.metainf-services>1.7</version.metainf-services>
@@ -194,7 +198,6 @@
       <version.pax.url>2.5.2</version.pax.url>
       <version.karaf>3.0.8</version.karaf>
       <version.pax.exam>4.10.0</version.pax.exam>
-      <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
@@ -612,28 +615,6 @@
             <artifactId>slf4j-jboss-logging</artifactId>
             <version>${version.slf4j-jboss-logging}</version>
          </dependency>
-         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${version.slf4j}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${version.slf4j}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <version>${version.slf4j}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${version.slf4j}</version>
-            <scope>test</scope>
-         </dependency>
 
          <dependency>
             <groupId>org.testng</groupId>
@@ -1020,12 +1001,6 @@
             <version>${version.elasticsearch}</version>
             <scope>test</scope>
          </dependency>
-         <dependency>
-            <groupId>org.elasticsearch.plugin</groupId>
-            <artifactId>delete-by-query</artifactId>
-            <version>${version.elasticsearch}</version>
-            <scope>test</scope>
-         </dependency>
       </dependencies>
    </dependencyManagement>
    <dependencies>
@@ -1062,6 +1037,12 @@
          <classifier>runtime</classifier>
          <version>${version.jacoco}</version>
          <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-license</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
       </dependency>
    </dependencies>
    <build>
@@ -1104,7 +1085,14 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-antrun-plugin</artifactId>
-               <version>1.8</version>
+               <version>${version.maven.antrun}</version>
+               <dependencies>
+                  <dependency>
+                     <groupId>org.apache.ant</groupId>
+                     <artifactId>ant</artifactId>
+                     <version>${version.ant}</version>
+                  </dependency>
+               </dependencies>
             </plugin>
             <plugin>
                <groupId>org.apache.felix</groupId>
@@ -1114,8 +1102,8 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-assembly-plugin</artifactId>
-               <version>2.4</version>
-            </plugin>
+               <version>3.0.0</version>
+           </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-dependency-plugin</artifactId>
@@ -1131,10 +1119,11 @@
                <artifactId>maven-failsafe-plugin</artifactId>
                <version>${version.maven.surefire}</version>
                <configuration>
-	              <systemPropertyVariables>
-	                 <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
-	              </systemPropertyVariables>
-	           </configuration>
+                  <systemPropertyVariables>
+                     <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
+                  </systemPropertyVariables>
+                  <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
+               </configuration>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1161,7 +1150,12 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-shade-plugin</artifactId>
-               <version>2.4.3</version>
+               <version>${version.maven.shade}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-source-plugin</artifactId>
+               <version>${version.maven.source}</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1170,7 +1164,7 @@
             </plugin>
             <plugin>
                <artifactId>maven-war-plugin</artifactId>
-               <version>2.1.1</version>
+               <version>2.4</version>
                <configuration>
                   <attachClasses>false</attachClasses>
                </configuration>
@@ -1196,6 +1190,11 @@
                <version>1.0-beta-1</version>
             </plugin>
             <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>keytool-maven-plugin</artifactId>
+               <version>1.5</version>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>2.17</version>
@@ -1216,41 +1215,27 @@
                </configuration>
              </plugin>
              <plugin>
-                <groupId>org.scala-tools</groupId>
-                <artifactId>maven-scala-plugin</artifactId>
-                <version>${version.maven.scala}</version>
-                <executions>
-                   <execution>
-                      <id>compile</id>
-                      <phase>none</phase>
-                      <goals>
-                         <goal>compile</goal>
-                      </goals>
-                   </execution>
-                   <execution>
-                      <id>test-compile</id>
-                      <phase>none</phase>
-                      <goals>
-                         <goal>testCompile</goal>
-                      </goals>
-                   </execution>
-                   <execution>
-                      <phase>none</phase>
-                      <goals>
-                         <goal>compile</goal>
-                      </goals>
-                   </execution>
-                </executions>
-                <configuration>
-                   <jvmArgs>
-                      <jvmArg>-Xmx256m</jvmArg>
-                   </jvmArgs>
-                </configuration>
-             </plugin>
-             <plugin>
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <version>${version.org.wildfly.maven-plugin}</version>
+                <dependencies>
+                   <dependency>
+                      <groupId>org.wildfly.core</groupId>
+                      <artifactId>wildfly-cli</artifactId>
+                      <version>${version.org.wildfly.cli}</version>
+                      <exclusions>
+                         <exclusion>
+                            <groupId>sun.jdk</groupId>
+                            <artifactId>jconsole</artifactId>
+                         </exclusion>
+                      </exclusions>
+                   </dependency>
+                </dependencies>
+             </plugin>
+             <plugin>
+                <groupId>com.github.alexcojocaru</groupId>
+                <artifactId>elasticsearch-maven-plugin</artifactId>
+                <version>${version.elasticsearch.plugin}</version>
              </plugin>
              <plugin>
                 <groupId>org.apache.karaf.tooling</groupId>
@@ -1464,7 +1449,7 @@
                   </property>
                </properties>
 
-               <argLine>${forkJvmArgs} -Dsun.nio.ch.bugLevel</argLine>
+               <argLine>${forkJvmArgs} ${jigsawForkJvmArgs} -Dsun.nio.ch.bugLevel</argLine>
             </configuration>
          </plugin>
 
@@ -1651,6 +1636,42 @@
          <activation>
             <jdk>[9,)</jdk>
          </activation>
+         <properties>
+            <!--
+              java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
+                core externalizers for JDK types
+              java.nio, jdk.internal.ref, sun.nio.ch: Netty, server/hotrod
+              com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
+              java.text, java.awt.font: XStream, server/rest
+              java.security: Wildfly, server/integration/*
+            -->
+            <jigsawForkJvmArgs>
+               -Dsun.reflect.debugModuleAccessChecks=true
+               --add-opens=java.base/java.lang=ALL-UNNAMED
+               --add-opens=java.base/java.util=ALL-UNNAMED
+               --add-opens=java.base/java.io=ALL-UNNAMED
+               --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+               --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+               --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+               --add-opens=java.base/java.time=ALL-UNNAMED
+               --add-opens=java.base/java.nio=ALL-UNNAMED
+               --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
+               --add-modules=java.xml.bind
+               --add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
+               --add-opens=java.base/java.text=ALL-UNNAMED
+               --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
+               --add-opens=java.base/java.security=ALL-UNNAMED
+               --add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED
+               --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+               --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+               --add-exports=java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED
+               --add-exports=java.security.sasl/com.sun.security.sasl.ntlm=ALL-UNNAMED
+               --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED
+               --add-opens=java.management/javax.management=ALL-UNNAMED
+               --add-exports=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED
+               --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
+            </jigsawForkJvmArgs>
+         </properties>
          <build>
             <pluginManagement>
                <plugins>
@@ -1675,16 +1696,20 @@
          <id>extras</id>
          <activation>
             <activeByDefault>true</activeByDefault>
+            <!-- activeByDefault is not enough to activate the profile in children projects -->
+            <property>
+               <name>maven.home</name>
+            </property>
          </activation>
          <build>
             <plugins>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-source-plugin</artifactId>
-                  <version>${version.maven.source}</version>
                   <executions>
                      <execution>
                         <id>attach-sources</id>
+                        <phase>verify</phase>
                         <goals>
                            <goal>jar</goal>
                            <goal>test-jar</goal>
@@ -1696,7 +1721,6 @@
             </plugins>
          </build>
          <properties>
-
             <packaging>bundle</packaging>
          </properties>
       </profile>
@@ -1728,19 +1752,9 @@
          <id>test-xsite</id>
          <properties>
             <defaultTestGroup>xsite</defaultTestGroup>
+            <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-surefire-plugin</artifactId>
-                  <configuration>
-                     <threadCount>1</threadCount>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
       </profile>
       <profile>
          <id>test-unstable</id>
@@ -1755,8 +1769,8 @@
          <id>test-stress</id>
          <properties>
             <defaultTestGroup>stress</defaultTestGroup>
-
             <defaultExcludedTestGroup />
+            <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
@@ -1805,6 +1819,8 @@
        </properties>
      </profile>
 
+      <!-- Only one of the root-dirX profiles will be active, and it will set log4j.configurationFile
+           to $REACTOR_ROOT/etc/log4j2.xml -->
       <profile>
          <id>root-dir1</id>
          <activation>
@@ -1945,7 +1961,7 @@
                      <dependency>
                         <groupId>org.apache.ant</groupId>
                         <artifactId>ant-nodeps</artifactId>
-                        <version>${version.ant-nodeps}</version>
+                        <version>${version.ant}</version>
                      </dependency>
                   </dependencies>
                   <executions>

@@ -9,6 +9,7 @@ import static org.testng.Assert.assertTrue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +20,6 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -41,11 +41,11 @@ import org.testng.annotations.Test;
 public abstract class ParallelIterationTest extends SingleCacheManagerTest {
 
    private static final int NUM_THREADS = 10;
-   public static final int NUM_ENTRIES = 200;
+   private static final int NUM_ENTRIES = 200;
 
    protected AdvancedCacheLoader loader;
    protected AdvancedCacheWriter writer;
-   protected Executor executor;
+   protected ExecutorService executor;
    protected StreamingMarshaller sm;
 
    @Override
@@ -62,6 +62,14 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
             new SynchronousQueue<>(), getTestThreadFactory("iteration"),
             new ThreadPoolExecutor.CallerRunsPolicy());
       return manager;
+   }
+
+   @Override
+   protected void teardown() {
+      super.teardown();
+      if (executor != null) {
+         executor.shutdownNow();
+      }
    }
 
    protected abstract void configurePersistence(ConfigurationBuilder cb);
@@ -103,19 +111,16 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       final ConcurrentMap<Object, Object> entries = new ConcurrentHashMap<>();
       final AtomicBoolean stopped = new AtomicBoolean(false);
 
-      loader.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
-         @Override
-         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            synchronized (entries) {
-               boolean shouldStop = entries.size() == 100 && !stopped.get();
-               log.trace("shouldStop = " + shouldStop + ",entries size = " + entries.size());
-               if (shouldStop) {
-                  stopped.set(true);
-                  taskContext.stop();
-                  return;
-               }
-               entries.put(unwrapKey(marshalledEntry.getKey()), unwrapValue(marshalledEntry.getValue()));
+      loader.process(null, (marshalledEntry, taskContext) -> {
+         synchronized (entries) {
+            boolean shouldStop = entries.size() == 100 && !stopped.get();
+            log.trace("shouldStop = " + shouldStop + ",entries size = " + entries.size());
+            if (shouldStop) {
+               stopped.set(true);
+               taskContext.stop();
+               return;
             }
+            entries.put(unwrapKey(marshalledEntry.getKey()), unwrapValue(marshalledEntry.getValue()));
          }
       }, executor, true, true);
 
@@ -137,31 +142,28 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       assertEquals(loader.size(), 0);
       insertData();
 
-      loader.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
-         @Override
-         public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            int key = unwrapKey(marshalledEntry.getKey());
-            if (fetchValues) {
-               // Note: MarshalledEntryImpl.getValue() fails with NPE when it's got null valueBytes,
-               // that's why we must not call this when values are not retrieved
-               Integer existing = entries.put(key, unwrapValue(marshalledEntry.getValue()));
-               if (existing != null) {
-                  log.warnf("Already a value present for key %s: %s", key, existing);
-                  sameKeyMultipleTimes.set(true);
-               }
+      loader.process(null, (marshalledEntry, taskContext) -> {
+         int key = unwrapKey(marshalledEntry.getKey());
+         if (fetchValues) {
+            // Note: MarshalledEntryImpl.getValue() fails with NPE when it's got null valueBytes,
+            // that's why we must not call this when values are not retrieved
+            Integer existing = entries.put(key, unwrapValue(marshalledEntry.getValue()));
+            if (existing != null) {
+               log.warnf("Already a value present for key %s: %s", key, existing);
+               sameKeyMultipleTimes.set(true);
             }
-            if (marshalledEntry.getMetadata() != null) {
-               log.tracef("For key %d found metadata %s", key, marshalledEntry.getMetadata());
-               InternalMetadata prevMetadata = metadata.put(key, marshalledEntry.getMetadata());
-               if (prevMetadata != null) {
-                  log.warnf("Already a metadata present for key %s: %s", key, prevMetadata);
-                  sameKeyMultipleTimes.set(true);
-               }
-            } else {
-               log.tracef("No metadata found for key %d", key);
-            }
-            processed.incrementAndGet();
          }
+         if (marshalledEntry.getMetadata() != null) {
+            log.tracef("For key %d found metadata %s", key, marshalledEntry.getMetadata());
+            InternalMetadata prevMetadata = metadata.put(key, marshalledEntry.getMetadata());
+            if (prevMetadata != null) {
+               log.warnf("Already a metadata present for key %s: %s", key, prevMetadata);
+               sameKeyMultipleTimes.set(true);
+            }
+         } else {
+            log.tracef("No metadata found for key %d", key);
+         }
+         processed.incrementAndGet();
       }, executor, fetchValues, fetchMetadata);
 
       assertFalse(sameKeyMultipleTimes.get());
@@ -204,11 +206,11 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
    }
 
    protected long lifespan(int i) {
-      return 1000l * (i + 1000);
+      return 1000L * (i + 1000);
    }
 
    protected long maxIdle(int i) {
-      return 10000l * (i + 1000);
+      return 10000L * (i + 1000);
    }
 
    protected Object wrapKey(int key) {

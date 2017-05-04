@@ -726,8 +726,8 @@ public interface Log extends BasicLogger {
    void failedLoadingKeysFromCacheStore(@Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error during rebalance for cache %s on node %s", id = 195)
-   void rebalanceError(String cacheName, Address node, @Cause Throwable cause);
+   @Message(value = "Error during rebalance for cache %s on node %s, topology id = %d", id = 195)
+   void rebalanceError(String cacheName, Address node, int topologyId, @Cause Throwable cause);
 
    @LogMessage(level = ERROR)
    @Message(value = "Failed to recover cluster state after the current node became the coordinator (or after merge)", id = 196)
@@ -1121,10 +1121,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Starting cluster-wide rebalance for cache %s, topology %s", id = 310)
    void startRebalance(String cacheName, CacheTopology cacheTopology);
 
-   @LogMessage(level = DEBUG)
-   @Message(value = "Received a command from an outdated topology, returning the exception to caller", id = 311)
-   void outdatedTopology(@Cause Throwable oe);
-
    // Messages between 312 and 320 have been moved to the org.infinispan.util.logging.events.Messages class
 
    @LogMessage(level = WARN)
@@ -1389,8 +1385,8 @@ public interface Log extends BasicLogger {
    TimeoutException coordinatorTimeoutWaitingForView(int expectedViewId, int currentViewId,
                                                      Object clusterManagerStatus);
 
-   @LogMessage(level = WARN)
-   @Message(value = "No indexable classes were defined for this indexed cache; switching to autodetection (support for autodetection will be removed in Infinispan 9.0).", id = 403)
+   @LogMessage(level = INFO)
+   @Message(value = "No indexable classes were defined for this indexed cache; using autodetection.", id = 403)
    void noIndexableClassesDefined();
 
    @Message(value = "The configured entity class %s is not indexable. Please remove it from the indexing configuration.", id = 404)
@@ -1560,4 +1556,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke defineConfiguration first and then getCache. Cache name was %s", id = 454)
    void warnAttemptToOverrideExistingConfiguration(String cacheName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Failure during leaver transactions cleanup", id = 455)
+   void transactionCleanupError(@Cause Throwable e);
 }

@@ -16,9 +16,15 @@ import org.infinispan.marshall.core.Ids;
  * @since 4.0
  */
 public class UnsuccessfulResponse extends ValidResponse {
-   public static final UnsuccessfulResponse INSTANCE = new UnsuccessfulResponse();
+   public static final UnsuccessfulResponse EMPTY = new UnsuccessfulResponse(null);
+   private final Object responseValue;
 
-   private UnsuccessfulResponse() {
+   private UnsuccessfulResponse(Object value) {
+      this.responseValue = value;
+   }
+
+   public static UnsuccessfulResponse create(Object value) {
+      return value == null ? EMPTY : new UnsuccessfulResponse(value);
    }
 
    @Override
@@ -26,26 +32,41 @@ public class UnsuccessfulResponse extends ValidResponse {
       return false;
    }
 
+   public Object getResponseValue() {
+      return responseValue;
+   }
+
+   @Override
+   public String toString() {
+      return "UnsuccessfulResponse{responseValue=" + Util.toStr(responseValue) + "} ";
+   }
+
    @Override
    public boolean equals(Object o) {
-      if (o == null) return false;
-      return o.getClass().equals(this.getClass());
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      UnsuccessfulResponse that = (UnsuccessfulResponse) o;
+
+      if (responseValue != null ? !responseValue.equals(that.responseValue) : that.responseValue != null) return false;
+
+      return true;
    }
 
    @Override
    public int hashCode() {
-      return 13;
+      return responseValue != null ? responseValue.hashCode() : 0;
    }
 
    public static class Externalizer extends AbstractExternalizer<UnsuccessfulResponse> {
       @Override
-      public void writeObject(ObjectOutput output, UnsuccessfulResponse object) throws IOException {
-         // no-op
+      public void writeObject(ObjectOutput output, UnsuccessfulResponse response) throws IOException {
+         output.writeObject(response.getResponseValue());
       }
 
       @Override
       public UnsuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return INSTANCE;
+         return create(input.readObject());
       }
 
       @Override

@@ -57,7 +57,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
         ModelNode operation = Util.createAddOperation(address);
         operations.put(address, operation);
 
-        if (!this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+        if (!this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
             @SuppressWarnings("deprecation")
             String defaultStack = require(reader, Attribute.DEFAULT_STACK);
             JGroupsSubsystemResourceDefinition.DEFAULT_STACK.parseAndSetParameter(defaultStack, operation, reader);
@@ -67,19 +67,19 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
                 case CHANNELS: {
-                    if (this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
                         this.parseChannels(reader, address, operations);
                         break;
                     }
                 }
                 case STACKS: {
-                    if (this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
                         this.parseStacks(reader, address, operations);
                         break;
                     }
                 }
                 case STACK: {
-                    if (!this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (!this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
                         this.parseStack(reader, address, operations);
                         break;
                     }
@@ -255,7 +255,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case RELAY: {
-                    if (this.schema.since(JGroupsSchema.VERSION_2_0) || this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
                         this.parseRelay(reader, address, operations);
                         break;
                     }
@@ -322,19 +322,19 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case SITE: {
-                    if (this.schema.since(JGroupsSchema.VERSION_1_1, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
                         TransportResourceDefinition.SITE.parseAndSetParameter(value, operation, reader);
                         break;
                     }
                 }
                 case RACK: {
-                    if (this.schema.since(JGroupsSchema.VERSION_1_1, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
                         TransportResourceDefinition.RACK.parseAndSetParameter(value, operation, reader);
                         break;
                     }
                 }
                 case MACHINE: {
-                    if (this.schema.since(JGroupsSchema.VERSION_1_1, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_7_0)) {
                         TransportResourceDefinition.MACHINE.parseAndSetParameter(value, operation, reader);
                         break;
                     }
@@ -379,7 +379,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                 break;
             }
             case MODULE: {
-                if (this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
                     ProtocolResourceDefinition.MODULE.parseAndSetParameter(value, operation, reader);
                     break;
                 }
@@ -523,19 +523,19 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
                     break;
                 }
                 case STACK: {
-                    if (!this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (!this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
                         RemoteSiteResourceDefinition.STACK.parseAndSetParameter(value, operation, reader);
                         break;
                     }
                 }
                 case CLUSTER: {
-                    if (!this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (!this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
                         cluster = value;
                         break;
                     }
                 }
                 case CHANNEL: {
-                    if (this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+                    if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
                         RemoteSiteResourceDefinition.CHANNEL.parseAndSetParameter(value, operation, reader);
 
                         // We need to populate the deprecated STACK attribute so that we have enough context for transforming the add operation
@@ -560,7 +560,7 @@ public class JGroupsSubsystemXMLReader implements XMLElementReader<List<ModelNod
             }
         }
 
-        if (this.schema.since(JGroupsSchema.VERSION_3_0, JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
+        if (this.schema.since(JGroupsSchema.INFINISPAN_SERVER_JGROUPS_8_0)) {
             if (!operation.hasDefined(RemoteSiteResourceDefinition.CHANNEL.getName())) {
                 throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.CHANNEL));
             }

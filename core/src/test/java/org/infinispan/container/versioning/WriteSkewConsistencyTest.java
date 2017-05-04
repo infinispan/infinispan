@@ -4,9 +4,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.replaceComponent;
-import static org.infinispan.test.TestingUtil.replaceField;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -26,7 +24,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -74,7 +71,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       //version2 is put by tx2
       final EntryVersion version2 = versionGenerator.increment((IncrementableEntryVersion) version1);
 
-      ControllerInboundInvocationHandler handler = injectControllerInboundInvocationHandler(cache(0));
+      ControllerInboundInvocationHandler handler = wrapInboundInvocationHandler(cache(0), ControllerInboundInvocationHandler::new);
       BackupOwnerInterceptor backupOwnerInterceptor = injectBackupOwnerInterceptor(cache(0));
       backupOwnerInterceptor.blockCommit(true);
       handler.discardRemoteGet = true;
@@ -154,14 +151,6 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       ReorderResponsesRpcManager newRpcManager = new ReorderResponsesRpcManager(address(lastResponse), rpcManager);
       TestingUtil.replaceComponent(toInject, RpcManager.class, newRpcManager, true);
       return newRpcManager;
-   }
-
-   private ControllerInboundInvocationHandler injectControllerInboundInvocationHandler(Cache cache) {
-      ControllerInboundInvocationHandler handler = new ControllerInboundInvocationHandler(
-            extractComponent(cache, PerCacheInboundInvocationHandler.class));
-      replaceComponent(cache, PerCacheInboundInvocationHandler.class, handler, true);
-      replaceField(handler, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
-      return handler;
    }
 
    private void assertVersion(String message, EntryVersion v0, EntryVersion v1, InequalVersionComparisonResult result) {

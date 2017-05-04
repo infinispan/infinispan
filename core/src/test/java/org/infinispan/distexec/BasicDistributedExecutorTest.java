@@ -1,5 +1,7 @@
 package org.infinispan.distexec;
 
+import static org.infinispan.test.Exceptions.expectException;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
@@ -16,6 +18,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
+import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -34,28 +37,24 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    public BasicDistributedExecutorTest() {
    }
 
-   @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testImproperMasterCacheForDistributedExecutor() {
-      DistributedExecutorService des = new DefaultExecutorService(null);
-
+      expectException(IllegalArgumentException.class, () -> new DefaultExecutorService(null));
    }
 
-   @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testImproperLocalExecutorServiceForDistributedExecutor() {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(false);
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
-         DistributedExecutorService des = new DefaultExecutorService(cache, null);
+         expectException(IllegalArgumentException.class, () -> new DefaultExecutorService(cache, null));
       } finally {
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
 
-   @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testStoppedLocalExecutorServiceForDistributedExecutor() throws ExecutionException, InterruptedException {
       ExecutorService service = new WithinThreadExecutor();
       service.shutdown();
-      customExecutorServiceDistributedExecutorTest(service, false);
+      expectException(IllegalArgumentException.class, () -> customExecutorServiceDistributedExecutorTest(service, false));
    }
 
    public void testDistributedExecutorWithPassedThreadExecutorOwnership() throws ExecutionException, InterruptedException {
@@ -73,20 +72,19 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       customExecutorServiceDistributedExecutorTest(service, false);
    }
 
-   @Test(expectedExceptions = { IllegalArgumentException.class })
    public void testDistributedExecutorWithManagedExecutorServiceOwnership() throws ExecutionException, InterruptedException {
       ExecutorService service = new ManagedExecutorServicesEmulator();
-      customExecutorServiceDistributedExecutorTest(service, true);
+      expectException(IllegalArgumentException.class, () -> customExecutorServiceDistributedExecutorTest(service, true));
    }
 
    private void customExecutorServiceDistributedExecutorTest(ExecutorService service, boolean overrideOwnership) throws ExecutionException, InterruptedException {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
-      DistributedExecutorService des = null;
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
 
+         DistributedExecutorService des;
          if (overrideOwnership)
             des = new DefaultExecutorService(cache, service, true);
          else
@@ -100,7 +98,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       }
    }
 
-   @Test(expectedExceptions = { IllegalStateException.class })
    public void testStoppedCacheForDistributedExecutor() {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config.clustering().cacheMode(CacheMode.REPL_SYNC);
@@ -108,7 +105,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
          cache.stop();
-         DistributedExecutorService des = new DefaultExecutorService(cache);
+         expectException(IllegalStateException.class, () -> new DefaultExecutorService(cache));
       } finally {
          TestingUtil.killCacheManagers(cacheManager);
       }
@@ -118,10 +115,9 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
-      DistributedExecutorService des = null;
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
-         des = new DefaultExecutorService(cache);
+         DistributedExecutorService des = new DefaultExecutorService(cache);
          des.shutdown();
          assert des.isShutdown();
          assert des.isTerminated();
@@ -134,13 +130,11 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
-      DistributedExecutorService des = null;
-      ExecutorService service = null;
+      ExecutorService service = new WithinThreadExecutor();
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
-         service = new WithinThreadExecutor();
 
-         des = new DefaultExecutorService(cache, service);
+         DistributedExecutorService des = new DefaultExecutorService(cache, service);
 
          des.shutdown();
 
@@ -157,13 +151,11 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
-      DistributedExecutorService des = null;
-      ExecutorService service = null;
+      ExecutorService service = new WithinThreadExecutor();
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
-         service = new WithinThreadExecutor();
 
-         des = new DefaultExecutorService(cache, service, true);
+         DistributedExecutorService des = new DefaultExecutorService(cache, service, true);
 
          des.shutdown();
 
@@ -197,8 +189,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
    /**
     * Tests that we can invoke DistributedExecutorService on an Infinispan cluster having a single node
-    *
-    * @throws Exception
     */
    public void testSingleCacheExecution() throws Exception {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
@@ -226,8 +216,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    /**
     * Tests that we can invoke DistributedExecutorService task with keys
     * https://issues.jboss.org/browse/ISPN-1886
-    *
-    * @throws Exception
     */
    public void testSingleCacheWithKeysExecution() throws Exception {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
@@ -243,8 +231,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          des = new DefaultExecutorService(c1);
 
-         Future<Boolean> future = des.submit(new SimpleDistributedCallable(true), new String[] {
-                  "key1", "key2" });
+         Future<Boolean> future = des.submit(new SimpleDistributedCallable(true), "key1", "key2");
          Boolean r = future.get();
          assert r;
       } finally {
@@ -283,7 +270,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          DistributedTask<Integer> task = taskBuilder.build();
          AssertJUnit.assertEquals(1, task.getTaskFailoverPolicy().maxFailoverAttempts());
-         Future<Integer> val = des.submit(task, new String[] { "key1" });
+         Future<Integer> val = des.submit(task, "key1");
          AssertJUnit.assertEquals(new Integer(1), val.get());
       } finally {
          if (des != null) des.shutdownNow();
@@ -340,8 +327,8 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          });
          DistributedTask<Boolean> task = taskBuilder.build();
          AssertJUnit.assertEquals(1, task.getTaskFailoverPolicy().maxFailoverAttempts());
-         Future<Boolean> val = des.submit(task, new String[] { "key1", "key5" });
-         AssertJUnit.assertEquals(new Boolean(true), val.get());
+         Future<Boolean> val = des.submit(task, "key1", "key5");
+         AssertJUnit.assertEquals(Boolean.TRUE, val.get());
       } finally {
          if (des != null) des.shutdownNow();
          TestingUtil.killCacheManagers(cacheManager1);
@@ -369,12 +356,11 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          Future<Integer> f = des.submit(task);
 
-         f.get();
-      } catch (ExecutionException e) {
-         // Verify that the distributed executor didn't wrap the exception in too many extra exceptions.
-         AssertJUnit.assertTrue("Wrong exception: " + e, e.getCause() instanceof ArithmeticException);
+         expectException(ExecutionException.class, TestException.class, f::get);
       } finally {
-         if (des != null) des.shutdownNow();
+         if (des != null)
+            des.shutdownNow();
+
          TestingUtil.killCacheManagers(cacheManager);
       }
    }
@@ -401,7 +387,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          assert task.getTaskFailoverPolicy().equals(DefaultExecutorService.RANDOM_NODE_FAILOVER);
 
-         Future<Integer> val = des.submit(task, new String[] {"key1"});
+         Future<Integer> val = des.submit(task, "key1");
 
          val.get();
          throw new IllegalStateException("Should have raised exception");
@@ -441,7 +427,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
 
          assert task.getTaskFailoverPolicy().equals(DefaultExecutorService.RANDOM_NODE_FAILOVER);
 
-         Future<Integer> val = des.submit(task, new String[] {"key1"});
+         Future<Integer> val = des.submit(task, "key1");
          val.get();
          throw new IllegalStateException("Should have thrown exception");
       }  catch (Exception e){
@@ -451,7 +437,9 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          AssertJUnit.assertEquals(false, duplicateEEInChain);
       }
       finally {
-         if (des != null) des.shutdownNow();
+         if (des != null)
+            des.shutdownNow();
+
          TestingUtil.killCacheManagers(cacheManager, cacheManager1);
       }
    }
@@ -461,23 +449,25 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       config.clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(0L);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
       EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(config);
-
-      Cache<Object, Object> cache1 = cacheManager.getCache();
-      Cache<Object, Object> cache2 = cacheManager1.getCache();
       DistributedExecutorService des = null;
       try {
+         Cache<Object, Object> cache1 = cacheManager.getCache();
+         Cache<Object, Object> cache2 = cacheManager1.getCache();
+
          // initiate task from cache1 and execute on same node
          des = new DefaultExecutorService(cache1);
          Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
 
-         DistributedTaskBuilder builder = des
+         DistributedTaskBuilder<Integer> builder = des
                .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable());
 
          Future<Integer> future = des.submit(target, builder.build());
 
          AssertJUnit.assertEquals((Integer) 1, future.get());
       } finally {
-         des.shutdown();
+         if (des != null)
+            des.shutdownNow();
+
          TestingUtil.killCacheManagers(cacheManager, cacheManager1);
       }
    }
@@ -497,14 +487,16 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          des = new DefaultExecutorService(cache1);
          Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
 
-         DistributedTaskBuilder builder = des
+         DistributedTaskBuilder<Integer> builder = des
                .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable());
 
          Future<Integer> future = des.submit(target, builder.build());
 
          AssertJUnit.assertEquals((Integer) 1, future.get());
       } finally {
-         des.shutdown();
+         if (des != null)
+            des.shutdown();
+
          TestingUtil.killCacheManagers(cacheManager, cacheManager1);
       }
    }
@@ -542,7 +534,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          DistributedTask<Integer> task = taskBuilder.build();
          assert task.getTaskFailoverPolicy().maxFailoverAttempts() == 0;
 
-         Future<Integer> val = des.submit(task, new String[] {"key1"});
+         Future<Integer> val = des.submit(task, "key1");
          val.get();
          throw new IllegalStateException("Should have thrown exception");
       } catch (Exception e) {
@@ -592,9 +584,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
 
-      public SimpleCallable() {
-      }
-
       @Override
       public Integer call() throws Exception {
          return 1;
@@ -607,17 +596,13 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       private static final long serialVersionUID = 3961940091247573385L;
       boolean throwException = true;
 
-      public FailOnlyOnceCallable() {
-         super();
-      }
-
       @Override
       public Integer call() throws Exception {
          if (throwException) {
             // do to not throw the exception 2nd time during retry.
             throwException = false;
             // now throw exception for the first run
-            int a = 5 / 0;
+            throw new TestException();
          }
          return 1;
       }
@@ -638,7 +623,7 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          if(throwException) {
             throwException = false;
 
-            int a = 5 / 0;
+            throw new TestException();
          }
 
          return true;
@@ -650,15 +635,9 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
 
-      public ExceptionThrowingCallable() {
-      }
-
       @Override
       public Integer call() throws Exception {
-         //simulating ArithmeticException
-         int a = 5 / 0;
-
-         return 1;
+         throw new TestException();
       }
    }
 }

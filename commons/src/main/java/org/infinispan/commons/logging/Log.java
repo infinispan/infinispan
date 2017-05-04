@@ -111,4 +111,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Multiple errors encountered while validating configuration", id = 919)
    CacheConfigurationException multipleConfigurationValidationErrors();
 
+   @Message(value = "Unable to load file using scheme %s", id = 920)
+   UnsupportedOperationException unableToLoadFileUsingScheme(String scheme);
+
+   @Message(value = "The alias '%s' does not exist in the key store '%s'", id = 921)
+   SecurityException noSuchAliasInKeyStore(String keyAlias, String keyStoreFileName);
 }

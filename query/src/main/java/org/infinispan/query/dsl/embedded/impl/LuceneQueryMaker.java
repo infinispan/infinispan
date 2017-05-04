@@ -6,11 +6,12 @@ import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
@@ -24,6 +25,7 @@ import org.hibernate.search.bridge.builtin.NumericFieldBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.query.dsl.BooleanJunction;
+import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.dsl.FieldCustomization;
 import org.hibernate.search.query.dsl.PhraseContext;
 import org.hibernate.search.query.dsl.QueryBuilder;
@@ -51,12 +53,12 @@ import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.logging.Log;
 import org.jboss.logging.Logger;
 
 /**
- * An *Expr {@link Visitor} that transforms a {@link FilterParsingResult} into a {@link LuceneQueryParsingResult}.
+ * An *Expr {@link Visitor} that transforms a {@link IckleParsingResult} into a {@link LuceneQueryParsingResult}.
  * <p>
  * NOTE: This is not stateless, not threadsafe, so it can only be used for a single transformation at a time.
  *
@@ -72,17 +74,18 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    private static final char LUCENE_WILDCARD_ESCAPE_CHARACTER = '\\';
 
    private final QueryContextBuilder queryContextBuilder;
-   private final FieldBridgeProvider<TypeMetadata> fieldBridgeProvider;
+   private final FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider;
    private final SearchIntegrator searchFactory;
 
    private Map<String, Object> namedParameters;
    private QueryBuilder queryBuilder;
    private TypeMetadata entityType;
    private Analyzer entityAnalyzer;
-   private boolean isAnalyzerRemote;
 
-   @FunctionalInterface
-   public interface FieldBridgeProvider<TypeMetadata> {
+   /**
+    * This provides some glue code for Hibernate Search. Implementations are different for embedded and remote use case.
+    */
+   public interface FieldBridgeAndAnalyzerProvider<TypeMetadata> {
 
       /**
        * Returns the field bridge to be applied when executing queries on the given property of the given entity type.
@@ -93,28 +96,57 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
        * @return the field bridge to be used for querying the given property; may be {@code null}
        */
       FieldBridge getFieldBridge(TypeMetadata typeMetadata, String[] propertyPath);
+
+      /**
+       * Get the analyzer to be used for a property.
+       */
+      Analyzer getAnalyzer(SearchIntegrator searchIntegrator, TypeMetadata typeMetadata, String[] propertyPath);
+
+      /**
+       * Populate the EntityContext with the analyzers that will be used for properties.
+       *
+       * @param parsingResult the parsed query
+       * @param entityContext the entity context to populate
+       */
+      void overrideAnalyzers(IckleParsingResult<TypeMetadata> parsingResult, EntityContext entityContext);
    }
 
-   public LuceneQueryMaker(SearchIntegrator searchFactory, FieldBridgeProvider<TypeMetadata> fieldBridgeProvider) {
+   LuceneQueryMaker(SearchIntegrator searchFactory, FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider) {
       if (searchFactory == null) {
          throw new IllegalArgumentException("searchFactory argument cannot be null");
       }
-      this.fieldBridgeProvider = fieldBridgeProvider;
+      this.fieldBridgeAndAnalyzerProvider = fieldBridgeAndAnalyzerProvider;
       this.queryContextBuilder = searchFactory.buildQueryBuilder();
       this.searchFactory = searchFactory;
    }
 
-   public LuceneQueryParsingResult<TypeMetadata> transform(FilterParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, Class<?> targetedType) {
+   public LuceneQueryParsingResult<TypeMetadata> transform(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, Class<?> targetedType) {
       this.namedParameters = namedParameters;
-      queryBuilder = queryContextBuilder.forEntity(targetedType).get();
+      EntityContext entityContext = queryContextBuilder.forEntity(targetedType);
+      fieldBridgeAndAnalyzerProvider.overrideAnalyzers(parsingResult, entityContext);
+      queryBuilder = entityContext.get();
       entityType = parsingResult.getTargetEntityMetadata();
       AnalyzerReference analyzerReference = ((ExtendedSearchIntegrator) searchFactory).getAnalyzerReference(targetedType);
-      if(analyzerReference.is(LuceneAnalyzerReference.class)) {
+      if (analyzerReference.is(LuceneAnalyzerReference.class)) {
          entityAnalyzer = analyzerReference.unwrap(LuceneAnalyzerReference.class).getAnalyzer();
-      } else {
-         isAnalyzerRemote = true;
       }
       Query query = makeQuery(parsingResult.getWhereClause());
+
+      // an all negative top level boolean query is not allowed; needs a bit of rewriting
+      if (query instanceof BooleanQuery) {
+         BooleanQuery booleanQuery = (BooleanQuery) query;
+         boolean allClausesAreMustNot = booleanQuery.clauses().stream().allMatch(c -> c.getOccur() == BooleanClause.Occur.MUST_NOT);
+         if (allClausesAreMustNot) {
+            //It is illegal to have only must-not queries, in this case we need to add a positive clause to match everything else.
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            for (BooleanClause clause : booleanQuery.clauses()) {
+               builder.add(clause.getQuery(), BooleanClause.Occur.MUST_NOT);
+            }
+            builder.add(new MatchAllDocsQuery(), BooleanClause.Occur.FILTER);
+            query = builder.build();
+         }
+      }
+
       Sort sort = makeSort(parsingResult.getSortFields());
       return new LuceneQueryParsingResult<>(query, parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(), parsingResult.getProjections(), sort);
    }
@@ -132,7 +164,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       for (int i = 0; i < fields.length; i++) {
          org.infinispan.objectfilter.SortField sf = sortFields[i];
          SortField.Type sortType = SortField.Type.STRING;
-         FieldBridge fieldBridge = fieldBridgeProvider.getFieldBridge(entityType, sf.getPath().asArrayPath());
+         FieldBridge fieldBridge = fieldBridgeAndAnalyzerProvider.getFieldBridge(entityType, sf.getPath().asArrayPath());
          if (fieldBridge instanceof NullEncodingTwoWayFieldBridge) {
             fieldBridge = ((NullEncodingTwoWayFieldBridge) fieldBridge).unwrap(FieldBridge.class);
          }
@@ -178,7 +210,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
          case FILTER:
             return BooleanClause.Occur.FILTER;
       }
-      throw new IllegalArgumentException("Unknown boolean occur value: " + fullTextOccurExpr.getOccur());
+      throw new IllegalArgumentException("Unknown boolean occur clause: " + fullTextOccurExpr.getOccur());
    }
 
    @Override
@@ -187,28 +219,34 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       return new BoostQuery(child, fullTextBoostExpr.getBoost());
    }
 
-   private boolean isMultiTermText(String fieldName, String text) {
-      if(!isAnalyzerRemote) {
+   private boolean isMultiTermText(PropertyPath<?> propertyPath, String text) {
+      Analyzer analyzer = fieldBridgeAndAnalyzerProvider.getAnalyzer(searchFactory, entityType, propertyPath.asArrayPath());
+      if (analyzer == null) {
+         analyzer = entityAnalyzer;
+      }
+
+      if (analyzer != null) {
          int terms = 0;
-         try (TokenStream stream = entityAnalyzer.tokenStream(fieldName, new StringReader(text))) {
-            CharTermAttribute attribute = stream.addAttribute(CharTermAttribute.class);
-            stream.reset();
-            while (stream.incrementToken()) {
-               if (attribute.length() > 0) {
+         try (TokenStream tokenStream = analyzer.tokenStream(propertyPath.asStringPathWithoutAlias(), new StringReader(text))) {
+            PositionIncrementAttribute posIncAtt = tokenStream.addAttribute(PositionIncrementAttribute.class);
+            tokenStream.reset();
+            while (tokenStream.incrementToken()) {
+               if (posIncAtt.getPositionIncrement() > 0) {
                   if (++terms > 1) {
-                     return true;
+                     break;
                   }
                }
             }
-            stream.end();
+            tokenStream.end();
          } catch (IOException e) {
-            // Highly unlikely when reading from a StreamReader.
+            // Highly unlikely to happen when reading from a StringReader.
             log.error(e);
          }
          return terms > 1;
-      } else {
-         return text.contains(" ");
       }
+
+      // fallback to good old indexOf
+      return text.trim().indexOf(' ') != -1;
    }
 
    @Override
@@ -220,7 +258,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       int questionPos = text.indexOf(LUCENE_SINGLE_CHARACTER_WILDCARD);
 
       if (asteriskPos == -1 && questionPos == -1) {
-         if (isMultiTermText(propertyValueExpr.getPropertyPath().asStringPath(), text)) {
+         if (isMultiTermText(propertyValueExpr.getPropertyPath(), text)) {
             // phrase query
             PhraseContext phrase = queryBuilder.phrase();
             if (fullTextTermExpr.getFuzzySlop() != null) {
@@ -308,19 +346,32 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
 
    @Override
    public Query visit(AndExpr andExpr) {
-      BooleanJunction<BooleanJunction> booleanJunction = queryBuilder.bool();
+      BooleanQuery.Builder builder = new BooleanQuery.Builder();
       for (BooleanExpr c : andExpr.getChildren()) {
-         if (c instanceof NotExpr) {
+         boolean isNegative = c instanceof NotExpr;
+         if (isNegative) {
             // minor optimization: unwrap negated predicates and add child directly to this predicate
-            BooleanExpr child = ((NotExpr) c).getChild();
-            Query transformedChild = child.acceptVisitor(this);
-            booleanJunction.must(transformedChild).not();
+            c = ((NotExpr) c).getChild();
+         }
+         Query transformedChild = c.acceptVisitor(this);
+         if (transformedChild instanceof BooleanQuery) {
+            // child absorption
+            BooleanQuery booleanQuery = (BooleanQuery) transformedChild;
+            if (booleanQuery.clauses().size() == 1) {
+               BooleanClause clause = booleanQuery.clauses().get(0);
+               BooleanClause.Occur occur = clause.getOccur();
+               if (isNegative) {
+                  occur = occur == BooleanClause.Occur.MUST_NOT ? BooleanClause.Occur.MUST : BooleanClause.Occur.MUST_NOT;
+               }
+               builder.add(clause.getQuery(), occur);
+            } else {
+               builder.add(transformedChild, isNegative ? BooleanClause.Occur.MUST_NOT : BooleanClause.Occur.MUST);
+            }
          } else {
-            Query transformedChild = c.acceptVisitor(this);
-            booleanJunction.must(transformedChild);
+            builder.add(transformedChild, isNegative ? BooleanClause.Occur.MUST_NOT : BooleanClause.Occur.MUST);
          }
       }
-      return booleanJunction.createQuery();
+      return builder.build();
    }
 
    @Override
@@ -374,7 +425,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    @Override
    public Query visit(LikeExpr likeExpr) {
       PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
-      StringBuilder lucenePattern = new StringBuilder(likeExpr.getPattern());
+      StringBuilder lucenePattern = new StringBuilder(likeExpr.getPattern(namedParameters));
       // transform 'Like' pattern into Lucene wildcard pattern
       boolean isEscaped = false;
       for (int i = 0; i < lucenePattern.length(); i++) {
@@ -426,7 +477,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
    }
 
    private <F extends FieldCustomization> F applyFieldBridge(boolean isAnalyzed, PropertyPath<?> propertyPath, F field) {
-      FieldBridge fieldBridge = fieldBridgeProvider.getFieldBridge(entityType, propertyPath.asArrayPath());
+      FieldBridge fieldBridge = fieldBridgeAndAnalyzerProvider.getFieldBridge(entityType, propertyPath.asArrayPath());
       if (fieldBridge != null) {
          ((FieldBridgeCustomization) field).withFieldBridge(fieldBridge);
       }

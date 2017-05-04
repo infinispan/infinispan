@@ -222,7 +222,8 @@ public class JmxManagementIT {
         mc.set("key1", "value1");
         mc.set("key2", "value2");
         mc.get("key1");
-        assertEquals(1, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "NumberOfEntries")));
+        assertEquals(2, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "NumberOfEntries")));
+        assertEquals(1, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "NumberOfEntriesInMemory")));
         mc.delete("key1");
         assertEquals(2, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "Evictions")));
         assertEquals(0, Integer.parseInt(getAttribute(provider, memcachedCacheStatisticsMBean, "RemoveMisses")));

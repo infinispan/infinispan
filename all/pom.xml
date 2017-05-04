@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.1.0-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-all-parent</artifactId>
@@ -13,18 +13,33 @@
    
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <createSourcesJar>false</createSourcesJar>
+      <skipCreateSourcesJar>true</skipCreateSourcesJar>
    </properties>
 
    <build>
-      <pluginManagement>
-         <plugins>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-shade-plugin</artifactId>
-               <version>2.4.3</version>
-            </plugin>
-         </plugins>
-      </pluginManagement>
+      <plugins>
+         <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default-jar</id>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+                  <phase>prepare-package</phase>
+               </execution>
+               <execution>
+                  <id>build-test-jar</id>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+            <inherited>true</inherited>
+         </plugin>
+      </plugins>
    </build>
 
    <profiles>
@@ -33,6 +48,37 @@
       <properties>
          <skipTests>true</skipTests>
       </properties>
+      </profile>
+      <profile>
+         <id>extras</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <properties>
+            <createSourcesJar>true</createSourcesJar>
+            <skipCreateSourcesJar>false</skipCreateSourcesJar>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                           <goal>jar</goal>
+                        </goals>
+                        <!-- Required because of https://issues.apache.org/jira/browse/MSHADE-247 -->
+                        <phase>prepare-package</phase>
+                        <configuration>
+                           <skipSource>${skipCreateSourcesJar}</skipSource>
+                        </configuration>
+                     </execution>
+                  </executions>
+                  <inherited>true</inherited>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
    </profiles>
 

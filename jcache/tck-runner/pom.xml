@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-jcache-parent</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.1.0-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -219,6 +219,7 @@
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <jgroups.join_timeout>2000</jgroups.join_timeout>
                </systemPropertyVariables>
+               <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                <properties>
                   <property>
                      <name>listener</name>
@@ -359,6 +360,39 @@
          </build>
       </profile>
 
+      <profile>
+         <id>jigsaw</id>
+         <activation>
+            <jdk>[9,)</jdk>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.wildfly.plugins</groupId>
+                  <artifactId>wildfly-maven-plugin</artifactId>
+                  <!-- we only configure the jigsaw-specific VM options here -->
+                  <configuration>
+                     <javaOpts>
+                        <javaOpt>-Dsun.reflect.debugModuleAccessChecks=true</javaOpt>
+                        <javaOpt>--add-opens=java.base/java.lang=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-opens=java.base/java.security=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-opens=java.management/javax.management.openmbean=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-exports=java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-exports=java.security.sasl/com.sun.security.sasl.ntlm=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-opens=java.base/java.io=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-opens=java.base/java.nio=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-opens=java.base/java.util=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-opens=java.base/sun.nio.ch=ALL-UNNAMED</javaOpt>
+                        <javaOpt>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</javaOpt>
+                     </javaOpts>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
    </profiles>
-
 </project>

@@ -29,7 +29,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "stress", testName = "client.hotrod.event.ClientEventStressTest")
+@Test(groups = "stress", testName = "client.hotrod.event.ClientEventStressTest", timeOut = 15*60*1000)
 public class ClientEventStressTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(ClientEventStressTest.class);

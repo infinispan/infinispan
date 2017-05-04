@@ -7,7 +7,6 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -71,7 +70,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
          AssertJUnit.fail("Other cache manager should not be set!");
       }
       Cache otherCache = otherCacheManager.getCache();
-      TestingUtil.waitForRehashToComplete(cache, otherCache);
+      TestingUtil.waitForNoRebalance(cache, otherCache);
    }
 
    @Override
@@ -81,12 +80,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       final AfterPassivationOrCacheWriter controller = new AfterPassivationOrCacheWriter().injectThis(cache);
       final Latch latch = new Latch();
-      controller.beforeEvict = new Runnable() {
-         @Override
-         public void run() {
-            latch.blockIfNeeded();
-         }
-      };
+      controller.beforeEvict = () -> latch.blockIfNeeded();
 
       //this will trigger the eviction of key1. key1 eviction will be blocked in the latch
       latch.enable();
@@ -98,7 +92,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       //let the eviction continue and wait for put
       latch.disable();
-      evict.get();
+      evict.get(30, TimeUnit.SECONDS);
 
       assertNotInMemory(key1, "v1");
    }
@@ -121,7 +115,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       //let the eviction continue and wait for put
       latch.disable();
-      evict.get();
+      evict.get(30, TimeUnit.SECONDS);
 
       assertNotInMemory(key1, "v1");
    }
@@ -153,7 +147,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       //let the eviction continue and wait for put
       latch.disable();
-      evict.get();
+      evict.get(30, TimeUnit.SECONDS);
 
       assertInMemory(key1, "v1");
    }
@@ -168,17 +162,12 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final AtomicBoolean firstGet = new AtomicBoolean(false);
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            if (firstGet.compareAndSet(false, true)) {
-               readLatch.blockIfNeeded();
-            }
+      afterEntryWrappingInterceptor.beforeGet = () -> {
+         if (firstGet.compareAndSet(false, true)) {
+            readLatch.blockIfNeeded();
          }
       };
-      final SyncEvictionListener evictionListener = new
-
-            SyncEvictionListener() {
+      final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
                @Override
                public void evicted(CacheEntriesEvictedEvent event) {
@@ -195,7 +184,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       writeLatch.waitToBlock(30, TimeUnit.SECONDS);
 
       //the eviction was trigger and the key is no longer in the map
-      Future<Object> get = cache.getAsync(key1);
+      Future<Object> get = fork(() -> cache.get(key1));
       readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
       //the first read is blocked. it has check the data container and it didn't found any value
@@ -204,11 +193,11 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
 
       //let the eviction continue and wait for put
       writeLatch.disable();
-      evict.get();
+      evict.get(30, TimeUnit.SECONDS);
 
       //let the second get continue
       readLatch.disable();
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", get.get());
+      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", get.get(30, TimeUnit.SECONDS));
 
       assertInMemory(key1, "v1");
    }
@@ -222,16 +211,8 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final Latch writeLatch = new Latch();
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            readLatch.blockIfNeeded();
-
-         }
-      };
-      final SyncEvictionListener evictionListener = new
-
-            SyncEvictionListener() {
+      afterEntryWrappingInterceptor.beforeGet = () -> readLatch.blockIfNeeded();
+      final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
                @Override
                public void evicted(CacheEntriesEvictedEvent event) {
@@ -248,7 +229,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       writeLatch.waitToBlock(30, TimeUnit.SECONDS);
 
       //the eviction was trigger and the key is no longer in the map
-      Future<Object> get = cache.getAsync(key1);
+      Future<Object> get = fork(() -> cache.get(key1));
       readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
       //let the eviction continue
@@ -258,11 +239,11 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       //this second get should not block anywhere and it should fetch the value from persistence
       assertEquals("Wrong value for key " + key1 + " in put operation.", "v1", cache.put(key1, "v3"));
 
-      evict.get();
+      evict.get(30, TimeUnit.SECONDS);
 
       //let the get continue
       readLatch.disable();
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v3", get.get());
+      assertEquals("Wrong value for key " + key1 + " in get operation.", "v3", get.get(30, TimeUnit.SECONDS));
 
       assertInMemory(key1, "v3");
    }
@@ -277,24 +258,9 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       final Latch writeLatch2 = new Latch();
       final AfterEntryWrappingInterceptor afterEntryWrappingInterceptor = new AfterEntryWrappingInterceptor()
             .injectThis(cache);
-      afterEntryWrappingInterceptor.beforeGet = new Runnable() {
-         @Override
-         public void run() {
-            readLatch.blockIfNeeded();
-
-         }
-      };
-      afterEntryWrappingInterceptor.afterPut = new
-
-            Runnable() {
-               @Override
-               public void run() {
-                  writeLatch2.blockIfNeeded();
-               }
-            };
-      final SyncEvictionListener evictionListener = new
-
-            SyncEvictionListener() {
+      afterEntryWrappingInterceptor.beforeGet = () -> readLatch.blockIfNeeded();
+      afterEntryWrappingInterceptor.afterPut = () -> writeLatch2.blockIfNeeded();
+      final SyncEvictionListener evictionListener = new SyncEvictionListener() {
                @CacheEntriesEvicted
                @Override
                public void evicted(CacheEntriesEvictedEvent event) {
@@ -311,25 +277,25 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       writeLatch.waitToBlock(30, TimeUnit.SECONDS);
 
       //the eviction was trigger and the key is no longer in the map
-      Future<Object> get = cache.getAsync(key1);
+      Future<Object> get = fork(() -> cache.get(key1));
       readLatch.waitToBlock(30, TimeUnit.SECONDS);
 
       //let the eviction continue
       writeLatch.disable();
 
-      Future<Object> put2 = cache.putAsync(key1, "v3");
+      Future<Object> put2 = fork(() -> cache.put(key1, "v3"));
 
-      evict.get();
+      evict.get(30, TimeUnit.SECONDS);
 
       //wait until the 2nd put writes to persistence
       writeLatch2.waitToBlock(30, TimeUnit.SECONDS);
 
       //let the get continue
       readLatch.disable();
-      assertPossibleValues(key1, get.get(), "v1", "v3");
+      assertPossibleValues(key1, get.get(30, TimeUnit.SECONDS), "v1", "v3");
 
       writeLatch2.disable();
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", put2.get());
+      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", put2.get(30, TimeUnit.SECONDS));
 
       assertInMemory(key1, "v3");
    }
@@ -363,12 +329,9 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
    }
 
    protected final Future<Void> evictWithFuture(final Object key) {
-      return fork(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            cache.evict(key);
-            return null;
-         }
+      return fork(() -> {
+         cache.evict(key);
+         return null;
       });
    }
 

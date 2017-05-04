@@ -4,6 +4,7 @@ import org.hibernate.search.annotations.Analyze;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
+import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 
 /**
@@ -17,6 +18,7 @@ public class TheEntity {
     * Set a different name to demonstrate field mapping.
     */
    @Field(name = "theField", store = Store.YES, analyze = Analyze.NO)
+   @SortableField(forField="theField")
    private String fieldX;
 
    @IndexedEmbedded(indexNullAs = Field.DEFAULT_NULL_TOKEN)

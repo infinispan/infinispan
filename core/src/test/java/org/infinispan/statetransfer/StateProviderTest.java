@@ -164,7 +164,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, ch1.getMembers(), persistentUUIDManager.mapAddresses(ch1.getMembers()));
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch1.getMembers(), persistentUUIDManager.mapAddresses(ch1.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);
@@ -186,7 +186,7 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
+      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, true);
 
       assertFalse(stateProvider.isStateTransferInProgress());
@@ -267,7 +267,7 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch1.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       log.debug("ch1: " + ch1);
@@ -290,7 +290,7 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
+      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, CacheTopology.Phase.READ_OLD_WRITE_ALL, ch2.getMembers(), persistentUUIDManager.mapAddresses(ch2.getMembers()));
       stateProvider.onTopologyUpdate(cacheTopology, false);
 
       assertFalse(stateProvider.isStateTransferInProgress());

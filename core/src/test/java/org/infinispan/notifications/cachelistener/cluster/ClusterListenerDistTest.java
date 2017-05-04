@@ -60,7 +60,7 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
       // Maybe some day this can work properly
       assertEquals(future.get(10, TimeUnit.SECONDS), FIRST_VALUE);
 
-      TestingUtil.waitForRehashToComplete(cache0, cache2);
+      TestingUtil.waitForNoRebalance(cache0, cache2);
 
       // The command is retried during rebalance, but there are two topologies - in the first (rebalancing) topology
       // one node can be primary owner and in the second (rebalanced) the other. In this case, it's possible that

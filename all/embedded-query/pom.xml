@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-all-parent</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.1.0-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -67,6 +67,7 @@
                            <exclude>org.osgi:org.osgi.core:jar:</exclude>
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                            <exclude>org.hibernate.javax.persistence:hibernate-jpa-2.1-api:jar:</exclude>
+                           <exclude>org.infinispan:infinispan-license:jar:</exclude>
                         </excludes>
                      </artifactSet>
                      <filters>
@@ -89,7 +90,7 @@
                            </excludes>
                         </filter>
                      </filters>
-                     <createSourcesJar>true</createSourcesJar>
+                     <createSourcesJar>${createSourcesJar}</createSourcesJar>
                      <relocations>
                         <relocation>
                            <pattern>antlr</pattern>
@@ -115,6 +116,15 @@
                            <pattern>org.codehaus</pattern>
                            <shadedPattern>infinispan.org.codehaus</shadedPattern>
                         </relocation>
+                        <!-- Unfortunatelly because of https://issues.jboss.org/browse/ISPN-6093
+                             and https://bugzilla.redhat.com/show_bug.cgi?id=1266831 we cannot relocate
+                             logging module, otherwise some integration modules might miss it
+                             when both Uber jar as well as ISPN commons are on classpath
+                        -->
+                        <!--<relocation>-->
+                           <!--<pattern>org.jboss.logging</pattern>-->
+                           <!--<shadedPattern>infinispan.org.jboss.logging</shadedPattern>-->
+                        <!--</relocation>-->
                         <relocation>
                            <pattern>org.slf4j</pattern>
                            <shadedPattern>infinispan.org.slf4j</shadedPattern>

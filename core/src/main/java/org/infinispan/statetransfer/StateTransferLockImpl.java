@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -29,9 +30,10 @@ public class StateTransferLockImpl implements StateTransferLock {
    private volatile int transactionDataTopologyId = -1;
    private CompletableFuture<Void> transactionDataFuture = new CompletableFuture<>();
 
+   @Stop
    public void stop() {
-      notifyTransactionDataReceived(TOPOLOGY_ID_STOPPED);
       notifyTopologyInstalled(TOPOLOGY_ID_STOPPED);
+      notifyTransactionDataReceived(TOPOLOGY_ID_STOPPED);
    }
 
    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
@@ -59,8 +61,9 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public void notifyTransactionDataReceived(int topologyId) {
       if (topologyId < transactionDataTopologyId) {
-         throw new IllegalStateException("Cannot set a topology id (" + topologyId +
-               ") that is lower than the current one (" + transactionDataTopologyId + ")");
+         log.debugf("Trying to set a topology id (%d) that is lower than the current one (%d)", topologyId,
+                    this.topologyId);
+         return;
       }
       if (trace) {
          log.tracef("Signalling transaction data received for topology %d", topologyId);
@@ -108,8 +111,9 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public void notifyTopologyInstalled(int topologyId) {
       if (topologyId < this.topologyId) {
-         throw new IllegalStateException("Cannot set a topology id (" + topologyId +
-               ") that is lower than the current one (" + this.topologyId + ")");
+         log.debugf("Trying to set a topology id (%d) that is lower than the current one (%d)", topologyId,
+                    this.topologyId);
+         return;
       }
       if (trace) {
          log.tracef("Signalling topology %d is installed", topologyId);
@@ -119,7 +123,7 @@ public class StateTransferLockImpl implements StateTransferLock {
       try {
          synchronized (this) {
             oldFuture = topologyFuture;
-            topologyFuture = new CompletableFuture();
+            topologyFuture = new CompletableFuture<>();
          }
       } finally {
          if (oldFuture != null) {

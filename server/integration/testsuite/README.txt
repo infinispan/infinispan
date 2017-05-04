@@ -117,23 +117,3 @@ properties:
 
   rocksdb.compression - sets compression type, allowed values: SNAPPY, NONE, ZLIB, BZ2LIB, LZ4, LZ4HC
 
-
-Note about generating a keystore with keytool
----------------------------------------------
-
-1) The following command (and its variants) was used to generate the keystore and truststore for HotRod SSL tests:
-
-    keytool -keystore keystore_server.jks -genkey -alias memcached -validity 10000
-
-2) Examine the keystore/truststore with:
-
-    keytool -list -v -keystore keystore_server.jks
-
-3) Generate a certificate out of the jks file:
-
-    keytool -export -alias memcached -file server.cer -storepass secret -keystore keystore_server.jks
-
-4) Import the certificate and generate a truststore:
-
-    keytool -import -alias memcached -v -trustcacerts -file server.cer -keypass secret -storepass secret -keystore truststore_client.jks
-

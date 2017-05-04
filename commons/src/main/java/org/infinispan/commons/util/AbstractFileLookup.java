@@ -10,13 +10,13 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
-import org.infinispan.commons.logging.BasicLogFactory;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.FileLookupFactory.DefaultFileLookup;
-import org.jboss.logging.BasicLogger;
 
 public abstract class AbstractFileLookup implements FileLookup {
 
-   private static final BasicLogger log = BasicLogFactory.getLog(FileLookup.class);
+   private static final Log log = LogFactory.getLog(AbstractFileLookup.class);
 
    public AbstractFileLookup() {
       super();
@@ -60,11 +60,21 @@ public abstract class AbstractFileLookup implements FileLookup {
 
    @Override
    public InputStream lookupFileStrict(URI uri, ClassLoader cl) throws FileNotFoundException {
-      //in case we don't have only file schema, but jar:file schema too, we have to get rid of all schemas
-      int startIndex = uri.toString().lastIndexOf(':');
-      String fileName = uri.toString().substring(startIndex + 1);
-
-      return cl.getResourceAsStream(fileName);
+      String scheme = uri.getScheme();
+      switch (scheme) {
+         case "file":
+            return new FileInputStream(new File(uri.getPath()));
+         case "jar":
+            String uriAsString = uri.toString();
+            String fileName = uriAsString.substring(uriAsString.lastIndexOf(":") + 1);
+            return new FileInputStream(new File(fileName));
+         default:
+            InputStream streamToBeReturned = getAsInputStreamFromClassLoader(uri.toString(), cl);
+            if(streamToBeReturned == null) {
+               throw log.unableToLoadFileUsingScheme(scheme);
+            }
+            return streamToBeReturned;
+      }
    }
 
    @Override

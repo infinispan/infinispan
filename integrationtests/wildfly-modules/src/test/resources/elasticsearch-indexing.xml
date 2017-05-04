@@ -16,6 +16,8 @@
             <indexing index="LOCAL">
                 <property name="default.indexmanager">elasticsearch</property>
                 <property name="default.elasticsearch.refresh_after_write">true</property>
+                <property name="default.elasticsearch.required_index_status">yellow</property>
+                <property name="default.elasticsearch.index_schema_management_strategy">drop-and-create-and-drop</property>
             </indexing>
         </distributed-cache>
     </cache-container>

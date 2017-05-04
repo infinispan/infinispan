@@ -33,36 +33,18 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 @Category({RollingUpgradesDist.class})
-public class HotRodRollingUpgradesDistIT {
-
-    @InfinispanResource
-    RemoteInfinispanServers serverManager;
-
-    static final String DEFAULT_CACHE_NAME = "default";
-
-    @ArquillianResource
-    ContainerController controller;
-
-    RemoteCacheManagerFactory rcmFactory;
-
-    @Before
-    public void setUp() {
-        rcmFactory = new RemoteCacheManagerFactory();
-    }
-
-    @After
-    public void tearDown() {
-        if (rcmFactory != null) {
-            rcmFactory.stopManagers();
-        }
-        rcmFactory = null;
-    }
+public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT {
 
     @Test
     public void testHotRodRollingUpgradesDiffVersionsDist() throws Exception {
         // Target nodes
         final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
+
+        // Target nodes
+        final int managementPortServer2 = 10090;
+        MBeanServerConnectionProvider provider2;
+
         // Source node
         int managementPortServer3 = 10199;
         MBeanServerConnectionProvider provider3;
@@ -76,12 +58,12 @@ public class HotRodRollingUpgradesDistIT {
                 managementPortServer3 = 10190;
             }
 
-            // we use PROTOCOL_VERSION_12 here because older servers does not support higher versions
+            // we use PROTOCOL_VERSION_25 here because servers using older version are out of testing scope
             ConfigurationBuilder builder3 = new ConfigurationBuilder();
             builder3.addServer()
                     .host("127.0.0.1")
                     .port(11422)
-                    .version(ProtocolVersion.PROTOCOL_VERSION_12);
+                    .version(ProtocolVersion.PROTOCOL_VERSION_25);
 
             RemoteCacheManager rcm3 = new RemoteCacheManager(builder3.build());
             final RemoteCache<String, String> c3 = rcm3.getCache("default");
@@ -90,7 +72,7 @@ public class HotRodRollingUpgradesDistIT {
             builder4.addServer()
                     .host("127.0.0.1")
                     .port(11522)
-                    .version(ProtocolVersion.PROTOCOL_VERSION_12);
+                    .version(ProtocolVersion.PROTOCOL_VERSION_25);
 
             RemoteCacheManager rcm4 = new RemoteCacheManager(builder4.build());
             final RemoteCache<String, String> c4 = rcm4.getCache("default");
@@ -124,6 +106,9 @@ public class HotRodRollingUpgradesDistIT {
             provider1 = new MBeanServerConnectionProvider(s1.server.getHotrodEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
 
+            provider2 = new MBeanServerConnectionProvider(s2.server.getHotrodEndpoint().getInetAddress().getHostName(),
+                  managementPortServer2);
+
             provider3 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer3);
 
             final ObjectName rollMan3 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
@@ -131,14 +116,17 @@ public class HotRodRollingUpgradesDistIT {
 
             invokeOperation(provider3, rollMan3.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
-            final ObjectName rollMan1 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
+            final ObjectName rollManTarget = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered-new\"," + "component=RollingUpgradeManager");
 
-            invokeOperation(provider1, rollMan1.toString(), "synchronizeData", new Object[]{"hotrod"},
+            invokeOperation(provider1, rollManTarget.toString(), "synchronizeData", new Object[]{"hotrod"},
                     new String[]{"java.lang.String"});
 
-            invokeOperation(provider1, rollMan1.toString(), "disconnectSource", new Object[]{"hotrod"},
+            invokeOperation(provider1, rollManTarget.toString(), "disconnectSource", new Object[]{"hotrod"},
                     new String[]{"java.lang.String"});
+
+            invokeOperation(provider2, rollManTarget.toString(), "disconnectSource", new Object[]{"hotrod"},
+                  new String[]{"java.lang.String"});
 
             // is source (RemoteCacheStore) really disconnected?
             c3.put("disconnected", "source");
@@ -181,26 +169,4 @@ public class HotRodRollingUpgradesDistIT {
         }
     }
 
-    protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans) {
-        if (System.getProperty("hotrod.protocol.version") != null) {
-            // we might want to test backwards compatibility as well
-            // old Hot Rod protocol version was set for communication with new server
-            return createCache(cacheBeans, System.getProperty("hotrod.protocol.version"));
-        } else {
-            return createCache(cacheBeans, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
-        }
-    }
-
-    protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans, String protocolVersion) {
-        return rcmFactory.createCache(cacheBeans, protocolVersion);
-    }
-
-    protected RemoteInfinispanMBeans createRemotes(String serverName, String managerName, String cacheName) {
-        return RemoteInfinispanMBeans.create(serverManager, serverName, cacheName, managerName);
-    }
-
-    private Object invokeOperation(MBeanServerConnectionProvider provider, String mbean, String operationName, Object[] params,
-                                   String[] signature) throws Exception {
-        return provider.getConnection().invoke(new ObjectName(mbean), operationName, params, signature);
-    }
 }

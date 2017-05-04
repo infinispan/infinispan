@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-bom</artifactId>
-        <version>9.0.0-SNAPSHOT</version>
+        <version>9.1.0-SNAPSHOT</version>
         <relativePath>../bom/pom.xml</relativePath>
     </parent>
 
@@ -14,11 +14,70 @@
     <description>Infinispan Integration Tests Parent</description>
     <packaging>pom</packaging>
 
+    <properties>
+        <forkJvmArgs>-Xmx2G</forkJvmArgs>
+        <jigsawForkJvmArgs></jigsawForkJvmArgs>
+    </properties>
+
     <profiles>
         <profile>
             <id>distribution</id>
             <properties>
                 <skipTests>true</skipTests>
+            </properties>
+        </profile>
+        <profile>
+            <id>customForkJvmArgs</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>env.MAVEN_FORK_OPTS</name>
+                </property>
+            </activation>
+            <properties>
+                <forkJvmArgs>${env.MAVEN_FORK_OPTS}</forkJvmArgs>
+            </properties>
+        </profile>
+        <profile>
+            <id>jigsaw</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <!--
+                  java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
+                    core externalizers for JDK types
+                  java.nio, jdk.internal.ref, sun.nio.ch: Netty, server/hotrod
+                  com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
+                  java.text, java.awt.font: XStream, server/rest
+                  java.security: Wildfly, server/integration/*
+                -->
+                <jigsawForkJvmArgs>
+                    -Dsun.reflect.debugModuleAccessChecks=true
+                    --add-opens=java.base/java.lang=ALL-UNNAMED
+                    --add-opens=java.base/java.util=ALL-UNNAMED
+                    --add-opens=java.base/java.io=ALL-UNNAMED
+                    --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+                    --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+                    --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+                    --add-opens=java.base/java.time=ALL-UNNAMED
+                    --add-opens=java.base/java.nio=ALL-UNNAMED
+                    --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
+                    --add-modules=java.xml.bind
+                    --add-exports=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
+                    --add-opens=java.base/java.text=ALL-UNNAMED
+                    --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
+                    --add-opens=java.base/java.security=ALL-UNNAMED
+                    --add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED
+                    --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+                    --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                    --add-exports=java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED
+                    --add-exports=java.security.sasl/com.sun.security.sasl.ntlm=ALL-UNNAMED
+                    --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED
+                    --add-opens=java.management/javax.management=ALL-UNNAMED
+                    --add-exports=java.management/com.sun.jmx.mbeanserver=ALL-UNNAMED
+                    --add-opens=java.base/com.sun.crypto.provider=ALL-UNNAMED
+                </jigsawForkJvmArgs>
             </properties>
         </profile>
     </profiles>
@@ -31,6 +90,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
                         <trimStackTrace>false</trimStackTrace>
+                        <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                     </configuration>
                 </plugin>
             </plugins>

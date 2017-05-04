@@ -66,7 +66,7 @@ public class CodecFactory {
       if (codecMap.containsKey(version))
          return codecMap.get(version);
       else
-         throw new IllegalArgumentException("Invalid Hot Rod protocol version");
+         throw new IllegalArgumentException(String.format("Invalid Hot Rod protocol version '%s'", version));
    }
 
 }

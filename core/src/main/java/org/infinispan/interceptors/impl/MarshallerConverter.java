@@ -2,15 +2,12 @@ package org.infinispan.interceptors.impl;
 
 import java.io.IOException;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.context.Flag;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * Converter that uses the given marshaller to box and unbox values

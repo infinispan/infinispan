@@ -52,11 +52,11 @@ import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.continuous.impl.ContinuousQueryResult;
-import org.infinispan.query.continuous.impl.JPAContinuousQueryCacheEventFilterConverter;
+import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
 import org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper;
-import org.infinispan.query.dsl.embedded.impl.JPACacheEventFilterConverter;
-import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.IckleCacheEventFilterConverter;
+import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
 import org.infinispan.query.impl.externalizers.ClusteredTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
@@ -88,6 +88,7 @@ import org.kohsuke.MetaInfServices;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
+@SuppressWarnings("unused")
 public class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
@@ -147,7 +148,6 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, IndexingConfiguration indexingConfiguration) {
       if (indexingConfiguration.indexedEntities().isEmpty()) {
-         // todo [anistor] remove dependency on QueryKnownClasses in infinispan 9.0
          // indexed classes are autodetected and propagated across cluster via this cache
          cacheManager.addCacheDependency(cacheStarting, QueryKnownClasses.QUERY_KNOWN_CLASSES_CACHE_NAME);
       }
@@ -315,12 +315,25 @@ public class LifecycleManager extends AbstractModuleLifecycle {
                indexedEntities = new Class[0];
             }
          }
+         allowDynamicSortingByDefault(indexingProperties);
          // Set up the search factory for Hibernate Search first.
          SearchConfiguration config = new SearchableCacheConfiguration(indexedEntities, indexingProperties, uninitializedCacheManager, cr);
          searchFactory = new SearchIntegratorBuilder().configuration(config).buildSearchIntegrator();
          cr.registerComponent(searchFactory, SearchIntegrator.class);
       }
       return searchFactory;
+   }
+
+   /**
+    * Dynamic index uninverting is deprecated: using it will cause warnings to be logged,
+    * to encourage people to use the annotation org.hibernate.search.annotations.SortableField.
+    * The default in Hibernate Search is to throw an exception rather than logging a warning;
+    * we opt to be more lenient by default in the Infinispan use case, matching the behaviour
+    * of previous versions of Hibernate Search.
+    * @param indexingProperties
+    */
+   private void allowDynamicSortingByDefault(Properties indexingProperties) {
+      indexingProperties.putIfAbsent( Environment.INDEX_UNINVERTING_ALLOWED, Boolean.TRUE.toString() );
    }
 
    private Properties addProgrammaticMappings(Properties indexingProperties, ComponentRegistry cr) {
@@ -393,11 +406,11 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       gcr.registerComponent(queryCache, QueryCache.class);
 
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.JPA_FILTER_AND_CONVERTER, new JPAFilterAndConverter.JPAFilterAndConverterExternalizer());
-      externalizerMap.put(ExternalizerIds.JPA_FILTER_RESULT, new JPAFilterAndConverter.FilterResultExternalizer());
-      externalizerMap.put(ExternalizerIds.JPA_CACHE_EVENT_FILTER_CONVERTER, new JPACacheEventFilterConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.JPA_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new JPAContinuousQueryCacheEventFilterConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.JPA_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResult.Externalizer());
+      externalizerMap.put(ExternalizerIds.ICKLE_FILTER_AND_CONVERTER, new IckleFilterAndConverter.IckleFilterAndConverterExternalizer());
+      externalizerMap.put(ExternalizerIds.ICKLE_FILTER_RESULT, new IckleFilterAndConverter.FilterResultExternalizer());
+      externalizerMap.put(ExternalizerIds.ICKLE_CACHE_EVENT_FILTER_CONVERTER, new IckleCacheEventFilterConverter.Externalizer());
+      externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new IckleContinuousQueryCacheEventFilterConverter.Externalizer());
+      externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResult.Externalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_BOOLEAN, new LuceneBooleanQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_TERM, new LuceneTermQueryExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_TERM, new LuceneTermExternalizer());

@@ -22,12 +22,10 @@ import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -72,14 +70,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
       assertEquals(0, store.size());
 
-      final List<String> keys = new ArrayList<String>(NUM_KEYS);
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j;
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      final List<String> keys = populateStore(NUM_KEYS, 0, store, marshaller);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[NUM_WRITER_THREADS];
@@ -115,7 +106,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
       assertEquals(0, store.size());
 
-      final List<String> keys = new ArrayList<String>(NUM_KEYS);
+      final List<String> keys = new ArrayList<>(NUM_KEYS);
       for (int j = 0; j < NUM_KEYS; j++) {
          String key = "key" + j;
          keys.add(key);
@@ -162,37 +153,30 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       // Also record the file size after each such iteration.
       // Since entry sizes increase during each iteration, new entries won't fit in old free entries
       for (int i = 0; i < TIMES; i++) {
-         for (int j = 0; j < NUM_KEYS; j++) {
-            String key = "key" + j;
-            String value = key + "_value_" + j + "_" + times("123456789_", i);
-            MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-            store.write(entry);
-         }
+         populateStore(NUM_KEYS, i, store, marshaller);
          fileSizesWithoutPurge[i] = file.length();
       }
 
       // Clear the store so that we can start fresh again
       store.clear();
 
-      ExecutorService executor = Executors.newSingleThreadExecutor(getTestThreadFactory("Purge"));
       // Repeat the same logic as above
       // Just that, in this case we will call purge after each iteration
-      for (int i = 0; i < TIMES; i++) {
-         for (int j = 0; j < NUM_KEYS; j++) {
-            String key = "key" + j;
-            String value = key + "_value_" + j + "_" + times("123456789_", i);
-            MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-            store.write(entry);
+      ExecutorService executor = Executors.newSingleThreadExecutor(getTestThreadFactory("Purge"));
+      try {
+         for (int i = 0; i < TIMES; i++) {
+            populateStore(NUM_KEYS, i, store, marshaller);
+            // Call purge so that the entries are coalesced
+            // Since this will merge and make bigger free entries available, new entries should get some free slots (unlike earlier case)
+            // This should prove that the file size increases slowly
+            store.purge(executor, null);
+            // Give some time for the purge thread to finish
+            MILLISECONDS.sleep(200);
+            fileSizesWithPurge[i] = file.length();
          }
-         // Call purge so that the entries are coalesced
-         // Since this will merge and make bigger free entries available, new entries should get some free slots (unlike earlier case)
-         // This should prove that the file size increases slowly
-         store.purge(executor, null);
-         // Give some time for the purge thread to finish
-         MILLISECONDS.sleep(200);
-         fileSizesWithoutPurge[i] = file.length();
+      } finally {
+         executor.shutdownNow();
       }
-      executor.shutdown();
 
       // Verify that file size increases slowly when the space optimization logic (implemented within store.purge()) is used
       for (int j = 2; j < TIMES; j++) {
@@ -213,14 +197,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertEquals(0, store.size());
 
       // Write a few entries into the cache
-      final List<String> keys = new ArrayList<String>(NUM_KEYS);
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j;
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      final List<String> keys = populateStore(NUM_KEYS, 0, store, marshaller);
 
       // Do some reading/writing entries with random size
       final CountDownLatch stopLatch = new CountDownLatch(1);
@@ -254,13 +231,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       long length2 = file.length();
 
       // Again write entries with smaller size
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j;
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      populateStore(NUM_KEYS, 0, store, marshaller);
 
       store.purge(executor, null);
       // Give some time for the purge thread to finish
@@ -274,6 +245,18 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertTrue(length3 < length2);
    }
 
+   public List<String> populateStore(int numKeys, int numPadding, SingleFileStore store, StreamingMarshaller marshaller) {
+      final List<String> keys = new ArrayList<>(numKeys);
+      for (int j = 0; j < numKeys; j++) {
+         String key = "key" + j;
+         String value = key + "_value_" + j + times("123456789_", numPadding);
+         keys.add(key);
+         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
+         store.write(entry);
+      }
+      return keys;
+   }
+
    public void testProcess() throws ExecutionException, InterruptedException {
       final int NUM_WRITER_THREADS = 2;
       final int NUM_KEYS = 2000;
@@ -285,14 +268,8 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
       assertEquals(0, store.size());
 
-      final List<String> keys = new ArrayList<String>(NUM_KEYS);
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j + times("123456789_", new Random().nextInt(MAX_VALUE_SIZE/10));
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      final List<String> keys = new ArrayList<>(NUM_KEYS);
+      populateStoreRandomValues(NUM_KEYS, MAX_VALUE_SIZE, store, marshaller, keys);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[NUM_WRITER_THREADS];
@@ -323,13 +300,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertEquals(0, store.size());
 
       final List<String> keys = new ArrayList<>(NUM_KEYS);
-      for (int j = 0; j < NUM_KEYS; j++) {
-         String key = "key" + j;
-         String value = key + "_value_" + j + times("123456789_", new Random().nextInt(MAX_VALUE_SIZE / 10));
-         keys.add(key);
-         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
-         store.write(entry);
-      }
+      populateStoreRandomValues(NUM_KEYS, MAX_VALUE_SIZE, store, marshaller, keys);
 
       final CountDownLatch stopLatch = new CountDownLatch(1);
       Future[] writeFutures = new Future[NUM_WRITER_THREADS];
@@ -348,11 +319,25 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       }
    }
 
+   private void populateStoreRandomValues(int NUM_KEYS, int MAX_VALUE_SIZE, SingleFileStore store,
+                                         StreamingMarshaller marshaller, List<String> keys) {
+      for (int j = 0; j < NUM_KEYS; j++) {
+         String key = "key" + j;
+         String value = key + "_value_" + j + times("123456789_", new Random().nextInt(MAX_VALUE_SIZE / 10));
+         keys.add(key);
+         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
+         store.write(entry);
+      }
+   }
+
    private Callable<Object> stopOnException(Callable<Object> task, CountDownLatch stopLatch) {
       return new StopOnExceptionTask(task, stopLatch);
    }
 
    private String times(String s, int count) {
+      if (count == 0)
+         return "";
+
       StringBuilder sb = new StringBuilder(s.length() * count);
       for (int i = 0; i < count; i++) {
          sb.append(s);
@@ -382,7 +367,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          while (stopLatch.getCount() != 0) {
             String key = keys.get(random.nextInt(keys.size()));
             String value = key + "_value_" + i + "_" + times("123456789_", random.nextInt(MAX_VALUE_SIZE) / 10);
-            MarshalledEntry entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
+            MarshalledEntry entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
             store.write(entry);
 //            log.tracef("Wrote value %s for key %s", value, key);
 
@@ -440,14 +425,14 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
          MILLISECONDS.sleep(100);
          while (stopLatch.getCount() != 0) {
-            long sizeBeforeClear = file.length();
+            log.tracef("Clearing store, store size before = %d, file size before = %d", store.getFileSize(), file.length());
             store.clear();
-            log.tracef("Cleared store, store size before = %d, file size before = %d", store.getFileSize(), file.length());
             MILLISECONDS.sleep(1);
             // The store size is incremented before values are actually written, so the on-disk size should always be
             // smaller than the logical size.
             long fileSizeAfterClear = file.length();
             long storeSizeAfterClear = store.getFileSize();
+            log.tracef("Cleared store, store size after = %d, file size after = %d", storeSizeAfterClear, fileSizeAfterClear);
             assertTrue("Store size " + storeSizeAfterClear + " is smaller than the file size " + fileSizeAfterClear,
                   fileSizeAfterClear <= storeSizeAfterClear);
             MILLISECONDS.sleep(100);
@@ -471,23 +456,19 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          assertTrue(file.exists());
 
          final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
-         final AtomicInteger count = new AtomicInteger(0);
-         store.process(new KeyFilter() {
-            @Override
-            public boolean accept(Object key) {
-               return true;
-            }
-         }, new AdvancedCacheLoader.CacheLoaderTask() {
-            @Override
-            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext)
-                  throws InterruptedException {
-               count.incrementAndGet();
-               Object key = marshalledEntry.getKey();
-               Object value = marshalledEntry.getValue();
-               assertEquals(key, ((String) value).substring(0, ((String) key).length()));
-            }
-         }, executor, true, true);
-         log.tracef("Processed %d entries from the store", count.get());
+         try {
+            final AtomicInteger count = new AtomicInteger(0);
+            store.process(key -> true,
+                          (marshalledEntry, taskContext) -> {
+                             count.incrementAndGet();
+                             Object key = marshalledEntry.getKey();
+                             Object value = marshalledEntry.getValue();
+                             assertEquals(key, ((String) value).substring(0, ((String) key).length()));
+                          }, executor, true, true);
+            log.tracef("Processed %d entries from the store", count.get());
+         } finally {
+            executor.shutdownNow();
+         }
          return null;
       }
    }
@@ -506,17 +487,21 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
-         final AtomicInteger count = new AtomicInteger(0);
-         store.process(
-                 (key) -> true,
-                 (marshalledEntry, taskContext) -> {
-                    count.incrementAndGet();
-                    Object key = marshalledEntry.getKey();
-                    assertNotNull(key);
-                 },
-                 executor, false, false);  // Set (value and metadata) == false so that no disk reads are performed
-         log.tracef("Processed %d in-memory keys from the store", count.get());
+         ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process"));
+         try {
+            final AtomicInteger count = new AtomicInteger(0);
+            store.process(
+                  (key) -> true,
+                  (marshalledEntry, taskContext) -> {
+                     count.incrementAndGet();
+                     Object key = marshalledEntry.getKey();
+                     assertNotNull(key);
+                  },
+                  executor, false, false);  // Set (value and metadata) == false so that no disk reads are performed
+            log.tracef("Processed %d in-memory keys from the store", count.get());
+         } finally {
+            executor.shutdownNow();
+         }
          return null;
       }
    }

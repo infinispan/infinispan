@@ -1,5 +1,8 @@
 package org.infinispan.functional;
 
+import static org.infinispan.test.Exceptions.assertException;
+import static org.infinispan.test.Exceptions.assertExceptionNonStrict;
+import static org.infinispan.test.Exceptions.expectExceptionNonStrict;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -7,6 +10,7 @@ import static org.testng.Assert.fail;
 
 import java.io.Serializable;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -18,7 +22,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap;
-import org.infinispan.commons.api.functional.Param;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.remoting.RemoteException;
 import org.testng.annotations.Test;
@@ -95,8 +98,8 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
                (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> {
                   throw new TestException();
                }, getClass());
-         fail("Should throw CacheException:TestException");
-      } catch (CacheException e) { // catches RemoteExceptions, too
+         fail("Should throw CompletionException:CacheException:[RemoteException:]*TestException");
+      } catch (CacheException | CompletionException e) { // catches RemoteExceptions, too
          Throwable t = e;
          if (Boolean.TRUE.equals(transactional) && t.getCause() instanceof RollbackException) {
             Throwable[] suppressed = t.getCause().getSuppressed();
@@ -106,10 +109,13 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
                t = t.getCause();
             }
          }
+         assertException(CompletionException.class, t);
+         t = t.getCause();
+         assertExceptionNonStrict(CacheException.class, t);
          while (t.getCause() instanceof RemoteException && t != t.getCause()) {
             t = t.getCause();
          }
-         assertEquals(t.getCause().getClass(), TestException.class);
+         assertException(TestException.class, t.getCause());
       }
    }
 
@@ -120,13 +126,16 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
          method.action.eval(key, null, rw,
                (Function<ReadEntryView<Object, String>, Object> & Serializable) view -> view.get(),
                (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> {}, getClass());
-         fail("Should throw CacheException:NoSuchElem entException");
-      } catch (CacheException e) { // catches RemoteExceptions, too
+         fail("Should throw CompletionException:CacheException:[RemoteException:]*NoSuchElementException");
+      } catch (CompletionException e) { // catches RemoteExceptions, too
          Throwable t = e;
-         while (t.getCause() instanceof RemoteException) {
+         assertException(CompletionException.class, t);
+         t = t.getCause();
+         assertExceptionNonStrict(CacheException.class, t);
+         while (t.getCause() instanceof RemoteException && t != t.getCause()) {
             t = t.getCause();
          }
-         assertEquals(t.getCause().getClass(), NoSuchElementException.class);
+         assertException(NoSuchElementException.class, t.getCause());
       }
    }
 
@@ -185,18 +194,15 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "methods")
    public void testOnMissingValueLocal(ReadMethod method) {
-      testReadOnMissingValue(0, ReadOnlyMapImpl.create(fmapL1).withParams(Param.FutureMode.COMPLETED), method);
+      testReadOnMissingValue(0, ReadOnlyMapImpl.create(fmapL1), method);
    }
 
    private <K> void testReadOnMissingValue(K key, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) {
       assertEquals(ro.eval(key,
             (Function<ReadEntryView<K, String>, Boolean> & Serializable) (view -> view.find().isPresent())).join(), Boolean.FALSE);
-      try {
-         method.action.eval(key, ro, (Function<ReadEntryView<K, String>, Object> & Serializable) view -> view.get());
-         fail("Should throw CacheException:NoSuchElementException");
-      } catch (CacheException e) { // catches RemoteException, too
-         assertEquals(e.getCause().getClass(), NoSuchElementException.class);
-      }
+      expectExceptionNonStrict(CompletionException.class, CacheException.class, NoSuchElementException.class, () ->
+            method.action.eval(key, ro, (Function<ReadEntryView<K, String>, Object> & Serializable) view -> view.get())
+      );
    }
 
    private static class TestException extends RuntimeException {

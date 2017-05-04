@@ -14,7 +14,6 @@ import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.jmx.annotations.Units;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -134,6 +133,18 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
          long longValue = value.longValue();
          if (longValue > -1) {
             total += longValue;
+         }
+      }
+      return total;
+   }
+
+   double addDoubleAttributes(List<Map<String, Number>> responseList, String attribute) {
+      double total = 0;
+      for (Map<String, Number> m : responseList) {
+         Number value = m.get(attribute);
+         double doubleValue = value.doubleValue();
+         if (doubleValue > -1) {
+            total += doubleValue;
          }
       }
       return total;

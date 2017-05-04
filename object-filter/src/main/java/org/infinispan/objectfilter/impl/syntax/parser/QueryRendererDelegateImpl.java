@@ -20,7 +20,7 @@ import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.jboss.logging.Logger;
 
 /**
- * Transform the parsed tree into a {@link FilterParsingResult} containing the {@link
+ * Transform the parsed tree into a {@link IckleParsingResult} containing the {@link
  * org.infinispan.objectfilter.impl.syntax.BooleanExpr}s representing the WHERE and HAVING clauses of the query.
  *
  * @author Adrian Nistor
@@ -54,9 +54,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private AggregationFunction aggregationFunction;
 
-   private final FilterExpressionBuilder<TypeMetadata> whereBuilder;
+   private final ExpressionBuilder<TypeMetadata> whereBuilder;
 
-   private final FilterExpressionBuilder<TypeMetadata> havingBuilder;
+   private final ExpressionBuilder<TypeMetadata> havingBuilder;
 
    /**
     * Persister space: keep track of aliases and entity names.
@@ -84,8 +84,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    QueryRendererDelegateImpl(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.queryString = queryString;
       this.propertyHelper = propertyHelper;
-      this.whereBuilder = new FilterExpressionBuilder<>(propertyHelper);
-      this.havingBuilder = new FilterExpressionBuilder<>(propertyHelper);
+      this.whereBuilder = new ExpressionBuilder<>(propertyHelper);
+      this.havingBuilder = new ExpressionBuilder<>(propertyHelper);
    }
 
    /**
@@ -305,9 +305,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
       checkAnalyzed(property, false);
       if (phase == Phase.WHERE) {
-         whereBuilder.addLike(property, (String) pattern, escapeCharacter);
+         whereBuilder.addLike(property, pattern, escapeCharacter);
       } else if (phase == Phase.HAVING) {
-         havingBuilder.addLike(property, (String) pattern, escapeCharacter);
+         havingBuilder.addLike(property, pattern, escapeCharacter);
       } else {
          throw new IllegalStateException();
       }
@@ -384,9 +384,9 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          if (property.isEmpty()) {
             throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
          }
-         String from = lower != null ? (String) parameterValue(lower) : null;
-         String to = upper != null ? (String) parameterValue(upper) : null;
-         checkAnalyzed(property, true);
+         Object from = lower != null ? parameterValue(lower) : null;
+         Object to = upper != null ? parameterValue(upper) : null;
+         checkIndexed(property);
          whereBuilder.addFullTextRange(property, includeLower, from, to, includeUpper);
       } else if (phase == Phase.HAVING) {
          throw log.getFullTextQueriesNotAllowedInHavingClauseException();
@@ -404,6 +404,12 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          if (expectAnalyzed) {
             throw log.getFullTextQueryOnNotAalyzedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
          }
+      }
+   }
+
+   private void checkIndexed(PropertyPath<?> propertyPath) {
+      if (!fieldIndexingMetadata.isIndexed(propertyPath.asArrayPath())) {
+         throw log.getFullTextQueryOnNotIndexedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
       }
    }
 
@@ -518,7 +524,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       if (sortFields == null) {
          sortFields = new ArrayList<>(5);
       }
-      sortFields.add(new FilterParsingResult.SortFieldImpl<>(property, isAscending));
+      sortFields.add(new IckleParsingResult.SortFieldImpl<>(property, isAscending));
    }
 
    /**
@@ -615,8 +621,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
    }
 
-   public FilterParsingResult<TypeMetadata> getResult() {
-      return new FilterParsingResult<>(
+   public IckleParsingResult<TypeMetadata> getResult() {
+      return new IckleParsingResult<>(
             queryString,
             Collections.unmodifiableSet(new HashSet<>(namedParameters.keySet())),
             whereBuilder.build(),

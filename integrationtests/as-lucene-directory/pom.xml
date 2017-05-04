@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.1.0-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -105,7 +105,11 @@
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
          <scope>test</scope>
-
+         <!--
+           This H2 version has to match the version bundled within WildFly
+           as we start the server and then connect to it from within WildFly:
+           it can not connect between different versions.
+           -->
          <version>${version.h2.driver-within-wildfly}</version>
       </dependency>
       <dependency>
@@ -156,6 +160,7 @@
                           <version.hibernate.search>${version.hibernate.search}</version.hibernate.search>
                           <version.hibernate.core>${version.hibernate.core}</version.hibernate.core>
                       </systemPropertyVariables>
+                     <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                   </configuration>
                </execution>
             </executions>

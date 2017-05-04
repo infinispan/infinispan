@@ -44,7 +44,7 @@ import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
-import org.infinispan.query.remote.impl.filter.JPACacheEventFilterConverterFactory;
+import org.infinispan.query.remote.impl.filter.IckleCacheEventFilterConverterFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -70,9 +70,9 @@ public class EmbeddedCompatClientListenerWithDslFilterTest extends MultiHotRodSe
 
       // Register the filter/converter factory. This should normally be discovered by the server via class path instead
       // of being added manually here, but this is ok in a test.
-      JPACacheEventFilterConverterFactory factory = new JPACacheEventFilterConverterFactory();
+      IckleCacheEventFilterConverterFactory factory = new IckleCacheEventFilterConverterFactory();
       for (int i = 0; i < NUM_NODES; i++) {
-         server(i).addCacheEventFilterConverterFactory(JPACacheEventFilterConverterFactory.FACTORY_NAME, factory);
+         server(i).addCacheEventFilterConverterFactory(IckleCacheEventFilterConverterFactory.FACTORY_NAME, factory);
       }
 
       remoteCache = client(0).getCache();

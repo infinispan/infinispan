@@ -79,6 +79,14 @@ public interface ReplicableCommand {
    boolean isReturnValueExpected();
 
    /**
+    * If true, a return value will be marshalled as a {@link org.infinispan.remoting.responses.SuccessfulResponse},
+    * otherwise it will be marshalled as a {@link org.infinispan.remoting.responses.UnsuccessfulResponse}.
+    */
+   default boolean isSuccessful() {
+      return true;
+   }
+
+   /**
     * If true, the command is processed asynchronously in a thread provided by an Infinispan thread pool. Otherwise,
     * the command is processed directly in the JGroups thread.
     * <p/>

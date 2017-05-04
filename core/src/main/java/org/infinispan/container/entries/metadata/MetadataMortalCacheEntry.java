@@ -119,27 +119,6 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
       this.metadata = metadata;
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MetadataMortalCacheEntry that = (MetadataMortalCacheEntry) o;
-
-      if (created != that.created) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
-      return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;
-
-   }
-
-   @Override
-   public int hashCode() {
-      int result = value != null ? value.hashCode() : 0;
-      result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
-      result = 31 * result + (int) (created ^ (created >>> 32));
-      return result;
-   }
-
    public static class Externalizer extends AbstractExternalizer<MetadataMortalCacheEntry> {
       @Override
       public void writeObject(ObjectOutput output, MetadataMortalCacheEntry ice) throws IOException {
@@ -165,7 +144,7 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
 
       @Override
       public Set<Class<? extends MetadataMortalCacheEntry>> getTypeClasses() {
-         return Util.<Class<? extends MetadataMortalCacheEntry>>asSet(MetadataMortalCacheEntry.class);
+         return Util.asSet(MetadataMortalCacheEntry.class);
       }
    }
 }

@@ -56,13 +56,14 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.responses.UnsureResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.topology.CacheTopology;
+import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -172,7 +173,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       getCommand.setTopologyId(topologyId);
       getCommand.setWrite(isWrite);
 
-      return rpcManager.invokeRemotelyAsync(info.readOwners(), getCommand, staggeredOptions).thenAccept(responses -> {
+      return rpcManager.invokeRemotelyAsync(info.readOwners(), getCommand, getStaggeredOptions(info.readOwners().size())).thenAccept(responses -> {
          for (Response r : responses.values()) {
             if (r instanceof SuccessfulResponse) {
                SuccessfulResponse response = (SuccessfulResponse) r;
@@ -192,13 +193,23 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                return;
             }
          }
-         // If this node has topology higher than some of the nodes and the nodes could not respond
-         // with the remote entry, these nodes are blocking the response and therefore we can get only timeouts.
-         // Therefore, if we got here it means that we have lower topology than some other nodes and we can wait
-         // for it in StateTransferInterceptor and retry the read later.
-         // TODO: These situations won't happen as soon as we'll implement 4-phase topology change in ISPN-5021
-         throw new OutdatedTopologyException("Did not get any successful response, got " + responses);
+         throw handleMissingSuccessfulResponse(responses);
       });
+   }
+
+   protected static CacheException handleMissingSuccessfulResponse(Map<Address, Response> responses) {
+      // The response map does not contain any ExceptionResponses; these are rethrown as exceptions
+      if (responses.values().stream().anyMatch(UnsureResponse.class::isInstance)) {
+         // We got only unsure responses, as all nodes that were read-owners at the time when we've sent
+         // the request have progressed to newer topology. However we are guaranteed to have progressed
+         // to a topology at most one older, and can immediately retry.
+         return OutdatedTopologyException.INSTANCE;
+      } else {
+         // Another instance when we don't get any successful response is when all owners are lost. We'll handle
+         // this later in StateTransferInterceptor, as we have to signal this to PartitionHandlingInterceptor
+         // if that's present.
+         return AllOwnersLostException.INSTANCE;
+      }
    }
 
    protected void wrapRemoteEntry(InvocationContext ctx, Object key, CacheEntry ice, boolean isWrite) {
@@ -280,9 +291,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             command.setValueMatcher(command.getValueMatcher().matcherForRetry());
             CompletableFutures.rethrowException(t);
 
-            Object primaryResult = getResponseFromPrimaryOwner(primaryOwner, responses);
-            command.updateStatusFromRemoteResponse(primaryResult);
-            return primaryResult;
+            ValidResponse primaryResponse = getResponseFromPrimaryOwner(primaryOwner, responses);
+            if (!primaryResponse.isSuccessful()) {
+               command.fail();
+            }
+            // We expect only successful/unsuccessful responses, not unsure
+            return primaryResponse.getResponseValue();
          }));
       } else {
          return null;
@@ -330,25 +344,22 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   private Object getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
+   private ValidResponse getResponseFromPrimaryOwner(Address primaryOwner, Map<Address, Response> addressResponseMap) {
       Response fromPrimaryOwner = addressResponseMap.get(primaryOwner);
       if (fromPrimaryOwner == null) {
-         if (trace) log.tracef("Primary owner %s returned null", primaryOwner);
-         return null;
+         throw new IllegalStateException("Missing response from primary owner!");
       }
-      if (fromPrimaryOwner.isSuccessful()) {
-         return ((SuccessfulResponse) fromPrimaryOwner).getResponseValue();
+      if (fromPrimaryOwner.isValid()) {
+         return (ValidResponse) fromPrimaryOwner;
       }
-
-      if (addressResponseMap.get(primaryOwner) instanceof CacheNotFoundResponse) {
+      if (fromPrimaryOwner instanceof CacheNotFoundResponse) {
          // This means the cache wasn't running on the primary owner, so the command wasn't executed.
          // We throw an OutdatedTopologyException, StateTransferInterceptor will catch the exception and
          // it will then retry the command.
          throw new OutdatedTopologyException("Cache is no longer running on primary owner " + primaryOwner);
       }
-
       Throwable cause = fromPrimaryOwner instanceof ExceptionResponse ? ((ExceptionResponse)fromPrimaryOwner).getException() : null;
-      throw new CacheException("Got unsuccessful response from primary owner: " + fromPrimaryOwner, cause);
+      throw new CacheException("Got unexpected response from primary owner: " + fromPrimaryOwner, cause);
    }
 
    @Override
@@ -360,7 +371,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (!ctx.isOriginLocal()) {
          for (Object key : command.getKeys()) {
             if (ctx.lookupEntry(key) == null) {
-               return handleMissingEntryOnRead(command);
+               return UnsureResponse.INSTANCE;
             }
          }
          return invokeNext(ctx, command);
@@ -472,7 +483,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          InvocationContext ctx, C command, Collection<?> keys, InvocationSuccessFunction remoteReturnHandler) {
       for (Object key : keys) {
          if (ctx.lookupEntry(key) == null) {
-            return handleMissingEntryOnRead(command);
+            return UnsureResponse.INSTANCE;
          }
       }
       return invokeNextThenApply(ctx, command, remoteReturnHandler);
@@ -585,7 +596,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          if (!response.isSuccessful()) {
             // CHECKME: The command is sent with current topology and deferred until the node gets our topology;
-            // therefore if it returns unsuccessful response we can assume that there is a newer topology
+            // therefore if it returns unsure response we can assume that there is a newer topology
             future.completeExceptionally(new OutdatedTopologyException("Remote node has higher topology, response " + response));
             return null;
          }
@@ -672,32 +683,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private Object onEntryMiss(InvocationContext ctx, AbstractDataCommand command) {
       return ctx.isOriginLocal() ?
-            handleMissingEntryOnLocalRead(ctx, command) :
-            handleMissingEntryOnRead(command);
+            handleMissingEntryOnLocalRead(ctx, command) : UnsureResponse.INSTANCE;
    }
 
    private Object handleMissingEntryOnLocalRead(InvocationContext ctx, AbstractDataCommand command) {
       return readNeedsRemoteValue(command) ?
             asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), false)) :
             null;
-   }
-
-   protected final Object handleMissingEntryOnRead(TopologyAffectedCommand command) {
-      // If we have the entry in context it means that we are read owners, so we don't have to check the topology
-      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      int currentTopologyId = cacheTopology.getTopologyId();
-      int cmdTopology = command.getTopologyId();
-      if (cmdTopology < currentTopologyId) {
-         return UnsuccessfulResponse.INSTANCE;
-      } else {
-         // If cmdTopology > currentTopologyId: the topology of this node is outdated
-         // TODO: This situation won't happen as soon as we'll implement 4-phase topology change in ISPN-5021
-         // (then, Tx.readCH and T(x+1).readCH will always have common subset of nodes so we'll be safe here
-         // to return UnsuccessfulResponse
-         // If cmdTopology == currentTopologyId: between STI and BDI this node had different topology, therefore
-         // the entry was not loaded into context. Retry again locally.
-         throw new OutdatedTopologyException(cmdTopology);
-      }
    }
 
    @Override
@@ -731,7 +723,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
       }
       if (!ctx.isOriginLocal()) {
-         return handleMissingEntryOnRead(command);
+         return UnsureResponse.INSTANCE;
       }
       if (readNeedsRemoteValue(command)) {
          LocalizedCacheTopology cacheTopology = checkTopologyId(command);
@@ -743,17 +735,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          // make sure that the command topology is set to the value according which we route it
          remoteCommand.setTopologyId(cacheTopology.getTopologyId());
 
-         CompletableFuture<Map<Address, Response>> rpc = rpcManager.invokeRemotelyAsync(owners, remoteCommand, staggeredOptions);
+         CompletableFuture<Map<Address, Response>> rpc = rpcManager.invokeRemotelyAsync(owners, remoteCommand, getStaggeredOptions(owners.size()));
          return asyncValue(rpc.thenApply(responses -> {
                for (Response rsp : responses.values()) {
                   if (rsp.isSuccessful()) {
                      return unwrapFunctionalResultOnOrigin(ctx, key, ((SuccessfulResponse) rsp).getResponseValue());
                   }
                }
-               // On receiver side the command topology id is checked and if it's too new, the command is delayed.
-               // We can assume that we miss successful response only because the owners already have new topology
-               // in which they're not owners - we'll wait for this topology, then.
-               throw new OutdatedTopologyException("We haven't found an owner");
+               throw handleMissingSuccessfulResponse(responses);
             }));
       } else {
          // This has LOCAL flags, just wrap NullCacheEntry and let the command run

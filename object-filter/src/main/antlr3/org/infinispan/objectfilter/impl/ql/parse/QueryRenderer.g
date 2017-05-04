@@ -361,8 +361,8 @@ ftClause
          { delegate.predicateFullTextRegexp($REGEXP_LITERAL.text); }
    |  ^(FT_RANGE startRange=(LSQUARE | LCURLY) lower=ftRangeBound upper=ftRangeBound endRange=(RSQUARE | RCURLY))
          { delegate.predicateFullTextRange($startRange.type == LSQUARE,
-                                     $lower.tree.getType() == ASTERISK ? null : $lower.text,
-                                     $upper.tree.getType() == ASTERISK ? null : $upper.text,
+                                     $lower.start.getType() == ASTERISK ? null : $lower.text,
+                                     $upper.start.getType() == ASTERISK ? null : $upper.text,
                                      $endRange.type == RSQUARE); }
    |  ^(OR { delegate.activateOR(); } ftClause ftClause { delegate.deactivateBoolean(); })
    |  ^(AND { delegate.activateAND(); } ftClause ftClause { delegate.deactivateBoolean(); })

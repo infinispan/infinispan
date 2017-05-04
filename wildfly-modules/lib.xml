@@ -83,7 +83,7 @@
         </sequential>
     </macrodef>
 
-    <scriptdef name="define-module-dir" language="javascript">
+    <scriptdef name="define-module-dir" language="groovy">
         <attribute name="name"/>
         <attribute name="slot"/>
         <attribute name="src"/>
@@ -106,7 +106,7 @@
         ]]>
     </scriptdef>
 
-    <scriptdef name="define-bundle-dir" language="javascript">
+    <scriptdef name="define-bundle-dir" language="groovy">
         <attribute name="name"/>
         <attribute name="slot"/>
         <![CDATA[
@@ -223,7 +223,7 @@
         </sequential>
     </macrodef>
 
-    <scriptdef name="define-resource-root" language="javascript">
+    <scriptdef name="define-resource-root" language="groovy">
         <attribute name="path"/>
         <![CDATA[
             path = attributes.get("path");
@@ -235,7 +235,7 @@
         ]]>
     </scriptdef>
 
-    <scriptdef name="major-minor" language="javascript">
+    <scriptdef name="major-minor" language="groovy">
         <attribute name="property" />
         <attribute name="artifact"/>
         <attribute name="version"/>

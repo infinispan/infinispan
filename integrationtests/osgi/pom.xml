@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.1.0-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -18,6 +18,17 @@
       <profile>
          <id>smoke</id>
          <properties>
+            <skipOSGiTests>true</skipOSGiTests>
+         </properties>
+      </profile>
+      <profile>
+         <id>jigsaw</id>
+         <activation>
+            <jdk>[9,)</jdk>
+         </activation>
+         <properties>
+            <!-- TODO Upgrade to pax-exam 4.11.0 and remove this profile -->
+            <!-- 4.10.0 doesn't work with the latest JDK9 builds, see https://ops4j1.jira.com/browse/PAXEXAM-810 -->
             <skipOSGiTests>true</skipOSGiTests>
          </properties>
       </profile>
@@ -264,6 +275,7 @@
                      <value>${junitListener}</value>
                   </property>
                </properties>
+               <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
             </configuration>
             <executions>
                <execution>
@@ -291,4 +303,3 @@
       </plugins>
    </build>
 </project>
-

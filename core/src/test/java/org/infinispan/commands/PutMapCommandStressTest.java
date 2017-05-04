@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 7.2
  */
-@Test(groups = "stress", testName = "commands.PutMapCommandStressTest")
+@Test(groups = "stress", testName = "commands.PutMapCommandStressTest", timeOut = 15*60*1000)
 public class PutMapCommandStressTest extends StressTest {
    protected final static int NUM_OWNERS = 3;
    protected final static int CACHE_COUNT = 6;

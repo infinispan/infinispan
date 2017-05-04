@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-bom</artifactId>
-   <version>9.0.0-SNAPSHOT</version>
+   <version>9.1.0-SNAPSHOT</version>
    <packaging>pom</packaging>
    <name>Infinispan BOM</name>
    <description>Infinispan BOM module</description>
@@ -52,15 +52,15 @@
    </issueManagement>
 
    <properties>
-      <infinispan.codename>Ruppaner</infinispan.codename>
-      <infinispan.core.schema.version>9.0</infinispan.core.schema.version>
+      <infinispan.codename>Ruppaner.1</infinispan.codename>
+      <infinispan.core.schema.version>9.1</infinispan.core.schema.version>
 
       <version.java>1.8</version.java>
 
       <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
 
       <version.caffeine>2.4.0</version.caffeine>
-      <version.protostream>4.0.0.Alpha9</version.protostream>
+      <version.protostream>4.0.0.Final</version.protostream>
       <version.aesh>0.66.13</version.aesh>
       <version.antlr>3.5.2</version.antlr>
       <version.c3p0>0.9.5</version.c3p0>
@@ -68,7 +68,7 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
       <version.hibernate.core>5.2.7.Final</version.hibernate.core>
-      <version.hibernate.search>5.7.0.Final</version.hibernate.search>
+      <version.hibernate.search>5.8.0.Beta1</version.hibernate.search>
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.cdi>1.2</version.cdi>
@@ -79,9 +79,6 @@
       <version.netty>4.1.9.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.rocksdb>5.1.2</version.rocksdb>
-      <version.scala.major>2.11</version.scala.major>
-      <version.scala>${version.scala.major}.7</version.scala>
-      <version.scala.xml>1.0.2</version.scala.xml>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.xstream>1.4.9</version.xstream>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
@@ -484,16 +481,6 @@
             <version>${version.rocksdb}</version>
          </dependency>
          <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>${version.scala}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-xml_${version.scala.major}</artifactId>
-            <version>${version.scala.xml}</version>
-         </dependency>
-         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <version>${version.xstream}</version>
@@ -717,21 +704,6 @@
                                     <versionRange>[1.0-beta-1,)</versionRange>
                                     <goals>
                                        <goal>javac2</goal>
-                                    </goals>
-                                 </pluginExecutionFilter>
-                                 <action>
-                                    <ignore />
-                                 </action>
-                              </pluginExecution>
-                              <pluginExecution>
-                                 <pluginExecutionFilter>
-                                    <groupId>org.scala-tools</groupId>
-                                    <artifactId>maven-scala-plugin</artifactId>
-                                    <versionRange>[2.15.2,)</versionRange>
-                                    <goals>
-                                       <goal>testCompile</goal>
-                                       <goal>compile</goal>
-                                       <goal>script</goal>
                                     </goals>
                                  </pluginExecutionFilter>
                                  <action>

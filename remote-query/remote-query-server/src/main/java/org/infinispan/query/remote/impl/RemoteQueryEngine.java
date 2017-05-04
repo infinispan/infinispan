@@ -14,13 +14,13 @@ import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.CustomTypeMetadata;
 import org.infinispan.AdvancedCache;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.RowProcessor;
 import org.infinispan.query.impl.SearchManagerImpl;
-import org.infinispan.query.remote.impl.filter.JPAProtobufFilterAndConverter;
+import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
@@ -30,8 +30,8 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
  */
 final class RemoteQueryEngine extends BaseRemoteQueryEngine {
 
-   public RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
-      super(cache, isIndexed, ProtobufMatcher.class, new ProtobufFieldBridgeProvider());
+   RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
+      super(cache, isIndexed, ProtobufMatcher.class, new ProtobufFieldBridgeAndAnalyzerProvider());
    }
 
    @Override
@@ -69,7 +69,7 @@ final class RemoteQueryEngine extends BaseRemoteQueryEngine {
    }
 
    @Override
-   protected CacheQuery<?> makeCacheQuery(FilterParsingResult<Descriptor> filterParsingResult, org.apache.lucene.search.Query luceneQuery) {
+   protected CacheQuery<?> makeCacheQuery(IckleParsingResult<Descriptor> ickleParsingResult, Query luceneQuery) {
       CustomTypeMetadata customTypeMetadata = new CustomTypeMetadata() {
          @Override
          public Class<?> getEntityType() {
@@ -78,7 +78,7 @@ final class RemoteQueryEngine extends BaseRemoteQueryEngine {
 
          @Override
          public Set<String> getSortableFields() {
-            IndexingMetadata indexingMetadata = filterParsingResult.getTargetEntityMetadata().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+            IndexingMetadata indexingMetadata = ickleParsingResult.getTargetEntityMetadata().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
             return indexingMetadata != null ? indexingMetadata.getSortableFields() : Collections.emptySet();
          }
       };
@@ -87,13 +87,13 @@ final class RemoteQueryEngine extends BaseRemoteQueryEngine {
    }
 
    @Override
-   protected JPAFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
-      return isIndexed ? new JPAProtobufFilterAndConverter(queryString, namedParameters) :
+   protected IckleFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
+      return isIndexed ? new IckleProtobufFilterAndConverter(queryString, namedParameters) :
             super.createFilter(queryString, namedParameters);
    }
 
    @Override
-   protected Class<?> getTargetedClass(FilterParsingResult<?> parsingResult) {
+   protected Class<?> getTargetedClass(IckleParsingResult<?> parsingResult) {
       return ProtobufValueWrapper.class;
    }
 }

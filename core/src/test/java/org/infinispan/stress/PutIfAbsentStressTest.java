@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  */
 @Test(groups = "stress", testName = "stress.PutIfAbsentStressTest",
-      description = "Since this test is slow to run, it should be disabled by default and run by hand as necessary.")
+      description = "Since this test is slow to run, it should be disabled by default and run by hand as necessary.", timeOut = 15*60*1000)
 public class PutIfAbsentStressTest extends AbstractInfinispanTest {
 
    private static final int NODES_NUM = 5;

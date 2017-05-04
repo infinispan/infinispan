@@ -5,7 +5,7 @@
                     </ssl>
                 </server-identities>
                 <authentication>
-                    <truststore path="truststore_server.jks" relative-to="jboss.server.config.dir" keystore-password="${VAULT::keystore::password::1}"/> <!-- password: secret -->
+                    <truststore path="ca.jks" relative-to="jboss.server.config.dir" keystore-password="${VAULT::keystore::password::1}"/> <!-- password: secret -->
                     <ldap connection="ldaps_connection" recursive="true" base-dn="ou=People,dc=infinispan,dc=org">
                         <username-filter attribute="uid" />
                     </ldap>

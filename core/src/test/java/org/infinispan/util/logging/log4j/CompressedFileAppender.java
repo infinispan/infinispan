@@ -3,6 +3,7 @@ package org.infinispan.util.logging.log4j;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
@@ -24,8 +25,6 @@ import org.apache.logging.log4j.core.util.Integers;
  */
 @Plugin(name = "CompressedFile", category = "Core", elementType = "appender", printObject = true)
 public final class CompressedFileAppender extends AbstractOutputStreamAppender<FileManager> {
-
-    private static final long serialVersionUID = 1L;
     private static final int DEFAULT_BUFFER_SIZE = 8192;
     private final String fileName;
     private final Advertiser advertiser;
@@ -36,7 +35,7 @@ public final class CompressedFileAppender extends AbstractOutputStreamAppender<F
                          final Advertiser advertiser) {
         super(name, layout, filter, ignoreExceptions, immediateFlush, manager);
         if (advertiser != null) {
-            final Map<String, String> configuration = new HashMap<String, String>(layout.getContentFormat());
+            final Map<String, String> configuration = new HashMap<>(layout.getContentFormat());
             configuration.putAll(manager.getContentFormat());
             configuration.put("contentType", layout.getContentType());
             configuration.put("name", name);
@@ -47,11 +46,15 @@ public final class CompressedFileAppender extends AbstractOutputStreamAppender<F
     }
 
     @Override
-    public void stop() {
-        super.stop();
+    public boolean stop(long timeout, TimeUnit timeUnit, boolean changeLifeCycleState) {
+        super.stop(timeout, timeUnit, false);
         if (advertiser != null) {
             advertiser.unadvertise(advertisement);
         }
+        if (changeLifeCycleState) {
+            setStopped();
+        }
+        return true;
     }
 
     /**

@@ -95,7 +95,7 @@ public abstract class AbstractProtocolConfigurationBuilder<P extends ProtocolCon
     @Override
     public String getProtocolClassName() {
         StringBuilder builder = new StringBuilder();
-        if (this.module.equals(ProtocolConfiguration.DEFAULT_MODULE) && !this.name.startsWith(org.jgroups.conf.ProtocolConfiguration.protocol_prefix)) {
+        if (module.getName().equals(ProtocolConfiguration.DEFAULT_MODULE.getName()) && !this.name.startsWith(org.jgroups.conf.ProtocolConfiguration.protocol_prefix)) {
             builder.append(org.jgroups.conf.ProtocolConfiguration.protocol_prefix).append('.');
         }
         return builder.append(this.name).toString();

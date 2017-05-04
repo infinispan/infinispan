@@ -1,5 +1,6 @@
 package org.infinispan.replication;
 
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -61,7 +62,11 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       Transaction tx = tm.getTransaction();
       LocalListener lis = new LocalListener();
       cache1.addListener(lis);
-      lis.put("age", 38);
+      try {
+         lis.put("age", 38);
+      } finally {
+         cache1.removeListener(lis);
+      }
 
       tm.suspend();
       assertNull("age on cache2 must be null as the TX has not yet been committed", cache2.get("age"));
@@ -78,20 +83,28 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       Integer age;
       RemoteListener lis = new RemoteListener();
       cache2.addListener(lis);
-      cache1.put("age", 38);
+      try {
+         cache1.put("age", 38);
 
-      // value on cache2 must be 38
-      age = (Integer) cache2.get("age");
-      assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
-      assertTrue("\"age\" must be 38", age == 38);
-      cache1.remove("age");
+         // value on cache2 must be 38
+         age = (Integer) cache2.get("age");
+         assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
+         assertTrue("\"age\" must be 38", age == 38);
+         cache1.remove("age");
+      } finally {
+         cache2.removeListener(lis);
+      }
    }
 
    public void testSyncRepl() throws Exception {
       Integer age;
       LocalListener lis = new LocalListener();
       cache1.addListener(lis);
-      lis.put("age", 38);
+      try {
+         lis.put("age", 38);
+      } finally {
+         cache2.removeListener(lis);
+      }
 
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
@@ -106,7 +119,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       cache1.put("key", "value");
       tm.commit();
 
-      assert cache2.get("key").equals("value");
+      assertEquals("value", cache2.get("key"));
 
    }
 
@@ -116,11 +129,14 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       tm.begin();
       Transaction tx = tm.getTransaction();
       LocalListener lis = new LocalListener();
+      try {
+         cache1.put("age", 38);
+         lis.put("name", "Ben");
+      } finally {
+         cache1.removeListener(lis);
+      }
 
-      cache1.put("age", 38);
-      lis.put("name", "Ben");
-
-      assert cache1.get("age").equals(38);
+      assertEquals(38, cache1.get("age"));
       tm.suspend();
       assertNull("age on cache2 must be null as the TX has not yet been committed", cache2.get("age"));
       assertNull("age on cache1 must be null as the TX has been resumed", cache1.get("age"));
@@ -140,18 +156,23 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       Integer age;
       LockManager lm1 = TestingUtil.extractComponent(cache1, LockManager.class);
 
-      assert lm1.getOwner("age") == null : "lock info is " + lm1.printLockInfo();
+      assertNull("lock info is " + lm1.printLockInfo(), lm1.getOwner("age"));
       LocalListener lis = new LocalListener();
       cache1.addListener(lis);
-      lis.put("age", 38);
-      assert lm1.getOwner("age") == null : "lock info is " + lm1.printLockInfo();
+      try {
+         lis.put("age", 38);
 
-      cache1.put("name", "Ben");
+         cache1.put("name", "Ben");
+      } finally {
+         cache1.removeListener(lis);
+      }
+
+      assertNull("lock info is " + lm1.printLockInfo(), lm1.getOwner("age"));
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
       assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
       assertTrue("\"age\" must be 38", age == 38);
-      assert lm1.getOwner("age") == null : "lock info is " + lm1.printLockInfo();
+      assertNull("lock info is " + lm1.printLockInfo(), lm1.getOwner("age"));
    }
 
    @Listener

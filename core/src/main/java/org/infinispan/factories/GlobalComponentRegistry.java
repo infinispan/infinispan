@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.MBeanServer;
@@ -136,6 +137,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          getOrCreateComponent(LocalTopologyManager.class);
          getOrCreateComponent(ClusterTopologyManager.class);
          getOrCreateComponent(ClusterContainerStats.class);
+
+         getOrCreateComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }

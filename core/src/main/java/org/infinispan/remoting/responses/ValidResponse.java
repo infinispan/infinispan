@@ -13,6 +13,8 @@ public abstract class ValidResponse implements Response {
       return true;
    }
 
+   public abstract Object getResponseValue();
+
    @Override
    public String toString() {
       return getClass().getSimpleName();

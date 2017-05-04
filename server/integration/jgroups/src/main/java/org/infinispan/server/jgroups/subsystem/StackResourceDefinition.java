@@ -27,7 +27,6 @@ import java.util.List;
 
 import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.ObjectListAttributeDefinition;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -43,9 +42,6 @@ import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
-import org.jboss.as.controller.transform.ResourceTransformationContext;
-import org.jboss.as.controller.transform.ResourceTransformer;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
@@ -83,33 +79,6 @@ public class StackResourceDefinition extends SimpleResourceDefinition {
             .setDeprecated(JGroupsModel.VERSION_3_0_0.getVersion())
             .setAllowNull(true)
             .build();
-
-    static void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
-        ResourceTransformationDescriptionBuilder builder = parent.addChildResource(WILDCARD_PATH);
-
-        if (JGroupsModel.VERSION_3_0_0.requiresTransformation(version)) {
-            // Create legacy "protocols" attributes, which lists protocols by name
-            ResourceTransformer transformer = new ResourceTransformer() {
-                @Override
-                public void transformResource(ResourceTransformationContext context, PathAddress address, Resource resource) throws OperationFailedException {
-                    for (String name : resource.getChildrenNames(ProtocolResourceDefinition.WILDCARD_PATH.getKey())) {
-                        resource.getModel().get(PROTOCOLS.getName()).add(name);
-                    }
-                    context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource).processChildren(resource);
-                }
-            };
-            builder.setCustomResourceTransformer(transformer);
-        }
-
-        if (JGroupsModel.VERSION_2_0_0.requiresTransformation(version)) {
-            builder.rejectChildResource(RelayResourceDefinition.PATH);
-        } else {
-            RelayResourceDefinition.buildTransformation(version, builder);
-        }
-        SaslResourceDefinition.buildTransformation(version, builder);
-        TransportResourceDefinition.buildTransformation(version, builder);
-        ProtocolResourceDefinition.buildTransformation(version, builder);
-    }
 
     // registration
     public StackResourceDefinition(boolean allowRuntimeOnlyRegistration) {
@@ -194,26 +163,23 @@ public class StackResourceDefinition extends SimpleResourceDefinition {
                 .setDeprecated(JGroupsModel.VERSION_3_0_0.getVersion())
                 .build();
         // Transform legacy /subsystem=jgroups/stack=*:add-protocol() operation -> /subsystem=jgroups/stack=*/protocol=*:add()
-        OperationStepHandler legacyAddProtocolHandler = new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) {
-                PathAddress address = context.getCurrentAddress();
-                String protocol = operation.require(ProtocolResourceDefinition.TYPE.getName()).asString();
-                PathAddress protocolAddress = address.append(ProtocolResourceDefinition.pathElement(protocol));
-                ModelNode protocolOperation = Util.createAddOperation(protocolAddress);
-                for (AttributeDefinition attribute : ProtocolResourceDefinition.ATTRIBUTES) {
-                    String name = attribute.getName();
-                    if (operation.hasDefined(name)) {
-                        protocolOperation.get(name).set(operation.get(name));
-                    }
+        OperationStepHandler legacyAddProtocolHandler = (context, operation) -> {
+            PathAddress address = context.getCurrentAddress();
+            String protocol = operation.require(ProtocolResourceDefinition.TYPE.getName()).asString();
+            PathAddress protocolAddress = address.append(ProtocolResourceDefinition.pathElement(protocol));
+            ModelNode protocolOperation = Util.createAddOperation(protocolAddress);
+            for (AttributeDefinition attribute : ProtocolResourceDefinition.ATTRIBUTES) {
+                String name = attribute.getName();
+                if (operation.hasDefined(name)) {
+                    protocolOperation.get(name).set(operation.get(name));
                 }
-                context.addStep(protocolOperation, new ReloadRequiredAddStepHandler(ProtocolResourceDefinition.ATTRIBUTES), OperationContext.Stage.MODEL);
-                if (operation.hasDefined(ProtocolResourceDefinition.PROPERTIES.getName())) {
-                    for (Property property : operation.get(ProtocolResourceDefinition.PROPERTIES.getName()).asPropertyList()) {
-                        ModelNode addPropertyOperation = Util.createAddOperation(protocolAddress.append(PropertyResourceDefinition.pathElement(property.getName())));
-                        addPropertyOperation.get(PropertyResourceDefinition.VALUE.getName()).set(property.getValue());
-                        context.addStep(addPropertyOperation, new ReloadRequiredAddStepHandler(PropertyResourceDefinition.VALUE), OperationContext.Stage.MODEL);
-                    }
+            }
+            context.addStep(protocolOperation, new ReloadRequiredAddStepHandler(ProtocolResourceDefinition.ATTRIBUTES), OperationContext.Stage.MODEL);
+            if (operation.hasDefined(ProtocolResourceDefinition.PROPERTIES.getName())) {
+                for (Property property : operation.get(ProtocolResourceDefinition.PROPERTIES.getName()).asPropertyList()) {
+                    ModelNode addPropertyOperation = Util.createAddOperation(protocolAddress.append(PropertyResourceDefinition.pathElement(property.getName())));
+                    addPropertyOperation.get(PropertyResourceDefinition.VALUE.getName()).set(property.getValue());
+                    context.addStep(addPropertyOperation, new ReloadRequiredAddStepHandler(PropertyResourceDefinition.VALUE), OperationContext.Stage.MODEL);
                 }
             }
         };
@@ -224,15 +190,12 @@ public class StackResourceDefinition extends SimpleResourceDefinition {
                 .setDeprecated(JGroupsModel.VERSION_3_0_0.getVersion())
                 .build();
         // Transform legacy /subsystem=jgroups/stack=*:remove-protocol() operation -> /subsystem=jgroups/stack=*/protocol=*:remove()
-        OperationStepHandler legacyRemoveProtocolHandler = new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) {
-                PathAddress address = context.getCurrentAddress();
-                String protocol = operation.require(ProtocolResourceDefinition.TYPE.getName()).asString();
-                PathAddress protocolAddress = address.append(ProtocolResourceDefinition.pathElement(protocol));
-                ModelNode removeOperation = Util.createRemoveOperation(protocolAddress);
-                context.addStep(removeOperation, ReloadRequiredRemoveStepHandler.INSTANCE, context.getCurrentStage());
-            }
+        OperationStepHandler legacyRemoveProtocolHandler = (context, operation) -> {
+            PathAddress address = context.getCurrentAddress();
+            String protocol = operation.require(ProtocolResourceDefinition.TYPE.getName()).asString();
+            PathAddress protocolAddress = address.append(ProtocolResourceDefinition.pathElement(protocol));
+            ModelNode removeOperation = Util.createRemoveOperation(protocolAddress);
+            context.addStep(removeOperation, ReloadRequiredRemoveStepHandler.INSTANCE, context.getCurrentStage());
         };
         registration.registerOperationHandler(legacyRemoveProtocolOperation, legacyRemoveProtocolHandler);
 

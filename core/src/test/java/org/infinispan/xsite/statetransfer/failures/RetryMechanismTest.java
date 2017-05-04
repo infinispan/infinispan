@@ -3,8 +3,8 @@ package org.infinispan.xsite.statetransfer.failures;
 import static org.infinispan.test.TestingUtil.WrapFactory;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.test.TestingUtil.wrapComponent;
-import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandler;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -351,12 +351,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       }
 
       public static DiscardHandler replaceOn(Cache<?, ?> cache) {
-         return wrapPerCacheInboundInvocationHandler(cache, new WrapFactory<PerCacheInboundInvocationHandler, DiscardHandler, Cache<?, ?>>() {
-            @Override
-            public DiscardHandler wrap(Cache<?, ?> wrapOn, PerCacheInboundInvocationHandler current) {
-               return new DiscardHandler(current);
-            }
-         }, true);
+         return wrapInboundInvocationHandler(cache, DiscardHandler::new);
       }
 
       @Override
@@ -401,12 +396,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       }
 
       public static FailureHandler replaceOn(Cache<?, ?> cache) {
-         return wrapPerCacheInboundInvocationHandler(cache, new WrapFactory<PerCacheInboundInvocationHandler, FailureHandler, Cache<?, ?>>() {
-            @Override
-            public FailureHandler wrap(Cache<?, ?> wrapOn, PerCacheInboundInvocationHandler current) {
-               return new FailureHandler(current);
-            }
-         }, true);
+         return wrapInboundInvocationHandler(cache, FailureHandler::new);
       }
 
       @Override

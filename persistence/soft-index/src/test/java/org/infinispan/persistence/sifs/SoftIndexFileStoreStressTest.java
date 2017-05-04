@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "stress", testName = "persistence.SoftIndexFileStoreStressTest")
+@Test(groups = "stress", testName = "persistence.SoftIndexFileStoreStressTest", timeOut = 15*60*1000)
 public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
    protected static final int THREADS = 10;
    protected static final long TEST_DURATION = TimeUnit.MINUTES.toMillis(10);

@@ -118,7 +118,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       ControlledRpcManager blockingRpcManager0 = blockStateResponseCommand(cache0);
 
       // Block the rebalance confirmation on cache0 (to avoid the retrying of commands)
-      blockRebalanceConfirmation(manager(0), checkPoint);
+      blockRebalanceConfirmation(manager(0), checkPoint, preJoinTopologyId + 1);
 
       // Start the joiner
       log.tracef("Starting the cache on the joiner");
@@ -183,7 +183,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       int rebalanceTopologyId = preJoinTopologyId + 1;
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(0));
       checkPoint.trigger("resume_rebalance_confirmation_" + rebalanceTopologyId + "_from_" + address(1));
-      TestingUtil.waitForRehashToComplete(cache0, cache1);
+      TestingUtil.waitForNoRebalance(cache0, cache1);
 
       // Check the value on all the nodes
       assertEquals(op.getValue(), cache0.get(key));
@@ -236,7 +236,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       return controlledRpcManager;
    }
 
-   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint)
+   private void blockRebalanceConfirmation(final EmbeddedCacheManager manager, final CheckPoint checkPoint, int rebalanceTopologyId)
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       ClusterTopologyManager spyManager = spy(ctm);
@@ -246,11 +246,13 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
             Object[] arguments = invocation.getArguments();
             Address source = (Address) arguments[1];
             int topologyId = (Integer) arguments[2];
-            checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+            if (rebalanceTopologyId == topologyId) {
+               checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
+               checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
+            }
             return invocation.callRealMethod();
          }
-      }).when(spyManager).handleRebalanceCompleted(anyString(), any(Address.class), anyInt(), any(Throwable.class),
+      }).when(spyManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), any(Throwable.class),
             anyInt());
       TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
    }

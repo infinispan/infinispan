@@ -57,10 +57,6 @@ public class ForkChannelFactory implements ChannelFactory {
         this.protocols = protocols;
     }
 
-    public ForkChannelFactory(JChannel channel, ChannelFactory parentFactory, ProtocolConfiguration... protocols) {
-        this(channel, parentFactory, Arrays.asList(protocols));
-    }
-
     @Override
     public JChannel createChannel(String id) throws Exception {
         JGroupsLogger.ROOT_LOGGER.debugf("Creating fork channel %s from channel %s", id, this.channel.getClusterName());

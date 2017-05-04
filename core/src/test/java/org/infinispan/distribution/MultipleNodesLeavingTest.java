@@ -33,7 +33,7 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
       log.trace("MultipleNodesLeavingTest.testMultipleLeaves");
 
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0));
-      TestingUtil.waitForRehashToComplete(cache(0));
+      TestingUtil.waitForNoRebalance(cache(0));
       List<Address> caches = advancedCache(0).getDistributionManager().getWriteConsistentHash().getMembers();
       log.tracef("caches = %s", caches);
       int size = caches.size();

@@ -8,10 +8,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.commons.io.FileUtils;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.core.RunningServer;
@@ -23,7 +19,6 @@ import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -55,29 +50,8 @@ public class EncryptProtocolIT {
 
     final String ENCRYPT_MBEAN = "jgroups:type=protocol,cluster=\"cluster\",protocol=SYM_ENCRYPT";
     final String ENCRYPT_PROPERTY_KEY = "keystore_name";
-    final String ENCRYPT_PROPERTY_VALUE_SUFFIX = "server_jceks.keystore";
+    final String ENCRYPT_PROPERTY_VALUE_SUFFIX = "cluster.jks";
     final String ENCRYPT_PASSWORD_KEY = "store_password";
-
-    @BeforeClass
-    public static void before() {
-        // ibm7 and ibm6 can't read the keystores created by oracle java, so we need to use the one created on ibm7
-        if (System.getProperty("java.vendor").toLowerCase().contains("ibm") &&
-              (System.getProperty("java.version").contains("1.7") || System.getProperty("java.version").contains("1.6"))) {
-            replaceKeyStoreInConfig(System.getProperty("server1.dist"));
-            replaceKeyStoreInConfig(System.getProperty("server2.dist"));
-        }
-    }
-
-    private static void replaceKeyStoreInConfig(String serverDir) {
-        try {
-            File configFile = new File(serverDir + "/standalone/configuration/testsuite/clustered-with-encrypt.xml");
-            String configContent = FileUtils.readFileToString(configFile, "UTF-8");
-            configContent = configContent.replaceAll("server_jceks.keystore", "ibm7_server_jceks.keystore");
-            FileUtils.writeStringToFile(configFile, configContent, "UTF-8");
-        } catch (IOException e) {
-            throw new RuntimeException("Replacing the keystore in configuration failed ", e);
-        }
-    }
 
     @Test
     @WithRunningServer(@RunningServer(name = COORDINATOR_NODE))

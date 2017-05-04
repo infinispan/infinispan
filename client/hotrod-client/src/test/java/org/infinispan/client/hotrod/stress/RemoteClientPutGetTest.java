@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 /**
  * Simple PUTs/GETs test to verify performance regressions. Requires an external running server.
  */
-@Test(groups = "stress", testName = "org.infinispan.client.hotrod.stress.RemoteClientPutGetTest")
+@Test(groups = "stress", testName = "org.infinispan.client.hotrod.stress.RemoteClientPutGetTest", timeOut = 15*60*1000)
 public class RemoteClientPutGetTest {
 
    private RemoteCache<String, Object> cache;

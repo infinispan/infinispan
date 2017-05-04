@@ -27,7 +27,6 @@ import java.util.List;
 
 import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -48,7 +47,6 @@ import org.jboss.as.controller.operations.validation.LongRangeValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -188,9 +186,5 @@ public enum ThreadPoolResourceDefinition implements ResourceDefinition {
 
     SimpleAttributeDefinition getKeepaliveTime() {
         return this.keepaliveTime;
-    }
-
-    void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
-        // Nothing to transform yet
     }
 }

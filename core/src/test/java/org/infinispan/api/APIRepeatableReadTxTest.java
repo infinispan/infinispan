@@ -23,12 +23,4 @@ public class APIRepeatableReadTxTest extends APITxTest {
       cache = cm.getCache("test");
       return cm;
    }
-
-   @Override
-   public void testRetainAllMethodOfEntryCollection() {
-      //pruivo.note:
-      //write-skew is not stored in ImmortalCacheEntry
-      //should we add equals() to MetadataImmortalCacheEntry and re-implement the test using it?
-      //TBH, it doesn't make much sense to expose our internal cache entries...
-   }
 }

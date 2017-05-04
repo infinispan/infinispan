@@ -19,6 +19,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.remoting.transport.jgroups.SingleResponseFuture;
 import org.infinispan.test.TestingUtil;
 import org.jgroups.Address;
+import org.jgroups.blocks.MessageDispatcher;
 import org.jgroups.blocks.ResponseMode;
 
 /**
@@ -50,6 +51,15 @@ public class CountingCARD extends CommandAwareRpcDispatcher {
       installUpHandler(prot_adapter, true); // Make sure that this is the up handler
       this.timeoutExecutor = timeoutExecutor;
       start();
+   }
+
+   @Override
+   public <X extends MessageDispatcher> X stop() {
+      // Because of a quirk of CommandAwareRpcDispatcher, stop() is also called during the constructor
+      if (timeoutExecutor != null) {
+         timeoutExecutor.shutdownNow();
+      }
+      return super.stop();
    }
 
    @Override

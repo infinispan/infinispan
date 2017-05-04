@@ -23,14 +23,11 @@ package org.infinispan.server.jgroups.subsystem;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.EnumSet;
 
 import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionContext;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
-import org.jboss.as.controller.transform.description.TransformationDescription;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -47,14 +44,11 @@ public class JGroupsExtension implements Extension {
     // Workaround for JGRP-1475
     // Configure JGroups to use jboss-logging.
     static {
-        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                if (org.jgroups.logging.LogFactory.getCustomLogFactory() == null) {
-                    org.jgroups.logging.LogFactory.setCustomLogFactory(new org.infinispan.server.jgroups.LogFactory());
-                }
-                return null;
+        PrivilegedAction<Void> action = () -> {
+            if (org.jgroups.logging.LogFactory.getCustomLogFactory() == null) {
+                org.jgroups.logging.LogFactory.setCustomLogFactory(new org.infinispan.server.jgroups.LogFactory());
             }
+            return null;
         };
         AccessController.doPrivileged(action);
     }
@@ -69,14 +63,6 @@ public class JGroupsExtension implements Extension {
 
         registration.registerSubsystemModel(new JGroupsSubsystemResourceDefinition(context.isRuntimeOnlyRegistrationValid()));
         registration.registerXMLElementWriter(new JGroupsSubsystemXMLWriter());
-
-        if (context.isRegisterTransformers()) {
-            // Register transformers for all but the current model
-            for (JGroupsModel model: EnumSet.complementOf(EnumSet.of(JGroupsModel.CURRENT))) {
-                ModelVersion version = model.getVersion();
-                TransformationDescription.Tools.register(JGroupsSubsystemResourceDefinition.buildTransformers(version), registration, version);
-            }
-        }
     }
 
     /**

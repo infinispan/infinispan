@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 7.0
  */
-@Test(groups = "stress", testName = "stress.ReplGetStressTest")
+@Test(groups = "stress", testName = "stress.ReplGetStressTest", timeOut = 15*60*1000)
 public class ReplGetStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_NODES = 4;

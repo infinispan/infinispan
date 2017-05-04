@@ -45,7 +45,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 8.0
  */
-@Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest")
+@Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest", timeOut = 15*60*1000)
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
 public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
@@ -238,7 +238,7 @@ public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest
                   List<Cache<Object, Object>> caches = caches(CACHE_NAME);
                   if (caches.size() > 0) {
                      TestingUtil.blockUntilViewsReceived(60000, false, caches);
-                     TestingUtil.waitForRehashToComplete(caches);
+                     TestingUtil.waitForNoRebalance(caches);
                   }
                } else {
                   throw new IllegalStateException("Cache Manager " + cacheToKill.getCacheManager() +

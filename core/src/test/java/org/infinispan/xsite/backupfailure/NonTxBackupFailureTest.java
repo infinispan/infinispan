@@ -30,12 +30,16 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
    }
 
    public void testPutFailure() {
+      failureInterceptor.enable();
       try {
          cache("LON", 0).put("k", "v");
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
+      } finally {
+         failureInterceptor.disable();
       }
+
       //in triangle, if an exception is received, the originator doesn't wait for the ack from backup
       //it is possible to check the value before the backup handles the BackupWriteRpcCommand.
       eventuallyEquals("v", () -> cache("LON", 1).get("k"));
@@ -44,7 +48,6 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
    }
 
    public void testRemoveFailure() {
-      failureInterceptor.disable();
       cache("LON", 0).put("k", "v");
       assertEquals("v", cache("LON", 1).get("k"));
       assertEquals("v", backup("LON").get("k"));
@@ -55,6 +58,8 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
+      } finally {
+         failureInterceptor.disable();
       }
 
       eventuallyEquals(null, () -> cache("LON", 0).get("k"));
@@ -76,6 +81,8 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
+      } finally {
+         failureInterceptor.disable();
       }
 
       eventuallyEquals("v2", () -> cache("LON", 0).get("k"));
@@ -86,7 +93,6 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
    }
 
    public void testClearFailure() {
-      failureInterceptor.disable();
       cache("LON", 0).put("k1", "v1");
       cache("LON", 0).put("k2", "v2");
       cache("LON", 0).put("k3", "v3");
@@ -97,6 +103,8 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
+      } finally {
+         failureInterceptor.disable();
       }
 
       eventuallyEquals(null, () -> cache("LON", 0).get("k1"));
@@ -114,15 +122,18 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
    }
 
    public void testPutMapFailure() {
-      Map toAdd = new HashMap();
+      Map<String, String> toAdd = new HashMap<>();
       for (int i = 0; i < 100; i++) {
          toAdd.put("k" + i, "v" + i);
       }
+      failureInterceptor.enable();
       try {
          cache("LON", 0).putAll(toAdd);
          checkFailOnBackupFailure();
       } catch (CacheException e) {
          checkNonFailOnBackupFailure();
+      } finally {
+         failureInterceptor.disable();
       }
 
       for (int i = 0; i < 100; i++) {

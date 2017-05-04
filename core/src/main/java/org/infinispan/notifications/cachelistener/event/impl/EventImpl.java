@@ -50,7 +50,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private Type type;
    private V value;
    private V oldValue;
-   private ConsistentHash consistentHashAtStart, consistentHashAtEnd, unionConsistentHash;
+   private ConsistentHash readConsistentHashAtStart, writeConsistentHashAtStart, readConsistentHashAtEnd, writeConsistentHashAtEnd, unionConsistentHash;
    private int newTopologyId;
    private Map<? extends K, ? extends V> entries;
    private boolean created;
@@ -127,12 +127,20 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       this.transactionSuccessful = transactionSuccessful;
    }
 
-   public void setConsistentHashAtStart(ConsistentHash consistentHashAtStart) {
-      this.consistentHashAtStart = consistentHashAtStart;
+   public void setReadConsistentHashAtStart(ConsistentHash readConsistentHashAtStart) {
+      this.readConsistentHashAtStart = readConsistentHashAtStart;
    }
 
-   public void setConsistentHashAtEnd(ConsistentHash consistentHashAtEnd) {
-      this.consistentHashAtEnd = consistentHashAtEnd;
+   public void setWriteConsistentHashAtStart(ConsistentHash writeConsistentHashAtStart) {
+      this.writeConsistentHashAtStart = writeConsistentHashAtStart;
+   }
+
+   public void setReadConsistentHashAtEnd(ConsistentHash readConsistentHashAtEnd) {
+      this.readConsistentHashAtEnd = readConsistentHashAtEnd;
+   }
+
+   public void setWriteConsistentHashAtEnd(ConsistentHash writeConsistentHashAtEnd) {
+      this.writeConsistentHashAtEnd = writeConsistentHashAtEnd;
    }
 
    public void setUnionConsistentHash(ConsistentHash unionConsistentHash) {
@@ -218,8 +226,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (transaction != null ? !transaction.equals(event.transaction) : event.transaction != null) return false;
       if (type != event.type) return false;
       if (value != null ? !value.equals(event.value) : event.value != null) return false;
-      if (!Util.safeEquals(consistentHashAtStart, event.consistentHashAtStart)) return false;
-      if (!Util.safeEquals(consistentHashAtEnd, event.consistentHashAtEnd)) return false;
+      if (!Util.safeEquals(readConsistentHashAtStart, event.readConsistentHashAtStart)) return false;
+      if (!Util.safeEquals(writeConsistentHashAtStart, event.writeConsistentHashAtStart)) return false;
+      if (!Util.safeEquals(readConsistentHashAtEnd, event.readConsistentHashAtEnd)) return false;
+      if (!Util.safeEquals(writeConsistentHashAtEnd, event.writeConsistentHashAtEnd)) return false;
       if (!Util.safeEquals(unionConsistentHash, event.unionConsistentHash)) return false;
       if (newTopologyId != event.newTopologyId) return false;
       if (created != event.created) return false;
@@ -238,8 +248,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       result = 31 * result + (transactionSuccessful ? 1 : 0);
       result = 31 * result + (type != null ? type.hashCode() : 0);
       result = 31 * result + (value != null ? value.hashCode() : 0);
-      result = 31 * result + (consistentHashAtStart != null ? consistentHashAtStart.hashCode() : 0);
-      result = 31 * result + (consistentHashAtEnd != null ? consistentHashAtEnd.hashCode() : 0);
+      result = 31 * result + (readConsistentHashAtStart != null ? readConsistentHashAtStart.hashCode() : 0);
+      result = 31 * result + (writeConsistentHashAtStart != null ? writeConsistentHashAtStart.hashCode() : 0);
+      result = 31 * result + (readConsistentHashAtEnd != null ? readConsistentHashAtEnd.hashCode() : 0);
+      result = 31 * result + (writeConsistentHashAtEnd != null ? writeConsistentHashAtEnd.hashCode() : 0);
       result = 31 * result + (unionConsistentHash != null ? unionConsistentHash.hashCode() : 0);
       result = 31 * result + newTopologyId;
       result = 31 * result + (created ? 1 : 0);
@@ -254,8 +266,10 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
                "type=" + type +
                ", pre=" + pre +
                ", cache=" + cache +
-               ", consistentHashAtStart=" + consistentHashAtStart +
-               ", consistentHashAtEnd=" + consistentHashAtEnd +
+               ", readConsistentHashAtStart=" + readConsistentHashAtStart +
+               ", writeConsistentHashAtStart=" + writeConsistentHashAtStart +
+               ", readConsistentHashAtEnd=" + readConsistentHashAtEnd +
+               ", writeConsistentHashAtEnd=" + writeConsistentHashAtEnd +
                ", unionConsistentHash=" + unionConsistentHash +
                ", newTopologyId=" + newTopologyId +
                '}';
@@ -276,22 +290,42 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
 
    @Override
    public Collection<Address> getMembersAtStart() {
-      return consistentHashAtStart != null ? consistentHashAtStart.getMembers() : Collections.<Address>emptySet();
+      return readConsistentHashAtStart != null ? readConsistentHashAtStart.getMembers() : Collections.<Address>emptySet();
    }
 
    @Override
    public Collection<Address> getMembersAtEnd() {
-      return consistentHashAtEnd != null ? consistentHashAtEnd.getMembers() : Collections.<Address>emptySet();
+      return readConsistentHashAtEnd != null ? readConsistentHashAtEnd.getMembers() : Collections.<Address>emptySet();
    }
 
    @Override
    public ConsistentHash getConsistentHashAtStart() {
-      return consistentHashAtStart;
+      return readConsistentHashAtStart;
    }
 
    @Override
    public ConsistentHash getConsistentHashAtEnd() {
-      return consistentHashAtEnd;
+      return writeConsistentHashAtEnd;
+   }
+
+   @Override
+   public ConsistentHash getReadConsistentHashAtStart() {
+      return readConsistentHashAtStart;
+   }
+
+   @Override
+   public ConsistentHash getWriteConsistentHashAtStart() {
+      return writeConsistentHashAtStart;
+   }
+
+   @Override
+   public ConsistentHash getReadConsistentHashAtEnd() {
+      return readConsistentHashAtEnd;
+   }
+
+   @Override
+   public ConsistentHash getWriteConsistentHashAtEnd() {
+      return writeConsistentHashAtEnd;
    }
 
    @Override

@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod.test;
 
 import static org.infinispan.server.core.test.ServerTestingUtil.killServer;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtils.host;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.host;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readString;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedLong;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
@@ -43,11 +43,10 @@ public class HotRodPipeTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager();
    }
 
-   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    @Override
    protected void setup() throws Exception {
       super.setup();
-      server = HotRodTestingUtils.startHotRodServer(cacheManager);
+      server = HotRodTestingUtil.startHotRodServer(cacheManager);
    }
 
    @AfterClass(alwaysRun = true)
@@ -106,7 +105,7 @@ public class HotRodPipeTest extends SingleCacheManagerTest {
             });
 
          try {
-            ChannelFuture f = b.connect(host, port).sync();
+            ChannelFuture f = b.connect(host(), port).sync();
             ch = f.channel();
          } catch (InterruptedException e) {
             throw new AssertionError(e);

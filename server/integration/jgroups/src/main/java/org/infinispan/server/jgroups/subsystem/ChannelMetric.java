@@ -57,13 +57,13 @@ public enum ChannelMetric implements Metric<JChannel> {
     NUM_TASKS_IN_TIMER(MetricKeys.NUM_TASKS_IN_TIMER, ModelType.INT) {
         @Override
         public ModelNode execute(JChannel channel) {
-            return new ModelNode(((TP) channel.getProtocolStack().getTransport()).getNumTimerTasks());
+            return new ModelNode((channel.getProtocolStack().getTransport()).getNumTimerTasks());
         }
     },
     NUM_TIMER_THREADS(MetricKeys.NUM_TIMER_THREADS, ModelType.INT) {
         @Override
         public ModelNode execute(JChannel channel) {
-            return new ModelNode(((TP) channel.getProtocolStack().getTransport()).getTimerThreads());
+            return new ModelNode((channel.getProtocolStack().getTransport()).getTimerThreads());
         }
     },
     RECEIVED_BYTES(MetricKeys.RECEIVED_BYTES, ModelType.LONG) {

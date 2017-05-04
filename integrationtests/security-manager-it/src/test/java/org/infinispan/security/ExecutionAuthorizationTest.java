@@ -32,9 +32,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "security.ExecutionAuthorizationTest")
 public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
    private static final String EXECUTION_CACHE = "executioncache";
-   Subject ADMIN = TestingUtil.makeSubject("admin");
-   Subject EXEC = TestingUtil.makeSubject("exec");
-   Subject NOEXEC = TestingUtil.makeSubject("noexec");
+   private static Subject ADMIN = TestingUtil.makeSubject("admin");
+   private static Subject EXEC = TestingUtil.makeSubject("exec");
+   private static Subject NOEXEC = TestingUtil.makeSubject("noexec");
 
 
 
@@ -42,18 +42,15 @@ public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       final ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       builder.security().authorization().enable().role("admin").role("exec").role("noexec");
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            addClusterEnabledCacheManager(getSecureClusteredGlobalConfiguration(), builder);
-            addClusterEnabledCacheManager(getSecureClusteredGlobalConfiguration(), builder);
-            for (EmbeddedCacheManager cm : cacheManagers) {
-               cm.defineConfiguration(EXECUTION_CACHE, builder.build());
-               cm.getCache(EXECUTION_CACHE);
-            }
-            waitForClusterToForm(EXECUTION_CACHE);
-            return null;
+      Subject.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         addClusterEnabledCacheManager(getSecureClusteredGlobalConfiguration(), builder);
+         addClusterEnabledCacheManager(getSecureClusteredGlobalConfiguration(), builder);
+         for (EmbeddedCacheManager cm : cacheManagers) {
+            cm.defineConfiguration(EXECUTION_CACHE, builder.build());
+            cm.getCache(EXECUTION_CACHE);
          }
+         waitForClusterToForm(EXECUTION_CACHE);
+         return null;
       });
    }
 
@@ -77,30 +74,22 @@ public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
    @Override
    @AfterClass(alwaysRun = true)
    protected void destroy() {
-      Subject.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            ExecutionAuthorizationTest.super.destroy();
-            return null;
-         }
+      Subject.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         ExecutionAuthorizationTest.super.destroy();
+         return null;
       });
    }
 
    @Override
    @AfterClass(alwaysRun = true)
    protected void clearContent() throws Exception {
-      Subject.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-
-         @Override
-         public Void run() throws Exception {
-            try {
-               ExecutionAuthorizationTest.super.clearContent();
-            } catch (Throwable e) {
-               throw new Exception(e);
-            }
-            return null;
+      Subject.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
+         try {
+            ExecutionAuthorizationTest.super.clearContent();
+         } catch (Throwable e) {
+            throw new Exception(e);
          }
-
+         return null;
       });
    }
 
@@ -114,13 +103,9 @@ public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
       Policy.setPolicy(new SurefireTestingPolicy());
       System.setSecurityManager(new SecurityManager());
       try {
-         Subject.doAs(EXEC, new PrivilegedExceptionAction<Void>() {
-
-            @Override
-            public Void run() throws Exception {
-               distExecTest();
-               return null;
-            }
+         Subject.doAs(EXEC, (PrivilegedExceptionAction<Void>) () -> {
+            distExecTest();
+            return null;
          });
       } finally {
          System.setSecurityManager(null);
@@ -133,13 +118,9 @@ public class ExecutionAuthorizationTest extends MultipleCacheManagersTest {
       Policy.setPolicy(new SurefireTestingPolicy());
       try {
          System.setSecurityManager(new SecurityManager());
-         Subject.doAs(NOEXEC, new PrivilegedExceptionAction<Void>() {
-
-            @Override
-            public Void run() throws Exception {
-               distExecTest();
-               return null;
-            }
+         Subject.doAs(NOEXEC, (PrivilegedExceptionAction<Void>) () -> {
+            distExecTest();
+            return null;
          });
       } finally {
          System.setSecurityManager(null);

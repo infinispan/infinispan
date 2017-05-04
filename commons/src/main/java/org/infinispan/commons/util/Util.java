@@ -15,6 +15,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
@@ -471,10 +472,30 @@ public final class Util {
    }
 
    public static String toStr(Object o) {
-      if (o instanceof byte[]) {
-         return printArray((byte[]) o, false);
-      } else if (o == null) {
+      if (o == null) {
          return "null";
+      } else if (o.getClass().isArray()) {
+         // as Java arrays are covariant, this cast is safe unless it's primitive
+         if (o.getClass().getComponentType().isPrimitive()) {
+            if (o instanceof byte[]) {
+               return printArray((byte[]) o, false);
+            } else if (o instanceof int[]) {
+               return Arrays.toString((int[]) o);
+            } else if (o instanceof long[]) {
+               return Arrays.toString((long[]) o);
+            } else if (o instanceof short[]) {
+               return Arrays.toString((short[]) o);
+            } else if (o instanceof double[]) {
+               return Arrays.toString((double[]) o);
+            } else if (o instanceof float[]) {
+               return Arrays.toString((float[]) o);
+            } else if (o instanceof char[]) {
+               return Arrays.toString((char[]) o);
+            } else if (o instanceof boolean[]) {
+               return Arrays.toString((boolean[]) o);
+            }
+         }
+         return Arrays.toString((Object[]) o);
       } else {
          return o.toString();
       }

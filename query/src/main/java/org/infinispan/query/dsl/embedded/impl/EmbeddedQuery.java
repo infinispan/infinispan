@@ -24,7 +24,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
 
    private final QueryEngine queryEngine;
 
-   private JPAFilterAndConverter<?, ?> filter;
+   private IckleFilterAndConverter<?, ?> filter;
 
    EmbeddedQuery(QueryEngine queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
                  String queryString, Map<String, Object> namedParameters, String[] projection,
@@ -39,7 +39,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
       filter = null;
    }
 
-   private JPAFilterAndConverter createFilter() {
+   private IckleFilterAndConverter createFilter() {
       // filter is created first time only
       if (filter == null) {
          filter = queryEngine.createAndWireFilter(queryString, namedParameters);

@@ -28,8 +28,6 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.manager.PersistenceManager;

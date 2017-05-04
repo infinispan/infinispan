@@ -128,7 +128,7 @@ public class DistributedExecutorExecutionPolicyTest extends MultipleCacheManager
          taskBuilder.executionPolicy(policy);
 
          DistributedTask<Boolean> distributedTask = taskBuilder.build();
-         Future<Boolean> future = des.submit(distributedTask, new String[] {"key1", "key6"});
+         Future<Boolean> future = des.submit(distributedTask, "key1", "key6");
 
          assert future.get();
       } finally {

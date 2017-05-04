@@ -100,12 +100,7 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
     public JChannel createChannel(final String id) throws Exception {
         JGroupsLogger.ROOT_LOGGER.debugf("Creating channel %s from stack %s", id, this.configuration.getName());
 
-        PrivilegedExceptionAction<JChannel> action = new PrivilegedExceptionAction<JChannel>() {
-            @Override
-            public JChannel run() throws Exception {
-                return new JChannel(JChannelFactory.this);
-            }
-        };
+        PrivilegedExceptionAction<JChannel> action = () -> new JChannel(JChannelFactory.this);
         final JChannel channel = WildFlySecurityManager.doChecked(action);
         ProtocolStack stack = channel.getProtocolStack();
 
@@ -215,7 +210,7 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
                 props.put("client_password", ""); // HACKY
             }
             Map<String, String> saslProps = props.containsKey("sasl_props")
-                    ? Util.parseCommaDelimitedProps(props.get("sasl_props")) : new HashMap<String, String>();
+                    ? Util.parseCommaDelimitedProps(props.get("sasl_props")) : new HashMap<>();
             sasl.setServerCallbackHandler(new RealmAuthorizationCallbackHandler(securityRealm, mech,
                     clusterRole != null ? clusterRole : id, saslProps));
             props.put("sasl_props", new PropertyConverters.StringProperties().toString(saslProps));
@@ -291,13 +286,7 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
         stack.add(protocol);
 
         final Class<? extends TP> transportClass = introspector.getProtocolClass().asSubclass(TP.class);
-        PrivilegedExceptionAction<TP> action = new PrivilegedExceptionAction<TP>() {
-            @Override
-            public TP run() throws InstantiationException, IllegalAccessException {
-                return transportClass.newInstance();
-            }
-        };
-
+        PrivilegedExceptionAction<TP> action = transportClass::newInstance;
         try {
             stack.addAll(createProtocols(this.configuration, WildFlySecurityManager.doChecked(action).isMulticastCapable()));
         } catch (PrivilegedActionException e) {
@@ -401,29 +390,26 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
             String name = config.getProtocolName();
             try {
                 this.protocolClass = config.getClassLoader().loadClass(name).asSubclass(Protocol.class);
-                PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-                    @Override
-                    public Void run() {
-                        Class<?> targetClass = Introspector.this.protocolClass;
-                        while (Protocol.class.isAssignableFrom(targetClass)) {
-                            for (Method method: targetClass.getDeclaredMethods()) {
-                                if (method.isAnnotationPresent(Property.class)) {
-                                    String property = method.getAnnotation(Property.class).name();
-                                    if (!property.isEmpty()) {
-                                        Introspector.this.properties.add(property);
-                                    }
+                PrivilegedAction<Void> action = () -> {
+                    Class<?> targetClass = Introspector.this.protocolClass;
+                    while (Protocol.class.isAssignableFrom(targetClass)) {
+                        for (Method method: targetClass.getDeclaredMethods()) {
+                            if (method.isAnnotationPresent(Property.class)) {
+                                String property = method.getAnnotation(Property.class).name();
+                                if (!property.isEmpty()) {
+                                    Introspector.this.properties.add(property);
                                 }
                             }
-                            for (Field field: targetClass.getDeclaredFields()) {
-                                if (field.isAnnotationPresent(Property.class)) {
-                                    String property = field.getAnnotation(Property.class).name();
-                                    Introspector.this.properties.add(!property.isEmpty() ? property : field.getName());
-                                }
-                            }
-                            targetClass = targetClass.getSuperclass();
                         }
-                        return null;
+                        for (Field field: targetClass.getDeclaredFields()) {
+                            if (field.isAnnotationPresent(Property.class)) {
+                                String property = field.getAnnotation(Property.class).name();
+                                Introspector.this.properties.add(!property.isEmpty() ? property : field.getName());
+                            }
+                        }
+                        targetClass = targetClass.getSuperclass();
                     }
+                    return null;
                 };
                 WildFlySecurityManager.doChecked(action);
             } catch (ClassNotFoundException e) {

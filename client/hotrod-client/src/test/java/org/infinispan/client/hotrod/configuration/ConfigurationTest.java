@@ -11,6 +11,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STOR
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_MECHANISM;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SASL_PROPERTIES_PREFIX;
@@ -46,6 +47,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV2;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
@@ -81,6 +83,7 @@ public class ConfigurationTest {
       OPTIONS.put("testOnReturn", c -> c.connectionPool().testOnReturn());
       OPTIONS.put("testWhileIdle", c -> c.connectionPool().testWhileIdle());
       OPTIONS.put(CONNECT_TIMEOUT, Configuration::connectionTimeout);
+      OPTIONS.put(PROTOCOL_VERSION, Configuration::version);
       OPTIONS.put(SO_TIMEOUT, Configuration::socketTimeout);
       OPTIONS.put(TCP_NO_DELAY, Configuration::tcpNoDelay);
       OPTIONS.put(TCP_KEEP_ALIVE, Configuration::tcpKeepAlive);
@@ -114,6 +117,7 @@ public class ConfigurationTest {
       TYPES.put(SSLContext.class, s -> s);
       TYPES.put(MyCallbackHandler.class, c -> c);
       TYPES.put(Subject.class, s -> s);
+      TYPES.put(ProtocolVersion.class, p -> p.toString());
    }
 
    CallbackHandler callbackHandler = new MyCallbackHandler();
@@ -155,6 +159,7 @@ public class ConfigurationTest {
             .minEvictableIdleTime(12000)
             .timeBetweenEvictionRuns(15000)
          .connectionTimeout(100)
+         .version(ProtocolVersion.PROTOCOL_VERSION_13)
          .consistentHashImpl(2, SomeCustomConsistentHashV2.class)
          .socketTimeout(100)
          .tcpNoDelay(false)
@@ -211,6 +216,7 @@ public class ConfigurationTest {
       p.setProperty("testOnReturn", "true");
       p.setProperty("testWhileIdle", "false");
       p.setProperty(CONNECT_TIMEOUT, "100");
+      p.setProperty(PROTOCOL_VERSION, "1.3");
       p.setProperty(SO_TIMEOUT, "100");
       p.setProperty(TCP_NO_DELAY, "false");
       p.setProperty(TCP_KEEP_ALIVE, "true");
@@ -494,6 +500,7 @@ public class ConfigurationTest {
       assertEqualsConfig("1", SASL_PROPERTIES_PREFIX + ".A", configuration);
       assertEqualsConfig("2", SASL_PROPERTIES_PREFIX + ".B", configuration);
       assertEqualsConfig("3", SASL_PROPERTIES_PREFIX + ".C", configuration);
+      assertEqualsConfig(ProtocolVersion.PROTOCOL_VERSION_13, PROTOCOL_VERSION, configuration);
    }
 
    private void validateSSLContextConfiguration(Configuration configuration) {

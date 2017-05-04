@@ -70,7 +70,13 @@ public class NonIndexedQueryStringTest extends QueryStringTest {
       super.testFullTextTermDoesntOccur();
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028527: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed.")
+   @Override
+   public void testFullTextRangeWildcard() throws Exception {
+      super.testFullTextRangeWildcard();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028527: Full-text queries cannot be applied to property 'amount' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed.")
    @Override
    public void testFullTextRange() throws Exception {
       super.testFullTextRange();

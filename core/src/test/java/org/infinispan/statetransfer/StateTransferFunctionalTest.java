@@ -22,7 +22,6 @@ import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
@@ -165,7 +164,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       EmbeddedCacheManager cm2 = createCacheManager(cacheName);
       cache2 = cm2.getCache(cacheName);
-      TestingUtil.waitForRehashToComplete(cache1, cache2);
+      TestingUtil.waitForNoRebalance(cache1, cache2);
       verifyInitialData(cache2);
 
       logTestEnd(m);
@@ -181,7 +180,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       EmbeddedCacheManager cm2 = createCacheManager(cacheName);
       cache2 = cm2.getCache(cacheName);
-      TestingUtil.waitForRehashToComplete(cache1, cache2);
+      TestingUtil.waitForNoRebalance(cache1, cache2);
       verifyInitialData(cache2);
 
       cacheManager1.defineConfiguration("otherCache", configurationBuilder.build());
@@ -201,7 +200,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       cache1.put("delay", new DelayTransfer());
 
-      TestingUtil.waitForRehashToComplete(cache1, cache2);
+      TestingUtil.waitForNoRebalance(cache1, cache2);
       verifyInitialData(cache2);
 
       EmbeddedCacheManager cm3 = createCacheManager(cacheName);
@@ -216,8 +215,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       cache3 = cm3.getCache(cacheName);
       cache4 = cm4.getCache(cacheName);
 
-      TestingUtil.waitForRehashToComplete(cache1, cache2, cache3, cache4);
-      TestingUtil.waitForRehashToComplete(cache1, cache2, cache3, cache4);
+      TestingUtil.waitForNoRebalance(cache1, cache2, cache3, cache4);
+      TestingUtil.waitForNoRebalance(cache1, cache2, cache3, cache4);
 
       verifyInitialData(cache3);
       verifyInitialData(cache4);
@@ -240,7 +239,6 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testSTWithWritingNonTxThread(Method m) throws Exception {
-      TestResourceTracker.testThreadStarted(this);
       testCount++;
       logTestStart(m);
       writingThreadTest(false);
@@ -248,7 +246,6 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testSTWithWritingTxThread(Method m) throws Exception {
-      TestResourceTracker.testThreadStarted(this);
       testCount++;
       logTestStart(m);
       writingThreadTest(true);
@@ -264,7 +261,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       EmbeddedCacheManager cm2 = createCacheManager(cacheName);
       cache2 = cm2.getCache(cacheName);
-      TestingUtil.waitForRehashToComplete(cache1, cache2);
+      TestingUtil.waitForNoRebalance(cache1, cache2);
       verifyInitialData(cache2);
 
       cache2.stop();
@@ -305,7 +302,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm2 = createCacheManager(cacheName);
       cache2 = cm2.getCache(cacheName);
 
-      TestingUtil.waitForRehashToComplete(cache1, cache2, cache3);
+      TestingUtil.waitForNoRebalance(cache1, cache2, cache3);
 
       writingTask.stop();
       int count = future.get(60, SECONDS);
@@ -350,7 +347,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       EmbeddedCacheManager cm2 = createCacheManager(cacheName);
       cache2 = cm2.getCache(cacheName);
-      TestingUtil.waitForRehashToComplete(cache1, cache2);
+      TestingUtil.waitForNoRebalance(cache1, cache2);
 
       writingTask.stop();
       int count = future.get(60, SECONDS);

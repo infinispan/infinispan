@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "stress", testName = "stress.DistTotalOrderL1WriteSkewStressTest")
+@Test(groups = "stress", testName = "stress.DistTotalOrderL1WriteSkewStressTest", timeOut = 15*60*1000)
 public class DistTotalOrderL1WriteSkewStressTest extends DistL1WriteSkewStressTest {
 
    @Override

@@ -33,9 +33,7 @@ public class RealmAuthorizationCallbackHandler implements CallbackHandler {
     private final SecurityRealm realm;
     private final String clusterRole;
 
-    static final Collection<Principal> EMPTY_PRINCIPALS = Collections.emptySet();
     static final String SASL_OPT_REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
-    static final String SASL_OPT_ALT_PROTO_PROPERTY = "org.jboss.sasl.digest.alternative_protocols";
     static final String SASL_OPT_PRE_DIGESTED_PROPERTY = "org.jboss.sasl.digest.pre_digested";
 
     static final String DIGEST_MD5 = "DIGEST-MD5";
@@ -111,7 +109,7 @@ public class RealmAuthorizationCallbackHandler implements CallbackHandler {
                 acb.setAuthorized(authenticationId.equals(authorizationId));
                 int realmSep = authorizationId.indexOf('@');
                 RealmUser realmUser = realmSep < 0 ? new RealmUser(authorizationId) : new RealmUser(authorizationId.substring(realmSep+1), authorizationId.substring(0, realmSep));
-                List<Principal> principals = new ArrayList<Principal>();
+                List<Principal> principals = new ArrayList<>();
                 principals.add(realmUser);
                 createSubjectUserInfo(principals);
             } else {

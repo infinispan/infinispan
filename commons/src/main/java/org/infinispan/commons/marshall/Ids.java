@@ -175,6 +175,4 @@ public interface Ids {
    int VERSIONED_RESULT = 115;
    int VERSIONED_RESULTS = 116;
    int FUNCTIONAL_ENTRY_VERSION_ADAPTER = 117;
-
-   int WRITE_RESPONSE = 118;
 }

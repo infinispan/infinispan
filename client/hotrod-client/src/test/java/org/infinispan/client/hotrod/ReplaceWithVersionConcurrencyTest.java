@@ -20,7 +20,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "stress", testName = "client.hotrod.ReplaceWithVersionConcurrencyTest")
+@Test(groups = "stress", testName = "client.hotrod.ReplaceWithVersionConcurrencyTest", timeOut = 15*60*1000)
 public class ReplaceWithVersionConcurrencyTest extends MultiHotRodServersTest {
 
    static final AtomicInteger globalCounter = new AtomicInteger();

@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.impl.TypedProperties;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
+import org.infinispan.client.hotrod.security.VoidCallbackHandler;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.Util;
@@ -171,13 +172,16 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
 
    @Override
    public AuthenticationConfiguration create() {
+      String mech = saslMechanism == null ? "DIGEST-MD5" : saslMechanism;
       CallbackHandler cbh;
       if (username != null) {
          cbh = new BasicCallbackHandler(username, realm, password);
+      } else if ("EXTERNAL".equals(mech) && callbackHandler == null) {
+         cbh = new VoidCallbackHandler();
       } else {
          cbh = callbackHandler;
       }
-      return new AuthenticationConfiguration(cbh, clientSubject, enabled, saslMechanism, saslProperties, serverName);
+      return new AuthenticationConfiguration(cbh, clientSubject, enabled, mech, saslProperties, serverName);
    }
 
    @Override
@@ -194,7 +198,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    @Override
    public void validate() {
       if (enabled) {
-         if (callbackHandler == null && clientSubject == null && username == null) {
+         if (callbackHandler == null && clientSubject == null && username == null && !"EXTERNAL".equals(saslMechanism)) {
             throw log.invalidCallbackHandler();
          }
          if (callbackHandler != null && username != null) {

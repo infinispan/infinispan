@@ -40,7 +40,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
-@Test(groups = "stress", testName = "client.hotrod.event.ClusterClientEventStressTest")
+@Test(groups = "stress", testName = "client.hotrod.event.ClusterClientEventStressTest", timeOut = 15*60*1000)
 public class ClusterClientEventStressTest extends MultiHotRodServersTest {
 
    private static final Log log = LogFactory.getLog(ClusterClientEventStressTest.class);

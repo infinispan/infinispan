@@ -20,7 +20,7 @@ import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETreeMaker;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
 
@@ -61,7 +61,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
                     MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
-                    FilterParsingResult<TypeMetadata> parsingResult,
+                    IckleParsingResult<TypeMetadata> parsingResult,
                     FieldAccumulator[] acc) {
       super(parsingResult, null);
       this.projection = parsingResult.getProjections();

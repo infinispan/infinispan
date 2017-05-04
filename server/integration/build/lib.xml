@@ -121,7 +121,7 @@
         </sequential>
     </macrodef>
     
-    <scriptdef name="define-module-dir" language="javascript">
+    <scriptdef name="define-module-dir" language="groovy">
         <attribute name="name"/>
         <attribute name="slot"/>
         <![CDATA[
@@ -138,7 +138,7 @@
         ]]>
     </scriptdef>
 
-    <scriptdef name="define-bundle-dir" language="javascript">
+    <scriptdef name="define-bundle-dir" language="groovy">
         <attribute name="name"/>
         <attribute name="slot"/>
         <![CDATA[
@@ -216,7 +216,7 @@
         </sequential>
     </macrodef>
 
-    <scriptdef name="define-resource-root" language="javascript">
+    <scriptdef name="define-resource-root" language="groovy">
         <attribute name="path"/>
         <attribute name="jandex"/>
         <![CDATA[

@@ -136,8 +136,7 @@ link:{javadocroot}/org/infinispan/tree/TreeCache.html[TreeCache] should be consi
 
 ==== Which JVMs (JDKs) does Infinispan work with?
 Infinispan is developed and primarily tested against Oracle Java SE 8.
-It should work with most Java SE 9 implementations, including those from IBM, HP, Apple, Oracle, and OpenJDK.
-We also build/test against JDK 9.
+It should work with most Java SE 8 implementations, including those from IBM, HP, Apple, Oracle, and OpenJDK.
 
 ==== Does Infinispan store data by value or by reference?
 
@@ -383,6 +382,29 @@ link:https://github.com/infinispan/infinispan/blob/master/core/src/test/resource
 as base for any Infinispan related logging, and you can pass it to your system via system parameter (e.g.,
 `-Dlog4j.configurationFile=file:/path/to/log4j2.xml`).
 
+==== Slf4j Multiple Bindings Warning
+If you are using an SLF4J implementation for logging, then it is possible you will receive a `Class path contains multiple SLF4J bindings`
+warning at runtime. This is caused by the `infinispan-cachestore-jdbc` jar's dependency on `org.jboss.slf4j:slf4j-jboss-logging`.
+To avoid this warning you must utilise the fine grained jars, e.g `infinispan-core` and `infinispan-cachestore-jdbc` and
+explicitly exclude `slf4j-jboss-logging` as shown below:
+
+....
+<dependency>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-cachestore-jdbc</artifactId>
+    <version>9.0.0.Final</version>
+    <exclusions>
+        <exclusion>
+            <groupId>org.jboss.slf4j</groupId>
+            <artifactId>slf4j-jboss-logging</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+....
+
+NOTE: It is not possible to avoid such warnings when using the `infinispan-embedded` uber jar with SLF4J, instead you should
+declare individual dependencies on the required Infinispan jars.
+
 === Third Party Container questions
 
 ==== Can I use Infinispan on Google App Engine for Java?
@@ -616,4 +638,30 @@ version=281483566645249}]
 
 ==== How do I retrieve the clustering physical address?
 You can retrieve the physical address via link:{javadocroot}/org/infinispan/remoting/transport/Transport.html#getPhysicalAddresses[`AdvancedCache.getRpcManager().getTransport().getPhysicalAddresses()`]
+
+=== Security questions
+
+==== Using Kerberos with the IBM JDK
+
+When using Kerberos/GSSAPI authentication over Hot Rod, the IBM JDK implementation sometimes fail to authenticate with the following exception:
+
+----
+com.ibm.security.krb5.KrbException, status code: 101
+    message: Invalid option in ticket request
+    at com.ibm.security.krb5.KrbTgsReq.<init>(KrbTgsReq.java:62)
+    at com.ibm.security.krb5.KrbTgsReq.<init>(KrbTgsReq.java:145)
+    at com.ibm.security.krb5.internal.k.b(k.java:179)
+    at com.ibm.security.krb5.internal.k.a(k.java:215)
+----
+
+A possible workaround is to perform a login/logout/login on the LoginContext, before using the Subject:
+
+----
+LoginContext lc = ...;
+lc.login();
+lc.logout();
+lc = ...;
+lc.login();
+lc.getSubject();
+----
 

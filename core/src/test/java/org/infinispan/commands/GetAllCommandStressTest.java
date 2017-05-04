@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 7.2
  */
-@Test(groups = "stress", testName = "commands.GetAllCommandStressTest")
+@Test(groups = "stress", testName = "commands.GetAllCommandStressTest", timeOut = 15*60*1000)
 @InCacheMode({ CacheMode.DIST_SYNC })
 public class GetAllCommandStressTest extends StressTest {
    protected final String CACHE_NAME = getClass().getName();

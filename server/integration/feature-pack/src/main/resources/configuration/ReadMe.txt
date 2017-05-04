@@ -36,17 +36,18 @@ to look up the socket bindings brought in from the subsystems we are interested 
 2.0 The subsystem.xml files
 -----------------------
 This simply lists the file paths for each subsystem snippet file you want in your configuration. The paths are
-relative to the src/main/resources folder. For standalone configurations there will be only one (unnamed) list 
+relative to the src/main/resources/subsystem-templates folders in appropriate subsystem.
+For standalone configurations there will be only one (unnamed) list
 of subsystems, for domain configurations there needs to be a named list of subsystem per profile in the template. 
 
 Most subsystems are the same no matter where they are used, so they are just included in the basic form, e.g:
 
-   <subsystem>configuration/subsystems/ee.xml</subsystem>
+   <subsystem>ee.xml</subsystem>
 
 Some subsystems have different flavours depending on for example if they are run in ha or not, which is set up in the
 corresponding snippet file, you can choose these by passing in the 'substitution' parameter, e.g.:
 
-   <subsystem supplement="ha">configuration/subsystems/infinispan.xml</subsystem>
+   <subsystem supplement="ha">infinispan.xml</subsystem>
    
 3.0 The subsystem snippet files
 ---------------------------

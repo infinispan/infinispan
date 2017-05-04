@@ -233,7 +233,6 @@ include::persistence_cluster.adoc[]
 include::persistence_cli.adoc[]
 include::persistence_rocksdb.adoc[]
 include::persistence_leveldb.adoc[]
-include::persistence_rest.adoc[]
 include::persistence_jpa.adoc[]
 
 include::persistence_custom.adoc[]

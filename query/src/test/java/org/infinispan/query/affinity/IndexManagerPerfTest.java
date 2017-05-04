@@ -61,7 +61,7 @@ import org.testng.annotations.Test;
  *
  * @since 9.0
  */
-@Test(groups = "stress", testName = "query.IndexManagerPerfTest")
+@Test(groups = "stress", testName = "query.IndexManagerPerfTest", timeOut = 15*60*1000)
 public class IndexManagerPerfTest extends BaseAffinityTest {
 
    private final AtomicInteger globalCounter = new AtomicInteger(0);

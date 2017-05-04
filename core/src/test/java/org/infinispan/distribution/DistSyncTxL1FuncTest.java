@@ -177,11 +177,11 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       addBlockingInterceptorBeforeTx(nonOwnerCache, barrier, ReplaceCommand.class, false);
       try {
          // The replace will internally block the get until it gets the remote value
-         Future<Boolean> futureReplace = nonOwnerCache.replaceAsync(key, firstValue, secondValue);
+         Future<Boolean> futureReplace = fork(() -> nonOwnerCache.replace(key, firstValue, secondValue));
 
          barrier.await(5, TimeUnit.SECONDS);
 
-         Future<String> futureGet = nonOwnerCache.getAsync(key);
+         Future<String> futureGet = fork(() -> nonOwnerCache.get(key));
          Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
 
          // Let the replace now finish
@@ -216,11 +216,11 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, mockManager, true);
       try {
          // The replace will internally block the get until it gets the remote value
-         Future<Boolean> futureReplace = nonOwnerCache.replaceAsync(key, firstValue, secondValue);
+         Future<Boolean> futureReplace = fork(() -> nonOwnerCache.replace(key, firstValue, secondValue));
 
          barrier.await(5, TimeUnit.SECONDS);
 
-         Future<String> futureGet = nonOwnerCache.getAsync(key);
+         Future<String> futureGet = fork(() -> nonOwnerCache.get(key));
 
          Exceptions.expectException(TimeoutException.class, () -> futureGet.get(100, TimeUnit.MILLISECONDS));
 
@@ -257,11 +257,11 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       addBlockingInterceptorBeforeTx(nonOwnerCache, barrier, PutKeyValueCommand.class, true);
       try {
          // The replace will internally block the get until it gets the remote value
-         Future<String> futureReplace = nonOwnerCache.putAsync(key, secondValue);
+         Future<String> futureReplace = fork(() -> nonOwnerCache.put(key, secondValue));
 
          barrier.await(5, TimeUnit.SECONDS);
 
-         Future<String> futureGet = nonOwnerCache.getAsync(key);
+         Future<String> futureGet = fork(() -> nonOwnerCache.get(key));
 
          // If this errors here it means the get was blocked by the write operation even though it already retrieved
          // the remoteValue and should have unblocked any other waiters
@@ -305,7 +305,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
                              false);
 
       try {
-         Future<String> future = ownerCache.putAsync(key, secondValue);
+         Future<String> future = fork(() -> ownerCache.put(key, secondValue));
 
          // Wait until owner has tried to replicate to backup owner
          backupPutBarrier.await(10, TimeUnit.SECONDS);

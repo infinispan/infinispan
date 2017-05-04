@@ -25,9 +25,14 @@ public interface Stats {
     * not attempt to communicate with other nodes to find out about the data
     * stored in other nodes in the cluster that is not available locally.
     *
-    * @return Number of entries currently in the cache.
+    * @return Number of entries currently in the cache, including passivated entries.
     */
    int getCurrentNumberOfEntries();
+
+   /**
+    * The same as {@link #getCurrentNumberOfEntries()}, however passivated entries are not included.
+    */
+   int getCurrentNumberOfEntriesInMemory();
 
    /**
     * Number of entries stored in cache since the cache started running.

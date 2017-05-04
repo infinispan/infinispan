@@ -11,7 +11,7 @@
 
    <groupId>org.infinispan.server</groupId>
    <artifactId>infinispan-server-versions</artifactId>
-   <version>9.0.0-SNAPSHOT</version>
+   <version>9.1.0-SNAPSHOT</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Server - BOM</name>
@@ -23,6 +23,14 @@
       <maven.compiler.target>1.8</maven.compiler.target>
       <maven.compiler.source>1.8</maven.compiler.source>
       <server.output.dir.prefix>infinispan-server</server.output.dir.prefix>
+      <forkJvmArgs></forkJvmArgs>
+      <jigsawForkJvmArgs></jigsawForkJvmArgs>
+
+      <!-- Override plugin versions defined in the JBoss parent POM to work with JDK9-->
+      <version.source.plugin>3.0.0</version.source.plugin>
+      <version.compiler.plugin>3.6.1</version.compiler.plugin>
+      <version.jar.plugin>3.0.2</version.jar.plugin>
+      <version.assembly.plugin>3.0.0</version.assembly.plugin>
 
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.apache.ds>2.0.0-M16</version.apache.ds>
@@ -37,29 +45,33 @@
       <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
       <version.junit>4.11</version.junit>
       <version.org.infinispan>${project.version}</version.org.infinispan>
-      <version.org.infinispan.infinispan-management-console>9.0.0.CR4</version.org.infinispan.infinispan-management-console>
-      <version.org.infinispan.arquillian.container>1.2.0.Beta1</version.org.infinispan.arquillian.container>
+      <version.org.infinispan.infinispan-management-console>9.0.0.Final</version.org.infinispan.infinispan-management-console>
+      <version.org.infinispan.arquillian.container>1.2.0.Beta2</version.org.infinispan.arquillian.container>
+      <version.org.infinispan.server-build.old>8.2.6.Final</version.org.infinispan.server-build.old>
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.apache.logging.log4j>2.3</version.org.apache.logging.log4j>
 
+      <!-- WildFly dependencies -->
       <version.org.wildfly>10.1.0.Final</version.org.wildfly>
       <version.org.wildfly.core>2.2.0.Final</version.org.wildfly.core>
       <version.org.wildfly.arquillian>1.1.0.Beta1</version.org.wildfly.arquillian>
       <version.remoting.jmx.wildfly>2.0.1.Final</version.remoting.jmx.wildfly>
       <version.org.wildfly.build-tools>1.1.6.Final</version.org.wildfly.build-tools>
+      <!-- JavaEE Spec dependencies -->
       <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.0.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
+      <!-- Infinispan Server dependencies -->
       <version.org.wildfly.extras.creaper>1.1.0</version.org.wildfly.extras.creaper>
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
-      <version.org.infinispan.protostream>4.0.0.Alpha9</version.org.infinispan.protostream>
+      <version.org.infinispan.protostream>4.0.0.Final</version.org.infinispan.protostream>
       <version.http.core>4.4</version.http.core>
       <version.http.client>4.5</version.http.client>
       <version.org.picketbox>4.0.17.SP2</version.org.picketbox>
       <version.xpp3>1.1.4c</version.xpp3>
-      <version.pax.url>1.3.7</version.pax.url>
-      <version.karaf>2.3.4</version.karaf>
-      <version.pax.exam>4.1.0</version.pax.exam>
+      <version.pax.url>2.5.2</version.pax.url>
+      <version.karaf>4.1.1</version.karaf>
+      <version.pax.exam>4.10.0</version.pax.exam>
       <version.h2.database>1.3.173</version.h2.database>
       <version.resteasy>3.1.0.Final</version.resteasy>
       <version.lucene>5.5.4</version.lucene>
@@ -80,6 +92,7 @@
             <scope>import</scope>
          </dependency>
 
+         <!-- Core Modules -->
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-parent</artifactId>
@@ -101,7 +114,7 @@
             <type>zip</type>
             <version>${version.org.wildfly}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-security</artifactId>
@@ -632,6 +645,14 @@
          </dependency>
 
          <dependency>
+            <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-build</artifactId>
+            <type>zip</type>
+            <version>${version.org.infinispan.server-build.old}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
             <version>${version.apache.ds}</version>
@@ -752,6 +773,7 @@
                <artifactId>maven-surefire-plugin</artifactId>
                <configuration>
                   <trimStackTrace>false</trimStackTrace>
+                  <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                </configuration>
             </plugin>
          </plugins>
@@ -803,6 +825,77 @@
          <properties>
             <skipTests>true</skipTests>
          </properties>
+      </profile>
+
+      <profile>
+         <id>customForkJvmArgs</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+            <property>
+               <name>env.MAVEN_FORK_OPTS</name>
+            </property>
+         </activation>
+         <properties>
+            <forkJvmArgs>${env.MAVEN_FORK_OPTS}</forkJvmArgs>
+         </properties>
+      </profile>
+      <profile>
+         <id>jigsaw</id>
+         <activation>
+            <jdk>[9,)</jdk>
+         </activation>
+         <properties>
+            <!--
+              java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
+                core externalizers for JDK types
+              java.nio, jdk.internal.ref: Netty, server/hotrod
+              com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
+              java.text, java.awt.font: XStream, server/rest
+              java.security: Wildfly, server/integration/*
+            -->
+            <jigsawForkJvmArgs>
+               -Dsun.reflect.debugModuleAccessChecks=true
+               --add-opens=java.base/java.lang=ALL-UNNAMED
+               --add-opens=java.base/java.util=ALL-UNNAMED
+               --add-opens=java.base/java.io=ALL-UNNAMED
+               --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+               --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+               --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+               --add-opens=java.base/java.time=ALL-UNNAMED
+               --add-opens=java.base/java.nio=ALL-UNNAMED
+               --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
+               --add-modules=java.xml.bind
+               --add-opens=java.security.sasl/com.sun.security.sasl=ALL-UNNAMED
+               --add-opens=java.base/java.text=ALL-UNNAMED
+               --add-opens=java.desktop/java.awt.font=ALL-UNNAMED
+               --add-opens=java.base/java.security=ALL-UNNAMED
+               --add-exports=jdk.security.jgss/com.sun.security.sasl.gsskerb=ALL-UNNAMED
+               --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+               --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+               --add-exports=java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED
+               --add-exports=java.security.sasl/com.sun.security.sasl.ntlm=ALL-UNNAMED
+               --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED
+               --add-opens=java.management/javax.management=ALL-UNNAMED
+            </jigsawForkJvmArgs>
+         </properties>
+         <build>
+            <pluginManagement>
+               <plugins>
+                  <plugin>
+                     <groupId>org.apache.maven.plugins</groupId>
+                     <artifactId>maven-compiler-plugin</artifactId>
+                     <configuration>
+                        <!-- fork is needed so compiler args can be used -->
+                        <fork>true</fork>
+                        <compilerArgs>
+                           <arg>-J--add-modules</arg>
+                           <arg>-Jjava.xml.ws.annotation</arg>
+                        </compilerArgs>
+                     </configuration>
+                  </plugin>
+               </plugins>
+            </pluginManagement>
+         </build>
       </profile>
    </profiles>
 

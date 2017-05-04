@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "stress", testName = "stress.ReplWriteSkewStressTest")
+@Test(groups = "stress", testName = "stress.ReplWriteSkewStressTest", timeOut = 15*60*1000)
 public class ReplWriteSkewStressTest extends AbstractWriteSkewStressTest {
 
    @Override

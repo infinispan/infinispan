@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan.server</groupId>
         <artifactId>infinispan-server-versions</artifactId>
-        <version>9.0.0-SNAPSHOT</version>
+        <version>9.1.0-SNAPSHOT</version>
         <relativePath>../versions/pom.xml</relativePath>
     </parent>
 
@@ -132,6 +132,12 @@
           <type>pom</type>
           <scope>test</scope>
        </dependency>
+        <dependency>
+            <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-build</artifactId>
+            <type>zip</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
@@ -266,6 +272,12 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-jcache-remote</artifactId>
         </dependency>
+       <dependency>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>org.apache.felix.gogo.runtime</artifactId>
+          <version>0.12.1</version>
+          <scope>test</scope>
+       </dependency>
     </dependencies>
 
     <properties>
@@ -295,21 +307,19 @@
         <server2.old.dist>${basedir}/target/server/node2_old</server2.old.dist>
         <server3.old.dist>${basedir}/target/server/node3_old</server3.old.dist>
 
-        <old.server.schema.version>6.1</old.server.schema.version>
-        <new.server.schema.version>7.0</new.server.schema.version>
+        <old.server.schema.version>8.0</old.server.schema.version>
+        <new.server.schema.version>9.0</new.server.schema.version>
 
         <start.jboss.as.manually>false</start.jboss.as.manually>
 
         <server.jvm>${env.JAVA_HOME}</server.jvm>
-        <resources.dir>${basedir}/src/test/resources</resources.dir>
+        <resources.dir>${project.build.testOutputDirectory}</resources.dir>
 
         <jvm.memory.args>-Xmx512m</jvm.memory.args>
         <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
 
-
-        <hotrod.protocol.version />
 
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <node0.ip>127.0.0.1</node0.ip>
@@ -323,12 +333,10 @@
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false
             -Djboss.default.multicast.address=${mcast.ip}
         </jvm.ip.stack>
-        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args} ${jigsawForkJvmArgs}</server.jvm.args>
         <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
         <suite.manual.phase>integration-test</suite.manual.phase>
         <suite.queries.phase>integration-test</suite.queries.phase>
-        <suite.rollups.manual.phase>none</suite.rollups.manual.phase>
-        <suite.rollups.manual.dist.phase>none</suite.rollups.manual.dist.phase>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
         <suite.client.repl.config>testsuite/clustered-default-repl.xml</suite.client.repl.config>
@@ -343,7 +351,7 @@
 
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
-            org.infinispan.server.test.category.ClientSingleNode,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.RollingUpgradesDist,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
+            org.infinispan.server.test.category.ClientSingleNode,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
             org.infinispan.server.test.category.Queries
         </suite.manual.exclude.groups>
         <suite.client.arq.domain>suite-client-domain</suite.client.arq.domain>
@@ -371,6 +379,20 @@
             org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.UnstableClientLocal,
             org.infinispan.server.test.category.UnstableClientClustered,org.infinispan.server.test.category.UnstableQueries
         </groups.unstable>
+
+        <!-- KeyStore properties -->
+        <ca.dname>CN=CA,OU=Infinispan,O=JBoss,L=Red Hat</ca.dname>
+        <ca.alias>infinispan-ca</ca.alias>
+        <ca.keystore>${project.build.testOutputDirectory}/ca.jks</ca.keystore>
+        <server.dname>CN=HotRod,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW</server.dname>
+        <server.alias>hotrod</server.alias>
+        <server.keystore>${project.build.testOutputDirectory}/keystore_server.jks</server.keystore>
+        <client1.dname>CN=Client1,OU=Infinispan,O=JBoss,L=Red Hat</client1.dname>
+        <client1.alias>client1</client1.alias>
+        <client2.dname>CN=Client2,OU=Infinispan,O=JBoss,L=Red Hat</client2.dname>
+        <client2.alias>client2</client2.alias>
+        <client.keystore>${project.build.testOutputDirectory}/keystore_client.jks</client.keystore>
+        <cluster.keystore>${project.build.testOutputDirectory}/cluster.jks</cluster.keystore>
     </properties>
 
     <build>
@@ -397,6 +419,220 @@
             </testResource>
         </testResources>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>keytool-maven-plugin</artifactId>
+                <version>1.5</version>
+                <!-- Vaults -->
+                <executions>
+                    <execution>
+                        <id>ispn-vault</id>
+                        <goals>
+                            <goal>generateSecretKey</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>ispn-vault</alias>
+                            <storetype>JCEKS</storetype>
+                            <keystore>${project.build.testOutputDirectory}/vault/vault.keystore</keystore>
+                            <keyalg>AES</keyalg>
+                            <keysize>128</keysize>
+                        </configuration>
+                    </execution>
+                    <!-- CA -->
+                    <execution>
+                        <id>ca</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${ca.alias}</alias>
+                            <dname>${ca.dname}</dname>
+                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
+                            <ext>bc:c</ext>
+                        </configuration>
+                    </execution>
+                    <!-- Server -->
+                    <execution>
+                        <id>server</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${server.alias}</alias>
+                            <dname>${server.dname}</dname>
+                            <keystore>${server.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-certreq</id>
+                        <goals>
+                            <goal>generateCertificateRequest</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${server.alias}</alias>
+                            <dname>${server.dname}</dname>
+                            <file>${project.build.testOutputDirectory}/server.csr</file>
+                            <keystore>${server.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-gencert</id>
+                        <goals>
+                            <goal>generateCertificate</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${ca.alias}</alias>
+                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
+                            <infile>${project.build.testOutputDirectory}/server.csr</infile>
+                            <outfile>${project.build.testOutputDirectory}/server.cer</outfile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-import-ca</id>
+                        <goals>
+                            <goal>importKeystore</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <srcalias>${ca.alias}</srcalias>
+                            <srckeystore>${project.build.testOutputDirectory}/ca.jks</srckeystore>
+                            <destkeystore>${server.keystore}</destkeystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-signed-import</id>
+                        <goals>
+                            <goal>importCertificate</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${server.alias}</alias>
+                            <file>${project.build.testOutputDirectory}/server.cer</file>
+                            <keystore>${server.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server-no-ca</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${server.alias}</alias>
+                            <dname>${server.dname}</dname>
+                            <keystore>${project.build.testOutputDirectory}/keystore_server_no_ca.jks</keystore>
+                        </configuration>
+                    </execution>
+                    <!-- Client -->
+                    <execution>
+                        <id>client-import-ca</id>
+                        <goals>
+                            <goal>importKeystore</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <srcalias>${ca.alias}</srcalias>
+                            <srckeystore>${project.build.testOutputDirectory}/ca.jks</srckeystore>
+                            <destkeystore>${client.keystore}</destkeystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client1</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${client1.alias}</alias>
+                            <dname>${client1.dname}</dname>
+                            <keystore>${client.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client1-certreq</id>
+                        <goals>
+                            <goal>generateCertificateRequest</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${client1.alias}</alias>
+                            <dname>${client1.dname}</dname>
+                            <file>${project.build.testOutputDirectory}/client1.csr</file>
+                            <keystore>${client.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client1-gencert</id>
+                        <goals>
+                            <goal>generateCertificate</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${ca.alias}</alias>
+                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
+                            <infile>${project.build.testOutputDirectory}/client1.csr</infile>
+                            <outfile>${project.build.testOutputDirectory}/client1.cer</outfile>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client1-signed-import</id>
+                        <goals>
+                            <goal>importCertificate</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${client1.alias}</alias>
+                            <file>${project.build.testOutputDirectory}/client1.cer</file>
+                            <keystore>${client.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <!-- A client certificate which is NOT signed by the CA -->
+                    <execution>
+                        <id>client2</id>
+                        <goals>
+                            <goal>generateKeyPair</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>${client2.alias}</alias>
+                            <dname>${client2.dname}</dname>
+                            <keystore>${client.keystore}</keystore>
+                        </configuration>
+                    </execution>
+                    <!-- Cluster key for JGroups encryption -->
+                    <execution>
+                        <id>cluster</id>
+                        <goals>
+                            <goal>generateSecretKey</goal>
+                        </goals>
+                        <phase>generate-test-resources</phase>
+                        <configuration>
+                            <alias>cluster</alias>
+                            <keystore>${cluster.keystore}</keystore>
+                            <keyalg>DESEDE</keyalg>
+                            <keysize>168</keysize>
+                            <storetype>JCEKS</storetype>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <keyalg>RSA</keyalg>
+                    <keysize>2048</keysize>
+                    <noprompt>true</noprompt>
+                    <storepass>secret</storepass>
+                    <keypass>secret</keypass>
+                    <srcstorepass>secret</srcstorepass>
+                    <deststorepass>secret</deststorepass>
+                    <trustcacerts>true</trustcacerts>
+                    <validity>365</validity>
+                    <verbose>true</verbose>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -461,7 +697,7 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
-                        <phase>generate-resources</phase>
+                        <phase>process-test-resources</phase>
                         <configuration>
                             <skip>${skipTests}</skip>
                             <target>
@@ -608,7 +844,7 @@
 
                         <server.jmx.domain>jboss.datagrid-infinispan</server.jmx.domain>
                     </systemPropertyVariables>
-
+                    <argLine>${jigsawForkJvmArgs}</argLine>
                     <additionalClasspathElements>
                         <element>${driver.dir}/${driver.jar}</element>
                     </additionalClasspathElements>
@@ -648,36 +884,6 @@
                             <groups>${groups.queries}</groups>
                             <systemPropertyVariables>
                                 <arquillian.launch>queries</arquillian.launch>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>suite-rollups-manual</id>
-                        <phase>${suite.rollups.manual.phase}</phase>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                        <configuration>
-                            <reportNameSuffix>${old.server.schema.version}-to-${new.server.schema.version}</reportNameSuffix>
-                            <groups>org.infinispan.server.test.category.RollingUpgrades</groups>
-                            <excludedGroups>${groups.unstable}</excludedGroups>
-                            <systemPropertyVariables>
-                                <arquillian.launch>suite-rollups-manual</arquillian.launch>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>suite-rollups-manual-dist</id>
-                        <phase>${suite.rollups.manual.dist.phase}</phase>
-                        <goals>
-                            <goal>integration-test</goal>
-                        </goals>
-                        <configuration>
-                            <reportNameSuffix>${old.server.schema.version}-to-${new.server.schema.version}</reportNameSuffix>
-                            <groups>org.infinispan.server.test.category.RollingUpgradesDist</groups>
-                            <excludedGroups>${groups.unstable}</excludedGroups>
-                            <systemPropertyVariables>
-                                <arquillian.launch>suite-rollups-manual-dist</arquillian.launch>
                             </systemPropertyVariables>
                         </configuration>
                     </execution>
@@ -852,7 +1058,7 @@
                                     <pluginExecutionFilter>
                                         <groupId>org.apache.maven.plugins</groupId>
                                         <artifactId>maven-antrun-plugin</artifactId>
-                                        <versionRange>[${version.java},)</versionRange>
+                                        <versionRange>[1.7,)</versionRange>
                                         <goals>
                                             <goal>run</goal>
                                         </goals>
@@ -969,35 +1175,10 @@
             </properties>
         </profile>
         <profile>
-            <id>suite.rolling.upgrades</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.rollups.manual.phase>integration-test</suite.rollups.manual.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-                <start.jboss.as.manually>false</start.jboss.as.manually>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.rolling.upgrades.dist</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.rollups.manual.dist.phase>integration-test</suite.rollups.manual.dist.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-                <start.jboss.as.manually>false</start.jboss.as.manually>
-            </properties>
-        </profile>
-        <profile>
             <id>suite.rolling.upgrades.jbossas</id>
             <properties>
-                <suite.manual.phase>none</suite.manual.phase>
+                <suite.manual.phase>integration-test</suite.manual.phase>
                 <suite.queries.phase>none</suite.queries.phase>
-                <suite.rollups.manual.phase>integration-test</suite.rollups.manual.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
@@ -1017,9 +1198,8 @@
                                 <configuration>
                                     <skip>${skipTests}</skip>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml"
-                                             target="kill-server">
-                                            <property name="hotrod.port" value="11322"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
+                                            <property name="hotrod.port" value="11322" />
                                         </ant>
                                         <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server.old.dist}" />
@@ -1055,9 +1235,8 @@
         <profile>
             <id>suite.rolling.upgrades.dist.jbossas</id>
             <properties>
-                <suite.manual.phase>none</suite.manual.phase>
+                <suite.manual.phase>integration-test</suite.manual.phase>
                 <suite.queries.phase>none</suite.queries.phase>
-                <suite.rollups.manual.dist.phase>integration-test</suite.rollups.manual.dist.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
@@ -1078,7 +1257,7 @@
                                     <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
-                                            <property name="hotrod.port" value="11422"/>
+                                            <property name="hotrod.port" value="11422" />
                                         </ant>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server2.old.dist}" />
@@ -1101,7 +1280,7 @@
                                     <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
-                                            <property name="hotrod.port" value="11522"/>
+                                            <property name="hotrod.port" value="11522" />
                                         </ant>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server3.old.dist}" />
@@ -1188,7 +1367,7 @@
                                     <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
-                                            <property name="hotrod.port" value="11222"/>
+                                            <property name="hotrod.port" value="11222" />
                                         </ant>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server1.dist}" />
@@ -1254,6 +1433,48 @@
                 <groups.client.local>org.infinispan.server.test.category.UnstableClientLocal</groups.client.local>
                 <groups.client.clustered>org.infinispan.server.test.category.UnstableClientClustered</groups.client.clustered>
             </properties>
+        </profile>
+
+        <profile>
+            <id>unpack-old-server</id>
+            <activation>
+                <property>
+                    <name>!zip.dist.old</name>
+                </property>
+            </activation>
+            <properties>
+                <hotrod.protocol.version>2.5</hotrod.protocol.version>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>copy-old-server</id>
+                            <phase>generate-resources</phase>
+                            <configuration>
+                                <skip>${skipTests}</skip>
+                                <outputDirectory>${server.old.dist}-tmp</outputDirectory>
+                                <stripVersion>true</stripVersion>
+                                <artifactItems>
+                                    <artifactItem>
+                                        <groupId>${project.groupId}</groupId>
+                                        <artifactId>infinispan-server-build</artifactId>
+                                        <type>zip</type>
+                                        <overWrite>true</overWrite>
+                                    </artifactItem>
+                                </artifactItems>
+                            </configuration>
+                            <goals>
+                                <goal>unpack</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>

@@ -94,7 +94,7 @@
                <file-store passivation="true" path="dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="namedCache">
-               <expiration lifespan="2000" max-idle="1000" />
+               <expiration lifespan="2000"/>
                <file-store passivation="false" path="nc" purge="true" shared="false">
                   <write-behind modification-queue-size="1024" thread-pool-size="1" />
                </file-store>
@@ -114,7 +114,7 @@
                <rocksdb-store passivation="true" path="rocksdb-dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="namedCache">
-               <expiration lifespan="2000" max-idle="1000" />
+               <expiration lifespan="2000" />
                <rocksdb-store path="rocksdb-nc" block-size="1024" cache-size="50000" clear-threshold="100000">
                   <expiration path="rocksdb-nc-expired" queue-size="2000"/>
                   <compression type="SNAPPY"/>
@@ -183,7 +183,7 @@
                </remote-store>
             </local-cache>
             <local-cache name="namedCache">
-               <expiration lifespan="2000" max-idle="1000" />
+               <expiration lifespan="3000"/>
                <remote-store cache="namedCache" socket-timeout="60000" tcp-no-delay="true" passivation="false">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>

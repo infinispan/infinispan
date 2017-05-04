@@ -1,0 +1,9 @@
+                <security-domain name="krb-node1" cache-type="default">
+                    <authentication>
+                        <login-module code="Kerberos" flag="required">
+                            <module-option name="useKeytab" value="${jboss.server.config.dir}/jgroups_node1_clustered.keytab"/>
+                            <module-option name="principal" value="jgroups/node1/clustered@INFINISPAN.ORG"/>
+                            <module-option name="credsType" value="acceptor" />
+                        </login-module>
+                    </authentication>
+                </security-domain>

@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  *
  * @since 9.0
  */
-@Test(groups = "stress", testName = "query.AffinityTopologyChangeTest")
+@Test(groups = "stress", testName = "query.AffinityTopologyChangeTest", timeOut = 15*60*1000)
 public class AffinityTopologyChangeTest extends BaseAffinityTest {
    private final AtomicInteger globalCounter = new AtomicInteger(0);
    private Node indexing1, indexing2, indexing3, querying;

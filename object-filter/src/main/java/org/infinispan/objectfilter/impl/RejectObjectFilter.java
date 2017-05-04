@@ -3,7 +3,7 @@ package org.infinispan.objectfilter.impl;
 import java.util.Map;
 
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 /**
  * A filter that rejects all inputs. Does not support sorting and projections.
@@ -14,7 +14,7 @@ import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
 final class RejectObjectFilter<TypeMetadata>
       extends ObjectFilterBase<TypeMetadata> implements ObjectFilter {
 
-   RejectObjectFilter(Map<String, Object> namedParameters, FilterParsingResult<TypeMetadata> parsingResult) {
+   RejectObjectFilter(Map<String, Object> namedParameters, IckleParsingResult<TypeMetadata> parsingResult) {
       super(parsingResult, namedParameters);
    }
 

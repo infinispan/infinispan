@@ -246,25 +246,25 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    @Override
-   public void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception {
+   public void handleRebalancePhaseConfirm(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception {
       if (throwable != null) {
          // TODO We could try to update the pending CH such that nodes reporting errors are not considered to hold any state
          // For now we are just logging the error and proceeding as if the rebalance was successful everywhere
-         log.rebalanceError(cacheName, node, throwable);
+         log.rebalanceError(cacheName, node, topologyId, throwable);
       }
 
       CLUSTER.rebalanceCompleted(cacheName, node, topologyId);
-      eventLogManager.getEventLogger().context(cacheName).scope(node.toString()).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceCompleted());
+      eventLogManager.getEventLogger().context(cacheName).scope(node.toString()).info(EventLogCategory.CLUSTER, MESSAGES.rebalancePhaseConfirmed(node, topologyId));
 
 
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
-      if (cacheStatus == null || !cacheStatus.isRebalanceInProgress()) {
+      if (cacheStatus == null) {
          log.debugf("Ignoring rebalance confirmation from %s " +
                "for cache %s because it doesn't have a cache status entry", node, cacheName);
          return;
       }
 
-      cacheStatus.doConfirmRebalance(node, topologyId);
+      cacheStatus.confirmRebalancePhase(node, topologyId);
    }
 
    private static class CacheTopologyFilterReuser implements ResponseFilter {
@@ -433,7 +433,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Override
    public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
       CLUSTER.startRebalance(cacheName, cacheTopology);
-      eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress()).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceStarted());
+      eventLogManager.getEventLogger().context(cacheName).scope(transport.getAddress()).info(EventLogCategory.CLUSTER, MESSAGES.rebalanceStarted(cacheTopology.getTopologyId()));
       ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.REBALANCE_START, transport.getAddress(), cacheTopology, null,
             viewId);

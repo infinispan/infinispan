@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 7.0
  */
-@Test(groups = "stress", testName = "notifications.cachelistener.cluster.ClusterListenerStressTest")
+@Test(groups = "stress", testName = "notifications.cachelistener.cluster.ClusterListenerStressTest", timeOut = 15*60*1000)
 public class ClusterListenerStressTest extends MultipleCacheManagersTest {
    protected final static String CACHE_NAME = "cluster-listener";
    protected final static String KEY = "ClusterListenerStressTestKey";

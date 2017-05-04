@@ -23,9 +23,7 @@ package org.infinispan.server.jgroups.subsystem;
 
 import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationStepHandler;
-import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
@@ -34,11 +32,6 @@ import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.transform.TransformationContext;
-import org.jboss.as.controller.transform.description.AttributeConverter;
-import org.jboss.as.controller.transform.description.DiscardAttributeChecker;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
-import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 /**
@@ -67,54 +60,7 @@ public class RemoteSiteResourceDefinition extends SimpleResourceDefinition {
             .setDeprecated(JGroupsModel.VERSION_3_0_0.getVersion())
             .build();
 
-    @Deprecated
-    static final SimpleAttributeDefinition CLUSTER = new SimpleAttributeDefinitionBuilder(ModelKeys.CLUSTER, ModelType.STRING, true)
-            .setXmlName(Attribute.CLUSTER.getLocalName())
-            .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDeprecated(JGroupsModel.VERSION_3_0_0.getVersion())
-            .build();
-
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { CHANNEL, STACK };
-
-    static void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
-        ResourceTransformationDescriptionBuilder builder = parent.addChildResource(WILDCARD_PATH);
-
-        if (JGroupsModel.VERSION_3_0_0.requiresTransformation(version)) {
-            AttributeConverter converter = new AttributeConverter() {
-                @Override
-                public void convertOperationParameter(PathAddress address, String name, ModelNode value, ModelNode operation, TransformationContext context) {
-                    // Nothing to convert
-                }
-
-                @Override
-                public void convertResourceAttribute(PathAddress address, String name, ModelNode value, TransformationContext context) {
-                    ModelNode remoteSite = context.readResourceFromRoot(address).getModel();
-                    String channelName = remoteSite.get(CHANNEL.getName()).asString();
-                    if (STACK.getName().equals(name)) {
-                        PathAddress subsystemAddress = address.subAddress(0, address.size() - 3);
-                        PathAddress channelAddress = subsystemAddress.append(ChannelResourceDefinition.pathElement(channelName));
-                        ModelNode channel = context.readResourceFromRoot(channelAddress).getModel();
-
-                        if (channel.hasDefined(ChannelResourceDefinition.STACK.getName())) {
-                            value.set(channel.get(ChannelResourceDefinition.STACK.getName()).asString());
-                        } else {
-                            ModelNode subsystem = context.readResourceFromRoot(subsystemAddress).getModel();
-                            value.set(subsystem.get(JGroupsSubsystemResourceDefinition.DEFAULT_STACK.getName()).asString());
-                        }
-                    } else if (CLUSTER.getName().equals(name)) {
-                        value.set(channelName);
-                    } else {
-                        throw new IllegalStateException();
-                    }
-                }
-            };
-            builder.getAttributeBuilder()
-                    .setValueConverter(converter, STACK, CLUSTER)
-                    .setDiscard(DiscardAttributeChecker.ALWAYS, CHANNEL)
-                    .end();
-        }
-    }
 
     RemoteSiteResourceDefinition() {
         super(WILDCARD_PATH, new JGroupsResourceDescriptionResolver(ModelKeys.REMOTE_SITE), new ReloadRequiredAddStepHandler(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);

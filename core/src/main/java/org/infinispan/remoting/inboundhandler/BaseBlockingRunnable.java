@@ -57,6 +57,9 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       } catch (Throwable t) {
          afterCommandException(unwrap(t));
       } finally {
+         if (handler.isStopped()) {
+            response = CacheNotFoundResponse.INSTANCE;
+         }
          reply.reply(response);
          onFinally();
       }
@@ -71,10 +74,16 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
             if (rsp != null) {
                response = rsp;
                afterInvoke();
+               if (handler.isStopped()) {
+                  response = rsp = CacheNotFoundResponse.INSTANCE;
+               }
                reply.reply(rsp);
                onFinally();
             } else if (throwable != null) {
                afterCommandException(unwrap(throwable));
+               if (handler.isStopped()) {
+                  response = CacheNotFoundResponse.INSTANCE;
+               }
                reply.reply(response);
                onFinally();
             } else {
@@ -90,6 +99,9 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
          commandFuture = handler.invokeCommand(command);
       } catch (Throwable t) {
          afterCommandException(unwrap(t));
+         if (handler.isStopped()) {
+            response = CacheNotFoundResponse.INSTANCE;
+         }
          reply.reply(response);
          onFinally();
          return;
@@ -103,6 +115,9 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
                afterCommandException(unwrap(throwable));
             }
          } finally {
+            if (handler.isStopped()) {
+               response = CacheNotFoundResponse.INSTANCE;
+            }
             reply.reply(response);
             onFinally();
          }

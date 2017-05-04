@@ -77,7 +77,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
       TestingUtil.blockUntilViewsReceived(60000, false, caches());
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForNoRebalance(caches());
       log.info("Here is where ST ends");
       List<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager()
                                                      .getWriteConsistentHash().getMembers();
@@ -101,7 +101,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
       TestingUtil.blockUntilViewsReceived(60000, false, caches());
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForNoRebalance(caches());
       List<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager()
                                                      .getWriteConsistentHash().getMembers();
       log.debug("After shutting down " + addresses[2] + " caches are " +  addressList);
@@ -123,7 +123,7 @@ public class TopologyAwareStateTransferTest extends MultipleCacheManagersTest {
       TestingUtil.killCacheManagers(cm);
       cacheManagers.remove(cm);
       TestingUtil.blockUntilViewsReceived(60000, false, caches());
-      TestingUtil.waitForRehashToComplete(caches());
+      TestingUtil.waitForNoRebalance(caches());
       List<Address> addressList = cache(addresses[0]).getAdvancedCache().getDistributionManager()
                                                      .getWriteConsistentHash().getMembers();
       log.debug("After shutting down " + addresses[1] + " caches are " +  addressList);

@@ -70,6 +70,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
@@ -94,7 +95,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final int NO_REBALANCE_IN_PROGRESS = -1;
+   private static final int NO_STATE_TRANSFER_IN_PROGRESS = -1;
    private static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL,
                                                                       IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
                                                                       SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
@@ -102,6 +103,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    private Cache cache;
    private StateTransferManager stateTransferManager;
+   private LocalTopologyManager localTopologyManager;
    private String cacheName;
    private Configuration configuration;
    private RpcManager rpcManager;
@@ -136,7 +138,7 @@ public class StateConsumerImpl implements StateConsumer {
     * isRebalance==true is called.
     * It is changed back to NO_REBALANCE_IN_PROGRESS when a topology update with a null pending CH is received.
     */
-   private final AtomicInteger stateTransferTopologyId = new AtomicInteger(NO_REBALANCE_IN_PROGRESS);
+   private final AtomicInteger stateTransferTopologyId = new AtomicInteger(NO_STATE_TRANSFER_IN_PROGRESS);
 
    /**
     * Indicates if there is a rebalance in progress and there the local node has not yet received
@@ -190,6 +192,7 @@ public class StateConsumerImpl implements StateConsumer {
    public void init(Cache cache,
                     @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService stateTransferExecutor,
                     StateTransferManager stateTransferManager,
+                    LocalTopologyManager localTopologyManager,
                     AsyncInterceptorChain interceptorChain,
                     InvocationContextFactory icf,
                     Configuration configuration,
@@ -212,6 +215,7 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheName = cache.getName();
       this.stateTransferExecutor = stateTransferExecutor;
       this.stateTransferManager = stateTransferManager;
+      this.localTopologyManager = localTopologyManager;
       this.interceptorChain = interceptorChain;
       this.icf = icf;
       this.configuration = configuration;
@@ -247,7 +251,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Override
    public boolean isStateTransferInProgress() {
-      return stateTransferTopologyId.get() != NO_REBALANCE_IN_PROGRESS;
+      return stateTransferTopologyId.get() != NO_STATE_TRANSFER_IN_PROGRESS;
    }
 
    @Override
@@ -293,7 +297,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (startRebalance) {
          // Only update the rebalance topology id when starting the rebalance, as we're going to ignore any state
          // response with a smaller topology id
-         stateTransferTopologyId.compareAndSet(NO_REBALANCE_IN_PROGRESS, cacheTopology.getTopologyId());
+         stateTransferTopologyId.compareAndSet(NO_STATE_TRANSFER_IN_PROGRESS, cacheTopology.getTopologyId());
          cacheNotifier.notifyDataRehashed(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(),
                                           cacheTopology.getUnionCH(), cacheTopology.getTopologyId(), true);
       }
@@ -398,27 +402,25 @@ public class StateConsumerImpl implements StateConsumer {
             }
          }
 
-         int rebalanceTopologyId = stateTransferTopologyId.get();
+         int stateTransferTopologyId = this.stateTransferTopologyId.get();
          if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %d, startRebalance = %s, pending CH = %s",
-               (Object)rebalanceTopologyId, startRebalance, cacheTopology.getPendingCH());
-         if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS) {
-            // there was a rebalance in progress
-            if (!startRebalance && cacheTopology.getPendingCH() == null) {
-               // we have received a topology update without a pending CH, signalling the end of the rebalance
-               boolean changed = stateTransferTopologyId.compareAndSet(rebalanceTopologyId, NO_REBALANCE_IN_PROGRESS);
-               if (changed) {
-                  stopApplyingState();
+               (Object)stateTransferTopologyId, startRebalance, cacheTopology.getPendingCH());
+         if (stateTransferTopologyId != NO_STATE_TRANSFER_IN_PROGRESS && !startRebalance && cacheTopology.getPhase() != CacheTopology.Phase.READ_OLD_WRITE_ALL) {
+            // we have received a topology update that does not start a state transfer, and neither is a members update
+            // due to crashed member during state transfer
+            boolean changed = this.stateTransferTopologyId.compareAndSet(stateTransferTopologyId, NO_STATE_TRANSFER_IN_PROGRESS);
+            if (changed) {
+               stopApplyingState();
 
-                  // if the coordinator changed, we might get two concurrent topology updates,
-                  // but we only want to notify the @DataRehashed listeners once
-                  cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getCurrentCH(), previousWriteCh,
-                        cacheTopology.getTopologyId(), false);
-                  if (trace) {
-                     log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
-                  }
-                  if (isTotalOrder) {
-                     totalOrderManager.notifyStateTransferEnd();
-                  }
+               // if the coordinator changed, we might get two concurrent topology updates,
+               // but we only want to notify the @DataRehashed listeners once
+               cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getPendingCH(), previousWriteCh,
+                     cacheTopology.getTopologyId(), false);
+               if (trace) {
+                  log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
+               }
+               if (isTotalOrder) {
+                  totalOrderManager.notifyStateTransferEnd();
                }
             }
          }
@@ -427,20 +429,33 @@ public class StateConsumerImpl implements StateConsumer {
          remoteCommandsExecutor.checkForReadyTasks();
 
          // Only set the flag here, after all the transfers have been added to the transfersBySource map
-         if (stateTransferTopologyId.get() != NO_REBALANCE_IN_PROGRESS && isMember) {
+         if (stateTransferTopologyId.get() != NO_STATE_TRANSFER_IN_PROGRESS && isMember) {
             waitingForState.set(true);
          }
 
-         notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+         notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
 
          // Remove the transactions whose originators have left the cache.
          // Need to do it now, after we have applied any transactions from other nodes,
          // and after notifyTransactionDataReceived - otherwise the RollbackCommands would block.
-         if (transactionTable != null) {
-            transactionTable.cleanupLeaverTransactions(rpcManager.getTransport().getMembers());
+         try {
+            if (transactionTable != null) {
+               transactionTable.cleanupLeaverTransactions(rpcManager.getTransport().getMembers());
+            }
+         } catch (Exception e) {
+            // Do not fail state transfer when the cleanup fails. See ISPN-7437 for details.
+            log.transactionCleanupError(e);
          }
 
          commandAckCollector.onMembersChange(newWriteCh.getMembers());
+
+         // The rebalance (READ_OLD_WRITE_ALL) is confirmed through notifyEndOfRebalanceIfNeeded
+         // and STABLE does not have to be confirmed at all
+         switch (cacheTopology.getPhase()) {
+            case READ_ALL_WRITE_ALL:
+            case READ_NEW_WRITE_ALL:
+               localTopologyManager.confirmRebalancePhase(cacheName, cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), null);
+         }
 
          // Any data for segments we do not own should be removed from data container and cache store
          // We need to discard data from all segments we don't own, not just those we previously owned,
@@ -449,7 +464,7 @@ public class StateConsumerImpl implements StateConsumer {
          Set<Integer> removedSegments;
          boolean wasMember =
                previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
-         if (isMember || wasMember) {
+         if ((isMember || wasMember) && cacheTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
             removedSegments = new HashSet<>(newWriteCh.getNumSegments());
             for (int i = 0; i < newWriteCh.getNumSegments(); i++) {
                removedSegments.add(i);
@@ -490,12 +505,12 @@ public class StateConsumerImpl implements StateConsumer {
 
    }
 
-   private void notifyEndOfRebalanceIfNeeded(int topologyId, int rebalanceId) {
+   private void notifyEndOfStateTransferIfNeeded(int topologyId, int rebalanceId) {
       if (waitingForState.get() && !hasActiveTransfers()) {
          if (waitingForState.compareAndSet(true, false)) {
             log.debugf("Finished receiving of segments for cache %s for topology %d.", cacheName, topologyId);
             stopApplyingState();
-            stateTransferManager.notifyEndOfRebalance(topologyId, rebalanceId);
+            stateTransferManager.notifyEndOfStateTransfer(topologyId, rebalanceId);
          }
       }
    }
@@ -520,7 +535,7 @@ public class StateConsumerImpl implements StateConsumer {
       // Ignore segments that we requested for a previous rebalance
       // Can happen when the coordinator leaves, and the new coordinator cancels the rebalance in progress
       int rebalanceTopologyId = stateTransferTopologyId.get();
-      if (rebalanceTopologyId == NO_REBALANCE_IN_PROGRESS) {
+      if (rebalanceTopologyId == NO_STATE_TRANSFER_IN_PROGRESS) {
          log.debugf("Discarding state response with topology id %d for cache %s, we don't have a state transfer in progress",
                topologyId, cacheName);
          return;
@@ -1046,7 +1061,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (trace) log.tracef("Inbound transfer finished: %s", inboundTransfer);
       if (inboundTransfer.isCompletedSuccessfully()) {
          removeTransfer(inboundTransfer);
-         notifyEndOfRebalanceIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+         notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
       }
    }
 

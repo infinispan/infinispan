@@ -20,7 +20,7 @@ public class CommonNameRoleMapper implements PrincipalRoleMapper {
    @Override
    public Set<String> principalToRoles(Principal principal) {
       String name = principal.getName();
-      if (name.startsWith("CN=")) {
+      if (name.regionMatches(true, 0, "CN=", 0, 3)) {
          return Collections.singleton(name.split(",")[0].substring(3));
       } else {
          return null;

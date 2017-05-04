@@ -92,6 +92,9 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
 
                AnnotationElement.Value indexNullAsAttribute = fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_INDEX_NULL_AS_ATTRIBUTE);
                String indexNullAs = (String) indexNullAsAttribute.getValue();
+               if (IndexingMetadata.DO_NOT_INDEX_NULL.equals(indexNullAs)) {
+                  indexNullAs = null;
+               }
 
                AnnotationElement.Annotation fieldLevelAnalyzerAnnotationAttribute = (AnnotationElement.Annotation) fieldAnnotation.getAttributeValue(IndexingMetadata.FIELD_ANALYZER_ATTRIBUTE).getValue();
                String fieldLevelAnalyzerAttribute = (String) fieldLevelAnalyzerAnnotationAttribute.getAttributeValue(IndexingMetadata.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
@@ -114,7 +117,7 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                      indexNullAs,
                      fieldLevelBoost, 1.0f);
 
-               fields.put(fieldName, new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions));
+               fields.put(fieldName, new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions, fd));
             }
 
             // process the deprecated @IndexedField annotation if present
@@ -149,7 +152,7 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                      indexNullAs,
                      1.0f, 1.0f);
 
-               fields.put(fd.getName(), new FieldMapping(fd.getName(), isIndexed, 1.0f, false, isStored, false, null, indexNullAs, luceneOptions));
+               fields.put(fd.getName(), new FieldMapping(fd.getName(), isIndexed, 1.0f, false, isStored, false, null, indexNullAs, luceneOptions, fd));
             }
          }
          return new IndexingMetadata(true, indexName, entityAnalyzer, fields);

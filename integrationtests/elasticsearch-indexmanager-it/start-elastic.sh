@@ -13,11 +13,6 @@ function startElastic()
   waitForElastic
 }
 
-function installPlugins()
-{
-  docker exec elastic bin/plugin install delete-by-query
-}
-
 function restartElastic()
 {
   docker restart elastic
@@ -25,5 +20,4 @@ function restartElastic()
 }
 
 startElastic
-installPlugins
 restartElastic

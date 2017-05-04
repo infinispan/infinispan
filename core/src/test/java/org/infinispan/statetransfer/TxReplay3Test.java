@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.test.TestingUtil.wrapComponent;
-import static org.infinispan.test.TestingUtil.wrapPerCacheInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Map;
@@ -64,8 +64,7 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
 
       wrapComponent(cache(1), RpcManager.class,
                     (wrapOn, current) -> new UnsureResponseRpcManager(current, sequencer), true);
-      Handler handler = wrapPerCacheInboundInvocationHandler(cache(0),
-                                                             (wrapOn, current) -> new Handler(current, sequencer), true);
+      Handler handler = wrapInboundInvocationHandler(cache(0), current -> new Handler(current, sequencer));
       handler.setOrigin(address(cache(2)));
 
       Future<Void> tx1 = fork(() -> {

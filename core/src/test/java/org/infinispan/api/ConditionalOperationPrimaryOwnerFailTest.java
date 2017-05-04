@@ -1,7 +1,7 @@
 package org.infinispan.api;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.replaceField;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyObject;
@@ -20,7 +20,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
@@ -102,10 +101,6 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
    }
 
    private PerCacheInboundInvocationHandler spyInvocationHandler(Cache cache) {
-      PerCacheInboundInvocationHandler spy = Mockito.spy(extractComponent(cache, PerCacheInboundInvocationHandler.class));
-      TestingUtil.replaceComponent(cache, PerCacheInboundInvocationHandler.class, spy, true);
-      replaceField(spy, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
-      return spy;
+      return wrapInboundInvocationHandler(cache, Mockito::spy);
    }
-
 }

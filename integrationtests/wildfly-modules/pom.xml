@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>9.0.0-SNAPSHOT</version>
+      <version>9.1.0-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -26,7 +26,7 @@
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
       <mcast.ip>234.99.54.14</mcast.ip>
       <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
-      <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+      <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args} ${jigsawForkJvmArgs}</server.jvm.args>
       <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
    </properties>
 
@@ -141,12 +141,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.elasticsearch.plugin</groupId>
-         <artifactId>delete-by-query</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>org.elasticsearch</groupId>
          <artifactId>elasticsearch</artifactId>
          <scope>test</scope>
@@ -207,6 +201,7 @@
                      <value>${junitListener}</value>
                   </property>
                </properties>
+               <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
             </configuration>
             <executions>
                <execution>
@@ -268,37 +263,15 @@
                      </artifactItems>
                   </configuration>
                </execution>
-               <execution>
-                  <id>unpack-es-plugins</id>
-                  <phase>pre-integration-test</phase>
-                  <goals>
-                     <goal>unpack</goal>
-                  </goals>
-                  <configuration>
-                     <skip>${skipTests}</skip>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.elasticsearch.plugin</groupId>
-                           <artifactId>delete-by-query</artifactId>
-                           <version>${version.elasticsearch}</version>
-                           <type>zip</type>
-                           <overWrite>true</overWrite>
-                           <outputDirectory>${project.build.directory}/plugins/delete-by-query
-                           </outputDirectory>
-                        </artifactItem>
-                     </artifactItems>
-                  </configuration>
-               </execution>
             </executions>
          </plugin>
          <plugin>
             <groupId>com.github.alexcojocaru</groupId>
             <artifactId>elasticsearch-maven-plugin</artifactId>
-            <version>2.3</version>
             <configuration>
+               <version>${version.elasticsearch}</version>
                <skip>${skipTests}</skip>
-               <clusterName>test</clusterName>
-               <pluginsPath>${project.build.directory}/plugins/</pluginsPath>
+               <clusterName>elasticTestCluster</clusterName>
                <tcpPort>9300</tcpPort>
                <httpPort>9200</httpPort>
             </configuration>
@@ -307,7 +280,7 @@
                   <id>start-elasticsearch</id>
                   <phase>pre-integration-test</phase>
                   <goals>
-                     <goal>start</goal>
+                     <goal>runforked</goal>
                   </goals>
                </execution>
                <execution>
@@ -318,13 +291,6 @@
                   </goals>
                </execution>
             </executions>
-            <dependencies>
-               <dependency>
-                  <groupId>org.elasticsearch</groupId>
-                  <artifactId>elasticsearch</artifactId>
-                  <version>${version.elasticsearch}</version>
-               </dependency>
-            </dependencies>
          </plugin>
 
          <plugin>
@@ -399,7 +365,7 @@
                      <skip>${skipTests}</skip>
                      <target>
                         <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="kill-server">
-                           <property name="hotrod.port" value="11222"/>
+                           <property name="hotrod.port" value="11222" />
                         </ant>
                         <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="start-server">
                            <property name="server.dist" value="${ispnserver.dist}" />

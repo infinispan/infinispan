@@ -23,7 +23,6 @@ package org.infinispan.server.jgroups.subsystem;
 
 import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
@@ -34,7 +33,6 @@ import org.jboss.as.controller.SimpleListAttributeDefinition;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelType;
 
 /**
@@ -75,11 +73,6 @@ public class SaslResourceDefinition extends SimpleResourceDefinition {
     ;
 
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { CLUSTER_ROLE, MECH, SECURITY_REALM, ProtocolResourceDefinition.PROPERTIES };
-
-    static void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
-        ResourceTransformationDescriptionBuilder builder = parent.addChildResource(PATH);
-        PropertyResourceDefinition.buildTransformation(version, builder);
-    }
 
     SaslResourceDefinition() {
         super(PATH, new JGroupsResourceDescriptionResolver(ModelKeys.SASL), new ReloadRequiredAddStepHandler(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);

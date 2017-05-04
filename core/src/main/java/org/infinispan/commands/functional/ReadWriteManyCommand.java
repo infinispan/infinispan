@@ -138,10 +138,6 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    }
 
    @Override
-   public void updateStatusFromRemoteResponse(Object remoteResponse) {
-   }
-
-   @Override
    public LoadType loadType() {
       return LoadType.OWNER;
    }

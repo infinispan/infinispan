@@ -67,12 +67,7 @@ public class JGroupsSubsystemRemoveHandler extends AbstractRemoveStepHandler {
             }
         }
 
-        context.addStep(operation, new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                JGroupsSubsystemRemoveHandler.super.performRemove(context, operation, model);
-            }
-        }, OperationContext.Stage.MODEL);
+        context.addStep(operation, (context1, operation1) -> super.performRemove(context, operation, model), OperationContext.Stage.MODEL);
     }
 
     @Override

@@ -20,7 +20,7 @@ public class DefaultResponseGenerator implements ResponseGenerator {
          return (Response) returnValue;
 
       if (command.isReturnValueExpected()) {
-         return SuccessfulResponse.create(returnValue);
+         return command.isSuccessful() ? SuccessfulResponse.create(returnValue) : UnsuccessfulResponse.create(returnValue);
       } else {
          if (returnValue != null) {
             if (trace) log.tracef("Ignoring non-null response for command %s: %s", command, returnValue);

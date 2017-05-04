@@ -41,7 +41,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 // As this is a SLOW stress test, leave it disabled by default.  Only run it manually.
-@Test(groups = "stress", testName = "distribution.rehash.ConsistencyStressTest")
+@Test(groups = "stress", testName = "distribution.rehash.ConsistencyStressTest", timeOut = 15*60*1000)
 public class ConsistencyStressTest extends MultipleCacheManagersTest {
    private static final int NUM_NODES = 10;
    private static final int WORKERS_PER_NODE = 2;
@@ -112,7 +112,7 @@ public class ConsistencyStressTest extends MultipleCacheManagersTest {
 
       // lets make sure any rehashing work has completed
       TestingUtil.blockUntilViewsReceived(60000, false, cacheMap.values());
-      TestingUtil.waitForRehashToComplete(cacheMap.values());
+      TestingUtil.waitForNoRebalance(cacheMap.values());
       LocalizedCacheTopology cacheTopology = cache(1).getAdvancedCache().getDistributionManager().getCacheTopology();
 
       for (int i = 0; i < NUM_NODES; i++) {

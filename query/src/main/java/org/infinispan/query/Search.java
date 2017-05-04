@@ -13,8 +13,8 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryEngine;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
-import org.infinispan.query.dsl.embedded.impl.JPACacheEventFilterConverter;
-import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.IckleCacheEventFilterConverter;
+import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.logging.Log;
@@ -40,8 +40,8 @@ public final class Search {
    }
 
    public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(String queryString, Map<String, Object> namedParameters) {
-      JPAFilterAndConverter<K, V> filterAndConverter = new JPAFilterAndConverter<>(queryString, namedParameters, ReflectionMatcher.class);
-      return new JPACacheEventFilterConverter<>(filterAndConverter);
+      IckleFilterAndConverter<K, V> filterAndConverter = new IckleFilterAndConverter<>(queryString, namedParameters, ReflectionMatcher.class);
+      return new IckleCacheEventFilterConverter<>(filterAndConverter);
    }
 
    public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(Query query) {

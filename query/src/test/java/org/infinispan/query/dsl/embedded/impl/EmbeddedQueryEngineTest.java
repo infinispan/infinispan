@@ -16,7 +16,7 @@ import org.hibernate.search.exception.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.objectfilter.impl.syntax.parser.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.Query;
@@ -349,7 +349,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testBuildLuceneQuery() {
-      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", qe.propertyHelper);
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", qe.propertyHelper);
       CacheQuery<UserHS> q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
       List<?> list = q.list();
       assertEquals(3, list.size());
@@ -357,7 +357,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = SearchException.class, expectedExceptionsMessageRegExp = "Unable to find field notes in org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS")
    public void testBuildLuceneQueryOnNonIndexedField() {
-      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.propertyHelper);
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS where notes like 'TBD%'", qe.propertyHelper);
       CacheQuery<?> q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
    }
 
@@ -494,7 +494,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testBooleanComparison() {
-      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
             "WHERE isDebit = false", qe.propertyHelper);
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
@@ -503,7 +503,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testConstantBooleanExpression() {
-      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS " +
             "WHERE true", qe.propertyHelper);
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 
@@ -519,7 +519,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
    }
 
    public void testFullTextKeyword() {
-      FilterParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.Book b " +
+      IckleParsingResult<Class<?>> parsingResult = IckleParser.parse("from org.infinispan.query.dsl.embedded.testdomain.Book b " +
             "where b.preface:('java se'^7 -('bicycle' 'ski')) and b.publisher:'Oracel'~2", qe.propertyHelper);
       CacheQuery q = qe.buildLuceneQuery(parsingResult, null, -1, -1);
 

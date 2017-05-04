@@ -3,7 +3,6 @@ package org.infinispan.query.it;
 import org.infinispan.query.dsl.embedded.ClusteredQueryDslConditionsTest;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -20,10 +19,7 @@ public class ElasticsearchDSLConditionsIT extends ClusteredQueryDslConditionsTes
 
     @Override
     protected Map<String, String> getIndexConfig() {
-        Map<String, String> indexConfig = new HashMap<>();
-        indexConfig.put("default.indexmanager", "elasticsearch");
-        indexConfig.put("default.elasticsearch.refresh_after_write", "true");
-        indexConfig.put("lucene_version", "LUCENE_CURRENT");
-        return indexConfig;
+        return ElasticsearchTesting.getConfigProperties();
     }
+
 }

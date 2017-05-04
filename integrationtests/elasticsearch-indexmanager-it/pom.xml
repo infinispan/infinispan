@@ -1,12 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
-        <version>9.0.0-SNAPSHOT</version>
+        <version>9.1.0-SNAPSHOT</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
 
@@ -72,13 +71,20 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
+                    <disableXmlReport>true</disableXmlReport>
+                    <useFile>false</useFile>
                     <skip>${skipTests}</skip>
                     <properties>
+                        <property>
+                            <name>usedefaultlisteners</name>
+                            <value>false</value>
+                        </property>
                         <property>
                             <name>listener</name>
                             <value>${testNGListeners}</value>
                         </property>
                     </properties>
+                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                 </configuration>
                 <executions>
                     <execution>
@@ -93,39 +99,12 @@
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>unpack-es-plugins</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipTests}</skip>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.elasticsearch.plugin</groupId>
-                                    <artifactId>delete-by-query</artifactId>
-                                    <version>${version.elasticsearch}</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/plugins/delete-by-query
-                                    </outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>com.github.alexcojocaru</groupId>
                 <artifactId>elasticsearch-maven-plugin</artifactId>
-                <version>2.3</version>
                 <configuration>
+                    <version>${version.elasticsearch}</version>
                     <skip>${skipTests}</skip>
-                    <clusterName>test</clusterName>
-                    <pluginsPath>${project.build.directory}/plugins/</pluginsPath>
+                    <clusterName>elasticTestCluster</clusterName>
                     <tcpPort>9300</tcpPort>
                     <httpPort>9200</httpPort>
                 </configuration>
@@ -134,7 +113,7 @@
                         <id>start-elasticsearch</id>
                         <phase>pre-integration-test</phase>
                         <goals>
-                            <goal>start</goal>
+                            <goal>runforked</goal>
                         </goals>
                     </execution>
                     <execution>
@@ -145,13 +124,6 @@
                         </goals>
                     </execution>
                 </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.elasticsearch</groupId>
-                        <artifactId>elasticsearch</artifactId>
-                        <version>${version.elasticsearch}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>

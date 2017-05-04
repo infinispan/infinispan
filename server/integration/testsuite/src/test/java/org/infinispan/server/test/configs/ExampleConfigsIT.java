@@ -44,14 +44,12 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.ITestUtils;
-import org.infinispan.server.test.util.ITestUtils.Condition;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.Config;
@@ -101,14 +99,14 @@ public class ExampleConfigsIT {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = "hotrod-rolling-upgrade-2"),@RunningServer(name = "hotrod-rolling-upgrade-1")})
+    @WithRunningServer({@RunningServer(name = "example-hotrod-rolling-upgrade-2"),@RunningServer(name = "example-hotrod-rolling-upgrade-1")})
     public void testHotRodRollingUpgrades() throws Exception {
         // Target node
         MBeanServerConnectionProvider provider1;
         // Source node
         MBeanServerConnectionProvider provider2;
 
-        RemoteInfinispanMBeans s2 = createRemotes("hotrod-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
+        RemoteInfinispanMBeans s2 = createRemotes("example-hotrod-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
         final RemoteCache<Object, Object> c2 = createCache(s2);
 
         c2.put("key1", "value1");
@@ -118,9 +116,9 @@ public class ExampleConfigsIT {
             c2.put("keyLoad" + i, "valueLoad" + i);
         }
 
-        controller.start("hotrod-rolling-upgrade-1");
+        controller.start("example-hotrod-rolling-upgrade-1");
 
-        RemoteInfinispanMBeans s1 = createRemotes("hotrod-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
+        RemoteInfinispanMBeans s1 = createRemotes("example-hotrod-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
         final RemoteCache<Object, Object> c1 = createCache(s1);
 
         assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
@@ -339,16 +337,16 @@ public class ExampleConfigsIT {
     @WithRunningServer({@RunningServer(name = "standalone-hotrod-ssl")})
     public void testSSLHotRodConfig() throws Exception {
         RemoteInfinispanMBeans s = createRemotes("standalone-hotrod-ssl", "local", DEFAULT_CACHE_NAME);
-        RemoteCache<Object, Object> c = createCache(s, securityConfig("keystore_client.jks", "truststore_client.jks", s.server));
+        RemoteCache<Object, Object> c = createCache(s, securityConfig("keystore_client.jks", "ca.jks", s.server));
         doPutGet(s, c);
         try {
-            doPutGet(s, createCache(s, securityConfig("keystore_server.jks", "truststore_client.jks", s.server)));
-            Assert.fail();
+            doPutGet(s, createCache(s, securityConfig("keystore_server_no_ca.jks", "ca.jks", s.server)));
+            Assert.fail("Should have failed to write");
         } catch (TransportException e) {
             // ok
         }
         try {
-            doPutGet(s, createCache(s, securityConfig("keystore_client.jks", "truststore_server.jks", s.server)));
+            doPutGet(s, createCache(s, securityConfig("keystore_server_no_ca.jks", "ca.jks", s.server)));
             Assert.fail();
         } catch (TransportException e) {
             // ok
@@ -439,8 +437,8 @@ public class ExampleConfigsIT {
         long s0Entries = 0;
         long s1Entries = 0;
         long s2Entries = 0;
-        List<String> s1Bulk = new ArrayList<String>();
-        List<String> s2Bulk = new ArrayList<String>();
+        List<String> s1Bulk = new ArrayList<>();
+        List<String> s2Bulk = new ArrayList<>();
 
         // By using topology information we divide our 3 nodes into 2 groups and generate enough elements so there
         // is at least 1 element in each group and at least 5 elements total,
@@ -498,12 +496,7 @@ public class ExampleConfigsIT {
         cleanRESTServer(rest);
         assertEquals(0, s1.cache.getNumberOfEntries());
         assertEquals(0, s2.cache.getNumberOfEntries());
-        eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-                return s1.manager.getClusterSize() == 2;
-            }
-        }, 30000, 300);
+        eventually(() -> s1.manager.getClusterSize() == 2, 30000, 300);
         Assert.assertEquals(2, s1.manager.getClusterSize());
         Assert.assertEquals(2, s2.manager.getClusterSize());
         s1Cache.put("k", "v");
@@ -617,15 +610,12 @@ public class ExampleConfigsIT {
         for (int i = 0; i < 1100; i++) {
             sMainCache.put("key" + i, "value" + i);
         }
-        assertTrue(sMain.cache.getNumberOfEntries() <= 1000);
-        eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-                log.debug("Num entries: Main cache: " + sMain.cache.getNumberOfEntries() + " Remote store: "
-                        + sRemoteStore.cache.getNumberOfEntries() + " Total: "
-                        + (sMain.cache.getNumberOfEntries() + sRemoteStore.cache.getNumberOfEntries()));
-                return sMain.cache.getNumberOfEntries() + sRemoteStore.cache.getNumberOfEntries() == 1100;
-            }
+        assertTrue(sMain.cache.getNumberOfEntriesInMemory() <= 1000);
+        eventually(() -> {
+            log.debug("Num entries: Main cache: " + sMain.cache.getNumberOfEntries() + " Remote store: "
+                  + sRemoteStore.cache.getNumberOfEntriesInMemory() + " Total: "
+                  + (sMain.cache.getNumberOfEntriesInMemory() + sRemoteStore.cache.getNumberOfEntriesInMemory()));
+            return sMain.cache.getNumberOfEntriesInMemory() + sRemoteStore.cache.getNumberOfEntriesInMemory() == 1100;
         }, 10000);
 
         for (int i = 0; i < 1100; i++) {
@@ -639,33 +629,34 @@ public class ExampleConfigsIT {
         sRemoteStoreCache.clear();
     }
 
-    private void doPutGetWithExpiration(RemoteInfinispanMBeans s1, RemoteInfinispanMBeans s2) throws Exception {
-        assertEquals(0, s2.cache.getNumberOfEntries());
+    private void doPutGetWithExpiration(RemoteInfinispanMBeans s1, RemoteInfinispanMBeans s2) {
+        assertEquals(0, s2.cache.getNumberOfEntriesInMemory());
         RemoteCache<Object, Object> s1Cache = createCache(s1);
         doPutGet(s1, s1Cache);
         // all entries are in store (passivation=false)
-        assertEquals(10, s2.cache.getNumberOfEntries());
+        assertEquals(10, s2.cache.getNumberOfEntriesInMemory());
 
-        sleepForSecs(2.1); // the lifespan is 2000ms so we need to wait more
+        sleepForSecs(3.1); // the lifespan is 3000ms so we need to wait more
 
         // entries expired
         for (int i = 0; i < 10; i++) {
             assertNull(s1Cache.get("key" + i));
         }
+        assertEquals(0, s2.cache.getNumberOfEntriesInMemory());
     }
 
     private void doPutGet(RemoteInfinispanMBeans s, RemoteCache<Object, Object> c) {
-        assertEquals(0, s.cache.getNumberOfEntries());
+        assertEquals(0, s.cache.getNumberOfEntriesInMemory());
         for (int i = 0; i < 10; i++) {
             c.put("k" + i, "v" + i);
         }
         for (int i = 0; i < 10; i++) {
             assertEquals("v" + i, c.get("k" + i));
         }
-        assertEquals(10, s.cache.getNumberOfEntries());
+        assertEquals(10, s.cache.getNumberOfEntriesInMemory());
     }
 
-    private void doPutGetCheckPath(RemoteInfinispanMBeans s, String filePath, double sleepTime) throws Exception {
+    private void doPutGetCheckPath(RemoteInfinispanMBeans s, String filePath, double sleepTime) {
         RemoteCache<Object, Object> sCache = createCache(s);
         doPutGet(s, sCache);
         if (sleepTime >= 0) {
@@ -695,10 +686,6 @@ public class ExampleConfigsIT {
 
     protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans) {
         return rcmFactory.createCache(cacheBeans);
-    }
-
-    protected RemoteCacheManager createCacheManager(RemoteInfinispanMBeans cacheBeans) {
-        return rcmFactory.createManager(cacheBeans);
     }
 
     protected RemoteInfinispanMBeans createRemotes(String serverName, String managerName, String cacheName) {

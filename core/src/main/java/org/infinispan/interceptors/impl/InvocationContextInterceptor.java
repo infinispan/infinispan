@@ -125,7 +125,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             // We log this as DEBUG rather than ERROR - see ISPN-2076
             log.debug("Exception executing call", th);
          } else if (th instanceof OutdatedTopologyException) {
-            log.outdatedTopology(th);
+            log.tracef("Topology changed, notifying the originator: %s", th);
          } else if (th instanceof RetryPrepareException) {
             log.debugf("Retrying total order prepare command for transaction %s, affected keys %s",
                ctx.getLockOwner(), toStr(extractWrittenKeys(ctx, command)));

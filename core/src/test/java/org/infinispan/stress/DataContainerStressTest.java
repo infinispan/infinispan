@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(testName = "stress.DataContainerStressTest", groups = "stress",
-      description = "Disabled by default, designed to be run manually.")
+      description = "Disabled by default, designed to be run manually.", timeOut = 15*60*1000)
 public class DataContainerStressTest {
    volatile CountDownLatch latch;
    final int RUN_TIME_MILLIS = 45 * 1000; // 1 min

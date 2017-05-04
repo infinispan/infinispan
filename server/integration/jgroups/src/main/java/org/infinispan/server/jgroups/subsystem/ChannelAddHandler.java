@@ -82,9 +82,6 @@ public class ChannelAddHandler extends AbstractAddStepHandler {
 
         String name = context.getCurrentAddressValue();
         String stack = ModelNodes.asString(ChannelResourceDefinition.STACK.resolveModelAttribute(context, model), ProtocolStackServiceNameFactory.DEFAULT_STACK);
-
-        ModuleIdentifier module = ModelNodes.asModuleIdentifier(ChannelResourceDefinition.MODULE.resolveModelAttribute(context, model));
-
         ServiceTarget target = context.getServiceTarget();
 
         // Install channel factory alias

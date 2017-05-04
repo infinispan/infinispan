@@ -31,20 +31,22 @@ public interface DataRehashedEvent<K, V> extends Event<K, V> {
 
    /**
     * @return The current consistent hash that was installed prior to the rehash.
-    *         It is both for reading and writing before the rehash, and only for reading during the rehash.
+    *         It is used both for reading and writing before the rebalance.
     */
    ConsistentHash getConsistentHashAtStart();
 
    /**
-    * @return The consistent hash that will be installed after the rehash.
-    *         It will be used both for reading and writing once it is installed.
+    * @return The consistent hash that will be installed after the rebalance.
+    *         It will be used both for reading and writing once the rebalance is complete.
     */
    ConsistentHash getConsistentHashAtEnd();
 
    /**
     * @return The union of the current and future consistent hashes.
-    *         It is used for writing during the rehash.
+    *
+    * @deprecated Since 9.0
     */
+   @Deprecated
    ConsistentHash getUnionConsistentHash();
 
    /**

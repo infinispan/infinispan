@@ -29,7 +29,7 @@ import org.testng.annotations.Test;
  * @since 5.3
  */
 @CleanupAfterTest
-@Test(groups = "stress", testName = "stress.LargeClusterStressTest")
+@Test(groups = "stress", testName = "stress.LargeClusterStressTest", timeOut = 15*60*1000)
 public class LargeClusterStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_NODES = 40;
@@ -129,8 +129,8 @@ public class LargeClusterStressTest extends MultipleCacheManagersTest {
          if (cacheManagers.size() > 0) {
             TestingUtil.blockUntilViewsReceived(60000, false, cacheManagers);
             for (int j = 0; j < NUM_CACHES/2; j++) {
-               TestingUtil.waitForRehashToComplete(caches("repl-cache-" + j));
-               TestingUtil.waitForRehashToComplete(caches("dist-cache-" + j));
+               TestingUtil.waitForNoRebalance(caches("repl-cache-" + j));
+               TestingUtil.waitForNoRebalance(caches("dist-cache-" + j));
             }
          }
       }
