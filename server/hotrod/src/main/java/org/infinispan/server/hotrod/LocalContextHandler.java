@@ -30,13 +30,7 @@ public class LocalContextHandler extends ChannelInboundHandlerAdapter {
    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
       if (msg instanceof CacheDecodeContext) {
          CacheDecodeContext cdc = (CacheDecodeContext) msg;
-         Subject subject = ((CacheDecodeContext) msg).subject;
-         if (subject == null)
-            realChannelRead(ctx, msg, cdc);
-         else Security.doAs(subject, (PrivilegedExceptionAction<Void>) () -> {
-            realChannelRead(ctx, msg, cdc);
-            return null;
-         });
+         realChannelRead(ctx, msg, cdc);
       } else {
          super.channelRead(ctx, msg);
       }

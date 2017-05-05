@@ -29,7 +29,7 @@ import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOpera
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveContainsAsync;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveWithVersion;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testRemoveWithVersionAsync;
-import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testReplaceWitFlag;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testReplaceWithFlag;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testReplaceWithVersionAsync;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testReplaceWithVersioned;
 import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
@@ -119,7 +119,7 @@ public class HotRodOperationsAuthzIT extends HotRodSaslAuthTestBase {
       testRemoveContainsAsync(remoteCache);
       testRemoveWithVersion(remoteCache);
       testRemoveWithVersionAsync(remoteCache);
-      testReplaceWitFlag(remoteCache);
+      testReplaceWithFlag(remoteCache);
       testReplaceWithVersioned(remoteCache);
       testReplaceWithVersionAsync(remoteCache);
       testSize(remoteCache);
@@ -150,7 +150,7 @@ public class HotRodOperationsAuthzIT extends HotRodSaslAuthTestBase {
       testRemoveContainsAsync(remoteCache);
       testRemoveWithVersion(remoteCache);
       testRemoveWithVersionAsync(remoteCache);
-      testReplaceWitFlag(remoteCache);
+      testReplaceWithFlag(remoteCache);
       testReplaceWithVersioned(remoteCache);
       testReplaceWithVersionAsync(remoteCache);
       testSize(remoteCache);
@@ -205,7 +205,7 @@ public class HotRodOperationsAuthzIT extends HotRodSaslAuthTestBase {
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
    public void testWriterReplaceWithReturnFlag() throws PrivilegedActionException, LoginException {
       initAsWriter();
-      testReplaceWitFlag(remoteCache);
+      testReplaceWithFlag(remoteCache);
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)

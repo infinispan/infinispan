@@ -75,23 +75,17 @@ public class SecureExecTest extends AbstractAuthenticationTest {
 
    @Override
    protected void setup() throws Exception {
-      Security.doAs(ADMIN, new PrivilegedExceptionAction<Void>() {
-         @Override
-         public Void run() throws Exception {
-            SecureExecTest.super.setup();
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedExceptionAction<Void>) () -> {
+         SecureExecTest.super.setup();
+         return null;
       });
    }
 
    @Override
    protected void teardown() {
-      Security.doAs(ADMIN, new PrivilegedAction<Void>() {
-         @Override
-         public Void run() {
-            SecureExecTest.super.teardown();
-            return null;
-         }
+      Security.doAs(ADMIN, (PrivilegedAction<Void>) () -> {
+         SecureExecTest.super.teardown();
+         return null;
       });
    }
 
@@ -101,12 +95,7 @@ public class SecureExecTest extends AbstractAuthenticationTest {
    }
 
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder initServerAndClient() {
-      return Security.doAs(ADMIN, new PrivilegedAction<org.infinispan.client.hotrod.configuration.ConfigurationBuilder>() {
-         @Override
-         public org.infinispan.client.hotrod.configuration.ConfigurationBuilder run() {
-            return SecureExecTest.super.initServerAndClient();
-         }
-      });
+      return Security.doAs(ADMIN, (PrivilegedAction<org.infinispan.client.hotrod.configuration.ConfigurationBuilder>) () -> SecureExecTest.super.initServerAndClient());
    }
 
    public void testSimpleScriptExecutionWithValidAuth() throws IOException, PrivilegedActionException {

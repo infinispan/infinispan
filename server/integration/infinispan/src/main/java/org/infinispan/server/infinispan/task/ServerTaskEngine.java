@@ -94,7 +94,7 @@ public class ServerTaskEngine implements TaskEngine {
                return;
             }
          }
-         globalAuthzHelper.checkPermission(null, AuthorizationPermission.EXEC, role);
+         globalAuthzHelper.checkPermission(null, null, AuthorizationPermission.EXEC, role);
       }
    }
 

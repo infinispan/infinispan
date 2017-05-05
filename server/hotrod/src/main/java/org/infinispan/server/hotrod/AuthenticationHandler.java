@@ -141,7 +141,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
                   throw log.unauthorizedOperation();
                }
                if (op.requiresAuthentication()) {
-                  ((CacheDecodeContext) msg).subject = subject;
+                  ((CacheDecodeContext)msg).withSubect(subject);
                }
                super.channelRead(ctx, msg);
                break;

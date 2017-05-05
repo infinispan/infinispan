@@ -192,7 +192,7 @@ public class HotRodAuthzOperationTests {
       assertEquals(VALUE1, remoteCache.getAsync(KEY1).get(ASYNC_TIMEOUT, TimeUnit.SECONDS));
    }
 
-   public static void testReplaceWitFlag(RemoteCache<String, String> remoteCache) {
+   public static void testReplaceWithFlag(RemoteCache<String, String> remoteCache) {
       remoteCache.put(KEY1, VALUE1);
       assertEquals(VALUE1, remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).replace(KEY1, "replace value"));
    }
