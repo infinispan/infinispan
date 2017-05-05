@@ -1,7 +1,9 @@
 #!/usr/bin/env groovy
 
 pipeline {
-    agent any
+    agent {
+        label 'slave-group-normal'
+    }
     options {
         timeout(time: 4, unit: 'HOURS')
     }
