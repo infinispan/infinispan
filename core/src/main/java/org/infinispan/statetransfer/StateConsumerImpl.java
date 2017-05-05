@@ -317,11 +317,11 @@ public class StateConsumerImpl implements StateConsumer {
       // Ensures writes to the data container use the right consistent hash
       // No need for a try/finally block, since it's just an assignment
       stateTransferLock.acquireExclusiveTopologyLock();
-      this.cacheTopology = cacheTopology;
       triangleOrderManager.updateCacheTopology(cacheTopology);
       if (distributionManager != null) {
          distributionManager.setCacheTopology(cacheTopology);
       }
+      this.cacheTopology = cacheTopology;
       if (startRebalance) {
          if (trace) log.tracef("Start keeping track of keys for rebalance");
          commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);

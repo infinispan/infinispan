@@ -57,7 +57,7 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
 
    @Override
    public V getValue() {
-      if (value == null) {
+      if (value == null && valueBytes != null) {
          value = unmarshall(valueBytes);
       }
       return value;

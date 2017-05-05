@@ -28,13 +28,18 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
+   public void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      clusteringDependentLogic.notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
+   }
+
+   @Override
    public LocalizedCacheTopology getCacheTopology() {
       return clusteringDependentLogic.getCacheTopology();
    }
 
    @Override
-   public void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
-      clusteringDependentLogic.commitEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
+   public void commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+      clusteringDependentLogic.commitEntry(entry, command, ctx, trackFlag, l1Invalidation);
    }
 
    @Override

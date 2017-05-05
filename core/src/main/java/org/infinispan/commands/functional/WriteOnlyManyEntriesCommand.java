@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
@@ -22,19 +23,19 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    private Map<? extends K, ? extends V> entries;
    private BiConsumer<V, WriteEntryView<V>> f;
 
-   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId);
+   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries,
+                                      BiConsumer<V, WriteEntryView<V>> f, Params params,
+                                      CommandInvocationId commandInvocationId, InvocationManager invocationManager, boolean synchronous) {
+      super(commandInvocationId, invocationManager, synchronous);
       this.entries = entries;
       this.f = f;
       this.params = params;
    }
 
    public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V> command) {
-      this.commandInvocationId = command.commandInvocationId;
+      super(command);
       this.entries = command.entries;
       this.f = command.f;
-      this.params = command.params;
-      this.flags = command.flags;
    }
 
    public WriteOnlyManyEntriesCommand() {
@@ -65,7 +66,6 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
-      output.writeInt(topologyId);
       output.writeLong(flags);
    }
 
@@ -76,7 +76,6 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
-      topologyId = input.readInt();
       flags = input.readLong();
    }
 
@@ -90,6 +89,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
             throw new IllegalStateException();
          }
          f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry));
+         recordInvocation(ctx, cacheEntry, null);
       }
       return null;
    }
@@ -125,6 +125,8 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       sb.append("entries=").append(entries);
       sb.append(", f=").append(f.getClass().getName());
       sb.append(", isForwarded=").append(isForwarded);
+      sb.append(", topologyId=").append(topologyId);
+      sb.append(", commandInvocationId=").append(commandInvocationId);
       sb.append('}');
       return sb.toString();
    }

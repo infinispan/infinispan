@@ -2,6 +2,7 @@ package org.infinispan.jcache;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
@@ -161,8 +162,8 @@ public class JCacheLoaderTest extends AbstractInfinispanTest {
 
             DataContainer<Integer, String> dc = cache.unwrap(AdvancedCache.class).getDataContainer();
 
-            assertEquals(null, dc.get(2));
-            assertEquals(null, dc.get(1));
+            assertFalse(dc.containsKey(2));
+            assertFalse(dc.containsKey(1));
          }
       });
    }

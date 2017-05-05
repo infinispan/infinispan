@@ -6,10 +6,9 @@ import java.io.ObjectOutput;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -24,8 +23,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    private V value;
 
    public WriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f,
-         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
-      super(key, valueMatcher, id, params);
+                                   CommandInvocationId id, Params params, InvocationManager invocationManager, boolean synchronous) {
+      super(key, id, params, invocationManager, synchronous);
       this.f = f;
       this.value = value;
    }
@@ -44,7 +43,6 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       output.writeObject(key);
       output.writeObject(value);
       output.writeObject(f);
-      MarshallUtil.marshallEnum(valueMatcher, output);
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
@@ -55,7 +53,6 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       key = input.readObject();
       value = (V) input.readObject();
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
@@ -74,6 +71,7 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       if (e == null) return null;
 
       f.accept(value, EntryViews.writeOnly(e));
+      recordInvocation(ctx, e, null);
       return null;
    }
 

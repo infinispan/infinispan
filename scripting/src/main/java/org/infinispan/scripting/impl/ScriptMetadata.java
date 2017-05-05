@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
@@ -100,6 +102,16 @@ public class ScriptMetadata implements Metadata {
    @Override
    public EntryVersion version() {
       return null;
+   }
+
+   @Override
+   public InvocationRecord lastInvocation() {
+      return null;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return null;  // TODO: Customise this generated block
    }
 
    @Override
@@ -199,6 +211,21 @@ public class ScriptMetadata implements Metadata {
       @Override
       public ScriptMetadata.Builder version(EntryVersion version) {
          return this;
+      }
+
+      @Override
+      public Metadata.Builder invocation(CommandInvocationId id, Object returnValue, boolean authoritative, boolean created, boolean modified, boolean removed, long timestamp) {
+         return this;
+      }
+
+      @Override
+      public Metadata.Builder invocations(InvocationRecord invocations) {
+         return this;
+      }
+
+      @Override
+      public InvocationRecord invocations() {
+         return null;
       }
 
       @Override

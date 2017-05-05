@@ -8,10 +8,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -39,9 +41,13 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
    private long flags;
    private int topologyId;
    private long sequence;
-   private InvocationContextFactory invocationContextFactory;
-   private AsyncInterceptorChain interceptorChain;
-   private CacheNotifier cacheNotifier;
+   private Map<Object, Object> providedResults;
+
+   private transient InvocationContextFactory invocationContextFactory;
+   private transient AsyncInterceptorChain interceptorChain;
+   private transient CacheNotifier cacheNotifier;
+   private transient InvocationManager invocationManager;
+   private transient Configuration configuration;
 
    public BackupPutMapRpcCommand() {
       super(null);
@@ -72,10 +78,12 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
    }
 
    public void init(InvocationContextFactory invocationContextFactory, AsyncInterceptorChain interceptorChain,
-         CacheNotifier cacheNotifier) {
+                    CacheNotifier cacheNotifier, InvocationManager invocationManager, Configuration configuration) {
       this.invocationContextFactory = invocationContextFactory;
       this.interceptorChain = interceptorChain;
       this.cacheNotifier = cacheNotifier;
+      this.invocationManager = invocationManager;
+      this.configuration = configuration;
    }
 
    @Override
@@ -107,16 +115,17 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
    public void writeTo(ObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
       MarshallUtil.marshallMap(map, output);
+      MarshallUtil.marshallMap(providedResults, output);
       output.writeObject(metadata);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
       output.writeLong(sequence);
-
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
       map = MarshallUtil.unmarshallMap(input, HashMap::new);
+      providedResults = MarshallUtil.unmarshallMap(input, HashMap::new);
       metadata = (Metadata) input.readObject();
       flags = input.readLong();
       sequence = input.readLong();
@@ -124,9 +133,9 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
-      PutMapCommand command = new PutMapCommand(map, cacheNotifier, metadata, flags, commandInvocationId);
+      PutMapCommand command = new PutMapCommand(map, cacheNotifier, metadata, flags, commandInvocationId, null,
+            invocationManager, configuration.clustering().cacheMode().isSynchronous());
       command.addFlags(FlagBitSets.SKIP_LOCKING);
-      command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
       command.setTopologyId(topologyId);
       command.setForwarded(true);
       InvocationContext invocationContext = invocationContextFactory
@@ -152,5 +161,9 @@ public class BackupPutMapRpcCommand extends BaseRpcCommand implements TopologyAf
 
    public void setSequence(long sequence) {
       this.sequence = sequence;
+   }
+
+   public void setProvidedResults(Map<Object, Object> providedResults) {
+      this.providedResults = providedResults;
    }
 }

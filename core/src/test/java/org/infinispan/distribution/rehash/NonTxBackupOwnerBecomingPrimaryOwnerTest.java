@@ -159,14 +159,14 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
 
       // Every operation command will be blocked before reaching the distribution interceptor on cache1
       CyclicBarrier beforeCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCache1Barrier,
-            op.getCommandClass(), false, false);
+      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCache1Barrier,
+            op.getCommandClasses(), false, false);
       cache1.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor1, TriangleDistributionInterceptor.class);
 
       // Every operation command will be blocked after returning to the distribution interceptor on cache2
       CyclicBarrier afterCache2Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor<>(afterCache2Barrier,
-            op.getCommandClass(), true, false,
+      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(afterCache2Barrier,
+            op.getCommandClasses(), true, false,
             cmd -> !(cmd instanceof FlagAffectedCommand) || !((FlagAffectedCommand) cmd).hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER));
       cache2.getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
 
@@ -205,7 +205,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
 
       // Check that the write command didn't fail
       Object result = future.get(10, TimeUnit.SECONDS);
-      assertEquals(op.getReturnValueWithRetry(), result);
+      assertEquals(op.getReturnValue(), result);
       log.tracef("Write operation is done");
 
       // Check the value on all the nodes

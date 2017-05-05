@@ -93,7 +93,7 @@ public interface MetaParam<T> {
        *
        * @param <T> metadata parameter type
        */
-      <T> Optional<T> findMetaParam(Class<T> type);
+      <T extends MetaParam> Optional<T> findMetaParam(Class<T> type);
    }
 
    /**

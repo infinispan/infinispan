@@ -9,7 +9,6 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
@@ -64,18 +63,19 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          PutKeyValueCommand putKeyValueCommand = (PutKeyValueCommand) rCommand;
          Object key = putKeyValueCommand.getKey();
-         if (!putKeyValueCommand.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE) && (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful()))
-            return rv;
+         if (!putKeyValueCommand.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE) &&
+               (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() ||
+                     !putKeyValueCommand.isSuccessful() || putKeyValueCommand.isCompleted(putKeyValueCommand.getKey())))
+            return;
          if (!isProperWriter(rCtx, putKeyValueCommand, putKeyValueCommand.getKey()))
-            return rv;
+            return;
 
          storeEntry(rCtx, key, putKeyValueCommand);
          if (getStatisticsEnabled())
             cacheStores.incrementAndGet();
-         return rv;
       });
    }
 
@@ -96,7 +96,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
                   !cacheTopology.getDistribution(key).primary().equals(rCtx.getOrigin()))
                continue;
 
-            if (isProperWriter(rCtx, putMapCommand, key)) {
+            if (!putMapCommand.isCompleted(key) && isProperWriter(rCtx, putMapCommand, key)) {
                storeEntry(rCtx, key, putMapCommand);
                count++;
             }
@@ -108,39 +108,16 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          RemoveCommand removeCommand = (RemoveCommand) rCommand;
-         Object key = removeCommand.getKey();
-         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, removeCommand, key))
-            return rv;
+         if (shouldSkipPersist(rCtx, removeCommand))
+            return;
 
+         Object key = removeCommand.getKey();
          boolean resp = persistenceManager
                .deleteFromAllStores(key, skipSharedStores(rCtx, key, removeCommand) ? PRIVATE : BOTH);
          if (trace)
             log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
-
-         return rv;
-      });
-   }
-
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
-         throws Throwable {
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         ReplaceCommand replaceCommand = (ReplaceCommand) rCommand;
-         Object key = replaceCommand.getKey();
-         if (!isStoreEnabled(replaceCommand) || rCtx.isInTxScope() || !replaceCommand.isSuccessful())
-            return rv;
-         if (!isProperWriter(rCtx, replaceCommand, replaceCommand.getKey()))
-            return rv;
-
-         storeEntry(rCtx, key, replaceCommand);
-         if (getStatisticsEnabled())
-            cacheStores.incrementAndGet();
-
-         return rv;
       });
    }
 

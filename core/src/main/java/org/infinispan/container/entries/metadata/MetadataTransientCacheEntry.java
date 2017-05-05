@@ -107,8 +107,8 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
    }
 
    @Override
-   public InternalCacheValue toInternalCacheValue() {
-      return new MetadataTransientCacheValue(value, metadata, lastUsed);
+   public InternalCacheValue toInternalCacheValue(boolean includeInvocationRecords) {
+      return new MetadataTransientCacheValue(value, includeInvocationRecords ? metadata : metadata.builder().noInvocations().build(), lastUsed);
    }
 
    @Override

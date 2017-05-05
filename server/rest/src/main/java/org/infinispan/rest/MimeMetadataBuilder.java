@@ -20,6 +20,6 @@ public class MimeMetadataBuilder extends EmbeddedMetadata.Builder {
 
    @Override
    public Metadata build() {
-      return new MimeExpirableMetadata(contentType, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return new MimeExpirableMetadata(contentType, records, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 }

@@ -29,4 +29,24 @@ public interface ByteBuffer {
     * Returns a new byte[] instance of size {@link #getLength()} that contains all the bytes owned by this buffer.
     */
    ByteBuffer copy();
+
+   /**
+    * @return Byte array with length equal to {@link #getLength()}, possibly directly the underlying buffer.
+    */
+   default byte[] toBytes() {
+      byte[] buf = getBuf();
+      int length = getLength();
+      int offset = getOffset();
+      if (buf.length == length && offset == 0) {
+         return buf;
+      } else {
+         byte[] newBuf = new byte[length];
+         System.arraycopy(buf, offset, newBuf, 0, length);
+         return newBuf;
+      }
+   }
+
+   default void copyTo(byte[] bytes, int offset) {
+      System.arraycopy(getBuf(), getOffset(), bytes, offset, getLength());
+   }
 }

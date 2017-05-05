@@ -15,7 +15,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -40,7 +39,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
          ctx.getCacheTransaction().setUpdatedEntryVersions(EMPTY_VERSION_MAP);
          return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
             if (shouldCommitDuringPrepare((PrepareCommand) rCommand, ctx)) {
-               commitContextEntries(ctx, null, null);
+               commitContextEntries(ctx, null);
             }
          });
       }
@@ -57,7 +56,7 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
                      prepareCommand);
 
          if (prepareCommand.isOnePhaseCommit()) {
-            commitContextEntries(txInvocationContext, null, null);
+            commitContextEntries(txInvocationContext, null);
          } else {
             if (trace)
                log.tracef("Transaction %s will be committed in the 2nd phase",
@@ -70,33 +69,31 @@ public class TotalOrderVersionedEntryWrappingInterceptor extends VersionedEntryW
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null, null));
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null));
    }
 
    @Override
    protected void commitContextEntry(CacheEntry entry, InvocationContext ctx, FlagAffectedCommand command,
-                                     Metadata metadata, Flag stateTransferFlag, boolean l1Invalidation) {
+                                     Flag stateTransferFlag, boolean l1Invalidation) {
       if (ctx.isInTxScope() && stateTransferFlag == null) {
-         Metadata commitMetadata;
          // If user provided version, use it, otherwise generate/increment accordingly
          VersionedRepeatableReadEntry clusterMvccEntry = (VersionedRepeatableReadEntry) entry;
-         EntryVersion existingVersion = clusterMvccEntry.getMetadata().version();
+         Metadata metadata = clusterMvccEntry.getMetadata();
+         EntryVersion existingVersion = metadata.version();
          EntryVersion newVersion;
-         if (existingVersion == null) {
+         if (entry.isRemoved()) {
+            newVersion = versionGenerator.nonExistingVersion();
+         } else if (existingVersion == null) {
             newVersion = versionGenerator.generateNew();
          } else {
             newVersion = versionGenerator.increment((IncrementableEntryVersion) existingVersion);
          }
 
-         if (metadata == null)
-            commitMetadata = new EmbeddedMetadata.Builder().version(newVersion).build();
-         else
-            commitMetadata = metadata.builder().version(newVersion).build();
-
-         cdl.commitEntry(entry, commitMetadata, command, ctx, null, l1Invalidation);
+         entry.setMetadata(metadata.builder().version(newVersion).build());
+         cdl.commitEntry(entry, command, ctx, null, l1Invalidation);
       } else {
          // This could be a state transfer call!
-         cdl.commitEntry(entry, entry.getMetadata(), command, ctx, stateTransferFlag, l1Invalidation);
+         cdl.commitEntry(entry, command, ctx, stateTransferFlag, l1Invalidation);
       }
    }
 }

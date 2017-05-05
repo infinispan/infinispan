@@ -22,7 +22,7 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
    private static final Log log = LogFactory.getLog(BlockingInterceptor.class);
 
    private final CyclicBarrier barrier;
-   private final Class<T> commandClass;
+   private final Class<T>[] commandClasses;
    private final boolean blockAfter;
    private final boolean originLocalOnly;
    private final AtomicBoolean suspended = new AtomicBoolean();
@@ -30,13 +30,23 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
 
    public BlockingInterceptor(CyclicBarrier barrier, Class<T> commandClass,
          boolean blockAfter, boolean originLocalOnly) {
-      this(barrier, commandClass, blockAfter, originLocalOnly, t -> true);
+      this(barrier, new Class[] { commandClass } , blockAfter, originLocalOnly, t -> true);
+   }
+
+   public BlockingInterceptor(CyclicBarrier barrier, Class<T>[] commandClasses,
+                              boolean blockAfter, boolean originLocalOnly) {
+      this(barrier, commandClasses, blockAfter, originLocalOnly, t -> true);
    }
 
    public BlockingInterceptor(CyclicBarrier barrier, Class<T> commandClass,
+                              boolean blockAfter, boolean originLocalOnly, Predicate<T> acceptCommand) {
+      this(barrier, new Class[] { commandClass } , blockAfter, originLocalOnly, acceptCommand);
+   }
+
+   public BlockingInterceptor(CyclicBarrier barrier, Class<T>[] commandClasses,
          boolean blockAfter, boolean originLocalOnly, Predicate<T> acceptCommand) {
       this.barrier = barrier;
-      this.commandClass = commandClass;
+      this.commandClasses = commandClasses;
       this.blockAfter = blockAfter;
       this.originLocalOnly = originLocalOnly;
       this.acceptCommand = acceptCommand;
@@ -51,15 +61,16 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
          log.tracef("Suspended, not blocking command %s", command);
          return;
       }
-      if (commandClass.equals(command.getClass()) && (!originLocalOnly || ctx.isOriginLocal()) && acceptCommand.test(commandClass.cast(command))) {
-         log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
-         // The first arrive and await is to sync with main thread
-         barrier.await();
-         // Now we actually block until main thread lets us go
-         barrier.await();
-         log.tracef("Command completed blocking completion of %s", command);
-      } else {
-         log.trace("Command arrived but already found a blocker");
+      for (Class<T> commandClass : commandClasses) {
+         if (commandClass.equals(command.getClass()) && (!originLocalOnly || ctx.isOriginLocal()) && acceptCommand.test(commandClass.cast(command))) {
+            log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
+            // The first arrive and await is to sync with main thread
+            barrier.await();
+            // Now we actually block until main thread lets us go
+            barrier.await();
+            log.tracef("Command completed blocking completion of %s", command);
+            return;
+         }
       }
    }
 

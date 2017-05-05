@@ -113,13 +113,13 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       InternalCacheEntry d0 = advancedCache(0).getDataContainer().get(key);
       InternalCacheEntry d1 = advancedCache(1).getDataContainer().get(key);
       InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
-      if (d0 == null) {
+      if (d0 == null || d0.getValue() == null) {
          assert sameValue(d1, d2);
          return d1.getValue();
-      } else if (d1 == null)  {
+      } else if (d1 == null || d1.getValue() == null)  {
          assert sameValue(d0, d2);
          return d0.getValue();
-      } else  if (d2 == null) {
+      } else  if (d2 == null || d2.getValue() == null) {
          assert sameValue(d0, d1);
          return d0.getValue();
       }

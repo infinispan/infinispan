@@ -598,11 +598,16 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    @Override
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iterator() {
       long time = timeService.time();
-      return entryStream().filter(e -> !e.isExpired(time)).iterator();
+      return entryStream().filter(e -> !e.isExpired(time) && e.getValue() != null).iterator();
    }
 
    @Override
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iteratorIncludingExpired() {
+      return entryStream().filter(e -> e.getValue() != null).iterator();
+   }
+
+   @Override
+   public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iteratorIncludingExpiredAndTombstones() {
       return entryStream().iterator();
    }
 }

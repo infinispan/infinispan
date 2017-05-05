@@ -72,7 +72,7 @@ public class NonTxPrimaryOwnerLeavingTest extends MultipleCacheManagersTest {
       ControlledRpcManager crm = new ControlledRpcManager(cache0.getRpcManager());
       cache0.getComponentRegistry().registerComponent(crm, RpcManager.class);
       cache0.getComponentRegistry().rewire();
-      crm.blockBefore(operation.getCommandClass());
+      crm.blockBefore(operation.getCommandClasses());
 
       // Try to put a key/value from cache0 with cache1 the primary owner
       final MagicKey key = new MagicKey(cache1);

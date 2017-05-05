@@ -115,14 +115,12 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public final void commit(DataContainer container, Metadata providedMetadata) {
-      // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
-
+   public final void commit(DataContainer container) {
       // only do stuff if there are changes.
       if (isChanged()) {
          if (trace)
-            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s metadata=%s, providedMetadata=%s)",
-                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), toStr(value), getMetadata(), providedMetadata);
+            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s metadata=%s)",
+                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), toStr(value), getMetadata());
 
          // Ugh!
          if (value instanceof AtomicHashMap) {
@@ -137,13 +135,14 @@ public class ReadCommittedEntry implements MVCCEntry {
 
          if (isEvicted()) {
             container.evict(key);
-         } else if (isRemoved()) {
+         } else if (!isValid() || (value == null && (metadata == null || metadata.lastInvocation() == null))) {
             container.remove(key);
-         } else if (value != null) {
+         } else {
+            assert !isRemoved() || value == null;
             // Can't just rely on the entry's metadata because it could have
             // been modified by the interceptor chain (i.e. new version
             // generated if none provided by the user)
-            container.put(key, value, providedMetadata == null ? metadata : providedMetadata);
+            container.put(key, value, metadata);
          }
       }
    }

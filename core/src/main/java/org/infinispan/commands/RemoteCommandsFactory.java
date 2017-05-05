@@ -316,6 +316,9 @@ public class RemoteCommandsFactory {
             case BackupPutMapRpcCommand.COMMAND_ID:
                command = new BackupPutMapRpcCommand(cacheName);
                break;
+            case ForgetInvocationsCommand.COMMAND_ID:
+               command = new ForgetInvocationsCommand(cacheName);
+               break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
          }

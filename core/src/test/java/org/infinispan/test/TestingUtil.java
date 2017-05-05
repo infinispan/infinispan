@@ -1009,6 +1009,15 @@ public class TestingUtil {
       return old;
    }
 
+   public static <T, R> R wrapComponent(Cache<?, ?> cache, Class<T> componentType, Function<T, R> ctor) {
+      ComponentRegistry cr = extractComponentRegistry(cache);
+      T old = cr.getComponent(componentType);
+      R replacementComponent = ctor.apply(old);
+      cr.registerComponent(replacementComponent, componentType);
+      cr.rewire();
+      return replacementComponent;
+   }
+
    /**
     * Replaces a component in a running cache manager (global component registry)
     *

@@ -3,6 +3,7 @@ package org.infinispan.replication;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyCollectionOf;
 import static org.mockito.Mockito.reset;
@@ -10,7 +11,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -58,7 +59,7 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
 
       // check that the replication call was sync
       cache1.put("k", "v");
-      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
+      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), isA(SingleRpcCommand.class),
             eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(), any(ResponseFilter.class),
             any(DeliverOrder.class), anyBoolean());
 
@@ -66,7 +67,7 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
 
       // verify FORCE_ASYNCHRONOUS flag on SYNC cache
       cache1.withFlags(Flag.FORCE_ASYNCHRONOUS).put("k", "v");
-      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
+      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), isA(SingleRpcCommand.class),
             eq(ResponseMode.ASYNCHRONOUS), anyLong(), any(ResponseFilter.class), any(DeliverOrder.class),
             anyBoolean());
    }
@@ -86,14 +87,14 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
       rpcManager.setTransport(mockTransport);
 
       cache1.put("k", "v");
-      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
+      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), isA(SingleRpcCommand.class),
             eq(ResponseMode.ASYNCHRONOUS), anyLong(), any(ResponseFilter.class), any(DeliverOrder.class),
             anyBoolean());
       reset(mockTransport);
 
       // verify FORCE_SYNCHRONOUS flag on ASYNC cache
       cache1.withFlags(Flag.FORCE_SYNCHRONOUS).put("k", "v");
-      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
+      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), isA(SingleRpcCommand.class),
             eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(), any(ResponseFilter.class),
             any(DeliverOrder.class), anyBoolean());
    }

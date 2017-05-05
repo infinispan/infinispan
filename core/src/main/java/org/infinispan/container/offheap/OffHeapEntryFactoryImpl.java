@@ -2,8 +2,10 @@ package org.infinispan.container.offheap;
 
 import java.io.IOException;
 
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.Configuration;
@@ -23,22 +25,24 @@ import org.infinispan.util.TimeService;
  */
 public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final UnsafeWrapper UNSAFE = UnsafeWrapper.INSTANCE;
+   private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-   private Marshaller marshaller;
+   private StreamingMarshaller marshaller;
    private OffHeapMemoryAllocator allocator;
    private TimeService timeService;
    private InternalEntryFactory internalEntryFactory;
    private boolean evictionEnabled;
 
    // If custom than we just store the metadata as is (no other bits should be used)
-   private static final byte CUSTOM = 1;
+   private static final int CUSTOM = 1;
    // Version can be set with any combination of the following types
-   private static final byte HAS_VERSION = 2;
+   private static final int HAS_VERSION = 2;
    // Only one of the following should ever be set
-   private static final byte IMMORTAL = 1 << 2;
-   private static final byte MORTAL = 1 << 3;
-   private static final byte TRANSIENT = 1 << 4;
-   private static final byte TRANSIENT_MORTAL = 1 << 5;
+   private static final int MORTAL = 1 << 2;
+   private static final int TRANSIENT = 1 << 3;
+   private static final int TOMBSTONE = 1 << 4;
+   private static final int HAS_INVOCATIONS = 1 << 5;
+   private static final int EMBEDDED_TYPE_MASK = TRANSIENT | MORTAL;
 
    private static final int BYTE_ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(byte[].class);
 
@@ -48,7 +52,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final int HEADER_LENGTH = 4 + 4 + 4 + 4 + 1;
 
    @Inject
-   public void inject(Marshaller marshaller, OffHeapMemoryAllocator allocator, TimeService timeService,
+   public void inject(StreamingMarshaller marshaller, OffHeapMemoryAllocator allocator, TimeService timeService,
          InternalEntryFactory internalEntryFactory, Configuration configuration) {
       this.marshaller = marshaller;
       this.allocator = allocator;
@@ -69,47 +73,72 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       byte type;
       byte[] metadataBytes;
       if (metadata instanceof EmbeddedMetadata) {
-
+         int versionInvocationsLength = 0;
          EntryVersion version = metadata.version();
          byte[] versionBytes;
          if (version != null) {
             type = HAS_VERSION;
             try {
                versionBytes = marshaller.objectToByteBuffer(version);
+               versionInvocationsLength += versionBytes.length;
             } catch (IOException | InterruptedException e) {
                throw new CacheException(e);
             }
          } else {
             type = 0;
-            versionBytes = new byte[0];
+            versionBytes = EMPTY_BYTE_ARRAY;
+         }
+         ByteBuffer invocationBytes;
+         if (metadata.lastInvocation() != null) {
+            type |= HAS_INVOCATIONS;
+            try {
+               invocationBytes = metadata.lastInvocation().toByteBuffer(marshaller);
+               versionInvocationsLength += invocationBytes.getLength();
+            } catch (IOException e) {
+               throw new CacheException(e);
+            }
+         } else {
+            invocationBytes = null;
+         }
+
+         if (type == (HAS_INVOCATIONS | HAS_VERSION)) {
+            versionInvocationsLength += 4;
          }
 
          long lifespan = metadata.lifespan();
          long maxIdle = metadata.maxIdle();
 
          if (lifespan < 0 && maxIdle < 0) {
-            type |= IMMORTAL;
-            metadataBytes = versionBytes;
+            if ((type & HAS_VERSION) == 0) {
+               metadataBytes = invocationBytes == null ? EMPTY_BYTE_ARRAY : invocationBytes.toBytes();
+            } else if ((type & HAS_INVOCATIONS) == 0) {
+               metadataBytes = versionBytes;
+            } else {
+               metadataBytes = new byte[versionInvocationsLength];
+               Bits.putInt(metadataBytes, 0, versionBytes.length);
+               System.arraycopy(versionBytes, 0, metadataBytes, 4, versionBytes.length);
+               invocationBytes.copyTo(metadataBytes, 4 + versionBytes.length);
+            }
          } else if (lifespan > -1 && maxIdle < 0) {
             type |= MORTAL;
-            metadataBytes = new byte[16 + versionBytes.length];
+            metadataBytes = new byte[16 + versionInvocationsLength];
             Bits.putLong(metadataBytes, 0, lifespan);
             Bits.putLong(metadataBytes, 8, timeService.wallClockTime());
-            System.arraycopy(metadataBytes, 0, versionBytes, 16, versionBytes.length);
+            putVersionsInvocations(metadataBytes, 16, type, versionBytes, invocationBytes);
          } else if (lifespan < 0 && maxIdle > -1) {
             type |= TRANSIENT;
-            metadataBytes = new byte[16 + versionBytes.length];
+            metadataBytes = new byte[16 + versionInvocationsLength];
             Bits.putLong(metadataBytes, 0, maxIdle);
             Bits.putLong(metadataBytes, 8, timeService.wallClockTime());
-            System.arraycopy(metadataBytes, 0, versionBytes, 16, versionBytes.length);
+            putVersionsInvocations(metadataBytes, 16, type, versionBytes, invocationBytes);
          } else {
-            type |= TRANSIENT_MORTAL;
-            metadataBytes = new byte[32 + versionBytes.length];
+            type |= TRANSIENT | MORTAL;
+            metadataBytes = new byte[32 + versionInvocationsLength];
             Bits.putLong(metadataBytes, 0, maxIdle);
             Bits.putLong(metadataBytes, 8, lifespan);
             Bits.putLong(metadataBytes, 16, timeService.wallClockTime());
             Bits.putLong(metadataBytes, 24, timeService.wallClockTime());
-            System.arraycopy(metadataBytes, 0, versionBytes, 16, versionBytes.length);
+            putVersionsInvocations(metadataBytes, 32, type, versionBytes, invocationBytes);
          }
       } else {
          type = CUSTOM;
@@ -120,7 +149,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          }
       }
       int keySize = key.getLength();
-      int valueSize = value.getLength();
+      int valueSize = value == null ? 0 : value.getLength();
       int metadataSize = metadataBytes.length;
       long totalSize = 8 + HEADER_LENGTH + keySize + metadataSize + valueSize;
 
@@ -137,6 +166,10 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          memoryOffset =  memoryAddress;
       }
 
+      if (value == null) {
+         type |= TOMBSTONE;
+      }
+
       int offset = 0;
       byte[] header = new byte[HEADER_LENGTH];
 
@@ -146,7 +179,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       offset += 4;
       Bits.putInt(header, offset, metadataBytes.length);
       offset += 4;
-      Bits.putInt(header, offset, value.getLength());
+      Bits.putInt(header, offset, valueSize);
       offset += 4;
       header[offset++] = type;
 
@@ -164,10 +197,25 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       UNSAFE.copyMemory(metadataBytes, BYTE_ARRAY_BASE_OFFSET, null, memoryOffset, metadataSize);
       memoryOffset += metadataSize;
 
-      UNSAFE.copyMemory(value.getBytes(), value.backArrayOffset() + BYTE_ARRAY_BASE_OFFSET, null, memoryOffset,
-            valueSize);
+      if (value != null) {
+         UNSAFE.copyMemory(value.getBytes(), value.backArrayOffset() + BYTE_ARRAY_BASE_OFFSET, null, memoryOffset,
+               valueSize);
+      }
 
       return memoryAddress;
+   }
+
+   private void putVersionsInvocations(byte[] metadataBytes, int offset, byte type, byte[] versionBytes, ByteBuffer invocationBytes) {
+      int hasBoth = HAS_VERSION | HAS_INVOCATIONS;
+      if ((type & hasBoth) == hasBoth) {
+         Bits.putInt(metadataBytes, offset, versionBytes.length);
+         System.arraycopy(versionBytes, 0, metadataBytes, offset + 4, versionBytes.length);
+         invocationBytes.copyTo(metadataBytes, offset + 4 + versionBytes.length);
+      } else if ((type & HAS_VERSION) != 0) {
+         System.arraycopy(versionBytes, 0, metadataBytes, offset, versionBytes.length);
+      } else if ((type & HAS_INVOCATIONS) != 0) {
+         invocationBytes.copyTo(metadataBytes, offset);
+      }
    }
 
    @Override
@@ -220,7 +268,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       byte[] valueBytes = new byte[Bits.getInt(header, offset)];
       offset += 4;
 
-      byte metadataType = header[offset++];
+      byte type = header[offset++];
 
       long memoryOffset = address + offset;
 
@@ -228,29 +276,35 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       memoryOffset += keyBytes.length;
       UNSAFE.copyMemory(null, memoryOffset, metadataBytes, BYTE_ARRAY_BASE_OFFSET, metadataBytes.length);
       memoryOffset += metadataBytes.length;
-      UNSAFE.copyMemory(null, memoryOffset, valueBytes, BYTE_ARRAY_BASE_OFFSET, valueBytes.length);
-      memoryOffset += valueBytes.length;
+
+      WrappedByteArray value = null;
+      if ((type & TOMBSTONE) == 0) {
+         UNSAFE.copyMemory(null, memoryOffset, valueBytes, BYTE_ARRAY_BASE_OFFSET, valueBytes.length);
+         value = new WrappedByteArray(valueBytes);
+      } else {
+         assert valueBytes.length == 0;
+      }
 
       Metadata metadata;
-      // This is a custom metadata
-      if ((metadataType & 1) == 1) {
+      if ((type & CUSTOM) == CUSTOM) {
          try {
             metadata = (Metadata) marshaller.objectFromByteBuffer(metadataBytes);
          } catch (IOException | ClassNotFoundException e) {
             throw new CacheException(e);
          }
          return internalEntryFactory.create(new WrappedByteArray(keyBytes),
-               new WrappedByteArray(valueBytes), metadata);
+               value, metadata);
       } else {
          long lifespan;
          long maxIdle;
          long created;
          long lastUsed;
          offset = 0;
-         boolean hasVersion = (metadataType & 2) == 2;
+         boolean hasVersion = (type & HAS_VERSION) == HAS_VERSION;
+         boolean hasInvocations = (type & HAS_INVOCATIONS) == HAS_INVOCATIONS;
          // Ignore CUSTOM and VERSION to find type
-         switch (metadataType & 0xFC) {
-            case IMMORTAL:
+         switch (type & EMBEDDED_TYPE_MASK) {
+            case 0:
                lifespan = -1;
                maxIdle = -1;
                created = -1;
@@ -268,27 +322,41 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
                created = -1;
                lastUsed = Bits.getLong(metadataBytes, offset += 8);
                break;
-            case TRANSIENT_MORTAL:
+            case (TRANSIENT | MORTAL):
                lifespan = Bits.getLong(metadataBytes, offset++);
                maxIdle = Bits.getLong(metadataBytes, offset += 8);
                created = Bits.getLong(metadataBytes, offset += 8);
                lastUsed = Bits.getLong(metadataBytes, offset += 8);
                break;
             default:
-               throw new IllegalArgumentException("Unsupported type: " + metadataType);
+               throw new IllegalArgumentException("Unsupported type: " + type);
          }
-         if (hasVersion) {
-            try {
-               EntryVersion version = (EntryVersion) marshaller.objectFromByteBuffer(metadataBytes, offset,
-                     metadataBytes.length - offset);
+
+         try {
+            if (hasVersion) {
+               if (hasInvocations) {
+                  int versionLength = Bits.getInt(metadataBytes, offset);
+                  EntryVersion version = (EntryVersion) marshaller.objectFromByteBuffer(metadataBytes, offset += 4, versionLength);
+                  InvocationRecord invocations = InvocationRecord.fromBytes(marshaller, metadataBytes, offset += versionLength, metadataBytes.length - offset);
+                  metadata = new EmbeddedMetadata.Builder().version(version).invocations(invocations).lifespan(lifespan).maxIdle(maxIdle).build();
+                  return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
+                        value, metadata, created, lifespan, lastUsed, maxIdle);
+               } else {
+                  EntryVersion version = (EntryVersion) marshaller.objectFromByteBuffer(metadataBytes, offset, metadataBytes.length - offset);
+                  return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
+                        value, version, created, lifespan, lastUsed, maxIdle);
+               }
+            } else if (hasInvocations) {
+               InvocationRecord invocations = InvocationRecord.fromBytes(marshaller, metadataBytes, offset, metadataBytes.length - offset);
+               metadata = new EmbeddedMetadata.Builder().invocations(invocations).lifespan(lifespan).maxIdle(maxIdle).build();
                return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
-                     new WrappedByteArray(valueBytes), version, created, lifespan, lastUsed, maxIdle);
-            } catch (IOException | ClassNotFoundException e) {
-               throw new CacheException(e);
+                     value, metadata, created, lifespan, lastUsed, maxIdle);
+            } else {
+               return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
+                     value, (Metadata) null, created, lifespan, lastUsed, maxIdle);
             }
-         } else {
-            return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
-                  new WrappedByteArray(valueBytes), (Metadata) null, created, lifespan, lastUsed, maxIdle);
+         } catch (IOException | ClassNotFoundException e) {
+            throw new CacheException(e);
          }
       }
    }

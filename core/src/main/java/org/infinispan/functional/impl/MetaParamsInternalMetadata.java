@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.api.functional.MetaParam.MetaCreated;
 import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
@@ -91,6 +93,16 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       return params.find(MetaEntryVersion.class).map(MetaParamsInternalMetadata::versionOrNull).orElse(null);
    }
 
+   @Override
+   public InvocationRecord lastInvocation() {
+      return params.find(InvocationRecords.class).flatMap(InvocationRecords::lastInvocation).orElse(null);
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return params.find(InvocationRecords.class).flatMap(ir -> ir.invocation(id)).orElse(null);
+   }
+
    private static EntryVersion versionOrNull(MetaEntryVersion mev) {
       org.infinispan.commons.api.functional.EntryVersion entryVersion = mev.get();
       return entryVersion instanceof FunctionalEntryVersionAdapter ? ((FunctionalEntryVersionAdapter) entryVersion).get() : null;
@@ -102,7 +114,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    }
 
    @Override
-   public <T> Optional<T> findMetaParam(Class<T> type) {
+   public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
       return params.find(type);
    }
 
@@ -148,6 +160,23 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       public Metadata.Builder version(EntryVersion version) {
          params.add(new MetaEntryVersion<>(new FunctionalEntryVersionAdapter(version)));
          return this;
+      }
+
+      @Override
+      public Metadata.Builder invocation(CommandInvocationId id, Object returnValue, boolean authoritative, boolean created, boolean modified, boolean removed, long timestamp) {
+         params.replace(InvocationRecords.class, records -> InvocationRecords.join(id, returnValue, authoritative, created, modified, removed, timestamp, records));
+         return this;
+      }
+
+      @Override
+      public Metadata.Builder invocations(InvocationRecord invocations) {
+         params.replace(InvocationRecords.class, ignored -> InvocationRecords.of(invocations));
+         return this;
+      }
+
+      @Override
+      public InvocationRecord invocations() {
+         return params.find(InvocationRecords.class).flatMap(InvocationRecords::lastInvocation).orElse(null);
       }
 
       @Override

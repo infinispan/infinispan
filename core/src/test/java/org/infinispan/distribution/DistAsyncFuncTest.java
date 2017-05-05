@@ -2,13 +2,13 @@ package org.infinispan.distribution;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.ReplListener;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "distribution.DistAsyncFuncTest")
@@ -39,12 +39,12 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
       r3 = new ReplListener(c3, true, true);
       r4 = new ReplListener(c4, true, true);
       r = new ReplListener[]{r1, r2, r3, r4};
-      listenerLookup = new HashMap<Cache<?, ?>, ReplListener>();
+      listenerLookup = new HashMap<>();
       for (ReplListener rl : r) listenerLookup.put(rl.getCache(), rl);
    }
 
    @Override
-   protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... cachesOnWhichKeyShouldInval) {
+   protected void asyncWait(Object key, Predicate<VisitableCommand> command, Cache<?, ?>... cachesOnWhichKeyShouldInval) {
       if (key == null) {
          // test all caches.
          for (ReplListener rl : r) rl.expect(command);
@@ -62,7 +62,5 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
             }
          }
       }
-      // This sucks but for async transactions we still need this!!
-      TestingUtil.sleepThread(1000);
    }
 }

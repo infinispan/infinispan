@@ -141,8 +141,8 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-            op.getCommandClass(), true, false);
+      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCommitCache1Barrier,
+            op.getCommandClasses(), true, false);
       cache1.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
 
       // Wait for cache0 to collect the state to send to cache1 (including our previous value).

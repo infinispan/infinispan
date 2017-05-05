@@ -2,6 +2,8 @@ package org.infinispan.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -9,8 +11,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -28,8 +35,8 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ReplListener {
    Cache<?, ?> c;
-   volatile List<Class<? extends VisitableCommand>> expectedCommands;
-   List<Class<? extends VisitableCommand>> eagerCommands = new LinkedList<Class<? extends VisitableCommand>>();
+   volatile List<Predicate<VisitableCommand>> expectedCommands;
+   List<VisitableCommand> eagerCommands = new LinkedList<>();
    boolean recordCommandsEagerly;
    boolean watchLocal;
    final Lock expectationSetupLock = new ReentrantLock();
@@ -85,7 +92,7 @@ public class ReplListener {
     */
    public void expectAny() {
       expectAny = true;
-      expect();
+      expect(new Predicate[0]);
    }
 
    /**
@@ -126,16 +133,34 @@ public class ReplListener {
     * @param expectedCommands commands to expect
     */
    public void expect(Class<? extends VisitableCommand>... expectedCommands) {
+      Function<Class<? extends VisitableCommand>, Predicate<VisitableCommand>> predicateGenerator = clazz -> clazz::isInstance;
+      expect(Stream.of(expectedCommands).map(predicateGenerator).collect(Collectors.toList()));
+   }
+
+   public void expect(Class<? extends VisitableCommand> expectedCommand) {
+      expect(Collections.singleton(expectedCommand::isInstance));
+   }
+
+   public void expect(Predicate<VisitableCommand> predicate) {
+      expect(Collections.singleton(predicate));
+   }
+
+   public void expect(Predicate<VisitableCommand>... predicates) {
+      expect(Arrays.asList(predicates));
+   }
+
+   public void expect(Collection<Predicate<VisitableCommand>> predicates) {
       expectationSetupLock.lock();
       try {
          if (this.expectedCommands == null) {
-            this.expectedCommands = new CopyOnWriteArrayList<Class<? extends VisitableCommand>>();
+            this.expectedCommands = new CopyOnWriteArrayList<>();
          }
-         this.expectedCommands.addAll(Arrays.asList(expectedCommands));
-         info("Setting expected commands to " + this.expectedCommands);
+         this.expectedCommands.addAll(predicates);
          info("Record eagerly is " + recordCommandsEagerly + ", and eager commands are " + eagerCommands);
          if (recordCommandsEagerly) {
-            this.expectedCommands.removeAll(eagerCommands);
+            for (VisitableCommand eager : eagerCommands) {
+               this.expectedCommands.removeIf(pred -> pred.test(eager));
+            }
             if (!eagerCommands.isEmpty()) sawAtLeastOneInvocation = true;
             eagerCommands.clear();
          }
@@ -163,12 +188,10 @@ public class ReplListener {
       assert expectedCommands != null : "there are no replication expectations; please use ReplListener.expect() before calling this method";
       try {
          boolean successful = (expectAny && sawAtLeastOneInvocation) || (!expectAny && expectedCommands.isEmpty());
-         info("Expect Any is " + expectAny + ", saw at least one? " + sawAtLeastOneInvocation + " Successful? " + successful + " Expected commands " + expectedCommands);
+         info("Expect Any is " + expectAny + ", saw at least one? " + sawAtLeastOneInvocation + " Successful? " + successful);
          if (!successful && !latch.await(time, unit)) {
             EmbeddedCacheManager cacheManager = c.getCacheManager();
-            assert false : "Waiting for more than " + time + " " + unit + " and following commands did not replicate: " + expectedCommands + " on cache [" + cacheManager.getAddress() + "]";
-         } else {
-            info("Exiting wait for rpc with expected commands " + expectedCommands);
+            assert false : "Waiting for more than " + time + " " + unit + " and some commands did not replicate on cache [" + cacheManager.getAddress() + "]";
          }
       }
       catch (InterruptedException e) {
@@ -198,6 +221,15 @@ public class ReplListener {
       this.watchLocal = watchLocal;
    }
 
+   private boolean isPrimaryOwner(VisitableCommand cmd) {
+      if (cmd instanceof DataCommand) {
+         return c.getAdvancedCache().getDistributionManager().getCacheTopology()
+               .getDistribution(((DataCommand) cmd).getKey()).isPrimary();
+      } else {
+         return true;
+      }
+   }
+
    protected class ReplListenerInterceptor extends CommandInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
@@ -207,7 +239,7 @@ public class ReplListener {
             o = invokeNextInterceptor(ctx, cmd);
          } finally {//make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
             info("Checking whether command " + cmd.getClass().getSimpleName() + " should be marked as local with watch local set to " + watchLocal);
-            if (!ctx.isOriginLocal() || watchLocal) markAsVisited(cmd);
+            if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) markAsVisited(cmd);
          }
          return o;
       }
@@ -228,11 +260,11 @@ public class ReplListener {
          try {
             info("ReplListener saw command " + cmd);
             if (expectedCommands != null) {
-               if (expectedCommands.remove(cmd.getClass())) {
+               if (expectedCommands.removeIf(predicate -> predicate.test(cmd))) {
                   info("Successfully removed command: " + cmd.getClass());
                }
                else {
-                  if (recordCommandsEagerly) eagerCommands.add(cmd.getClass());
+                  if (recordCommandsEagerly) eagerCommands.add(cmd);
                }
                sawAtLeastOneInvocation = true;
                if (expectedCommands.isEmpty()) {
@@ -240,7 +272,7 @@ public class ReplListener {
                   latch.countDown();
                }
             } else {
-               if (recordCommandsEagerly) eagerCommands.add(cmd.getClass());
+               if (recordCommandsEagerly) eagerCommands.add(cmd);
             }
          } finally {
             expectationSetupLock.unlock();

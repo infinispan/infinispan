@@ -89,6 +89,9 @@ public interface ClusteringDependentLogic {
       }
    }
 
+   void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
+                          InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata);
+
    /**
     * @return information about the location of keys.
     */
@@ -118,8 +121,7 @@ public interface ClusteringDependentLogic {
       return getCacheTopology().getDistribution(key).primary();
    }
 
-   void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
-                    Flag trackFlag, boolean l1Invalidation);
+   void commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation);
 
    Commit commitType(FlagAffectedCommand command, InvocationContext ctx, Object key, boolean removed);
 
@@ -178,12 +180,12 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public final void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
+      public final void commitEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          if (entry instanceof ClearCacheEntry) {
             //noinspection unchecked
             commitClearCommand(dataContainer, (ClearCacheEntry<Object, Object>) entry, ctx, command);
          } else {
-            commitSingleEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
+            commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
          }
       }
 
@@ -191,13 +193,13 @@ public interface ClusteringDependentLogic {
                                       InvocationContext context, FlagAffectedCommand command) {
          List<InternalCacheEntry<Object, Object>> copyEntries = new ArrayList<>(dataContainer.sizeIncludingExpired());
          dataContainer.iterator().forEachRemaining(copyEntries::add);
-         cacheEntry.commit(dataContainer, null);
+         cacheEntry.commit(dataContainer);
          for (InternalCacheEntry entry : copyEntries) {
             notifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), false, context, command);
          }
       }
 
-      protected abstract void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
+      protected abstract void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                                 InvocationContext ctx, Flag trackFlag, boolean l1Invalidation);
 
       @Override
@@ -230,8 +232,9 @@ public interface ClusteringDependentLogic {
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder);
 
-      protected void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
-              InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      @Override
+      public void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
+                                    InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
          boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
          if (removed) {
             if (command instanceof RemoveCommand) {
@@ -362,7 +365,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
+      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
                                        Flag trackFlag, boolean l1Invalidation) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
@@ -382,7 +385,7 @@ public interface ClusteringDependentLogic {
             previousValue = previousEntry.getValue();
             previousMetadata = previousEntry.getMetadata();
          }
-         commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
+         commitManager.commit(entry, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
          notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
@@ -400,7 +403,7 @@ public interface ClusteringDependentLogic {
    class InvalidationLogic extends AbstractClusteringDependentLogic {
 
       @Override
-      protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
+      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          // Cache flags before they're reset
          // TODO: Can the reset be done after notification instead?
@@ -420,7 +423,7 @@ public interface ClusteringDependentLogic {
             previousValue = previousEntry.getValue();
             previousMetadata = previousEntry.getMetadata();
          }
-         commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
+         commitManager.commit(entry, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
          notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
@@ -460,7 +463,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
+      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
@@ -486,7 +489,7 @@ public interface ClusteringDependentLogic {
                   previousValue = previousEntry.getValue();
                   previousMetadata = previousEntry.getMetadata();
                }
-               commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
+               commitManager.commit(entry, trackFlag, l1Invalidation);
                if (doCommit.isLocal()) {
                   notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
                }
@@ -524,7 +527,7 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      protected void commitSingleEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command,
+      protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,
                                        InvocationContext ctx, Flag trackFlag, boolean l1Invalidation) {
          // Don't allow the CH to change (and state transfer to invalidate entries)
          // between the ownership check and the commit
@@ -536,23 +539,12 @@ public interface ClusteringDependentLogic {
             if (!doCommit.isCommit() && configuration.clustering().l1().enabled()) {
                // transform for L1
                if (!entry.isRemoved()) {
-                  long lifespan;
-                  if (metadata != null) {
-                     lifespan = metadata.lifespan();
-                  } else {
-                     lifespan = entry.getLifespan();
-                  }
+                  long lifespan = entry.getLifespan();
                   if (lifespan < 0 || lifespan > configuration.clustering().l1().lifespan()) {
-                     Metadata.Builder builder;
-                     if (metadata != null) {
-                        builder = metadata.builder();
-                     } else {
-                        builder = entry.getMetadata().builder();
-                     }
-                     metadata = builder
+                     Metadata metadata = entry.getMetadata().builder()
                         .lifespan(configuration.clustering().l1().lifespan())
                         .build();
-                     metadata = new L1Metadata(metadata);
+                     entry.setMetadata(new L1Metadata(metadata));
                   }
                }
                isL1Write = true;
@@ -583,7 +575,7 @@ public interface ClusteringDependentLogic {
                   // don't overwrite non-L1 entry with L1 (e.g. when originator == backup
                   // and therefore we have two contexts on one node)
                } else {
-                  commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
+                  commitManager.commit(entry, trackFlag, l1Invalidation);
                   if (doCommit.isLocal()) {
                      notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
                   }

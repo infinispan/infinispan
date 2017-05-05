@@ -5,22 +5,31 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.InvocationManager;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
+import org.infinispan.commands.functional.StrictOrderingCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -31,8 +40,12 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -50,6 +63,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.ClusteringInterceptor;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -65,6 +80,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -80,16 +97,23 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class BaseDistributionInterceptor extends ClusteringInterceptor {
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final long REPLICATE_NON_AUTHORITATIVE_FLAGS =
+         FlagBitSets.COMMAND_RETRY | FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.PROVIDED_RESULT;
 
    protected DistributionManager dm;
    protected RemoteValueRetrievedListener rvrl;
    protected KeyPartitioner keyPartitioner;
+   protected ClusteringDependentLogic cdl;
+   protected InvocationManager invocationManager;
 
    protected boolean isL1Enabled;
    protected boolean isReplicated;
 
    private final ReadOnlyManyHelper readOnlyManyHelper = new ReadOnlyManyHelper();
    private final InvocationSuccessFunction primaryReturnHandler = this::primaryReturnHandler;
+   protected TimeService timeService;
+
+   protected final PutMapHelper putMapHelper = new PutMapHelper();
 
    @Override
    protected Log getLog() {
@@ -98,10 +122,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    @Inject
    public void injectDependencies(DistributionManager distributionManager, RemoteValueRetrievedListener rvrl,
-                                  KeyPartitioner keyPartitioner) {
+                                  KeyPartitioner keyPartitioner, TimeService timeService, ClusteringDependentLogic cdl,
+                                  InvocationManager invocationManager) {
       this.dm = distributionManager;
       this.rvrl = rvrl;
       this.keyPartitioner = keyPartitioner;
+      this.timeService = timeService;
+      this.cdl = cdl;
+      this.invocationManager = invocationManager;
    }
 
 
@@ -147,30 +175,30 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNext(ctx, command);
    }
 
-   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<Void> remoteGet(
-         InvocationContext ctx, C command, Object key, boolean isWrite) {
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      int topologyId = cacheTopology.getTopologyId();
+   protected CompletableFuture<Void> remoteGet(InvocationContext ctx, Object key, boolean isWrite,
+                                               int topologyId, long flagsBitSet) {
+      LocalizedCacheTopology cacheTopology = checkTopologyId(topologyId);
+      int currentTopologyId = cacheTopology.getTopologyId();
 
       DistributionInfo info = cacheTopology.getDistribution(key);
       if (info.isReadOwner()) {
          if (trace) {
             log.tracef("Key %s became local after wrapping, retrying command. Command topology is %d, current topology is %d",
-                  key, command.getTopologyId(), topologyId);
+                  key, topologyId, currentTopologyId);
          }
          // The topology has changed between EWI and BDI, let's retry
-         if (command.getTopologyId() == topologyId) {
+         if (topologyId == currentTopologyId) {
             throw new IllegalStateException();
          }
-         throw new OutdatedTopologyException(topologyId);
+         throw new OutdatedTopologyException(currentTopologyId);
       }
       if (trace) {
          log.tracef("Perform remote get for key %s. currentTopologyId=%s, owners=%s",
-            key, topologyId, info.readOwners());
+            key, currentTopologyId, info.readOwners());
       }
 
-      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, command.getFlagsBitSet());
-      getCommand.setTopologyId(topologyId);
+      ClusteredGetCommand getCommand = cf.buildClusteredGetCommand(key, flagsBitSet);
+      getCommand.setTopologyId(currentTopologyId);
       getCommand.setWrite(isWrite);
 
       return rpcManager.invokeRemotelyAsync(info.readOwners(), getCommand, getStaggeredOptions(info.readOwners().size())).thenAccept(responses -> {
@@ -219,80 +247,159 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    protected final Object handleNonTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command)
          throws Throwable {
       Object key = command.getKey();
-      CacheEntry entry = ctx.lookupEntry(key);
 
       if (isLocalModeForced(command)) {
-         if (entry == null) {
+         if (ctx.lookupEntry(key) == null) {
             entryFactory.wrapExternalEntry(ctx, key, null, false, true);
          }
+         command.setAuthoritative(true);
          return invokeNext(ctx, command);
       }
 
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      DistributionInfo info = cacheTopology.getDistribution(key);
-      if (entry == null) {
-         boolean load = shouldLoad(ctx, command, info);
-         if (info.isPrimary()) {
-            throw new IllegalStateException("Primary owner in writeCH should always be an owner in readCH as well.");
-         } else if (ctx.isOriginLocal()) {
-            return invokeRemotely(command, info.primary());
-         } else {
-            if (load) {
-               CompletableFuture<?> getFuture = remoteGet(ctx, command, command.getKey(), true);
-               return asyncInvokeNext(ctx, command, getFuture);
-            } else {
-               entryFactory.wrapExternalEntry(ctx, key, null, false, true);
-               return invokeNext(ctx, command);
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command.getTopologyId());
+      DistributionInfo distributionInfo = cacheTopology.getDistribution(key);
+
+      if (distributionInfo.isPrimary()) {
+         if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+            ByRef<Object> returnValue = new ByRef<>(null);
+            if (checkInvocationRecord(ctx, command, distributionInfo, returnValue, this::updateBackupsAndReturn)) {
+               return returnValue.get();
             }
          }
-      } else {
-         if (info.isPrimary()) {
-            return invokeNextThenApply(ctx, command, primaryReturnHandler);
-         } else if (ctx.isOriginLocal()) {
-            return invokeRemotely(command, info.primary());
-         } else {
-            return invokeNext(ctx, command);
+         if (command instanceof StrictOrderingCommand) {
+            CommandInvocationId lastId = ctx.lookupEntry(key)
+                  .metadata().flatMap(Metadata::lastInvocationOpt).map(InvocationRecord::getId).orElse(null);
+            if (lastId != null) {
+               ((StrictOrderingCommand) command).setLastInvocationId(command.getKey(), lastId);
+            }
          }
+
+         return invokeNextThenApply(ctx, command, primaryReturnHandler);
+      } else if (ctx.isOriginLocal()) {
+         return invokeRemotely(command, distributionInfo);
+      } else {
+         return handleBackupWrite(ctx, command, distributionInfo);
       }
    }
 
-   private boolean shouldLoad(InvocationContext ctx, AbstractDataWriteCommand command, DistributionInfo info) {
-      if (!command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)) {
-         VisitableCommand.LoadType loadType = command.loadType();
-         switch (loadType) {
-            case DONT_LOAD:
-               return false;
-            case OWNER:
-               return info.isPrimary() || (info.isWriteOwner() && !ctx.isOriginLocal());
-            case PRIMARY:
-               return info.isPrimary();
-            default:
-               throw new IllegalStateException();
+   protected Object handleBackupWrite(InvocationContext ctx, AbstractDataWriteCommand command, DistributionInfo distributionInfo) {
+      CacheEntry entry = ctx.lookupEntry(command.getKey());
+      if (command instanceof StrictOrderingCommand) {
+         StrictOrderingCommand soc = (StrictOrderingCommand) command;
+         if (soc.isStrictOrdering()) {
+            CommandInvocationId lastInvocationId = soc.getLastInvocationId(command.getKey());
+            CommandInvocationId entryInvocationId = Optional.ofNullable(entry)
+                  .flatMap(CacheEntry::metadata).flatMap(Metadata::lastInvocationOpt)
+                  .map(InvocationRecord::getId).orElse(null);
+            if (entry != null && Objects.equals(lastInvocationId, entryInvocationId)) {
+               // We can apply the write, because it's based on the same previous value
+               // Note: previous invocation id might expire on primary, therefore if it sends a command without
+               // valid last invocation id and we are not read owner, we cannot apply the value because primary
+               // *could* have a value (without any id)
+            } else {
+               return retrieveRemoteAndMaybeApply(ctx, command, distributionInfo, lastInvocationId, command.getKey());
+            }
          }
+      }
+      if (entry == null) {
+         // Retrieving remote value may be impossible as it might be already overwritten on all owners.
+         assert command.loadType() != VisitableCommand.LoadType.OWNER;
+         entryFactory.wrapExternalEntry(ctx, command.getKey(), null, false, true);
+      } else if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+         Metadata metadata = entry.getMetadata();
+         if (metadata != null) {
+            InvocationRecord invocationRecord = metadata.invocation(command.getCommandInvocationId());
+            if (invocationRecord != null) {
+               invocationRecord.touch(timeService.wallClockTime());
+               command.setCompleted(command.getKey());
+               cdl.notifyCommitEntry(invocationRecord.isCreated(), invocationRecord.isRemoved(), false,
+                     entry, ctx, command, null, null);
+               return invocationRecord.returnValue;
+            }
+         }
+      }
+      command.setAuthoritative(false);
+      return invokeNext(ctx, command);
+   }
+
+   private Object retrieveRemoteAndMaybeApply(InvocationContext ctx, AbstractDataWriteCommand command, DistributionInfo distributionInfo, CommandInvocationId lastInvocationId, Object key) {
+      ClusteredGetCommand clusteredGetCommand = cf.buildClusteredGetCommand(key, FlagBitSets.WITH_INVOCATION_RECORDS);
+      clusteredGetCommand.setTopologyId(command.getTopologyId());
+      return asyncValue(rpcManager.invokeRemotelyAsync(distributionInfo.primaryAsList(), clusteredGetCommand, defaultSyncOptions)
+            .thenApply(responses -> {
+               ByRef<Object> retval = new ByRef<>(null);
+               if (handleStrictOrderingResponse(responses, ctx, command, key, distributionInfo, lastInvocationId, retval::set)) {
+                  return invokeNext(ctx, command);
+               } else {
+                  return retval.get();
+               }
+            }));
+   }
+
+   protected boolean handleStrictOrderingResponse(Map<Address, Response> responses, InvocationContext ctx, WriteCommand command, Object key, DistributionInfo distributionInfo, CommandInvocationId lastInvocationId, Consumer<Object> completedResultsConsumer) {
+      ValidResponse rsp = getResponseFromPrimaryOwner(distributionInfo.primary(), responses);
+      if (!(rsp instanceof SuccessfulResponse)) {
+         throw OutdatedTopologyException.INSTANCE;
+      }
+
+      CacheEntry<?, ?> cacheEntry;
+      CommandInvocationId id;
+      if (rsp.getResponseValue() == null) {
+         cacheEntry = NullCacheEntry.getInstance();
+         id = null;
       } else {
+         cacheEntry = ((InternalCacheValue) rsp.getResponseValue()).toInternalCacheEntry(key);
+         id = cacheEntry.metadata().flatMap(Metadata::lastInvocationOpt).map(InvocationRecord::getId).orElse(null);
+      }
+      wrapRemoteEntry(ctx, key, cacheEntry, true);
+
+      if (id == null || id.equals(lastInvocationId)) {
+         // One of these cases:
+         // 1) id == null -> the previous invocation id has expired, but as commands on backup are
+         // invoked in order, this means that this is the correct previous value (as opposed to
+         // a more recent one that already has the change applied
+         // 2) We got the value before applying the command and should apply the write
+         if (trace)
+            log.tracef("Continuing with command execution, entry's last id is %s, requested last id is %s", id, lastInvocationId);
+         command.setAuthoritative(false);
+         return true;
+      } else {
+         // We got other value and we should commit it. This boils down to these cases:
+         // 1) id == command.getCommandInvocationId() -> the command was already applied & committed on primary
+         // 2) id == another id -> triangle-like algorithm, we've received more recent value,
+         // we'll use it. This will result in further retrievals (and some events being lost),
+         // but in correct value in the end.
+         if (trace)
+            log.trace("Command was already applied");
+         CacheEntry entry = ctx.lookupEntry(key);
+         entry.setChanged(true);
+         InvocationRecord invocationRecord = cacheEntry.metadata()
+               .flatMap(m -> Optional.ofNullable(m.invocation(command.getCommandInvocationId())))
+               .orElseThrow(() -> new IllegalStateException("Retrieved " + cacheEntry + " for command "
+                     + command + " but missing id " + command.getCommandInvocationId() + " in records"));
+         invocationRecord.touch(timeService.wallClockTime());
+         // We're not marking the command as completed because we want to persist the modified value in context
+         completedResultsConsumer.accept(invocationRecord.returnValue);
          return false;
       }
    }
 
-   private Object invokeRemotely(DataWriteCommand command, Address primaryOwner) {
-      if (trace) log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
+   private Object invokeRemotely(DataWriteCommand command, DistributionInfo distributionInfo) {
+      if (trace) log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", distributionInfo.primary());
       boolean isSyncForwarding = isSynchronous(command) || command.isReturnValueExpected();
 
-      CompletableFuture<Map<Address, Response>> remoteInvocation;
-      try {
-         remoteInvocation = rpcManager.invokeRemotelyAsync(Collections.singletonList(primaryOwner), command,
+      CompletableFuture<Map<Address, Response>> remoteInvocation = rpcManager.invokeRemotelyAsync(distributionInfo.primaryAsList(), command,
                isSyncForwarding ? defaultSyncOptions : defaultAsyncOptions);
-      } catch (Throwable t) {
-         command.setValueMatcher(command.getValueMatcher().matcherForRetry());
-         throw t;
-      }
       if (isSyncForwarding) {
          return asyncValue(remoteInvocation.handle((responses, t) -> {
-            command.setValueMatcher(command.getValueMatcher().matcherForRetry());
             CompletableFutures.rethrowException(t);
 
-            ValidResponse primaryResponse = getResponseFromPrimaryOwner(primaryOwner, responses);
-            if (!primaryResponse.isSuccessful()) {
+            ValidResponse primaryResponse = getResponseFromPrimaryOwner(distributionInfo.primary(), responses);
+            if (primaryResponse.isSuccessful()) {
+               if (isSynchronous(command)) {
+                  invocationManager.notifyCompleted(command.getCommandInvocationId(), command.getKey(), distributionInfo.segmentId());
+               }
+            } else {
                command.fail();
             }
             // We expect only successful/unsuccessful responses, not unsure
@@ -305,30 +412,33 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private Object primaryReturnHandler(InvocationContext ctx, VisitableCommand visitableCommand, Object localResult) {
       DataWriteCommand command = (DataWriteCommand) visitableCommand;
-      if (!command.isSuccessful()) {
-         if (trace) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
-         return localResult;
-      }
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command.getTopologyId());
       DistributionInfo distributionInfo = cacheTopology.getDistribution(command.getKey());
-      Collection<Address> owners = distributionInfo.writeOwners();
-      if (owners.size() == 1) {
+      if (command.isSuccessful()) {
+         return updateBackupsAndReturn(ctx, command, distributionInfo, localResult);
+      } else {
+         return handleUnsuccessfulWriteOnPrimary(ctx, localResult, command.getKey(), distributionInfo);
+      }
+   }
+
+   private Object updateBackupsAndReturn(InvocationContext ctx, DataWriteCommand command, DistributionInfo distributionInfo, Object localResult) {
+      Collection<Address> backups = distributionInfo.writeBackups();
+      if (backups.isEmpty()) {
          // There are no backups, skip the replication part.
          return localResult;
       }
-      Collection<Address> recipients = isReplicated ? null : owners;
+      Collection<Address> recipients = isReplicated ? null : backups;
 
-      // Cache the matcher and reset it if we get OOTE (or any other exception) from backup
-      ValueMatcher originalMatcher = command.getValueMatcher();
-      // Ignore the previous value on the backup owners
-      command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
       RpcOptions rpcOptions = determineRpcOptionsForBackupReplication(rpcManager, isSynchronous(command), recipients);
+      // TODO: set flags so that backup does not try to return any value
+      // but local interceptors can consume it - SKIP_REMOTE_LOOKUP?
       CompletableFuture<Map<Address, Response>> remoteInvocation =
             rpcManager.invokeRemotelyAsync(recipients, command, rpcOptions);
       return asyncValue(remoteInvocation.handle((responses, t) -> {
-         // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
-         command.setValueMatcher(originalMatcher.matcherForRetry());
          CompletableFutures.rethrowException(t instanceof RemoteException ? t.getCause() : t);
+         if (ctx.isOriginLocal() && isSynchronous(command)) {
+            invocationManager.notifyCompleted(command.getCommandInvocationId(), command.getKey(), distributionInfo.segmentId());
+         }
          return localResult;
       }));
    }
@@ -377,7 +487,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return invokeNext(ctx, command);
       }
 
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command.getTopologyId());
       Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, command.getKeys(), cacheTopology, null);
       if (requestedKeys.isEmpty()) {
          return invokeNext(ctx, command);
@@ -438,7 +548,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return handleLocalOnlyReadManyCommand(ctx, command, helper.keys(command));
       }
 
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command.getTopologyId());
       Collection<?> keys = helper.keys(command);
       if (!ctx.isOriginLocal()) {
          return handleRemoteReadManyCommand(ctx, command, keys, helper);
@@ -458,7 +568,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       // to allow retries in StateTransferInterceptor in case of topology change.
       MergingCompletableFuture<Object> allFuture = new MergingCompletableFuture<>(
          ctx, requestedKeys.size() + (availableKeys.isEmpty() ? 0 : 1),
-         new Object[keys.size()], helper::transformResult);
+            new Object[keys.size()], helper::transformResult);
 
       handleLocallyAvailableKeys(ctx, command, availableKeys, allFuture, helper);
       int pos = availableKeys.size();
@@ -604,6 +714,150 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
+   protected boolean checkInvocationRecord(InvocationContext context, DataWriteCommand command, DistributionInfo distributionInfo, ByRef<Object> returnValue, BackupHandler handler) {
+      CacheEntry cacheEntry = context.lookupEntry(command.getKey());
+      Metadata metadata = cacheEntry.getMetadata();
+      if (metadata == null) {
+         return false;
+      }
+      InvocationRecord invocationRecord = metadata.invocation(command.getCommandInvocationId());
+      // having invocation record implies that the command was successful
+      if (invocationRecord == null) {
+         return false;
+      }
+      invocationRecord.touch(timeService.wallClockTime());
+      // If the record is the last invoked command, it is possible that the other owners did not
+      // get the change - we must not execute the command locally but we have to replicate it
+      // to the other backups
+      if (invocationRecord == metadata.lastInvocation()) {
+         // We can already set this to authoritative, though we cannot confirm that this will
+         // be properly replicated to all backups - originator will fail if it does not get
+         // acks from some backups, though
+         invocationRecord.setAuthoritative();
+
+         // 1) strict ordering: the command has already been applied, other nodes may have
+         // missed it, but we don't know what was the previous invocation *before* the command.
+         // 2) delta write needs previous value
+         // In any case, replicate full value
+         if (command instanceof StrictOrderingCommand || command.hasAnyFlag(FlagBitSets.DELTA_WRITE)) {
+            // It would be nicer to use RemoveCommand if the value is null, but RemoveCommand can't carry metadata
+            command = new PutKeyValueCommand(cacheEntry.getKey(), cacheEntry.getValue(), false, null,
+                  cacheEntry.getMetadata(), (command.getFlagsBitSet() & ~FlagBitSets.DELTA_WRITE) | FlagBitSets.WITH_INVOCATION_RECORDS,
+                  command.getCommandInvocationId(), null, null, true);
+         }
+         returnValue.set(handler.invoke(context, command, distributionInfo, invocationRecord.returnValue));
+         // TODO: if setExecuted does not modify flags, we can move it up
+         // set no execution flags only after invoking the handler which may cause replication
+         command.setCompleted(command.getKey());
+         cdl.notifyCommitEntry(invocationRecord.isCreated(), invocationRecord.isRemoved(), false,
+               cacheEntry, context, command, null, null);
+         return true;
+
+      }
+      command.setCompleted(command.getKey());
+      returnValue.set(invocationRecord.returnValue);
+      return true;
+   }
+
+   protected <Item> Map<Object, Object> checkInvocationRecords(InvocationContext ctx, WriteCommand command,
+                                                               Collection<Item> items, Consumer<Item> backupConsumer,
+                                                               Consumer<Item> fullBackupConsumer,
+                                                               WriteManyCommandHelper helper) {
+      Map<Object, Object> completedResults = null;
+      for (Iterator<Item> iterator = items.iterator(); iterator.hasNext(); ) {
+         Item item = iterator.next();
+         Object key = helper.item2key(item);
+         CacheEntry cacheEntry = ctx.lookupEntry(key);
+         if (cacheEntry == null) {
+            // It is possible that this is executed on backup write-owner, read-non-owner
+            entryFactory.wrapExternalEntry(ctx, key, null, false, true);
+            backupConsumer.accept(item);
+            continue;
+         }
+         Metadata metadata = cacheEntry.getMetadata();
+         InvocationRecord invocationRecord = metadata == null ? null : metadata.invocation(command.getCommandInvocationId());
+         // having invocation record implies that the command was successful
+         if (invocationRecord != null) {
+            invocationRecord.touch(timeService.wallClockTime());
+            // If the record is the last invoked command, it is possible that the other owners did not
+            // get the change - we must not execute the command locally but we have to replicate it
+            // to the other backups
+            if (invocationRecord == metadata.lastInvocation()) {
+               // We can already set this to authoritative, though we cannot confirm that this will
+               // be properly replicated to all backups - originator will fail if it does not get
+               // acks from some backups, though
+               invocationRecord.setAuthoritative();
+               if (command instanceof StrictOrderingCommand) {
+                  fullBackupConsumer.accept(item);
+               } else {
+                  backupConsumer.accept(item);
+               }
+            } else {
+               backupConsumer.accept(item);
+            }
+            if (!command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES)) {
+               if (completedResults == null) {
+                  completedResults = new HashMap<>();
+               }
+               completedResults.put(key, invocationRecord.returnValue);
+            }
+            command.setCompleted(key);
+            iterator.remove();
+            cdl.notifyCommitEntry(invocationRecord.isCreated(), invocationRecord.isRemoved(), false,
+                  cacheEntry, ctx, command, null, null);
+         } else {
+            backupConsumer.accept(item);
+         }
+      }
+      return completedResults;
+   }
+
+   protected Object handleUnsuccessfulWriteOnPrimary(InvocationContext ctx, Object rv, Object key, DistributionInfo distributionInfo) {
+      CacheEntry cacheEntry = ctx.lookupEntry(key);
+      Metadata metadata = cacheEntry.getMetadata();
+      InvocationRecord invocationRecord = metadata == null ? null : metadata.lastInvocation();
+      if (invocationRecord != null && !invocationRecord.isAuthoritative()) {
+         if (trace) log.trace("Replicating full entry to all backups");
+         // Before replying, make sure that backup copies are in sync with primary to prevent ISPN-3918
+         // TODO: With triangle, ISPN-3918 can happen any time when a command fails since upon unsuccessful execution
+         // we don't wait for the replication to backup.
+         // don't use provided value, that's already passed in metadata
+         PutKeyValueCommand putKeyValueCommand = new PutKeyValueCommand(key, cacheEntry.getValue(), false, null,
+               metadata, REPLICATE_NON_AUTHORITATIVE_FLAGS, invocationRecord.id, null, null, true);
+         return asyncValue(rpcManager.invokeRemotelyAsync(distributionInfo.writeBackups(), putKeyValueCommand, defaultSyncOptions)
+               .thenApply(nil -> {
+                  invocationRecord.setAuthoritative();
+                  return rv;
+               }));
+      }
+      if (trace) log.trace("Skipping the replication of the conditional command as it did not succeed on primary owner.");
+      return rv;
+   }
+
+   // we're assuming that this function is ran on primary owner of given segments
+   protected Map<Address, Set<Integer>> backupOwnersOfSegments(ConsistentHash ch, Set<Integer> segments) {
+      Map<Address, Set<Integer>> map = new HashMap<>(ch.getMembers().size());
+      if (ch.isReplicated()) {
+         for (Address member : ch.getMembers()) {
+            map.put(member, segments);
+         }
+         map.remove(rpcManager.getAddress());
+      } else if (ch.getNumOwners() > 1) {
+         for (Integer segment : segments) {
+            List<Address> owners = ch.locateOwnersForSegment(segment);
+            for (int i = 1; i < owners.size(); ++i) {
+               map.computeIfAbsent(owners.get(i), o -> new HashSet<>()).add(segment);
+            }
+         }
+      }
+      return map;
+   }
+
+   @FunctionalInterface
+   protected interface BackupHandler {
+      Object invoke(InvocationContext ctx, DataWriteCommand command, DistributionInfo distributionInfo, Object rv);
+   }
+
    protected static class ArrayIterator {
       private final Object[] array;
       private int pos = 0;
@@ -632,13 +886,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
-   protected static class CountDownCompletableFuture extends CompletableFuture<Object> {
+   protected static class CountDownCompletableFuture extends CompletableFuture<Object> implements BiConsumer<Object, Throwable> {
       protected final InvocationContext ctx;
       protected final AtomicInteger counter;
 
       public CountDownCompletableFuture(InvocationContext ctx, int participants) {
          if (trace) log.tracef("Creating shortcut countdown with %d participants", participants);
          this.ctx = ctx;
+         assert participants > 0;
          this.counter = new AtomicInteger(participants);
       }
 
@@ -658,13 +913,23 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       protected Object result() {
          return null;
       }
+
+      @Override
+      public void accept(Object o, Throwable throwable) {
+         if (throwable != null) {
+            completeExceptionally(throwable);
+         } else {
+            countDown();
+         }
+      }
    }
 
    protected static class MergingCompletableFuture<T> extends CountDownCompletableFuture {
       private final Function<T[], Object> transform;
       protected final T[] results;
 
-      public MergingCompletableFuture(InvocationContext ctx, int participants, T[] results, Function<T[], Object> transform) {
+      public MergingCompletableFuture(InvocationContext ctx, int participants,
+                                      T[] results, Function<T[], Object> transform) {
          super(ctx, participants);
          // results can be null if the command has flag IGNORE_RETURN_VALUE
          this.results = results;
@@ -688,7 +953,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    private Object handleMissingEntryOnLocalRead(InvocationContext ctx, AbstractDataCommand command) {
       return readNeedsRemoteValue(command) ?
-            asyncInvokeNext(ctx, command, remoteGet(ctx, command, command.getKey(), false)) :
+            asyncInvokeNext(ctx, command, remoteGet(ctx, command.getKey(), false, command.getTopologyId(), command.getFlagsBitSet())) :
             null;
    }
 
@@ -726,7 +991,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          return UnsureResponse.INSTANCE;
       }
       if (readNeedsRemoteValue(command)) {
-         LocalizedCacheTopology cacheTopology = checkTopologyId(command);
+         LocalizedCacheTopology cacheTopology = checkTopologyId(command.getTopologyId());
          Collection<Address> owners = cacheTopology.getDistribution(key).readOwners();
          if (trace)
             log.tracef("Doing a remote get for key %s in topology %d to %s", key, cacheTopology.getTopologyId(), owners);
@@ -763,16 +1028,15 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return responseValue;
    }
 
-   protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
+   protected LocalizedCacheTopology checkTopologyId(int topologyId) {
       LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
       int currentTopologyId = cacheTopology.getTopologyId();
-      int cmdTopology = command.getTopologyId();
-      if (currentTopologyId != cmdTopology && cmdTopology != -1) {
+      if (currentTopologyId != topologyId && topologyId != -1) {
          throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
-            cmdTopology + ", got " + currentTopologyId);
+               topologyId + ", got " + currentTopologyId);
       }
       if (trace) {
-         log.tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
+         log.tracef("Current topology %d, command topology %d", currentTopologyId, topologyId);
       }
       return cacheTopology;
    }
@@ -796,6 +1060,50 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       ReplicableCommand copyForRemote(C command, List<Object> keys, InvocationContext ctx);
       void applyLocalResult(MergingCompletableFuture allFuture, Object rv);
       Object transformResult(Object[] results);
+   }
+
+   /**
+    * Classifies the keys by primary owner (address => keys & segments) and backup owners (address => segments).
+    * <p>
+    * The first map is used to forward the command to the primary owner with the subset of keys.
+    * <p>
+    * The second map is used to initialize the {@link CommandAckCollector} to wait for the backups acknowledges.
+    */
+   protected static class PrimaryOwnerClassifier<Container, Item> {
+      protected final Map<Address, Container> primaries;
+      protected final Collection<Object>[] keysBySegment;
+      private final LocalizedCacheTopology cacheTopology;
+      private final WriteManyCommandHelper<?, Container, Item> helper;
+
+      protected PrimaryOwnerClassifier(LocalizedCacheTopology cacheTopology, int entryCount, WriteManyCommandHelper<?, Container, Item> helper) {
+         this.cacheTopology = cacheTopology;
+         this.keysBySegment =  new Collection[cacheTopology.numSegments()];
+         int memberSize = cacheTopology.getMembers().size();
+         this.primaries = new HashMap<>(memberSize);
+         this.helper = helper;
+      }
+
+      public Collection<?>[] keysBySegment() {
+         return keysBySegment;
+      }
+
+      public void add(Item item) {
+         Object key = helper.item2key(item);
+         int segment = cacheTopology.getSegment(key);
+         DistributionInfo distributionInfo = cacheTopology.getDistributionForSegment(segment);
+         add(key, item, distributionInfo);
+      }
+
+      protected void add(Object key, Item item, DistributionInfo distributionInfo) {
+         final Address primaryOwner = distributionInfo.primary();
+         Collection<Object> keysInSegment = keysBySegment[distributionInfo.segmentId()];
+         if (keysInSegment == null) {
+            keysBySegment[distributionInfo.segmentId()] = keysInSegment = new ArrayList<>();
+         }
+         keysInSegment.add(key);
+         Container container = primaries.computeIfAbsent(primaryOwner, address -> helper.newContainer());
+         helper.accumulate(container, item);
+      }
    }
 
    protected class ReadOnlyManyHelper implements ReadManyCommandHelper<ReadOnlyManyCommand> {
@@ -833,4 +1141,102 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
    }
 
+   protected abstract class WriteManyCommandHelper<C extends WriteCommand, Container, Item> {
+      public abstract C copyForPrimary(C cmd, Container items);
+
+      public abstract C copyForBackup(C cmd, Container items);
+
+      public abstract Collection<Item> getItems(C cmd);
+
+      public abstract Object item2key(Item item);
+
+      public abstract Container newContainer();
+
+      public abstract void accumulate(Container container, Item item);
+
+      public abstract Collection<Item> asCollection(Container items);
+
+      public abstract int containerSize(Container container);
+
+      public abstract boolean isForwarded(C cmd);
+
+      public abstract Object transformResult(Object[] results);
+
+      public abstract Object transformResult(Object key, Object result);
+
+      public abstract Object mergeResults(Object rv, Map<Object, Object> results);
+   }
+
+   private class PutMapHelper extends WriteManyCommandHelper<PutMapCommand, Map<Object, Object>, Map.Entry<Object, Object>> {
+      @Override
+      public PutMapCommand copyForPrimary(PutMapCommand cmd, Map<Object, Object> items) {
+         return new PutMapCommand(cmd).withMap(items);
+      }
+
+      @Override
+      public PutMapCommand copyForBackup(PutMapCommand cmd, Map<Object, Object> items) {
+         PutMapCommand copy = new PutMapCommand(cmd).withMap(items);
+         copy.setForwarded(true);
+         return copy;
+      }
+
+      @Override
+      public Collection<Map.Entry<Object, Object>> getItems(PutMapCommand cmd) {
+         return cmd.getMap().entrySet();
+      }
+
+      @Override
+      public Object item2key(Map.Entry<Object, Object> entry) {
+         return entry.getKey();
+      }
+
+      @Override
+      public Map<Object, Object> newContainer() {
+         return new HashMap<>();
+      }
+
+      @Override
+      public void accumulate(Map<Object, Object> map, Map.Entry<Object, Object> entry) {
+         map.put(entry.getKey(), entry.getValue());
+      }
+
+      @Override
+      public Collection<Map.Entry<Object, Object>> asCollection(Map<Object, Object> items) {
+         return items.entrySet();
+      }
+
+      @Override
+      public int containerSize(Map<Object, Object> map) {
+         return map.size();
+      }
+
+      @Override
+      public boolean isForwarded(PutMapCommand cmd) {
+         return cmd.isForwarded();
+      }
+
+      @Override
+      public Object transformResult(Object[] results) {
+         if (results == null) return null;
+         Map<Object, Object> result = new HashMap<>();
+         for (Object r : results) {
+            Map.Entry<Object, Object> entry = (Map.Entry<Object, Object>) r;
+            result.put(entry.getKey(), entry.getValue());
+         }
+         return result;
+      }
+
+      @Override
+      public Object transformResult(Object key, Object result) {
+         return Immutables.immutableEntry(key, result);
+      }
+
+      @Override
+      public Object mergeResults(Object rv, Map<Object, Object> results) {
+         if (rv != null) {
+            ((Map<Object, Object>) rv).putAll(results);
+         }
+         return rv;
+      }
+   }
 }

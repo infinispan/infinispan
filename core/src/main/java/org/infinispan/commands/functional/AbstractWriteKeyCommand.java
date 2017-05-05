@@ -3,36 +3,23 @@ package org.infinispan.commands.functional;
 import static org.infinispan.commons.util.Util.toStr;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.functional.impl.Params;
 
 public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements FunctionalCommand<K, V> {
 
    Params params;
-   ValueMatcher valueMatcher;
    boolean successful = true;
 
-   public AbstractWriteKeyCommand(K key, ValueMatcher valueMatcher,
-         CommandInvocationId id, Params params) {
-      super(key, EnumUtil.EMPTY_BIT_SET, id);
-      this.valueMatcher = valueMatcher;
+   public AbstractWriteKeyCommand(K key, CommandInvocationId id, Params params, InvocationManager invocationManager, boolean synchronous) {
+      super(key, EnumUtil.EMPTY_BIT_SET, id, null, invocationManager, synchronous);
       this.params = params;
    }
 
    public AbstractWriteKeyCommand() {
       // No-op
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return valueMatcher;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      this.valueMatcher = valueMatcher;
    }
 
    @Override
@@ -57,7 +44,6 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
             ", flags=" + printFlags() +
             ", commandInvocationId=" + commandInvocationId +
             ", params=" + params +
-            ", valueMatcher=" + valueMatcher +
             ", successful=" + successful +
             "}";
    }

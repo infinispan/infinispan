@@ -1,5 +1,7 @@
 package org.infinispan.metadata.impl;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
 
@@ -32,6 +34,16 @@ public class L1Metadata implements Metadata {
    @Override
    public EntryVersion version() {
       return metadata.version();
+   }
+
+   @Override
+   public InvocationRecord lastInvocation() {
+      return metadata.lastInvocation();
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return metadata.invocation(id);
    }
 
    @Override

@@ -41,6 +41,7 @@ import org.infinispan.interceptors.impl.NotificationInterceptor;
 import org.infinispan.interceptors.impl.PassivationWriterInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.interceptors.impl.VersionReadInterceptor;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
@@ -293,6 +294,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             break;
          case LOCAL:
             //Nothing...
+      }
+
+      if (needsVersionAwareComponents) {
+         interceptorChain.appendInterceptor(createInterceptor(new VersionReadInterceptor(), VersionReadInterceptor.class), false);
       }
 
       AsyncInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);

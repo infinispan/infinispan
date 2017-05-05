@@ -193,6 +193,8 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     */
    Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired();
 
+   Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpiredAndTombstones();
+
    interface ComputeAction<K, V> {
 
       /**

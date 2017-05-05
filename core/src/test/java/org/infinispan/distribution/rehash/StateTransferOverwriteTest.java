@@ -28,8 +28,8 @@ public class StateTransferOverwriteTest extends BaseTxStateTransferOverwriteTest
    }
 
    @Override
-   protected Class<? extends VisitableCommand> getVisitableCommand(TestWriteOperation op) {
-      return op.getCommandClass();
+   protected Class<? extends VisitableCommand>[] getVisitableCommands(TestWriteOperation op) {
+      return op.getCommandClasses();
    }
 
    @Override

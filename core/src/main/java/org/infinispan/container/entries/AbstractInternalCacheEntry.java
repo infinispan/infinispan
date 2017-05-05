@@ -24,7 +24,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public final void commit(DataContainer container, Metadata metadata) {
+   public final void commit(DataContainer container) {
       // no-op
    }
 
@@ -65,7 +65,7 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    @Override
    public final boolean isNull() {
-      return false;
+      return getValue() == null;
    }
 
    @Override

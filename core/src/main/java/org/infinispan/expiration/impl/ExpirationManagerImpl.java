@@ -8,6 +8,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.InvocationManager;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -41,6 +43,7 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    protected DataContainer<K, V> dataContainer;
    protected CacheNotifier<K, V> cacheNotifier;
    protected TimeService timeService;
+   protected InvocationManager invocationManager;
    protected boolean enabled;
    protected String cacheName;
 
@@ -55,14 +58,13 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
          ScheduledExecutorService executor, Cache<K, V> cache, Configuration cfg, DataContainer<K, V> dataContainer,
-         PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier, TimeService timeService) {
-      initialize(executor, cache.getName(), cfg, dataContainer,
-                 persistenceManager, cacheNotifier, timeService);
+         PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier, TimeService timeService, InvocationManager invocationManager) {
+      initialize(executor, cache.getName(), cfg, dataContainer, persistenceManager, cacheNotifier, timeService, invocationManager);
    }
 
    void initialize(ScheduledExecutorService executor, String cacheName, Configuration cfg,
            DataContainer<K, V> dataContainer, PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier,
-           TimeService timeService) {
+           TimeService timeService, InvocationManager invocationManager) {
       this.executor = executor;
       this.configuration = cfg;
       this.cacheName = cacheName;
@@ -70,6 +72,7 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
       this.persistenceManager = persistenceManager;
       this.cacheNotifier = cacheNotifier;
       this.timeService = timeService;
+      this.invocationManager = invocationManager;
 
       this.expiring = new ConcurrentHashMap<>();
    }
@@ -103,11 +106,33 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
                start = timeService.time();
             }
             long currentTimeMillis = timeService.wallClockTime();
+            long invocationLimitTime = invocationManager == null ? 0 : currentTimeMillis - invocationManager.invocationTimeout();
             for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.iteratorIncludingExpired();
                  purgeCandidates.hasNext();) {
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.isExpired(currentTimeMillis)) {
                   handleInMemoryExpiration(e, currentTimeMillis);
+               }
+               InvocationRecord record = e.metadata().map(Metadata::lastInvocation).orElse(null);
+               if (record != null) {
+                  InvocationRecord purged = InvocationRecord.purgeExpired(record, invocationLimitTime);
+                  if (purged != record) {
+                     dataContainer.compute(e.getKey(), (k, entry, f) -> {
+                        // By not synchronizing the access to entry we're risking that we'll change
+                        // the metadata during entry copy by GetCacheEntryCommand or expiration checks,
+                        // but that's can't do any harm.
+                        Metadata metadata = entry.getMetadata();
+                        if (metadata == null) return entry;
+                        InvocationRecord last = metadata.lastInvocation();
+                        if (last != record) return entry;
+                        if (purged != null || entry.getValue() != null) {
+                           entry.setMetadata(metadata.builder().invocations(purged).build());
+                           return entry;
+                        } else {
+                           return null;
+                        }
+                     });
+                  }
                }
             }
             if (trace) {

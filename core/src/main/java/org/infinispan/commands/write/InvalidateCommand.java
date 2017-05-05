@@ -35,7 +35,9 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    private static final boolean trace = log.isTraceEnabled();
    protected Object[] keys;
    protected CommandInvocationId commandInvocationId;
-   protected CacheNotifier notifier;
+   protected transient CacheNotifier notifier;
+   protected transient boolean authoritative;
+   protected transient boolean executed;
 
    public InvalidateCommand() {
    }
@@ -68,13 +70,11 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
       }
       for (Object key : keys) {
          MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-         if (e != null) {
-            notify(ctx, e, true);
-            e.setChanged(true);
-            e.setRemoved(true);
-            e.setCreated(false);
-            e.setValid(false);
-         }
+         notify(ctx, e, true);
+         e.setChanged(true);
+         e.setRemoved(true);
+         e.setCreated(false);
+         e.setValid(false);
       }
       return null;
    }
@@ -139,15 +139,6 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-   }
-
-   @Override
    public Collection<?> getAffectedKeys() {
       return CollectionFactory.makeSet(keys);
    }
@@ -155,6 +146,25 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public void fail() {
       throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CommandInvocationId getCommandInvocationId() {
+      return commandInvocationId;
+   }
+
+   @Override
+   public void setAuthoritative(boolean authoritative) {
+      this.authoritative = authoritative;
+   }
+
+   @Override
+   public void setCompleted(Object key) {
+   }
+
+   @Override
+   public boolean isCompleted(Object key) {
+      return false;
    }
 
    @Override

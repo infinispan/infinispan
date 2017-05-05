@@ -79,7 +79,8 @@ public class CommandAckCollector {
          return new PrimaryOwnerOnlyCollector<>();
       }
       SingleKeyCollector collector = new SingleKeyCollector(id, backupOwners, topologyId);
-      collectorMap.put(id, collector);
+      BaseCollector<?> prev = collectorMap.put(id, collector);
+      assert prev == null;
       if (trace) {
          log.tracef("Created new collector for %s. BackupOwners=%s", id, backupOwners);
       }
@@ -88,21 +89,19 @@ public class CommandAckCollector {
 
    /**
     * Creates a collector for {@link org.infinispan.commands.write.PutMapCommand}.
-    *
-    * @param id         the id from {@link CommandInvocationId#getId()}.
-    * @param primary    a primary owners collection..
+    *  @param id         the id from {@link CommandInvocationId#getId()}.
     * @param backups    a map between a backup owner and its segments affected.
     * @param topologyId the current topology id.
     */
-   public Collector<Map<Object, Object>> createMultiKeyCollector(long id, Collection<Address> primary,
-         Map<Address, Collection<Integer>> backups, int topologyId) {
+   public Collector<Map<Object, Object>> createMultiKeyCollector(long id, Map<Address, Collection<Integer>> backups, int topologyId) {
       if (backups.isEmpty()) {
          return new PrimaryOwnerOnlyCollector<>();
       }
       MultiKeyCollector collector = new MultiKeyCollector(id, backups, topologyId);
-      collectorMap.put(id, collector);
+      BaseCollector<?> prev = collectorMap.put(id, collector);
+      assert prev == null;
       if (trace) {
-         log.tracef("Created new collector for %s. Primary=%s. BackupSegments=%s", id, primary, backups);
+         log.tracef("Created new collector for %s. BackupSegments=%s", id, backups);
       }
       return collector;
    }
@@ -189,6 +188,7 @@ public class CommandAckCollector {
 
       final long id;
       final CompletableFuture<T> future;
+      final CompletableFuture<T> exposedFuture;
       final int topologyId;
       private final ScheduledFuture<?> timeoutTask;
       volatile T primaryResult;
@@ -198,6 +198,7 @@ public class CommandAckCollector {
          this.id = id;
          this.topologyId = topologyId;
          this.future = new CompletableFuture<>();
+         this.exposedFuture = future.whenComplete(this);
          this.timeoutTask = timeoutExecutor.schedule(this, timeoutNanoSeconds, TimeUnit.NANOSECONDS);
       }
 
@@ -222,13 +223,14 @@ public class CommandAckCollector {
          if (trace) {
             log.tracef("[Collector#%s] Collector completed with ret=%s, throw=%s", id, t, throwable);
          }
-         collectorMap.remove(id);
+         boolean removed = collectorMap.remove(id, this);
+         assert removed;
          timeoutTask.cancel(false);
       }
 
       @Override
       public final CompletableFuture<T> getFuture() {
-         return future.whenComplete(this);
+         return exposedFuture;
       }
 
       @Override

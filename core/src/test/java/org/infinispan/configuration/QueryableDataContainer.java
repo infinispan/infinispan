@@ -46,6 +46,12 @@ public class QueryableDataContainer implements DataContainer<Object, Object> {
    }
 
    @Override
+   public Iterator<InternalCacheEntry<Object, Object>> iteratorIncludingExpiredAndTombstones() {
+      loggedOperations.add("expiredTombstonesIterator()");
+      return delegate.iteratorIncludingExpiredAndTombstones();
+   }
+
+   @Override
    public InternalCacheEntry<Object, Object> get(Object k) {
       loggedOperations.add("get(" + k + ")" );
       return delegate.get(k);

@@ -6,6 +6,8 @@ import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationRecord;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
@@ -21,9 +23,11 @@ import org.jboss.marshalling.util.IdentityIntMap;
 public class EmbeddedMetadata implements Metadata {
 
    final EntryVersion version;
+   final InvocationRecord records;
 
-   private EmbeddedMetadata(EntryVersion version) {
+   private EmbeddedMetadata(InvocationRecord records, EntryVersion version) {
       this.version = version;
+      this.records = records;
    }
 
    @Override
@@ -42,8 +46,18 @@ public class EmbeddedMetadata implements Metadata {
    }
 
    @Override
+   public InvocationRecord lastInvocation() {
+      return records;
+   }
+
+   @Override
+   public InvocationRecord invocation(CommandInvocationId id) {
+      return InvocationRecord.lookup(records, id);
+   }
+
+   @Override
    public Metadata.Builder builder() {
-      return new Builder().version(version);
+      return new Builder().version(version).invocations(records);
    }
 
    @Override
@@ -68,6 +82,7 @@ public class EmbeddedMetadata implements Metadata {
    public String toString() {
       return "EmbeddedMetadata{" +
             "version=" + version +
+            ", records=" + records +
             '}';
    }
 
@@ -78,6 +93,15 @@ public class EmbeddedMetadata implements Metadata {
       protected Long maxIdle = null;
       protected TimeUnit maxIdleUnit = TimeUnit.MILLISECONDS;
       protected EntryVersion version;
+      protected InvocationRecord records;
+
+      public static Metadata.Builder from(Metadata metadata) {
+         if (metadata == null) {
+            return new EmbeddedMetadata.Builder();
+         } else {
+            return metadata.builder();
+         }
+      }
 
       @Override
       public Metadata.Builder lifespan(long time, TimeUnit unit) {
@@ -104,6 +128,23 @@ public class EmbeddedMetadata implements Metadata {
       }
 
       @Override
+      public Metadata.Builder invocation(CommandInvocationId id, Object returnValue, boolean authoritative, boolean created, boolean modified, boolean removed, long timestamp) {
+         records = new InvocationRecord(id, returnValue, authoritative, created, modified, removed, timestamp, records);
+         return this;
+      }
+
+      @Override
+      public Metadata.Builder invocations(InvocationRecord invocations) {
+         records = invocations;
+         return this;
+      }
+
+      @Override
+      public InvocationRecord invocations() {
+         return records;
+      }
+
+      @Override
       public Metadata.Builder version(EntryVersion version) {
          this.version = version;
          return this;
@@ -115,13 +156,13 @@ public class EmbeddedMetadata implements Metadata {
          boolean hasMaxIdle = hasMaxIdle();
          if (hasLifespan && hasMaxIdle)
             return new EmbeddedExpirableMetadata(
-                  lifespan, lifespanUnit, maxIdle, maxIdleUnit, version);
+                  records, lifespan, lifespanUnit, maxIdle, maxIdleUnit, version);
          else if (hasLifespan)
-            return new EmbeddedLifespanExpirableMetadata(lifespan, lifespanUnit, version);
+            return new EmbeddedLifespanExpirableMetadata(records, lifespan, lifespanUnit, version);
          else if (hasMaxIdle)
-            return new EmbeddedMaxIdleExpirableMetadata(maxIdle, maxIdleUnit, version);
+            return new EmbeddedMaxIdleExpirableMetadata(records, maxIdle, maxIdleUnit, version);
          else
-            return new EmbeddedMetadata(version);
+            return new EmbeddedMetadata(records, version);
       }
 
       protected boolean hasLifespan() {
@@ -157,9 +198,9 @@ public class EmbeddedMetadata implements Metadata {
       private final long maxIdle;
 
       private EmbeddedExpirableMetadata(
-            long lifespan, TimeUnit lifespanUnit,
+            InvocationRecord records, long lifespan, TimeUnit lifespanUnit,
             long maxIdle, TimeUnit maxIdleUnit, EntryVersion version) {
-         super(version);
+         super(records, version);
          this.lifespan = lifespan < 0 ? -1 : lifespanUnit.toMillis(lifespan);
          this.maxIdle = maxIdle < 0 ? -1 : maxIdleUnit.toMillis(maxIdle);
       }
@@ -176,8 +217,7 @@ public class EmbeddedMetadata implements Metadata {
 
       @Override
       public Metadata.Builder builder() {
-         return new EmbeddedMetadata.Builder()
-               .lifespan(lifespan).maxIdle(maxIdle).version(version);
+         return super.builder().lifespan(lifespan).maxIdle(maxIdle);
       }
 
       @Override
@@ -208,6 +248,7 @@ public class EmbeddedMetadata implements Metadata {
                "lifespan=" + lifespan +
                ", maxIdle=" + maxIdle +
                ", version=" + version +
+               ", records=" + records +
                '}';
       }
    }
@@ -216,10 +257,10 @@ public class EmbeddedMetadata implements Metadata {
 
       protected final long timeout;
 
-      private AbstractEmbeddedTimeoutMetadata(
+      private AbstractEmbeddedTimeoutMetadata(InvocationRecord records,
             long timeout, TimeUnit timeoutUnit,
             EntryVersion version) {
-         super(version);
+         super(records, version);
          this.timeout = timeout < 0 ? -1 : timeoutUnit.toMillis(timeout);
       }
 
@@ -246,8 +287,8 @@ public class EmbeddedMetadata implements Metadata {
 
    private static class EmbeddedLifespanExpirableMetadata extends AbstractEmbeddedTimeoutMetadata {
 
-      private EmbeddedLifespanExpirableMetadata(long lifespan, TimeUnit lifespanUnit, EntryVersion version) {
-         super(lifespan, lifespanUnit, version);
+      private EmbeddedLifespanExpirableMetadata(InvocationRecord records, long lifespan, TimeUnit lifespanUnit, EntryVersion version) {
+         super(records, lifespan, lifespanUnit, version);
       }
 
       @Override
@@ -257,8 +298,7 @@ public class EmbeddedMetadata implements Metadata {
 
       @Override
       public Metadata.Builder builder() {
-         return new EmbeddedMetadata.Builder()
-               .lifespan(timeout).version(version);
+         return super.builder().lifespan(timeout);
       }
 
       @Override
@@ -266,6 +306,7 @@ public class EmbeddedMetadata implements Metadata {
          return "EmbeddedLifespanExpirableMetadata{" +
                "lifespan=" + timeout +
                ", version=" + version +
+               ", records=" + records +
                '}';
       }
 
@@ -273,8 +314,8 @@ public class EmbeddedMetadata implements Metadata {
 
    private static class EmbeddedMaxIdleExpirableMetadata extends AbstractEmbeddedTimeoutMetadata {
 
-      private EmbeddedMaxIdleExpirableMetadata(long maxIdle, TimeUnit maxIdleUnit, EntryVersion version) {
-         super(maxIdle, maxIdleUnit, version);
+      private EmbeddedMaxIdleExpirableMetadata(InvocationRecord records, long maxIdle, TimeUnit maxIdleUnit, EntryVersion version) {
+         super(records, maxIdle, maxIdleUnit, version);
       }
 
       @Override
@@ -284,8 +325,7 @@ public class EmbeddedMetadata implements Metadata {
 
       @Override
       public Metadata.Builder builder() {
-         return new EmbeddedMetadata.Builder()
-               .maxIdle(timeout).version(version);
+         return super.builder().maxIdle(timeout);
       }
 
       @Override
@@ -293,6 +333,7 @@ public class EmbeddedMetadata implements Metadata {
          return "EmbeddedMaxIdleExpirableMetadata{" +
                "maxIdle=" + timeout +
                ", version=" + version +
+               ", records=" + records +
                '}';
       }
 
@@ -329,6 +370,7 @@ public class EmbeddedMetadata implements Metadata {
       public void writeObject(ObjectOutput output, EmbeddedMetadata object) throws IOException {
          int number = numbers.get(object.getClass(), -1);
          output.write(number);
+         InvocationRecord.writeListTo(output, object.records);
          switch (number) {
             case EXPIRABLE:
                output.writeLong(object.lifespan());
@@ -348,24 +390,25 @@ public class EmbeddedMetadata implements Metadata {
       @Override
       public EmbeddedMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          int number = input.readUnsignedByte();
+         InvocationRecord records = InvocationRecord.readListFrom(input);
          switch (number) {
             case IMMORTAL:
                return new EmbeddedMetadata(
-                     (EntryVersion) input.readObject());
+                     records, (EntryVersion) input.readObject());
             case EXPIRABLE:
                long lifespan = input.readLong();
                long maxIdle = input.readLong();
                EntryVersion version = (EntryVersion) input.readObject();
                return new EmbeddedExpirableMetadata(
-                     lifespan, TimeUnit.MILLISECONDS,
+                     records, lifespan, TimeUnit.MILLISECONDS,
                      maxIdle, TimeUnit.MILLISECONDS, version);
             case LIFESPAN_EXPIRABLE:
                return new EmbeddedLifespanExpirableMetadata(
-                     input.readLong(), TimeUnit.MILLISECONDS,
+                     records, input.readLong(), TimeUnit.MILLISECONDS,
                      (EntryVersion) input.readObject());
             case MAXIDLE_EXPIRABLE:
                return new EmbeddedMaxIdleExpirableMetadata(
-                     input.readLong(), TimeUnit.MILLISECONDS,
+                     records, input.readLong(), TimeUnit.MILLISECONDS,
                      (EntryVersion) input.readObject());
             default:
                throw new IllegalStateException("Unknown metadata type " + number);

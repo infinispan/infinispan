@@ -9,6 +9,7 @@ import java.util.Collection;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commands.InvocationManager;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
@@ -33,8 +34,9 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    public ApplyDeltaCommand() {
    }
 
-   public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      super(deltaAwareValueKey, EnumUtil.bitSetOf(Flag.DELTA_WRITE), commandInvocationId);
+   public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys,
+                            CommandInvocationId commandInvocationId, InvocationManager invocationManager, boolean synchronous) {
+      super(deltaAwareValueKey, EnumUtil.bitSetOf(Flag.DELTA_WRITE), commandInvocationId, null, invocationManager, synchronous);
 
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("At least one key to be locked needs to be specified");
@@ -62,6 +64,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       } else {
          throw new IllegalStateException();
       }
+      recordInvocation(ctx, contextEntry, null);
       return null;
    }
 
@@ -150,16 +153,6 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    @Override
    public boolean isConditional() {
       return false;
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // Do nothing
    }
 
    @Override
