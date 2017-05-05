@@ -41,7 +41,6 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-tasks</artifactId>
-         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.jboss.sasl</groupId>

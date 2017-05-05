@@ -3,19 +3,15 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
 import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-import javax.security.auth.Subject;
-
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
@@ -41,24 +37,20 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
    private final HotRodServer server;
    private final NettyTransport transport;
    private final Executor executor;
+   private final TaskManager taskManager;
 
    public ContextHandler(HotRodServer server, NettyTransport transport, Executor executor) {
       this.server = server;
       this.transport = transport;
       this.executor = executor;
+      this.taskManager = SecurityActions.getGlobalComponentRegistry(server.getCacheManager()).getComponent(TaskManager.class);
    }
 
    @Override
    protected void channelRead0(ChannelHandlerContext ctx, CacheDecodeContext msg) throws Exception {
       executor.execute(() -> {
          try {
-            Subject subject = msg.subject;
-            if (subject == null)
-               realRead(ctx, msg);
-            else Security.doAs(subject, (PrivilegedExceptionAction<Void>) () -> {
-               realRead(ctx, msg);
-               return null;
-            });
+            realRead(ctx, msg);
          } catch (PrivilegedActionException e) {
             ctx.fireExceptionCaught(e.getCause());
          } catch (Exception e) {
@@ -115,15 +107,18 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
             break;
          case EXEC:
             ExecRequestContext execContext = (ExecRequestContext) msg.operationDecodeContext;
-            TaskManager taskManager = SecurityActions.getCacheGlobalComponentRegistry(msg.cache).getComponent(TaskManager.class);
             Marshaller marshaller;
             if (server.getMarshaller() != null) {
                marshaller = server.getMarshaller();
             } else {
                marshaller = new GenericJBossMarshaller();
             }
-            byte[] result = (byte[]) taskManager.runTask(execContext.getName(),
-                  new TaskContext().marshaller(marshaller).cache(msg.cache).parameters(execContext.getParams())).get();
+            TaskContext taskContext = new TaskContext()
+                  .marshaller(marshaller)
+                  .cache(msg.cache)
+                  .parameters(execContext.getParams())
+                  .subject(msg.subject);
+            byte[] result = (byte[]) taskManager.runTask(execContext.getName(), taskContext).get();
             writeResponse(msg, ctx.channel(),
                   new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId,
                         result == null ? new byte[]{} : result));

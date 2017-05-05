@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
@@ -25,7 +27,7 @@ import org.infinispan.util.logging.LogFactory;
  * Invokes operations against the cache based on the state kept during decoding process
  */
 public final class CacheDecodeContext {
-   static final long MillisecondsIn30days = 60 * 60 * 24 * 30 * 1000l;
+   static final long MillisecondsIn30days = TimeUnit.DAYS.toMillis(30);
    static final Log log = LogFactory.getLog(CacheDecodeContext.class, Log.class);
    static final boolean isTrace = log.isTraceEnabled();
 
@@ -37,11 +39,11 @@ public final class CacheDecodeContext {
 
    VersionedDecoder decoder;
    HotRodHeader header;
-   Subject subject;
    AdvancedCache<byte[], byte[]> cache;
    byte[] key;
    RequestParameters params;
    Object operationDecodeContext;
+   Subject subject;
 
    public HotRodHeader getHeader() {
       return header;
@@ -129,6 +131,11 @@ public final class CacheDecodeContext {
          }
       }
       this.cache = decoder.getOptimizedCache(header, cache, server.getCacheConfiguration(cacheName));
+   }
+
+   void withSubect(Subject subject) {
+      this.subject = subject;
+      this.cache = cache.as(subject);
    }
 
    Metadata buildMetadata() {

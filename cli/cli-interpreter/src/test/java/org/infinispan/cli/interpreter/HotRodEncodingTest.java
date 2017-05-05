@@ -54,8 +54,7 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       port = hotrodServer.getPort();
       remoteCacheManager = new RemoteCacheManager(
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
-                  .addServers("localhost:" + hotrodServer.getPort()).build());
+            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder().addServer().host("localhost").port(port).build());
       remoteCacheManager.start();
       GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(cacheManager);
       interpreter = gcr.getComponent(Interpreter.class);

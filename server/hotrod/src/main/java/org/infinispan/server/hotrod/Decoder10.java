@@ -26,8 +26,6 @@ import org.infinispan.util.concurrent.TimeoutException;
 
 import io.netty.buffer.ByteBuf;
 
-;
-
 /**
  * HotRod protocol decoder specific for specification version 1.0.
  *

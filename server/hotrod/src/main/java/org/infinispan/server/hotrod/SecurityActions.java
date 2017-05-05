@@ -5,19 +5,16 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listenable;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
-import org.infinispan.security.actions.GetCacheDistributionManagerAction;
 import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
-import org.infinispan.security.actions.GetCacheRpcManagerAction;
+import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.actions.RemoveListenerAction;
 
 /**
@@ -54,18 +51,13 @@ final class SecurityActions {
       return (org.infinispan.Cache<K, V>) doPrivileged(action);
    }
 
-   static DistributionManager getCacheDistributionManager(final AdvancedCache<?, ?> cache) {
-      GetCacheDistributionManagerAction action = new GetCacheDistributionManagerAction(cache);
-      return doPrivileged(action);
-   }
-
-   static RpcManager getCacheRpcManager(final AdvancedCache<?, ?> cache) {
-      GetCacheRpcManagerAction action = new GetCacheRpcManagerAction(cache);
-      return doPrivileged(action);
-   }
-
    static GlobalComponentRegistry getCacheGlobalComponentRegistry(final AdvancedCache<?, ?> cache) {
       GetCacheGlobalComponentRegistryAction action = new GetCacheGlobalComponentRegistryAction(cache);
+      return doPrivileged(action);
+   }
+
+   static GlobalComponentRegistry getGlobalComponentRegistry(final EmbeddedCacheManager cacheManager) {
+      GetGlobalComponentRegistryAction action = new GetGlobalComponentRegistryAction(cacheManager);
       return doPrivileged(action);
    }
 
