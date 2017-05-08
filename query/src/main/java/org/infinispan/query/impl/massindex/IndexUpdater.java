@@ -35,7 +35,7 @@ public class IndexUpdater {
       QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.searchIntegrator = queryInterceptor.getSearchFactory();
       this.keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       DefaultMassIndexerProgressMonitor monitor = new DefaultMassIndexerProgressMonitor(componentRegistry.getTimeService());
       this.defaultBatchBackend = new ExtendedBatchBackend(searchIntegrator, monitor);
    }
