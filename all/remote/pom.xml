@@ -284,6 +284,7 @@
                            !org.w3c.*,
                            !org.wildfly.*,
                            !org.xml.*,
+                           !org.apache.logging.log4j.*,
                            *
                         </Import-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>

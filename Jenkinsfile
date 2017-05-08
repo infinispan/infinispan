@@ -1,7 +1,9 @@
 #!/usr/bin/env groovy
 
 pipeline {
-    agent any
+    agent {
+        label 'slave-group-normal'
+    }
     options {
         timeout(time: 4, unit: 'HOURS')
     }
@@ -56,6 +58,7 @@ pipeline {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
                     script {
+                        milestone label: 'Deploy SNAPSHOT'
                         def mvnHome = tool 'Maven'
                         sh "${mvnHome}/bin/mvn deploy -s $MAVEN_SETTINGS -DskipTests"
                     }
