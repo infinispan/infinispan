@@ -155,7 +155,10 @@
       <version.lucene>5.5.4</version.lucene>
       <version.mc4j>1.2.6</version.mc4j>
       <version.mockito>2.7.21</version.mockito>
-      <version.mockito_dep.objenesis>1.4</version.mockito_dep.objenesis>
+      <version.mockito_dep.objenesis>2.5</version.mockito_dep.objenesis>
+      <!-- Used by integrationtests/osgi -->
+      <version.mockito_dep.bytebuddy>1.6.11</version.mockito_dep.bytebuddy>
+      <version.mockito_dep.hamcrest>1.3</version.mockito_dep.hamcrest>
       <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
       <version.org.picketbox>4.0.20.Final</version.org.picketbox>
@@ -1000,6 +1003,34 @@
             <artifactId>elasticsearch</artifactId>
             <version>${version.elasticsearch}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${version.mockito}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.objenesis</groupId>
+            <artifactId>objenesis</artifactId>
+            <version>${version.mockito_dep.objenesis}</version>
+         </dependency>
+         <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>${version.mockito_dep.bytebuddy}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>${version.mockito_dep.bytebuddy}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+            <version>${version.mockito_dep.hamcrest}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>

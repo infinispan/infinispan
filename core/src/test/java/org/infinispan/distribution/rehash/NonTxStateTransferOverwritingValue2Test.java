@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
@@ -9,7 +10,6 @@ import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -38,8 +38,6 @@ import org.infinispan.test.fwk.ClusteringDependentLogicDelegator;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 /**
@@ -129,13 +127,8 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       final AdvancedCache<Object,Object> cache1 = advancedCache(1);
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache0.getRpcManager().getMembers().size() == 2 &&
-                  cache1.getRpcManager().getMembers().size() == 2;
-         }
-      });
+      eventually(() -> cache0.getRpcManager().getMembers().size() == 2 &&
+            cache1.getRpcManager().getMembers().size() == 2);
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       blockEntryCommit(checkPoint, cache1);
@@ -150,12 +143,7 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
 
       // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 as backup owner
       // The put command will be blocked on cache1 just before committing the entry.
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return op.perform(cache0, key);
-         }
-      });
+      Future<Object> future = fork(() -> op.perform(cache0, key));
 
       // Check that the user write is blocked by the state transfer write
       boolean blocked = checkPoint.peek(1, SECONDS, "pre_commit_entry_" + key + "_from_" + address(0)) == null;
@@ -202,27 +190,21 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
                return;
             }
             final Address source = ctx.getOrigin();
-            if (entry instanceof ClearCacheEntry) {
-               super.commitEntry(entry, metadata, command, ctx, trackFlag, l1Invalidation);
-            } else {
-               CacheEntry newEntry = new CacheEntryDelegator(entry) {
-                  @Override
-                  public void commit(DataContainer container, Metadata metadata) {
-                     checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_" + source);
-                     try {
-                        checkPoint.awaitStrict("resume_commit_entry_" + getKey() + "_from_" + source, 10,
-                              SECONDS);
-                     } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                     } catch (TimeoutException e) {
-                        throw new RuntimeException(e);
-                     }
-                     super.commit(container, metadata);
-                     checkPoint.trigger("post_commit_entry_" + getKey() + "_from_" + source);
+            CacheEntry newEntry = new CacheEntryDelegator(entry) {
+               @Override
+               public void commit(DataContainer container, Metadata metadata) {
+                  checkPoint.trigger("pre_commit_entry_" + getKey() + "_from_" + source);
+                  try {
+                     checkPoint.awaitStrict("resume_commit_entry_" + getKey() + "_from_" + source, 10,
+                           SECONDS);
+                  } catch (InterruptedException | TimeoutException e) {
+                     throw new RuntimeException(e);
                   }
-               };
-               super.commitEntry(newEntry, metadata, command, ctx, trackFlag, l1Invalidation);
-            }
+                  super.commit(container, metadata);
+                  checkPoint.trigger("post_commit_entry_" + getKey() + "_from_" + source);
+               }
+            };
+            super.commitEntry(newEntry, metadata, command, ctx, trackFlag, l1Invalidation);
          }
       };
       TestingUtil.replaceComponent(cache, ClusteringDependentLogic.class, replaceCdl, true);
@@ -240,20 +222,16 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
          throws Exception {
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       ClusterTopologyManager spyManager = spy(ctm);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object[] arguments = invocation.getArguments();
-            Address source = (Address) arguments[1];
-            int topologyId = (Integer) arguments[2];
-            if (rebalanceTopologyId == topologyId) {
-               checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-               checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
-            }
-            return invocation.callRealMethod();
+      doAnswer(invocation -> {
+         Object[] arguments = invocation.getArguments();
+         Address source = (Address) arguments[1];
+         int topologyId = (Integer) arguments[2];
+         if (rebalanceTopologyId == topologyId) {
+            checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
+            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
          }
-      }).when(spyManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), any(Throwable.class),
-            anyInt());
+         return invocation.callRealMethod();
+      }).when(spyManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());
       TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, spyManager, true);
    }
 }

@@ -1,8 +1,9 @@
 package org.infinispan.stream;
 
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doAnswer;
@@ -213,9 +214,9 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      // Add an extra so that when we remove 1 it means not all the values will be on 1 node
+      // Add an extra node so that when we remove 1 it means not all the values will be on 1 node
       addClusterEnabledCacheManager(builderUsed).defineConfiguration(CACHE_NAME, builderUsed.build());
-
+      cache(3, CACHE_NAME);
 
       // put a lot of entries in cache0, so that when a node goes down it will lose some
       Map<Object, String> values = new HashMap<>();
@@ -373,8 +374,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
             // Now wait until main thread lets us through
             checkPoint.awaitStrict("post_send_response_released", 10, TimeUnit.SECONDS);
          }
-      }).when(mockManager).invokeRemotely(anyCollectionOf(Address.class), any(StreamResponseCommand.class),
-                                          any(RpcOptions.class));
+      }).when(mockManager).invokeRemotely(anyCollection(), any(StreamResponseCommand.class), nullable(RpcOptions.class));
       TestingUtil.replaceComponent(cache, RpcManager.class, mockManager, true);
       return rpc;
    }
@@ -397,15 +397,15 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
             // Now wait until main thread lets us through
             checkPoint.awaitStrict("post_receive_response_released", 10, TimeUnit.SECONDS);
          }
-      }).when(mockRetriever).receiveResponse(any(UUID.class), any(Address.class), anyBoolean(), anySetOf(Integer.class),
+      }).when(mockRetriever).receiveResponse(any(String.class), any(Address.class), anyBoolean(), anySet(),
               any());
       TestingUtil.replaceComponent(cache, ClusterStreamManager.class, mockRetriever, true);
       return rpc;
    }
 
    protected DataContainer waitUntilDataContainerWillBeIteratedOn(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      DataContainer rpc = TestingUtil.extractComponent(cache, DataContainer.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(rpc);
+      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(dataContainer);
       DataContainer mocaContainer = mock(DataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
       final AtomicInteger invocationCount = new AtomicInteger();
       doAnswer(invocation -> {
@@ -431,6 +431,6 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
          }
       }).when(mocaContainer).iterator();
       TestingUtil.replaceComponent(cache, DataContainer.class, mocaContainer, true);
-      return rpc;
+      return dataContainer;
    }
 }

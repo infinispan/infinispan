@@ -2,22 +2,20 @@ package org.infinispan.notifications.cachelistener;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.isNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
+import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.Matcher;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -82,18 +80,14 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    }
 
    protected Matcher<FlagAffectedCommand> getFlagMatcher() {
-      return new BaseMatcher<FlagAffectedCommand>() {
-         @Override
-         public boolean matches(Object o) {
-            boolean expected = o instanceof FlagAffectedCommand;
-            boolean isSkipListener = ((FlagAffectedCommand) o).hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION);
-            return expected && !isSkipListener;
-         }
-
-         @Override
-         public void describeTo(Description description) {
-         }
-      };
+      Matcher<FlagAffectedCommand> flagAffectedCommandMatcher =
+            new CustomTypeSafeMatcher<FlagAffectedCommand>("SKIP_LISTENER_NOTIFICATION") {
+               @Override
+               protected boolean matchesSafely(FlagAffectedCommand item) {
+                  return !item.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION);
+               }
+            };
+      return flagAffectedCommandMatcher;
    }
 
 
@@ -111,7 +105,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
 
    public void testRemoveData() throws Exception {
       Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
-      Map<String, String> data = new HashMap<String, String>();
+      Map<String, String> data = new HashMap<>();
       data.put("key", "value");
       data.put("key2", "value2");
       initCacheData(cache, data);
@@ -199,8 +193,8 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
 
    private void initCacheData(Cache cache, Map<String, String> data) {
       cache.putAll(data);
-      verify(getMockNotifier(cache), atLeastOnce()).notifyCacheEntryCreated(anyObject(),
-            anyObject(), any(Metadata.class), anyBoolean(),
+      verify(getMockNotifier(cache), atLeastOnce()).notifyCacheEntryCreated(any(),
+            any(), any(Metadata.class), anyBoolean(),
             isA(InvocationContext.class), getExpectedPutMapCommand());
    }
 
@@ -209,10 +203,12 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    }
 
    private void expectSingleEntryCreated(Cache cache, Object key, Object value,
-         Matcher<FlagAffectedCommand> matcher) {
-      verify(getMockNotifier(cache)).notifyCacheEntryCreated(eq(key), eq(value), isNotNull(Metadata.class),
-            eq(true), isA(InvocationContext.class), argThat(matcher));
-      verify(getMockNotifier(cache)).notifyCacheEntryCreated(eq(key), eq(value), isNotNull(Metadata.class),
-            eq(false), isA(InvocationContext.class), argThat(matcher));
+                                         Matcher<FlagAffectedCommand> matcher) {
+      verify(getMockNotifier(cache))
+            .notifyCacheEntryCreated(eq(key), eq(value), any(Metadata.class), eq(true), any(InvocationContext.class),
+                                     argThat(matcher));
+      verify(getMockNotifier(cache))
+            .notifyCacheEntryCreated(eq(key), eq(value), any(Metadata.class), eq(false), any(InvocationContext.class),
+                                     argThat(matcher));
    }
 }

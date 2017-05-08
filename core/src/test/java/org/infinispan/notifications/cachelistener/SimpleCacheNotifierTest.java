@@ -1,9 +1,9 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.mockito.Matchers.isNull;
 
 import org.hamcrest.Matcher;
-import org.hamcrest.core.IsNull;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -33,12 +33,12 @@ public class SimpleCacheNotifierTest extends CacheNotifierTest {
 
    @Override
    protected Matcher<FlagAffectedCommand> getFlagMatcher() {
-      return new IsNull<>();
+      return nullValue(FlagAffectedCommand.class);
    }
 
    @Override
    protected PutMapCommand getExpectedPutMapCommand() {
-      return isNull(PutMapCommand.class);
+      return isNull();
    }
 
    @Listener

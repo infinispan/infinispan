@@ -1,14 +1,13 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import javax.transaction.TransactionManager;
@@ -27,8 +26,6 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 @Test(testName = "lock.ManyTxsDuringStateTransferTest", groups = "functional")
@@ -67,18 +64,15 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
       // Block state request commands on cache 0
       StateProvider stateProvider = TestingUtil.extractComponent(cache0, StateProvider.class);
       StateProvider spyProvider = spy(stateProvider);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object[] arguments = invocation.getArguments();
-            Address source = (Address) arguments[0];
-            int topologyId = (Integer) arguments[1];
-            Object result = invocation.callRealMethod();
-            checkpoint.trigger("post_get_transactions_" + topologyId + "_from_" + source);
-            checkpoint.awaitStrict("resume_get_transactions_" + topologyId + "_from_" + source, 10, SECONDS);
-            return result;
-         }
-      }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySetOf(Integer.class));
+      doAnswer(invocation -> {
+         Object[] arguments = invocation.getArguments();
+         Address source = (Address) arguments[0];
+         int topologyId = (Integer) arguments[1];
+         Object result = invocation.callRealMethod();
+         checkpoint.trigger("post_get_transactions_" + topologyId + "_from_" + source);
+         checkpoint.awaitStrict("resume_get_transactions_" + topologyId + "_from_" + source, 10, SECONDS);
+         return result;
+      }).when(spyProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySet());
       TestingUtil.replaceComponent(cache0, StateProvider.class, spyProvider, true);
 
       // Start cache 1, but the tx data request will be blocked on cache 0
@@ -93,14 +87,11 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
       for (int i = 0; i < NUM_TXS; i++) {
          // The rollback command should be invoked on cache 1 and it should block until the tx is created there
          final int ii = i;
-         futures[i] = fork(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-               tm0.begin();
-               cache0.put("testkey" + ii, "v" + ii);
-               tm0.commit();
-               return null;
-            }
+         futures[i] = fork(() -> {
+            tm0.begin();
+            cache0.put("testkey" + ii, "v" + ii);
+            tm0.commit();
+            return null;
          });
       }
 
@@ -123,11 +114,7 @@ public class ManyTxsDuringStateTransferTest extends MultipleCacheManagersTest {
       // Check for stale locks
       final TransactionTable tt0 = TestingUtil.extractComponent(cache0, TransactionTable.class);
       final TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return tt0.getLocalTxCount() == 0 && tt1.getRemoteTxCount() == 0;
-         }
-      });
+      eventuallyEquals(0, tt0::getLocalTxCount);
+      eventuallyEquals(0, tt1::getRemoteTxCount);
    }
 }

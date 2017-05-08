@@ -1,7 +1,7 @@
 package org.infinispan.remoting;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 
@@ -49,10 +49,11 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
          PutKeyValueCommand putCommand = new PutKeyValueCommand();
          putCommand.setKey(key);
          putCommand.setValue(value);
-         doAnswer(invocation -> invocation.callRealMethod()).when(mockMarshaller2).objectToByteBuffer(anyObject());
+         doAnswer(invocation -> invocation.callRealMethod())
+               .when(mockMarshaller2).objectToByteBuffer(any());
          doAnswer(invocation -> {
             throw new EOFException();
-         }).when(mockMarshaller2).objectFromByteBuffer(anyObject(), anyInt(), anyInt());
+         }).when(mockMarshaller2).objectFromByteBuffer(any(), anyInt(), anyInt());
          dispatcher2.setIspnMarshaller(mockMarshaller2);
          cache1.put(key, value);
          assert false : "Should have thrown an exception";

@@ -2,12 +2,13 @@ package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
@@ -27,7 +28,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
@@ -125,8 +125,9 @@ public class RpcManagerMBeanTest extends AbstractClusterMBeanTest {
          Transport transport = mock(Transport.class);
          when(transport.getMembers()).thenReturn(memberList);
          when(transport.getAddress()).thenReturn(mockAddress1);
-         when(transport.invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class), any(ResponseMode.class),
-               anyLong(), any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean())).thenThrow(new RuntimeException());
+         // If cache1 is the primary owner it will be a broadcast, otherwise a unicast
+         when(transport.invokeRemotelyAsync(any(), any(ReplicableCommand.class), any(ResponseMode.class),
+               anyLong(), isNull(), any(DeliverOrder.class), anyBoolean())).thenThrow(new RuntimeException());
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
          assert false : "rpc manager should have thrown an exception";

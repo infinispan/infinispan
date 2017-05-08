@@ -31,8 +31,6 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.jgroups.protocols.DISCARD;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "statetransfer.ClusterTopologyManagerTest")
@@ -224,7 +222,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    public void testClusterRecoveryWithRebalance() throws Exception {
       // Compute the merge coordinator by sorting the JGroups addresses, the same way MERGE2/3 do
-      List<Address> members = new ArrayList<Address>(manager(0).getMembers());
+      List<Address> members = new ArrayList<>(manager(0).getMembers());
       Collections.sort(members);
       Address mergeCoordAddress = members.get(0);
       log.debugf("The merge coordinator will be %s", mergeCoordAddress);
@@ -261,12 +259,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       cm4.defineConfiguration(CACHE_NAME, defaultConfig.build());
       cm4.defineConfiguration(OTHER_CACHE_NAME, defaultConfig.build());
       cm4.getCache(OTHER_CACHE_NAME);
-      Future<Cache<Object,Object>> cacheFuture = fork(new Callable<Cache<Object, Object>>() {
-         @Override
-         public Cache<Object, Object> call() throws Exception {
-            return cm4.getCache(CACHE_NAME);
-         }
-      });
+      Future<Cache<Object,Object>> cacheFuture = fork(() -> cm4.getCache(CACHE_NAME));
 
       log.debugf("Waiting for the REBALANCE_START command to reach the merge coordinator");
       checkpoint.awaitStrict("rebalance_" + Arrays.asList(mergeCoordAddress, cm4.getAddress()), 10, TimeUnit.SECONDS);
@@ -309,20 +302,17 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       final LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(manager,
             LocalTopologyManager.class);
       LocalTopologyManager spyLocalTopologyManager = spy(localTopologyManager);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
-            List<Address> members = topology.getMembers();
-            checkpoint.trigger("rebalance_" + members);
-            if (members.size() == numMembers) {
-               log.debugf("Blocking the REBALANCE_START command with members %s on %s", members, manager.getAddress());
-               checkpoint.awaitStrict("merge", 30, TimeUnit.SECONDS);
-            }
-            return invocation.callRealMethod();
+      doAnswer(invocation -> {
+         CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
+         List<Address> members = topology.getMembers();
+         checkpoint.trigger("rebalance_" + members);
+         if (members.size() == numMembers) {
+            log.debugf("Blocking the REBALANCE_START command with members %s on %s", members, manager.getAddress());
+            checkpoint.awaitStrict("merge", 30, TimeUnit.SECONDS);
          }
+         return invocation.callRealMethod();
       }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
-            any(Address.class));
+                                                          any(Address.class));
       TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLocalTopologyManager, true);
    }
 
@@ -337,15 +327,12 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager2 = spy(localTopologyManager2);
       final CacheTopology initialTopology = localTopologyManager2.getCacheTopology(CACHE_NAME);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            int viewId = (Integer) invocation.getArguments()[0];
-            checkpoint.trigger("GET_STATUS_" + viewId);
-            log.debugf("Blocking the GET_STATUS command on the new coordinator");
-            checkpoint.awaitStrict("3 left", 10, TimeUnit.SECONDS);
-            return invocation.callRealMethod();
-         }
+      doAnswer(invocation -> {
+         int viewId = (Integer) invocation.getArguments()[0];
+         checkpoint.trigger("GET_STATUS_" + viewId);
+         log.debugf("Blocking the GET_STATUS command on the new coordinator");
+         checkpoint.awaitStrict("3 left", 10, TimeUnit.SECONDS);
+         return invocation.callRealMethod();
       }).when(spyLocalTopologyManager2).handleStatusRequest(anyInt());
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
@@ -394,43 +381,34 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       final CheckPoint checkpoint = new CheckPoint();
       LocalTopologyManager spyLocalTopologyManager2 = spy(localTopologyManager2);
       final CacheTopology initialTopology = localTopologyManager2.getCacheTopology(CACHE_NAME);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            int viewId = (Integer) invocation.getArguments()[0];
-            checkpoint.trigger("GET_STATUS_" + viewId);
-            log.debugf("Blocking the GET_STATUS command on the new coordinator");
-            checkpoint.awaitStrict("3 left", 10, TimeUnit.SECONDS);
-            return invocation.callRealMethod();
-         }
+      doAnswer(invocation -> {
+         int viewId = (Integer) invocation.getArguments()[0];
+         checkpoint.trigger("GET_STATUS_" + viewId);
+         log.debugf("Blocking the GET_STATUS command on the new coordinator");
+         checkpoint.awaitStrict("3 left", 10, TimeUnit.SECONDS);
+         return invocation.callRealMethod();
       }).when(spyLocalTopologyManager2).handleStatusRequest(anyInt());
 
       // Discard the first topology update after the merge
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
-            if (topology.getRebalanceId() == initialTopology.getRebalanceId() + 1) {
-               log.debugf("Discarding CH update command %s", topology);
-               return null;
-            }
-            return invocation.callRealMethod();
+      doAnswer(invocation -> {
+         CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
+         if (topology.getRebalanceId() == initialTopology.getRebalanceId() + 1) {
+            log.debugf("Discarding CH update command %s", topology);
+            return null;
          }
+         return invocation.callRealMethod();
       }).when(spyLocalTopologyManager2).handleTopologyUpdate(eq(CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt(), any(Address.class));
+                                                                any(AvailabilityMode.class), anyInt(), any(Address.class));
       // Discard the first rebalance after the merge
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
-            if (topology.getRebalanceId() == initialTopology.getRebalanceId() + 2) {
-               log.debugf("Discarding rebalance command %s", topology);
-               return null;
-            }
-            return invocation.callRealMethod();
+      doAnswer(invocation -> {
+         CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
+         if (topology.getRebalanceId() == initialTopology.getRebalanceId() + 2) {
+            log.debugf("Discarding rebalance command %s", topology);
+            return null;
          }
+         return invocation.callRealMethod();
       }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
-            any(Address.class));
+                                                           any(Address.class));
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
       // Node 1 (the coordinator) dies. Node 2 becomes coordinator and tries to call GET_STATUS
@@ -454,15 +432,12 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       final CheckPoint checkpoint = new CheckPoint();
       StateProvider stateProvider = TestingUtil.extractComponent(c2, StateProvider.class);
       StateProvider spyStateProvider = spy(stateProvider);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            int topologyId = (Integer) invocation.getArguments()[1];
-            checkpoint.trigger("GET_TRANSACTIONS");
-            log.debugf("Blocking the GET_TRANSACTIONS(%d) command on the %s", topologyId, c2);
-            checkpoint.awaitStrict("LEAVE", 10, TimeUnit.SECONDS);
-            return invocation.callRealMethod();
-         }
+      doAnswer(invocation -> {
+         int topologyId = (Integer) invocation.getArguments()[1];
+         checkpoint.trigger("GET_TRANSACTIONS");
+         log.debugf("Blocking the GET_TRANSACTIONS(%d) command on the %s", topologyId, c2);
+         checkpoint.awaitStrict("LEAVE", 10, TimeUnit.SECONDS);
+         return invocation.callRealMethod();
       }).when(spyStateProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySet());
       TestingUtil.replaceComponent(c2, StateProvider.class, spyStateProvider, true);
 
@@ -486,12 +461,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       defineConfigurationOnAllManagers(OTHER_CACHE_NAME, new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
 
       d2.setDiscardAll(true);
-      fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return cache(1, OTHER_CACHE_NAME);
-         }
-      });
+      fork((Callable<Object>) () -> cache(1, OTHER_CACHE_NAME));
       TestingUtil.blockUntilViewsReceived(30000, false, manager(1));
       TestingUtil.waitForNoRebalance(cache(1, OTHER_CACHE_NAME));
    }
