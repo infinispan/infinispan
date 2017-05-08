@@ -68,7 +68,7 @@ pipeline {
             }
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    milestone label: 'Deploy SNAPSHOT'
+                    milestone ordinal: 100, label: 'Deploy SNAPSHOT'
                     sh "${MAVEN_HOME}/bin/mvn deploy -B -V -s $MAVEN_SETTINGS -DskipTests"
                 }
             }
