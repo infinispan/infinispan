@@ -14,9 +14,11 @@
     <description>Integration tests for Infinispan and Spring Boot</description>
 
     <properties>
-        
-        
-        <overriden.version.junit>4.12</overriden.version.junit>
+        <!-- Most or our tests require JUnit 4.11 for Arquillian, however Spring needs 4.12 -->
+        <!-- FIXME: https://issues.jboss.org/browse/ISPN-7034 -->
+        <overridden.version.junit>4.12</overridden.version.junit>
+        <!-- Spring Boot needs the MockUtil constructor to be public, so it can't use mockito-core 2+ -->
+        <overridden.version.mockito>1.10.19</overridden.version.mockito>
     </properties>
 
     <dependencyManagement>
@@ -32,7 +34,7 @@
     </dependencyManagement>
 
     <dependencies>
-        
+        <!-- Those are normal dependencies that are recommended for Spring Boot users -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -69,12 +71,17 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-commons-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-client-hotrod</artifactId>
             <scope>test</scope>
         </dependency>
 
-        
+        <!-- Helper, test dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -89,7 +96,13 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
-            <version>${overriden.version.junit}</version>
+            <version>${overridden.version.junit}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+            <version>${overridden.version.mockito}</version>
         </dependency>
     </dependencies>
 
