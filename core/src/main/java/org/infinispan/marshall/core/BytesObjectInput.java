@@ -1,10 +1,11 @@
 package org.infinispan.marshall.core;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInput;
 
 /**
- * Array backed, expandable {@link ObjectInput} implementation.
+ * Array backed {@link ObjectInput} implementation.
  *
  * {@link #skip(long)} and {@link #skipBytes(int)} have been enhanced so that
  * if a negative number is passed in, they skip backwards effectively
@@ -41,18 +42,27 @@ final class BytesObjectInput implements ObjectInput {
 
    @Override
    public int read() {
-      return readUnsignedByte();
+      if (pos >= bytes.length) {
+         return -1;
+      }
+      return bytes[pos++] & 0xff;
    }
 
    @Override
    public int read(byte[] b) {
-      readFully(b);
-      return b.length;
+      return read(b, 0, b.length);
    }
 
    @Override
    public int read(byte[] b, int off, int len) {
-      readFully(b, off, len);
+      if (pos >= bytes.length) {
+         return -1;
+      }
+      if (pos + len >= bytes.length) {
+         len = bytes.length - pos;
+      }
+      System.arraycopy(bytes, pos, b, off, len);
+      pos += len;
       return len;
    }
 
@@ -101,17 +111,20 @@ final class BytesObjectInput implements ObjectInput {
    }
 
    @Override
-   public boolean readBoolean() {
+   public boolean readBoolean() throws EOFException {
       return readByte() != 0;
    }
 
    @Override
-   public byte readByte() {
+   public byte readByte() throws EOFException {
+      if (pos >= bytes.length) {
+         throw new EOFException();
+      }
       return bytes[pos++];
    }
 
    @Override
-   public int readUnsignedByte() {
+   public int readUnsignedByte() throws EOFException {
       return readByte() & 0xff;
    }
 
@@ -233,8 +246,8 @@ final class BytesObjectInput implements ObjectInput {
       return new String(chararr, 0, chararr_count);
    }
 
-   String readString() {
-      byte mark = readByte();
+   String readString() throws EOFException {
+      int mark = readByte();
 
       switch(mark) {
          case 0:
