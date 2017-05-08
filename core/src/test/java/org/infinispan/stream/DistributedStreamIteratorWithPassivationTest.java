@@ -68,7 +68,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
       Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
 
-      Map<MagicKey, String> originalValues = new HashMap<MagicKey, String>();
+      Map<MagicKey, String> originalValues = new HashMap<>();
       originalValues.put(new MagicKey(cache0), "cache0");
       originalValues.put(new MagicKey(cache1), "cache1");
       originalValues.put(new MagicKey(cache2), "cache2");
@@ -107,7 +107,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
 
          // we need this count since the map will replace same key'd value
          int count = 0;
-         Map<MagicKey, String> results = new HashMap<MagicKey, String>();
+         Map<MagicKey, String> results = new HashMap<>();
          while (iterator.hasNext()) {
             Map.Entry<MagicKey, String> entry = iterator.next();
             results.put(entry.getKey(), entry.getValue());
@@ -131,7 +131,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
       Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
 
-      Map<MagicKey, String> originalValues = new HashMap<MagicKey, String>();
+      Map<MagicKey, String> originalValues = new HashMap<>();
       originalValues.put(new MagicKey(cache0), "cache0");
       originalValues.put(new MagicKey(cache1), "cache1");
       originalValues.put(new MagicKey(cache2), "cache2");
@@ -169,7 +169,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
 
          // we need this count since the map will replace same key'd value
          int count = 0;
-         Map<MagicKey, String> results = new HashMap<MagicKey, String>();
+         Map<MagicKey, String> results = new HashMap<>();
          while (iterator.hasNext()) {
             Map.Entry<MagicKey, String> entry = iterator.next();
             results.put(entry.getKey(), entry.getValue());
@@ -194,7 +194,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
       Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
 
-      Map<MagicKey, String> originalValues = new HashMap<MagicKey, String>();
+      Map<MagicKey, String> originalValues = new HashMap<>();
       originalValues.put(new MagicKey(cache0), "cache0");
       originalValues.put(new MagicKey(cache1), "cache1");
       originalValues.put(new MagicKey(cache2), "cache2");
@@ -234,7 +234,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
 
          // we need this count since the map will replace same key'd value
          int count = 0;
-         Map<MagicKey, String> results = new HashMap<MagicKey, String>();
+         Map<MagicKey, String> results = new HashMap<>();
          while (iterator.hasNext()) {
             Map.Entry<MagicKey, String> entry = iterator.next();
             results.put(entry.getKey(), entry.getValue());
@@ -275,9 +275,6 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
    /**
     * This test is to verify that if a concurrent passivation occurs while switching between data container and loader(s)
     * that we don't return the same key/value twice
-    * @throws InterruptedException
-    * @throws ExecutionException
-    * @throws TimeoutException
     */
    @Test
    public void testConcurrentPassivation() throws InterruptedException, ExecutionException, TimeoutException {

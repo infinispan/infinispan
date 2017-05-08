@@ -120,7 +120,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       Map<Address, Set<Integer>> targets = determineTargets(ch, segments);
       String id;
       if (!targets.isEmpty()) {
-         id = localAddress.toString() + requestId.getAndIncrement();
+         id = localAddress.toString() + "-" + requestId.getAndIncrement();
          log.tracef("Performing remote rehash key aware operations %s for id %s", targets, id);
          RequestTracker<Map<K, R2>> tracker = new RequestTracker<>(callback, targets, null);
          currentlyRunning.put(id, tracker);
@@ -284,9 +284,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       if (time <= 0) {
          throw new IllegalArgumentException("Time must be greater than 0");
       }
-      if (id == null) {
-         Objects.requireNonNull(id, "Identifier must be non null");
-      }
+      Objects.requireNonNull(id, "Identifier must be non null");
 
       log.tracef("Awaiting completion of %s", id);
 

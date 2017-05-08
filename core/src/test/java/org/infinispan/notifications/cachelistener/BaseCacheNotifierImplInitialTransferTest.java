@@ -3,7 +3,6 @@ package org.infinispan.notifications.cachelistener;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -121,7 +120,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       when(config.clustering().cacheMode()).thenReturn(cacheMode);
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
 
-      Answer answer = i -> Mockito.mock((Class) i.getArguments()[0]);
+      Answer answer = i -> Mockito.mock(i.getArgument(0));
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
             new WrappedByteArrayConverter());
@@ -188,14 +187,14 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       n.addListener(listener, filter, converter);
       verifyEvents(isClustered(listener), listener, initialValues);
 
-      verify(filter, never()).accept(anyObject(), anyObject(), any(Metadata.class), anyObject(), any(Metadata.class),
+      verify(filter, never()).accept(any(), any(), any(Metadata.class), any(), any(Metadata.class),
                                      any(EventType.class));
-      verify(converter, never()).convert(anyObject(), anyObject(), any(Metadata.class), anyObject(), any(Metadata.class),
+      verify(converter, never()).convert(any(), any(), any(Metadata.class), any(), any(Metadata.class),
                                          any(EventType.class));
    }
 
    public void testMetadataAvailable() {
-      final List<CacheEntry<String, String>> initialValues = new ArrayList<CacheEntry<String, String>>(10);
+      final List<CacheEntry<String, String>> initialValues = new ArrayList<>(10);
       for (int i = 0; i < 10; i++) {
          String key = "key-" + i;
          String value = "value-" + i;
@@ -293,7 +292,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
    private void testModificationAfterIterationBeganButNotIteratedValueYet(final StateListener<String, String> listener,
                                                                           Operation operation) throws InterruptedException,
                                                                                   TimeoutException, BrokenBarrierException, ExecutionException {
-      final List<CacheEntry<String, String>> initialValues = new ArrayList<CacheEntry<String, String>>();
+      final List<CacheEntry<String, String>> initialValues = new ArrayList<>();
       for (int i = 0; i < 10; i++) {
          String key = "key-" + i;
          String value = "value-" + i;
@@ -512,7 +511,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
    }
 
    protected static abstract class StateListener<K, V> {
-      final List<CacheEntryEvent<K, V>> events = new ArrayList<CacheEntryEvent<K, V>>();
+      final List<CacheEntryEvent<K, V>> events = new ArrayList<>();
       private final Log log = LogFactory.getLog(getClass());
 
       @CacheEntryCreated

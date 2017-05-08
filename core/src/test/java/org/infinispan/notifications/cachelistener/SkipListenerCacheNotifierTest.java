@@ -1,7 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
+import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.Matcher;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -21,16 +20,10 @@ public class SkipListenerCacheNotifierTest extends CacheNotifierTest {
 
    @Override
    protected Matcher<FlagAffectedCommand> getFlagMatcher() {
-      return new BaseMatcher<FlagAffectedCommand>() {
+      return new CustomTypeSafeMatcher<FlagAffectedCommand>("") {
          @Override
-         public boolean matches(Object o) {
-            boolean expected = o instanceof FlagAffectedCommand;
-            boolean isSkipListener = ((FlagAffectedCommand) o).hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION);
-            return expected && isSkipListener;
-         }
-
-         @Override
-         public void describeTo(Description description) {
+         protected boolean matchesSafely(FlagAffectedCommand item) {
+            return item.hasAnyFlag(FlagBitSets.SKIP_LISTENER_NOTIFICATION);
          }
       };
    }

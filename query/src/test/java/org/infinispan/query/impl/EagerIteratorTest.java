@@ -1,6 +1,6 @@
 package org.infinispan.query.impl;
 
-import static org.mockito.Matchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -54,13 +54,9 @@ public class EagerIteratorTest {
       // create the instance of the iterator.
       cache = mock(AdvancedCache.class);
 
-      when(cache.get(anyObject())).thenAnswer(new Answer<String>() {
-         @Override
-         public String answer(InvocationOnMock invocation) throws Throwable {
-            String k = invocation.getArguments()[0].toString();
-            return dummyResults.get(k);
-         }
-
+      when(cache.get(any())).thenAnswer(invocation -> {
+         String k = invocation.getArguments()[0].toString();
+         return dummyResults.get(k);
       });
 
       iterator = new EagerIterator<>(entityInfos, new EntityLoader(cache, keyTransformationHandler), getFetchSize());

@@ -4,6 +4,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -33,7 +34,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -206,21 +206,18 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
          final int currentTopologyId)
          throws InterruptedException {
       LocalTopologyManager component = TestingUtil.extractGlobalComponent(manager, LocalTopologyManager.class);
-      LocalTopologyManager spyLtm = Mockito.spy(component);
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
-            // Ignore the first topology update on the joiner, which is with the topology before the join
-            if (topology.getTopologyId() != currentTopologyId) {
-               checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
-               checkPoint.await("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
-                     10, TimeUnit.SECONDS);
-            }
-            return invocation.callRealMethod();
+      LocalTopologyManager spyLtm = spy(component);
+      doAnswer(invocation -> {
+         CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
+         // Ignore the first topology update on the joiner, which is with the topology before the join
+         if (topology.getTopologyId() != currentTopologyId) {
+            checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
+            checkPoint.await("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
+                  10, TimeUnit.SECONDS);
          }
+         return invocation.callRealMethod();
       }).when(spyLtm).handleTopologyUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt(), any(Address.class));
+                                              any(AvailabilityMode.class), anyInt(), any(Address.class));
       TestingUtil.extractGlobalComponentRegistry(manager).registerComponent(spyLtm, LocalTopologyManager.class);
    }
 }

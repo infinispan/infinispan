@@ -55,7 +55,7 @@ public class RetryOnFailureUnitTest {
    private void doRetryTest(int maxRetry, boolean failOnTransport) {
       TransportFactory mockTransport = Mockito.mock(TransportFactory.class);
       Mockito.when(mockTransport.getMaxRetries()).thenReturn(maxRetry);
-      Mockito.when(mockTransport.trySwitchCluster(Mockito.anyObject(), Mockito.anyObject())).thenReturn(ClusterSwitchStatus.NOT_SWITCHED);
+      Mockito.when(mockTransport.trySwitchCluster(Mockito.any(), Mockito.any())).thenReturn(ClusterSwitchStatus.NOT_SWITCHED);
       MockOperation mockOperation = new MockOperation(mockTransport, failOnTransport);
       try {
          mockOperation.execute();

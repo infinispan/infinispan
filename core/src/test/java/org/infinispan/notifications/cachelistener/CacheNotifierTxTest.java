@@ -1,8 +1,8 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNotNull;
@@ -21,6 +21,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -86,9 +87,9 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       }
 
       expectTransactionBoundaries(true);
-      verify(mockNotifier, atLeastOnce()).notifyCacheEntryCreated(anyObject(),
-            anyObject(), any(Metadata.class), anyBoolean(),
-            isA(InvocationContext.class), any(PutKeyValueCommand.class));
+      verify(mockNotifier, atLeastOnce()).notifyCacheEntryCreated(notNull(),
+            notNull(), any(Metadata.class), anyBoolean(),
+            any(InvocationContext.class), any(PutMapCommand.class));
       reset(mockNotifier);
    }
 
@@ -101,14 +102,14 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
    }
 
    static void expectSingleEntryCreated(Object key, Object value, CacheNotifier mockNotifier) {
-      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), isNotNull(Metadata.class),
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), any(Metadata.class),
             eq(true), isA(InvocationContext.class), isA(PutKeyValueCommand.class));
-      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), isNotNull(Metadata.class),
-            eq(false), isA(InvocationContext.class), isNull(FlagAffectedCommand.class));
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), any(Metadata.class),
+            eq(false), isA(InvocationContext.class), isNull());
    }
 
    static void expectSingleEntryOnlyPreCreated(Object key, Object value, CacheNotifier mockNotifier) {
-      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), isNotNull(Metadata.class),
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), any(Metadata.class),
             eq(true), isA(InvocationContext.class), isA(PutKeyValueCommand.class));
    }
 
@@ -155,11 +156,11 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value"),
             any(Metadata.class), eq(true), isA(InvocationContext.class), isA(PutKeyValueCommand.class));
       verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value"),
-            any(Metadata.class), eq(false), isA(InvocationContext.class), isNull(FlagAffectedCommand.class));
+            any(Metadata.class), eq(false), isA(InvocationContext.class), isNull());
    }
 
    public void testTxRemoveData() throws Exception {
-      Map<Object, Object> data = new HashMap<Object, Object>();
+      Map<Object, Object> data = new HashMap<>();
       data.put("key", "value");
       data.put("key2", "value2");
       initCacheData(data);
@@ -172,6 +173,6 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), any(Metadata.class),
             eq(true), isA(InvocationContext.class), isA(RemoveCommand.class));
       verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), any(Metadata.class),
-            eq(false), isA(InvocationContext.class), isNull(FlagAffectedCommand.class));
+            eq(false), isA(InvocationContext.class), isNull());
    }
 }

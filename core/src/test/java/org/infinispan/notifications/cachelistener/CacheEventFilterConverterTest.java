@@ -1,7 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -32,10 +31,10 @@ public class CacheEventFilterConverterTest extends SingleCacheManagerTest {
 
    public void testFilterConvertedCalledOnlyOnce() {
       Object value = new Object();
-      CacheEventFilterConverter<Object, Object, Object> filterConverter =
-            when(mock(CacheEventFilterConverter.class).filterAndConvert(anyObject(), anyObject(), any(Metadata.class),
-                                                                        anyObject(), any(Metadata.class),
-                                                                        any(EventType.class))).thenReturn(value).getMock();
+      CacheEventFilterConverter<Object, Object, Object> filterConverter = mock(CacheEventFilterConverter.class);
+      when(filterConverter.filterAndConvert(notNull(), any(), any(),
+                                            any(), any(),
+                                            any(EventType.class))).thenReturn(value);
       CacheListener listener = new CacheListener();
       cache.addListener(listener, filterConverter, filterConverter);
 
@@ -43,14 +42,14 @@ public class CacheEventFilterConverterTest extends SingleCacheManagerTest {
 
       assertEquals(2, listener.getInvocationCount());
 
-      verify(filterConverter, times(2)).filterAndConvert(anyObject(), anyObject(), any(Metadata.class),
-                                                         anyObject(), any(Metadata.class),
-                                                         any(EventType.class));
-      verify(filterConverter, never()).accept(anyObject(), anyObject(), any(Metadata.class),
-                                              anyObject(), any(Metadata.class),
-                                              any(EventType.class));
-      verify(filterConverter, never()).convert(anyObject(), anyObject(), any(Metadata.class),
-                                               anyObject(), any(Metadata.class),
-                                               any(EventType.class));
+      verify(filterConverter, times(2)).filterAndConvert(any(), any(), any(),
+                                                         any(), any(),
+                                                         any());
+      verify(filterConverter, never()).accept(any(), any(), any(),
+                                              any(), any(),
+                                              any());
+      verify(filterConverter, never()).convert(any(), any(), any(),
+                                               any(), any(),
+                                               any());
    }
 }

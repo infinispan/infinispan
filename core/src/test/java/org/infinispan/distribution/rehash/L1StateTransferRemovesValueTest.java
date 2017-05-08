@@ -11,7 +11,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -95,13 +94,10 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(configuration);
 
-      Future<Void> join = fork(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            waitForClusterToForm(cacheName);
-            log.debug("4th has joined");
-            return null;
-         }
+      Future<Void> join = fork(() -> {
+         waitForClusterToForm(cacheName);
+         log.debug("4th has joined");
+         return null;
       });
 
       checkPoint.awaitStrict("post_topology_installed_invoked_" + c3, 10, TimeUnit.SECONDS);
@@ -159,13 +155,10 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(configuration);
 
-      Future<Void> join = fork(new Callable<Void>() {
-         @Override
-         public Void call() throws Exception {
-            waitForClusterToForm(cacheName);
-            log.debug("4th has joined");
-            return null;
-         }
+      Future<Void> join = fork(() -> {
+         waitForClusterToForm(cacheName);
+         log.debug("4th has joined");
+         return null;
       });
 
       checkPoint.awaitStrict("post_topology_installed_invoked_" + c3, 10, TimeUnit.SECONDS);
@@ -197,16 +190,13 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       StateConsumer sc = TestingUtil.extractComponent(cache, StateConsumer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(sc);
       StateConsumer mockConsumer = mock(StateConsumer.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            // Wait for main thread to sync up
-            checkPoint.trigger("pre_topology_installed_invoked_" + cache);
-            // Now wait until main thread lets us through
-            checkPoint.awaitStrict("pre_topology_installed_released_" + cache, 10, TimeUnit.SECONDS);
+      doAnswer(invocation -> {
+         // Wait for main thread to sync up
+         checkPoint.trigger("pre_topology_installed_invoked_" + cache);
+         // Now wait until main thread lets us through
+         checkPoint.awaitStrict("pre_topology_installed_released_" + cache, 10, TimeUnit.SECONDS);
 
-            return forwardedAnswer.answer(invocation);
-         }
+         return forwardedAnswer.answer(invocation);
       }).when(mockConsumer).onTopologyUpdate(any(CacheTopology.class), anyBoolean());
       TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
@@ -215,16 +205,13 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       StateTransferLock sc = TestingUtil.extractComponent(cache, StateTransferLock.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(sc);
       StateTransferLock mockConsumer = mock(StateTransferLock.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object answer = forwardedAnswer.answer(invocation);
-            // Wait for main thread to sync up
-            checkPoint.trigger("post_topology_installed_invoked_" + cache);
-            // Now wait until main thread lets us through
-            checkPoint.awaitStrict("post_topology_installed_released_" + cache, 10, TimeUnit.SECONDS);
-            return answer;
-         }
+      doAnswer(invocation -> {
+         Object answer = forwardedAnswer.answer(invocation);
+         // Wait for main thread to sync up
+         checkPoint.trigger("post_topology_installed_invoked_" + cache);
+         // Now wait until main thread lets us through
+         checkPoint.awaitStrict("post_topology_installed_released_" + cache, 10, TimeUnit.SECONDS);
+         return answer;
       }).when(mockConsumer).notifyTopologyInstalled(anyInt());
       TestingUtil.replaceComponent(cache, StateTransferLock.class, mockConsumer, true);
    }

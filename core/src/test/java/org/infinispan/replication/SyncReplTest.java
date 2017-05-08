@@ -1,10 +1,10 @@
 package org.infinispan.replication;
 
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyCollectionOf;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -13,15 +13,12 @@ import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -119,15 +116,12 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          assert altCache1.isEmpty();
 
          altCache1.put(k, "value2");
-         assert !strictPeerToPeer : "With strict peer-to-peer enabled the asymmetric put should have failed";
 
          assert altCache1.get(k).equals("value2");
          assert cache1.get(k).equals(v);
          assert cache2.get(k).equals(v);
 
          assert manager(0).getCache("newCache2").get(k).equals("value2");
-      } catch (CacheException e) {
-         assert strictPeerToPeer : "With strict peer-to-peer disabled the asymmetric put should have succeeded";
       } finally {
          removeCacheFromCluster("newCache2");
       }
@@ -159,9 +153,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
          // check that the replication call was sync
          cache1.put("k", "v");
-         verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class),
+         verify(mockTransport).invokeRemotelyAsync(isNull(),
                any(ReplicableCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(),
-               any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
+               isNull(), any(DeliverOrder.class), anyBoolean());
 
          // resume to test for async
          asyncRpcManager = (RpcManagerImpl) TestingUtil.extractComponent(asyncCache1, RpcManager.class);
@@ -170,9 +164,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          reset(mockTransport);
 
          asyncCache1.put("k", "v");
-         verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class),
+         verify(mockTransport).invokeRemotelyAsync(isNull(),
                any(ReplicableCommand.class), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
-               any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
+               isNull(), any(DeliverOrder.class), anyBoolean());
       } finally {
          // replace original transport
          if (rpcManager != null)
