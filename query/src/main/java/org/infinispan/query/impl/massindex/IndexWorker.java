@@ -25,7 +25,6 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 /**
  * Base class for mass indexer tasks.
- *
  * @author gustavonalle
  * @since 7.1
  */
@@ -54,7 +53,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
       this.cache = cache;
       this.indexUpdater = new IndexUpdater(cache);
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
       this.typeConverter = componentRegistry.getComponent(TypeConverter.class);
       if (everywhereKeys != null && everywhereKeys.size() > 0)
@@ -86,10 +85,11 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    @Override
    @SuppressWarnings("unchecked")
    public Void call() throws Exception {
+      Cache<Object, Object> unwrappedCache = SecurityActions.getUnwrappedCache(cache);
       if (keys == null || keys.size() == 0) {
          preIndex();
          KeyValueFilter filter = getFilter();
-         try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
+         try (Stream<CacheEntry<Object, Object>> stream = unwrappedCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
                .cacheEntrySet().stream()) {
             Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
             while (iterator.hasNext()) {
@@ -103,7 +103,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       } else {
          Set<Class<?>> classSet = new HashSet<>();
          for (Object key : keys) {
-            Object value = extractValue(cache.get(key));
+            Object value = extractValue(unwrappedCache.get(key));
             if (value != null) {
                indexUpdater.updateIndex(key, value);
                classSet.add(value.getClass());
