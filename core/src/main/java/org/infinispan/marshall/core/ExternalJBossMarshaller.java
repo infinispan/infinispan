@@ -146,17 +146,13 @@ final class ExternalJBossMarshaller implements StreamingMarshaller {
 
       @Override
       public int read() throws IOException {
-         try {
-            return in.readUnsignedByte();
-         } catch (ArrayIndexOutOfBoundsException e) {
-            // When JBoss Marshalling starts reading a stream, it buffers
-            // the contents, so it'll try as read as much as it can, so it
-            // can end up reading too far, in which case return -1 to signal
-            // that the end of the stream has been reached
-            return -1;
-         }
+         return in.read();
       }
 
+      @Override
+      public int read(byte[] b, int off, int len) throws IOException {
+         return in.read(b, off, len);
+      }
    }
 
 }
