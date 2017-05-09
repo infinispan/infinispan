@@ -2,6 +2,7 @@ package org.infinispan.atomic;
 
 import static org.infinispan.atomic.AtomicMapLookup.getAtomicMap;
 import static org.infinispan.atomic.AtomicMapLookup.getFineGrainedAtomicMap;
+import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.Map;
@@ -23,12 +24,7 @@ public class AtomicMapAPITest extends BaseAtomicHashMapAPITest {
       MagicKey key = new MagicKey(cache1);
       getFineGrainedAtomicMap(cache1, key);
 
-      try {
-         getAtomicMap(cache1, key);
-         fail("Should have failed with an IllegalArgumentException");
-      } catch (IllegalArgumentException e) {
-         // Expected
-      }
+      expectException(IllegalStateException.class, () -> getAtomicMap(cache1, key));
    }
 
    @Test(enabled = false, description = "Doesn't work when the originator isn't the primary owner, see ISPN-5988")

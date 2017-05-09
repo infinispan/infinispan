@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
-import org.infinispan.atomic.impl.AtomicHashMapProxy;
+import org.infinispan.atomic.impl.AtomicMapProxyImpl;
 import org.infinispan.atomic.impl.FineGrainedAtomicHashMapProxy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -228,7 +228,7 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
 
          @Override
          public void putObject(Cache cache, String key, Map<String, String> da) {
-            assertTrue(da instanceof AtomicHashMapProxy);
+            assertTrue(da instanceof AtomicMapProxyImpl);
             // we do not actually put the map back into cache because it must already be there
          }
 

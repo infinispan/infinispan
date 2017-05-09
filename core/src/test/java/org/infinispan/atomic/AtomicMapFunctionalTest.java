@@ -66,7 +66,7 @@ public class AtomicMapFunctionalTest extends SingleCacheManagerTest {
       assert AtomicMapLookup.getAtomicMap(ahmCache, "key").get("a").equals("b");
    }
 
-   @Test(expectedExceptions = IllegalStateException.class)
+   // Since 9.1 the test is expected to succeed
    public void testAtomicMapNonTransactionWithoutBatchSet() {
       ConfigurationBuilder builder = buildConfiguration();
       builder.invocationBatching().disable();

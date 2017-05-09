@@ -1560,4 +1560,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failure during leaver transactions cleanup", id = 455)
    void transactionCleanupError(@Cause Throwable e);
+
+   @Message(value = "Cache does not contain the atomic map.", id = 456)
+   IllegalStateException atomicMapDoesNotExist();
+
+   @Message(value = "Cache contains %s which is not of expected type %s", id = 457)
+   IllegalStateException atomicMapHasWrongType(Object value, Class<?> type);
 }
