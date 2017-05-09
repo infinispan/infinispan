@@ -72,6 +72,7 @@ public class TaskManagerImpl implements TaskManager {
    public <T> CompletableFuture<T> runTask(String name, TaskContext context) {
       for(TaskEngine engine : engines) {
          if (engine.handles(name)) {
+            context.cacheManager(cacheManager);
             Address address = cacheManager.getAddress();
             Optional<String> who;
             if (useSecurity) {

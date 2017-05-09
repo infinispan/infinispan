@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * TaskContext. Defines the execution context of a task by specifying parameters, cache and
@@ -15,12 +16,21 @@ import org.infinispan.commons.marshall.Marshaller;
  * @since 8.1
  */
 public class TaskContext {
+   private EmbeddedCacheManager cacheManager;
    private Optional<Marshaller> marshaller = Optional.empty();
    private Optional<Cache<?, ?>> cache = Optional.empty();
    private Optional<Map<String, ?>> parameters = Optional.empty();
    private boolean logEvent;
 
    public TaskContext() {
+   }
+
+   /**
+    * The cache manager with which this task should be executed
+    */
+   public TaskContext cacheManager(EmbeddedCacheManager cacheManager) {
+      this.cacheManager = cacheManager;
+      return this;
    }
 
    /**
@@ -67,6 +77,14 @@ public class TaskContext {
    public TaskContext logEvent(boolean logEvent) {
       this.logEvent = logEvent;
       return this;
+   }
+
+   /**
+    * CacheManager for this task execution
+    * @return the cache manager
+    */
+   public EmbeddedCacheManager getCacheManager() {
+      return cacheManager;
    }
 
    /**
