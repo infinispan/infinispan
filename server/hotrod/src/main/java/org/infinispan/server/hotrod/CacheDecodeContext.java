@@ -135,7 +135,7 @@ public final class CacheDecodeContext {
 
    void withSubect(Subject subject) {
       this.subject = subject;
-      this.cache = cache.as(subject);
+      this.cache = cache.withSubject(subject);
    }
 
    Metadata buildMetadata() {

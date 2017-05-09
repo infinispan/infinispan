@@ -94,7 +94,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private Map<String, AdvancedCache> knownCaches = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private Map<String, Configuration> knownCacheConfigurations = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private Map<String, ComponentRegistry> knownCacheRegistries = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
-   private List<QueryFacade> queryFacades;
+   private QueryFacade queryFacade;
    private Map<String, SaslServerFactory> saslMechFactories = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
    private ClientListenerRegistry clientListenerRegistry;
    private Marshaller marshaller;
@@ -113,7 +113,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    }
 
    byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
-      return queryFacades.get(0).query(cache, query);
+      return queryFacade.query(cache, query);
    }
 
    public ClientListenerRegistry getClientListenerRegistry() {
@@ -141,7 +141,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       setupSasl();
 
       // Initialize query-specific stuff
-      queryFacades = loadQueryFacades();
+      List<QueryFacade> queryFacades = loadQueryFacades();
+      queryFacade = queryFacades.size() > 0 ? queryFacades.get(0) : null;
       clientListenerRegistry = new ClientListenerRegistry(configuration);
 
       addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory());
@@ -154,7 +155,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       // topology in order to avoid topology updates being used before
       // endpoint is available.
       super.startInternal(configuration, cacheManager);
-
 
       // Add self to topology cache last, after everything is initialized
       if (Configurations.isClustered(cacheManager.getCacheManagerConfiguration())) {

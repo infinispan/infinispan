@@ -15,6 +15,9 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.impl.logging.Log;
+import org.infinispan.security.AuthorizationManager;
+import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
 import org.infinispan.server.core.QueryFacade;
 import org.kohsuke.MetaInfServices;
 
@@ -37,6 +40,9 @@ public final class QueryFacadeImpl implements QueryFacade {
 
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
+      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
+      if (authorizationManager != null)
+         authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       BaseRemoteQueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(cache).getComponent(BaseRemoteQueryEngine.class);
       if (queryEngine == null) {
          throw log.queryingNotEnabled(cache.getName());
