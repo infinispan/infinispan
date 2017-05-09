@@ -178,6 +178,8 @@ public interface Ids {
 
    int XID_IMPL = 118;
 
+   int ATOMIC_MAP_FUNCTIONS = 119;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

@@ -5,6 +5,7 @@ import java.util.Set;
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.atomic.impl.AtomicHashMapDelta;
+import org.infinispan.atomic.impl.AtomicMapProxyImpl;
 import org.infinispan.atomic.impl.ClearOperation;
 import org.infinispan.atomic.impl.PutOperation;
 import org.infinispan.atomic.impl.RemoveOperation;
@@ -132,6 +133,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer(), exts);
       addInternalExternalizer(new AtomicHashMap.Externalizer(), exts);
       addInternalExternalizer(new AtomicHashMapDelta.Externalizer(), exts);
+      addInternalExternalizer(new AtomicMapProxyImpl.Externalizer(), exts);
       addInternalExternalizer(new AvailabilityMode.Externalizer(), exts);
       addInternalExternalizer(new ByteBufferImpl.Externalizer(), exts);
       addInternalExternalizer(new CacheEventConverterAsConverter.Externalizer(), exts);
