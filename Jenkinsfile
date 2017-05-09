@@ -52,11 +52,12 @@ pipeline {
 
         stage('X-Site tests') {
             steps {
+                // Only the core module has X-site tests that need to run separately
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "${MAVEN_HOME}/bin/mvn verify -B -V -s $MAVEN_SETTINGS -pl core -Ptest-xsite -Dinfinispan.module-suffix=xsite -Dmaven.test.failure.ignore=true"
+                    sh "${MAVEN_HOME}/bin/mvn verify -B -V -s $MAVEN_SETTINGS -pl core -Ptest-xsite -Dmaven.test.failure.ignore=true"
                 }
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
-                junit testResults: 'core/target/*-reports*/*.xml',
+                junit testResults: 'core/target/*-reports*/*-xsite*.xml',
                         testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
                         healthScaleFactor: 100
             }

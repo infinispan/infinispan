@@ -89,6 +89,7 @@
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+      <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
       <packaging>jar</packaging>
@@ -1147,7 +1148,7 @@
                <version>${version.maven.surefire}</version>
                <configuration>
                   <systemPropertyVariables>
-                     <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
+                     <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   </systemPropertyVariables>
                   <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                </configuration>
@@ -1428,7 +1429,7 @@
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
 
-                  <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
+                  <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <properties>
@@ -1747,6 +1748,7 @@
             <defaultTestGroup>xsite</defaultTestGroup>
             <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+            <infinispan.module-suffix>-${project.artifactId}-xsite</infinispan.module-suffix>
          </properties>
       </profile>
       <profile>
