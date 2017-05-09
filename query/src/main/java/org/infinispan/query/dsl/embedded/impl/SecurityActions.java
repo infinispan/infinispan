@@ -5,6 +5,8 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
@@ -33,5 +35,9 @@ final class SecurityActions {
 
    static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> cache) {
       return doPrivileged(new GetCacheComponentRegistryAction(cache));
+   }
+
+   static SearchManager getCacheSearchManager(final AdvancedCache<?, ?> cache) {
+      return doPrivileged(() -> Search.getSearchManager(cache));
    }
 }
