@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import org.infinispan.remoting.transport.Address;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -20,12 +21,33 @@ import org.testng.annotations.Test;
 public class SingleClusterExecutorTest extends AllClusterExecutorTest {
    static final AtomicInteger atomicInteger = new AtomicInteger();
 
+   private boolean local;
+
    public SingleClusterExecutorTest() {
       atomicIntegerSupplier = () -> atomicInteger;
    }
 
+   SingleClusterExecutorTest executeLocal(boolean local) {
+      this.local = local;
+      return this;
+   }
+
+   @Override
+   public String toString() {
+      return "SingleClusterExecutorTest{ local = " + local + "}";
+   }
+
+   @Factory
+   public Object[] factory() {
+      System.currentTimeMillis();
+      return new Object[] {
+            new SingleClusterExecutorTest().executeLocal(true),
+            new SingleClusterExecutorTest().executeLocal(false)
+      };
+   }
+
    ClusterExecutor executor(EmbeddedCacheManager cm) {
-      return cm.executor().singleNodeSubmission();
+      return cm.executor().singleNodeSubmission().filterTargets(a -> local == a.equals(cm.getAddress()));
    }
 
    void assertSize(EmbeddedCacheManager[] cms, int receivedSize) {
