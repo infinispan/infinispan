@@ -5,6 +5,7 @@ import java.util.Set;
 import javax.transaction.Status;
 import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -26,7 +27,7 @@ public class RecoveryAdminOperations {
    private static final Log log = LogFactory.getLog(RecoveryAdminOperations.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   public static final String SEPARATOR = ", ";
+   private static final String SEPARATOR = ", ";
 
    private RecoveryManager recoveryManager;
 
@@ -94,7 +95,7 @@ public class RecoveryAdminOperations {
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
          @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
-      recoveryManager.removeRecoveryInformation(null, new SerializableXid(branchQualifier, globalTxId, formatId), true, null, false);
+      recoveryManager.removeRecoveryInformation(null, XidImpl.create(formatId, globalTxId, branchQualifier), true, null, false);
       return "Recovery info removed.";
    }
 
@@ -138,7 +139,7 @@ public class RecoveryAdminOperations {
 
    private  RecoveryManager.InDoubtTxInfo lookupRecoveryInfo(int formatId, byte[] globalTxId, byte[] branchQualifier) {
       Set<RecoveryManager.InDoubtTxInfo> info = getRecoveryInfoFromCluster();
-      SerializableXid xid = new SerializableXid(branchQualifier, globalTxId, formatId);
+      Xid xid = XidImpl.create(formatId, globalTxId, branchQualifier);
       for (RecoveryManager.InDoubtTxInfo i : info) {
          if (i.getXid().equals(xid)) {
             log.tracef("Found matching recovery info: %s", i);
@@ -166,7 +167,7 @@ public class RecoveryAdminOperations {
    }
 
    private String transactionNotFound(int formatId, byte[] globalTxId, byte[] branchQualifier) {
-      return "Transaction not found: " + new SerializableXid(branchQualifier, globalTxId, formatId);
+      return "Transaction not found: " + XidImpl.printXid(formatId, globalTxId, branchQualifier);
    }
 
    private String transactionNotFound(Long internalId) {

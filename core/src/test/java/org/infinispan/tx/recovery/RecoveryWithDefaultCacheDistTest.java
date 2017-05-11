@@ -22,7 +22,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.testng.annotations.Test;
 
 /**
@@ -113,9 +112,9 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
       List<Xid> inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(3, inDoubtTransactions.size());
-      assert inDoubtTransactions.contains(new SerializableXid(t1_1.getXid()));
-      assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
-      assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
+      assert inDoubtTransactions.contains(t1_1.getXid());
+      assert inDoubtTransactions.contains(t1_2.getXid());
+      assert inDoubtTransactions.contains(t1_3.getXid());
 
       configuration.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       addClusterEnabledCacheManager(configuration);
@@ -134,9 +133,9 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
       inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(3, inDoubtTransactions.size());
-      assert inDoubtTransactions.contains(new SerializableXid(t1_1.getXid()));
-      assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
-      assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
+      assert inDoubtTransactions.contains(t1_1.getXid());
+      assert inDoubtTransactions.contains(t1_2.getXid());
+      assert inDoubtTransactions.contains(t1_3.getXid());
 
 
       //now let's start to forget transactions
@@ -145,8 +144,8 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 2);
       inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(2, inDoubtTransactions.size());
-      assert inDoubtTransactions.contains(new SerializableXid(t1_2.getXid()));
-      assert inDoubtTransactions.contains(new SerializableXid(t1_3.getXid()));
+      assert inDoubtTransactions.contains(t1_2.getXid());
+      assert inDoubtTransactions.contains(t1_3.getXid());
 
       t1_4.firstEnlistedResource().forget(t1_2.getXid());
       t1_4.firstEnlistedResource().forget(t1_3.getXid());
