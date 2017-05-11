@@ -13,6 +13,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -367,6 +368,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
          storesMutex.readLock().lock();
          try {
             for (CacheWriter w : writers) {
+               if (configuration.eviction().strategy() == EvictionStrategy.NONE
+                     && configMap.get(w).preload()) {
+                  /*
+                   * Skip this writer if the configuration indicates that this
+                   * is a mirror of the transient state - in this case eviction
+                   * in memory will handle removal of entries from this store.
+                   */
+                  continue;
+               }
                if (w instanceof AdvancedCacheExpirationWriter) {
                   ((AdvancedCacheExpirationWriter)w).purge(persistenceExecutor, advanedListener);
                } else if (w instanceof AdvancedCacheWriter) {
