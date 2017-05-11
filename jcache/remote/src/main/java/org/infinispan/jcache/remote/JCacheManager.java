@@ -28,8 +28,6 @@ public class JCacheManager extends AbstractJCacheManager {
    private RemoteCacheManager cm;
    private RemoteCacheManager cmForceReturnValue;
 
-   private RemoteCacheAccess cacheAccess;
-
    public JCacheManager(URI uri, ClassLoader classLoader, CachingProvider provider, Properties properties) {
       super(uri, classLoader, provider, properties, false);
 
@@ -40,8 +38,6 @@ public class JCacheManager extends AbstractJCacheManager {
 
       builder.forceReturnValues(true);
       cmForceReturnValue = new RemoteCacheManager(builder.build(), true);
-
-      cacheAccess = RemoteCacheAccess.createCacheAccess(cm, properties);
    }
 
    private ConfigurationBuilder getConfigurationBuilder(Properties userProperties) {
@@ -79,8 +75,7 @@ public class JCacheManager extends AbstractJCacheManager {
    @Override
    protected <K, V, C extends Configuration<K, V>> AbstractJCache<K, V> create(String cacheName, C configuration) {
       ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create(configuration);
-
-      cacheAccess.addCacheIfAbsent(cacheName);
+      cm.administration().createCache(cacheName, null);
       return createJCache(cacheName, adapter);
    }
 
@@ -156,7 +151,7 @@ public class JCacheManager extends AbstractJCacheManager {
 
    @Override
    protected <K, V> void delegateRemoveCache(AbstractJCache<K, V> jcache) {
-      cacheAccess.removeCache(jcache.getName());
+      cm.administration().removeCache(jcache.getName());
       jcache.close();
    }
 
