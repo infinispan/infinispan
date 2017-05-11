@@ -112,7 +112,7 @@ class LocalClusterExecutor implements ClusterExecutor {
 
    @Override
    public ClusterExecutor filterTargets(Predicate<? super Address> predicate) {
-      return sameClusterExecutor(predicate, 0, null);
+      return sameClusterExecutor(predicate, time, unit);
    }
 
    @Override
@@ -135,7 +135,7 @@ class LocalClusterExecutor implements ClusterExecutor {
       if (predicate == null) {
          return this;
       }
-      return sameClusterExecutor(null, 0, null);
+      return sameClusterExecutor(null, time, unit);
    }
 
    @Override
