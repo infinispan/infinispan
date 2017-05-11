@@ -75,9 +75,8 @@ Cache<String, String> cache = cacheManager.createCache("remoteNamedCache",
       new MutableConfiguration<String, String>());
 ----
 
-NOTE: In order to use the org.infinispan.jcache.remote.JCachingProvider, the
-infinispan-jcache-remote-<version>.jar needs to be on put your classpath.
-
+NOTE: In order to use the org.infinispan.jcache.remote.JCachingProvider, infinispan-jcache-remote-<version>.jar
+and all its transitive dependencies need to be on put your classpath.
 
 === Store and retrieve data
 Even though JCache API does not extend neither
