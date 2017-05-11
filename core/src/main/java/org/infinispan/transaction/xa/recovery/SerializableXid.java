@@ -21,8 +21,10 @@ import net.jcip.annotations.Immutable;
  *
  * @author Mircea.Markus@jboss.com
  * @since 5.0
+ * @deprecated use {@link org.infinispan.commons.tx.XidImpl} instead.
  */
 @Immutable
+@Deprecated
 public class SerializableXid implements Xid {
 
    private final byte[] branchQualifier;

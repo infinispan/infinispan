@@ -8,6 +8,7 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.factories.annotations.Inject;
@@ -15,7 +16,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.transaction.xa.recovery.SerializableXid;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -72,7 +72,7 @@ public class XaTransactionTable extends TransactionTable {
       return this.xid2LocalTx.get(xid);
    }
 
-   public void addLocalTransactionMapping(LocalXaTransaction localTransaction) {
+   private void addLocalTransactionMapping(LocalXaTransaction localTransaction) {
       if (localTransaction.getXid() == null) throw new IllegalStateException("Initialize xid first!");
       this.xid2LocalTx.put(localTransaction.getXid(), localTransaction);
    }
@@ -140,8 +140,8 @@ public class XaTransactionTable extends TransactionTable {
     * Only does the conversion if recovery is enabled.
     */
    private Xid convertXid(Xid externalXid) {
-      if (isRecoveryEnabled() && (!(externalXid instanceof SerializableXid))) {
-         return new SerializableXid(externalXid);
+      if (isRecoveryEnabled()) {
+         return XidImpl.copy(externalXid);
       } else {
          return externalXid;
       }

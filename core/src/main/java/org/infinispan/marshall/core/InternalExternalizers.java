@@ -15,6 +15,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallableFunctionExternalizers;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
+import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.compat.ConverterKeyMapper;
 import org.infinispan.compat.ConverterValueMapper;
@@ -241,6 +242,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new WrappedByteArray.Externalizer(), exts);
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
       addInternalExternalizer(new TriangleAckExternalizer(), exts);
+      addInternalExternalizer(XidImpl.EXTERNALIZER, exts);
 
       return exts;
    }

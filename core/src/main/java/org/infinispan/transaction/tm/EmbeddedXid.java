@@ -1,13 +1,11 @@
 package org.infinispan.transaction.tm;
 
-import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.transaction.xa.Xid;
 
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.tx.XidImpl;
 
 /**
  * Implementation of {@link Xid} used by {@link EmbeddedTransactionManager}.
@@ -16,7 +14,7 @@ import org.infinispan.commons.util.Util;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public final class EmbeddedXid implements Xid {
+public final class EmbeddedXid extends XidImpl {
 
    //format can be anything except:
    //-1: means a null Xid
@@ -25,76 +23,26 @@ public final class EmbeddedXid implements Xid {
    private static final int FORMAT = 1;
    private static final AtomicLong GLOBAL_ID_GENERATOR = new AtomicLong(1);
    private static final AtomicLong BRANCH_QUALIFIER_GENERATOR = new AtomicLong(1);
-   private final int cachedHashcode;
-   //note: AFAIK, the max size is 64 but it can be smaller. keep it until the DummyXid is removed.
-   private byte[] globalTransactionId = new byte[64];
-   private byte[] branchQualifier = new byte[64];
 
    public EmbeddedXid(UUID transactionManagerId) {
-      cachedHashcode = initializeAndCalculateHash(transactionManagerId);
+      super(FORMAT, create(transactionManagerId, GLOBAL_ID_GENERATOR),
+            create(transactionManagerId, BRANCH_QUALIFIER_GENERATOR));
+
    }
 
-   @Override
-   public int getFormatId() {
-      return FORMAT;
-   }
-
-   //the getter is not safe. we should clone it to prevent any modification
-   @Override
-   public byte[] getGlobalTransactionId() {
-      return globalTransactionId;
-   }
-
-   @Override
-   public byte[] getBranchQualifier() {
-      return branchQualifier;
-   }
-
-   @Override
-   public String toString() {
-      return "EmbeddedXid{" +
-            ", globalTransactionId = " + Util.printArray(globalTransactionId, false) +
-            ", branchQualifier = " + Util.printArray(branchQualifier, false) +
-            '}';
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) {
-         return true;
+   private static void longToBytes(long val, byte[] array, int offset) {
+      for (int i = 7; i > 0; i--) {
+         array[offset + i] = (byte) val;
+         val >>>= 8;
       }
-      if (o == null || !(o instanceof Xid)) {
-         return false;
-      }
-
-      Xid other = (Xid) o;
-
-      return other.getFormatId() == FORMAT &&
-            Arrays.equals(branchQualifier, other.getBranchQualifier()) &&
-            Arrays.equals(globalTransactionId, other.getGlobalTransactionId());
+      array[offset] = (byte) val;
    }
 
-   @Override
-   public int hashCode() {
-      return cachedHashcode;
-   }
-
-   private int initializeAndCalculateHash(UUID transactionManagerId) {
-      int hc1 = initialize(transactionManagerId, GLOBAL_ID_GENERATOR, globalTransactionId);
-      return 37 * hc1 + initialize(transactionManagerId, BRANCH_QUALIFIER_GENERATOR, branchQualifier);
-   }
-
-   private int initialize(UUID transactionManagerId, AtomicLong generator, byte[] field) {
-      long lsb = transactionManagerId.getLeastSignificantBits();
-      long msb = transactionManagerId.getMostSignificantBits();
-      long id = generator.getAndIncrement();
-      Arrays.fill(field, (byte) 0);
-      UnsignedNumeric.writeUnsignedLong(field, 0, lsb);
-      UnsignedNumeric.writeUnsignedLong(field, 10, msb);
-      UnsignedNumeric.writeUnsignedLong(field, 20, id);
-      int hash = (int) (lsb ^ lsb >>> 32);
-      hash = 37 * hash + (int) (msb ^ msb >>> 32);
-      hash = 37 * hash + (int) (id ^ id >>> 32);
-      return hash;
+   private static byte[] create(UUID transactionManagerId, AtomicLong generator) {
+      byte[] field = new byte[24]; //size of 3 longs
+      longToBytes(transactionManagerId.getLeastSignificantBits(), field, 0);
+      longToBytes(transactionManagerId.getMostSignificantBits(), field, 8);
+      longToBytes(generator.incrementAndGet(), field, 16);
+      return field;
    }
 }
