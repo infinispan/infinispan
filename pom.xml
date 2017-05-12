@@ -26,6 +26,7 @@
       <module>core</module>
       <module>cloud</module>
       <module>extended-statistics</module>
+      <module>counter</module>
       <module>tools</module>
       <module>query</module>
       <module>query-dsl</module>
@@ -66,9 +67,9 @@
       <module>spring/spring4/spring4-remote</module>
       <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
-      <module>tasks</module>
-      <module>tasks-api</module>
-      <module>scripting</module>
+      <module>tasks/api</module>
+      <module>tasks/manager</module>
+      <module>tasks/scripting</module>
       <module>demos/gui</module>
       <module>demos/distexec</module>
       <module>demos/lucene-directory-demo</module>

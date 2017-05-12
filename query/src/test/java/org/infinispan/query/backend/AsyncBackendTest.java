@@ -36,32 +36,19 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
 
    @Test
    public void testWithEnablingAsync() {
-      test(getBaseConfigPlus("default.worker.execution", "async"), new Assertion() {
-         @Override
-         public void doAssertion(RpcManager rpcManager) {
-            calledIndexAsynchronously(rpcManager, "person");
-         }
-      });
+      test(getBaseConfigPlus("default.worker.execution", "async"),
+           rpcManager -> calledIndexAsynchronously(rpcManager, "person"));
    }
 
    @Test
    public void testWithEnablingAsyncForDifferentIndex() {
-      test(getBaseConfigPlus("cat.worker.execution", "async"), new Assertion() {
-         @Override
-         public void doAssertion(RpcManager rpcManager) {
-            calledIndexSynchronously(rpcManager, "person");
-         }
-      });
+      test(getBaseConfigPlus("cat.worker.execution", "async"),
+           rpcManager -> calledIndexSynchronously(rpcManager, "person"));
    }
 
    @Test
    public void testWithDefaultSettings() {
-      test(getBaseConfig(), new Assertion() {
-         @Override
-         public void doAssertion(RpcManager rpcManager) {
-            calledIndexSynchronously(rpcManager, "person");
-         }
-      });
+      test(getBaseConfig(), rpcManager -> calledIndexSynchronously(rpcManager, "person"));
    }
 
    @Test
@@ -70,12 +57,9 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
             "default.sharding_strategy.nbr_of_shards", "2",
             "person.0.worker.execution", "async"
       );
-      test(cfg, new Assertion() {
-         @Override
-         public void doAssertion(RpcManager rpcManager) {
-            calledIndexAsynchronously(rpcManager, "person.0");
-            calledIndexSynchronously(rpcManager, "person.1");
-         }
+      test(cfg, rpcManager -> {
+         calledIndexAsynchronously(rpcManager, "person.0");
+         calledIndexSynchronously(rpcManager, "person.1");
       });
    }
 
@@ -85,12 +69,7 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
             "default.worker.execution", "async",
             "person.worker.execution", "sync"
       );
-      test(cfg, new Assertion() {
-         @Override
-         public void doAssertion(RpcManager rpcManager) {
-            calledIndexSynchronously(rpcManager, "person");
-         }
-      });
+      test(cfg, rpcManager -> calledIndexSynchronously(rpcManager, "person"));
    }
 
    @Test
@@ -101,13 +80,10 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
             "person.worker.execution", "async",
             "person.1.worker.execution", "sync"
       );
-      test(cfg, new Assertion() {
-         @Override
-         public void doAssertion(RpcManager rpcManager) {
-            calledIndexAsynchronously(rpcManager, "person.0");
-            calledIndexSynchronously(rpcManager, "person.1");
-            calledIndexAsynchronously(rpcManager, "person.2");
-         }
+      test(cfg, rpcManager -> {
+         calledIndexAsynchronously(rpcManager, "person.0");
+         calledIndexSynchronously(rpcManager, "person.1");
+         calledIndexAsynchronously(rpcManager, "person.2");
       });
    }
 
@@ -150,7 +126,7 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
       assertTrue(indexCalled);
    }
 
-   private static interface Assertion {
+   private interface Assertion {
       void doAssertion(RpcManager rpcManager);
    }
 

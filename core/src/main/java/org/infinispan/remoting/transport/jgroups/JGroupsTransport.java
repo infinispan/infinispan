@@ -586,11 +586,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
       Address self = getAddress();
       boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
-      if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
+      List<Address> members = getMembers();
+      if (mode.isSynchronous() && recipients != null && !members.containsAll(recipients)) {
          if (!ignoreLeavers) { // SYNCHRONOUS
+            Address suspect = recipients.stream().filter(a -> !members.contains(a)).findFirst().orElse(null);
             CompletableFuture<Map<Address, Response>> future = new CompletableFuture<>();
             future.completeExceptionally(new SuspectException(
-                  "One or more nodes have left the cluster while replicating command " + rpcCommand));
+                  "One or more nodes have left the cluster while replicating command " + rpcCommand, suspect));
             return future;
          }
       }

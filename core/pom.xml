@@ -64,8 +64,12 @@
 
       <dependency>
          <groupId>org.mockito</groupId>
-         <artifactId>mockito-all</artifactId>
+         <artifactId>mockito-core</artifactId>
          <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.hamcrest</groupId>
+         <artifactId>hamcrest-core</artifactId>
       </dependency>
 
       <dependency>
@@ -157,6 +161,7 @@
                <instructions>
                   <Export-Package>
                      !${project.groupId}.commons.*,
+                     !${project.groupId}.counter.*,
                      org.infinispan.marshall.core,
                      ${project.groupId}.*;version=${project.version};-split-package:=error
                   </Export-Package>

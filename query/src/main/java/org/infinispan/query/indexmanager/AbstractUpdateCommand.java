@@ -11,12 +11,12 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
+import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
@@ -79,7 +79,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
       String name = cacheName.toString();
       if (ci.getCacheManager().cacheExists(name)) {
          Cache cache = ci.getCacheManager().getCache(name);
-         SearchManager searchManager = Search.getSearchManager(cache);
+         SearchManager searchManager = new SearchManagerImpl(cache.getAdvancedCache());
          searchFactory = searchManager.unwrap(SearchIntegrator.class);
          queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       } else {

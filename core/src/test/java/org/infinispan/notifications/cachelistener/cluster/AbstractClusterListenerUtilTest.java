@@ -1,9 +1,11 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.infinispan.test.Mocks.invokeAndReturnMock;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
@@ -324,7 +326,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
             // Now wait until main thread lets us through
             checkPoint.awaitStrict("post_add_listener_release_" + cache, 10, TimeUnit.SECONDS);
          }
-      }).when(mockNotifier).addFilteredListener(anyObject(), any(CacheEventFilter.class), any(CacheEventConverter.class), any(Set.class));
+      }).when(mockNotifier).addFilteredListener(notNull(), nullable(CacheEventFilter.class), nullable(CacheEventConverter.class), any(Set.class));
       TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 
@@ -373,7 +375,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
          } finally {
             checkPoint.trigger("post_view_listener_invoked_" + uniqueId);
          }
-      }).when(mockNotifier).notifyViewChange(anyListOf(Address.class), anyListOf(Address.class), any(Address.class), anyInt());
+      }).when(mockNotifier).notifyViewChange(anyList(), anyList(), any(Address.class), anyInt());
       TestingUtil.replaceComponent(cacheContainer, CacheManagerNotifier.class, mockNotifier, true);
    }
 }

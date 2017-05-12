@@ -1,6 +1,8 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.mockito.Mockito.argThat;
+import static org.infinispan.test.Mocks.invokeAndReturnMock;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -29,11 +31,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import org.hamcrest.core.IsInstanceOf;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
@@ -219,13 +219,13 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       final CheckPoint checkPoint = new CheckPoint();
 
-      AsyncInterceptorChain chain = mockStream(cache, (mock, real, additional) ->
+      AsyncInterceptorChain chain = mockEntrySet(cache, (mock, real, additional) ->
               doAnswer(i -> {
                  // Wait for main thread to sync up
                  checkPoint.trigger("pre_retrieve_entry_invoked");
                  // Now wait until main thread lets us through
                  checkPoint.awaitStrict("pre_retrieve_entry_released", 10, TimeUnit.SECONDS);
-                 return i.getMethod().invoke(real, i.getArguments());
+                 return invokeAndReturnMock(i, real);
               }).when(mock).iterator());
       try {
          String keyToChange = findKeyBasedOnOwnership("key-to-change",
@@ -291,16 +291,14 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       CheckPoint checkPoint = new CheckPoint();
 
-      AsyncInterceptorChain chain = mockStream(cache, (mock, real, additional) -> {
+      AsyncInterceptorChain chain = mockEntrySet(cache, (mock, real, additional) -> {
          doAnswer(i -> {
             // Wait for main thread to sync up
             checkPoint.trigger("pre_close_iter_invoked");
             // Now wait until main thread lets us through
             checkPoint.awaitStrict("pre_close_iter_released", 10, TimeUnit.SECONDS);
-            return i.getMethod().invoke(real, i.getArguments());
+            return invokeAndReturnMock(i, real);
          }).when(mock).close();
-
-         doAnswer(i -> i.getMethod().invoke(real, i.getArguments())).when(mock).iterator();
       });
 
       try {
@@ -684,9 +682,9 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
    protected ClusterCacheNotifier waitUntilClosingSegment(final Cache<?, ?> cache, final int segment, final CheckPoint checkPoint) {
       ClusterCacheNotifier realNotifier = TestingUtil.extractComponent(cache, ClusterCacheNotifier.class);
-      ConcurrentMap<UUID, QueueingSegmentListener> listeningMap = new ConcurrentHashMap() {
+      ConcurrentMap<UUID, QueueingSegmentListener> listeningMap = new ConcurrentHashMap<UUID, QueueingSegmentListener>() {
          @Override
-         public Object putIfAbsent(Object key, Object value) {
+         public QueueingSegmentListener putIfAbsent(UUID key, QueueingSegmentListener value) {
             log.tracef("Adding segment listener %s : %s", key, value);
             final Answer<Object> listenerAnswer = AdditionalAnswers.delegatesTo(value);
 
@@ -695,7 +693,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
                                                        withSettings().defaultAnswer(listenerAnswer));
 
             doAnswer(i -> {
-               Set<Integer> segments = (Set<Integer>) i.getArguments()[0];
+               Set<Integer> segments = i.getArgument(0);
                log.tracef("Completed segments %s", segments);
                if (segments.contains(segment)) {
                   wasLastSegment.set(true);
@@ -703,7 +701,8 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
                return listenerAnswer.answer(i);
             }).when(mockListener).segmentCompleted(Mockito.anySet());
 
-            doAnswer(k -> {
+            doAnswer(i -> {
+               Object k = i.getArgument(0);
                log.tracef("Notified for key %s", k);
                if (wasLastSegment.compareAndSet(true, false)) {
                   // Wait for main thread to sync up
@@ -711,8 +710,8 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
                   // Now wait until main thread lets us through
                   checkPoint.awaitStrict("pre_complete_segment_released", 10, TimeUnit.SECONDS);
                }
-               return listenerAnswer.answer(k);
-            }).when(mockListener).notifiedKey(Mockito.any());
+               return listenerAnswer.answer(i);
+            }).when(mockListener).notifiedKey(any());
             return super.putIfAbsent(key, mockListener);
          }
       };
@@ -724,12 +723,9 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
    // This is a helper method so that subsequent calls to the stream will return a mocked instance so we
    // can keep track of invocations properly.
-   protected Stream mockStream(Stream realStream, StreamMocking mocking) {
-      Answer<Stream> defaultAnswer = i -> {
-         Stream stream = (Stream) i.getMethod().invoke(realStream, i.getArguments());
-         return mockStream(stream, mocking);
-      };
-      CacheStream mockStream = mock(CacheStream.class, withSettings().defaultAnswer(defaultAnswer));
+   protected Stream mockStream(CacheStream realStream, StreamMocking mocking) {
+      CacheStream mockStream =
+            mock(CacheStream.class, withSettings().defaultAnswer(i -> invokeAndReturnMock(i, realStream)));
 
       mocking.additionalInformation(mockStream, realStream, mocking);
 
@@ -740,23 +736,21 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       void additionalInformation(Stream mockStream, Stream realStream, StreamMocking ourselves);
    }
 
-   protected AsyncInterceptorChain mockStream(final Cache<?, ?> cache, StreamMocking mocking) {
+   protected AsyncInterceptorChain mockEntrySet(final Cache<?, ?> cache, StreamMocking mocking) {
       AsyncInterceptorChain chain = TestingUtil.extractComponent(cache, AsyncInterceptorChain.class);
       AsyncInterceptorChain mockChain = spy(chain);
       doAnswer(i -> {
          CacheSet cacheSet = (CacheSet) i.callRealMethod();
-
-         CacheSet mockSet = spy(cacheSet);
+         CacheSet mockSet = mock(CacheSet.class,
+                                 withSettings().defaultAnswer(delegatesTo(cacheSet)));
 
          when(mockSet.stream()).then(j -> {
-            CacheStream stream = (CacheStream) j.callRealMethod();
-
+            CacheStream stream = cacheSet.stream();
             return mockStream(stream, mocking);
          });
 
          return mockSet;
-      }).when(mockChain).invoke(Mockito.any(InvocationContext.class),
-              (VisitableCommand) argThat(new IsInstanceOf(EntrySetCommand.class)));
+      }).when(mockChain).invoke(any(InvocationContext.class), any(EntrySetCommand.class));
       TestingUtil.replaceComponent(cache, AsyncInterceptorChain.class, mockChain, true);
       return chain;
    }

@@ -1,8 +1,9 @@
 package org.infinispan.partitionhandling;
 
+import static org.infinispan.test.Mocks.invokeAndReturnMock;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.anySetOf;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -14,7 +15,6 @@ import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -27,8 +27,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
-import org.mockito.AdditionalAnswers;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 /**
@@ -154,14 +152,14 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
    private static <K, V> CacheNotifier<K, V> blockNotifierPartitionStatusChanged(final CheckPoint checkPoint,
                                                                                  Cache<K, V> cache) {
       CacheNotifier<K, V> notifier = TestingUtil.extractComponent(cache, CacheNotifier.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(notifier);
-      CacheNotifier mockNotifier = mock(CacheNotifier.class, withSettings().defaultAnswer(forwardedAnswer));
+      CacheNotifier mockNotifier =
+            mock(CacheNotifier.class, withSettings().defaultAnswer(i -> invokeAndReturnMock(i, notifier)));
 
       doAnswer(invocation -> {
          checkPoint.trigger("pre_notify_partition_invoked");
          assertTrue(checkPoint.await("pre_notify_partition_released", 20, TimeUnit.SECONDS));
          try {
-            return forwardedAnswer.answer(invocation);
+            return invokeAndReturnMock(invocation, notifier);
          } finally {
             checkPoint.trigger("post_notify_partition_invoked");
             assertTrue(checkPoint.await("post_notify_partition_released", 20, TimeUnit.SECONDS));
@@ -173,10 +171,9 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
 
    private static <K> ClusterStreamManager<K> blockStreamResponse(final CheckPoint checkPoint, Cache<K, ?> cache) {
       ClusterStreamManager<K> manager = TestingUtil.extractComponent(cache, ClusterStreamManager.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(manager);
       ClusterStreamManager mockManager = mock(ClusterStreamManager.class, withSettings().defaultAnswer(i -> {
          try {
-            return forwardedAnswer.answer(i);
+            return invokeAndReturnMock(i, manager);
          } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof AvailabilityException) {
@@ -189,13 +186,12 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
          checkPoint.trigger("pre_receive_response_invoked");
          assertTrue(checkPoint.await("pre_receive_response_released", 20, TimeUnit.SECONDS));
          try {
-         return forwardedAnswer.answer(invocation);
+            return invokeAndReturnMock(invocation, manager);
          } finally {
             checkPoint.trigger("post_receive_response_invoked");
             assertTrue(checkPoint.await("post_receive_response_released", 20, TimeUnit.SECONDS));
          }
-      }).when(mockManager).receiveResponse(any(UUID.class), any(Address.class), anyBoolean(), anySetOf(Integer.class),
-              any());
+      }).when(mockManager).receiveResponse(any(String.class), any(Address.class), anyBoolean(), anySet(), any());
       TestingUtil.replaceComponent(cache, ClusterStreamManager.class, mockManager, true);
       return manager;
    }

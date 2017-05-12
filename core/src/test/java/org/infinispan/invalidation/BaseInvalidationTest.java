@@ -1,9 +1,9 @@
 package org.infinispan.invalidation;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -28,7 +28,6 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
@@ -212,9 +211,9 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
          when(mockTransport.getMembers()).thenReturn(members);
          when(mockTransport.getAddress()).thenReturn(addressOne);
-         when(mockTransport.invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
-               eq(isSync ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS), anyLong(), any(
-               ResponseFilter.class), any(DeliverOrder.class), anyBoolean()))
+         when(mockTransport.invokeRemotelyAsync(isNull(), any(ReplicableCommand.class),
+                                                eq(isSync ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS),
+                                                anyLong(), isNull(), any(DeliverOrder.class), anyBoolean()))
                .thenReturn(CompletableFuture.completedFuture(Collections.emptyMap()));
 
          cache1.put("k", "v");

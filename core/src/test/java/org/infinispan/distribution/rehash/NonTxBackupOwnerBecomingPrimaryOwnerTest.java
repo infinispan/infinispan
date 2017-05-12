@@ -4,6 +4,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -42,7 +43,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
-import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 /**
@@ -244,7 +244,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
                                                 final int currentTopologyId)
          throws InterruptedException {
       LocalTopologyManager component = TestingUtil.extractGlobalComponent(manager, LocalTopologyManager.class);
-      LocalTopologyManager spyLtm = Mockito.spy(component);
+      LocalTopologyManager spyLtm = spy(component);
       doAnswer(invocation -> {
          CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
          // Ignore the first topology update on the joiner, which is with the topology before the join

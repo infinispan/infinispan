@@ -214,7 +214,6 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          // An example of this situation is when a node sends leave - topology can be installed before the new view.
          // To prevent suspect exceptions use SYNCHRONOUS_IGNORE_LEAVERS response mode.
          if (currentTopologyId == cmd.getTopologyId() && !cacheTopology.getActualMembers().contains(((SuspectException) ce).getSuspect())) {
-            // TODO: provide a test case
             throw new IllegalStateException("Command was not sent with SYNCHRONOUS_IGNORE_LEAVERS?");
          }
       } else if (ce instanceof OutdatedTopologyException) {

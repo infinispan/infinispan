@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyInt;
@@ -37,7 +38,6 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.mockito.AdditionalAnswers;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
@@ -66,20 +66,13 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
     * the command that will cause data to soon be placed into the data container.  Since this test is
     * transaction based the default value is to return a {@link PrepareCommand}, however other tests
     * can change this behavior if desired.
-    * @param op
-    * @return
     */
    protected Class<? extends VisitableCommand> getVisitableCommand(TestWriteOperation op) {
       return PrepareCommand.class;
    }
 
    protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<? extends Object> callable) {
-      return new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return TestingUtil.withTx(tm, callable);
-         }
-      };
+      return () -> TestingUtil.withTx(tm, callable);
    }
 
    @Test
@@ -228,21 +221,17 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       try {
          TransactionManager tm = primaryOwnerCache.getTransactionManager();
-         Future<Object> future = fork(runWithTx(tm, new Callable<Object>() {
-
-            @Override
-            public Object call() throws Exception {
-               if (additionalValueOnNonOwner) {
-                  MagicKey mk = new MagicKey("placeholder", nonOwnerCache);
-                  String value = "somevalue";
-                  primaryOwnerCache.put(mk, value);
-                  log.tracef("Adding additional value on nonOwner value inserted: %s = %s", mk, value);
-               }
-               primaryOwnerCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(
-                     new BlockingInterceptor<>(cyclicBarrier, getVisitableCommand(op), true, false),
-                     StateTransferInterceptor.class);
-               return op.perform(primaryOwnerCache, key);
+         Future<Object> future = fork(runWithTx(tm, () -> {
+            if (additionalValueOnNonOwner) {
+               MagicKey mk = new MagicKey("placeholder", nonOwnerCache);
+               String value = "somevalue";
+               primaryOwnerCache.put(mk, value);
+               log.tracef("Adding additional value on nonOwner value inserted: %s = %s", mk, value);
             }
+            primaryOwnerCache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(
+                  new BlockingInterceptor<>(cyclicBarrier, getVisitableCommand(op), true, false),
+                  StateTransferInterceptor.class);
+            return op.perform(primaryOwnerCache, key);
          }));
 
          cyclicBarrier.await(10, SECONDS);
@@ -291,8 +280,6 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
    /**
     * When L1 is enabled this test should not be ran when a previous value is present as it will cause timeouts.  Due
     * to how locking works with L1 this cannot occur when the previous value exists.
-    * @param op
-    * @throws Exception
     */
    protected void doTestWhereCommitOccursAfterStateTransferBeginsBeforeCompletion(final TestWriteOperation op) throws Exception {
       if (l1Enabled() && op.getPreviousValue() != null) {
@@ -339,13 +326,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       backupOwnerCache.getCacheManager().stop();
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return primaryOwnerCache.getRpcManager().getMembers().size() == 2 &&
-                  nonOwnerCache.getRpcManager().getMembers().size() == 2;
-         }
-      });
+      eventuallyEquals(2, () -> primaryOwnerCache.getRpcManager().getMembers().size());
+      eventuallyEquals(2, () -> nonOwnerCache.getRpcManager().getMembers().size());
 
       assertEquals(primaryOwnerCache.getCacheManager().getCoordinator(), primaryOwnerCache.getCacheManager().getAddress());
 
@@ -360,12 +342,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
       // Put/Replace/Remove from cache0 with cache0 as primary owner, cache1 will become a backup owner for the retry
       // The put command will be blocked on cache1 just before committing the entry.
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return op.perform(primaryOwnerCache, key);
-         }
-      });
+      Future<Object> future = fork(() -> op.perform(primaryOwnerCache, key));
 
       // Wait for the entry to be wrapped on cache1
       beforeCommitCache1Barrier.await(10, TimeUnit.SECONDS);
@@ -441,14 +418,11 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       primaryOwnerCache.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, StateTransferInterceptor.class);
 
       // Put/Replace/Remove from primary owner.  This will block before it is committing on remote nodes
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            try {
-               return op.perform(primaryOwnerCache, key);
-            } finally {
-               log.tracef("%s operation is done", op);
-            }
+      Future<Object> future = fork(() -> {
+         try {
+            return op.perform(primaryOwnerCache, key);
+         } finally {
+            log.tracef("%s operation is done", op);
          }
       });
 
@@ -462,13 +436,8 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       backupOwnerCache.getCacheManager().stop();
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return primaryOwnerCache.getRpcManager().getMembers().size() == 2 &&
-                  nonOwnerCache.getRpcManager().getMembers().size() == 2;
-         }
-      });
+      eventually(() -> primaryOwnerCache.getRpcManager().getMembers().size() == 2 &&
+            nonOwnerCache.getRpcManager().getMembers().size() == 2);
 
       TestingUtil.waitForNoRebalance(primaryOwnerCache, nonOwnerCache);
 
@@ -507,20 +476,16 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
       ClusterTopologyManager mockManager = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object[] arguments = invocation.getArguments();
-            Address source = (Address) arguments[1];
-            int topologyId = (Integer) arguments[2];
-            if (topologyId == rebalanceTopologyId) {
-               checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
-               checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
-            }
-            return forwardedAnswer.answer(invocation);
+      doAnswer(invocation -> {
+         Object[] arguments = invocation.getArguments();
+         Address source = (Address) arguments[1];
+         int topologyId = (Integer) arguments[2];
+         if (topologyId == rebalanceTopologyId) {
+            checkPoint.trigger("pre_rebalance_confirmation_" + topologyId + "_from_" + source);
+            checkPoint.awaitStrict("resume_rebalance_confirmation_" + topologyId + "_from_" + source, 10, SECONDS);
          }
-      }).when(mockManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), any(Throwable.class),
-                                                   anyInt());
+         return forwardedAnswer.answer(invocation);
+      }).when(mockManager).handleRebalancePhaseConfirm(anyString(), any(Address.class), anyInt(), isNull(), anyInt());
       TestingUtil.replaceComponent(manager, ClusterTopologyManager.class, mockManager, true);
    }
 
@@ -528,16 +493,13 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       StateConsumer sc = TestingUtil.extractComponent(cache, StateConsumer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(sc);
       StateConsumer mockConsumer = mock(StateConsumer.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            // Wait for main thread to sync up
-            checkPoint.trigger("pre_state_apply_invoked_for_" + cache);
-            // Now wait until main thread lets us through
-            checkPoint.awaitStrict("pre_state_apply_release_for_" + cache, 10, TimeUnit.SECONDS);
+      doAnswer(invocation -> {
+         // Wait for main thread to sync up
+         checkPoint.trigger("pre_state_apply_invoked_for_" + cache);
+         // Now wait until main thread lets us through
+         checkPoint.awaitStrict("pre_state_apply_release_for_" + cache, 10, TimeUnit.SECONDS);
 
-            return forwardedAnswer.answer(invocation);
-         }
+         return forwardedAnswer.answer(invocation);
       }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyCollection());
       TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
