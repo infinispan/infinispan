@@ -25,8 +25,8 @@ public class TopologyAwareClusteredCacheTest extends ClusteredCacheTest {
          cacheManagers.add(((Cache) cache).getCacheManager());
       }
 
-      cache1 = (Cache<String, Person>) caches.get(0);
-      cache2 = (Cache<String, Person>) caches.get(1);
+      cache1 = (Cache<Object, Person>) caches.get(0);
+      cache2 = (Cache<Object, Person>) caches.get(1);
 
       waitForClusterToForm();
    }

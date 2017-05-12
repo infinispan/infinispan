@@ -1,13 +1,9 @@
 package org.infinispan.query.blackbox;
 
-import java.util.List;
-
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.Test;
