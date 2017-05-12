@@ -1,5 +1,6 @@
 package org.infinispan.commands.functional;
 
+import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 import java.io.IOException;
@@ -101,5 +102,18 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    @Override
    public Mutation<K, V, ?> toMutation(K key) {
       return new Mutations.ReadWrite<>(f);
+   }
+
+   @Override
+   public String toString() {
+      return "ReadWriteKeyCommand" +
+            "{ key=" + toStr(key) +
+            ", f=" + f +
+            ", flags=" + printFlags() +
+            ", commandInvocationId=" + commandInvocationId +
+            ", params=" + params +
+            ", valueMatcher=" + valueMatcher +
+            ", successful=" + successful +
+            "}";
    }
 }

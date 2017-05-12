@@ -14,6 +14,14 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -134,9 +142,17 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
             case RemoveCommand.COMMAND_ID:
             case RemoveExpiredCommand.COMMAND_ID:
             case ReplaceCommand.COMMAND_ID:
+            case ReadWriteKeyCommand.COMMAND_ID:
+            case ReadWriteKeyValueCommand.COMMAND_ID:
+            case WriteOnlyKeyCommand.COMMAND_ID:
+            case WriteOnlyKeyValueCommand.COMMAND_ID:
                set.add(((DataWriteCommand) writeCommand).getKey());
                break;
             case PutMapCommand.COMMAND_ID:
+            case ReadWriteManyCommand.COMMAND_ID:
+            case ReadWriteManyEntriesCommand.COMMAND_ID:
+            case WriteOnlyManyCommand.COMMAND_ID:
+            case WriteOnlyManyEntriesCommand.COMMAND_ID:
                set.addAll(writeCommand.getAffectedKeys());
                break;
             case ApplyDeltaCommand.COMMAND_ID:
