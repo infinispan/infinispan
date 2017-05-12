@@ -1,5 +1,7 @@
 package org.infinispan.query.it;
 
+import java.util.List;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -9,8 +11,6 @@ import org.infinispan.query.blackbox.ClusteredCacheTest;
 import org.infinispan.query.test.Person;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 /**
  * @since 9.0
@@ -41,7 +41,7 @@ public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCach
                 .index(Index.LOCAL)
                 .addIndexedEntity(Person.class);
         ElasticsearchTesting.applyTestProperties(cacheCfg.indexing());
-        List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
+        List<Cache<Object, Person>> caches = createClusteredCaches(2, cacheCfg);
         cache1 = caches.get(0);
         cache2 = caches.get(1);
     }
