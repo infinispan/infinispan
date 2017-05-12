@@ -29,7 +29,7 @@ public class ClusteredCacheWithAffinityIndexManagerTest extends ClusteredCacheTe
               .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
               .addProperty("lucene_version", "LUCENE_CURRENT");
       enhanceConfig(cacheCfg);
-      List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
+      List<Cache<Object, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
