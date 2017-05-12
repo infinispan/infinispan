@@ -17,6 +17,7 @@ import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.FunctionalCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -427,6 +428,46 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       }
 
       @Override
+      public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+         return visitModify(ctx, command, command.getKey());
+      }
+
+      @Override
+      public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+         return visitModify(ctx, command, command.getKey());
+      }
+
+      @Override
+      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+         return visitModify(ctx, command, command.getKey());
+      }
+
+      @Override
+      public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+         return visitManyModify(ctx, command);
+      }
+
+      @Override
+      public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+         return visitModify(ctx, command, command.getKey());
+      }
+
+      @Override
+      public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+         return visitManyModify(ctx, command);
+      }
+
+      @Override
+      public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+         return visitManyModify(ctx, command);
+      }
+
+      @Override
+      public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+         return visitManyModify(ctx, command);
+      }
+
+      @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          Object key = command.getKey();
          if (isProperWriter(ctx, command, key)) {
@@ -452,6 +493,30 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                MarshalledEntryImpl me = new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller);
                persistenceManager.writeToAllNonTxStores(me, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
             }
+         }
+         return null;
+      }
+
+      protected Object visitModify(InvocationContext ctx, FlagAffectedCommand command, Object key) throws Throwable {
+         if (isProperWriter(ctx, command, key)) {
+            CacheEntry entry = ctx.lookupEntry(key);
+            if (!entry.isChanged()) {
+               return null;
+            } else if (entry.getValue() == null) {
+               persistenceManager.deleteFromAllStores(key, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
+            } else {
+               if (generateStatistics) putCount++;
+               InternalCacheValue sv = entryFactory.getValueFromCtxOrCreateNew(key, ctx);
+               MarshalledEntryImpl me = new MarshalledEntryImpl(key, sv.getValue(), internalMetadata(sv), marshaller);
+               persistenceManager.writeToAllNonTxStores(me, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
+            }
+         }
+         return null;
+      }
+
+      protected Object visitManyModify(InvocationContext ctx, AbstractWriteManyCommand command) throws Throwable {
+         for (Object key : command.getAffectedKeys()) {
+            visitModify(ctx, command, key);
          }
          return null;
       }

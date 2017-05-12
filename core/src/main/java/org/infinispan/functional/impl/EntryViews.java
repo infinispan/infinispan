@@ -190,6 +190,7 @@ public final class EntryViews {
       public Void set(V value, MetaParam.Writable... metas) {
          entry.setValue(value);
          entry.setChanged(true);
+         entry.setRemoved(value == null);
          updateMetaParams(entry, metas);
          return null;
       }
@@ -232,8 +233,11 @@ public final class EntryViews {
       }
 
       private void setOnly(V value, MetaParam.Writable[] metas) {
+         entry.setCreated(entry.getValue() == null && value != null);
          entry.setValue(value);
          entry.setChanged(true);
+         entry.setRemoved(value == null);
+
          updateMetaParams(entry, metas);
       }
 
@@ -243,6 +247,7 @@ public final class EntryViews {
             entry.setRemoved(true);
             entry.setChanged(true);
             entry.setValue(null);
+            entry.setCreated(false);
          }
 
          return null;
@@ -305,6 +310,8 @@ public final class EntryViews {
       private void setOnly(V value, MetaParam.Writable[] metas) {
          entry.setValue(value);
          entry.setChanged(true);
+         entry.setRemoved(value == null);
+         entry.setCreated(prevValue == null && value != null);
          updateMetaParams(entry, metas);
       }
 
@@ -312,6 +319,7 @@ public final class EntryViews {
       public Void remove() {
          if (!entry.isNull()) {
             entry.setRemoved(true);
+            entry.setCreated(false);
             entry.setChanged(true);
             entry.setValue(null);
          }
