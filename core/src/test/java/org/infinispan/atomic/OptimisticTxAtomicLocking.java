@@ -1,5 +1,6 @@
 package org.infinispan.atomic;
 
+import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.testng.annotations.Test;
 
 /**
@@ -10,6 +11,6 @@ import org.testng.annotations.Test;
 public class OptimisticTxAtomicLocking extends BaseAtomicMapLockingTest {
 
    public OptimisticTxAtomicLocking() {
-      super(false);
+      super(false, VersionedPrepareCommand.class);
    }
 }
