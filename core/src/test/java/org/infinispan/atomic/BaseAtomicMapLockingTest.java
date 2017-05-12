@@ -41,11 +41,13 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
    private final boolean pessimistic;
    private final CollectCompositeKeysInterceptor[] collectors = new CollectCompositeKeysInterceptor[NUM_NODES];
    private final ControlledRpcManager[] rpcManagers = new ControlledRpcManager[NUM_NODES];
+   private final Class<? extends PrepareCommand> prepareCommandClass;
    private Object ahmKey;
    private Object fgahmKey;
 
-   protected BaseAtomicMapLockingTest(boolean pessimistic) {
+   protected BaseAtomicMapLockingTest(boolean pessimistic, Class<? extends PrepareCommand> prepareCommandClass) {
       this.pessimistic = pessimistic;
+      this.prepareCommandClass = prepareCommandClass;
    }
 
    public final void testAtomicHasMapLockingOnLockOwner() throws Exception {
@@ -97,9 +99,9 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       final Transaction tx1 = tm(txExecutor).suspend();
 
       if (pessimistic) {
-         rpcManagers[txExecutor].blockBefore(PrepareCommand.class);
+         rpcManagers[txExecutor].blockBefore(prepareCommandClass);
       } else {
-         rpcManagers[txExecutor].blockAfter(PrepareCommand.class);
+         rpcManagers[txExecutor].blockAfter(prepareCommandClass);
       }
 
       Future<Boolean> txOutcome = fork(new Callable<Boolean>() {
@@ -153,9 +155,9 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       log.infof("%s composite keys collected.", collectors[txExecutor].getCompositeKeys().size());
 
       if (pessimistic) {
-         rpcManagers[txExecutor].blockBefore(PrepareCommand.class);
+         rpcManagers[txExecutor].blockBefore(prepareCommandClass);
       } else {
-         rpcManagers[txExecutor].blockAfter(PrepareCommand.class);
+         rpcManagers[txExecutor].blockAfter(prepareCommandClass);
       }
 
       Future<Boolean> txOutcome = fork(new Callable<Boolean>() {
