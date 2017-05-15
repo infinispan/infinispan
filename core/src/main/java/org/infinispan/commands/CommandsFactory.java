@@ -452,7 +452,7 @@ public interface CommandsFactory {
     * @param groupName the group name.
     * @return the GetKeysInGroup created.
     */
-   GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, String groupName);
+   GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName);
 
    <K> StreamRequestCommand<K> buildStreamRequestCommand(Object id, boolean parallelStream, StreamRequestCommand.Type type,
            Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Object terminalOperation);

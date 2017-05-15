@@ -199,12 +199,11 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Override
    public Object visitGetKeysInGroupCommand(final InvocationContext ctx,
                                             GetKeysInGroupCommand command) throws Throwable {
-      final String groupName = command.getGroupName();
       if (!command.isGroupOwner() || hasSkipLoadFlag(command)) {
          return invokeNext(ctx, command);
       }
 
-      final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
+      final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(command.getGroupName(), groupManager),
             new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
       persistenceManager.processOnAllStores(keyFilter, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override

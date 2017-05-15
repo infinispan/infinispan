@@ -82,9 +82,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
             GetKeysInGroupCommand cmd = (GetKeysInGroupCommand) rCommand;
             final int commandTopologyId = cmd.getTopologyId();
-            String groupName = cmd.getGroupName();
             if (currentTopologyId() != commandTopologyId &&
-                  distributionManager.getCacheTopology().isWriteOwner(groupName)) {
+                  distributionManager.getCacheTopology().isWriteOwner(cmd.getGroupName())) {
                throw new OutdatedTopologyException(
                      "Cache topology changed while the command was executing: expected " +
                            commandTopologyId + ", got " + currentTopologyId());

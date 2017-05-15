@@ -624,7 +624,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, String groupName) {
+   public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName) {
       return new GetKeysInGroupCommand(flagsBitSet, groupName).setGroupManager(groupManager);
    }
 

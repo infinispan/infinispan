@@ -115,12 +115,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    @Override
    public final Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command)
          throws Throwable {
-      final String groupName = command.getGroupName();
       if (command.isGroupOwner()) {
          //don't go remote if we are an owner.
          return invokeNext(ctx, command);
       }
-      Address primaryOwner = dm.getCacheTopology().getDistribution(groupName).primary();
+      Address primaryOwner = dm.getCacheTopology().getDistribution(command.getGroupName()).primary();
       CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
             Collections.singleton(primaryOwner), command, defaultSyncOptions);
       return asyncInvokeNext(ctx, command, future.thenAccept(responses -> {
