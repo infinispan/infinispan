@@ -45,6 +45,17 @@ public class QueryResponse implements Serializable {
       this.resultSize = resultSize;
    }
 
+   public boolean nonEmpty() {
+      return resultSize > 0;
+   }
+
+   public ClusteredTopDocs toClusteredTopDocs() {
+      if(nodeTopDocs == null) throw new IllegalStateException("ClusteredTopDocs can't be created from an empty QueryResponse");
+      ClusteredTopDocs clusteredTopDocs = new ClusteredTopDocs(this.getTopDocs(), this.getNodeUUID());
+      clusteredTopDocs.setNodeAddress(this.getAddress());
+      return clusteredTopDocs;
+   }
+
    public int getResultSize() {
       return resultSize;
    }
