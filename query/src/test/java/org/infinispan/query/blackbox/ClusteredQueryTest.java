@@ -41,7 +41,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    private final QueryParser queryParser = createQueryParser("blurb");
 
-   private static final int NUM_ENTRIES = 30;
+   static final int NUM_ENTRIES = 30;
 
    Cache<String, Person> cacheAMachine1, cacheAMachine2;
    CacheQuery<Person> cacheQuery;
@@ -293,14 +293,14 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
-   private void populateCache() throws ParseException {
+   protected void populateCache() throws ParseException {
       prepareTestData();
 
       cacheQuery = Search.getSearchManager(cacheAMachine1).getClusteredQuery(createLuceneQuery());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
-   private BooleanQuery createLuceneQuery() throws ParseException {
+   protected BooleanQuery createLuceneQuery() throws ParseException {
       return new BooleanQuery.Builder()
             .add(queryParser.parse("blurb1?"), Occur.SHOULD)
             .build();
