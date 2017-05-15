@@ -123,11 +123,10 @@ public class ClusteredCacheQueryImpl<E> extends CacheQueryImpl<E> {
       List<QueryResponse> responses = invoker.broadcast(command);
 
       for (QueryResponse queryResponse : responses) {
-         ClusteredTopDocs topDocs = new ClusteredTopDocs(queryResponse.getTopDocs(), queryResponse.getNodeUUID());
-
-         resultSize += queryResponse.getResultSize();
-         topDocs.setNodeAddress(queryResponse.getAddress());
-         topDocsResponses.put(queryResponse.getNodeUUID(), topDocs);
+         if (queryResponse.nonEmpty()) {
+            topDocsResponses.put(queryResponse.getNodeUUID(), queryResponse.toClusteredTopDocs());
+            resultSize += queryResponse.getResultSize();
+         }
       }
 
       this.resultSize = resultSize;

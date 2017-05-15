@@ -22,7 +22,7 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
       DocumentExtractor extractor = query.queryDocumentExtractor();
       try {
          int resultSize = query.queryResultSize();
-         NodeTopDocs eagerTopDocs = collectKeys(extractor);
+         NodeTopDocs eagerTopDocs = resultSize == 0 ? null : collectKeys(extractor);
          QueryResponse queryResponse = new QueryResponse(eagerTopDocs, getQueryBox().getMyId(), resultSize);
          queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
          return queryResponse;
