@@ -15,7 +15,7 @@ public class KXGrouper implements Grouper<String> {
     private static Pattern kPattern = Pattern.compile("(^k)(\\d)$");
 
     @Override
-    public String computeGroup(String key, String group) {
+    public Object computeGroup(String key, Object group) {
         Matcher matcher = kPattern.matcher(key);
         if (matcher.matches()) {
             String g = Integer.parseInt(matcher.group(2)) % 2 + "";

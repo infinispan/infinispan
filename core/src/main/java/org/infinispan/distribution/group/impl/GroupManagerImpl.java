@@ -24,31 +24,27 @@ public class GroupManagerImpl implements GroupManager {
     private interface GroupMetadata {
         GroupMetadata NONE = instance -> null;
 
-        String getGroup(Object instance);
+        Object getGroup(Object instance);
     }
 
     private static class GroupMetadataImpl implements GroupMetadata {
         private final Method method;
 
         GroupMetadataImpl(Method method) {
-            if (!String.class.isAssignableFrom(method.getReturnType()))
-                throw new IllegalArgumentException(Util.formatString("@Group method %s must return java.lang.String", method));
             if (method.getParameterTypes().length > 0)
                 throw new IllegalArgumentException(Util.formatString("@Group method %s must have zero arguments", method));
             this.method = method;
         }
 
         @Override
-        public String getGroup(Object instance) {
+        public Object getGroup(Object instance) {
             Object object;
             if (System.getSecurityManager() == null) {
-                object = invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY);
+                return invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY);
             } else {
-                object = AccessController.doPrivileged((PrivilegedAction<Object>) () -> invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY));
+                return AccessController.doPrivileged((PrivilegedAction<Object>) () -> invokeAccessibly(instance, method, Util.EMPTY_OBJECT_ARRAY));
             }
-            return String.class.cast(object);
         }
-
     }
 
     private static GroupMetadata createGroupMetadata(Class<?> clazz) {
@@ -84,7 +80,7 @@ public class GroupManagerImpl implements GroupManager {
     }
 
     @Override
-    public String getGroup(Object key) {
+    public Object getGroup(Object key) {
         GroupMetadata metadata = getMetadata(key);
         if (metadata != null) {
             return applyGroupers(metadata.getGroup(key), key);
@@ -93,43 +89,42 @@ public class GroupManagerImpl implements GroupManager {
     }
 
    @Override
-   public boolean isOwner(String group) {
+   public boolean isOwner(Object group) {
       return distributionManager.getCacheTopology().isWriteOwner(group);
    }
 
    @Override
-   public Address getPrimaryOwner(String group) {
+   public Address getPrimaryOwner(Object group) {
       return distributionManager.getCacheTopology().getDistribution(group).primary();
    }
 
    @Override
-   public boolean isPrimaryOwner(String group) {
+   public boolean isPrimaryOwner(Object group) {
       return distributionManager.getCacheTopology().getDistribution(group).isPrimary();
    }
 
-   private String applyGroupers(String group, Object key) {
-        for (Grouper<?> grouper : groupers) {
-            if (grouper.getKeyType().isAssignableFrom(key.getClass()))
-                group = ((Grouper<Object>) grouper).computeGroup(key, group);
-        }
-        return group;
-    }
+   private Object applyGroupers(Object group, Object key) {
+      for (Grouper<?> grouper : groupers) {
+         if (grouper.getKeyType().isAssignableFrom(key.getClass()))
+             group = ((Grouper<Object>) grouper).computeGroup(key, group);
+      }
+      return group;
+   }
 
-    private GroupMetadata getMetadata(final Object key) {
-        final Class<?> keyClass = key.getClass();
-        GroupMetadata groupMetadata = groupMetadataCache.get(keyClass);
-        if (groupMetadata == null) {
-          //this is not ideal as it is possible for the group metadata to be redundantly calculated several times.
-          //however profiling showed that using the Map<Class,Future> cache-approach is significantly slower on
-          // the long run
-           groupMetadata = createGroupMetadata(keyClass);
-           GroupMetadata previous = groupMetadataCache.putIfAbsent(keyClass, groupMetadata);
-           if (previous != null) {
-               // in case another thread added a metadata already, discard what we created and reuse the existing.
-               return previous;
-           }
-       }
-       return groupMetadata;
-    }
-
+   private GroupMetadata getMetadata(final Object key) {
+      final Class<?> keyClass = key.getClass();
+      GroupMetadata groupMetadata = groupMetadataCache.get(keyClass);
+      if (groupMetadata == null) {
+         //this is not ideal as it is possible for the group metadata to be redundantly calculated several times.
+         //however profiling showed that using the Map<Class,Future> cache-approach is significantly slower on
+         // the long run
+         groupMetadata = createGroupMetadata(keyClass);
+         GroupMetadata previous = groupMetadataCache.putIfAbsent(keyClass, groupMetadata);
+         if (previous != null) {
+            // in case another thread added a metadata already, discard what we created and reuse the existing.
+            return previous;
+         }
+      }
+      return groupMetadata;
+   }
 }

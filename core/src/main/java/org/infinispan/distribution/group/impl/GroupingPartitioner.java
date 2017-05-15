@@ -20,7 +20,7 @@ public class GroupingPartitioner implements KeyPartitioner {
 
    @Override
    public int getSegment(Object key) {
-      String groupKey = groupManager.getGroup(key);
+      Object groupKey = groupManager.getGroup(key);
       return partitioner.getSegment(groupKey != null ? groupKey : key);
    }
 

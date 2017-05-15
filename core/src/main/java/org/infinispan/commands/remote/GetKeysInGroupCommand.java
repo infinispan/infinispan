@@ -27,14 +27,14 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
 
    public static final byte COMMAND_ID = 43;
 
-   private String groupName;
+   private Object groupName;
    /*
    local state to avoid checking everywhere if the node in which this command is executed is the group owner.
     */
    private transient boolean isGroupOwner;
    private transient GroupManager groupManager;
 
-   public GetKeysInGroupCommand(long flagsBitSet, String groupName) {
+   public GetKeysInGroupCommand(long flagsBitSet, Object groupName) {
       this.groupName = groupName;
       setFlagsBitSet(flagsBitSet);
    }
@@ -68,13 +68,13 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeUTF(groupName);
+      output.writeObject(groupName);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      groupName = input.readUTF();
+      groupName = input.readObject();
       setFlagsBitSet(input.readLong());
    }
 
@@ -98,7 +98,7 @@ public class GetKeysInGroupCommand extends AbstractTopologyAffectedCommand imple
       return LoadType.OWNER;
    }
 
-   public String getGroupName() {
+   public Object getGroupName() {
       return groupName;
    }
 

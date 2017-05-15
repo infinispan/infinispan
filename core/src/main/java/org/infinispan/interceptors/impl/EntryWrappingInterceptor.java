@@ -405,9 +405,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command)
          throws Throwable {
-      final String groupName = command.getGroupName();
       if (command.isGroupOwner()) {
-         final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
+         final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(command.getGroupName(), groupManager),
                new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
          dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
             synchronized (ctx) {

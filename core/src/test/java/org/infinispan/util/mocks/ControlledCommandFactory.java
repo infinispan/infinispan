@@ -374,7 +374,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, String groupName) {
+   public GetKeysInGroupCommand buildGetKeysInGroupCommand(long flagsBitSet, Object groupName) {
       return actual.buildGetKeysInGroupCommand(flagsBitSet, groupName);
    }
 

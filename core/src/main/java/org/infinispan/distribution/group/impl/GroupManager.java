@@ -16,7 +16,7 @@ public interface GroupManager {
     * @param key the key for which to get the group
     * @return the group, or null if no group is defined for the key
     */
-   String getGroup(Object key);
+   Object getGroup(Object key);
 
    /**
     * Checks if this node is an owner of the group.
@@ -27,7 +27,7 @@ public interface GroupManager {
     * @deprecated Since 9.0, please use {@link DistributionManager#getCacheTopology()} instead.
     */
    @Deprecated
-   boolean isOwner(String group);
+   boolean isOwner(Object group);
 
    /**
     * It returns the primary owner of the group.
@@ -38,7 +38,7 @@ public interface GroupManager {
     * @deprecated Since 9.0, please use {@link DistributionManager#getCacheTopology()} instead.
     */
    @Deprecated
-   Address getPrimaryOwner(String group);
+   Address getPrimaryOwner(Object group);
 
    /**
     * It checks if this node is the primary owner of the group.
@@ -49,6 +49,6 @@ public interface GroupManager {
     * @deprecated Since 9.0, please use {@link DistributionManager#getCacheTopology()} instead.
     */
    @Deprecated
-   boolean isPrimaryOwner(String group);
+   boolean isPrimaryOwner(Object group);
 
 }
