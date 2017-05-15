@@ -81,9 +81,19 @@ public class DistributedIterator<E> implements ResultIterator<E> {
       // fetch and return the value
       ScoreDoc scoreDoc = mergedResults.scoreDocs[currentIndex];
       int index = scoreDoc.shardIndex;
+      if(partialPositionNext[index] == 0) {
+         partialPositionNext[index] = findSpecificPosition(scoreDoc.doc, partialResults[index].getNodeTopDocs().topDocs);
+      }
       int specificPosition = partialPositionNext[index];
       partialPositionNext[index]++;
       return fetchValue(specificPosition, partialResults[index]);
+   }
+
+   private int findSpecificPosition(int docId, TopDocs topDocs) {
+      for (int i = 0; i < topDocs.scoreDocs.length; i++) {
+         if(topDocs.scoreDocs[i].doc == docId) return i;
+      }
+      return 0;
    }
 
    protected E fetchValue(int scoreIndex, ClusteredTopDocs topDoc) {
