@@ -23,18 +23,15 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    private BiConsumer<V, WriteEntryView<V>> f;
 
    public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId);
+      super(commandInvocationId, params);
       this.entries = entries;
       this.f = f;
-      this.params = params;
    }
 
    public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V> command) {
-      this.commandInvocationId = command.commandInvocationId;
+      super(command);
       this.entries = command.entries;
       this.f = command.f;
-      this.params = command.params;
-      this.flags = command.flags;
    }
 
    public WriteOnlyManyEntriesCommand() {

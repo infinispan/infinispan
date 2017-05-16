@@ -32,18 +32,15 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    boolean isForwarded = false;
 
    public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId);
+      super(commandInvocationId, params);
       this.keys = keys;
       this.f = f;
-      this.params = params;
    }
 
    public ReadWriteManyCommand(ReadWriteManyCommand command) {
-      this.commandInvocationId = command.commandInvocationId;
+      super(command);
       this.keys = command.keys;
       this.f = command.f;
-      this.params = command.params;
-      this.flags = command.flags;
    }
 
    public ReadWriteManyCommand() {

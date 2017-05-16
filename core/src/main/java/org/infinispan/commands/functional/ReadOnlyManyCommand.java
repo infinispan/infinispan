@@ -17,16 +17,20 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
 
    protected Collection<? extends K> keys;
    protected Function<ReadEntryView<K, V>, R> f;
+   protected Params params;
 
-   public ReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
+   public ReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f, Params params) {
       this.keys = keys;
       this.f = f;
+      this.params = params;
+      this.setFlagsBitSet(params.toFlagsBitSet());
    }
 
    public ReadOnlyManyCommand() {
@@ -35,6 +39,8 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    public ReadOnlyManyCommand(ReadOnlyManyCommand c) {
       this.keys = c.keys;
       this.f = c.f;
+      this.params = c.params;
+      this.setFlagsBitSet(c.getFlagsBitSet());
    }
 
    public Collection<? extends K> getKeys() {
@@ -69,12 +75,15 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
+      Params.writeObject(output, params);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       this.keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
       this.f = (Function<ReadEntryView<K, V>, R>) input.readObject();
+      this.params = Params.readObject(input);
+      this.setFlagsBitSet(params.toFlagsBitSet());
    }
 
    @Override
