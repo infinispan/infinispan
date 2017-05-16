@@ -19,6 +19,7 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
       super(key, EnumUtil.EMPTY_BIT_SET, id);
       this.valueMatcher = valueMatcher;
       this.params = params;
+      this.setFlagsBitSet(params.toFlagsBitSet());
    }
 
    public AbstractWriteKeyCommand() {

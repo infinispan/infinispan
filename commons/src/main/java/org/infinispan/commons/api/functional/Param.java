@@ -86,4 +86,76 @@ public interface Param<P> {
       }
    }
 
+   /**
+    * Normally the cache has to acquire locks during any write operation to guarantee
+    * its correctness. If the application is sure that no concurrent operation occurs,
+    * it is possible to increase performance by setting this param to {@link #SKIP}.
+    * The result of any operation without locking is undefined under presence of concurrent
+    * writes.
+    */
+   @Experimental
+   enum LockingMode implements Param<LockingMode> {
+      LOCK, SKIP;
+
+      public static final int ID = ParamIds.LOCKING_MODE_ID;
+      private static final LockingMode[] CACHED_VALUES = values();
+
+
+      @Override
+      public int id() {
+         return ID;
+      }
+
+      @Override
+      public LockingMode get() {
+         return this;
+      }
+
+      public static LockingMode defaultValue() {
+         return LOCK;
+      }
+
+      public static LockingMode valueOf(int ordinal) {
+         return CACHED_VALUES[ordinal];
+      }
+   }
+
+   /**
+    * Defines where is the command executed.
+    */
+   @Experimental
+   enum ExecutionMode implements Param<ExecutionMode> {
+      /**
+       * Command is executed on its owners, in transactional mode in the context, too, but there it is not persisted.
+       */
+      CLUSTER,
+      /**
+       * Command is executed only locally, it is not sent to remote nodes. If the command is a write and this node
+       * is not an owner of given entry, the entry is not stored in the cache. If the command reads a value and
+       * the entry is not available locally, null entry is provided instead.
+       */
+      LOCAL;
+      // Other options: context-only write, write without remote read (SKIP_REMOTE_LOOKUP)...
+
+      public static final int ID = ParamIds.EXECUTION_MODE_ID;
+      private static final ExecutionMode[] CACHED_VALUES = values();
+
+      @Override
+      public int id() {
+         return ID;
+      }
+
+      @Override
+      public ExecutionMode get() {
+         return this;
+      }
+
+      public static ExecutionMode defaultValue() {
+         return CLUSTER;
+      }
+
+      public static ExecutionMode valueOf(int ordinal) {
+         return CACHED_VALUES[ordinal];
+      }
+   }
 }

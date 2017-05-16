@@ -667,13 +667,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f) {
-      return new ReadOnlyKeyCommand<>(key, f);
+   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f, Params params) {
+      return new ReadOnlyKeyCommand<>(key, f, params);
    }
 
    @Override
-   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
-      return new ReadOnlyManyCommand<>(keys, f);
+   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f, Params params) {
+      return new ReadOnlyManyCommand<>(keys, f, params);
    }
 
    @Override

@@ -1,6 +1,9 @@
 package org.infinispan.functional.impl;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
+import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.commons.api.functional.Param;
@@ -27,11 +30,28 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    final FunctionalNotifier notifier;
 
    public static <K, V> FunctionalMapImpl<K, V> create(Params params, AdvancedCache<K, V> cache) {
+      params = params.addAll(Params.fromFlagsBitSet(getFlagsBitSet(cache)));
       return new FunctionalMapImpl<>(params, cache);
    }
 
    public static <K, V> FunctionalMapImpl<K, V> create(AdvancedCache<K, V> cache) {
-      return new FunctionalMapImpl<>(Params.create(), cache);
+      Params params = Params.fromFlagsBitSet(getFlagsBitSet(cache));
+      return new FunctionalMapImpl<>(params, cache);
+   }
+
+   private static <K, V> long getFlagsBitSet(Cache<K, V> cache) {
+      long flagsBitSet = 0;
+      for (;;) {
+         if (cache instanceof DecoratedCache) {
+            flagsBitSet |= ((DecoratedCache) cache).getFlagsBitSet();
+         }
+         if (cache instanceof AbstractDelegatingCache) {
+            cache = ((AbstractDelegatingCache) cache).getDelegate();
+         } else {
+            break;
+         }
+      }
+      return flagsBitSet;
    }
 
    private FunctionalMapImpl(Params params, AdvancedCache<K, V> cache) {

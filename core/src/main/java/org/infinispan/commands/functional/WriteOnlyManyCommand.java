@@ -24,18 +24,15 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    private Consumer<WriteEntryView<V>> f;
 
    public WriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId);
+      super(commandInvocationId, params);
       this.keys = keys;
       this.f = f;
-      this.params = params;
    }
 
    public WriteOnlyManyCommand(WriteOnlyManyCommand<K, V> command) {
-      this.commandInvocationId = command.commandInvocationId;
+      super(command);
       this.keys = command.keys;
       this.f = command.f;
-      this.params = command.params;
-      this.flags = command.flags;
    }
 
    public WriteOnlyManyCommand() {

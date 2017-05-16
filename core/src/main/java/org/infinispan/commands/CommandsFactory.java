@@ -470,9 +470,9 @@ public interface CommandsFactory {
    <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete, Set<Integer> lostSegments,
            R response);
 
-   <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f);
+   <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f, Params params);
 
-   <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f);
+   <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f, Params params);
 
    <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
       K key, Consumer<WriteEntryView<V>> f, Params params);

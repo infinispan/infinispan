@@ -13,6 +13,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public static final byte COMMAND_ID = 64;
@@ -23,12 +24,12 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    public TxReadOnlyKeyCommand(Object key, List<Mutation<K, V, ?>> mutations) {
-      super(key, null);
+      super(key, null, Params.create());
       this.mutations = mutations;
    }
 
    public TxReadOnlyKeyCommand(ReadOnlyKeyCommand other, List<Mutation<K, V, ?>> mutations) {
-      super(other.getKey(), other.f);
+      super(other.getKey(), other.f, Params.create());
       this.mutations = mutations;
    }
 

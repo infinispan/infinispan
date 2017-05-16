@@ -398,13 +398,13 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<EntryView.ReadEntryView<K, V>, R> f) {
-      return actual.buildReadOnlyKeyCommand(key, f);
+   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<EntryView.ReadEntryView<K, V>, R> f, Params params) {
+      return actual.buildReadOnlyKeyCommand(key, f, params);
    }
 
    @Override
-   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<EntryView.ReadEntryView<K, V>, R> f) {
-      return actual.buildReadOnlyManyCommand(keys, f);
+   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<EntryView.ReadEntryView<K, V>, R> f, Params params) {
+      return actual.buildReadOnlyManyCommand(keys, f, params);
    }
 
    @Override

@@ -32,21 +32,18 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    boolean isForwarded = false;
 
    public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId);
+      super(commandInvocationId, params);
       this.entries = entries;
       this.f = f;
-      this.params = params;
-   }
-
-   public ReadWriteManyEntriesCommand() {
    }
 
    public ReadWriteManyEntriesCommand(ReadWriteManyEntriesCommand command) {
-      this.commandInvocationId = command.commandInvocationId;
+      super(command);
       this.entries = command.entries;
       this.f = command.f;
-      this.params = command.params;
-      this.flags = command.flags;
+   }
+
+   public ReadWriteManyEntriesCommand() {
    }
 
    public Map<? extends K, ? extends V> getEntries() {
