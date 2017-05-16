@@ -47,6 +47,15 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       HotRodClientTestingUtil.killRemoteCacheManager(remoteCacheManager);
    }
 
+   public void testStartStopAsync() throws Exception {
+      remoteCacheManager = new RemoteCacheManager(false);
+
+      remoteCacheManager.startAsync().get();
+      assertTrue(remoteCacheManager.isStarted());
+
+      remoteCacheManager.stopAsync().get();
+      assertFalse(remoteCacheManager.isStarted());
+   }
    public void testNoArgConstructor() {
       remoteCacheManager = new RemoteCacheManager();
       assertTrue(remoteCacheManager.isStarted());
@@ -76,12 +85,6 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       assert !remoteCacheManager.isStarted();
       remoteCacheManager.start();
       assert null == remoteCacheManager.getCache("Undefined1234");
-   }
-
-   private void assertWorks(RemoteCacheManager remoteCacheManager) {
-      RemoteCache<Object, Object> cache = remoteCacheManager.getCache();
-      cache.put("aKey", "aValue");
-      assert cache.get("aKey").equals("aValue");
    }
 
    public void testMarshallerInstance() {
