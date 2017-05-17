@@ -26,7 +26,7 @@ public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
    protected ExecuteOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName,
                               AtomicInteger topologyId, int flags, ClientIntelligence clientIntelligence,
                               String taskName, Map<String, byte[]> marshalledParams) {
-      super(codec, transportFactory, cacheName, topologyId, flags, clientIntelligence);
+      super(codec, transportFactory, cacheName == null ? DEFAULT_CACHE_NAME_BYTES : cacheName, topologyId, flags, clientIntelligence);
       this.taskName = taskName;
       this.marshalledParams = marshalledParams;
    }

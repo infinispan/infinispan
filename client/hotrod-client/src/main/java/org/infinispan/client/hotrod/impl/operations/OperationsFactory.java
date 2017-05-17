@@ -53,7 +53,7 @@ public class OperationsFactory implements HotRodConstants {
            codec, ClientListenerNotifier listenerNotifier, ExecutorService executorService, ClientIntelligence clientIntelligence) {
       this.transportFactory = transportFactory;
       this.executorService = executorService;
-      this.cacheNameBytes = RemoteCacheManager.cacheNameBytes(cacheName);
+      this.cacheNameBytes = cacheName == null ? null : RemoteCacheManager.cacheNameBytes(cacheName);
       this.cacheName = cacheName;
       this.topologyId = transportFactory != null
          ? transportFactory.createTopologyId(cacheNameBytes)
@@ -62,6 +62,10 @@ public class OperationsFactory implements HotRodConstants {
       this.codec = codec;
       this.listenerNotifier = listenerNotifier;
       this.clientIntelligence = clientIntelligence;
+   }
+
+   public OperationsFactory(TransportFactory transportFactory, Codec codec, ExecutorService executorService, ClientIntelligence clientIntelligence) {
+      this(transportFactory, null, false, codec, null, executorService, clientIntelligence);
    }
 
    public ClientListenerNotifier getListenerNotifier() {
@@ -212,7 +216,8 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams) {
-      return new ExecuteOperation<>(codec, transportFactory, cacheNameBytes, topologyId, flags(), clientIntelligence, taskName, marshalledParams);
+      return new ExecuteOperation<>(codec, transportFactory, cacheNameBytes,
+            topologyId, flags(), clientIntelligence, taskName, marshalledParams);
    }
 
    private int flags(long lifespan, long maxIdle) {

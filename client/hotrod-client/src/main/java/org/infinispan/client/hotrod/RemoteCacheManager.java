@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -337,6 +338,11 @@ public class RemoteCacheManager implements RemoteCacheContainer {
 
    public static byte[] cacheNameBytes() {
       return HotRodConstants.DEFAULT_CACHE_NAME_BYTES;
+   }
+
+   public RemoteCacheManagerAdmin administration() {
+      OperationsFactory operationsFactory = new OperationsFactory(transportFactory, codec, asyncExecutorService, configuration.clientIntelligence());
+      return new RemoteCacheManagerAdminImpl(operationsFactory);
    }
 
    private static class RemoteCacheKey {
