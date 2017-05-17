@@ -56,7 +56,7 @@ public class ExpirationIT {
         // specific entry timeToLiveSeconds and maxIdleTimeSeconds that overrides the default
         rest.post(key1Path, "v1", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
              "timeToLiveSeconds", "4", "maxIdleTimeSeconds", "4");
-        // no value means never expire
+        // no value means use the default
         rest.post(key2Path, "v2", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text");
         // 0 value means use default
         rest.post(key3Path, "v3", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
@@ -73,12 +73,10 @@ public class ExpirationIT {
         rest.get(key1Path, "v1");
         rest.head(key3Path, HttpStatus.SC_NOT_FOUND);
         rest.head(key4Path, HttpStatus.SC_NOT_FOUND);
+        rest.head(key2Path, HttpStatus.SC_NOT_FOUND);
         sleepForSecs(1);
         // k1 expired
         rest.head(key1Path, HttpStatus.SC_NOT_FOUND);
-        // k2 should not be expired because without timeToLive/maxIdle parameters,
-        // the entries live forever. To use default values, 0 must be passed in.
-        rest.head(key2Path, HttpStatus.SC_OK);
     }
 
     @Test

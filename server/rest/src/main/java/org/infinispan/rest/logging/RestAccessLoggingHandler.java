@@ -1,19 +1,12 @@
 package org.infinispan.rest.logging;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.ContainerResponseFilter;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.ext.Provider;
 
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
 
 /**
  * Logging filter that can be used to output requests in a similar fashion to HTTPD log output
@@ -21,59 +14,42 @@ import io.netty.channel.ChannelHandlerContext;
  * @author wburns
  * @since 9.0
  */
-@Provider
-public class RestAccessLoggingHandler implements ContainerResponseFilter, ContainerRequestFilter {
+public class RestAccessLoggingHandler {
+
    private final static Log log = LogFactory.getLog(RestAccessLoggingHandler.class, Log.class);
 
    private final static String NANO_TIME = "NanoTime";
 
-   @Context
-   private ChannelHandlerContext context;
-
-   @Override
-   public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
-      // IP
-      String remoteAddress = context.channel().remoteAddress().toString();
-      // Date
-      String timeString = requestContext.getHeaderString(NANO_TIME);
-      long startNano;
-      if (timeString != null) {
-         startNano = Long.parseLong(requestContext.getHeaderString(NANO_TIME));
-      } else {
-         startNano = 0;
-      }
-      // Request method | path | protocol
-      String requestMethod = requestContext.getMethod();
-      String uri = requestContext.getUriInfo().getPath();
-      // Status code
-      int status = responseContext.getStatus();
-      // Body request size
-      int requestSize = requestContext.getLength();
-      // Body response Size - usually -1 so we calculate below
-      int responseSize = responseContext.getLength();
-      // Netty doesn't usually set the CONTENT_LENGTH on response - check if we can
-      if (responseSize == -1 && responseContext.hasEntity()) {
-         Object entity = responseContext.getEntity();
-         if (entity instanceof byte[]) {
-            responseSize = ((byte[]) entity).length;
-            responseContext.getHeaders().addFirst(HttpHeaders.CONTENT_LENGTH, responseSize);
-         }
-      }
-      // Response time
-      long responseTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNano);
-
-      log.tracef("%s [%s] \"%s %s\" %s %d %d %d ms", remoteAddress, responseTime, requestMethod, uri, status, requestSize,
-            responseSize, responseTime);
+   private boolean isEnabled() {
+      return log.isTraceEnabled();
    }
 
-   @Override
-   public void filter(ContainerRequestContext requestContext) throws IOException {
-      int requestSize = requestContext.getLength();
-      if (requestSize == -1) {
-         requestSize = requestContext.getEntityStream().available();
-         requestContext.getHeaders().putSingle(HttpHeaders.CONTENT_LENGTH, Integer.toString(requestSize));
+   public void log(ChannelHandlerContext ctx, FullHttpRequest request, FullHttpResponse response) {
+      if (isEnabled()) {
+         // IP
+         String remoteAddress = ctx.channel().remoteAddress().toString();
+         // Date
+         String timeString = request.headers().getAsString(NANO_TIME);
+         long startNano;
+         if (timeString != null) {
+            startNano = Long.parseLong(timeString);
+         } else {
+            startNano = 0;
+         }
+         // Request method | path | protocol
+         String requestMethod = request.method().toString();
+         String uri = request.uri();
+         // Status code
+         int status = response.status().code();
+         // Body request size
+         int requestSize = request.content().readableBytes();
+         // Body response Size - usually -1 so we calculate below
+         int responseSize = response.content().readableBytes();
+         // Response time
+         long responseTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNano);
+
+         log.tracef("%s [%s] \"%s %s\" %s %d %d %d ms", remoteAddress, responseTime, requestMethod, uri, status, requestSize,
+               responseSize, responseTime);
       }
-      // Set the starting time
-      requestContext.getHeaders().putSingle(NANO_TIME, Long.toString(System.nanoTime()));
    }
 }

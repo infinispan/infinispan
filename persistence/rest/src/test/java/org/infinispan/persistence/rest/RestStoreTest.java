@@ -3,6 +3,8 @@ package org.infinispan.persistence.rest;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.io.IOException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -12,8 +14,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
-import org.infinispan.rest.EmbeddedRestServer;
-import org.infinispan.rest.RestTestingUtil;
+import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.rest.RestServer;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.TimeService;
@@ -29,7 +32,7 @@ public class RestStoreTest extends BaseStoreTest {
 
    private static final String REMOTE_CACHE = "remote-cache";
    private EmbeddedCacheManager localCacheManager;
-   private EmbeddedRestServer restServer;
+   private RestServer restServer;
 
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
@@ -46,7 +49,11 @@ public class RestStoreTest extends BaseStoreTest {
       gcr.registerComponent(timeService, TimeService.class);
       gcr.rewire();
       localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
-      restServer = RestTestingUtil.startRestServer(localCacheManager);
+
+      RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
+      restServerConfigurationBuilder.port(0);
+      restServer = new RestServer();
+      restServer.start(restServerConfigurationBuilder.build(), localCacheManager);
 
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       RestStoreConfigurationBuilder storeConfigurationBuilder = builder.persistence()
@@ -63,7 +70,7 @@ public class RestStoreTest extends BaseStoreTest {
    @AfterMethod(alwaysRun = true)
    public void tearDown() {
       if (restServer != null) {
-         RestTestingUtil.killServers(restServer);
+         restServer.stop();
       }
       if (localCacheManager != null) {
          TestingUtil.killCacheManagers(localCacheManager);
@@ -88,4 +95,58 @@ public class RestStoreTest extends BaseStoreTest {
       assertEquals("v2", cl.load("k1").getValue());
    }
 
+   @Override
+   public void testLoadAndStoreImmortal() throws PersistenceException {
+      super.testLoadAndStoreImmortal();
+   }
+
+   @Override
+   public void testLoadAndStoreWithLifespan() throws Exception {
+      super.testLoadAndStoreWithLifespan();
+   }
+
+   @Override
+   public void testLoadAndStoreWithIdle() throws Exception {
+      super.testLoadAndStoreWithIdle();
+   }
+
+   @Override
+   public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
+      super.testLoadAndStoreWithLifespanAndIdle();
+   }
+
+   @Override
+   public void testLoadAndStoreWithLifespanAndIdle2() throws Exception {
+      super.testLoadAndStoreWithLifespanAndIdle2();
+   }
+
+   @Override
+   public void testStopStartDoesNotNukeValues() throws InterruptedException, PersistenceException {
+      super.testStopStartDoesNotNukeValues();
+   }
+
+   @Override
+   public void testPreload() throws Exception {
+      super.testPreload();
+   }
+
+   @Override
+   public void testStoreAndRemove() throws PersistenceException {
+      super.testStoreAndRemove();
+   }
+
+   @Override
+   public void testPurgeExpired() throws Exception {
+      super.testPurgeExpired();
+   }
+
+   @Override
+   public void testLoadAll() throws PersistenceException {
+      super.testLoadAll();
+   }
+
+   @Override
+   public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
+      super.testLoadAndStoreBytesValues();
+   }
 }

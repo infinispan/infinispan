@@ -8,13 +8,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLContext;
@@ -54,7 +52,6 @@ public class RESTHelper {
     public static final String KEY_B = "b";
     public static final String KEY_C = "c";
 
-    private static final String DATE_PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz";
     public static final String DEFAULT_CACHE = "default";
 
     private int port = 8080;
@@ -76,12 +73,9 @@ public class RESTHelper {
     }
 
     public static String addDay(String aDate, int days) throws Exception {
-        SimpleDateFormat format = new SimpleDateFormat(DATE_PATTERN_RFC1123, Locale.US);
-        Date date = format.parse(aDate);
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        cal.add(Calendar.DATE, days);
-        return format.format(cal.getTime());
+        ZonedDateTime date = ZonedDateTime.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(aDate));
+        date = date.plusDays(days);
+        return DateTimeFormatter.RFC_1123_DATE_TIME.format(date);
     }
 
     public HttpResponse head(URI uri) throws Exception {

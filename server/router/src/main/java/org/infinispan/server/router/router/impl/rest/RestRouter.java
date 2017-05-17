@@ -2,97 +2,104 @@ package org.infinispan.server.router.router.impl.rest;
 
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Optional;
-
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ContainerResponseFilter;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.rest.Server;
-import org.infinispan.rest.embedded.netty4.NettyJaxrsServer;
-import org.infinispan.rest.logging.RestAccessLoggingHandler;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.configuration.RestRouterConfiguration;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.router.Router;
-import org.infinispan.server.router.routes.PrefixedRouteSource;
-import org.infinispan.server.router.routes.rest.NettyRestServerRouteDestination;
-import org.jboss.resteasy.spi.ResteasyDeployment;
+import org.infinispan.server.router.router.impl.rest.handlers.ChannelInboundHandlerDelegatorInitializer;
 
-/**
- * {@link Router} implementation for REST. Uses {@link NettyJaxrsServer} internally.
- *
- * @author Sebastian Łaskawiec
- */
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.DefaultThreadFactory;
+import io.netty.util.concurrent.Future;
+
 public class RestRouter implements Router {
 
-    private static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
+   private static final RouterLogger logger = LogFactory.getLog(MethodHandles.lookup().lookupClass(), RouterLogger.class);
 
-    private static final String REST_PREFIX = "rest/";
-    private final RestRouterConfiguration configuration;
-    private Optional<Integer> port = Optional.empty();
-    private Optional<InetAddress> ip = Optional.empty();
-    private Optional<NettyJaxrsServer> nettyServer = Optional.empty();
+   private static final String THREAD_NAME_PREFIX = "MultiTenantRouter";
 
-    public RestRouter(RestRouterConfiguration configuration) {
-        this.configuration = configuration;
-    }
+   private final NioEventLoopGroup masterGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(THREAD_NAME_PREFIX + "-ServerMaster"));
+   private final NioEventLoopGroup workerGroup = new NioEventLoopGroup(0, new DefaultThreadFactory(THREAD_NAME_PREFIX + "-ServerWorker"));
+   private final RestRouterConfiguration configuration;
+   private Optional<Integer> port = Optional.empty();
+   private Optional<InetAddress> ip = Optional.empty();
 
-    @Override
-    public void start(RoutingTable routingTable) {
-        try {
-            NettyJaxrsServer netty = new NettyJaxrsServer();
-            ResteasyDeployment deployment = new ResteasyDeployment();
-            netty.setDeployment(deployment);
-            nettyServer = Optional.of(netty);
-            netty.setHostname(configuration.getIp().getHostName());
-            netty.setPort(configuration.getPort());
-            netty.setRootResourcePath("");
-            netty.setSecurityDomain(null);
-            netty.start();
+   public RestRouter(RestRouterConfiguration configuration) {
+      this.configuration = configuration;
+   }
 
-            addDeployments(netty, routingTable);
+   @Override
+   public void start(RoutingTable routingTable) {
+      try {
+         ServerBootstrap bootstrap = new ServerBootstrap();
+         bootstrap.group(masterGroup, workerGroup)
+               .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+               .childHandler(new ChannelInboundHandlerDelegatorInitializer(routingTable))
+               .channel(NioServerSocketChannel.class);
 
-            this.ip = Optional.of(configuration.getIp());
-            this.port = Optional.of(configuration.getPort());
+         InetAddress ip = configuration.getIp();
+         int port = configuration.getPort();
 
-            logger.restRouterStarted(ip, port);
-        } catch (Exception e) {
-            throw logger.restRouterStartFailed(e);
-        }
-    }
+         Channel channel = bootstrap.bind(ip, port).sync().channel();
+         InetSocketAddress localAddress = (InetSocketAddress) channel.localAddress();
+         this.port = Optional.of(localAddress.getPort());
+         this.ip = Optional.of(localAddress.getAddress());
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } catch (Exception e) {
+         throw logger.restRouterStartFailed(e);
+      }
 
-    private void addDeployments(NettyJaxrsServer netty, RoutingTable routingTable) {
-        routingTable.streamRoutes(PrefixedRouteSource.class, NettyRestServerRouteDestination.class)
-                .forEach(r -> {
-                    String routePrefix = r.getRouteSource().getRoutePrefix();
-                    Server targetResource = r.getRouteDesitnation().getRestResource();
-                    netty.getDeployment().getRegistry().addSingletonResource(targetResource, REST_PREFIX + routePrefix);
-                    netty.getDeployment().getProviderFactory().register(new RestAccessLoggingHandler(), ContainerResponseFilter.class,
-                            ContainerRequestFilter.class);
-                });
-    }
+      logger.restRouterStarted(ip + ":" + port);
+   }
 
-    @Override
-    public void stop() {
-        nettyServer.ifPresent(NettyJaxrsServer::stop);
-        nettyServer = Optional.empty();
-        ip = Optional.empty();
-        port = Optional.empty();
-    }
+   @Override
+   public void stop() {
+      CompletableFuture<?> masterGroupShutdown = wrapShutdownFuture(masterGroup.shutdownGracefully());
+      CompletableFuture<?> workerGroupShutdown = wrapShutdownFuture(workerGroup.shutdownGracefully());
+      try {
+         CompletableFuture.allOf(masterGroupShutdown, workerGroupShutdown).get();
+      } catch (Exception e) {
+         logger.errorWhileShuttingDown(e);
+      }
+      port = Optional.empty();
+      ip = Optional.empty();
+   }
 
-    @Override
-    public Optional<InetAddress> getIp() {
-        return ip;
-    }
+   @Override
+   public Optional<InetAddress> getIp() {
+      return ip;
+   }
 
-    @Override
-    public Optional<Integer> getPort() {
-        return port;
-    }
+   @Override
+   public Optional<Integer> getPort() {
+      return port;
+   }
 
-    @Override
-    public Protocol getProtocol() {
-        return Protocol.REST;
-    }
+
+
+   private <U> CompletableFuture<U> wrapShutdownFuture(Future<U> shutdownFuture) {
+      return CompletableFuture.supplyAsync(() -> {
+         try {
+            return shutdownFuture.get();
+         } catch (Exception e) {
+            throw new IllegalStateException(e);
+         }
+      });
+   }
+
+   @Override
+   public Protocol getProtocol() {
+      return Protocol.REST;
+   }
 }

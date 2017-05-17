@@ -24,8 +24,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Optional;
 
-import org.infinispan.rest.embedded.netty4.NettyRestServer;
-import org.infinispan.rest.Server;
+import org.infinispan.rest.RestServer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.router.MultiTenantRouter;
 import org.infinispan.server.router.configuration.builder.HotRodRouterBuilder;
@@ -65,14 +64,14 @@ class MultiTenantRouterService implements Service<MultiTenantRouter> {
     }
 
     static class RestRouting {
-        private final InjectedValue<NettyRestServer> rest = new InjectedValue<>();
+        private final InjectedValue<RestServer> rest = new InjectedValue<>();
         private final String name;
 
         public RestRouting(String name) {
             this.name = name;
         }
 
-        public InjectedValue<NettyRestServer> getRest() {
+        public InjectedValue<RestServer> getRest() {
             return rest;
         }
 
@@ -132,7 +131,7 @@ class MultiTenantRouterService implements Service<MultiTenantRouter> {
             });
 
             restRouting.forEach((path, routing) -> {
-                Server restResource = routing.getRest().getValue().getServer();
+                RestServer restResource = routing.getRest().getValue();
                 String name = routing.getName();
 
                 RestRouteSource source = new RestRouteSource(path);
