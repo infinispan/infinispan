@@ -83,8 +83,8 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
          rpcManagers[i] = new ControlledRpcManager(rpcManager);
          TestingUtil.replaceComponent(cache(i), RpcManager.class, rpcManagers[i], true);
       }
-      ahmKey = new MagicKey("AtomicHashMap", cache(0));
-      fgahmKey = new MagicKey("FineGrainedAtomicHashMap", cache(0));
+      ahmKey = new MagicKey("AtomicMap", cache(0));
+      fgahmKey = new MagicKey("FineGrainedAtomicMap", cache(0));
    }
 
    protected final void testAtomicHashMap(boolean executeOnLockOwner) throws Exception {

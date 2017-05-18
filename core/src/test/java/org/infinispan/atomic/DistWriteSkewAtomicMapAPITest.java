@@ -22,8 +22,6 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
- * {@link org.infinispan.atomic.impl.AtomicHashMap} test with write skew check enabled in a distributed cluster.
- *
  * @author Pedro Ruivo
  * @since 6.0
  */

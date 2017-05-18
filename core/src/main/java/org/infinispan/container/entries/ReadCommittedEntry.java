@@ -8,7 +8,6 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.VALID;
 
-import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.metadata.Metadata;
@@ -123,17 +122,6 @@ public class ReadCommittedEntry implements MVCCEntry {
          if (trace)
             log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s metadata=%s)",
                   toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), toStr(value), getMetadata());
-
-         // Ugh!
-         if (value instanceof AtomicHashMap) {
-            AtomicHashMap<?, ?> ahm = (AtomicHashMap<?, ?>) value;
-            // Removing commit() call should not be an issue.
-            // If marshalling is needed (clustering, or cache store), calling
-            // delta() will clear the delta, avoiding leaking values in delta.
-            // For local caches, using atomic hash maps does not make sense,
-            // so leaking delta values is not so important.
-            if (isRemoved() && !isEvicted()) ahm.markRemoved(true);
-         }
 
          if (isEvicted()) {
             container.evict(key);

@@ -3,13 +3,8 @@ package org.infinispan.marshall.core;
 import java.util.Set;
 
 import org.infinispan.atomic.DeltaCompositeKey;
-import org.infinispan.atomic.impl.AtomicHashMap;
-import org.infinispan.atomic.impl.AtomicHashMapDelta;
 import org.infinispan.atomic.impl.AtomicKeySetImpl;
 import org.infinispan.atomic.impl.AtomicMapProxyImpl;
-import org.infinispan.atomic.impl.ClearOperation;
-import org.infinispan.atomic.impl.PutOperation;
-import org.infinispan.atomic.impl.RemoveOperation;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.io.ByteBufferImpl;
@@ -132,8 +127,6 @@ final class InternalExternalizers {
 
       // Add the rest of stateless externalizers
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer(), exts);
-      addInternalExternalizer(new AtomicHashMap.Externalizer(), exts);
-      addInternalExternalizer(new AtomicHashMapDelta.Externalizer(), exts);
       addInternalExternalizer(new AtomicKeySetImpl.Externalizer(gcr), exts);
       addInternalExternalizer(new AtomicKeySetImpl.FunctionExternalizer(), exts);
       addInternalExternalizer(new AtomicMapProxyImpl.Externalizer(), exts);
@@ -148,7 +141,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new CacheRpcCommandExternalizer(gcr, ext), exts);
       addInternalExternalizer(new CacheStatusResponse.Externalizer(), exts);
       addInternalExternalizer(new CacheTopology.Externalizer(), exts);
-      addInternalExternalizer(new ClearOperation.Externalizer(), exts);
       addInternalExternalizer(new ClusterEvent.Externalizer(), exts);
       addInternalExternalizer(new ClusterEventCallable.Externalizer(), exts);
       addInternalExternalizer(new ClusterListenerRemoveCallable.Externalizer(), exts);
@@ -218,10 +210,8 @@ final class InternalExternalizers {
       addInternalExternalizer(new NumericVersion.Externalizer(), exts);
       addInternalExternalizer(new OptionalExternalizer(), exts);
       addInternalExternalizer(new PersistentUUID.Externalizer(), exts);
-      addInternalExternalizer(new PutOperation.Externalizer(), exts);
       addInternalExternalizer(new RecoveryAwareDldGlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new RecoveryAwareGlobalTransaction.Externalizer(), exts);
-      addInternalExternalizer(new RemoveOperation.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHash.Externalizer(), exts);
       addInternalExternalizer(new ReplicatedConsistentHashFactory.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new SerializableXid.XidExternalizer(), exts);
