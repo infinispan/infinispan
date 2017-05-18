@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.AtomicMap;
-import org.infinispan.atomic.impl.AtomicHashMapProxy;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
@@ -259,7 +258,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    private V put(AdvancedCache cache, K key, V value) {
       startAtomic();
       try {
-         AtomicHashMapProxy<K, V> map = (AtomicHashMapProxy<K, V>) getDataInternal(cache);
+         AtomicMap<K, V> map = getDataInternal(cache);
          return map.put(key, value);
       }
       finally {

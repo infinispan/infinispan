@@ -30,7 +30,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.Cache;
-import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -368,55 +367,6 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       byte[] bytes = marshaller.objectToByteBuffer(er);
       ExceptionResponse rer = (ExceptionResponse) marshaller.objectFromByteBuffer(bytes);
       assert rer.getException().getClass().equals(er.getException().getClass()) : "Writen[" + er.getException().getClass() + "] and read[" + rer.getException().getClass() + "] objects should be the same";
-   }
-
-   public void testAtomicHashMap() throws Exception {
-      AtomicHashMap<String, String> m = new AtomicHashMap<>();
-      m.initForWriting();
-      m.put("k1", "v1");
-      m.put("k1", "v2");
-      m.put("k1", "v3");
-      assert m.size() == 1;
-      byte[] bytes = marshaller.objectToByteBuffer(m);
-      m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
-      for (Map.Entry<String, String> entry : m.entrySet()) {
-         assert m.get(entry.getKey()).equals(entry.getValue());
-      }
-      assert m.size() == 1;
-
-      m = new AtomicHashMap<>();
-      assert m.isEmpty();
-      bytes = marshaller.objectToByteBuffer(m);
-      m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
-      assert m.isEmpty();
-
-      m = new AtomicHashMap<>();
-      m.initForWriting();
-      m.put("k1", "v1");
-      m.put("k2", "v2");
-      m.put("k3", "v3");
-      m.remove("k1");
-      assert m.size() == 2;
-      bytes = marshaller.objectToByteBuffer(m);
-      m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
-      for (Map.Entry<String, String> entry : m.entrySet()) {
-         assert m.get(entry.getKey()).equals(entry.getValue());
-      }
-      assert m.size() == 2;
-
-      m = new AtomicHashMap<>();
-      m.initForWriting();
-      m.put("k5", "v1");
-      m.put("k5", "v2");
-      m.put("k5", "v3");
-      m.clear();
-      assert m.isEmpty();
-      bytes = marshaller.objectToByteBuffer(m);
-      m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
-      for (Map.Entry<String, String> entry : m.entrySet()) {
-         assert m.get(entry.getKey()).equals(entry.getValue());
-      }
-      assert m.isEmpty();
    }
 
    public void testMarshallObjectThatContainsACustomReadObjectMethod() throws Exception {

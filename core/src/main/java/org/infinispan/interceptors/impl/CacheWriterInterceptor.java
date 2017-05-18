@@ -13,7 +13,6 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
-import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -43,7 +42,6 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersion;
@@ -402,9 +400,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
             InternalCacheEntry ice;
             if (entry instanceof InternalCacheEntry) {
                ice = (InternalCacheEntry) entry;
-            } else if (entry instanceof DeltaAwareCacheEntry) {
-               AtomicHashMap<?,?> uncommittedChanges = ((DeltaAwareCacheEntry) entry).getUncommittedChages();
-               ice = entryFactory.create(entry.getKey(), uncommittedChanges, entry.getMetadata(), entry.getLifespan(), entry.getMaxIdle());
             } else {
                ice = entryFactory.create(entry);
             }

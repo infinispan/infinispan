@@ -14,7 +14,6 @@ import java.util.List;
 import org.infinispan.atomic.CopyableDeltaAware;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
-import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
@@ -49,8 +48,6 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
    protected final List<Delta> deltas;
    protected byte flags = 0;
 
-   protected AtomicHashMap<K, ?> uncommittedChanges;
-
    public DeltaAwareCacheEntry(K key, DeltaAware value, CacheEntry<K, DeltaAware> wrappedEntry,
                                InvocationContext ctx, PersistenceManager persistenceManager, TimeService timeService) {
       setValid(true);
@@ -61,22 +58,12 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
       this.ctx = ctx;
       this.persistenceManager = persistenceManager;
       this.timeService = timeService;
-      if (value instanceof AtomicHashMap) {
-         this.uncommittedChanges = ((AtomicHashMap) value).copy();
-      }
       this.deltas = new LinkedList<Delta>();
    }
 
    public void appendDelta(Delta d) {
       deltas.add(d);
-      if (uncommittedChanges != null) {
-         uncommittedChanges = (AtomicHashMap<K, ?>) d.merge(uncommittedChanges);
-      }
       setChanged(true);
-   }
-
-   public AtomicHashMap<?, ?> getUncommittedChages() {
-      return uncommittedChanges;
    }
 
    protected static enum Flags {
@@ -150,21 +137,15 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
    public final DeltaAware getValue() {
       // TODO: it's not possible to return the actually modified (but uncommitted) value
       // when this is not a copyable entry
-      return uncommittedChanges;
+      return value;
    }
 
    @Override
    public final DeltaAware setValue(DeltaAware value) {
       DeltaAware oldValue = getValue();
       this.value = value;
-      // TODO: it is not possible to remove the special handling for AtomicHashmaps without copy() in normal deltas
       DeltaAware newValueCopy;
-      if (value instanceof AtomicHashMap) {
-         newValueCopy = this.uncommittedChanges = ((AtomicHashMap<K, ?>) value).copy();
-      } else {
-         this.uncommittedChanges = null;
-         newValueCopy = value;
-      }
+      newValueCopy = value;
       this.deltas.clear();
       // add a delta setting the value without caring about previous one
       this.deltas.add(d -> newValueCopy);
@@ -228,9 +209,6 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
    public void resetCurrentValue() {
       deltas.clear();
       flags = 0;
-      if (uncommittedChanges != null) {
-         uncommittedChanges.clear();
-      }
       setValid(true);
    }
 
@@ -340,7 +318,7 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, MVCCE
    @Override
    public String toString() {
       return getClass().getSimpleName() + "(" + Util.hexIdHashCode(this) + "){" + "key=" + key
-               + ", value=" + value + ", oldValue=" + uncommittedChanges + ", isCreated="
+               + ", value=" + value + ", isCreated="
                + isCreated() + ", isChanged=" + isChanged() + ", isRemoved=" + isRemoved()
                + ", isValid=" + isValid() + '}';
    }

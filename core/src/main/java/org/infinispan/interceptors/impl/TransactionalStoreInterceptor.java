@@ -8,7 +8,6 @@ import java.util.Set;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -23,7 +22,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
@@ -104,9 +102,6 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
          InternalCacheEntry ice;
          if (entry instanceof InternalCacheEntry) {
             ice = (InternalCacheEntry) entry;
-         } else if (entry instanceof DeltaAwareCacheEntry) {
-            AtomicHashMap<?, ?> uncommittedChanges = ((DeltaAwareCacheEntry) entry).getUncommittedChages();
-            ice = entryFactory.create(entry.getKey(), uncommittedChanges, entry.getMetadata(), entry.getLifespan(), entry.getMaxIdle());
          } else {
             ice = entryFactory.create(entry);
          }
