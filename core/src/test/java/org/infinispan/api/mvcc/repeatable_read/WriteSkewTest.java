@@ -57,6 +57,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       // The default cache is NOT write skew enabled.
       cacheManager = TestCacheManagerFactory.createCacheManager(configurationBuilder);
       configurationBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+      configurationBuilder.clustering().hash().groups().enabled();
       cacheManager.defineConfiguration("writeSkew", configurationBuilder.build());
    }
 

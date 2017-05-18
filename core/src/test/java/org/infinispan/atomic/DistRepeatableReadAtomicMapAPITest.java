@@ -25,7 +25,7 @@ public class DistRepeatableReadAtomicMapAPITest extends RepeatableReadAtomicMapA
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      c.clustering().hash().numOwners(1);
+      c.clustering().hash().numOwners(1).groups().enabled();
       createClusteredCaches(2, "atomic", c);
    }
 }

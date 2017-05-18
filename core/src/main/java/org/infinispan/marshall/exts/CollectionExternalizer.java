@@ -36,6 +36,7 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
    private static final int ARRAY_DEQUE = 8;
    private static final int READ_ONLY_SEGMENT_AWARE_COLLECTION = 9;
    private static final int ENTRY_SET = 10;
+   private static final int EMPTY_SET = 11;
 
    private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(16);
 
@@ -46,6 +47,7 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
       numbers.put(LinkedList.class, LINKED_LIST);
       numbers.put(getPrivateSingletonListClass(), SINGLETON_LIST);
       numbers.put(getPrivateEmptyListClass(), EMPTY_LIST);
+      numbers.put(getPrivateEmptySetClass(), EMPTY_SET);
       numbers.put(ArrayDeque.class, ARRAY_DEQUE);
       numbers.put(HashSet.class, HASH_SET);
       numbers.put(TreeSet.class, TREE_SET);
@@ -118,6 +120,8 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
          case ENTRY_SET:
             return MarshallUtil.<Map.Entry, Set<Map.Entry>>unmarshallCollection(input, s -> new HashSet(),
                   in -> new AbstractMap.SimpleEntry(in.readObject(), in.readObject()));
+         case EMPTY_SET:
+            return Collections.emptySet();
          default:
             throw new IllegalStateException("Unknown Set type: " + magicNumber);
       }
@@ -135,6 +139,7 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
             getPrivateUnmodifiableListClass(),
             getPrivateSingletonListClass(),
             getPrivateEmptyListClass(),
+            getPrivateEmptySetClass(),
             HashSet.class, TreeSet.class,
             getPrivateSingletonSetClass(),
             getPrivateSynchronizedSetClass(), getPrivateUnmodifiableSetClass(),
@@ -153,6 +158,10 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
 
    private static Class<Collection> getPrivateEmptyListClass() {
       return getCollectionClass("java.util.Collections$EmptyList");
+   }
+
+   private static Class<Collection> getPrivateEmptySetClass() {
+      return getCollectionClass("java.util.Collections$EmptySet");
    }
 
    private static Class<Collection> getPrivateSingletonListClass() {

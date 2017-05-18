@@ -49,7 +49,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      configurationBuilder.clustering().hash().numSegments(60);
+      configurationBuilder.clustering().hash().numSegments(60).groups().enabled();
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
@@ -670,7 +670,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertMap(modifiedMap, readMap);
    }
 
-   private void assertSize(Map<?, ?> map, int expectedSize) {
+   protected void assertSize(Map<?, ?> map, int expectedSize) {
       final int size;
       if (map instanceof Cache) {
          size = ((Cache)map).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();

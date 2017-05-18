@@ -33,6 +33,7 @@ public class AtomicMapFunctionalTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.invocationBatching().enable();
       builder.transaction().lockingMode(LockingMode.OPTIMISTIC);
+      builder.clustering().hash().groups().enabled();
       return builder;
    }
 

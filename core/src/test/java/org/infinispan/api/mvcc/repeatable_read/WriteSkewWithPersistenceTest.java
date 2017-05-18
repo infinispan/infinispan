@@ -18,6 +18,7 @@ public class WriteSkewWithPersistenceTest extends WriteSkewTest {
    protected ConfigurationBuilder createConfigurationBuilder() {
       ConfigurationBuilder configurationBuilder = super.createConfigurationBuilder();
       configurationBuilder.persistence().addStore(new DummyInMemoryStoreConfigurationBuilder(configurationBuilder.persistence()));
+      configurationBuilder.clustering().hash().groups().enabled();
       return configurationBuilder;
    }
 

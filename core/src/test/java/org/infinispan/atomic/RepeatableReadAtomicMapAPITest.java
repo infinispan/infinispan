@@ -18,7 +18,7 @@ public class RepeatableReadAtomicMapAPITest extends AtomicMapAPITest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
-      c.clustering().hash().numSegments(60);
+      c.clustering().hash().numSegments(60).groups().enabled();
       c.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.PESSIMISTIC)

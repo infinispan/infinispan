@@ -37,6 +37,11 @@ public class FunctionalEntryVersionAdapter implements org.infinispan.commons.api
       }
    }
 
+   @Override
+   public String toString() {
+      return "FunctionalEntryVersionAdapter(" + delegate + ")";
+   }
+
    public static class Externalizer implements AdvancedExternalizer<FunctionalEntryVersionAdapter> {
       @Override
       public Set<Class<? extends FunctionalEntryVersionAdapter>> getTypeClasses() {

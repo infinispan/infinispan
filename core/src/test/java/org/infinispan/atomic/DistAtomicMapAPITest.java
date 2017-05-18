@@ -23,7 +23,7 @@ public class DistAtomicMapAPITest extends AtomicMapAPITest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.PESSIMISTIC)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      configurationBuilder.clustering().hash().numOwners(1);
+      configurationBuilder.clustering().hash().numOwners(1).groups().enabled();
       createClusteredCaches(2, "atomic", configurationBuilder);
    }
 

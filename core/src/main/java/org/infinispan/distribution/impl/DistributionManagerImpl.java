@@ -20,6 +20,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
@@ -68,7 +69,7 @@ public class DistributionManagerImpl implements DistributionManager {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
 
       // We need an extended topology for preload, before the start of StateTransferManagerImpl
-      Address localAddress = transport.getAddress();
+      Address localAddress = transport == null ? LocalModeAddress.INSTANCE : transport.getAddress();
       extendedTopology = LocalizedCacheTopology.makeSingletonTopology(cacheMode, localAddress);
    }
 

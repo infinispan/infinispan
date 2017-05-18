@@ -2,7 +2,6 @@ package org.infinispan.atomic;
 
 import java.util.Map;
 
-import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
@@ -10,7 +9,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  *
  * <ol>
  *    <li>Atomic locking and isolation over the entire collection</li>
- *    <li>Fine-grained serialization of deltas</li>
+ *    <li>Replication of updates through deltas</li>
  * </ol>
  *
  * <b><u>1.  Atomic locking and isolation over the entire collection</u></b>
@@ -19,18 +18,10 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * isolates the map for safe reading (see {@link IsolationLevel} while concurrent writes may be going on.
  * </p>
  * <br />
- * <b><u>2.  Fine-grained serialization of deltas</u></b>
+ * <b><u>2.  Replication of updates through deltas</u></b>
  * <p>
- * AtomicMap implementations also implement the {@link DeltaAware} interface.  This powerful interface allows the
- * generation and application of deltas, and requires that implementations are capable of tracking changes made to it
- * during the course of a transaction.  This helps since when performing replications to update remote nodes, the
- * <i>entire</i> map need not be serialized and transported all the time, as serializing and transporting {@link Delta}
- * instances would work just as well, and typically be much smaller and hence faster to serialize and transport.
- * </p>
- * <br />
- * <p>
- * Applications requiring either or both of the characteristics described above are encouraged to use AtomicMaps with
- * Infinispan, however the real benefit is often only seen where a combination of both characteristics are required.
+ * As a performance optimization, when the map is updated the maps do not replicate all entries to other nodes but only
+ * the modifications.
  * </p>
  * <br />
  * <b><u>Usage</u></b>
@@ -61,10 +52,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * </p>
  *
  * @author Manik Surtani
- * @see DeltaAware
- * @see Delta
- * @see AtomicHashMap
  * @see AtomicMapLookup
+ * @see FineGrainedAtomicMap
  * @since 4.0
  */
 public interface AtomicMap<K, V> extends Map<K, V> {

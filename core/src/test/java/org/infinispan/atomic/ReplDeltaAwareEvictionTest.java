@@ -29,6 +29,7 @@ public class ReplDeltaAwareEvictionTest extends LocalDeltaAwareEvictionTest {
             .transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new JBossStandaloneJTAManagerLookup())
             .eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
+            .clustering().hash().groups().enabled()
             .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .fetchPersistentState(false);
