@@ -12,6 +12,14 @@ This guide walks you through the process of upgrading Infinispan.
 === Stat Changes
 Average values for read, write and removals are now returned in Nanoseconds, opposed to Milliseconds.
 
+=== (FineGrained)AtomicMap reimplemented
+
+Infinispan now contains a new implementation of both `AtomicMap` and `FineGrainedAtomicMap`, but the semantics has been preserved. The new implementation does not use `DeltaAware` interface but the link:../user_guide/user_guide.html#functional_map_api[Functional API] instead.
+
+There are no changes needed for `AtomicMap`, but it now supports non-transactional use case as well.
+
+`FineGrainedAtomicMap` now uses the link:../user_guide/user_guide.html#grouping[Grouping API] and therefore you need to link:../user_guide/user_guide.html#how_do_i_use_the_grouping_api[enable groups in configuration]. Also it holds entries as regular cache entries, plus one cache entry for cached key set (the map itself). Therefore the cache size or iteration/streaming results may differ. Note that fine grained atomic maps are still supported on transactional caches only.
+
 == Upgrading from 8.x to 9.0
 
 === Default transaction mode changed
