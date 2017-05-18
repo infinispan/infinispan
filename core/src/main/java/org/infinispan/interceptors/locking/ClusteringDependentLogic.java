@@ -381,7 +381,7 @@ public interface ClusteringDependentLogic {
             previousValue = previousEntry.getValue();
             previousMetadata = previousEntry.getMetadata();
          }
-         commitManager.commit(entry, trackFlag, l1Invalidation);
+         commitManager.commit(entry, trackFlag, l1Invalidation, ctx);
 
          // Notify after events if necessary
          notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
@@ -419,7 +419,7 @@ public interface ClusteringDependentLogic {
             previousValue = previousEntry.getValue();
             previousMetadata = previousEntry.getMetadata();
          }
-         commitManager.commit(entry, trackFlag, l1Invalidation);
+         commitManager.commit(entry, trackFlag, l1Invalidation, ctx);
 
          // Notify after events if necessary
          notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
@@ -485,7 +485,7 @@ public interface ClusteringDependentLogic {
                   previousValue = previousEntry.getValue();
                   previousMetadata = previousEntry.getMetadata();
                }
-               commitManager.commit(entry, trackFlag, l1Invalidation);
+               commitManager.commit(entry, trackFlag, l1Invalidation, ctx);
                if (doCommit.isLocal()) {
                   notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
                }
@@ -571,7 +571,7 @@ public interface ClusteringDependentLogic {
                   // don't overwrite non-L1 entry with L1 (e.g. when originator == backup
                   // and therefore we have two contexts on one node)
                } else {
-                  commitManager.commit(entry, trackFlag, l1Invalidation);
+                  commitManager.commit(entry, trackFlag, l1Invalidation, ctx);
                   if (doCommit.isLocal()) {
                      notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
                   }

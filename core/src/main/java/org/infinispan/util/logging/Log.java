@@ -1566,4 +1566,14 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cache contains %s which is not of expected type %s", id = 457)
    IllegalStateException atomicMapHasWrongType(Object value, Class<?> type);
+
+
+   @Message(value = "Fine grained maps require clustering.hash.groups enabled.", id = 458)
+   IllegalStateException atomicFineGrainedNeedsGroups();
+
+   @Message(value = "Fine grained maps require transactional cache.", id = 459)
+   IllegalStateException atomicFineGrainedNeedsTransactions();
+
+   @Message(value = "Fine grained maps require explict transaction or auto-commit enabled", id = 460)
+   IllegalStateException atomicFineGrainedNeedsExplicitTxOrAutoCommit();
 }

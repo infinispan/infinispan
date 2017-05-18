@@ -11,7 +11,7 @@ import java.util.concurrent.Future;
 import javax.transaction.Transaction;
 
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -39,7 +39,7 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
    private static final String VALUE = "value";
    private static final Object[] EMPTY_ARRAY = new Object[0];
    private final boolean pessimistic;
-   private final CollectCompositeKeysInterceptor[] collectors = new CollectCompositeKeysInterceptor[NUM_NODES];
+   private final CollectKeysInterceptor[] collectors = new CollectKeysInterceptor[NUM_NODES];
    private final ControlledRpcManager[] rpcManagers = new ControlledRpcManager[NUM_NODES];
    private final Class<? extends PrepareCommand> prepareCommandClass;
    private Object ahmKey;
@@ -69,12 +69,12 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
    @Override
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; ++i) {
-         collectors[i] = new CollectCompositeKeysInterceptor();
+         collectors[i] = new CollectKeysInterceptor();
          ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
          builder.transaction().lockingMode(pessimistic ? LockingMode.PESSIMISTIC : LockingMode.OPTIMISTIC);
          builder.customInterceptors().addInterceptor().interceptor(collectors[i])
                .before(TxInterceptor.class);
-         builder.clustering().hash().numOwners(2);
+         builder.clustering().hash().numOwners(2).groups().enabled();
          addClusterEnabledCacheManager(builder);
       }
       waitForClusterToForm();
@@ -135,24 +135,15 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       final int txExecutor = executeOnLockOwner ? 0 : 1;
       FineGrainedAtomicMap<Object, Object> map = AtomicMapLookup.getFineGrainedAtomicMap(cache(txExecutor), fgahmKey);
 
-      boolean hasLocalKeys = false;
-      boolean hasRemoteKeys = false;
-      int keyIndex = 0;
-
       tm(txExecutor).begin();
-      while (!hasLocalKeys || !hasRemoteKeys) {
-         map.put("key" + keyIndex++, VALUE);
-         //has composite keys mapped to the lock owner?
-         hasLocalKeys = hasKeyMappedTo(true, collectors[txExecutor].getCompositeKeys());
-         //has composite keys mapped to the non lock owner?
-         hasRemoteKeys = hasKeyMappedTo(false, collectors[txExecutor].getCompositeKeys());
-         //the locks are independent on where the composite keys are mapped to.
+      for (int keyIndex = 0; keyIndex < 100; ++keyIndex) {
+         map.put("key" + keyIndex, VALUE);
       }
       final Transaction tx1 = tm(txExecutor).suspend();
 
-      Assert.assertEquals(collectors[txExecutor].getCompositeKeys().size(), keyIndex,
-                          "Wrong number of composite keys collected!");
-      log.infof("%s composite keys collected.", collectors[txExecutor].getCompositeKeys().size());
+      Assert.assertEquals(collectors[txExecutor].getKeys().size(), 100,
+            "Wrong number of composite keys collected!");
+      log.infof("%s composite keys collected.", collectors[txExecutor].getKeys().size());
 
       if (pessimistic) {
          rpcManagers[txExecutor].blockBefore(prepareCommandClass);
@@ -175,7 +166,7 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
 
       try {
          rpcManagers[txExecutor].waitForCommandToBlock();
-         assertKeysLocked(0, collectors[txExecutor].getCompositeKeys().toArray());
+         assertKeysLocked(0, collectors[txExecutor].getKeys().toArray());
          assertKeysLocked(1, EMPTY_ARRAY);
          assertKeysLocked(2, EMPTY_ARRAY);
 
@@ -216,31 +207,31 @@ public abstract class BaseAtomicMapLockingTest extends MultipleCacheManagersTest
       }
    }
 
-   private static class CollectCompositeKeysInterceptor extends BaseCustomInterceptor {
+   private static class CollectKeysInterceptor extends BaseCustomInterceptor {
 
-      private final Set<Object> compositeKeys;
+      private final Set<Object> keys;
 
-      public CollectCompositeKeysInterceptor() {
-         compositeKeys = new HashSet<Object>();
+      public CollectKeysInterceptor() {
+         keys = new HashSet<>();
       }
 
       @Override
-      public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         synchronized (compositeKeys) {
-            compositeKeys.addAll(Arrays.asList(command.getCompositeKeys()));
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         synchronized (keys) {
+            keys.addAll(Arrays.asList(command.getKey()));
          }
          return invokeNextInterceptor(ctx, command);
       }
 
       public final void reset() {
-         synchronized (compositeKeys) {
-            compositeKeys.clear();
+         synchronized (keys) {
+            keys.clear();
          }
       }
 
-      public final Collection<Object> getCompositeKeys() {
-         synchronized (compositeKeys) {
-            return new ArrayList<Object>(compositeKeys);
+      public final Collection<Object> getKeys() {
+         synchronized (keys) {
+            return new ArrayList<>(keys);
          }
       }
    }

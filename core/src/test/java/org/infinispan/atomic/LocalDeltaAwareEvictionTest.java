@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
 import org.infinispan.atomic.impl.AtomicMapProxyImpl;
-import org.infinispan.atomic.impl.FineGrainedAtomicHashMapProxy;
+import org.infinispan.atomic.impl.FineGrainedAtomicMapProxyImpl;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
@@ -41,7 +41,7 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
       ConfigurationBuilder configBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       configBuilder.eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
-
+      configBuilder.clustering().hash().groups().enabled();
       addClusterEnabledCacheManager(configBuilder);
    }
 
@@ -68,6 +68,8 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
       String getSecondComponent(TDA da);
 
       void setSecondComponent(TDA da, String value);
+
+      boolean isFineGrained();
    }
 
    protected Object withTx(int cacheIndex, Callable<Object> c) throws Exception {
@@ -78,9 +80,9 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
       }
    }
 
-   protected void assertNumberOfEntries(int cacheIndex) throws Exception {
+   protected void assertNumberOfEntries(int cacheIndex, DeltaAwareAccessor daa) throws Exception {
       AdvancedCacheLoader loader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(cache(cacheIndex));
-      assertEquals(2, PersistenceUtil.count(loader, null)); // two entries in store
+      assertEquals(daa.isFineGrained() ? 6 : 2, PersistenceUtil.count(loader, null)); // two entries in store
 
       DataContainer dataContainer = cache(cacheIndex).getAdvancedCache().getDataContainer();
       assertEquals(1, dataContainer.size());        // only one entry in memory (the other one was evicted)
@@ -125,7 +127,7 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
    }
 
    protected void assertInitialValues(DeltaAwareAccessor daa, int cacheIndex) throws Exception {
-      assertNumberOfEntries(cacheIndex);
+      assertNumberOfEntries(cacheIndex, daa);
 
       final Object obj1 = daa.getObject(cache(cacheIndex), KEY1);
 
@@ -139,11 +141,11 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
       assertEquals("first component of object with key=" + KEY2, daa.getFirstComponent(obj2));
       assertEquals("second component of object with key=" + KEY2, daa.getSecondComponent(obj2));
 
-      assertNumberOfEntries(cacheIndex);
+      assertNumberOfEntries(cacheIndex, daa);
    }
 
    protected void assertUpdatedValues(DeltaAwareAccessor daa, int nodeThatReads) throws Exception {
-      assertNumberOfEntries(nodeThatReads);
+      assertNumberOfEntries(nodeThatReads, daa);
 
       Object obj1 = daa.getObject(cache(nodeThatReads), KEY1);
       assertNotNull(obj1);
@@ -155,7 +157,7 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
       assertEquals("** UPDATED** first component of object with key=" + KEY2, daa.getFirstComponent(obj2));
       assertEquals("second component of object with key=" + KEY2, daa.getSecondComponent(obj2));
 
-      assertNumberOfEntries(nodeThatReads);
+      assertNumberOfEntries(nodeThatReads, daa);
    }
 
    public void testDeltaAware() throws Exception {
@@ -202,6 +204,11 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
          @Override
          public void setSecondComponent(TestDeltaAware da, String value) {
             da.setSecondComponent(value);
+         }
+
+         @Override
+         public boolean isFineGrained() {
+            return false;
          }
       };
    }
@@ -251,6 +258,11 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
          public void setSecondComponent(Map<String, String> da, String value) {
             da.put("second", value);
          }
+
+         @Override
+         public boolean isFineGrained() {
+            return false;
+         }
       };
    }
 
@@ -276,7 +288,7 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
 
          @Override
          public void putObject(Cache cache, String key, Map<String, String> da) {
-            assertTrue(da instanceof FineGrainedAtomicHashMapProxy);
+            assertTrue(da instanceof FineGrainedAtomicMapProxyImpl);
             // we do not actually put the map back into cache because it must already be there
          }
 
@@ -298,6 +310,11 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
          @Override
          public void setSecondComponent(Map<String, String> da, String value) {
             da.put("second", value);
+         }
+
+         @Override
+         public boolean isFineGrained() {
+            return true;
          }
       };
    }

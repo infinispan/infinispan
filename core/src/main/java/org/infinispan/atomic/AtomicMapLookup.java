@@ -5,13 +5,9 @@ import static org.infinispan.commons.util.Immutables.immutableMapWrap;
 import java.util.Collections;
 import java.util.Map;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.atomic.impl.AtomicHashMap;
-import org.infinispan.atomic.impl.AtomicHashMapProxy;
 import org.infinispan.atomic.impl.AtomicMapProxyImpl;
-import org.infinispan.atomic.impl.FineGrainedAtomicHashMapProxy;
-import org.infinispan.context.Flag;
+import org.infinispan.atomic.impl.FineGrainedAtomicMapProxyImpl;
 
 /**
  * A helper that locates or safely constructs and registers atomic maps with a given cache.  This should be the
@@ -99,22 +95,8 @@ public class AtomicMapLookup {
    @SuppressWarnings("unchecked")
    private static <MK, K, V> Map<K, V> getMap(Cache<MK, Object> cache, MK key, boolean createIfAbsent, boolean fineGrained) {
       if (fineGrained) {
-         Object value = cache.get(key);
-         if (value == null) {
-            if (createIfAbsent)
-               value = AtomicHashMap.newInstance((Cache<Object, Object>) cache, key, AtomicHashMap.ProxyMode.FINE);
-            else return null;
-         } else if (!(value instanceof AtomicHashMap)) {
-            throw new IllegalArgumentException("Expected AtomicHashMap, got " + value);
-         }
-         AtomicHashMap<K, V> castValue = (AtomicHashMap<K, V>) value;
-         AtomicHashMapProxy<K, V> proxy =
-               castValue.getProxy((AdvancedCache<Object, Object>) cache.getAdvancedCache(), key);
-         if (!(proxy instanceof FineGrainedAtomicHashMapProxy)) {
-            throw new IllegalArgumentException("Cannot switch type of previously used " + value
-                  + " from " + (fineGrained ? "regular to fine-grained!" : "fine-grained to regular!"));
-         }
-         return proxy;
+         // With fine grained maps the cache will store both the keyset under master key and the entries under group keys
+         return FineGrainedAtomicMapProxyImpl.newInstance((Cache<Object, Object>) cache, key, createIfAbsent);
       } else {
          return AtomicMapProxyImpl.newInstance(cache, key, createIfAbsent);
       }
@@ -147,6 +129,7 @@ public class AtomicMapLookup {
     * @param <MK>  key param of the cache
     */
    public static <MK> void removeAtomicMap(Cache<MK, ?> cache, MK key) {
-      cache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES).remove(key);
+      // This removes any entry from the cache but includes special handling for fine-grained maps
+      FineGrainedAtomicMapProxyImpl.removeMap((Cache<Object, Object>) cache, key);
    }
 }
