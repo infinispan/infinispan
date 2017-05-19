@@ -16,6 +16,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -57,6 +58,10 @@ public class TaskManagerImpl implements TaskManager {
    public void initialize(final EmbeddedCacheManager cacheManager, final TimeService timeService) {
       this.cacheManager = cacheManager;
       this.timeService = timeService;
+   }
+
+   @Start
+   public void start() {
       this.useSecurity = cacheManager.getCacheManagerConfiguration().security().authorization().enabled();
    }
 
