@@ -42,6 +42,12 @@ contents into a in memory local set such as
 Set<K> keysCopy = remoteCache.keySet().stream().collect(Collectors.toSet());
 ----
 
+=== DeltaAware deprecated
+
+Interfaces `DeltaAware`, `Delta` and `CopyableDeltaAware` have been deprecated. Method `AdvancedCache.applyDelta()` has been deprecated and the implementation does not allow custom set of locked keys. `ApplyDeltaCommand` and its uses in interceptor stack are deprecated.
+
+Any partial updates to an entry should be replaced using the link:../user_guide/user_guide.html#functional_map_api[Functional API].
+
 == Upgrading from 8.x to 9.0
 
 === Default transaction mode changed

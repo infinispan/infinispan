@@ -20,7 +20,6 @@ import java.util.function.Function;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
-import org.infinispan.atomic.Delta;
 import org.infinispan.commands.CancelCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CreateCacheCommand;
@@ -57,7 +56,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.BackupPutMapRpcCommand;
@@ -342,11 +340,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public TxCompletionNotificationCommand buildTxCompletionNotificationCommand(long internalId) {
       return actual.buildTxCompletionNotificationCommand(internalId);
-   }
-
-   @Override
-   public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
-      return actual.buildApplyDeltaCommand(deltaAwareValueKey, delta, keys);
    }
 
    @Override

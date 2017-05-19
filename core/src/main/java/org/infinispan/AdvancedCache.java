@@ -234,8 +234,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @param deltaAwareValueKey the key for DeltaAware object
     * @param delta the delta to be applied to DeltaAware object
-    * @param locksToAcquire keys to be locked in DeltaAware scope
+    * @param locksToAcquire keys to be locked in DeltaAware scope. Must contain only single key equal to <code>deltaAwareValueKey</code>
+    * @deprecated since 9.1
     */
+   @Deprecated
    void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire);
 
    /**

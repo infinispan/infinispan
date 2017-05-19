@@ -6,9 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.infinispan.atomic.CopyableDeltaAware;
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
@@ -50,10 +47,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       //noinspection unchecked
       this.notifier = notifier;
       this.metadata = metadata;
-
-      if (value instanceof DeltaAware) {
-         addFlags(FlagBitSets.DELTA_WRITE);
-      }
    }
 
    public void init(CacheNotifier notifier) {
@@ -76,9 +69,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public LoadType loadType() {
-      if (hasAnyFlag(FlagBitSets.DELTA_WRITE)) {
-         return LoadType.OWNER;
-      } else if (isConditional() || !hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES)) {
+      if (isConditional() || !hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES)) {
          return LoadType.PRIMARY;
       } else {
          return LoadType.DONT_LOAD;
@@ -238,37 +229,14 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
       }
 
-      if (value instanceof Delta) {
-         // magic
-         Delta dv = (Delta) value;
-         if (e.isRemoved()) {
-            e.setExpired(false);
-            e.setRemoved(false);
-            e.setCreated(true);
-            e.setValid(true);
-            e.setValue(dv.merge(null));
-            Metadatas.updateMetadata(e, metadata);
-         } else {
-            DeltaAware toMergeWith = null;
-            if (entryValue instanceof CopyableDeltaAware) {
-               toMergeWith = ((CopyableDeltaAware) entryValue).copy();
-            } else if (entryValue instanceof DeltaAware) {
-               toMergeWith = (DeltaAware) entryValue;
-            }
-            e.setValue(dv.merge(toMergeWith));
-            Metadatas.updateMetadata(e, metadata);
-         }
-         o = entryValue;
-      } else {
-         o = e.setValue(value);
-         Metadatas.updateMetadata(e, metadata);
-         if (e.isRemoved()) {
-            e.setCreated(true);
-            e.setExpired(false);
-            e.setRemoved(false);
-            e.setValid(true);
-            o = null;
-         }
+      o = e.setValue(value);
+      Metadatas.updateMetadata(e, metadata);
+      if (e.isRemoved()) {
+         e.setCreated(true);
+         e.setExpired(false);
+         e.setRemoved(false);
+         e.setValid(true);
+         o = null;
       }
       e.setChanged(true);
       // Return the expected value when retrying a putIfAbsent command (i.e. null)

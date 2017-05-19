@@ -25,7 +25,6 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -42,7 +41,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
 import org.infinispan.manager.impl.ReplicableCommandRunnable;
-import org.infinispan.marshall.DeltaAwareObjectOutput;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.ByteString;
@@ -69,10 +67,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
    }
 
    protected void writeCommandParameters(ObjectOutput output, ReplicableCommand command) throws IOException {
-      DeltaAwareObjectOutput deltaAwareObjectOutput = output instanceof DeltaAwareObjectOutput ?
-            (DeltaAwareObjectOutput) output :
-            new DeltaAwareObjectOutput(output);
-      command.writeTo(deltaAwareObjectOutput);
+      command.writeTo(output);
       if (command instanceof TopologyAffectedCommand) {
          output.writeInt(((TopologyAffectedCommand) command).getTopologyId());
       }
@@ -125,7 +120,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
       //noinspection unchecked
       Set<Class<? extends ReplicableCommand>> coreCommands = Util.asSet(
             CacheTopologyControlCommand.class, DistributedExecuteCommand.class, GetKeyValueCommand.class,
-            ClearCommand.class, EvictCommand.class, ApplyDeltaCommand.class,
+            ClearCommand.class, EvictCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class,
             PutMapCommand.class, RemoveCommand.class, RemoveExpiredCommand.class,

@@ -61,7 +61,10 @@ public interface Visitor {
 
    Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable;
 
-   Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable;
+   @Deprecated
+   default Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
+      throw new UnsupportedOperationException();
+   }
 
    // read commands
 

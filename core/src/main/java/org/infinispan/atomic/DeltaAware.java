@@ -19,7 +19,9 @@ package org.infinispan.atomic;
  * @author Manik Surtani
  * @see Delta
  * @since 4.0
+ * @deprecated since 9.1
  */
+@Deprecated
 public interface DeltaAware {
    /**
     * Extracts changes made to implementations, in an efficient format that can easily and cheaply be serialized and

@@ -3,6 +3,7 @@ package org.infinispan.marshall.core;
 import java.util.Set;
 
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.atomic.impl.ApplyDelta;
 import org.infinispan.atomic.impl.AtomicKeySetImpl;
 import org.infinispan.atomic.impl.AtomicMapProxyImpl;
 import org.infinispan.cache.impl.EncoderEntryMapper;
@@ -129,6 +130,7 @@ final class InternalExternalizers {
 
       // Add the rest of stateless externalizers
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer(), exts);
+      addInternalExternalizer(new ApplyDelta.Externalizer(gcr), exts);
       addInternalExternalizer(new AtomicKeySetImpl.Externalizer(gcr), exts);
       addInternalExternalizer(new AtomicKeySetImpl.FunctionExternalizer(), exts);
       addInternalExternalizer(new AtomicMapProxyImpl.Externalizer(), exts);

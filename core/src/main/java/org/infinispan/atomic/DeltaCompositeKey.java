@@ -11,7 +11,9 @@ import org.infinispan.marshall.core.Ids;
 
 /**
  * DeltaCompositeKey is the key guarding access to a specific entry in DeltaAware
+ * @deprecated since 9.1
  */
+@Deprecated
 public final class DeltaCompositeKey {
 
    private final Object deltaAwareValueKey;
@@ -51,6 +53,7 @@ public final class DeltaCompositeKey {
       return "DeltaCompositeKey[deltaAwareValueKey=" + deltaAwareValueKey + ", entryKey=" + entryKey + ']';
    }
 
+   @Deprecated
    public static class DeltaCompositeKeyExternalizer extends AbstractExternalizer<DeltaCompositeKey> {
 
       @Override

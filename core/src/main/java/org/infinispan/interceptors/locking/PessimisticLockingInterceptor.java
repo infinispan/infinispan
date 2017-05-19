@@ -1,26 +1,20 @@
 package org.infinispan.interceptors.locking;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.LocalTransaction;
-import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -191,51 +185,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
-         throws Throwable {
-      try {
-         Object maybeStage;
-         if (hasSkipLocking(command)) {
-            maybeStage = invokeNext(ctx, command);
-         } else {
-            Object[] compositeKeys = command.getCompositeKeys();
-            Set<Object> keysToLock = new HashSet<>(Arrays.asList(compositeKeys));
-            if (!needRemoteLocks(ctx, keysToLock, command)) {
-               ((TxInvocationContext<?>) ctx).addAllAffectedKeys(keysToLock);
-               acquireLocalCompositeLocks(command, keysToLock, ctx);
-               maybeStage = invokeNext(ctx, command);
-            } else {
-               final TxInvocationContext txContext = (TxInvocationContext) ctx;
-               LockControlCommand lcc = cf.buildLockControlCommand(keysToLock, command.getFlagsBitSet(),
-                     txContext.getGlobalTransaction());
-               maybeStage = invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
-                  ((TxInvocationContext<?>) rCtx).addAllAffectedKeys(keysToLock);
-                  acquireLocalCompositeLocks(command, keysToLock, rCtx);
-                  return invokeNext(rCtx, command);
-               });
-            }
-         }
-         return maybeStage;
-      } catch (Throwable t) {
-         lockManager.unlockAll(ctx);
-         throw t;
-      }
-   }
-
-   private void acquireLocalCompositeLocks(ApplyDeltaCommand command, Set<Object> keysToLock,
-         InvocationContext ctx1) throws InterruptedException {
-      DistributionInfo distributionInfo = cdl.getCacheTopology().getDistribution(command.getKey());
-      if (distributionInfo.isPrimary()) {
-         lockAllAndRecord(ctx1, keysToLock, getLockTimeoutMillis(command));
-      } else if (distributionInfo.isWriteOwner()) {
-         TxInvocationContext<?> txContext = (TxInvocationContext<?>) ctx1;
-         for (Object key : keysToLock) {
-            txContext.getCacheTransaction().addBackupLockForKey(key);
-         }
-      }
-   }
-
-   @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command)
          throws Throwable {
       if (!ctx.isInTxScope())
@@ -322,15 +271,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    private boolean isLockOwner(Collection<?> keys) {
       for (Object key : keys) {
-         if (!LockUtil.isLockOwner(key, cdl)) {
+         if (!isLockOwner(key)) {
             return false;
          }
       }
       return true;
-   }
-
-   private boolean isLockOwner(Object key) {
-      return LockUtil.isLockOwner(key, cdl);
    }
 
    private boolean isStateTransferInProgress() {

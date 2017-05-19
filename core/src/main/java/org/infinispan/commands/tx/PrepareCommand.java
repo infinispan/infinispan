@@ -22,7 +22,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -158,11 +157,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
             case WriteOnlyManyCommand.COMMAND_ID:
             case WriteOnlyManyEntriesCommand.COMMAND_ID:
                set.addAll(writeCommand.getAffectedKeys());
-               break;
-            case ApplyDeltaCommand.COMMAND_ID:
-               ApplyDeltaCommand command = (ApplyDeltaCommand) writeCommand;
-               Object[] compositeKeys = command.getCompositeKeys();
-               set.addAll(Arrays.asList(compositeKeys));
                break;
             default:
                break;

@@ -1,8 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
 import static java.lang.String.format;
-import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
-import static org.infinispan.util.DeltaCompositeKeyUtil.getAffectedKeysFromContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -150,9 +148,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          throws Throwable {
       if (ctx.isOriginLocal()) {
          TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) ctx;
-         //In Pessimistic mode, the delta composite keys were sent to the wrong owner and never locked.
-         Collection<Address> affectedNodes =
-               dm.getCacheTopology().getWriteOwners(filterDeltaCompositeKeys(command.getKeys()));
+         Collection<Address> affectedNodes = dm.getCacheTopology().getWriteOwners(command.getKeys());
          Collection<Address> recipients = isReplicated ? null : affectedNodes;
          localTxCtx.getCacheTransaction().locksAcquired(affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
@@ -236,11 +232,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
          TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) rCtx;
          LocalTransaction localTx = localTxCtx.getCacheTransaction();
-         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
-         Collection<Address> writeOwners = cacheTopology.getWriteOwners(getAffectedKeysFromContext(localTxCtx));
-         localTx.locksAcquired(writeOwners);
-         Collection<Address> recipients =
-               isReplicated ? null : localTx.getCommitNodes(writeOwners, cacheTopology);
+         LocalizedCacheTopology cacheTopology =
+               dm.getCacheTopology();
+         Collection<Address> writeOwners = cacheTopology.getWriteOwners(localTxCtx.getAffectedKeys());
+         localTx.locksAcquired(writeOwners);Collection<Address> recipients = isReplicated ? null : localTx.getCommitNodes(writeOwners, cacheTopology);
          CompletableFuture<Object> remotePrepare =
                prepareOnAffectedNodes(localTxCtx, (PrepareCommand) rCommand, recipients);
          return asyncValue(remotePrepare);
@@ -289,7 +284,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
       LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
       Collection<Address> affectedNodes =
-            isReplicated ? null : cacheTopology.getWriteOwners(getAffectedKeysFromContext(ctx));
+            isReplicated ? null : cacheTopology.getWriteOwners(ctx.getAffectedKeys());
       return localTx.getCommitNodes(affectedNodes, cacheTopology);
    }
 

@@ -37,10 +37,13 @@ import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
+import org.infinispan.atomic.DeltaAware;
+import org.infinispan.atomic.impl.ApplyDelta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -48,10 +51,10 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -88,6 +91,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -943,14 +947,25 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
       if (locksToAcquire == null || locksToAcquire.length == 0) {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
+      } else if (locksToAcquire.length != 1) {
+         throw new IllegalArgumentException("Only one lock is permitted.");
+      } else if (!Objects.equals(locksToAcquire[0], deltaAwareValueKey)) {
+         throw new IllegalArgumentException("The delta aware key and locked key must match.");
       }
-      InvocationContext ctx = invocationContextFactory.createInvocationContext(true, UNBOUNDED);
-      ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta,
-            Arrays.asList(locksToAcquire));
+      assertKeyNotNull(deltaAwareValueKey);
+      InvocationContext ctx = invocationContextFactory.createInvocationContext(true, 1);
+      ReadWriteKeyValueCommand<K, Object, Object> command = createApplyDelta(deltaAwareValueKey, delta, FlagBitSets.IGNORE_RETURN_VALUES, ctx);
+      invoker.invoke(ctx, command);
+   }
+
+   private ReadWriteKeyValueCommand<K, Object, Object> createApplyDelta(K deltaAwareValueKey, Delta delta, long explicitFlags, InvocationContext ctx) {
+      ReadWriteKeyValueCommand<K, Object, Object> command = commandsFactory.buildReadWriteKeyValueCommand(
+            deltaAwareValueKey, delta,new ApplyDelta<>(marshaller), Params.create());
+      command.setFlagsBitSet(explicitFlags);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(command.getKeyLockOwner());
       }
-      invoker.invoke(ctx, command);
+      return command;
    }
 
    @Override
@@ -1271,7 +1286,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V put(K key, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = createPutCommand(key, value, metadata, explicitFlags, ctx);
+      DataWriteCommand command;
+      // CACHE_MODE_LOCAL is used for example when preloading - the entry has empty changeset (unless it's better
+      // defined) and that wouldn't store the value properly.
+      if (value instanceof Delta) {
+         command = createApplyDelta(key, (Delta) value, explicitFlags, ctx);
+      } else if (value instanceof DeltaAware && (explicitFlags & FlagBitSets.CACHE_MODE_LOCAL) == 0) {
+         command = createApplyDelta(key, ((DeltaAware) value).delta(), explicitFlags, ctx);
+      } else {
+         command = createPutCommand(key, value, metadata, explicitFlags, ctx);
+      }
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
@@ -1311,7 +1335,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V putIfAbsent(K key, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, ctx);
+      DataWriteCommand command;
+      if (value instanceof Delta) {
+         command = createApplyDelta(key, (Delta) value, explicitFlags, ctx);
+      } else if (value instanceof DeltaAware && (explicitFlags & FlagBitSets.CACHE_MODE_LOCAL) == 0) {
+         command = createApplyDelta(key, ((DeltaAware) value).delta(), explicitFlags, ctx);
+      } else {
+         command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, ctx);
+      }
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
