@@ -71,6 +71,7 @@ class MigratorConfiguration {
    private JdbcStringBasedStoreConfigurationBuilder jdbcConfigBuilder;
    private TwoWayKey2StringMapper key2StringMapper;
    private StreamingMarshaller marshaller;
+   private Map<Integer, AdvancedExternalizer<?>> externalizerMap;
 
    MigratorConfiguration(boolean sourceStore, Properties properties) {
       this.properties = properties;
@@ -177,14 +178,15 @@ class MigratorConfiguration {
 
       switch (marshallerType) {
          case CURRENT:
+            externalizerMap = getExternalizersFromProps();
+            if (orientation == TARGET)
+               return null;
+
             GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder()
                   .globalJmxStatistics()
                   .allowDuplicateDomains(true)
                   .defaultCacheName(cacheName);
-            SerializationConfigurationBuilder serializationBuilder = globalConfig.serialization();
-            for (Map.Entry<Integer, AdvancedExternalizer<?>> entry : getExternalizersFromProps().entrySet()) {
-               serializationBuilder.addAdvancedExternalizer(entry.getKey(), entry.getValue());
-            }
+            addExternalizersToConfig(globalConfig.serialization());
 
             EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build(), new ConfigurationBuilder().build());
             return manager.getCache().getAdvancedCache().getComponentRegistry().getComponent(StreamingMarshaller.class);
@@ -249,12 +251,16 @@ class MigratorConfiguration {
       return key2StringMapper;
    }
 
-   boolean hasCustomMarshaller() {
-      return marshaller != null;
-   }
-
    StreamingMarshaller getMarshaller() {
       return marshaller;
+   }
+
+   void addExternalizersToConfig(SerializationConfigurationBuilder builder) {
+      if (externalizerMap == null)
+         return;
+
+      for (Map.Entry<Integer, AdvancedExternalizer<?>> entry : externalizerMap.entrySet())
+         builder.addAdvancedExternalizer(entry.getKey(), entry.getValue());
    }
 
    private String property(Element... elements) {
