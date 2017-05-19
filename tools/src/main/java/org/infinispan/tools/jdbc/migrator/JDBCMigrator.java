@@ -14,10 +14,10 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.global.SerializationConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.tools.jdbc.migrator.marshaller.LegacyVersionAwareMarshaller;
 
 /**
  * @author Ryan Emerson
@@ -29,11 +29,11 @@ public class JDBCMigrator {
    private final String defaultCacheName = this.getClass().getName();
    private final Properties properties;
 
-   private JDBCMigrator(Properties properties) {
+   JDBCMigrator(Properties properties) {
       this.properties = properties;
    }
 
-   private void run() throws Exception {
+   void run() throws Exception {
       String batchSizeProp = properties.getProperty(BATCH + "." + SIZE);
       int batchLimit = batchSizeProp != null ? new Integer(batchSizeProp) : DEFAULT_BATCH_SIZE;
 
@@ -64,18 +64,15 @@ public class JDBCMigrator {
 
    private AdvancedCache initAndGetTargetCache() {
       MigratorConfiguration config = new MigratorConfiguration(false, properties);
-      GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-            .defaultCacheName(defaultCacheName)
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.defaultCacheName(defaultCacheName)
             .globalJmxStatistics()
-            .allowDuplicateDomains(true)
-            .build();
+            .allowDuplicateDomains(true);
 
-      if (config.hasCustomMarshaller()) {
-         globalConfig = new GlobalConfigurationBuilder()
-               .globalJmxStatistics().allowDuplicateDomains(true)
-               .serialization().marshaller(config.getMarshaller())
-               .build();
-      }
+      SerializationConfigurationBuilder serialBuilder = builder.serialization().marshaller(config.getMarshaller());
+      config.addExternalizersToConfig(serialBuilder);
+      GlobalConfiguration globalConfig = builder.build();
+
       Configuration cacheConfig = new ConfigurationBuilder().persistence().addStore(config.getJdbcConfigBuilder()).build();
       DefaultCacheManager targetCacheManager = new DefaultCacheManager(globalConfig, new ConfigurationBuilder().build());
       targetCacheManager.defineConfiguration(config.cacheName, cacheConfig);
