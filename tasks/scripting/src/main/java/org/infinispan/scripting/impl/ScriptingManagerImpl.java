@@ -24,6 +24,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
@@ -51,7 +52,8 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 public class ScriptingManagerImpl implements ScriptingManager {
    private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
-   EmbeddedCacheManager cacheManager;
+   private EmbeddedCacheManager cacheManager;
+   private TaskManager taskManager;
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = CollectionFactory.makeConcurrentMap(2);
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = CollectionFactory.makeConcurrentMap(2);
@@ -61,6 +63,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    private final Function<String, ScriptEngine> getEngineByName = this::getEngineByName;
    private final Function<String, ScriptEngine> getEngineByExtension = this::getEngineByExtension;
+   private InternalCacheRegistry internalCacheRegistry;
 
    public ScriptingManagerImpl() {
    }
@@ -68,6 +71,13 @@ public class ScriptingManagerImpl implements ScriptingManager {
    @Inject
    public void initialize(final EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry, TaskManager taskManager) {
       this.cacheManager = cacheManager;
+      this.taskManager = taskManager;
+      this.internalCacheRegistry = internalCacheRegistry;
+   }
+
+
+   @Start
+   public void start() {
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
       internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));

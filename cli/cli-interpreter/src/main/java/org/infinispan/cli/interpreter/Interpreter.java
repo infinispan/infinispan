@@ -62,18 +62,13 @@ public class Interpreter {
    @Inject
    public void initialize(final EmbeddedCacheManager cacheManager, TimeService timeService) {
       this.cacheManager = cacheManager;
-      this.codecRegistry = new CodecRegistry(cacheManager.getCacheManagerConfiguration().classLoader());
       this.timeService = timeService;
    }
 
    @Start
    public void start() {
-      this.executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-         @Override
-         public Thread newThread(final Runnable r) {
-            return new Thread(r, "Interpreter");
-         }
-      });
+      this.codecRegistry = new CodecRegistry(cacheManager.getCacheManagerConfiguration().classLoader());
+      this.executor = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "Interpreter"));
       sessionReaperTask = executor.scheduleWithFixedDelay(new ScheduledTask(), sessionReaperWakeupInterval, sessionReaperWakeupInterval, TimeUnit.MILLISECONDS);
    }
 
