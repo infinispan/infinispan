@@ -38,7 +38,6 @@ import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareComman
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupPutMapRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -143,9 +142,6 @@ public class RemoteCommandsFactory {
                break;
             case InvalidateL1Command.COMMAND_ID:
                command = new InvalidateL1Command();
-               break;
-            case ApplyDeltaCommand.COMMAND_ID:
-               command = new ApplyDeltaCommand();
                break;
             case CacheTopologyControlCommand.COMMAND_ID:
                command = new CacheTopologyControlCommand();

@@ -6,7 +6,9 @@ package org.infinispan.atomic;
  *
  * @author Pedro Ruivo
  * @since 7.0
+ * @deprecated since 9.1
  */
+@Deprecated
 public interface CopyableDeltaAware extends DeltaAware {
 
    /**

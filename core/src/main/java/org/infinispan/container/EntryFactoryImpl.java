@@ -2,13 +2,10 @@ package org.infinispan.container;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaAware;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.VersionedRepeatableReadEntry;
-import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullCacheEntry;
@@ -20,7 +17,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -41,19 +37,16 @@ public class EntryFactoryImpl implements EntryFactory {
    private DataContainer container;
    private boolean isL1Enabled;
    private Configuration configuration;
-   private PersistenceManager persistenceManager; // hack for DeltaAware
    private TimeService timeService;
    private VersionGenerator versionGenerator;
    private boolean useVersioning;
 
    @Inject
    public void injectDependencies(DataContainer dataContainer, Configuration configuration,
-                                  TimeService timeService, PersistenceManager persistenceManager,
-                                  VersionGenerator versionGenerator) {
+                                  TimeService timeService, VersionGenerator versionGenerator) {
       this.container = dataContainer;
       this.configuration = configuration;
       this.timeService = timeService;
-      this.persistenceManager = persistenceManager;
       this.versionGenerator = versionGenerator;
    }
 
@@ -98,7 +91,7 @@ public class EntryFactoryImpl implements EntryFactory {
       if (contextEntry instanceof MVCCEntry) {
          // Nothing to do, already wrapped.
       } else if (contextEntry != null) {
-         // Already in the context as an InternalCacheEntry or DeltaAwareCacheEntry.
+         // Already in the context as an InternalCacheEntry
          // Need to wrap it in a MVCCEntry.
          MVCCEntry mvccEntry = createWrappedEntry(key, contextEntry);
          ctx.putLookedUpEntry(key, mvccEntry);
@@ -169,32 +162,6 @@ public class EntryFactoryImpl implements EntryFactory {
             if (trace) log.tracef("Updated context entry %s -> %s", contextEntry, externalEntry);
          }
       }
-   }
-
-   @Override
-   public void wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta, boolean isOwner) {
-      CacheEntry cacheEntry = getFromContext(ctx, deltaKey);
-      DeltaAwareCacheEntry deltaAwareEntry;
-      if (cacheEntry instanceof DeltaAwareCacheEntry) {
-         // Already delta-aware, nothing to do.
-         deltaAwareEntry = (DeltaAwareCacheEntry) cacheEntry;
-      } else if (cacheEntry != null) {
-         // Wrap the existing context entry inside a DeltaAwareCacheEntry
-         deltaAwareEntry = createWrappedDeltaEntry(deltaKey, (DeltaAware) cacheEntry.getValue(), cacheEntry, ctx);
-         if (cacheEntry instanceof MVCCEntry && ((MVCCEntry) cacheEntry).isRead()) {
-            deltaAwareEntry.setRead();
-         }
-         ctx.putLookedUpEntry(deltaKey, deltaAwareEntry);
-      } else {
-         // Read the value from the container and wrap it
-         cacheEntry = getFromContainer(deltaKey, isOwner, false);
-         DeltaAwareCacheEntry deltaEntry =
-               createWrappedDeltaEntry(deltaKey, cacheEntry != null ? (DeltaAware) cacheEntry.getValue() : null, null, ctx);
-         deltaEntry.setRead();
-         ctx.putLookedUpEntry(deltaKey, deltaEntry);
-         deltaAwareEntry = deltaEntry;
-      }
-      if (trace) log.tracef("Wrap %s for delta. Entry=%s", deltaKey, deltaAwareEntry);
    }
 
    private CacheEntry getFromContext(InvocationContext ctx, Object key) {
@@ -277,15 +244,5 @@ public class EntryFactoryImpl implements EntryFactory {
       } else {
          return new ReadCommittedEntry(key, value, metadata);
       }
-   }
-
-   private DeltaAwareCacheEntry createWrappedDeltaEntry(Object key, DeltaAware deltaAware, CacheEntry entry, InvocationContext ctx) {
-      DeltaAwareCacheEntry deltaAwareCacheEntry = new DeltaAwareCacheEntry(key, deltaAware, entry, ctx, persistenceManager, timeService);
-      // Set the delta aware entry to created so it ignores the previous value and only merges new deltas when it is
-      // committed
-      if (entry != null && entry.isCreated()) {
-         deltaAwareCacheEntry.setCreated(true);
-      }
-      return deltaAwareCacheEntry;
    }
 }

@@ -7,7 +7,9 @@ package org.infinispan.atomic;
  * @see DeltaAware
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated since 9.1
  */
+@Deprecated
 public interface Delta {
    /**
     * Merge the current Delta instance with a given {@link DeltaAware} instance, and return a coherent and complete

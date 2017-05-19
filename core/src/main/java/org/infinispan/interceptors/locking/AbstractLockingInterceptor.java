@@ -42,7 +42,6 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -256,9 +255,13 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    protected final boolean shouldLockKey(Object key) {
       //only the primary owner acquires the lock.
-      boolean shouldLock = LockUtil.isLockOwner(key, cdl);
+      boolean shouldLock = isLockOwner(key);
       if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), toStr(key), shouldLock);
       return shouldLock;
+   }
+
+   protected final boolean isLockOwner(Object key) {
+      return cdl.getCacheTopology().getDistribution(key).isPrimary();
    }
 
    protected final void lockAndRecord(InvocationContext context, Object key, long timeout) throws InterruptedException {

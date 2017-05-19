@@ -49,7 +49,6 @@ public class WriteSkewHelper {
             if (ksl.performCheckOnKey(k)) {
                CacheEntry cacheEntry = context.lookupEntry(k);
                if (!(cacheEntry instanceof VersionedRepeatableReadEntry)) {
-                  // DeltaAware?
                   continue;
                }
                VersionedRepeatableReadEntry entry = (VersionedRepeatableReadEntry) cacheEntry;

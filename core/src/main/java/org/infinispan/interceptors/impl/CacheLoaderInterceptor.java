@@ -32,7 +32,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -121,12 +120,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    @Start
    public void start() {
       this.activation = cache.getCacheConfiguration().persistence().passivation();
-   }
-
-   @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
-         throws Throwable {
-      return visitDataCommand(ctx, command);
    }
 
    @Override

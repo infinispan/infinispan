@@ -17,7 +17,6 @@ import java.util.function.Function;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
-import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
@@ -55,7 +54,6 @@ import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareComman
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.BackupPutMapRpcCommand;
@@ -478,8 +476,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             CompleteTransactionCommand ccc = (CompleteTransactionCommand)c;
             ccc.init(recoveryManager);
             break;
-         case ApplyDeltaCommand.COMMAND_ID:
-            break;
          case CreateCacheCommand.COMMAND_ID:
             CreateCacheCommand createCacheCommand = (CreateCacheCommand)c;
             createCacheCommand.init(cache.getCacheManager());
@@ -613,11 +609,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public CompleteTransactionCommand buildCompleteTransactionCommand(Xid xid, boolean commit) {
       return new CompleteTransactionCommand(cacheName, xid, commit);
-   }
-
-   @Override
-   public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
-      return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys, generateUUID(transactional));
    }
 
    @Override

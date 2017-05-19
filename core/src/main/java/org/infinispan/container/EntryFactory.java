@@ -1,6 +1,5 @@
 package org.infinispan.container;
 
-import org.infinispan.atomic.Delta;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.NullCacheEntry;
@@ -94,17 +93,6 @@ public interface EntryFactory {
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
     */
    void wrapEntryForReading(InvocationContext ctx, Object key, boolean isOwner);
-
-   /**
-    * Used for wrapping Delta entry to be applied to DeltaAware object stored in cache. The wrapped
-    * entry is added to the supplied InvocationContext.
-    *
-    * @param ctx current invocation context
-    * @param deltaKey key to look up and wrap
-    * @param delta the delta of the executed command
-    * @param isOwner true if this node is current owner in readCH (or we ignore CH)
-    */
-   void wrapEntryForDelta(InvocationContext ctx, Object deltaKey, Delta delta, boolean isOwner);
 
    /**
     * Insert an entry that exists in the data container into the context.

@@ -1,6 +1,5 @@
 package org.infinispan.statetransfer;
 
-import java.util.Collections;
 import java.util.HashSet;
 
 import org.infinispan.commands.AbstractVisitor;
@@ -8,7 +7,6 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -60,11 +58,6 @@ public class AffectedKeysVisitor extends AbstractVisitor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       return command.getAffectedKeys();
-   }
-
-   @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) {
-      return Collections.singleton(command.getKey());
    }
 
    @Override

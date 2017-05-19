@@ -1,7 +1,6 @@
 package org.infinispan.lucene;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -55,11 +54,6 @@ public class SkipIndexingGuaranteed extends CommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return handleDefaultCheckingAssertion(ctx, command);
-   }
-
-   @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       return handleDefaultCheckingAssertion(ctx, command);
    }
 

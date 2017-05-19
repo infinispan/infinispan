@@ -25,7 +25,6 @@ import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Traversable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.functional.impl.FunctionalMapImpl;
@@ -73,13 +72,11 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
    @DataProvider(name = "operations")
    public Object[][] operations() {
-      // We do not test applyDelta, that's about to be removed anyway
       return Stream.of(
             new Operation("readWriteKey", this::readWriteKey),
             new Operation("readWriteKeyValue", this::readWriteKeyValue),
             new Operation("readWriteMany", this::readWriteMany),
-            new Operation("readWriteManyEntries", this::readWriteManyEntries),
-            new Operation("putDeltaWrite", this::putDeltaWrite)
+            new Operation("readWriteManyEntries", this::readWriteManyEntries)
       ).map(f -> new Object[] { f }).toArray(Object[][]::new);
    }
 
@@ -196,12 +193,6 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
          return "r" + index;
       });
       return traversable.findAny().orElseThrow(IllegalStateException::new);
-   }
-
-   private Object putDeltaWrite(MagicKey key, int index) {
-      // adding DELTA_WRITE is sufficient to force LoadType.OWNERS, we don't have to do actual delta
-      cache(0).getAdvancedCache().withFlags(Flag.DELTA_WRITE).put(key, "v" + index);
-      return "r" + index;
    }
 
    private static <T extends RpcManager> T replace(Cache<Object, Object> cache, Function<RpcManager, T> ctor) {

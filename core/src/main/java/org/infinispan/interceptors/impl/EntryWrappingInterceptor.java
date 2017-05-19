@@ -31,7 +31,6 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -353,15 +352,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       } else {
          ctx.removeLookedUpEntries(keys);
       }
-   }
-
-   @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
-         removeFromContextOnRetry(ctx, command.getKey());
-      }
-      entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta(), ignoreOwnership(command) || canRead(command.getKey()));
-      return invokeNext(ctx, command);
    }
 
    @Override
@@ -736,12 +726,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          return handleWriteCommand(ctx, command);
-      }
-
-      @Override
-      public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta(), ignoreOwnership(command) || canRead(command.getKey()));
-         return invokeNext(ctx, command);
       }
 
       @Override

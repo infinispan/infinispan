@@ -7,8 +7,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -58,11 +58,12 @@ public abstract class BaseLockingAction implements Action {
    }
 
    private void filterByLockOwner(Collection<?> keys, Collection<Object> toAdd) {
-      keys.forEach(key -> {
-         if (LockUtil.isLockOwner(key, clusteringDependentLogic)) {
+      LocalizedCacheTopology cacheTopology = clusteringDependentLogic.getCacheTopology();
+      for (Object key : keys) {
+         if (cacheTopology.getDistribution(key).isPrimary()) {
             toAdd.add(key);
          }
-      });
+      }
    }
 
    protected final List<Object> getAndUpdateFilteredKeys(ActionState state) {

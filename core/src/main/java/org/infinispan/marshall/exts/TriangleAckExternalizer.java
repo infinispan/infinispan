@@ -17,9 +17,6 @@ import org.infinispan.util.ByteString;
 
 /**
  * Externalizer for the triangle acknowledges.
- * <p>
- * It doesn't use the {@link org.infinispan.marshall.DeltaAwareObjectOutput} like the {@link
- * CacheRpcCommandExternalizer}.
  *
  * @author Pedro Ruivo
  * @since 9.0

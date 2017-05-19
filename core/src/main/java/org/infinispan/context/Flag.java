@@ -165,7 +165,9 @@ public enum Flag {
     * the object, rather than the full object. This can be useful in order to
     * make decisions such as whether the cache store needs checking to see if
     * the previous value needs to be loaded and merged.
+    * @deprecated since 9.1
     */
+   @Deprecated
    DELTA_WRITE,
 
    /**

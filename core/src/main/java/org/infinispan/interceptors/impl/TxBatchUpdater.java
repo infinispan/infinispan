@@ -18,7 +18,6 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -27,7 +26,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
@@ -73,29 +71,6 @@ public class TxBatchUpdater extends AbstractVisitor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return visitSingleStore(ctx, command, command.getKey());
-   }
-
-   @Override
-   public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      Object key = command.getKey();
-      if (isProperWriter(ctx, command, key)) {
-         if (generateStatistics) putCount++;
-         CacheEntry entry = ctx.lookupEntry(key);
-         // If the value is null, there is a subsequent remove operation in the transaction and we can ignore
-         // this modification.
-         if (entry.getValue() == null) {
-            return null;
-         }
-         InternalCacheEntry ice;
-         if (entry instanceof InternalCacheEntry) {
-            ice = (InternalCacheEntry) entry;
-         } else {
-            ice = entryFactory.create(entry);
-         }
-         MarshalledEntryImpl marshalledEntry = new MarshalledEntryImpl(ice.getKey(), ice.getValue(), internalMetadata(ice), marshaller);
-         getModifications(ctx, key, command).addMarshalledEntry(marshalledEntry.getKey(), marshalledEntry);
-      }
-      return null;
    }
 
    @Override

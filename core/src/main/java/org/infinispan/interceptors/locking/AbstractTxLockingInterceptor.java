@@ -12,11 +12,11 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.logging.Log;
 
@@ -75,7 +75,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
     */
    protected final boolean lockOrRegisterBackupLock(TxInvocationContext<?> ctx, Object key, long lockTimeout)
          throws InterruptedException {
-      switch (LockUtil.getLockOwnership(key, cdl)) {
+      switch (cdl.getCacheTopology().getDistribution(key).writeOwnership()) {
          case PRIMARY:
             if (trace) {
                getLog().tracef("Acquiring locks on %s.", toStr(key));
@@ -107,8 +107,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       final Log log = getLog();
       Collection<Object> keysToLock = new ArrayList<>(keys.size());
 
+      LocalizedCacheTopology cacheTopology = cdl.getCacheTopology();
       for (Object key : keys) {
-         switch (LockUtil.getLockOwnership(key, cdl)) {
+         switch (cacheTopology.getDistribution(key).writeOwnership()) {
             case PRIMARY:
                if (trace) {
                   log.tracef("Acquiring locks on %s.", toStr(key));

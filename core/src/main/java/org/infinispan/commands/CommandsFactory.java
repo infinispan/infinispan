@@ -415,8 +415,12 @@ public interface CommandsFactory {
     *
     * @return ApplyDeltaCommand instance
     * @see ApplyDeltaCommand
+    * @deprecated since 9.1
     */
-   ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys);
+   @Deprecated
+   default ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * Same as {@code buildCreateCacheCommand(cacheName, cacheConfigurationName, false, 0)}.

@@ -1,7 +1,6 @@
 package org.infinispan.transaction.impl;
 
 import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
-import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -875,7 +874,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          TxCompletionNotificationCommand command = commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
          LocalizedCacheTopology cacheTopology = clusteringLogic.getCacheTopology();
          Collection<Address> owners =
-               cacheTopology.getWriteOwners(filterDeltaCompositeKeys(localTransaction.getAffectedKeys()));
+               cacheTopology.getWriteOwners(localTransaction.getAffectedKeys());
          Collection<Address> commitNodes = cacheTopology.getReadConsistentHash().isReplicated() ? null : owners;
          commitNodes = localTransaction.getCommitNodes(commitNodes, cacheTopology);
          if (trace)

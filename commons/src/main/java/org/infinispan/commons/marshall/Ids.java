@@ -166,6 +166,8 @@ public interface Ids {
    int VERSIONED_RESULT = 115;
    int VERSIONED_RESULTS = 116;
 
+   int APPLY_DELTA = 117;
+
    int XID_IMPL = 118;
 
    int ATOMIC_MAP_FUNCTIONS = 119;

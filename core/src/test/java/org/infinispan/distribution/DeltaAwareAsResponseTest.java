@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import org.infinispan.atomic.TestDeltaAware;
 import org.infinispan.configuration.cache.CacheMode;
@@ -41,8 +42,9 @@ public class DeltaAwareAsResponseTest extends MultipleCacheManagersTest {
 
       response = cache(0).put(key, response);
       assertEquals(TestDeltaAware.class, response.getClass());
-      assertEquals("1", ((TestDeltaAware) response).getFirstComponent());
-      assertEquals("2", ((TestDeltaAware) response).getSecondComponent());
+      // The returned value should be the first one inserted in this test, which does not have the components set
+      assertNull(((TestDeltaAware) response).getFirstComponent());
+      assertNull(((TestDeltaAware) response).getSecondComponent());
 
       response = cache(0).get(key);
       assertEquals(TestDeltaAware.class, response.getClass());

@@ -3,48 +3,33 @@ package org.infinispan.commands.write;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 
 import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.DeltaAwareCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
 
 
 /**
  * @author Vladimir Blagojevic
  * @since 5.1
+ * @deprecated since 9.1
  */
+@Deprecated
 public class ApplyDeltaCommand extends AbstractDataWriteCommand {
 
    public static final int COMMAND_ID = 25;
-
-   private Collection<Object> keys;
-   private Delta delta;
 
    public ApplyDeltaCommand() {
    }
 
    public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys, CommandInvocationId commandInvocationId) {
-      super(deltaAwareValueKey, EnumUtil.bitSetOf(Flag.DELTA_WRITE), commandInvocationId);
-
-      if (keys == null || keys.isEmpty())
-         throw new IllegalArgumentException("At least one key to be locked needs to be specified");
-
-      this.keys = keys;
-      this.delta = delta;
+      super(deltaAwareValueKey, 0, commandInvocationId);
    }
 
    public Delta getDelta(){
-      return delta;
+      throw new UnsupportedOperationException();
    }
 
    /**
@@ -55,14 +40,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
     */
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      CacheEntry contextEntry = ctx.lookupEntry(key);
-      if (contextEntry instanceof DeltaAwareCacheEntry) {
-         DeltaAwareCacheEntry deltaAwareCacheEntry = (DeltaAwareCacheEntry) contextEntry;
-         deltaAwareCacheEntry.appendDelta(delta);
-      } else {
-         throw new IllegalStateException();
-      }
-      return null;
+      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -74,46 +52,31 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    public String toString() {
       return "ApplyDeltaCommand[" +
             "key=" + key +
-            ", delta=" + delta +
-            ", keys=" + keys +
             ", commandInvocationId=" + CommandInvocationId.show(commandInvocationId) +
             + ']';
    }
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      output.writeObject(delta);
-      MarshallUtil.marshallCollection(keys, output);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      CommandInvocationId.writeTo(output, commandInvocationId);
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      delta = (Delta) input.readObject();
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      setFlagsBitSet(input.readLong());
-      commandInvocationId = CommandInvocationId.readFrom(input);
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitApplyDeltaCommand(ctx, this);
+      throw new UnsupportedOperationException();
    }
 
    public Object[] getKeys() {
-      return keys.toArray();
+      throw new UnsupportedOperationException();
    }
 
    public Object[] getCompositeKeys() {
-      DeltaCompositeKey[] compositeKeys = new DeltaCompositeKey[keys.size()];
-      int i = 0;
-      for (Object k : keys) {
-         compositeKeys[i++] = new DeltaCompositeKey(key, k);
-      }
-      return compositeKeys;
+      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -122,29 +85,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (!(o instanceof ApplyDeltaCommand)) {
-         return false;
-      }
-      if (!super.equals(o)) {
-         return false;
-      }
-
-      ApplyDeltaCommand that = (ApplyDeltaCommand) o;
-      return keys.equals(that.keys);
-   }
-
-   @Override
-   public int hashCode() {
-      return 31 * super.hashCode() + keys.hashCode();
-   }
-
-   @Override
    public boolean isSuccessful() {
-      return true;
+      return false;
    }
 
    @Override
@@ -154,7 +96,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
 
    @Override
    public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
+      throw new UnsupportedOperationException();
    }
 
    @Override
