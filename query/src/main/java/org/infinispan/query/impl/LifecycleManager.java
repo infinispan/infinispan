@@ -25,6 +25,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -34,9 +35,10 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
-import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
+import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
@@ -79,14 +81,12 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
  * at cache stop.
- *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
@@ -178,16 +178,19 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
          interceptorBuilder.interceptor(queryInterceptor);
 
-         if (!cfg.transaction().transactionMode().isTransactional()) {
-            if (ic != null) ic.addInterceptorAfter(queryInterceptor, NonTransactionalLockingInterceptor.class);
-            interceptorBuilder.after(NonTransactionalLockingInterceptor.class);
-         } else if (cfg.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
-            if (ic != null) ic.addInterceptorAfter(queryInterceptor, OptimisticLockingInterceptor.class);
-            interceptorBuilder.after(OptimisticLockingInterceptor.class);
-         } else {
-            if (ic != null) ic.addInterceptorAfter(queryInterceptor, PessimisticLockingInterceptor.class);
-            interceptorBuilder.after(PessimisticLockingInterceptor.class);
+         boolean txVersioned = Configurations.isTxVersioned(cfg);
+         boolean isTotalOrder = cfg.transaction().transactionProtocol().isTotalOrder();
+
+         Class<? extends DDAsyncInterceptor> wrappingInterceptor = EntryWrappingInterceptor.class;
+
+         if (txVersioned) {
+            wrappingInterceptor = isTotalOrder ?
+                  TotalOrderVersionedEntryWrappingInterceptor.class : VersionedEntryWrappingInterceptor.class;
          }
+
+         if (ic != null) ic.addInterceptorAfter(queryInterceptor, wrappingInterceptor);
+         interceptorBuilder.after(wrappingInterceptor);
+
          if (ic != null) {
             cr.registerComponent(queryInterceptor, QueryInterceptor.class);
             cr.registerComponent(queryInterceptor, queryInterceptor.getClass().getName(), true);
@@ -335,7 +338,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
     * @param indexingProperties
     */
    private void allowDynamicSortingByDefault(Properties indexingProperties) {
-      indexingProperties.putIfAbsent( Environment.INDEX_UNINVERTING_ALLOWED, Boolean.TRUE.toString() );
+      indexingProperties.putIfAbsent(Environment.INDEX_UNINVERTING_ALLOWED, Boolean.TRUE.toString());
    }
 
    private Properties addProgrammaticMappings(Properties indexingProperties, ComponentRegistry cr) {

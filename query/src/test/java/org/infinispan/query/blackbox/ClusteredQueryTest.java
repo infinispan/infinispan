@@ -128,12 +128,15 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       final SearchManager searchManager1 = Search.getSearchManager(cacheAMachine1);
-      final CacheQuery<?> localQuery1 = searchManager1.getQuery(createLuceneQuery());
-      assertEquals(5, localQuery1.getResultSize());
+      final CacheQuery<Person> localQuery1 = searchManager1.getQuery(createLuceneQuery());
+      List<Person> results1 =  localQuery1.list();
 
       final SearchManager searchManager2 = Search.getSearchManager(cacheAMachine2);
-      final CacheQuery<?> localQuery2 = searchManager2.getQuery(createLuceneQuery());
-      assertEquals(5, localQuery2.getResultSize());
+      final CacheQuery<Person> localQuery2 = searchManager2.getQuery(createLuceneQuery());
+      List<Person> results2 =  localQuery2.list();
+
+      assertEquals(10, results1.size() + results2.size());
+
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 

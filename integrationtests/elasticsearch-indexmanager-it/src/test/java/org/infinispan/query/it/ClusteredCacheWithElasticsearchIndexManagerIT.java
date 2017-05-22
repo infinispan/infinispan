@@ -49,8 +49,7 @@ public class ClusteredCacheWithElasticsearchIndexManagerIT extends ClusteredCach
     @AfterMethod
     @Override
     protected void clearContent() throws Throwable {
-        // super.clearContent() clears the data container and the stores of all the non-private caches.
-        // Invoke clear() instead to clear the indexes stored in elasticsearch.
         cache(0).clear();
+        super.clearContent();
     }
 }

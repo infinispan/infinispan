@@ -1,9 +1,9 @@
 package org.infinispan.query.blackbox;
 
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
-import static org.infinispan.distribution.Ownership.PRIMARY;
-import static org.infinispan.distribution.Ownership.NON_OWNER;
 import static org.infinispan.distribution.Ownership.BACKUP;
+import static org.infinispan.distribution.Ownership.NON_OWNER;
+import static org.infinispan.distribution.Ownership.PRIMARY;
+import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -45,7 +45,6 @@ import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
@@ -565,15 +564,17 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
             .add(queryParser.parse("eats"), Occur.SHOULD)
             .add(queryParser.parse("playing"), Occur.SHOULD)
             .build();
-      CacheQuery<?> cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
-      AssertJUnit.assertEquals(3, cacheQuery.getResultSize());
+      CacheQuery<?> cacheQuery1 = Search.getSearchManager(cache1).getQuery(luceneQuery);
+      CacheQuery<?> cacheQuery2 = Search.getSearchManager(cache2).getQuery(luceneQuery);
+
+      AssertJUnit.assertEquals(3, cacheQuery1.getResultSize());
+      AssertJUnit.assertEquals(3, cacheQuery2.getResultSize());
 
       cache2.clear();
 
-      AssertJUnit.assertEquals(3, cacheQuery.getResultSize());
-      cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
+      AssertJUnit.assertEquals(0, cacheQuery1.list().size());
+      AssertJUnit.assertEquals(0, cacheQuery2.list().size());
 
-      AssertJUnit.assertEquals(0, cacheQuery.getResultSize());
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
@@ -635,10 +636,10 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    public void testSearchKeyTransformer() throws Exception {
-      SearchManagerImplementor manager = (SearchManagerImplementor) Search.getSearchManager(cache1);
-      SearchManagerImplementor manager1 = (SearchManagerImplementor) Search.getSearchManager(cache2);
-      manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
-      manager1.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
+      caches().forEach(cache -> {
+         SearchManagerImplementor manager = (SearchManagerImplementor) Search.getSearchManager(cache);
+         manager.registerKeyTransformer(CustomKey3.class, CustomKey3Transformer.class);
+      });
 
       prepareTestedObjects();
 
@@ -658,7 +659,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       queryParser = createQueryParser("blurb");
       Query luceneQuery = queryParser.parse("Eats");
 
-      CacheQuery<Person> cacheQuery = manager.getQuery(luceneQuery);
+      CacheQuery<Person> cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
 
       int counter = 0;
       try (ResultIterator<Person> found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
