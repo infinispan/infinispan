@@ -16,9 +16,10 @@ public enum EvictionStrategy {
    @Deprecated
    FIFO, 
    LRU, 
-   LIRS;
+   LIRS,
+   MANUAL;
 
    public boolean isEnabled() {
-      return this != NONE;
+      return this != NONE && this != MANUAL;
    }
 }
