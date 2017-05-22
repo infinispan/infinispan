@@ -44,6 +44,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
 
          DefaultDataContainer dataContainer;
          switch (st) {
+            case MANUAL:
             case NONE:
                return (T) DefaultDataContainer.unBoundedDataContainer(
                      level, keyEquivalence);
