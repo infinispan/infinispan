@@ -499,48 +499,44 @@ By default each protocol stores data in the cache in the most efficient format f
 
 ----
 
-To specify a custom server-side compatibility marshaller use the "marshaller" attribute:
+To specify a custom server-side compatibility marshaller use the "marshaller" attribute which can hold either an
+ordinary fully qualified class name or an 'extended' class name which is composed of a JBoss Modules module identifier,
+a slot name, and a fully qualified class name separated by the ':' character, (eg. "com.acme.my-module-name:my-slot:com.acme.CustomMarshaller").
+
+By using a plain fully qualified class name you will be able to reference only 'stock' marshallers provided by Infinispan,
+like "org.infinispan.query.remote.CompatibilityProtoStreamMarshaller". This option is provided for conciseness and backwards
+compatibility. The second option of using 'extended' class names is more generic and is preferred as it allows you to
+really add new marshallers from an external module of your choice.
+
+The module identifier and slot follow the rules imposed by JBoss Modules, and the designated module must be available to
+the server either in the 'modules' folder or be deployed through the deployer service in the 'deployments' folder. In
+the second case its module identifier will be of the form 'deployment.my-jar-name.jar' and the slot will be 'main'.
+
+NOTE: The referenced module will become an automatic dependency for the Cache referencing it, so in case the jar
+defining the module is redeployed, the Cache will be restarted.
 
 [source,xml]
 ----
+<!-- using an alternative, 'stock', marshaller -->
+<compatibility marshaller="org.infinispan.query.remote.CompatibilityProtoStreamMarshaller"/>
 
-<compatibility marshaller="com.acme.CustomMarshaller"/>
+or
 
-----
+<!-- using a marshaller deployed as a module -->
+<compatibility marshaller="com.acme.my-gadgets-module:main:com.acme.CustomCompatMarshaller"/>
 
-Your custom marshaller needs to be on the classpath of the Infinispan module. You can add it by either:
+or
 
-- copying your jar to
-+
-    modules/system/layers/base/org/infinispan/main
-+
-and editing the module definition to include the jar as resource-root:
-+
-[source,xml]
-.modules/system/layers/base/org/infinispan/main/modules.xml
-----
-
-<resources>
-    ...
-    <resource-root path="acme-custom-marshallers.jar"/>
-    ...
-</resources>
+<!-- using a marshaller deployed as a regular jar deployed by dropping it in the 'deployments' folder -->
+<compatibility marshaller="deployment.my-jar-with-gadgets.jar:main:com.acme.CustomCompatMarshaller"/>
 
 ----
 
-- or by creating a custom JBoss Module and adding it as a dependency to the Infinispan module:
-+
-[source,xml]
-.modules/system/layers/base/org/infinispan/main/modules.xml
-----
-
-<dependencies>
-    ...
-    <module name="com.acme.custom.marshallers"/>
-    ...
-</dependencies>
-
-----
+NOTE: Past versions of Infinispan (prior to 9.1.x) did not support the 'extended' class name format and were unable to
+refer to classes outside the Infinispan implementation and instead relied on the user to manually modify the
+'dependencies' or 'resources' element of the module.xml file of the "org.infinispan" module in order to 'inject' the
+user supplied jar containing the custom marshaller. This practice is suboptimal from the maintainability point of view
+and is now discouraged (but it still works) and you are urged to migrate to the new approach.
 
 ==== Custom Marshaller Bridges
 Infinispan provides two marshalling bridges for marshalling client/server requests using the Kryo and Protostuff libraries.

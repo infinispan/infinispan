@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -98,10 +100,12 @@ import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.as.network.OutboundSocketBinding;
 import org.jboss.as.server.ServerEnvironment;
 import org.jboss.as.server.Services;
+import org.jboss.as.server.moduleservice.ServiceModuleLoader;
 import org.jboss.as.txn.service.TxnServices;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.jboss.logging.Logger;
+import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.msc.inject.Injector;
@@ -370,17 +374,40 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                   .withProperties(indexingProperties)
                   .autoConfig(autoConfig)
             ;
-            final ModelNode indexedEntitiesModel = IndexingConfigurationResource.INDEXED_ENTITIES.resolveModelAttribute(context, indexingModel);
-            if (indexing.isEnabled() && indexedEntitiesModel.isDefined()) {
-                for (ModelNode indexedEntityNode : indexedEntitiesModel.asList()) {
-                    String className = indexedEntityNode.asString();
-                    // TODO This is ignored for now because we do not have access to the proper ClassLoader
-                    //                try {
-                    //                    Class<?> entityClass = CacheConfigurationAdd.class.getClassLoader().loadClass(className);
-                    //                    builder.indexing().addIndexedEntity(entityClass);
-                    //                } catch (ClassNotFoundException e) {
-                    //                    throw InfinispanMessages.MESSAGES.unableToInstantiateClass(className);
-                    //                }
+            if (indexing.isEnabled()) {
+                final ModelNode indexedEntitiesModel = IndexingConfigurationResource.INDEXED_ENTITIES.resolveModelAttribute(context, indexingModel);
+                if (indexedEntitiesModel.isDefined()) {
+                    for (ModelNode indexedEntityNode : indexedEntitiesModel.asList()) {
+                        String className = indexedEntityNode.asString();
+                        String[] split = className.split(":");
+                        try {
+                            if (split.length == 1) {
+                                // it's just a class name
+                                Class<?> entityClass = CacheLoader.class.getClassLoader().loadClass(className);
+                                builder.indexing().addIndexedEntity(entityClass);
+                            } else {
+                                // it's an 'extended' class name, including the module id and slot
+                                String entityClassName = split[2];
+                                ModuleIdentifier moduleIdentifier = ModuleIdentifier.create(split[0], split[1]);
+                                Injector<Module> injector = new SimpleInjector<Module>() {
+                                    @Override
+                                    public void inject(Module module) {
+                                        try {
+                                            ClassLoader moduleClassLoader = System.getSecurityManager() == null ? module.getClassLoader() :
+                                                  AccessController.doPrivileged((PrivilegedAction<ClassLoader>) module::getClassLoader);
+                                            Class<?> entityClass = Class.forName(entityClassName, false, moduleClassLoader);
+                                            builder.indexing().addIndexedEntity(entityClass);
+                                        } catch (Exception e) {
+                                            throw InfinispanMessages.MESSAGES.unableToInstantiateClass(className);
+                                        }
+                                    }
+                                };
+                                dependencies.add(new Dependency<>(ServiceModuleLoader.moduleServiceName(moduleIdentifier), Module.class, injector));
+                            }
+                        } catch (Exception e) {
+                            throw InfinispanMessages.MESSAGES.unableToInstantiateClass(className);
+                        }
+                    }
                 }
             }
         }
@@ -494,9 +521,32 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
             if (compatibility.hasDefined(ModelKeys.MARSHALLER)) {
                 String marshaller = CompatibilityConfigurationResource.MARSHALLER.resolveModelAttribute(context, compatibility).asString();
+                String[] split = marshaller.split(":");
                 try {
-                    Class<? extends Marshaller> marshallerClass = CacheLoader.class.getClassLoader().loadClass(marshaller).asSubclass(Marshaller.class);
-                    builder.compatibility().marshaller(marshallerClass.newInstance());
+                    if (split.length == 1) {
+                        // it's just a class name
+                        String marshallerClassName = split[0];
+                        Class<?> marshallerClass = CacheLoader.class.getClassLoader().loadClass(marshallerClassName);
+                        builder.compatibility().marshaller(marshallerClass.asSubclass(Marshaller.class).newInstance());
+                    } else {
+                        // it's an 'extended' class name, including the module id and slot
+                        String marshallerClassName = split[2];
+                        ModuleIdentifier moduleIdentifier = ModuleIdentifier.create(split[0], split[1]);
+                        Injector<Module> injector = new SimpleInjector<Module>() {
+                            @Override
+                            public void inject(Module module) {
+                                try {
+                                    ClassLoader moduleClassLoader = System.getSecurityManager() == null ? module.getClassLoader() :
+                                          AccessController.doPrivileged((PrivilegedAction<ClassLoader>) module::getClassLoader);
+                                    Class<?> marshallerClass = Class.forName(marshallerClassName, false, moduleClassLoader);
+                                    builder.compatibility().marshaller(marshallerClass.asSubclass(Marshaller.class).newInstance());
+                                } catch (Exception e) {
+                                    throw InfinispanMessages.MESSAGES.invalidCompatibilityMarshaller(e, marshaller);
+                                }
+                            }
+                        };
+                        dependencies.add(new Dependency<>(ServiceModuleLoader.moduleServiceName(moduleIdentifier), Module.class, injector));
+                    }
                 } catch (Exception e) {
                     throw InfinispanMessages.MESSAGES.invalidCompatibilityMarshaller(e, marshaller);
                 }
