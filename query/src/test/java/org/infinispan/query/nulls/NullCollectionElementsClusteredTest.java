@@ -23,6 +23,8 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
@@ -30,6 +32,7 @@ import org.infinispan.query.ProjectionConstants;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -40,7 +43,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.nulls.NullCollectionElementsClusteredTest")
 public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTest {
 
-   private Cache cache1, cache2;
+   private Cache<String, Foo> cache1, cache2;
    private SearchManager searchManager;
 
    public void testQuerySkipsNullsInList() throws Exception {
@@ -49,7 +52,11 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          @Override
          public Void call() throws Exception {
             cache2.remove("2");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache1);
+
+            // Query a cache where key "2" is not present in the index
+            Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
+
+            searchManager = Search.getSearchManager(queryCache);
 
             Query query = createQueryBuilder().keyword().onField("bar").matching("2").createQuery();
             List list = searchManager.getQuery(query).list();
@@ -89,8 +96,9 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       withTx(tm(0), new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            cache1.remove("1");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache1);
+            Cache<String, Foo> cache = getKeyLocation("1");
+            cache.remove("1");   // cache will now be out of sync with the index
+            searchManager = Search.getSearchManager(cache);
 
             Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
             ResultIterator<?> iterator = searchManager.getQuery(query).iterator();
@@ -113,8 +121,9 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       withTx(tm(0), new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            cache1.remove("1");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache1);
+            Cache<String, Foo> cache = getKeyLocation("1");
+            cache.remove("1");   // cache will now be out of sync with the index
+            searchManager = Search.getSearchManager(cache);
 
             Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
             CacheQuery<?> cacheQuery = searchManager.getQuery(query);
@@ -137,7 +146,9 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          @Override
          public Void call() throws Exception {
             cache2.remove("2");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache1);
+            // Query a cache where key "2" is present in the index
+            Cache queryCache = getKeyLocation("2").equals(cache1) ? cache2 : cache1;
+            searchManager = Search.getSearchManager(queryCache);
 
             Query query = createQueryBuilder().keyword().onField("bar").matching("2").createQuery();
             ResultIterator<?> iterator = searchManager.getQuery(query).iterator(new FetchOptions().fetchMode(LAZY));
@@ -159,8 +170,9 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       withTx(tm(0), new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            cache1.remove("1");   // cache will now be out of sync with the index
-            searchManager = Search.getSearchManager(cache1);
+            Cache<String, Foo> cache = getKeyLocation("1");
+            cache.remove("1");   // cache will now be out of sync with the index
+            searchManager = Search.getSearchManager(cache);
 
             Query query = createQueryBuilder().keyword().onField("bar").matching("1").createQuery();
             ResultIterator<Object[]> iterator = searchManager.getQuery(query).projection(ProjectionConstants.VALUE, "bar")
@@ -210,6 +222,15 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
          }
       });
    }
+
+   private Cache<String, Foo> getKeyLocation(String key) {
+      Address cache1Address = cache1.getAdvancedCache().getRpcManager().getAddress();
+      LocalizedCacheTopology cacheTopology = cache1.getAdvancedCache().getDistributionManager().getCacheTopology();
+      DistributionInfo distribution = cacheTopology.getDistribution(key);
+      Address primary = distribution.primary();
+      return primary.equals(cache1Address) ? cache1 : cache2;
+   }
+
 
    @Indexed(index = "FooIndex")
    public static class Foo implements Serializable, ExternalPojo {
