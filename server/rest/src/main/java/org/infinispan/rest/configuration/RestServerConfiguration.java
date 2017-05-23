@@ -12,8 +12,8 @@ public class RestServerConfiguration extends ProtocolServerConfiguration {
    private final boolean startTransport;
    private final String contextPath;
 
-   RestServerConfiguration(ExtendedHeaders extendedHeaders, String host, int port, Set<String> ignoredCaches, SslConfiguration ssl, boolean startTransport, String contextPath) {
-      super(null, null, host, port, -1, -1, -1, ssl, false, -1, ignoredCaches, startTransport);
+   RestServerConfiguration(String defaultCacheName, String name, ExtendedHeaders extendedHeaders, String host, int port, Set<String> ignoredCaches, SslConfiguration ssl, boolean startTransport, String contextPath) {
+      super(defaultCacheName, name, host, port, -1, -1, -1, ssl, false, -1, ignoredCaches, startTransport);
       this.extendedHeaders = extendedHeaders;
       this.startTransport = startTransport;
       this.contextPath = contextPath;

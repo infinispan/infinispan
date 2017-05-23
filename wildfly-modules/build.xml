@@ -177,10 +177,6 @@
             <maven-resource group="org.jboss.marshalling" artifact="jboss-marshalling-osgi" />
         </module-def>
 
-        <module-def name="org.jboss.resteasy.resteasy-netty4" slot="${infinispan.slot}">
-            <maven-resource group="org.jboss.resteasy" artifact="resteasy-netty4" />
-        </module-def>
-
         <module-def name="org.jgroups" slot="${infinispan.slot}">
             <maven-resource group="org.jgroups" artifact="jgroups" />
         </module-def>
@@ -262,7 +258,7 @@
         </module-def>
 
         <module-def name="org.infinispan.server.rest" slot="${infinispan.slot}">
-            <maven-resource-with-classifier group="org.infinispan" artifact="infinispan-server-rest" classifier="classes"/>
+            <maven-resource group="org.infinispan" artifact="infinispan-server-rest"/>
         </module-def>
 
         <module-def name="org.infinispan.server.router" slot="${infinispan.slot}">

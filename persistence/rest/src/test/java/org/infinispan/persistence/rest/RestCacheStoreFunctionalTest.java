@@ -5,8 +5,8 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
-import org.infinispan.rest.EmbeddedRestServer;
-import org.infinispan.rest.RestTestingUtil;
+import org.infinispan.rest.RestServer;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -18,12 +18,16 @@ import org.testng.annotations.Test;
 @Test(testName = "persistence.remote.RestCacheStoreFunctionalTest", groups = "functional")
 public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
    private EmbeddedCacheManager localCacheManager;
-   private EmbeddedRestServer restServer;
+   private RestServer restServer;
 
    @Override
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder loaders, boolean preload) {
       localCacheManager = TestCacheManagerFactory.createCacheManager();
-      restServer = RestTestingUtil.startRestServer(localCacheManager);
+      RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
+      restServerConfigurationBuilder.port(0);
+      restServer = new RestServer();
+      restServer.start(restServerConfigurationBuilder.build(), cacheManager);
+
       loaders.addStore(RestStoreConfigurationBuilder.class)
             .host("localhost")
             .port(restServer.getPort())
@@ -36,7 +40,7 @@ public class RestCacheStoreFunctionalTest extends BaseStoreFunctionalTest {
    protected void teardown() {
       super.teardown();
       if (restServer != null) {
-         RestTestingUtil.killServers(restServer);
+         restServer.stop();
       }
       if (localCacheManager != null) {
          TestingUtil.killCacheManagers(localCacheManager);

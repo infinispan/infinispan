@@ -1,9 +1,8 @@
 package org.infinispan.server.memcached;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOutboundHandler;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
@@ -16,9 +15,10 @@ import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
 import org.infinispan.server.memcached.logging.JavaLog;
 
-import java.util.Collections;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelInboundHandler;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOutboundHandler;
 
 /**
  * Memcached server defining its decoder/encoder settings. In fact, Memcached does not use an encoder since there's
@@ -64,7 +64,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
 
    @Override
    public ChannelInitializer<Channel> getInitializer() {
-      return new NettyInitializers(new NettyChannelInitializer<>(this, transport, getEncoder()));
+      return new NettyInitializers(new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()));
    }
 
    @Override

@@ -69,7 +69,7 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       HttpMethod get = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
       cacheFactory.getRestClient().executeMethod(get);
       assertEquals(HttpStatus.SC_OK, get.getStatusCode());
-      assertEquals("text/plain", get.getResponseHeader("Content-Type").getValue());
+      assertEquals("text/plain;charset=UTF-8", get.getResponseHeader("Content-Type").getValue());
       assertEquals("v1", get.getResponseBodyAsString());
 
       // 4. Get with Hot Rod

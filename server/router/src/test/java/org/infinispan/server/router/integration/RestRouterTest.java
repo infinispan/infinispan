@@ -4,9 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.InetAddress;
 
-import org.infinispan.rest.embedded.netty4.NettyRestServer;
+import org.infinispan.rest.RestServer;
 import org.infinispan.server.router.MultiTenantRouter;
 import org.infinispan.server.router.configuration.builder.MultiTenantRouterConfigurationBuilder;
+import org.infinispan.server.router.router.Router;
 import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.rest.NettyRestServerRouteDestination;
 import org.infinispan.server.router.routes.rest.RestRouteSource;
@@ -25,21 +26,20 @@ public class RestRouterTest {
     @Test
     public void shouldRouteToProperRestServerBasedOnPath() throws Exception {
         //given
-        NettyRestServer restServer1 = RestTestingUtil.createDefaultRestServer();
-        NettyRestServer restServer2 = RestTestingUtil.createDefaultRestServer();
+        RestServer restServer1 = RestTestingUtil.createDefaultRestServer();
+        RestServer restServer2 = RestTestingUtil.createDefaultRestServer();
 
-        NettyRestServerRouteDestination rest1Destination = new NettyRestServerRouteDestination("rest1", restServer1.getServer());
+        NettyRestServerRouteDestination rest1Destination = new NettyRestServerRouteDestination("rest1", restServer1);
         RestRouteSource rest1Source = new RestRouteSource("rest1");
         Route<RestRouteSource, NettyRestServerRouteDestination> routeToRest1 = new Route<>(rest1Source, rest1Destination);
 
-        NettyRestServerRouteDestination rest2Destination = new NettyRestServerRouteDestination("rest2", restServer2.getServer());
+        NettyRestServerRouteDestination rest2Destination = new NettyRestServerRouteDestination("rest2", restServer2);
         RestRouteSource rest2Source = new RestRouteSource("rest2");
         Route<RestRouteSource, NettyRestServerRouteDestination> routeToRest2 = new Route<>(rest2Source, rest2Destination);
 
         MultiTenantRouterConfigurationBuilder routerConfigurationBuilder = new MultiTenantRouterConfigurationBuilder();
         routerConfigurationBuilder
                 .rest()
-                //FIXME: Use random port, see: RESTEASY-1429
                 .port(8080)
                 .ip(InetAddress.getLoopbackAddress())
                 .routing()
@@ -48,10 +48,11 @@ public class RestRouterTest {
 
         MultiTenantRouter router = new MultiTenantRouter(routerConfigurationBuilder.build());
         router.start();
+        int port = router.getRouter(Router.Protocol.REST).get().getPort().get();
 
         //when
-        RestClient rest1Client = new RestClient("http://127.0.0.1:8080/rest/rest1");
-        RestClient rest2Client = new RestClient("http://127.0.0.1:8080/rest/rest2");
+        RestClient rest1Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest1");
+        RestClient rest2Client = new RestClient("http://127.0.0.1:" + port + "/rest/rest2");
         rest1Client.put("test", "rest1");
         rest2Client.put("test", "rest2");
         String valueReturnedFromRest1 = rest1Client.get("test");
@@ -61,5 +62,4 @@ public class RestRouterTest {
         assertThat(valueReturnedFromRest1).isEqualTo("rest1");
         assertThat(valueReturnedFromRest2).isEqualTo("rest2");
     }
-
 }
