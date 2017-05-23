@@ -3,6 +3,7 @@ package org.infinispan.server.infinispan.task;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
@@ -40,7 +41,7 @@ public class ServerTaskEngine implements TaskEngine {
    }
 
    @Override
-   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context) {
+   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
       ServerTaskWrapper<T> task = registry.<T>getTask(taskName);
       if (task == null) {
          throw new IllegalArgumentException("Task not found: " + taskName);

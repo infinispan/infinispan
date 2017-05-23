@@ -3,6 +3,7 @@ package org.infinispan.scripting.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
@@ -39,7 +40,7 @@ public class ScriptingTaskEngine implements TaskEngine {
    }
 
    @Override
-   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context) {
+   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
       return scriptingManager.runScript(taskName, context);
    }
 

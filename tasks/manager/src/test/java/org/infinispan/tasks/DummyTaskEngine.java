@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.tasks.spi.TaskEngine;
 
@@ -40,7 +41,7 @@ public class DummyTaskEngine implements TaskEngine {
    }
 
    @Override
-   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context) {
+   public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
       switch (DummyTaskTypes.valueOf(taskName)) {
       case SUCCESSFUL_TASK:
          return (CompletableFuture<T>) CompletableFuture.completedFuture("result");

@@ -11,10 +11,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -48,6 +52,7 @@ public class TaskManagerImpl implements TaskManager {
    private ConcurrentMap<UUID, TaskExecution> runningTasks;
    private TimeService timeService;
    private boolean useSecurity;
+   private ExecutorService asyncExecutor;
 
    public TaskManagerImpl() {
       engines = new ArrayList<>();
@@ -55,9 +60,11 @@ public class TaskManagerImpl implements TaskManager {
    }
 
    @Inject
-   public void initialize(final EmbeddedCacheManager cacheManager, final TimeService timeService) {
+   public void initialize(final EmbeddedCacheManager cacheManager, final TimeService timeService,
+                          @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) ExecutorService asyncExecutor) {
       this.cacheManager = cacheManager;
       this.timeService = timeService;
+      this.asyncExecutor = asyncExecutor;
    }
 
    @Start
@@ -90,7 +97,7 @@ public class TaskManagerImpl implements TaskManager {
             TaskExecutionImpl exec = new TaskExecutionImpl(name, address == null ? "local" : address.toString(), who, context);
             exec.setStart(timeService.instant());
             runningTasks.put(exec.getUUID(), exec);
-            CompletableFuture<T> task = engine.runTask(name, context);
+            CompletableFuture<T> task = engine.runTask(name, context, asyncExecutor);
             return task.whenComplete((r, e) -> {
                if (context.isLogEvent()) {
                   EventLogger eventLog = EventLogManager.getEventLogger(cacheManager).scope(cacheManager.getAddress());
