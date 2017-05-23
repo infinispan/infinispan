@@ -15,8 +15,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
-import org.infinispan.rest.EmbeddedRestServer;
-import org.infinispan.rest.RestTestingUtil;
+import org.infinispan.rest.RestServer;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,8 +30,8 @@ import org.testng.annotations.Test;
 @Test(testName = "persistence.rest.upgrade.RestUpgradeSynchronizerTest", groups = "functional")
 public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
-   private EmbeddedRestServer sourceServer;
-   private EmbeddedRestServer targetServer;
+   private RestServer sourceServer;
+   private RestServer targetServer;
    private EmbeddedCacheManager sourceContainer;
    private Cache<byte[], byte[]> sourceServerCache;
    private EmbeddedCacheManager targetContainer;
@@ -40,10 +40,15 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
    @BeforeClass
    public void setup() throws Exception {
+      RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
+      restServerConfigurationBuilder.port(0);
+
       ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       sourceContainer = TestCacheManagerFactory.createCacheManager(serverBuilder);
       sourceServerCache = sourceContainer.getCache();
-      sourceServer = RestTestingUtil.startRestServer(sourceContainer);
+      sourceServer = new RestServer();
+      sourceServer.start(restServerConfigurationBuilder.build(), sourceContainer);
+
 
       ConfigurationBuilder targetConfigurationBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       targetConfigurationBuilder.persistence().addStore(RestStoreConfigurationBuilder.class).host("localhost").port(sourceServer.getPort())
@@ -51,7 +56,8 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
       targetContainer = TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
       targetServerCache = targetContainer.getCache();
-      targetServer = RestTestingUtil.startRestServer(targetContainer, sourceServer.getPort() + 10);
+      targetServer = new RestServer();
+      targetServer.start(restServerConfigurationBuilder.build(), targetContainer);
 
       client = new HttpClient();
    }
@@ -88,7 +94,8 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
    @AfterClass
    public void tearDown() {
       ((SimpleHttpConnectionManager) client.getHttpConnectionManager()).shutdown();
-      RestTestingUtil.killServers(sourceServer, targetServer);
+      sourceServer.stop();
+      targetServer.stop();
       TestingUtil.killCacheManagers(targetContainer, sourceContainer);
    }
 

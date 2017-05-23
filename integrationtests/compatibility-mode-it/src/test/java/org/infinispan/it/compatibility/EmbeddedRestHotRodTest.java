@@ -314,6 +314,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST key1
       HttpMethod getHotRodValue = new GetMethod(cacheFactory.getRestUrl() + "/" + key1);
+      getHotRodValue.setRequestHeader("Accept", "application/octet-stream");
       cacheFactory.getRestClient().executeMethod(getHotRodValue);
       assertEquals(getHotRodValue.getStatusText(), HttpStatus.SC_OK, getHotRodValue.getStatusCode());
       assertEquals("application/octet-stream", getHotRodValue.getResponseHeader("Content-Type").getValue());
@@ -321,6 +322,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 4. Get with REST key2
       HttpMethod getEmbeddedValue = new GetMethod(cacheFactory.getRestUrl() + "/" + key2);
+      getEmbeddedValue.setRequestHeader("Accept", "application/octet-stream");
       cacheFactory.getRestClient().executeMethod(getEmbeddedValue);
       assertEquals(getEmbeddedValue.getStatusText(), HttpStatus.SC_OK, getEmbeddedValue.getStatusCode());
       assertEquals("application/octet-stream", getEmbeddedValue.getResponseHeader("Content-Type").getValue());
@@ -341,13 +343,13 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       HttpMethod getKey1 = new HeadMethod(cacheFactory.getRestUrl() + "/" + key1);
       getKey1.setRequestHeader("Accept", "unknown-media-type");
       cacheFactory.getRestClient().executeMethod(getKey1);
-      assertEquals(getKey1.getStatusText(), HttpStatus.SC_BAD_REQUEST, getKey1.getStatusCode());
+      assertEquals(getKey1.getStatusText(), HttpStatus.SC_NOT_ACCEPTABLE, getKey1.getStatusCode());
 
       // 4. GET with REST key2
       HttpMethod getKey2 = new HeadMethod(cacheFactory.getRestUrl() + "/" + key2);
       getKey2.setRequestHeader("Accept", "unknown-media-type");
       cacheFactory.getRestClient().executeMethod(getKey2);
-      assertEquals(getKey2.getStatusText(), HttpStatus.SC_BAD_REQUEST, getKey2.getStatusCode());
+      assertEquals(getKey2.getStatusText(), HttpStatus.SC_NOT_ACCEPTABLE, getKey2.getStatusCode());
    }
 
    public void testHotRodEmbeddedPutRestGetCacheControlHeader() throws Exception {

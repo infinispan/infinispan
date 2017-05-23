@@ -17,8 +17,6 @@
       <module name="org.infinispan.server.hotrod" slot="${slot}"/>
       <module name="org.infinispan.server.rest" slot="${slot}"/>
       <module name="javax.ws.rs.api"/>
-      <module name="org.jboss.resteasy.resteasy-netty4" slot="${slot}" />
-      <module name="org.jboss.resteasy.resteasy-jaxrs"/>
       <module name="org.infinispan.server" slot="${slot}"/>
       <module name="org.infinispan" slot="${slot}"/>
       <module name="org.jboss.logging" />

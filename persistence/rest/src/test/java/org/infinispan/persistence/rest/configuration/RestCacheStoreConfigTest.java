@@ -8,8 +8,8 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.rest.EmbeddedRestServer;
-import org.infinispan.rest.RestTestingUtil;
+import org.infinispan.rest.RestServer;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
@@ -29,13 +29,16 @@ public class RestCacheStoreConfigTest extends AbstractInfinispanTest {
 
    public static final String CACHE_LOADER_CONFIG = "rest-cl-config.xml";
    private EmbeddedCacheManager cacheManager;
-   private EmbeddedRestServer restServer;
+   private RestServer restServer;
 
    @BeforeClass
    public void startUp() {
       cacheManager = TestCacheManagerFactory.createCacheManager();
       assertEquals(cacheManager.getCache().size(), 0);
-      restServer = RestTestingUtil.startRestServer(cacheManager, 18212);
+      RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
+      restServerConfigurationBuilder.port(18212);
+      restServer = new RestServer();
+      restServer.start(restServerConfigurationBuilder.build(), cacheManager);
    }
 
    public void simpleTest() throws Exception {
@@ -65,7 +68,7 @@ public class RestCacheStoreConfigTest extends AbstractInfinispanTest {
 
    @AfterClass
    public void tearDown() {
-      RestTestingUtil.killServers(restServer);
+      restServer.stop();
       TestingUtil.killCacheManagers(cacheManager);
    }
 }

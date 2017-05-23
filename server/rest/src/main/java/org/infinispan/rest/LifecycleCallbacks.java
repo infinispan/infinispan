@@ -5,6 +5,7 @@ import static org.infinispan.server.core.ExternalizerIds.MIME_METADATA;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.rest.operations.mime.MimeMetadata;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific {@link org.infinispan.marshall.AdvancedExternalizer}

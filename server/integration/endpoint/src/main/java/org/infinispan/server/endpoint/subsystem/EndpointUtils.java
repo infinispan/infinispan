@@ -20,7 +20,7 @@ package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.embedded.netty4.NettyRestServer;
+import org.infinispan.rest.RestServer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
@@ -88,9 +88,9 @@ public class EndpointUtils {
       builder.addDependency(protocolServerServiceName, HotRodServer.class, target);
    }
 
-   public static void addRestDependency(ServiceBuilder<?> builder, String protocolServerName, InjectedValue<NettyRestServer> target) {
+   public static void addRestDependency(ServiceBuilder<?> builder, String protocolServerName, InjectedValue<RestServer> target) {
       ServiceName protocolServerServiceName = DATAGRID.append("rest").append(protocolServerName);
-      builder.addDependency(protocolServerServiceName, NettyRestServer.class, target);
+      builder.addDependency(protocolServerServiceName, RestServer.class, target);
    }
 
    public static void addSocketBindingDependency(OperationContext context, ServiceBuilder<?> builder, String socketBindingName,

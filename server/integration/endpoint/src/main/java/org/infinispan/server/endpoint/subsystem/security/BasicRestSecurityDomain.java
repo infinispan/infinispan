@@ -9,28 +9,23 @@ import java.util.Collections;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 
+import org.infinispan.rest.authentication.SecurityDomain;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal;
 import org.jboss.as.core.security.SubjectUserInfo;
 import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.AuthorizingCallbackHandler;
 import org.jboss.as.domain.management.SecurityRealm;
-import org.jboss.resteasy.plugins.server.embedded.SecurityDomain;
 import org.jboss.sasl.callback.VerifyPasswordCallback;
 
-/**
- *
- * @author Tristan Tarrant
- * @since 9.0
- */
 public class BasicRestSecurityDomain implements SecurityDomain {
+
    private final SecurityRealm securityRealm;
 
    public BasicRestSecurityDomain(SecurityRealm securityRealm) {
       this.securityRealm = securityRealm;
    }
 
-   @Override
    public Principal authenticate(String username, String password) throws SecurityException {
       AuthorizingCallbackHandler handler = securityRealm.getAuthorizingCallbackHandler(AuthMechanism.PLAIN);
       NameCallback ncb = new NameCallback("name", username);
@@ -50,10 +45,5 @@ public class BasicRestSecurityDomain implements SecurityDomain {
          }
 
       } else throw new SecurityException("Invalid credentials");
-   }
-
-   @Override
-   public boolean isUserInRole(Principal principal, String role) {
-      return true;
    }
 }
