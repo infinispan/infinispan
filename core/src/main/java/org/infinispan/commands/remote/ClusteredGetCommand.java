@@ -160,9 +160,4 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
       return true;
    }
 
-   @Override
-   public boolean canBlock() {
-      return false;
-   }
-
 }

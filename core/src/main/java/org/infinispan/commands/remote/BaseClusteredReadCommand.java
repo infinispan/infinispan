@@ -42,4 +42,9 @@ public abstract class BaseClusteredReadCommand extends BaseRpcCommand implements
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
    }
+
+   @Override
+   public final boolean canBlock() {
+      return true;
+   }
 }
