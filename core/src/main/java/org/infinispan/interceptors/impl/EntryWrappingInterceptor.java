@@ -10,6 +10,7 @@ import java.util.Set;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
@@ -306,7 +307,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public final Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
          throws Throwable {
       wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
    }
 
    private void wrapEntryIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
@@ -369,7 +370,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public final Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
    }
 
    @Override
@@ -380,7 +381,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       }
       // When retrying, we might still need to perform the command even if the previous value was removed
       entryFactory.wrapEntryForWriting(ctx, command.getKey(), ignoreOwnership(command) || canRead(command.getKey()), command.loadType() != VisitableCommand.LoadType.DONT_LOAD);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
    }
 
    @Override
@@ -471,21 +472,21 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command)
          throws Throwable {
       wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
    }
 
    @Override
    public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command)
          throws Throwable {
       wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
    }
 
    @Override
    public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command)
          throws Throwable {
       wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
    }
 
    @Override
@@ -519,7 +520,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command)
          throws Throwable {
       wrapEntryIfNeeded(ctx, command);
-      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command);
    }
 
    @Override
@@ -677,11 +678,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
    private Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
-         DataWriteCommand command, Metadata metadata) {
+         DataWriteCommand command) {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
-            applyChanges(rCtx, dataWriteCommand, metadata);
+            if (dataWriteCommand instanceof MetadataAwareCommand) {
+               applyChanges(rCtx, dataWriteCommand, ((MetadataAwareCommand) dataWriteCommand).getMetadata());
+            } else {
+               applyChanges(rCtx, dataWriteCommand, null);
+            }
             return;
          }
 
