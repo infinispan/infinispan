@@ -21,9 +21,6 @@
                 name="configurationProperties">
             <props>
                 <prop
-                        key="infinispan.client.hotrod.ping_on_startup">false
-                </prop>
-                <prop
                         key="infinispan.client.hotrod.value_size_estimate">1024
                 </prop>
                 <prop
