@@ -18,12 +18,11 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.embedded.netty4.NettyRestServer;
+import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -50,7 +49,7 @@ public class CompatibilityCacheFactory<K, V> {
    private EmbeddedCacheManager cacheManager;
    private HotRodServer hotrod;
    private RemoteCacheManager hotrodClient;
-   private Lifecycle rest;
+   private RestServer rest;
    private MemcachedServer memcached;
 
    private Cache<K, V> embeddedCache;
@@ -195,8 +194,8 @@ public class CompatibilityCacheFactory<K, V> {
    void createRestCache(int port) throws Exception {
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
       builder.port(port);
-      rest = NettyRestServer.createServer(builder.build(), cacheManager);
-      rest.start();
+      rest = new RestServer();
+      rest.start(builder.build(), cacheManager);
       restClient = new HttpClient();
    }
 
@@ -237,7 +236,7 @@ public class CompatibilityCacheFactory<K, V> {
       killCacheManagers(cacheManager);
    }
 
-   void killRestServer(Lifecycle rest) {
+   void killRestServer(RestServer rest) {
       if (rest != null) {
          try {
             rest.stop();

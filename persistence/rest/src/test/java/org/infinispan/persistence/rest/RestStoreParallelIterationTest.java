@@ -9,8 +9,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.ParallelIterationTest;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
-import org.infinispan.rest.EmbeddedRestServer;
-import org.infinispan.rest.RestTestingUtil;
+import org.infinispan.rest.RestServer;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -23,11 +23,14 @@ import org.testng.annotations.Test;
 public class RestStoreParallelIterationTest  extends ParallelIterationTest {
 
    private EmbeddedCacheManager localCacheManager;
-   private EmbeddedRestServer restServer;
+   private RestServer restServer;
 
    protected void configurePersistence(ConfigurationBuilder cb) {
       localCacheManager = TestCacheManagerFactory.createCacheManager();
-      restServer = RestTestingUtil.startRestServer(localCacheManager);
+      RestServerConfigurationBuilder restServerConfigurationBuilder = new RestServerConfigurationBuilder();
+      restServer = new RestServer();
+      restServer.start(restServerConfigurationBuilder.build(), localCacheManager);
+
       cb.persistence().addStore(RestStoreConfigurationBuilder.class)
             .host("localhost")
             .port(restServer.getPort())
@@ -38,7 +41,7 @@ public class RestStoreParallelIterationTest  extends ParallelIterationTest {
    @Override
    protected void teardown() {
       super.teardown();
-      RestTestingUtil.killServers(restServer);
+      restServer.stop();
       TestingUtil.killCacheManagers(localCacheManager);
    }
 

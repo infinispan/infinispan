@@ -4,9 +4,6 @@ import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 
-import java.net.InetAddress;
-import java.util.Optional;
-
 import org.infinispan.server.router.RoutingTable;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -36,8 +33,8 @@ public interface RouterLogger extends org.infinispan.util.logging.Log {
     void hotRodRouterStarted(String address);
 
     @LogMessage(level = DEBUG)
-    @Message(value = "REST Router listening on %s:%s", id = 14004)
-    void restRouterStarted(Optional<InetAddress> address, Optional<Integer> port);
+    @Message(value = "REST Router listening on %s", id = 14004)
+    void restRouterStarted(String address);
 
     @LogMessage(level = INFO)
     @Message(value = "Routing table: %s", id = 14005)

@@ -238,6 +238,7 @@ public class ExampleConfigsIT {
 
             // 2. Get with REST
             HttpGet get = new HttpGet(restUrl + "/" + key);
+            get.addHeader("Accept", ContentType.APPLICATION_OCTET_STREAM.toString());
             HttpResponse getResponse = restClient.execute(get);
             assertEquals(HttpStatus.SC_OK, getResponse.getStatusLine().getStatusCode());
             assertArrayEquals("v1".getBytes(), EntityUtils.toByteArray(getResponse.getEntity()));

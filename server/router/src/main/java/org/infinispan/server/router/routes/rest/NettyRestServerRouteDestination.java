@@ -1,14 +1,14 @@
 package org.infinispan.server.router.routes.rest;
 
-import org.infinispan.rest.Server;
+import org.infinispan.rest.RestServer;
 import org.infinispan.server.router.routes.RouteDestination;
 
 public class NettyRestServerRouteDestination implements RouteDestination {
 
     private final String name;
-    private final Server restResource;
+    private final RestServer restResource;
 
-    public NettyRestServerRouteDestination(String name, Server restResource) {
+    public NettyRestServerRouteDestination(String name, RestServer restResource) {
         this.name = name;
         this.restResource = restResource;
     }
@@ -17,7 +17,7 @@ public class NettyRestServerRouteDestination implements RouteDestination {
         return name;
     }
 
-    public Server getRestResource() {
+    public RestServer getRestServer() {
         return restResource;
     }
 

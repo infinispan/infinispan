@@ -24,7 +24,6 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-rest</artifactId>
-         <classifier>classes</classifier>
          <optional>true</optional>
       </dependency>
       <dependency>
@@ -53,6 +52,10 @@
          <artifactId>mockito-core</artifactId>
          <scope>test</scope>
       </dependency>
+       <dependency>
+           <groupId>commons-codec</groupId>
+           <artifactId>commons-codec</artifactId>
+       </dependency>
    </dependencies>
 
    <build>

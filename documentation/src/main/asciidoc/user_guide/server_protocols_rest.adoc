@@ -4,35 +4,35 @@ The Infinispan Server distribution contains a server module that implements link
 Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a REST server.
 
 ==== REST API
-HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). It is important that a Content-Type header is set. Other headers are used to control the cache settings and behaviour (detailed in that link). 
+HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). It is important that a Content-Type header is set. Other headers are used to control the cache settings and behaviour (detailed in that link).
 
 ===== Putting data in
 ====== `PUT /{cacheName}/{cacheKey}`
-A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (the named cache must exist on the server). For example `http://someserver/hr/payRoll/3` (in which case `hr` is the cache name, and `payRoll/3` is the key). Any existing data will be replaced, and Time-To-Live and Last-Modified values etc will updated (if applicable). 
+A PUT request of the above URL form will place the payload (body) in the given cache, with the given key (the named cache must exist on the server). For example `http://someserver/hr/payRoll/3` (in which case `hr` is the cache name, and `payRoll/3` is the key). Any existing data will be replaced, and Time-To-Live and Last-Modified values etc will updated (if applicable).
 
 ====== `POST /{cacheName}/{cacheKey}`
-Exactly the same as PUT, only if a value in a cache/key already exists, it will return a Http CONFLICT status (and the content will not be updated). 
+Exactly the same as PUT, only if a value in a cache/key already exists, it will return a Http CONFLICT status (and the content will not be updated).
 
 ====== Headers
 
-*  Content-Type : MANDATORY (use link:http://www.iana.org/assignments/media-types/[media/mime-types] for example: "application/json").  If you set the Content-Type to `application/x-java-serialized-object`, then it will be stored as a Java object 
+*  Content-Type : MANDATORY (use link:http://www.iana.org/assignments/media-types/[media/mime-types] for example: "application/json").  If you set the Content-Type to `application/x-java-serialized-object`, then it will be stored as a Java object
 
-*  performAsync : OPTIONAL true/false (if true, this will return immediately, and then replicate data to the cluster on its own. Can help with bulk data inserts/large clusters.) 
+*  performAsync : OPTIONAL true/false (if true, this will return immediately, and then replicate data to the cluster on its own. Can help with bulk data inserts/large clusters.)
 
-*  timeToLiveSeconds : OPTIONAL number (the number of seconds before this entry will automatically be deleted). If no parameter is sent, Infinispan assumes -1 as default value, which means that the entry will not expire. Passing any negative value will have the same effect.
+*  timeToLiveSeconds : OPTIONAL number (the number of seconds before this entry will automatically be deleted). If no parameter is sent, Infinispan assumes configuration default value. Passing any negative value will create an entry which will live forever.
 
-*  maxIdleTimeSeconds : OPTIONAL number (the number of seconds after last usage of this entry when it will automatically be deleted). If no  parameter is sent, Infinispan assumes -1 as default value, which means that the entry will not expire as a result of idle time. Passing any negative value will have the same effect.
+*  maxIdleTimeSeconds : OPTIONAL number (the number of seconds after last usage of this entry when it will automatically be deleted). If no  parameter is sent, Infinispan configuration default value. Passing any negative value will create an entry which will live forever.
 
 .Passing 0 as parameter for timeToLiveSeconds and/or maxIdleTimeSeconds
-*  If both `timeToLiveSeconds` and `maxIdleTimeSeconds` are 0, the cache will use the default `lifespan` and `maxIdle` values configured in XML/programmatically 
-*  If _only_ `maxIdleTimeSeconds` is 0, it uses the `timeToLiveSeconds` value passed as parameter (or -1 if not present), and default `maxIdle` configured in XML/programmatically 
+*  If both `timeToLiveSeconds` and `maxIdleTimeSeconds` are 0, the cache will use the default `lifespan` and `maxIdle` values configured in XML/programmatically
+*  If _only_ `maxIdleTimeSeconds` is 0, it uses the `timeToLiveSeconds` value passed as parameter (or -1 if not present), and default `maxIdle` configured in XML/programmatically
 *  If _only_ `timeToLiveSeconds` is 0, it uses default `lifespan` configured in XML/programmatically, and `maxIdle` is set to whatever came as parameter (or -1 if not present)
 
 ===== Getting data back out
-HTTP GET and HEAD are used to retrieve data from entries. 
+HTTP GET and HEAD are used to retrieve data from entries.
 
 ====== `GET /{cacheName}/{cacheKey}`
-This will return the data found in the given cacheName, under the given key - as the body of the response. A Content-Type header will be supplied which matches what the data was inserted as (other then if it is a Java object, see below). Browsers can use the cache directly of course (eg as a CDN). An link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] will be returned unique for each entry, as will the Last-Modified and Expires headers field indicating the state of the data at the given URL. ETags allow browsers (and other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard HTTP and is honoured by Infinispan. 
+This will return the data found in the given cacheName, under the given key - as the body of the response. A Content-Type header will be supplied which matches what the data was inserted as (other then if it is a Java object, see below). Browsers can use the cache directly of course (eg as a CDN). An link:http://en.wikipedia.org/wiki/HTTP_ETag[ETag] will be returned unique for each entry, as will the Last-Modified and Expires headers field indicating the state of the data at the given URL. ETags allow browsers (and other clients) to ask for data only in the case where it has changed (to save on bandwidth) - this is standard HTTP and is honoured by Infinispan.
 
 Since Infinispan 5.3 it is possible to obtain additional information by appending the "extended" parameter on the query string, as follows:
 

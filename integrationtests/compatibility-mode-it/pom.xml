@@ -58,7 +58,6 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-rest</artifactId>
-         <classifier>classes</classifier>
          <scope>test</scope>
       </dependency>
       <dependency>

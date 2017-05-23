@@ -1,3 +1,0 @@
-<scanning xmlns="urn:jboss:scanning:1.0">
-<!-- Purpose:  Disable scanning for annotations in contained deployment. -->
-</scanning>

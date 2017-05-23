@@ -42,7 +42,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-rest</artifactId>
-            <classifier>classes</classifier>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
@@ -69,8 +68,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

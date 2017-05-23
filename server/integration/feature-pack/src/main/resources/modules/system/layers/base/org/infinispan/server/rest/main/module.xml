@@ -6,13 +6,12 @@
    </properties>
 
    <resources>
-      <artifact name="${org.infinispan:infinispan-server-rest::classes}"/>
+      <artifact name="${org.infinispan:infinispan-server-rest}"/>
    </resources>
 
    <dependencies>
       <module name="com.thoughtworks.xstream" />
       <module name="javax.api" />
-      <module name="javax.servlet.api"/>
       <module name="javax.transaction.api" />
       <module name="javax.ws.rs.api" />
       <module name="io.netty" />
@@ -25,8 +24,6 @@
       <module name="org.infinispan.server" />
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" services="import"/>
-      <module name="org.jboss.resteasy.resteasy-jaxrs"/>
-      <module name="org.jboss.resteasy.resteasy-netty4" />
       <module name="org.jgroups" />
    </dependencies>
 </module>

@@ -12,7 +12,6 @@
    <dependencies>
       <module name="com.thoughtworks.xstream" slot="${slot}"/>
       <module name="javax.api" />
-      <module name="javax.servlet.api"/>
       <module name="javax.transaction.api" />
       <module name="javax.ws.rs.api" />
       <module name="io.netty" />
@@ -25,8 +24,6 @@
       <module name="org.infinispan.server" slot="${slot}"/>
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" slot="${slot}" services="import"/>
-      <module name="org.jboss.resteasy.resteasy-jaxrs"/>
-      <module name="org.jboss.resteasy.resteasy-netty4" slot="${slot}"/>
       <module name="org.jgroups" slot="${slot}"/>
    </dependencies>
 </module>
