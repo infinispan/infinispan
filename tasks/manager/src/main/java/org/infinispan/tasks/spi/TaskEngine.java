@@ -2,6 +2,7 @@ package org.infinispan.tasks.spi;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
@@ -31,9 +32,10 @@ public interface TaskEngine {
     *
     * @param taskName the name of the task
     * @param context a task context
+    * @param executor the executor which the can be used by the task engine to run the task
     * @return
     */
-   <T> CompletableFuture<T> runTask(String taskName, TaskContext context);
+   <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor);
 
    /**
     * Returns whether this task engine knows about a specified named task
