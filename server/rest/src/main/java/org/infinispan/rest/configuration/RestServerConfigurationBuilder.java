@@ -15,16 +15,19 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       Builder<RestServerConfiguration> {
 
    private final static Log logger = LogFactory.getLog(RestServerConfigurationBuilder.class, Log.class);
-   public static final String DEFAULT_CONTEXT_PATH = "rest";
-   private boolean startTransport = true;
 
-   private static final int DEFAULT_PORT = 8080;
+   public static final String DEFAULT_CONTEXT_PATH = "rest";
+   public static final int DEFAULT_PORT = 8080;
+   public static final String DEFAILT_NAME = "rest";
+
+   private boolean startTransport = true;
 
    private ExtendedHeaders extendedHeaders = ExtendedHeaders.ON_DEMAND;
    private String contextPath = DEFAULT_CONTEXT_PATH;
 
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT);
+      name(DEFAILT_NAME);
    }
 
    public RestServerConfigurationBuilder extendedHeaders(ExtendedHeaders extendedHeaders) {
@@ -50,7 +53,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    @Override
    public RestServerConfiguration create() {
-      return new RestServerConfiguration(extendedHeaders, host, port, ignoredCaches, ssl.create(), startTransport, contextPath);
+      return new RestServerConfiguration(defaultCacheName, name, extendedHeaders, host, port, ignoredCaches, ssl.create(), startTransport, contextPath);
    }
 
    @Override

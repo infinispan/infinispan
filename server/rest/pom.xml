@@ -15,17 +15,9 @@
    <description>REST interface for Infinispan, packaged as a WAR file for deployment in a servlet container
    </description>
 
-   <build>
-      <plugins>
-         <plugin>
-            <artifactId>maven-war-plugin</artifactId>
-            <configuration>
-               <attachClasses>true</attachClasses>
-            </configuration>
-         </plugin>
-      </plugins>
-
-   </build>
+   <properties>
+      <certificate.dname>CN=HotRod_1,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW</certificate.dname>
+   </properties>
 
    <dependencies>
       <dependency>
@@ -67,5 +59,87 @@
          <scope>test</scope>
       </dependency>
 
+      <!-- It is very likely that we will replace Jetty with Netty for unifying
+           HTTP/1.1 and HTTP/2 testsuide -->
+      <dependency>
+         <groupId>org.eclipse.jetty</groupId>
+         <artifactId>jetty-client</artifactId>
+         <version>9.4.3.v20170317</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.assertj</groupId>
+         <artifactId>assertj-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-all</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.openjdk.jmh</groupId>
+         <artifactId>jmh-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.openjdk.jmh</groupId>
+         <artifactId>jmh-generator-annprocess</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-war-plugin</artifactId>
+            <configuration>
+               <attachClasses>true</attachClasses>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>keytool-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default_server</id>
+                  <goals>
+                     <goal>generateKeyPair</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <alias>default</alias>
+                     <keystore>${project.build.testOutputDirectory}/default_server_keystore.jks</keystore>
+                     <dname>${certificate.dname}</dname>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>default_truststore</id>
+                  <goals>
+                     <goal>importKeystore</goal>
+                  </goals>
+                  <phase>generate-test-resources</phase>
+                  <configuration>
+                     <srckeystore>${project.build.testOutputDirectory}/default_server_keystore.jks</srckeystore>
+                     <srcstorepass>secret</srcstorepass>
+                     <destkeystore>${project.build.testOutputDirectory}/default_client_truststore.jks</destkeystore>
+                     <deststorepass>secret</deststorepass>
+                  </configuration>
+               </execution>
+            </executions>
+            <configuration>
+               <skipIfExist>true</skipIfExist>
+               <storepass>secret</storepass>
+               <keypass>secret</keypass>
+               <keysize>2048</keysize>
+               <keyalg>RSA</keyalg>
+               <validity>365</validity>
+               <noprompt>true</noprompt>
+               <trustcacerts>true</trustcacerts>
+               <verbose>true</verbose>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>

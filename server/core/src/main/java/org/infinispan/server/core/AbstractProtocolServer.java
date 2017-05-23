@@ -17,8 +17,6 @@ import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.NettyTransport;
 
-import io.netty.channel.epoll.Epoll;
-
 /**
  * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
  *
@@ -38,21 +36,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    protected A configuration;
    private ObjectName transportObjName;
    private MBeanServer mbeanServer;
-   private static final String USE_EPOLL_PROPERTY = "infinispan.server.channel.epoll";
-   private static final boolean IS_LINUX = System.getProperty("os.name").toLowerCase().startsWith("linux");
-   private static final boolean EPOLL_DISABLED = System.getProperty(USE_EPOLL_PROPERTY, "true").equalsIgnoreCase("false");
-   private static final boolean USE_NATIVE_EPOLL;
 
-   static {
-      if (Epoll.isAvailable()) {
-         USE_NATIVE_EPOLL = !EPOLL_DISABLED && IS_LINUX;
-      } else {
-         if (IS_LINUX) {
-            log.epollNotAvailable(Epoll.unavailabilityCause().toString());
-         }
-         USE_NATIVE_EPOLL = false;
-      }
-   }
 
    protected AbstractProtocolServer(String protocolName) {
       this.protocolName = protocolName;
@@ -86,7 +70,7 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
 
    protected void startTransport() {
       InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
-      transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager, USE_NATIVE_EPOLL);
+      transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
 
       // Register transport MBean regardless
@@ -155,6 +139,9 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    public int getPort() {
+      if (transport != null) {
+         return transport.getPort();
+      }
       return configuration.port();
    }
 
