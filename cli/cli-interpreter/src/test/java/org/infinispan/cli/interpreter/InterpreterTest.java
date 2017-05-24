@@ -15,6 +15,7 @@ import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.cli.interpreter.statement.CacheStatement;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -29,9 +30,12 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.defaultCacheName("default");
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
       c.jmxStatistics().enable().dataContainer().invocationBatching().enable().locking().isolationLevel(IsolationLevel.READ_COMMITTED);
-      return TestCacheManagerFactory.createCacheManager(c);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gcb, c);
+      return cm;
    }
 
    private Interpreter getInterpreter() {
@@ -50,7 +54,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testSimple() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       execute(interpreter, sessionId, "put 'a' 'b'; get 'a';");
       execute(interpreter, sessionId, "put 'c' {\"org.infinispan.cli.interpreter.MyClass\":{\"i\":5,\"x\":null,\"b\":true}};");
       Object o = cache.get("c");
@@ -68,14 +72,14 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testPutIfAbsent() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       execute(interpreter, sessionId, "put 'a' 'a'; put --ifabsent 'a' 'b';");
       assertEquals("a", (String)cache.get("a"));
    }
 
    public void testCacheQualifier() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       cacheManager.defineConfiguration("otherCache", new ConfigurationBuilder().build());
       Cache<Object, Object> otherCache = cacheManager.getCache("otherCache");
       execute(interpreter, sessionId, "put 'a' 'a'; put 'otherCache'.'b' 'b'; cache 'otherCache'; put 'c' 'c';");
@@ -89,7 +93,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testBatching() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       execute(interpreter, sessionId, "start; put 'a' 'a'; put 'b' 'b'; end;");
       Object a = cache.get("a");
       assertEquals("a", a);
@@ -99,7 +103,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testTx() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       execute(interpreter, sessionId, "begin; put 'a' 'a'; commit;");
       Object a = cache.get("a");
       assertEquals("a", a);
@@ -109,7 +113,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testDangling() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       interpreter.execute(sessionId, "begin; put 'a' 'a';");
       assertNull(cache.getAdvancedCache().getTransactionManager().getTransaction());
       assertFalse(cache.containsKey("a"));
@@ -120,7 +124,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testRemove() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       interpreter.execute(sessionId, "put 'a' 'a';");
       Object a = cache.get("a");
       assertEquals("a", a);
@@ -135,7 +139,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testEvict() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       interpreter.execute(sessionId, "put 'a' 'a';");
       Object a = cache.get("a");
       assertEquals("a", a);
@@ -145,7 +149,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testReplace() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       interpreter.execute(sessionId, "put 'a' 'a';");
       Object a = cache.get("a");
       assertEquals("a", a);
@@ -162,7 +166,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testCreateLocal() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       interpreter.execute(sessionId, "create newcache;");
       assertTrue(cacheManager.cacheExists("newcache"));
       interpreter.execute(sessionId, "create anothercache like newcache;");
@@ -171,7 +175,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testUpgrade() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       interpreter.execute(sessionId, "upgrade --dumpkeys;");
    }
 
@@ -193,7 +197,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testStats() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       Map<String, String> response = interpreter.execute(sessionId, "stats;");
       assertFalse(response.containsKey(ResultKeys.ERROR.toString()));
       String output = response.get(ResultKeys.OUTPUT.toString());
@@ -208,7 +212,7 @@ public class InterpreterTest extends SingleCacheManagerTest {
 
    public void testParserErrors() throws Exception {
       Interpreter interpreter = getInterpreter();
-      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      String sessionId = interpreter.createSessionId("default");
       Map<String, String> response = interpreter.execute(sessionId, "got a;");
       assertTrue(response.containsKey(ResultKeys.ERROR.toString()));
    }
