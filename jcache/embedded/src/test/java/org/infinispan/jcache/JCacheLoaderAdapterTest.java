@@ -11,9 +11,16 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
-import org.testng.annotations.*;
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
 
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertFalse;
 
 /**
  * Unit tests for {@link JCacheLoaderAdapter}.
