@@ -170,7 +170,7 @@ public class Interpreter {
    private Session validateSession(final String sessionId) {
       if (sessionId == null) {
          Session session = new SessionImpl(codecRegistry, cacheManager, null, timeService);
-         session.setCurrentCache(BasicCacheContainer.DEFAULT_CACHE_NAME);
+         cacheManager.getCacheManagerConfiguration().defaultCacheName().ifPresent(session::setCurrentCache);
          return session;
       }
       if (!sessions.containsKey(sessionId)) {

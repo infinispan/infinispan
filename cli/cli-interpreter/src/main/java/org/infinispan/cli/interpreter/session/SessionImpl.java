@@ -122,7 +122,8 @@ public class SessionImpl implements Session {
 
    @Override
    public void reset() {
-      resetCache(cacheManager.getCache());
+      if (cacheManager.getCacheManagerConfiguration().defaultCacheName().isPresent())
+         resetCache(cacheManager.getCache());
       for (String cacheName : cacheManager.getCacheNames()) {
          resetCache(cacheManager.getCache(cacheName));
       }
