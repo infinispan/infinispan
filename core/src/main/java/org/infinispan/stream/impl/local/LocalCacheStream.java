@@ -274,6 +274,7 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
    @Override
    public <K, V> void forEach(BiConsumer<Cache<K, V>, ? super R> action) {
       Cache<K, V> cache = registry.getComponent(Cache.class);
+      registry.wireDependencies(action);
       createStream().forEach(e -> action.accept(cache, e));
    }
 

@@ -17,6 +17,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +31,7 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.LockedStream;
 import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
@@ -100,8 +102,10 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.impl.StatsImpl;
 import org.infinispan.stream.StreamMarshalling;
+import org.infinispan.stream.impl.LockStreamImpl;
 import org.infinispan.stream.impl.local.ValueCacheCollection;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
@@ -345,7 +349,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private RemoveCommand createRemoveConditionalCommand(Object key, Object value, long explicitFlags, InvocationContext ctx) {
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, explicitFlags);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       return command;
    }
 
@@ -532,7 +538,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private RemoveCommand createRemoveCommand(Object key, long explicitFlags, InvocationContext ctx) {
       long flags = addUnsafeFlags(explicitFlags);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, flags);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       return command;
    }
 
@@ -540,7 +548,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public void removeExpired(K key, V value, Long lifespan) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, lifespan);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       // Send an expired remove command to everyone
       executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -593,6 +603,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
       return cacheEntrySet(EnumUtil.EMPTY_BIT_SET);
+   }
+
+   @Override
+   public LockedStream<K, V> lockedStream() {
+      if (transactional && config.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
+         throw new UnsupportedOperationException("Method lockedStream is not supported in OPTIMISTIC transactional caches!");
+      }
+      return LockStreamImpl.newStream(cacheEntrySet().stream());
    }
 
    @SuppressWarnings("unchecked")
@@ -717,7 +735,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
     * If this is a transactional cache and autoCommit is set to true then starts a transaction if this is
     * not a transactional call.
     */
-   private InvocationContext getInvocationContextWithImplicitTransaction(boolean isPutForExternalRead, int keyCount) {
+   InvocationContext getInvocationContextWithImplicitTransaction(boolean isPutForExternalRead, int keyCount) {
       InvocationContext invocationContext;
       boolean txInjected = false;
       if (transactional) {
@@ -757,7 +775,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
       InvocationContext ctx = invocationContextFactory.createInvocationContext(true, UNBOUNDED);
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, flagsBitSet);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       return (Boolean) invoker.invoke(ctx, command);
    }
 
@@ -769,7 +789,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       InvocationContext ctx = invocationContextFactory.createInvocationContext(true, UNBOUNDED);
       ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta,
                                                                          Arrays.asList(locksToAcquire));
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       invoker.invoke(ctx, command);
    }
 
@@ -901,6 +923,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public AuthorizationManager getAuthorizationManager() {
       return authorizationManager;
+   }
+
+   @Override
+   public AdvancedCache<K, V> lockAs(Object lockOwner) {
+      Objects.nonNull(lockOwner);
+      return new DecoratedCache<>(this, lockOwner);
    }
 
    @Override
@@ -1091,11 +1119,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @SuppressWarnings("unchecked")
-   private PutKeyValueCommand createPutCommand(K key, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
+   PutKeyValueCommand createPutCommand(K key, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       return command;
    }
 
@@ -1133,7 +1163,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
       command.setPutIfAbsent(true);
       command.setValueMatcher(ValueMatcher.MATCH_EXPECTED);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       return command;
    }
 
@@ -1159,7 +1191,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       // return value)
       explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
       PutMapCommand command = commandsFactory.buildPutMapCommand(map, merged, explicitFlags);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       return command;
    }
 
@@ -1184,7 +1218,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       long flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, merged, flags);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       return command;
    }
 
@@ -1208,7 +1244,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                                           long explicitFlags, InvocationContext ctx) {
       Metadata merged = applyDefaultMetadata(metadata);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, merged, explicitFlags);
-      ctx.setLockOwner(command.getKeyLockOwner());
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
       return command;
    }
 
@@ -1392,7 +1430,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
-   private Object executeCommandAndCommitIfNeeded(InvocationContext ctx, VisitableCommand command) {
+   Object executeCommandAndCommitIfNeeded(InvocationContext ctx, VisitableCommand command) {
       final boolean txInjected = isTxInjected(ctx);
       Object result;
       try {
