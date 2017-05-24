@@ -19,7 +19,7 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
  * annotations and which can be directly added to your Protobuf schema files in the documentation comments of your
  * message type definitions as demonstrated in the example below:
  * <p/>
- * <b>Example:<b/>
+ * <b>Example:</b>
  * <p/>
  * <pre>
  * /**
