@@ -50,7 +50,7 @@ import org.infinispan.query.dsl.Query;
  * the case of lifespan (naturally does NOT apply for max idle): If number of seconds is bigger than 30 days, this
  * number of seconds is treated as UNIX time and so, represents the number of seconds since 1/1/1970. <br/>
  *
- * <b>Note on default expiration values:<b/> Due to limitations on the first
+ * <b>Note on default expiration values:</b> Due to limitations on the first
  * version of the protocol, it's not possible for clients to rely on default
  * lifespan and maxIdle values set on the server. This is because the protocol
  * does not support a way to tell the server that no expiration lifespan and/or
