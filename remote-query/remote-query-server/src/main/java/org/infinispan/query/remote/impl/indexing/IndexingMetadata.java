@@ -12,12 +12,13 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
 /**
  * All fields of Protobuf types are indexed and stored by default if no indexing annotations are present. This behaviour
  * exists only for compatibility with first release of remote query; it is deprecated and will be removed in Infinispan
- * 10.0 (the lack of annotations will imply no indexing support in this future release). Indexing all fields is
- * sometimes acceptable but it can become a performance problem if there are many or very large fields. To avoid such
- * problems Infinispan allows and encourages you to specify which fields to index and store by means of two annotations
- * ({@literal @}Indexed and {@literal @}Field) that behave very similarly to the identically named Hibernate Search
- * annotations and which can be directly added to your Protobuf schema files in the documentation comments of your
- * message type definitions as demonstrated in the example below:
+ * 10.0 (the lack of annotations on your message/field definition will imply no indexing support in this future release,
+ * but you will still be able to perform unindexed query). Indexing all fields is sometimes acceptable but it can become
+ * a performance problem if there are many or very large fields. To avoid such problems Infinispan allows and encourages
+ * you to specify which fields to index and store by means of two annotations ({@literal @}Indexed and
+ * {@literal @}Field) that behave very similarly to the identically named Hibernate Search annotations and which can be
+ * directly added to your Protobuf schema files in the documentation comments of your message type definitions as
+ * demonstrated in the example below:
  * <p/>
  * <b>Example:</b>
  * <p/>
@@ -49,8 +50,8 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
  * }
  * </pre>
  * <p>
- * Documentation annotations can be added after the human-readable documentation text on the last lines of the
- * documentation comment that precedes the element to be annotated (a message type definition or a field definition).
+ * Documentation annotations can be added after the human-readable text on the last lines of the documentation comment
+ * that precedes the element to be annotated (a message type definition or a field definition).
  * The syntax for defining these pseudo-annotations is identical to the one use by the Java language.
  * <p>
  * The '{@literal @}Indexed' annotation applies to message types only, has a boolean value that defaults to 'true', so
@@ -71,6 +72,7 @@ import org.infinispan.protostream.descriptors.AnnotationElement;
  * The '{@literal @}Analyzer' annotation applies to messages and fields and allows you to specify which analyzer to use
  * if analysis was enabled. If has a single attribute name 'definition' which must contain a valid analyzer definition
  * name specified as a String.
+ * <p>
  * <b>NOTE:</b>
  * <ul>
  * <li>1. The {@literal @}Field and {@literal @}Analyzer annotations have effect only if the containing message
