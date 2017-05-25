@@ -685,7 +685,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final void evict(K key, long explicitFlags) {
       assertKeyNotNull(key);
-      if (config.eviction().strategy() == EvictionStrategy.NONE) {
+      if (!config.eviction().strategy().isEnabled()) {
          log.evictionDisabled(name);
       }
       InvocationContext ctx = createSingleKeyNonTxInvocationContext();
