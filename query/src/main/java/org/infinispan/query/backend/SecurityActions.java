@@ -1,11 +1,11 @@
 package org.infinispan.query.backend;
 
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetCacheAction;
 
 /**
  * SecurityActions for the org.infinispan.query.backend package.
@@ -21,13 +21,12 @@ final class SecurityActions {
    private SecurityActions() {
    }
 
-   @SuppressWarnings("unchecked")
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+      return System.getSecurityManager() != null ?
+            AccessController.doPrivileged(action) : Security.doPrivileged(action);
+   }
+
    static <K, V> Cache<K, V> getCache(EmbeddedCacheManager cacheManager, String cacheName) {
-      GetCacheAction action = new GetCacheAction(cacheManager, cacheName);
-      if (System.getSecurityManager() != null) {
-         return (Cache<K, V>) AccessController.doPrivileged(action);
-      } else {
-         return (Cache<K, V>) Security.doPrivileged(action);
-      }
+      return doPrivileged(() -> cacheManager.getCache(cacheName));
    }
 }

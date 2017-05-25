@@ -1,17 +1,16 @@
 package org.infinispan.query.impl;
 
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetCacheComponentRegistryAction;
-import org.infinispan.security.actions.GetCacheGlobalComponentRegistryAction;
 
 /**
  * SecurityActions for the org.infinispan.query.impl package.
- *
+ * <p>
  * Do not move. Do not change class and method visibility to avoid being called from other
  * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.
  *
@@ -23,21 +22,16 @@ final class SecurityActions {
    private SecurityActions() {
    }
 
-   static ComponentRegistry getCacheComponentRegistry(final AdvancedCache<?, ?> cache) {
-      GetCacheComponentRegistryAction action = new GetCacheComponentRegistryAction(cache);
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(action);
-      } else {
-         return Security.doPrivileged(action);
-      }
+   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+      return System.getSecurityManager() != null ?
+            AccessController.doPrivileged(action) : Security.doPrivileged(action);
    }
 
-   static GlobalComponentRegistry getCacheGlobalComponentRegistry(final AdvancedCache<?, ?> cache) {
-      GetCacheGlobalComponentRegistryAction action = new GetCacheGlobalComponentRegistryAction(cache);
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(action);
-      } else {
-         return Security.doPrivileged(action);
-      }
+   static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> cache) {
+      return doPrivileged(cache::getComponentRegistry);
+   }
+
+   static GlobalComponentRegistry getCacheGlobalComponentRegistry(AdvancedCache<?, ?> cache) {
+      return doPrivileged(() -> cache.getCacheManager().getGlobalComponentRegistry());
    }
 }

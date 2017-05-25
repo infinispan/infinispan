@@ -17,7 +17,6 @@ import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.Security;
 import org.infinispan.server.core.QueryFacade;
 import org.kohsuke.MetaInfServices;
 

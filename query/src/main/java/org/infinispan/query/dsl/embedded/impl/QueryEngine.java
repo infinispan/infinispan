@@ -40,7 +40,6 @@ import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.RowPropertyHelper;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -666,12 +665,7 @@ public class QueryEngine<TypeMetadata> {
 
    protected final IckleFilterAndConverter createAndWireFilter(String queryString, Map<String, Object> namedParameters) {
       IckleFilterAndConverter filter = createFilter(queryString, namedParameters);
-
-      SecurityActions.doPrivileged(() -> {
-         cache.getComponentRegistry().wireDependencies(filter);
-         return null;
-      });
-
+      SecurityActions.getCacheComponentRegistry(cache).wireDependencies(filter);
       return filter;
    }
 
