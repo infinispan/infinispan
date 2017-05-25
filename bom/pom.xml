@@ -52,7 +52,7 @@
    </issueManagement>
 
    <properties>
-      <infinispan.codename>Ruppaner.1</infinispan.codename>
+      <infinispan.codename>Less Threads</infinispan.codename>
       <infinispan.core.schema.version>9.1</infinispan.core.schema.version>
 
       <version.java>1.8</version.java>
