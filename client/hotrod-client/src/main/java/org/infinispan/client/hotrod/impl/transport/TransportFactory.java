@@ -11,6 +11,7 @@ import javax.net.ssl.SSLContext;
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.AddressMapper;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
@@ -34,7 +35,7 @@ public interface TransportFactory {
 
    void releaseTransport(Transport transport);
 
-   void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ClientListenerNotifier listenerNotifier);
+   void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ClientListenerNotifier listenerNotifier, AddressMapper addressMapper);
 
    void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet);
 

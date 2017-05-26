@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ADDRESS_MAPPER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.ASYNC_EXECUTOR_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CALLBACK_HANDLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.AUTH_CLIENT_SUBJECT;
@@ -56,6 +57,7 @@ import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV2;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
 import org.infinispan.client.hotrod.SomeTransportfactory;
+import org.infinispan.client.hotrod.impl.AddressMapper;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.SaslTransportObjectFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
@@ -72,6 +74,7 @@ public class ConfigurationTest {
 
    static {
       OPTIONS.put(ASYNC_EXECUTOR_FACTORY, c -> c.asyncExecutorFactory().factoryClass());
+      OPTIONS.put(ADDRESS_MAPPER, c -> c.addressMapper().getName());
       OPTIONS.put(REQUEST_BALANCING_STRATEGY, Configuration::balancingStrategyClass);
       OPTIONS.put(TRANSPORT_FACTORY, Configuration::transportFactory);
       OPTIONS.put("maxActive", c -> c.connectionPool().maxActive());
@@ -121,6 +124,7 @@ public class ConfigurationTest {
       TYPES.put(String.class, s -> s);
       TYPES.put(SSLContext.class, s -> s);
       TYPES.put(MyCallbackHandler.class, c -> c);
+      TYPES.put(MyAddressMapper.class, c -> c);
       TYPES.put(Subject.class, s -> s);
       TYPES.put(ProtocolVersion.class, p -> p.toString());
       TYPES.put(mkClass(), l -> String.join(",", (List<String>) l));
@@ -140,6 +144,10 @@ public class ConfigurationTest {
       @Override public void handle(Callback[] callbacks) {}
    }
 
+   public static class MyAddressMapper implements AddressMapper {
+
+   }
+
    Subject clientSubject = new Subject();
 
    public void testConfiguration() {
@@ -156,6 +164,7 @@ public class ConfigurationTest {
          .addServer()
             .host("host2")
             .port(11222)
+         .addressMapping(MyAddressMapper.class)
          .asyncExecutorFactory()
             .factoryClass(SomeAsyncExecutorFactory.class)
          .balancingStrategy(SomeRequestBalancingStrategy.class)
@@ -215,6 +224,7 @@ public class ConfigurationTest {
       Properties p = new Properties();
       p.setProperty(SERVER_LIST, "host1:11222; host2:11222");
       p.setProperty(ASYNC_EXECUTOR_FACTORY, "org.infinispan.client.hotrod.SomeAsyncExecutorFactory");
+      p.setProperty(ADDRESS_MAPPER, MyAddressMapper.class.getName());
       p.setProperty(REQUEST_BALANCING_STRATEGY, "org.infinispan.client.hotrod.SomeRequestBalancingStrategy");
       p.setProperty(TRANSPORT_FACTORY, "org.infinispan.client.hotrod.SomeTransportfactory");
       p.setProperty(HASH_FUNCTION_PREFIX + "." + 2, "org.infinispan.client.hotrod.SomeCustomConsistentHashV2");
@@ -478,6 +488,7 @@ public class ConfigurationTest {
          assertEquals(11222, configuration.servers().get(i).port());
       }
       assertEqualsConfig(SomeAsyncExecutorFactory.class, ASYNC_EXECUTOR_FACTORY, configuration);
+      assertEqualsConfig(MyAddressMapper.class.getName(), ADDRESS_MAPPER, configuration);
       assertEqualsConfig(SomeRequestBalancingStrategy.class, REQUEST_BALANCING_STRATEGY, configuration);
       assertEqualsConfig(SomeTransportfactory.class, TRANSPORT_FACTORY, configuration);
       assertEquals(null, configuration.consistentHashImpl(1));

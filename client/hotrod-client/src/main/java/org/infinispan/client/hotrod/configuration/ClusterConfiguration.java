@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.util.List;
 
+import org.infinispan.client.hotrod.impl.AddressMapper;
+
 /**
  * @since 8.1
  */
