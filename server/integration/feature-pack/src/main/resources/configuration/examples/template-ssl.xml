@@ -18,25 +18,25 @@
                 </authorization>
             </security-realm>
             <security-realm name="ApplicationRealm">
+                <server-identities>
+                    <ssl>
+                        <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" alias="hotrod" key-password="secret" generate-self-signed-certificate-host="localhost"/>
+                    </ssl>
+                </server-identities>
                 <authentication>
+                    <truststore path="ca.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
                     <local default-user="$local" allowed-users="*" skip-group-loading="true" />
-                    <truststore path="truststore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
                     <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
                 </authentication>
                 <authorization>
                     <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
                 </authorization>
-                <server-identities>
-                    <ssl>
-                       <keystore path="keystore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret" alias="server" key-password="secret" generate-self-signed-certificate-host="localhost"/>
-                    </ssl>
-                </server-identities>
             </security-realm>
         </security-realms>
         <audit-log>
             <formatters>
                <json-formatter name="json-formatter"/>
-            </formatters>        
+            </formatters>
             <handlers>
                <file-handler name="file" formatter="json-formatter" relative-to="jboss.server.data.dir" path="audit-log.log"/>
             </handlers>
