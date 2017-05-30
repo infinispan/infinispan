@@ -21,11 +21,13 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 
 /**
- * // TODO: Document this
+ * Not used anymore.
  *
  * @author anistor@redhat.com
  * @since 5.2
+ * @deprecated since 9.1
  */
+@Deprecated
 public class AffectedKeysVisitor extends AbstractVisitor {
 
    @Override
