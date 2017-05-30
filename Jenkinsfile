@@ -50,6 +50,22 @@ pipeline {
                 }
             }
         }
+
+        stage('distribution') {
+            when {
+                branch 'master'
+            }
+            steps {
+                configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
+                    script {
+                        def mvnHome = tool 'Maven'
+                        sh "${mvnHome}/bin/mvn clean install -s $MAVEN_SETTINGS -Pdistribution -DskipTests"
+                        junit testDataPublishers: [[$class: 'ClaimTestDataPublisher']], testResults: '**/target/*-reports/*.xml'
+                        sh "${mvnHome}/bin/mvn clean -s $MAVEN_SETTINGS"
+                    }
+                }
+            }
+        }
         
         stage('Deploy SNAPSHOT') {
             when {
