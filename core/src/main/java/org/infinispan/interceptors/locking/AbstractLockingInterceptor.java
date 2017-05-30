@@ -12,6 +12,8 @@ import java.util.stream.Stream;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
@@ -20,6 +22,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -74,6 +77,10 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ)) {
+         // Cache.putForExternalRead() is non-transactional
+         return visitNonTxDataWriteCommand(ctx, command);
+      }
       return visitDataWriteCommand(ctx, command);
    }
 
@@ -192,6 +199,11 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
+   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+
+   @Override
    public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
    }
@@ -210,6 +222,18 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
    }
+
+   @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      return handleReadManyCommand(ctx, command, command.getKeys());
+   }
+
+   @Override
+   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      return handleReadManyCommand(ctx, command, command.getKeys());
+   }
+
+   protected abstract Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) throws Throwable;
 
    protected abstract <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable;
 

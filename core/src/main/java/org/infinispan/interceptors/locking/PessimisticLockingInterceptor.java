@@ -110,13 +110,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) throws Throwable {
       try {
          Object stage;
          if (!readNeedsLock(ctx, command)) {
             stage = invokeNext(ctx, command);
          } else {
-            Collection<?> keys = command.getKeys();
             if (!needRemoteLocks(ctx, keys, command)) {
                acquireLocalLocks(ctx, command, keys);
                stage = invokeNext(ctx, command);
@@ -396,6 +395,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    private void releaseLocksOnFailureBeforePrepare(InvocationContext ctx) {
+      if (!ctx.isInTxScope()) {
+         return;
+      }
       TxInvocationContext txContext = (TxInvocationContext) ctx;
       try {
          lockManager.unlockAll(ctx);
