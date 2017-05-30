@@ -45,9 +45,10 @@ public abstract class AbstractNamedFactoryExtensionProcessor<T> extends Abstract
                         String nameValue = annotation.value("name").asString();
                         AbstractExtensionManagerService<T> service = createService(nameValue, instance);
                         ServiceName extensionServiceName = Constants.DATAGRID.append(service.getServiceTypeName(), nameValue.replaceAll("\\.", "_"));
-                        ServiceBuilder<T> serviceBuilder = ctx.getServiceTarget().addService(extensionServiceName, service);
-                        serviceBuilder.setInitialMode(ServiceController.Mode.ACTIVE)
-                                .addDependency(extensionManagerServiceName, ExtensionManagerService.class, service.getExtensionManager());
+                        ServiceBuilder<T> serviceBuilder = ctx.getServiceTarget()
+                              .addService(extensionServiceName, service)
+                              .setInitialMode(ServiceController.Mode.ACTIVE)
+                              .addDependency(extensionManagerServiceName, ExtensionManagerService.class, service.getExtensionManager());
                         serviceBuilder.install();
                     }
                 }

@@ -38,7 +38,6 @@ import org.jboss.dmr.ModelNode;
  */
 public abstract class ClusteredCacheConfigurationAdd extends CacheConfigurationAdd {
 
-
     ClusteredCacheConfigurationAdd(CacheMode mode) {
         super(mode);
     }
@@ -63,7 +62,7 @@ public abstract class ClusteredCacheConfigurationAdd extends CacheConfigurationA
      */
     @Override
     void processModelNode(OperationContext context, String containerName, ModelNode cache, ConfigurationBuilder builder, List<Dependency<?>> dependencies)
-            throws OperationFailedException{
+            throws OperationFailedException {
 
         // process cache attributes and elements
         super.processModelNode(context, containerName, cache, builder, dependencies);

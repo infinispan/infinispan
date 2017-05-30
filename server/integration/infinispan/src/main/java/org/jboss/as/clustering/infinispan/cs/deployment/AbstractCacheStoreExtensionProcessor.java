@@ -74,7 +74,7 @@ public abstract class AbstractCacheStoreExtensionProcessor<T> implements Deploym
 
       protected final T extension;
       protected final String className;
-      protected InjectedValue<DeployedCacheStoreFactory> deployedCacheStoreFactory = new InjectedValue<>();
+      protected final InjectedValue<DeployedCacheStoreFactory> deployedCacheStoreFactory = new InjectedValue<>();
 
       protected AbstractExtensionManagerService(String className, T extension) {
          this.extension = extension;
@@ -93,7 +93,7 @@ public abstract class AbstractCacheStoreExtensionProcessor<T> implements Deploym
          deployedCacheStoreFactory.getValue().removeInstance(extension);
       }
 
-      public InjectedValue<DeployedCacheStoreFactory> getDeployedCacheStoreFactory() {
+      InjectedValue<DeployedCacheStoreFactory> getDeployedCacheStoreFactory() {
          return deployedCacheStoreFactory;
       }
 

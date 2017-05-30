@@ -25,16 +25,15 @@ public class ServerExtensionDependenciesProcessor implements DeploymentUnitProce
 
     @Override
     public void deploy(DeploymentPhaseContext ctx) throws DeploymentUnitProcessingException {
-        if (hasInfinispanExtensions(ctx)) {
-            DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
+        DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
+        if (hasInfinispanExtensions(deploymentUnit)) {
             ModuleSpecification moduleSpec = deploymentUnit.getAttachment(Attachments.MODULE_SPECIFICATION);
             ModuleLoader moduleLoader = Module.getBootModuleLoader();
             moduleSpec.addSystemDependency(new ModuleDependency(moduleLoader, API, false, false, false, false));
         }
     }
 
-    private boolean hasInfinispanExtensions(DeploymentPhaseContext ctx) {
-        DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
+    private boolean hasInfinispanExtensions(DeploymentUnit deploymentUnit) {
         ServicesAttachment servicesAttachment = deploymentUnit.getAttachment(Attachments.SERVICES);
         if (servicesAttachment != null) {
             List<String> filterFactories = servicesAttachment.getServiceImplementations(CacheEventFilterFactory.class.getName());
@@ -43,7 +42,7 @@ public class ServerExtensionDependenciesProcessor implements DeploymentUnitProce
             List<String> marshallers = servicesAttachment.getServiceImplementations(Marshaller.class.getName());
             List<String> keyValueFilterConverterFactories = servicesAttachment.getServiceImplementations(KeyValueFilterConverterFactory.class.getName());
             return !filterFactories.isEmpty() || !marshallers.isEmpty()
-                    || !converterFactories.isEmpty() || !filterConverterFactories.isEmpty() || !keyValueFilterConverterFactories.isEmpty();
+                  || !converterFactories.isEmpty() || !filterConverterFactories.isEmpty() || !keyValueFilterConverterFactories.isEmpty();
         }
         return false;
     }
