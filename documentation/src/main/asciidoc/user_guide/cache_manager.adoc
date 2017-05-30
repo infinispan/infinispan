@@ -39,8 +39,9 @@ cluster overall.
 === Cluster Executor
 The cache manager comes with a nice utility that allows you to execute arbitrary code in the cluster.
 Note this is unlike the Distributed Execution Service as this requires no Cache to be used.  This
-link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html[cluster executor]
-can be retrieved by calling +executor()+ of the `EmbeddedCacheManager`.
+link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html[Cluster Executor]
+can be retrieved by calling +executor()+ of the `EmbeddedCacheManager`. This executor is retrievable
+in both clustered and non clustered configurations.
 
 This manager was built specifically using Java 8 and such has functional APIs in mind, thus all methods take a functional
 inteface as an argument.  Also since these arguments will be sent to other nodes they need to be serializable.  We even
@@ -48,7 +49,68 @@ used a nice trick to ensure our lambdas are immediately Serializable.  That is b
 Serializable and the real argument type (ie. Runnable or Function).  The JRE will pick the most specific class when
 determining which method to invoke, so in that case your lambdas will always be serializable.
 
-Below you will see an example of how to use the new executor.
+The manager by default will submit a given command to all nodes in the cluster including the node
+where it was submitted from. It is possible to further reduce which nodes it will execute upon or
+only run the command on a single node at a time if desired as is explained in the below sections.
+
+==== Topology Execution Policy
+
+As was mentioned above it is possible to limit on which nodes the command will be ran. For example you may
+want to only run a computation on machines in the same rack. Or you may want to perform an operation
+once in the local site and again on a different site. A cluster executor can limit what nodes it sends
+requests to at the scope of same or different machine, rack or site level.
+
+[source,java]
+.SameRack.java
+----
+   EmbeddedCacheManager manager = ...;
+   manager.executor().filterTargets(ClusterExecutionPolicy.SAME_RACK).submit(...)
+----
+
+To use this you must enable topology aware consistent hashing through
+<<ServerHinting, Server Hinting>>.
+
+==== Timeout
+
+Cluster Executor allows for a timeout to be set per invocation. This defaults to the distributed sync timeout
+as configured on the Transport Configuration. This timeout works in both a clusetered an non clustered
+cache manager. There are no guarantees as to if the execution is attempted to be interrupted or not. However
+when the timeout occurs any `Consumer` or `Future` will be completed passing back a `TimeoutException`.
+This value can be overridden by ivoking the
+link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
+method and supplying the desired duration.
+
+==== Single Node Submission
+
+Cluster Executor can also run in single node submission mode instead of submitting the command
+to all nodes it will instead pick one of the nodes that would have normally received the command
+and instead submit it it to only one. Each submission will possibly use a different node to
+execute the task on. This can be very useful to use the ClusterExecutor as a
+`java.util.concurrent.Executor` which you may have noticed that ClusterExecutor implements.
+
+[source,java]
+.SingleNode.java
+----
+   EmbeddedCacheManager manager = ...;
+   manager.executor().singleNodeSubmission().submit(...)
+----
+
+===== Failover
+
+When running in single node submission it may be desirable to also allow the Cluster Executor
+handle cases where an exception occurred during the processing of a given command by retrying
+the command again.
+When this occurs the Cluster Executor will choose a single node again to resubmit the command to
+up to the desired number of failover attempts. Note the chosen node could be any node that passes
+the topology or predicate check. Failover is enabled by invoking the overridden
+link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html#singleNodeSubmission-int-[singleNodeSubmission]
+method. The given command will be resubmitted again to a single node until either
+the command completes without exception or the total submission amount is equal to the provided
+failover count. If however a `org.infinispan.util.concurrent.TimeoutException` is encountered
+either from the command or by the command timing out as defined in `timeout` then it will
+terminate the failover process and complete any pending CompletableFutures with the
+exception.
+
 
 ==== Example: Dynamically Start and Stop Clustered Cache
 This example shows how you can use the ClusterExecutor to dynamically start and stop a cache.
@@ -71,7 +133,7 @@ To do this on every single node though, you could write your own service to do t
 .StartCache.java
 ----
 
-   EmbeddedCacheManager manager = null;
+   EmbeddedCacheManager manager = ...;
    String cacheName = "start-this-cache";
    manager.executor().submitConsumer(localManager -> {
          localManager.getCache(cacheName);
