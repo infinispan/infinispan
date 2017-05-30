@@ -60,7 +60,6 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-rest</artifactId>
-         <classifier>classes</classifier>
       </dependency>
 
       <dependency>
