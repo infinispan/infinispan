@@ -23,7 +23,8 @@ public final class ConverterFactoryExtensionProcessor extends AbstractNamedFacto
         return CacheEventConverterFactory.class;
     }
 
-    private static class ConverterFactoryService extends AbstractExtensionManagerService<CacheEventConverterFactory> {
+    private static final class ConverterFactoryService extends AbstractExtensionManagerService<CacheEventConverterFactory> {
+
         private ConverterFactoryService(String name, CacheEventConverterFactory converterFactory) {
             super(name, converterFactory);
         }

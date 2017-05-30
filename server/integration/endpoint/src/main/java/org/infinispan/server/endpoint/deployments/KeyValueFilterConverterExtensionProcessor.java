@@ -27,7 +27,8 @@ public class KeyValueFilterConverterExtensionProcessor extends AbstractNamedFact
       return KeyValueFilterConverterFactory.class;
    }
 
-   private static class KeyValueFilterConverterFactoryService extends AbstractExtensionManagerService<KeyValueFilterConverterFactory> {
+   private static final class KeyValueFilterConverterFactoryService extends AbstractExtensionManagerService<KeyValueFilterConverterFactory> {
+
       private KeyValueFilterConverterFactoryService(String name, KeyValueFilterConverterFactory converterFactory) {
          super(name, converterFactory);
       }

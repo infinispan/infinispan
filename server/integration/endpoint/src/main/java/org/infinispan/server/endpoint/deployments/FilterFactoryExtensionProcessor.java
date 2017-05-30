@@ -23,8 +23,9 @@ public final class FilterFactoryExtensionProcessor extends AbstractNamedFactoryE
         return new FilterFactoryService(name, instance);
     }
 
-    private static class FilterFactoryService extends AbstractExtensionManagerService<CacheEventFilterFactory> {
-        public FilterFactoryService(String name, CacheEventFilterFactory filterFactory) {
+    private static final class FilterFactoryService extends AbstractExtensionManagerService<CacheEventFilterFactory> {
+
+        private FilterFactoryService(String name, CacheEventFilterFactory filterFactory) {
             super(name, filterFactory);
         }
 

@@ -32,8 +32,9 @@ public class MarshallerExtensionProcessor extends AbstractServerExtensionProcess
     public void installService(DeploymentPhaseContext ctx, String serviceName, Marshaller instance) {
         MarshallerService service = new MarshallerService(instance);
         ServiceName extensionServiceName = Constants.DATAGRID.append(service.getServiceTypeName());
-        ServiceBuilder<Marshaller> serviceBuilder = ctx.getServiceTarget().addService(extensionServiceName, service);
-        serviceBuilder.setInitialMode(ServiceController.Mode.ACTIVE)
+        ServiceBuilder<Marshaller> serviceBuilder = ctx.getServiceTarget()
+                .addService(extensionServiceName, service)
+                .setInitialMode(ServiceController.Mode.ACTIVE)
                 .addDependency(extensionManagerServiceName, ExtensionManagerService.class, service.getExtensionManager());
         try {
             serviceBuilder.install();
@@ -43,16 +44,17 @@ public class MarshallerExtensionProcessor extends AbstractServerExtensionProcess
         }
     }
 
-    static class MarshallerService implements Service<Marshaller> {
+    private static final class MarshallerService implements Service<Marshaller> {
+
         private final Marshaller marshaller;
         private final InjectedValue<ExtensionManagerService> extensionManager = new InjectedValue<>();
 
-        MarshallerService(Marshaller marshaller) {
+        private MarshallerService(Marshaller marshaller) {
             assert marshaller != null : ROOT_LOGGER.nullVar(getServiceTypeName());
             this.marshaller = marshaller;
         }
 
-        public InjectedValue<ExtensionManagerService> getExtensionManager() {
+        InjectedValue<ExtensionManagerService> getExtensionManager() {
             return extensionManager;
         }
 
@@ -73,7 +75,7 @@ public class MarshallerExtensionProcessor extends AbstractServerExtensionProcess
             return marshaller;
         }
 
-        public String getServiceTypeName() {
+        String getServiceTypeName() {
             return "remote-event-marshaller";
         }
     }

@@ -48,7 +48,7 @@ public abstract class SharedStateCacheConfigurationAdd extends ClusteredCacheCon
 
     @Override
     void processModelNode(OperationContext context, String containerName, ModelNode cache, ConfigurationBuilder builder, List<Dependency<?>> dependencies)
-            throws OperationFailedException{
+            throws OperationFailedException {
 
         // process the basic clustered configuration
         super.processModelNode(context, containerName, cache, builder, dependencies);
