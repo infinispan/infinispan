@@ -36,12 +36,12 @@
         <attribute name="property" />
         <![CDATA[
             version = attributes.get("version");
-            checkMajor = java.lang.Integer.parseInt(attributes.get("major"));
-            checkMinor = java.lang.Integer.parseInt(attributes.get("minor"));
+            checkMajor = attributes.get("major").toInteger();
+            checkMinor = attributes.get("minor").toInteger();
             if (version.indexOf('.') > 0) {
-                parts = version.split(".");
-                major = parseInt(parts[0]);
-                minor = parseInt(parts[1]);
+                parts = version.tokenize(".");
+                major = parts[0].toInteger();
+                minor = parts[1].toInteger();
                 if (major > checkMajor || (major == checkMajor && minor >= checkMinor)) {
                     project.setProperty(attributes.get("property"), "true");
                     self.log("Version " + version);

@@ -270,7 +270,7 @@
                <dependency>
                   <groupId>org.codehaus.groovy</groupId>
                   <artifactId>groovy-all</artifactId>
-                  <version>2.4.8</version>
+                  <version>${version.groovy}</version>
                </dependency>
             </dependencies>
             <executions>
