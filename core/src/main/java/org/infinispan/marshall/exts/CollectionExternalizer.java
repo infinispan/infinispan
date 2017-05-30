@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -74,6 +75,8 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
             MarshallUtil.marshallCollection(collection, output);
             break;
          case SINGLETON_LIST:
+            output.writeObject(((List) collection).get(0));
+            break;
          case SINGLETON_SET:
             output.writeObject(collection.iterator().next());
             break;

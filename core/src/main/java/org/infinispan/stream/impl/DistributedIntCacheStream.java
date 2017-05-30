@@ -1,5 +1,7 @@
 package org.infinispan.stream.impl;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.IntSummaryStatistics;
 import java.util.Iterator;
@@ -29,6 +31,8 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.stream.impl.intops.primitive.i.AsDoubleIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.AsLongIntOperation;
@@ -56,6 +60,8 @@ import org.infinispan.util.function.SerializableIntToLongFunction;
 import org.infinispan.util.function.SerializableIntUnaryOperator;
 import org.infinispan.util.function.SerializableObjIntConsumer;
 import org.infinispan.util.function.SerializableSupplier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Implementation of {@link IntStream} that utilizes a lazily evaluated distributed back end execution.  Note this
@@ -64,6 +70,9 @@ import org.infinispan.util.function.SerializableSupplier;
  */
 public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntStream, IntCacheStream>
         implements IntCacheStream {
+
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
    /**
     * This constructor is to be used only when a user calls a map or flat map method changing to an IntStream
     * from a CacheStream, Stream, DoubleStream, LongStream etc.
@@ -71,6 +80,11 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
     */
    protected DistributedIntCacheStream(AbstractCacheStream other) {
       super(other);
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 
    @Override
@@ -441,7 +455,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
       // Since this is a remote iterator we have to add it to the remote intermediate operations queue
       intermediateOperations.add(BoxedIntOperation.getInstance());
       DistributedCacheStream<Integer> stream = new DistributedCacheStream<>(this);
-      Iterator<Integer> iterator = stream.remoteIterator();
+      Iterator<Integer> iterator = stream.iterator();
       return new IntegerIteratorToPrimitiveInteger(iterator);
    }
 
@@ -490,7 +504,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    @Override
    public IntCacheStream
    filterKeySegments(Set<Integer> segments) {
-      segmentsToFilter = segments;
+      segmentsToFilter = SmallIntSet.from(segments);
       return this;
    }
 

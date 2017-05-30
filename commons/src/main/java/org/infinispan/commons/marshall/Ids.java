@@ -157,9 +157,10 @@ public interface Ids {
 
    int IMMUTABLE_SET = 110;
 
-   int CONVERTER_KEY_MAPPER = 111;
-   int CONVERTER_VALUE_MAPPER = 112;
-   int CONVERTER_ENTRY_MAPPER = 113;
+   int STREAM_ITERATOR_RESPONSE = 111;
+   int END_ITERATOR = 112;
+
+   int STREAM_MAP_OPS = 113;
 
    int TRIANGLE_ACK_EXTERNALIZER = 114;
 
@@ -184,6 +185,8 @@ public interface Ids {
    int SCATTERED_CONSISTENT_HASH_FACTORY = 127;
    int SCATTERED_CONSISTENT_HASH = 128;
    int METADATA_REMOTE = 129;
+
+   int INT_SET = 130;
 
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
