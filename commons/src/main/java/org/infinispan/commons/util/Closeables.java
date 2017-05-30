@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.stream.BaseStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -46,7 +47,7 @@ public class Closeables {
     * @param <R> The type of the stream
     * @return A spliterator that when closed will also close the underlying stream
     */
-   public static <R> CloseableSpliterator<R> spliterator(Stream<R> stream) {
+   public static <R> CloseableSpliterator<R> spliterator(BaseStream<R, Stream<R>> stream) {
       return new StreamToCloseableSpliterator<>(stream);
    }
 
@@ -56,7 +57,7 @@ public class Closeables {
     * @param <R> The type of the stream
     * @return An iterator that when closed will also close the underlying stream
     */
-   public static <R> CloseableIterator<R> iterator(Stream<? extends R> stream) {
+   public static <R> CloseableIterator<R> iterator(BaseStream<R, Stream<R>> stream) {
       return new StreamToCloseableIterator<>(stream);
    }
 
@@ -174,9 +175,9 @@ public class Closeables {
    }
 
    private static class StreamToCloseableIterator<E> extends IteratorAsCloseableIterator<E> {
-      private final Stream<? extends E> stream;
+      private final BaseStream<E, Stream<E>> stream;
 
-      public StreamToCloseableIterator(Stream<? extends E> stream) {
+      public StreamToCloseableIterator(BaseStream<E, Stream<E>> stream) {
          super(stream.iterator());
          this.stream = stream;
       }
@@ -188,9 +189,9 @@ public class Closeables {
    }
 
    private static class StreamToCloseableSpliterator<T> extends SpliteratorAsCloseableSpliterator<T> {
-      private final Stream<T> stream;
+      private final BaseStream<T, Stream<T>> stream;
 
-      public StreamToCloseableSpliterator(Stream<T> stream) {
+      public StreamToCloseableSpliterator(BaseStream<T, Stream<T>> stream) {
          super(stream.spliterator());
          this.stream = stream;
       }
