@@ -15,7 +15,7 @@ from xml.etree.ElementTree import *
 # TreeBuilder that preserves comments
 class CommentedTreeBuilder(TreeBuilder):
   def __init__(self, *args, **kwargs):
-    super(CommentedTreeBuilder, self).__init__(*args, **kwargs)
+    TreeBuilder.__init__(self, *args, **kwargs)
 
   def comment(self, data):
     self.start(Comment, {})
