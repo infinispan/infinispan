@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-jcache-parent</artifactId>
-      <version>9.1.0-SNAPSHOT</version>
+      <version>9.1.0.Alpha1</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -370,7 +370,7 @@
                <plugin>
                   <groupId>org.wildfly.plugins</groupId>
                   <artifactId>wildfly-maven-plugin</artifactId>
-                  <!-- we only configure the jigsaw-specific VM options here -->
+                  
                   <configuration>
                      <javaOpts>
                         <javaOpt>-Dsun.reflect.debugModuleAccessChecks=true</javaOpt>

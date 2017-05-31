@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>9.1.0-SNAPSHOT</version>
+      <version>9.1.0.Alpha1</version>
       <relativePath>../bom/pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-parent</artifactId>
@@ -84,7 +84,7 @@
 
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
       <forkJvmArgs>-Xmx2G</forkJvmArgs>
-      <jigsawForkJvmArgs></jigsawForkJvmArgs>
+      <jigsawForkJvmArgs />
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter,org.infinispan.commons.test.skip.SkipOnOsListener</testNGListeners>
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
@@ -156,7 +156,7 @@
       <version.mc4j>1.2.6</version.mc4j>
       <version.mockito>2.7.21</version.mockito>
       <version.mockito_dep.objenesis>2.5</version.mockito_dep.objenesis>
-      <!-- Used by integrationtests/osgi -->
+      
       <version.mockito_dep.bytebuddy>1.6.11</version.mockito_dep.bytebuddy>
       <version.mockito_dep.hamcrest>1.3</version.mockito_dep.hamcrest>
       <version.mysql.driver>5.1.19</version.mysql.driver>
@@ -180,7 +180,7 @@
       <version.jmh>1.12</version.jmh>
       <version.oauth.core>20090531</version.oauth.core>
 
-      <!-- When updating WildFly version, keep the property version.h2.driver-within-wildfly in synch -->
+      
       <version.org.wildfly>10.1.0.Final</version.org.wildfly>
       <version.org.wildfly.core>2.2.0.Final</version.org.wildfly.core>
       <version.org.wildfly.arquillian>1.0.2.Final</version.org.wildfly.arquillian>
@@ -492,8 +492,8 @@
             <type>pom</type>
             <scope>import</scope>
          </dependency>
-         <!-- This is a work around for https://issues.jboss.org/browse/SHRINKRES-238 -->
-         <!-- After fixing the issue above, the dependency below can be safely removed -->
+         
+         
          <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-aether-provider</artifactId>
@@ -1618,14 +1618,7 @@
             <jdk>[9,)</jdk>
          </activation>
          <properties>
-            <!--
-              java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
-                core externalizers for JDK types
-              java.nio, jdk.internal.ref, sun.nio.ch: Netty, server/hotrod
-              com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
-              java.text, java.awt.font: XStream, server/rest
-              java.security: Wildfly, server/integration/*
-            -->
+            
             <jigsawForkJvmArgs>
                -Dsun.reflect.debugModuleAccessChecks=true
                --add-opens=java.base/java.lang=ALL-UNNAMED
@@ -1660,7 +1653,7 @@
                      <groupId>org.apache.maven.plugins</groupId>
                      <artifactId>maven-compiler-plugin</artifactId>
                      <configuration>
-                        <!-- fork is needed so compiler args can be used -->
+                        
                         <fork>true</fork>
                         <compilerArgs>
                            <arg>-J--add-modules</arg>
@@ -1677,7 +1670,7 @@
          <id>extras</id>
          <activation>
             <activeByDefault>true</activeByDefault>
-            <!-- activeByDefault is not enough to activate the profile in children projects -->
+            
             <property>
                <name>maven.home</name>
             </property>
@@ -1800,8 +1793,7 @@
        </properties>
      </profile>
 
-      <!-- Only one of the root-dirX profiles will be active, and it will set log4j.configurationFile
-           to $REACTOR_ROOT/etc/log4j2.xml -->
+      
       <profile>
          <id>root-dir1</id>
          <activation>
@@ -1954,13 +1946,13 @@
                         </goals>
                         <configuration>
                            <target>
-                              <ac:if xmlns:ac="antlib:net.sf.antcontrib">
-                                 <ac:available file="${project.build.directory}/classes" type="dir"/>
-                                 <ac:then>
+                              <ns2:if xmlns:ns2="antlib:net.sf.antcontrib">
+                                 <ns2:available file="${project.build.directory}/classes" type="dir" />
+                                 <ns2:then>
                               <echo>Copying test classes to jacoco folder.</echo>
                               <copydir dest="${jacoco.reportPath}/classes" src="${project.build.directory}/classes" />
-                                 </ac:then>
-                              </ac:if>
+                                 </ns2:then>
+                              </ns2:if>
                            </target>
                         </configuration>
                      </execution>
