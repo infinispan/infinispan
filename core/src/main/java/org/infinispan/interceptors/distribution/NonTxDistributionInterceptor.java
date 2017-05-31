@@ -40,9 +40,9 @@ import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -248,12 +248,12 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             .whenComplete((responseMap, throwable) -> {
                if (throwable != null) {
                   allFuture.completeExceptionally(throwable);
-               } else try {
-                  // ignore actual response value
-                  getSingleSuccessfulResponseOrFail(responseMap, allFuture);
+               } else {
+                  if (getSuccessfulResponseOrFail(responseMap, allFuture,
+                        () -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE)) == null) {
+                     return;
+                  }
                   allFuture.countDown();
-               } catch (Throwable t) {
-                  allFuture.completeExceptionally(t);
                }
             });
    }
@@ -385,9 +385,12 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                if (throwable != null) {
                   allFuture.completeExceptionally(throwable);
                } else {
-                  Response response = getSingleSuccessfulResponseOrFail(responses, allFuture);
-                  if (response == null) return;
-                  Object responseValue = ((SuccessfulResponse) response).getResponseValue();
+                  SuccessfulResponse response = getSuccessfulResponseOrFail(responses, allFuture,
+                        () -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE));
+                  if (response == null) {
+                     return;
+                  }
+                  Object responseValue = response.getResponseValue();
                   moveListItemsToFuture(myOffset).accept(allFuture, responseValue);
                   allFuture.countDown();
                }
