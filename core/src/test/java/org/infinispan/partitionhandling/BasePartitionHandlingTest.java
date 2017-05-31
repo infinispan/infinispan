@@ -1,12 +1,15 @@
 package org.infinispan.partitionhandling;
 
+import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -294,6 +297,9 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       public void assertKeyAvailableForRead(Object k, Object expectedValue) {
          for (Cache c : cachesInThisPartition()) {
             assertEquals(c.get(k), expectedValue, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value: ");
+            // While we keep the null values in the map inside interceptor stack, these are removed in CacheImpl.getAll
+            Map<Object, Object> expectedMap = expectedValue == null ? Collections.emptyMap() : Collections.singletonMap(k, expectedValue);
+            assertEquals(c.getAdvancedCache().getAll(Collections.singleton(k)), expectedMap, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value: ");
          }
       }
 
@@ -311,12 +317,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
       protected void assertKeyNotAvailableForRead(Object key) {
          for (Cache<Object, ?> c : cachesInThisPartition()) {
-            try {
-               c.get(key);
-               fail("Key " + key + " available in cache " + address(c));
-            } catch (AvailabilityException ae) {
-               //expected!
-            }
+            expectException(AvailabilityException.class, () -> c.get(key));
+            expectException(AvailabilityException.class, () -> c.getAdvancedCache().getAll(Collections.singleton(key)));
          }
       }
 

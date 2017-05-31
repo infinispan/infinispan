@@ -76,6 +76,13 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
       return LoadType.OWNER;
    }
 
+   /**
+    * Apply function on entry without any data
+    */
+   public Object performOnLostData() {
+      return f.apply(EntryViews.noValue((K) key));
+   }
+
    @Override
    public String toString() {
       return "ReadOnlyKeyCommand{" +
@@ -83,5 +90,4 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
             ", f=" + f +
             '}';
    }
-
 }

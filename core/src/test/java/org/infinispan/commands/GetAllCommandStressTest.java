@@ -95,9 +95,15 @@ public class GetAllCommandStressTest extends StressTest {
 
    protected void workerLogic(Cache<Integer, Integer> cache, Set<Integer> threadKeys, int iteration) {
       Map<Integer, Integer> results = cache.getAdvancedCache().getAll(threadKeys);
-      assertEquals("Keys: " + threadKeys + "\nResults: " + results, threadKeys.size(), results.size());
+      assertEquals("Missing: " + diff(threadKeys, results.keySet()), threadKeys.size(), results.size());
       for (Integer key : threadKeys) {
          assertEquals(key, results.get(key));
       }
+   }
+
+   private Set<Integer> diff(Set<Integer> superset, Set<Integer> subset) {
+      Set<Integer> diff = new HashSet<>(superset);
+      diff.removeAll(subset);
+      return diff;
    }
 }
