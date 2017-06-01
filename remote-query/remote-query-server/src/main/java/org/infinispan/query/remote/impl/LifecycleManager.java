@@ -110,9 +110,12 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-      InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
+      InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {
-         ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+         ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class);
+         protobufMetadataManager.addCacheDependency(cacheName);
+
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
          cr.registerComponent(new ProtobufMatcher(serCtx), ProtobufMatcher.class);
 
