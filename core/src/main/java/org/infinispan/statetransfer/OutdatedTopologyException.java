@@ -22,8 +22,6 @@ public class OutdatedTopologyException extends CacheException {
     * handle a command.
     * <p>
     * It avoids the cost associated to create and collect the stack when it isn't needed.
-    *
-    * @return a cached instance of {@link OutdatedTopologyException}.
     */
    @SuppressWarnings("ThrowableInstanceNeverThrown")
    public static final OutdatedTopologyException INSTANCE = new OutdatedTopologyException();
@@ -40,7 +38,6 @@ public class OutdatedTopologyException extends CacheException {
 
    /**
     * Request retrying the command in explicitly set topology (or later one).
-    * @param requestedTopologyId
     */
    public OutdatedTopologyException(int requestedTopologyId) {
       super(null, null, false, false);

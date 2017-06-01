@@ -76,14 +76,14 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       assertTrue(lm.isLocked("k2"));
       assertEquals(2, txTable.getLocalTxCount());
       assertNotNull(tm.getTransaction());
-      expectException(TimeoutException.class, () -> op.execute());
+      expectException(TimeoutException.class, op::execute);
 
       //make sure that locks acquired by that tx were released even before the transaction is rolled back, the tx object
       //was marked for rollback
       Transaction transaction = tm.getTransaction();
       assertNotNull(transaction);
       assertEquals(Status.STATUS_MARKED_ROLLBACK, transaction.getStatus());
-      assertFalse(lm.isLocked("k2"));
+      assertTrue(lm.isLocked("k2"));
       assertTrue(lm.isLocked("k1"));
       expectException(CacheException.class, IllegalStateException.class, () -> cache.put("k3", "v3"));
       assertEquals(2, txTable.getLocalTxCount());
@@ -99,6 +99,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       assertEquals(0, txTable.getLocalTxCount());
       assertEquals("v1", cache.get("k1"));
       assertFalse(lm.isLocked("k1"));
+      assertFalse(lm.isLocked("k2"));
       assertEquals(0, txTable.getLocalTxCount());
    }
 

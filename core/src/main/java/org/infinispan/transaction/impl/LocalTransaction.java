@@ -212,12 +212,12 @@ public abstract class LocalTransaction extends AbstractCacheTransaction {
       if (recipients == null) {
          return null;
       }
-      if (getTopologyId() == currentTopologyId) {
-         return recipients;
-      }
+      // Include all the nodes we sent a LockControlCommand to and are not in the recipients list now
+      // either because the topology changed, or because the lock failed.
+      // Also include nodes that are no longer in the cluster, so if JGroups retransmits a lock/prepare command
+      // after a merge, it also retransmits the commit/rollback.
       Set<Address> allRecipients = new HashSet<>(getRemoteLocksAcquired());
       allRecipients.addAll(recipients);
-      allRecipients.retainAll(members);
       if (trace) log.tracef("The merged list of nodes to send commit/rollback is %s", allRecipients);
       return allRecipients;
    }
