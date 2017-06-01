@@ -4,13 +4,15 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 
 /**
- * SecurityActions for the org.infinispan.query.remote package. Do not move and do not change class and method
+ * SecurityActions for the org.infinispan.query.remote.impl package. Do not move and do not change class and method
  * visibility!
  *
  * @author anistor@redhat.com
@@ -36,5 +38,9 @@ final class SecurityActions {
 
    static AuthorizationManager getCacheAuthorizationManager(AdvancedCache<?, ?> cache) {
       return doPrivileged(cache::getAuthorizationManager);
+   }
+
+   static <K, V> Cache<K, V> getCache(EmbeddedCacheManager cacheManager, String cacheName) {
+      return doPrivileged(() -> cacheManager.getCache(cacheName));
    }
 }
