@@ -9,7 +9,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -18,8 +17,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.concurrent.locks.LockUtil;
@@ -45,6 +43,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    private static final Log log = LogFactory.getLog(PessimisticLockingInterceptor.class);
    public static final boolean trace = log.isTraceEnabled();
 
+   private final InvocationSuccessFunction localLockCommandWork =
+         (rCtx, rCommand, rv) -> localLockCommandWork(rCtx, (LockControlCommand) rCommand);
+
    private CommandsFactory cf;
    private StateTransferManager stateTransferManager;
 
@@ -66,32 +67,23 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          return invokeNext(ctx, command);
       }
 
-      try {
-         if (!readNeedsLock(ctx, command)) {
-            return invokeNext(ctx, command);
-         }
-
-         Object key = command.getKey();
-         if (!needRemoteLocks(ctx, key, command)) {
-            acquireLocalLock(ctx, command);
-            return invokeNext(ctx, command);
-         }
-
-         TxInvocationContext txContext = (TxInvocationContext) ctx;
-         LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
-               txContext.getGlobalTransaction());
-         Object result = invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> invokeNext(rCtx, command));
-         return makeStage(result).andFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
-            if (t != null) {
-               rethrowAndReleaseLocksIfNeeded(rCtx, t);
-            } else {
-               acquireLocalLock(rCtx, (DataCommand) rCommand);
-            }
-         });
-      } catch (Throwable t) {
-         rethrowAndReleaseLocksIfNeeded(ctx, t);
-         throw t;
+      if (!readNeedsLock(ctx, command)) {
+         return invokeNext(ctx, command);
       }
+
+      Object key = command.getKey();
+      if (!needRemoteLocks(ctx, key, command)) {
+         acquireLocalLock(ctx, command);
+         return invokeNext(ctx, command);
+      }
+
+      TxInvocationContext txContext = (TxInvocationContext) ctx;
+      LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
+            txContext.getGlobalTransaction());
+      return invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
+         acquireLocalLock(rCtx, command);
+         return invokeNext(rCtx, command);
+      });
 
    }
 
@@ -110,33 +102,25 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    @Override
    protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) throws Throwable {
-      try {
-         Object stage;
-         if (!readNeedsLock(ctx, command)) {
-            stage = invokeNext(ctx, command);
+      Object maybeStage;
+      if (!readNeedsLock(ctx, command)) {
+         maybeStage = invokeNext(ctx, command);
+      } else {
+         if (!needRemoteLocks(ctx, keys, command)) {
+            acquireLocalLocks(ctx, command, keys);
+            maybeStage = invokeNext(ctx, command);
          } else {
-            if (!needRemoteLocks(ctx, keys, command)) {
-               acquireLocalLocks(ctx, command, keys);
-               stage = invokeNext(ctx, command);
-            } else {
-               // Acquire the remote locks first, then the local locks
-               final TxInvocationContext txContext = (TxInvocationContext) ctx;
-               LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
-                     txContext.getGlobalTransaction());
-               stage = invokeNextThenApply(ctx, lcc, (rCtx, rLockCommand, rv) -> {
-                  acquireLocalLocks(rCtx, command, keys);
-                  return invokeNext(rCtx, command);
-               });
-            }
+            // Acquire the remote locks first, then the local locks
+            final TxInvocationContext txContext = (TxInvocationContext) ctx;
+            LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
+                  txContext.getGlobalTransaction());
+            maybeStage = invokeNextThenApply(ctx, lcc, (rCtx, rLockCommand, rv) -> {
+               acquireLocalLocks(rCtx, command, keys);
+               return invokeNext(rCtx, command);
+            });
          }
-         return makeStage(stage).andExceptionally(ctx, command, (rCtx, rCommand, t) -> {
-            releaseLocksOnFailureBeforePrepare(rCtx);
-            throw t;
-         });
-      } catch (Throwable t) {
-         releaseLocksOnFailureBeforePrepare(ctx);
-         throw t;
       }
+      return maybeStage;
    }
 
    private void acquireLocalLocks(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys)
@@ -157,101 +141,81 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
 
    @Override
    protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
-      try {
-         Object stage;
-         if (hasSkipLocking(command)) {
-            stage = invokeNext(ctx, command);
+      Object maybeStage;
+      if (hasSkipLocking(command)) {
+         maybeStage = invokeNext(ctx, command);
+      } else {
+         if (!needRemoteLocks(ctx, keys, command)) {
+            acquireLocalLocks(ctx, command, keys);
+            maybeStage = invokeNext(ctx, command);
          } else {
-            if (!needRemoteLocks(ctx, keys, command)) {
-               acquireLocalLocks(ctx, command, keys);
-               stage = invokeNext(ctx, command);
-            } else {
-               final TxInvocationContext txContext = (TxInvocationContext) ctx;
-               LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
-                     txContext.getGlobalTransaction());
-               stage = invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
-                  acquireLocalLocks(rCtx, command, keys);
-                  return invokeNext(rCtx, command);
-               });
-            }
+            final TxInvocationContext txContext = (TxInvocationContext) ctx;
+            LockControlCommand lcc = cf.buildLockControlCommand(keys, command.getFlagsBitSet(),
+                  txContext.getGlobalTransaction());
+            maybeStage = invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
+               acquireLocalLocks(rCtx, command, keys);
+               return invokeNext(rCtx, command);
+            });
          }
-         return makeStage(stage).andExceptionally(ctx, command, (rCtx, rCommand, t) -> {
-            rethrowAndReleaseLocksIfNeeded(rCtx, t);
-            throw t;
-         });
-      } catch (Throwable t) {
-         rethrowAndReleaseLocksIfNeeded(ctx, t);
-         throw t;
       }
+      return maybeStage;
    }
 
    @Override
    protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command)
          throws Throwable {
-      try {
-         Object stage;
-         Object key = command.getKey();
-         if (hasSkipLocking(command)) {
-            // Non-modifying functional write commands are executed in non-transactional context on non-originators
-            if (ctx.isInTxScope()) {
-               // Mark the key as affected even with SKIP_LOCKING
-               ((TxInvocationContext<?>) ctx).addAffectedKey(key);
-            }
-            stage = invokeNext(ctx, command);
-         } else {
-            if (!needRemoteLocks(ctx, key, command)) {
-               acquireLocalLock(ctx, command);
-               stage = invokeNext(ctx, command);
-            } else {
-               final TxInvocationContext txContext = (TxInvocationContext) ctx;
-               LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
-                     txContext.getGlobalTransaction());
-               return invokeNextAndHandle(ctx, lcc, (rCtx, rCommand, rv, t) -> {
-                  rethrowAndReleaseLocksIfNeeded(rCtx, t);
-                  acquireLocalLock(rCtx, command);
-                  return invokeNext(rCtx, command);
-               });
-            }
+      Object maybeStage;
+      Object key = command.getKey();
+      if (hasSkipLocking(command)) {
+         // Non-modifying functional write commands are executed in non-transactional context on non-originators
+         if (ctx.isInTxScope()) {
+            // Mark the key as affected even with SKIP_LOCKING
+            ((TxInvocationContext<?>) ctx).addAffectedKey(key);
          }
-         return makeStage(stage).andExceptionally(ctx, command, (rCtx, rCommand, t) -> {
-            rethrowAndReleaseLocksIfNeeded(rCtx, t);
-            throw t;
-         });
-      } catch (Throwable t) {
-         releaseLocksOnFailureBeforePrepare(ctx);
-         throw t;
+         maybeStage = invokeNext(ctx, command);
+      } else {
+         if (!needRemoteLocks(ctx, key, command)) {
+            acquireLocalLock(ctx, command);
+            maybeStage = invokeNext(ctx, command);
+         } else {
+            final TxInvocationContext txContext = (TxInvocationContext) ctx;
+            LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
+                  txContext.getGlobalTransaction());
+            return invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
+               acquireLocalLock(rCtx, command);
+               return invokeNext(rCtx, command);
+            });
+         }
       }
+      return maybeStage;
    }
 
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command)
          throws Throwable {
       try {
-         Object stage;
+         Object maybeStage;
          if (hasSkipLocking(command)) {
-            stage = invokeNext(ctx, command);
+            maybeStage = invokeNext(ctx, command);
          } else {
             Object[] compositeKeys = command.getCompositeKeys();
             Set<Object> keysToLock = new HashSet<>(Arrays.asList(compositeKeys));
             if (!needRemoteLocks(ctx, keysToLock, command)) {
                ((TxInvocationContext<?>) ctx).addAllAffectedKeys(keysToLock);
                acquireLocalCompositeLocks(command, keysToLock, ctx);
-               stage = invokeNext(ctx, command);
+               maybeStage = invokeNext(ctx, command);
             } else {
                final TxInvocationContext txContext = (TxInvocationContext) ctx;
                LockControlCommand lcc = cf.buildLockControlCommand(keysToLock, command.getFlagsBitSet(),
                      txContext.getGlobalTransaction());
-               stage = invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
+               maybeStage = invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> {
                   ((TxInvocationContext<?>) rCtx).addAllAffectedKeys(keysToLock);
                   acquireLocalCompositeLocks(command, keysToLock, rCtx);
                   return invokeNext(rCtx, command);
                });
             }
          }
-         return makeStage(stage).andExceptionally(ctx, command, (rCtx, rCommand, t) -> {
-            lockManager.unlockAll(rCtx);
-            throw t;
-         });
+         return maybeStage;
       } catch (Throwable t) {
          lockManager.unlockAll(ctx);
          throw t;
@@ -302,10 +266,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          }
       }
 
-      return invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, t) -> {
-         rethrowAndReleaseLocksIfNeeded(rCtx, t);
-         return localLockCommandWork(rCtx, (LockControlCommand) rCommand);
-      });
+      return invokeNextThenApply(ctx, command, localLockCommandWork);
    }
 
    private boolean localLockCommandWork(InvocationContext ctx, LockControlCommand command)
@@ -318,28 +279,11 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       if (command.isUnlock()) {
          if (ctx.isOriginLocal()) throw new AssertionError(
                "There's no advancedCache.unlock so this must have originated remotely.");
-         releaseLocksOnFailureBeforePrepare(ctx);
          return false;
       }
 
-      try {
-         lockAllOrRegisterBackupLock(txInvocationContext, command.getKeys(), getLockTimeoutMillis(command));
-      } catch (Throwable t) {
-         releaseLocksOnFailureBeforePrepare(ctx);
-         throw t;
-      }
+      lockAllOrRegisterBackupLock(txInvocationContext, command.getKeys(), getLockTimeoutMillis(command));
       return true;
-   }
-
-   private void rethrowAndReleaseLocksIfNeeded(InvocationContext ctx, Throwable throwable)
-         throws Throwable {
-      if (throwable != null) {
-         // If the command will be retried, there is no need to release this or other locks
-         if (!(throwable instanceof OutdatedTopologyException)) {
-            releaseLocksOnFailureBeforePrepare(ctx);
-         }
-         throw throwable;
-      }
    }
 
    private boolean needRemoteLocks(InvocationContext ctx, Collection<?> keys,
@@ -392,26 +336,4 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    private boolean isStateTransferInProgress() {
       return stateTransferManager != null && stateTransferManager.isStateTransferInProgress();
    }
-
-   private void releaseLocksOnFailureBeforePrepare(InvocationContext ctx) {
-      if (!ctx.isInTxScope()) {
-         return;
-      }
-      TxInvocationContext txContext = (TxInvocationContext) ctx;
-      try {
-         lockManager.unlockAll(ctx);
-         if (ctx.isOriginLocal() && ctx.isInTxScope() && rpcManager != null) {
-            TxCompletionNotificationCommand command =
-                  cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
-            final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
-            if (!cacheTransaction.getRemoteLocksAcquired().isEmpty()) {
-               rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command,
-                                         rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
-            }
-         }
-      } catch (Throwable t) {
-         log.debugf(t, "Error releasing locks for failure before prepare for transaction %s", txContext.getCacheTransaction());
-      }
-   }
-
 }

@@ -604,6 +604,8 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             log.tracef("Rolling back remote transaction %s because either already completed (%s) or originator no longer in the cluster (%s).",
                        globalTransaction, alreadyCompleted, originatorMissing);
          }
+         // The rollback command only marks the transaction as completed in invokeAsync()
+         txTable.markTransactionCompleted(globalTransaction, false);
          RollbackCommand rollback = commandsFactory.buildRollbackCommand(command.getGlobalTransaction());
          return invokeNextAndFinally(ctx, rollback, (rCtx, rCommand, rv1, throwable1) -> {
             RemoteTransaction remoteTx = ((TxInvocationContext<RemoteTransaction>) rCtx).getCacheTransaction();

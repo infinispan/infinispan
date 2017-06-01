@@ -105,21 +105,17 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
-      /**
-       * Contrary to functional commands, compute() needs to return the new value returned by the remapping function.
-       * Since we can assume that old and new values are comparable in size, fetching old value into context is acceptable
-       * and it is more efficient in case that we execute more subsequent modifications than sending the return value.
-       */
+      // Contrary to functional commands, compute() needs to return the new value returned by the remapping function.
+      // Since we can assume that old and new values are comparable in size, fetching old value into context is acceptable
+      // and it is more efficient in case that we execute more subsequent modifications than sending the return value.
       return handleTxWriteCommand(ctx, command, command.getKey());
    }
 
    @Override
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
-      /**
-       * Contrary to functional commands, compute() needs to return the new value returned by the remapping function.
-       * Since we can assume that old and new values are comparable in size, fetching old value into context is acceptable
-       * and it is more efficient in case that we execute more subsequent modifications than sending the return value.
-       */
+      // Contrary to functional commands, compute() needs to return the new value returned by the remapping function.
+      // Since we can assume that old and new values are comparable in size, fetching old value into context is acceptable
+      // and it is more efficient in case that we execute more subsequent modifications than sending the return value.
       return handleTxWriteCommand(ctx, command, command.getKey());
    }
 
@@ -239,15 +235,15 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
 
          TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) rCtx;
-         Collection<Address> affectedNodes =
-               dm.getCacheTopology().getWriteOwners(getAffectedKeysFromContext(localTxCtx));
-         Collection<Address> recipients = isReplicated ? null : affectedNodes;
+         LocalTransaction localTx = localTxCtx.getCacheTransaction();
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+         Collection<Address> writeOwners = cacheTopology.getWriteOwners(getAffectedKeysFromContext(localTxCtx));
+         localTx.locksAcquired(writeOwners);
+         Collection<Address> recipients =
+               isReplicated ? null : localTx.getCommitNodes(writeOwners, cacheTopology);
          CompletableFuture<Object> remotePrepare =
                prepareOnAffectedNodes(localTxCtx, (PrepareCommand) rCommand, recipients);
-         return asyncValue(remotePrepare.thenApply(o -> {
-            localTxCtx.getCacheTransaction().locksAcquired(affectedNodes);
-            return o;
-         }));
+         return asyncValue(remotePrepare);
       });
    }
 
@@ -300,14 +296,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    protected void checkTxCommandResponses(Map<Address, Response> responseMap,
          TransactionBoundaryCommand command, TxInvocationContext<LocalTransaction> context,
          Collection<Address> recipients) {
-      OutdatedTopologyException outdatedTopologyException = null;
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
          Address recipient = e.getKey();
          Response response = e.getValue();
          if (response == CacheNotFoundResponse.INSTANCE) {
-            // No need to retry if the missing node wasn't a member when the command started.
-            if (command.getTopologyId() == stateTransferManager.getCacheTopology().getTopologyId()
-                  && !rpcManager.getMembers().contains(recipient)) {
+            // Prepare/Commit commands are sent to all affected nodes, including the ones that left the cluster.
+            // We must not register a partial commit when receiving a CacheNotFoundResponse from one of those.
+            if (!cacheTopology.getMembers().contains(recipient)) {
                if (trace) log.tracef("Ignoring response from node not targeted %s", recipient);
             } else {
                if (checkCacheNotFoundResponseInPartitionHandling(command, context, recipients)) {
@@ -315,18 +311,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                   return;
                } else {
                   if (trace) log.tracef("Cache not running on node %s, or the node is missing", recipient);
-                  //noinspection ThrowableInstanceNeverThrown
-                  outdatedTopologyException = new OutdatedTopologyException(format("Cache not running on node %s, or the node is missing", recipient));
+                  throw OutdatedTopologyException.INSTANCE;
                }
             }
          } else if (response == UnsureResponse.INSTANCE) {
             if (trace) log.tracef("Node %s has a newer topology id", recipient);
-            //noinspection ThrowableInstanceNeverThrown
-            outdatedTopologyException = new OutdatedTopologyException(format("Node %s has a newer topology id", recipient));
+            throw OutdatedTopologyException.INSTANCE;
          }
-      }
-      if (outdatedTopologyException != null) {
-         throw outdatedTopologyException;
       }
    }
 

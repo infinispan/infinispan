@@ -22,6 +22,7 @@ import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.AssertJUnit;
 
 /**
@@ -31,6 +32,7 @@ import org.testng.AssertJUnit;
  * @since 8.0
  */
 public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingTest {
+   private static final Log log = LogFactory.getLog(BaseTxPartitionAndMergeTest.class);
 
    protected static final String INITIAL_VALUE = "init-value";
    protected static final String FINAL_VALUE = "final-value";
@@ -195,6 +197,8 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
          final Filter currentFilter = filter;
          if (currentFilter != null && currentFilter.before(command, reply, order)) {
             delegate.handle(command, reply, order);
+         } else {
+            log.debugf("Ignoring command %s", command);
          }
       }
    }
