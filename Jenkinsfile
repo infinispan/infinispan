@@ -28,7 +28,7 @@ pipeline {
                     script {
                         def mvnHome = tool 'Maven'
                         sh "${mvnHome}/bin/mvn clean install -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true"
-                        junit testDataPublishers: [[$class: 'ClaimTestDataPublisher']], testResults: '**/target/*-reports/*.xml'
+                        junit testDataPublishers: [[$class: 'ClaimTestDataPublisher']], testResults: '**/target/*-reports*/*.xml'
                         sh "${mvnHome}/bin/mvn clean -s $MAVEN_SETTINGS"
                     }
                 }
