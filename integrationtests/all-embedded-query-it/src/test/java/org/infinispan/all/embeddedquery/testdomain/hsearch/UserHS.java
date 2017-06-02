@@ -12,6 +12,7 @@ import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.NumericField;
+import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
 import org.infinispan.all.embeddedquery.testdomain.Address;
@@ -25,6 +26,7 @@ import org.infinispan.all.embeddedquery.testdomain.User;
 public class UserHS extends UserBase {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    private int id;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
@@ -32,10 +34,12 @@ public class UserHS extends UserBase {
    private Set<Integer> accountIds;
 
    @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
+   @SortableField
    private String surname;
 
    @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "-1")
    @NumericField
+   @SortableField
    private Integer age;  // yes, not the birth date :)
 
    @Field(store = Store.YES, analyze = Analyze.NO)
@@ -192,12 +196,15 @@ public class UserHS extends UserBase {
 abstract class UserBase implements User, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    protected String name;
 
+   @Override
    public String getName() {
       return name;
    }
 
+   @Override
    public void setName(String name) {
       this.name = name;
    }
