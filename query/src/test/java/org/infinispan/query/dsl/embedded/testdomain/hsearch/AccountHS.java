@@ -30,7 +30,7 @@ public class AccountHS implements Account, Serializable, ExternalPojo {
    private String description;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
-   @DateBridge(encoding=EncodingType.STRING, resolution=Resolution.MILLISECOND)
+   @DateBridge(encoding = EncodingType.STRING, resolution = Resolution.MILLISECOND)
    @SortableField
    private Date creationDate;
 

@@ -48,6 +48,7 @@ public class TransactionHS implements Transaction, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
    @NumericField
+   @SortableField
    private double amount;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
