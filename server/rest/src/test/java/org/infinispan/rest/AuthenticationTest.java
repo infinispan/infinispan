@@ -11,60 +11,41 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
-import org.infinispan.rest.authentication.Authenticator;
-import org.infinispan.rest.authentication.impl.BasicAuthenticator;
 import org.infinispan.rest.authentication.SecurityDomain;
+import org.infinispan.rest.authentication.impl.BasicAuthenticator;
+import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.mockito.internal.stubbing.answers.ThrowsExceptionClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.AuthenticationTest")
 public class AuthenticationTest extends AbstractInfinispanTest {
 
-   private EmbeddedCacheManager cacheManager;
    private HttpClient client;
-   private RestServer restServer;
-   private RestServerConfigurationBuilder restServerConfiguration;
+   private RestServerHelper restServer;
 
    @BeforeSuite
    public void beforeSuite() throws Exception {
-      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
-      gcb.globalJmxStatistics().allowDuplicateDomains(true);
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cacheManager = new DefaultCacheManager(gcb.build(), cb.build());
-
-      restServerConfiguration = new RestServerConfigurationBuilder();
-      restServerConfiguration.host("localhost").port(0);
-   }
-
-   @AfterSuite
-   public void afterSuite() throws Exception {
-      cacheManager.stop();
-   }
-
-   @BeforeMethod
-   public void beforeMethod() throws Exception {
       client = new HttpClient();
       client.start();
    }
 
+   @AfterSuite
+   public void afterSuite() throws Exception {
+      restServer.stop();
+      client.stop();
+   }
+
    @AfterMethod
    public void afterMethod() throws Exception {
-      cacheManager.getCache("default").clear();
+      restServer.clear();
       if (restServer != null) {
          restServer.stop();
       }
-      client.stop();
    }
 
    @Test
@@ -74,8 +55,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
       doReturn(mock(Principal.class)).when(securityDomainMock).authenticate(eq("test"), eq("test"));
 
       BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
-
-      startRestWithAuthenticator(basicAuthenticator);
+      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start();
 
       //when
       ContentResponse response = client
@@ -88,12 +68,6 @@ public class AuthenticationTest extends AbstractInfinispanTest {
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
-   private void startRestWithAuthenticator(Authenticator basicAuthenticator) {
-      restServer = new RestServer();
-      restServer.setAuthenticator(basicAuthenticator);
-      restServer.start(restServerConfiguration.build(), cacheManager);
-   }
-
    @Test
    public void shouldRejectNotValidAuthorizationString() throws Exception {
       //given
@@ -101,7 +75,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
 
-      startRestWithAuthenticator(basicAuthenticator);
+      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start();
 
       //when
       ContentResponse response = client
@@ -121,7 +95,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       BasicAuthenticator basicAuthenticator = new BasicAuthenticator(securityDomainMock, "ApplicationRealm");
 
-      startRestWithAuthenticator(basicAuthenticator);
+      restServer = RestServerHelper.defaultRestServer().withAuthenticator(basicAuthenticator).start();
 
       //when
       ContentResponse response = client

@@ -7,7 +7,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * into {@link InfinispanResponse} and sent back to the client.
  *
  * <p>
- *    {@link Http20RequestHandler} and {@link Http10RequestHandler} are responsible for catching subtypes of this
+ *    {@link Http20RequestHandler} and {@link Http11RequestHandler} are responsible for catching subtypes of this
  *    exception and translate them into proper Netty responses.
  * </p>
  */

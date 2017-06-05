@@ -38,13 +38,14 @@
          <artifactId>testng</artifactId>
          <scope>test</scope>
       </dependency>
-
-      <!-- It is very likely that we will replace Jetty with Netty for unifying
-           HTTP/1.1 and HTTP/2 testsuide -->
       <dependency>
          <groupId>org.eclipse.jetty</groupId>
          <artifactId>jetty-client</artifactId>
-         <version>9.4.5.v20170502</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-tcnative-boringssl-static</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
