@@ -156,7 +156,9 @@ public class InfinispanRequest {
          if(content.hasArray()) {
             return Optional.of(content.array());
          } else {
-            return Optional.of(content.copy().array());
+            byte[] bufferCopy = new byte[content.readableBytes()];
+            content.readBytes(bufferCopy);
+            return Optional.of(bufferCopy);
          }
       }
       return Optional.empty();

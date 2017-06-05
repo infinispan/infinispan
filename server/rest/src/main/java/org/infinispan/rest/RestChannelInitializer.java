@@ -4,20 +4,22 @@ import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyTransport;
 
 import io.netty.channel.Channel;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.ssl.ApplicationProtocolConfig;
+import io.netty.handler.ssl.ApplicationProtocolNames;
 
 /**
  * Creates Netty Channels for this server.
+ *
+ * <p>
+ *    With ALPN support, this class acts only as a bridge between Server Core and ALPN Handler which bootstraps
+ *    pipeline handlers
+ * </p>
  *
  * @author Sebastian Łaskawiec
  */
 public class RestChannelInitializer extends NettyChannelInitializer {
 
-   private static final int MAX_PAYLOAD_SIZE = 5 * 1024 * 1024;
-
-   private RestServer restServer;
+   private final AlpnHandler alpnHandler;
 
    /**
     * Creates new {@link RestChannelInitializer}.
@@ -27,24 +29,35 @@ public class RestChannelInitializer extends NettyChannelInitializer {
     */
    public RestChannelInitializer(RestServer server, NettyTransport transport) {
       super(server, transport, null, null);
-      restServer = server;
+      alpnHandler = new AlpnHandler(server);
    }
 
    @Override
    public void initializeChannel(Channel ch) throws Exception {
       super.initializeChannel(ch);
-      ch.pipeline().addLast(new HttpRequestDecoder());
-      ch.pipeline().addLast(new HttpResponseEncoder());
-      ch.pipeline().addLast(new HttpObjectAggregator(MAX_PAYLOAD_SIZE));
-      ch.pipeline().addLast("rest-handler", getHttpHandler());
+      if (server.getConfiguration().ssl().enabled()) {
+         ch.pipeline().addLast(alpnHandler);
+      } else {
+         alpnHandler.configurePipeline(ch.pipeline(), ApplicationProtocolNames.HTTP_1_1);
+      }
    }
 
-   /**
-    * Returns new instance of the main HTTP Handler.
-    *
-    * @return new instance of the main HTTP Handler.
-    */
-   public Http10RequestHandler getHttpHandler() {
-      return new Http10RequestHandler(restServer.getConfiguration(), restServer.getCacheManager(), restServer.getAuthenticator());
+   @Override
+   protected ApplicationProtocolConfig getAlpnConfiguration() {
+      if (server.getConfiguration().ssl().enabled()) {
+         return new ApplicationProtocolConfig(
+               ApplicationProtocolConfig.Protocol.ALPN,
+               // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
+               ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+               // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
+               ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+               ApplicationProtocolNames.HTTP_2,
+               ApplicationProtocolNames.HTTP_1_1);
+      }
+      return null;
+   }
+
+   public AlpnHandler getAlpnHandler() {
+      return alpnHandler;
    }
 }

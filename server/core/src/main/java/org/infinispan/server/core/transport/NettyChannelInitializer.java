@@ -9,6 +9,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelOutboundHandler;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SniHandler;
 import io.netty.util.DomainNameMappingBuilder;
@@ -43,14 +44,16 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
       }
       SslConfiguration ssl = server.getConfiguration().ssl();
       if (ssl.enabled()) {
+         ApplicationProtocolConfig alpnConfig = getAlpnConfiguration();
+
          //add default domain mapping
-         JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get(SslConfiguration.DEFAULT_SNI_DOMAIN));
+         JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get(SslConfiguration.DEFAULT_SNI_DOMAIN), alpnConfig);
          DomainNameMappingBuilder<JdkSslContext> domainMappingBuilder = new DomainNameMappingBuilder<>(defaultNettySslContext);
 
          //and the rest
          ssl.sniDomainsConfiguration().forEach((k, v) -> {
             if (!SslConfiguration.DEFAULT_SNI_DOMAIN.equals(k)) {
-               domainMappingBuilder.add(k, SslUtils.createNettySslContext(ssl, v));
+               domainMappingBuilder.add(k, SslUtils.createNettySslContext(ssl, v, alpnConfig));
             }
          });
 
@@ -64,5 +67,9 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
       }
       if (encoder != null)
          pipeline.addLast("encoder", encoder);
+   }
+
+   protected ApplicationProtocolConfig getAlpnConfiguration() {
+      return null;
    }
 }

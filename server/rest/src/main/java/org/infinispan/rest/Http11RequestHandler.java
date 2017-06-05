@@ -19,26 +19,26 @@ import io.netty.handler.codec.http.HttpUtil;
  *
  * @author Sebastian Łaskawiec
  */
-public class Http10RequestHandler extends Http20RequestHandler {
+public class Http11RequestHandler extends Http20RequestHandler {
 
    /**
-    * Creates new {@link Http10RequestHandler}.
+    * Creates new {@link Http11RequestHandler}.
     *
     * @param configuration Rest Server configuration
     * @param embeddedCacheManager Embedded Cache Manager for storing data.
     */
-   public Http10RequestHandler(RestServerConfiguration configuration, EmbeddedCacheManager embeddedCacheManager) {
+   public Http11RequestHandler(RestServerConfiguration configuration, EmbeddedCacheManager embeddedCacheManager) {
       super(configuration, embeddedCacheManager);
    }
 
    /**
-    * Creates new {@link Http10RequestHandler}.
+    * Creates new {@link Http11RequestHandler}.
     *
     * @param configuration Rest Server configuration
     * @param embeddedCacheManager Embedded Cache Manager for storing data.
     * @param authenticator Authenticator.
     */
-   public Http10RequestHandler(RestServerConfiguration configuration, EmbeddedCacheManager embeddedCacheManager, Authenticator authenticator) {
+   public Http11RequestHandler(RestServerConfiguration configuration, EmbeddedCacheManager embeddedCacheManager, Authenticator authenticator) {
       super(configuration, embeddedCacheManager, authenticator);
    }
 
