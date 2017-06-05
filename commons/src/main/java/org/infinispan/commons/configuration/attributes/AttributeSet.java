@@ -271,7 +271,7 @@ public class AttributeSet implements AttributeListener<Object> {
 
    @Override
    public String toString() {
-      return toString(null);
+      return toString(name);
    }
 
    public String toString(String name) {

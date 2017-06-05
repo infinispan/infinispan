@@ -2,7 +2,6 @@ package org.infinispan.persistence.remote.upgrade;
 
 import static org.infinispan.client.hotrod.ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
@@ -28,13 +27,13 @@ import org.testng.annotations.Test;
 @Test(testName = "upgrade.hotrod.HotRodUpgradeSynchronizerTest", groups = "functional")
 public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
 
-   private TestCluster sourceCluster, targetCluster;
+   protected TestCluster sourceCluster, targetCluster;
 
-   private static final String OLD_CACHE = "old-cache";
-   private static final String TEST_CACHE = HotRodUpgradeSynchronizerTest.class.getName();
+   protected static final String OLD_CACHE = "old-cache";
+   protected static final String TEST_CACHE = HotRodUpgradeSynchronizerTest.class.getName();
 
-   private static final String OLD_PROTOCOL_VERSION = "2.0";
-   private static final String NEW_PROTOCOL_VERSION = DEFAULT_PROTOCOL_VERSION.toString();
+   protected static final String OLD_PROTOCOL_VERSION = "2.0";
+   protected static final String NEW_PROTOCOL_VERSION = DEFAULT_PROTOCOL_VERSION.toString();
 
    @BeforeMethod
    public void setup() throws Exception {

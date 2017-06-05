@@ -80,6 +80,10 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                parseServer(reader, builder.addServer());
                break;
             }
+            case SECURITY: {
+               parseSecurity(reader, builder.remoteSecurity());
+               break;
+            }
             default: {
                Parser.parseStoreElement(reader, builder);
                break;
@@ -87,6 +91,193 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
          }
       }
       persistenceBuilder.addStore(builder);
+   }
+
+   private void parseSecurity(XMLExtendedStreamReader reader, SecurityConfigurationBuilder security) throws XMLStreamException {
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case AUTHENTICATION: {
+               parseAuthentication(reader, security.authentication());
+               break;
+            }
+            case ENCRYPTION: {
+               parseEncryption(reader, security.ssl());
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private void parseAuthentication(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder authentication) throws XMLStreamException {
+      authentication.enable();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case SERVER_NAME: {
+               authentication.serverName(value);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      boolean hasMech = false;
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case AUTH_PLAIN: {
+               if (hasMech)
+                  throw ParseUtils.unexpectedElement(reader);
+               parseAuthenticationPlain(reader, authentication);
+               hasMech = true;
+               break;
+            }
+            case AUTH_DIGEST: {
+               if (hasMech)
+                  throw ParseUtils.unexpectedElement(reader);
+               parseAuthenticationDigest(reader, authentication);
+               hasMech = true;
+               break;
+            }
+            case AUTH_EXTERNAL: {
+               if (hasMech)
+                  throw ParseUtils.unexpectedElement(reader);
+               parseAuthenticationDigest(reader, authentication);
+               hasMech = true;
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private void parseAuthenticationPlain(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder authentication) throws XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName());
+      authentication.saslMechanism("PLAIN").username(attributes[0]).password(attributes[1]);
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseAuthenticationDigest(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder authentication) throws XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName(), Attribute.REALM.getLocalName());
+      authentication.saslMechanism("DIGEST-MD5").username(attributes[0]).password(attributes[1]).realm(attributes[2]);
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseAuthenticationExternal(XMLExtendedStreamReader reader, AuthenticationConfigurationBuilder authentication) throws XMLStreamException {
+      ParseUtils.requireNoAttributes(reader);
+      authentication.saslMechanism("EXTERNAL");
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseEncryption(XMLExtendedStreamReader reader, SslConfigurationBuilder ssl) throws XMLStreamException {
+      ssl.enable();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case PROTOCOL: {
+               ssl.protocol(value);
+               break;
+            }
+            case SNI_HOSTNAME: {
+               ssl.sniHostName(value);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case KEYSTORE: {
+               parseKeystore(reader, ssl);
+               break;
+            }
+            case TRUSTSTORE: {
+               parseTruststore(reader, ssl);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private void parseKeystore(XMLExtendedStreamReader reader, SslConfigurationBuilder ssl) throws XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, true,
+            Attribute.FILENAME.getLocalName(),
+            Attribute.PASSWORD.getLocalName());
+      ssl.keyStoreFileName(attributes[0]);
+      ssl.keyStorePassword(attributes[1].toCharArray());
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case FILENAME:
+            case PASSWORD:
+               // already processed
+               break;
+            case CERTIFICATE_PASSWORD: {
+               ssl.keyStoreCertificatePassword(value.toCharArray());
+               break;
+            }
+            case KEY_ALIAS: {
+               ssl.keyAlias(value);
+               break;
+            }
+            case TYPE: {
+               ssl.keyStoreType(value);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseTruststore(XMLExtendedStreamReader reader, SslConfigurationBuilder ssl) throws XMLStreamException {
+      String[] attributes = ParseUtils.requireAttributes(reader, true,
+            Attribute.FILENAME.getLocalName(),
+            Attribute.PASSWORD.getLocalName());
+      ssl.trustStoreFileName(attributes[0]);
+      ssl.trustStorePassword(attributes[1].toCharArray());
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case FILENAME:
+            case PASSWORD:
+               // already processed
+               break;
+            case TYPE: {
+               ssl.keyStoreType(value);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseAsyncTransportExecutor(final XMLExtendedStreamReader reader,
@@ -211,7 +402,11 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             case PING_ON_STARTUP: {
-               log.ignoreXmlAttribute(attribute);
+               if (!reader.getSchema().since(9, 1)) {
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+               } else {
+                  log.ignoreXmlAttribute(attribute);
+               }
                break;
             }
             case PROTOCOL_VERSION: {

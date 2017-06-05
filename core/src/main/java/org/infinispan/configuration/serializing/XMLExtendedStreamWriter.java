@@ -21,4 +21,6 @@ public interface XMLExtendedStreamWriter extends XMLStreamWriter {
    void writeStartElement(Enum<?> name) throws XMLStreamException;
 
    void writeAttribute(Enum<?> name, String property) throws XMLStreamException;
+
+   void writeEmptyElement(Enum<?> name) throws XMLStreamException;
 }

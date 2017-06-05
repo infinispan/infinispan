@@ -517,6 +517,39 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeAttribute(Attribute.OUTBOUND_SOCKET_BINDING.getLocalName(), remoteServer.get(ModelKeys.OUTBOUND_SOCKET_BINDING).asString());
                     writer.writeEndElement();
                 }
+                if (store.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME).isDefined()) {
+                    ModelNode authentication = store.get(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
+                    writer.writeStartElement(Element.AUTHENTICATION.getLocalName());
+                    switch(authentication.get(ModelKeys.MECHANISM).asString()) {
+                        case "PLAIN": {
+                            writer.writeStartElement(Element.PLAIN.getLocalName());
+                            this.writeRequired(writer, Attribute.USERNAME, authentication, ModelKeys.USERNAME);
+                            this.writeRequired(writer, Attribute.PASSWORD, authentication, ModelKeys.PASSWORD);
+                            writer.writeEndElement();
+                            break;
+                        }
+                        case "DIGEST-MD5": {
+                            writer.writeStartElement(Element.DIGEST.getLocalName());
+                            this.writeRequired(writer, Attribute.USERNAME, authentication, ModelKeys.USERNAME);
+                            this.writeRequired(writer, Attribute.PASSWORD, authentication, ModelKeys.PASSWORD);
+                            this.writeRequired(writer, Attribute.REALM, authentication, ModelKeys.REALM);
+                            writer.writeEndElement();
+                            break;
+                        }
+                        case "EXTERNAL": {
+                            writer.writeEmptyElement(Element.EXTERNAL.getLocalName());
+                            break;
+                        }
+                    }
+                    writer.writeEndElement();
+                }
+                if (store.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME).isDefined()) {
+                    ModelNode encryption = store.get(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME);
+                    writer.writeStartElement(Element.ENCRYPTION.getLocalName());
+                    this.writeRequired(writer, Attribute.SECURITY_REALM, encryption, ModelKeys.SECURITY_REALM);
+                    this.writeOptional(writer, Attribute.SNI_HOSTNAME, encryption, ModelKeys.SNI_HOSTNAME);
+                    writer.writeEndElement();
+                }
                 writer.writeEndElement();
             }
         }

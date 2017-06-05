@@ -21,6 +21,10 @@ public enum Attribute {
    FORCE_RETURN_VALUES("force-return-values"),
    HOST("host"),
    HOTROD_WRAPPING("hotrod-wrapping"),
+   FILENAME("filename"),
+   CERTIFICATE_PASSWORD("certificate-password"),
+   KEY_ALIAS("key-alias"),
+   TYPE("type"),
    MARSHALLER("marshaller"),
    MAX_ACTIVE("max-active"),
    MAX_IDLE("max-idle"),
@@ -29,22 +33,29 @@ public enum Attribute {
    MIN_IDLE("min-idle-time"),
    KEY_SIZE_ESTIMATE("key-size-estimate"),
    OUTBOUND_SOCKET_BINDING("outbound-socket-binding"),
+   PASSWORD("password"),
    PING_ON_STARTUP("ping-on-start"),
    PORT("port"),
+   PROTOCOL("protocol"),
    PROTOCOL_VERSION("protocol-version"),
    RAW_VALUES("raw-values"),
+   REALM("realm"),
    REMOTE_CACHE_NAME("cache"),
+   SASL_MECHANISM("sasl-mechanism"),
+   SERVER_NAME("server-name"),
+   SNI_HOSTNAME("sni-hostname"),
    SOCKET_TIMEOUT("socket-timeout"),
    TCP_NO_DELAY("tcp-no-delay"),
    TEST_WHILE_IDLE("test-idle"),
    TIME_BETWEEN_EVICTION_RUNS("eviction-interval"),
    TRANSPORT_FACTORY("transport-factory"),
+   USERNAME("username"),
    VALUE_SIZE_ESTIMATE("value-size-estimate"),
    ;
 
    private final String name;
 
-   private Attribute(final String name) {
+   Attribute(final String name) {
       this.name = name;
    }
 
@@ -60,7 +71,7 @@ public enum Attribute {
    private static final Map<String, Attribute> attributes;
 
    static {
-      final Map<String, Attribute> map = new HashMap<String, Attribute>(64);
+      final Map<String, Attribute> map = new HashMap<>(64);
       for (Attribute attribute : values()) {
          final String name = attribute.getLocalName();
          if (name != null) {

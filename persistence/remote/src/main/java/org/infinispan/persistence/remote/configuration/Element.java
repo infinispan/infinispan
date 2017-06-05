@@ -14,13 +14,22 @@ public enum Element {
    // must be first
    UNKNOWN(null),
 
-   CACHE("cache"),
    ASYNC_TRANSPORT_EXECUTOR("async-executor"),
+   AUTHENTICATION("authentication"),
+   AUTH_PLAIN("plain"),
+   AUTH_DIGEST("digest"),
+   AUTH_EXTERNAL("external"),
+   CACHE("cache"),
    CONNECTION_POOL("connection-pool"),
+   ENCRYPTION("encryption"),
+   KEYSTORE("keystore"),
    PROPERTIES("properties"),
    REMOTE_STORE("remote-store"),
+   SECURITY("security"),
    SERVERS("servers"),
-   SERVER("remote-server");
+   SERVER("remote-server"),
+   TRUSTSTORE("truststore"),
+   ;
 
    private final String name;
 

@@ -2,7 +2,7 @@
 <!-- See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
 <config default-supplement="default">
    <extension-module>org.infinispan.extension</extension-module>
-   <subsystem xmlns="urn:infinispan:server:core:9.0" default-cache-container="@@default-cache-container@@">
+   <subsystem xmlns="urn:infinispan:server:core:9.1" default-cache-container="@@default-cache-container@@">
       <?CACHE-CONTAINERS?>
    </subsystem>
    <supplement name="default">
@@ -131,6 +131,20 @@
             <local-cache name="default">
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+               </remote-store>
+            </local-cache>
+         </cache-container>
+      </replacement>
+   </supplement>
+   <supplement name="hotrod-rolling-upgrade-ssl">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <global-state />
+            <local-cache name="default">
+               <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
+                  <remote-server outbound-socket-binding="remote-store-hotrod-server" />
+                  <encryption security-realm="ApplicationRealm"/>
                </remote-store>
             </local-cache>
          </cache-container>

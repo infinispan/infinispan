@@ -38,6 +38,8 @@ public class ModelKeys {
     @Deprecated
     static final String ASYNC_MARSHALLING = "async-marshalling";
     static final String AUDIT_LOGGER = "audit-logger";
+    static final String AUTHENTICATION = "authentication";
+    static final String AUTHENTICATION_NAME = "AUTHENTICATION";
     static final String AUTHORIZATION = "authorization";
     static final String AUTHORIZATION_NAME = "AUTHORIZATION";
     static final String AUTO_CONFIG = "auto-config";
@@ -88,9 +90,12 @@ public class ModelKeys {
     static final String DB_MAJOR_VERSION = "db-major-version";
     static final String DB_MINOR_VERSION = "db-minor-version";
     static final String DIALECT = "dialect";
+    static final String DIGEST = "digest";
     static final String DISTRIBUTED_CACHE = "distributed-cache";
     static final String DISTRIBUTED_CACHE_CONFIGURATION = DISTRIBUTED_CACHE + CONFIGURATION_SUFFIX;
     static final String DROP_ON_EXIT = "drop-on-exit";
+    static final String ENCRYPTION = "encryption";
+    static final String ENCRYPTION_NAME = "ENCRYPTION";
     static final String ENABLED = "enabled";
     static final String ENTRY_TABLE = "entry-table";
     static final String EVICTION = "eviction";
@@ -101,6 +106,7 @@ public class ModelKeys {
     static final String EXECUTOR = "executor";
     static final String EXPIRATION = "expiration";
     static final String EXPIRATION_NAME = "EXPIRATION";
+    static final String EXTERNAL = "external";
     static final String FETCH_SIZE = "fetch-size";
     static final String FETCH_STATE = "fetch-state";
     static final String FILE_STORE = "file-store";
@@ -155,6 +161,7 @@ public class ModelKeys {
     static final String MAX_RETRIES = "max-retries";
     static final String MAX_THREADS = "max-threads";
     static final String MAX_TOTAL_CONNECTIONS = "max-total-connections";
+    static final String MECHANISM = "mechanism";
     static final String MEMORY = "memory";
     static final String MIGRATOR_NAME = "migrator-name";
     static final String MIN_THREADS = "min-threads";
@@ -170,10 +177,12 @@ public class ModelKeys {
     static final String PARTITION_HANDLING = "partition-handling";
     static final String PARTITION_HANDLING_NAME = "PARTITION_HANDLING";
     static final String PASSIVATION = "passivation";
+    static final String PASSWORD = "password";
     static final String PATH = "path";
     static final String PERMISSIONS = "permissions";
     static final String PERSISTENCE = "persistence";
     static final String PERSISTENT_LOCATION = "persistent-location";
+    static final String PLAIN = "plain";
     static final String PREFIX = "prefix";
     static final String PRELOAD = "preload";
     static final String PROPERTY = "property";
@@ -187,6 +196,7 @@ public class ModelKeys {
     static final String RACK = "rack";
     static final String RAW_VALUES = "raw-values";
     static final String READ_ONLY = "read-only";
+    static final String REALM = "realm";
     static final String RELATIVE_TO = "relative-to";
     static final String REMOTE_CACHE = "remote-cache";
     static final String REMOTE_COMMAND_EXECUTOR = "remote-command-executor";
@@ -208,6 +218,7 @@ public class ModelKeys {
     static final String SECURITY_NAME = "SECURITY";
     static final String SEGMENTS = "segments";
     static final String CAPACITY_FACTOR = "capacity-factor";
+    static final String SECURITY_REALM = "security-realm";
     static final String SHARED = "shared";
     static final String SHUTDOWN_TIMEOUT = "shutdown-timeout";
     static final String SIMPLE_CACHE = "simple-cache";
@@ -216,6 +227,7 @@ public class ModelKeys {
     static final String SINGLETON = "singleton";
     static final String SITE = "site";
     static final String SIZE = "size";
+    static final String SNI_HOSTNAME = "sni-hostname";
     static final String SOCKET_TIMEOUT = "socket-timeout";
     static final String STACK = "stack";
     static final String START = "start";
@@ -248,6 +260,7 @@ public class ModelKeys {
     static final String HEALTH_NAME = "HEALTH";
     static final String TYPE = "type";
     static final String TX_INTERNAL_ID = "internal-id";
+    static final String USERNAME = "username";
     static final String VALUE = "value";
     static final String WAIT = "wait";
     static final String WAIT_TIME = "wait-time";
@@ -264,4 +277,5 @@ public class ModelKeys {
     static final String TRANSPORT_THREAD_POOL = "transport-thread-pool";
     static final String READ_BATCH = "read-batch";
     static final String WRITE_THREADS = "write-threads";
+
 }

@@ -40,13 +40,13 @@ public enum Namespace {
     INFINISPAN_SERVER_8_1("infinispan:server:core", 8, 1),
     INFINISPAN_SERVER_8_2("infinispan:server:core", 8, 2),
     INFINISPAN_SERVER_9_0("infinispan:server:core", 9, 0),
-    ;
+    INFINISPAN_SERVER_9_1("infinispan:server:core", 9, 1);
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
     /**
      * The current namespace version.
      */
-    public static final Namespace CURRENT = INFINISPAN_SERVER_9_0;
+    public static final Namespace CURRENT = INFINISPAN_SERVER_9_1;
 
     private final int major;
     private final int minor;

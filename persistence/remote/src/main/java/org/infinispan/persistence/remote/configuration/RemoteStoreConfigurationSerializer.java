@@ -28,6 +28,7 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       writeAsyncExecutor(writer, configuration.asyncExecutorFactory());
       writeConnectionPool(writer, configuration.connectionPool());
       writeServers(writer, configuration.servers());
+      writeSecurity(writer, configuration.security());
 
       writeCommonStoreElements(writer, configuration);
       writer.writeEndElement();
@@ -65,6 +66,70 @@ public class RemoteStoreConfigurationSerializer extends AbstractStoreSerializer 
       }
    }
 
+   private void writeSecurity(XMLExtendedStreamWriter writer, SecurityConfiguration security) throws XMLStreamException {
+      if (security.authentication().attributes().isModified() || security.ssl().attributes().isModified()) {
+         writer.writeStartElement(Element.SECURITY);
+         writeAuthentication(writer, security.authentication());
+         writeEncryption(writer, security.ssl());
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeAuthentication(XMLExtendedStreamWriter writer, AuthenticationConfiguration authentication) throws XMLStreamException {
+      AttributeSet attributeSet = authentication.attributes();
+      if (attributeSet.isModified()) {
+         writer.writeStartElement(Element.AUTHENTICATION);
+         attributeSet.write(writer);
+         switch (authentication.saslMechanism()) {
+            case "PLAIN": {
+               writer.writeStartElement(Element.AUTH_PLAIN);
+               writer.writeAttribute(Attribute.USERNAME, authentication.username());
+               writer.writeAttribute(Attribute.PASSWORD, new String(authentication.password()));
+               writer.writeEndElement();
+               break;
+            }
+            case "DIGEST-MD5": {
+               writer.writeStartElement(Element.AUTH_DIGEST);
+               writer.writeAttribute(Attribute.USERNAME, authentication.username());
+               writer.writeAttribute(Attribute.PASSWORD, new String(authentication.password()));
+               writer.writeAttribute(Attribute.REALM, authentication.realm());
+               writer.writeEndElement();
+               break;
+            }
+            case "EXTERNAL": {
+               writer.writeEmptyElement(Element.AUTH_EXTERNAL);
+               break;
+            }
+
+         }
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeEncryption(XMLExtendedStreamWriter writer, SslConfiguration ssl) throws XMLStreamException {
+      AttributeSet attributes = ssl.attributes();
+      if (attributes.isModified()) {
+         writer.writeStartElement(Element.ENCRYPTION);
+         attributes.write(writer);
+         if (ssl.keyStoreFileName() != null) {
+            writer.writeStartElement(Element.KEYSTORE);
+            writer.writeAttribute(Attribute.FILENAME, ssl.keyStoreFileName());
+            writer.writeAttribute(Attribute.PASSWORD, new String(ssl.keyStorePassword()));
+            writer.writeAttribute(Attribute.CERTIFICATE_PASSWORD, new String(ssl.keyStoreCertificatePassword()));
+            writer.writeAttribute(Attribute.KEY_ALIAS, ssl.keyAlias());
+            writer.writeAttribute(Attribute.TYPE, ssl.keyStoreType());
+            writer.writeEndElement();
+         }
+         if (ssl.trustStoreFileName() != null) {
+            writer.writeStartElement(Element.TRUSTSTORE);
+            writer.writeAttribute(Attribute.FILENAME, ssl.trustStoreFileName());
+            writer.writeAttribute(Attribute.PASSWORD, new String(ssl.trustStorePassword()));
+            writer.writeAttribute(Attribute.TYPE, ssl.trustStoreType());
+            writer.writeEndElement();
+         }
+         writer.writeEndElement();
+      }
+   }
 
 
 }

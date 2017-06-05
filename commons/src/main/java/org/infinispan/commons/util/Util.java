@@ -1040,4 +1040,8 @@ public final class Util {
       }
       return sb.toString();
    }
+
+  public static char[] toCharArray(String s) {
+     return s == null ? null : s.toCharArray();
+  }
 }

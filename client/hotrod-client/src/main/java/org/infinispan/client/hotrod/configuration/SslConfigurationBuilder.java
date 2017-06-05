@@ -233,7 +233,8 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       if (typed.containsKey(ConfigurationProperties.SNI_HOST_NAME))
          this.sniHostName(typed.getProperty(ConfigurationProperties.SNI_HOST_NAME, null, true));
 
-      this.sslContext((SSLContext) typed.get(ConfigurationProperties.SSL_CONTEXT));
+      if (typed.containsKey(ConfigurationProperties.SSL_CONTEXT))
+         this.sslContext((SSLContext) typed.get(ConfigurationProperties.SSL_CONTEXT));
 
       return builder.getBuilder();
    }
