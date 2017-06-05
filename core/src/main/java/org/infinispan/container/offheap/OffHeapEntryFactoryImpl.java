@@ -95,21 +95,22 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             metadataBytes = new byte[16 + versionBytes.length];
             Bits.putLong(metadataBytes, 0, lifespan);
             Bits.putLong(metadataBytes, 8, timeService.wallClockTime());
-            System.arraycopy(metadataBytes, 0, versionBytes, 16, versionBytes.length);
+            System.arraycopy(versionBytes, 0, metadataBytes, 16, versionBytes.length);
          } else if (lifespan < 0 && maxIdle > -1) {
             type |= TRANSIENT;
             metadataBytes = new byte[16 + versionBytes.length];
             Bits.putLong(metadataBytes, 0, maxIdle);
             Bits.putLong(metadataBytes, 8, timeService.wallClockTime());
-            System.arraycopy(metadataBytes, 0, versionBytes, 16, versionBytes.length);
+            System.arraycopy(versionBytes, 0, metadataBytes, 16, versionBytes.length);
          } else {
             type |= TRANSIENT_MORTAL;
             metadataBytes = new byte[32 + versionBytes.length];
             Bits.putLong(metadataBytes, 0, maxIdle);
             Bits.putLong(metadataBytes, 8, lifespan);
-            Bits.putLong(metadataBytes, 16, timeService.wallClockTime());
-            Bits.putLong(metadataBytes, 24, timeService.wallClockTime());
-            System.arraycopy(metadataBytes, 0, versionBytes, 16, versionBytes.length);
+            long time = timeService.wallClockTime();
+            Bits.putLong(metadataBytes, 16, time);
+            Bits.putLong(metadataBytes, 24, time);
+            System.arraycopy(versionBytes, 0, metadataBytes, 32, versionBytes.length);
          }
       } else {
          type = CUSTOM;
