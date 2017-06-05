@@ -31,16 +31,7 @@ public class CacheRemoveTask extends AdminServerTask<Void> {
          throw new UnsupportedOperationException();
 
       String name = requireParameter("name");
-      cacheManager.executor().submitConsumer(localManager -> {
-         if (localManager.cacheExists(name)) {
-            localManager.removeCache(name);
-         }
-         return null;
-      }, (address, value, throwable) -> {
-         if (throwable != null) {
-            log.fatal("Cache removal encountered exception on node " + address, throwable);
-         }
-      }).join();
+      cacheManager.removeCache(name);
       return null;
    }
 }

@@ -1,5 +1,6 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.core.admin.AdminServerTask;
 
@@ -38,7 +39,9 @@ public class CacheCreateTask extends AdminServerTask<Void> {
          if (template != null) {
             builder.read(localManager.getCacheConfiguration(template));
          } else {
-            builder.read(localManager.getDefaultCacheConfiguration());
+            Configuration parent = localManager.getDefaultCacheConfiguration();
+            if (parent != null)
+               builder.read(parent);
          }
          builder.template(false);
          localManager.defineConfiguration(name, builder.build());
