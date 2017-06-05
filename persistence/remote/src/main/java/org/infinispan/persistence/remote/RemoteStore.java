@@ -28,9 +28,11 @@ import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.persistence.remote.configuration.AuthenticationConfiguration;
 import org.infinispan.persistence.remote.configuration.ConnectionPoolConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
+import org.infinispan.persistence.remote.configuration.SslConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.persistence.remote.wrapper.HotRodEntryMarshaller;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -285,7 +287,37 @@ public class RemoteStore implements AdvancedLoadWriteStore, FlagAffectedStore {
          builder.version(ProtocolVersion.DEFAULT_PROTOCOL_VERSION);
       if (configuration.transportFactory() != null)
          builder.transportFactory(configuration.transportFactory());
+      SslConfiguration ssl = configuration.security().ssl();
+      if (ssl.enabled()) {
+         builder.security().ssl()
+               .enable()
+               .keyStoreType(ssl.keyStoreType())
+               .keyAlias(ssl.keyAlias())
+               .keyStoreFileName(ssl.keyStoreFileName())
+               .keyStorePassword(ssl.keyStorePassword())
+               .keyStoreCertificatePassword(ssl.keyStoreCertificatePassword())
+               .trustStoreFileName(ssl.trustStoreFileName())
+               .trustStorePassword(ssl.trustStorePassword())
+               .trustStoreType(ssl.trustStoreType())
+               .protocol(ssl.protocol())
+               .sniHostName(ssl.sniHostName());
+      }
+      AuthenticationConfiguration auth = configuration.security().authentication();
+      if (auth.enabled()) {
+         builder.security().authentication()
+               .enable()
+               .callbackHandler(auth.callbackHandler())
+               .clientSubject(auth.clientSubject())
+               .saslMechanism(auth.saslMechanism())
+               .serverName(auth.serverName())
+               .saslProperties(auth.saslProperties())
+               .username(auth.username())
+               .password(auth.password())
+               .realm(auth.realm())
+         ;
+      }
 
+      builder.withProperties(configuration.properties());
       return builder;
    }
 

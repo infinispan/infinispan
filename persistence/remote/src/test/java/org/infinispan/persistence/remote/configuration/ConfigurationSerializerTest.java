@@ -12,7 +12,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
       return new Object[][] {
-            {"remote-cl-config.xml"}
+            {"remote-cl-config-security.xml"}
       };
    }
 

@@ -59,9 +59,11 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    private final Attribute<String> transportFactory;
    private final ConnectionPoolConfiguration connectionPool;
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
+   private final SecurityConfiguration security;
 
    public RemoteStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
-                                   ExecutorFactoryConfiguration asyncExecutorFactory, ConnectionPoolConfiguration connectionPool) {
+                                   ExecutorFactoryConfiguration asyncExecutorFactory, ConnectionPoolConfiguration connectionPool,
+                                   SecurityConfiguration security) {
       super(attributes, async, singletonStore);
       balancingStrategy = attributes.attribute(BALANCING_STRATEGY);
       connectionTimeout = attributes.attribute(CONNECTION_TIMEOUT);
@@ -79,6 +81,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
       transportFactory = attributes.attribute(TRANSPORT_FACTORY);
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.connectionPool = connectionPool;
+      this.security = security;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -148,5 +151,9 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
 
    public int valueSizeEstimate() {
       return valueSizeEstimate.get();
+   }
+
+   public SecurityConfiguration security() {
+      return security;
    }
 }

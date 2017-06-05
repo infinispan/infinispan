@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,6 +20,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
@@ -74,6 +74,11 @@ class TestCluster {
       private String name = "cluster1";
       private int numMembers = 1;
       private Map<String, ConfigurationBuilder> caches = new HashMap<>();
+      private HotRodServerConfigurationBuilder hotRodBuilder = new HotRodServerConfigurationBuilder();
+      private String trustStoreFileName;
+      private char[] trustStorePassword;
+      private char[] keyStorePassword;
+      private String keyStoreFileName;
 
       Builder setNumMembers(int numMembers) {
          this.numMembers = numMembers;
@@ -133,15 +138,39 @@ class TestCluster {
             if (configurationBuilder == null)
                configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
             if (remotePort != null) {
-               configurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class).hotRodWrapping(true)
+               RemoteStoreConfigurationBuilder store = configurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
+               store.hotRodWrapping(true)
                      .remoteCacheName(name).protocolVersion(protocolVersion).shared(true)
                      .addServer().host("localhost").port(remotePort);
+               if (builder.trustStoreFileName != null) {
+                  store.remoteSecurity().ssl().enable().trustStoreFileName(builder.trustStoreFileName).trustStorePassword(builder.trustStorePassword);
+               }
+               if (builder.keyStoreFileName != null) {
+                  store.remoteSecurity().ssl().keyStoreFileName(builder.keyStoreFileName).keyStorePassword(builder.keyStorePassword);
+               }
             }
             builder.addCache(name, configurationBuilder);
             return new CacheDefinitionBuilder(builder);
          }
-
       }
+
+      Builder withHotRodBuilder(HotRodServerConfigurationBuilder hotRodBuilder) {
+         this.hotRodBuilder = hotRodBuilder;
+         return this;
+      }
+
+      Builder withSSLTrustStore(String trustStoreFileName, char[] trustStorePassword) {
+         this.trustStoreFileName = trustStoreFileName;
+         this.trustStorePassword = trustStorePassword;
+         return this;
+      }
+
+      Builder withSSLKeyStore(String keyStoreFileName, char[] keyStorePassword) {
+         this.keyStoreFileName = keyStoreFileName;
+         this.keyStorePassword = keyStorePassword;
+         return this;
+      }
+
 
       private void addCache(String name, ConfigurationBuilder cfg) {
          caches.put(name, cfg);
@@ -160,14 +189,20 @@ class TestCluster {
                   clusteredCacheManager.defineConfiguration(entry.getKey(), entry.getValue().build()));
 
             embeddedCacheManagers.add(clusteredCacheManager);
-            hotRodServers.add(HotRodClientTestingUtil.startHotRodServer(clusteredCacheManager));
+            hotRodServers.add(HotRodClientTestingUtil.startHotRodServer(clusteredCacheManager, hotRodBuilder));
          }
 
          int port = hotRodServers.get(0).getPort();
-         Configuration build = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()
-               .addServer().port(port).host("localhost").build();
+         org.infinispan.client.hotrod.configuration.ConfigurationBuilder build = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+         build.addServer().port(port).host("localhost");
+         if (trustStoreFileName != null) {
+            build.security().ssl().enable().trustStoreFileName(trustStoreFileName).trustStorePassword(trustStorePassword);
+         }
+         if (keyStoreFileName != null) {
+            build.security().ssl().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword);
+         }
 
-         return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(build));
+         return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(build.build()));
       }
 
    }

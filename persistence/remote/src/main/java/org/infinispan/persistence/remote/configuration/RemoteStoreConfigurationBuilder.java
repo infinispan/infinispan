@@ -38,12 +38,14 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    private static final Log log = LogFactory.getLog(RemoteStoreConfigurationBuilder.class, Log.class);
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private final ConnectionPoolConfigurationBuilder connectionPool;
+   private final SecurityConfigurationBuilder security;
    private List<RemoteServerConfigurationBuilder> servers = new ArrayList<RemoteServerConfigurationBuilder>();
 
    public RemoteStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, RemoteStoreConfiguration.attributeDefinitionSet());
       asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       connectionPool = new ConnectionPoolConfigurationBuilder(this);
+      security = new SecurityConfigurationBuilder(this);
    }
 
    @Override
@@ -129,6 +131,11 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    }
 
    @Override
+   public SecurityConfigurationBuilder remoteSecurity() {
+      return this.security;
+   }
+
+   @Override
    public RemoteStoreConfigurationBuilder socketTimeout(long socketTimeout) {
       attributes.attribute(SOCKET_TIMEOUT).set(socketTimeout);
       return this;
@@ -172,7 +179,8 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
          remoteServers.add(server.create());
       }
       attributes.attribute(SERVERS).set(remoteServers);
-      return new RemoteStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(), asyncExecutorFactory.create(), connectionPool.create());
+      return new RemoteStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(),
+            asyncExecutorFactory.create(), connectionPool.create(), security.create());
    }
 
    @Override
@@ -183,6 +191,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       for (RemoteServerConfiguration server : template.servers()) {
          this.addServer().host(server.host()).port(server.port());
       }
+      this.security.read(template.security());
 
       return this;
    }

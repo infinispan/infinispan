@@ -32,6 +32,7 @@ import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.client.helpers.MeasurementUnit;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -58,7 +59,7 @@ public class RemoteStoreConfigurationResource extends BaseStoreConfigurationReso
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
-   static final SimpleAttributeDefinition PROTOCOL_VERSION =
+    static final SimpleAttributeDefinition PROTOCOL_VERSION =
            new SimpleAttributeDefinitionBuilder(ModelKeys.PROTOCOL_VERSION, ModelType.STRING, true)
                    .setXmlName(Attribute.PROTOCOL_VERSION.getLocalName())
                    .setAllowExpression(true)
@@ -110,5 +111,13 @@ public class RemoteStoreConfigurationResource extends BaseStoreConfigurationReso
     public RemoteStoreConfigurationResource(CacheConfigurationResource parent) {
         super(REMOTE_STORE_PATH, ModelKeys.REMOTE_STORE, parent, REMOTE_STORE_ATTRIBUTES);
     }
+
+   @Override
+   public void registerChildren(ManagementResourceRegistration resourceRegistration) {
+      super.registerChildren(resourceRegistration);
+      // child resources
+      resourceRegistration.registerSubModel(new AuthenticationResource());
+      resourceRegistration.registerSubModel(new EncryptionResource());
+   }
 
 }

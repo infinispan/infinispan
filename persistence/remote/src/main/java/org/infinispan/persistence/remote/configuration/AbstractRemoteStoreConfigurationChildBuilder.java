@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * AbstractRemoteStoreConfigurationChildBuilder.
@@ -13,7 +14,7 @@ import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder
  * @since 5.2
  */
 public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements RemoteStoreConfigurationChildBuilder<S> {
-   private final RemoteStoreConfigurationBuilder builder;
+   protected final RemoteStoreConfigurationBuilder builder;
    protected final AttributeSet attributes;
 
    protected AbstractRemoteStoreConfigurationChildBuilder(RemoteStoreConfigurationBuilder builder, AttributeSet attributes) {
@@ -93,6 +94,11 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    }
 
    @Override
+   public SecurityConfigurationBuilder remoteSecurity() {
+      return builder.remoteSecurity();
+   }
+
+   @Override
    public RemoteStoreConfigurationBuilder socketTimeout(long socketTimeout) {
       return builder.socketTimeout(socketTimeout);
    }
@@ -115,5 +121,13 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    @Override
    public RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       return builder.valueSizeEstimate(valueSizeEstimate);
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+   }
+
+   public RemoteStoreConfigurationBuilder getRemoteStoreBuilder() {
+      return builder;
    }
 }

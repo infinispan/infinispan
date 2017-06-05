@@ -310,8 +310,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER, null, true));
       }
       this.version(ProtocolVersion.parseVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion.toString(), true)));
-      this.servers.clear();
-      this.addServers(typed.getProperty(ConfigurationProperties.SERVER_LIST, "", true));
+      String serverList = typed.getProperty(ConfigurationProperties.SERVER_LIST, null, true);
+      if (serverList != null) {
+         this.servers.clear();
+         this.addServers(serverList);
+      }
       this.socketTimeout(typed.getIntProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
       this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
       this.tcpKeepAlive(typed.getBooleanProperty(ConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive, true));

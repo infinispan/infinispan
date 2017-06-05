@@ -22,6 +22,15 @@
                   <property name="pool_size">1</property>
                   <property name="queue_size">10000</property>
                </async-executor>
+               <security>
+                  <authentication server-name="servername">
+                     <digest username="username" password="password" realm="realm" />
+                  </authentication>
+                  <encryption protocol="TLSv1.2" sni-hostname="snihostname">
+                     <keystore filename="${project.build.testOutputDirectory}/keystore_client.jks" password="secret" certificate-password="secret" key-alias="hotrod" type="JKS"/>
+                     <truststore filename="${project.build.testOutputDirectory}/ca.jks" password="secret" type="JKS"/>
+                  </encryption>
+               </security>
             </remote-store>
          </persistence>
       </local-cache>

@@ -1,6 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -229,7 +230,7 @@ public final class ParseUtils {
      * @return the attribute values in order
      * @throws javax.xml.stream.XMLStreamException if an error occurs
      */
-    public static String[] requireAttributes(final XMLStreamReader reader, final String... attributeNames)
+    public static String[] requireAttributes(final XMLStreamReader reader, boolean replace, final String... attributeNames)
             throws XMLStreamException {
         final int length = attributeNames.length;
         final String[] result = new String[length];
@@ -239,9 +240,14 @@ public final class ParseUtils {
             if (value == null) {
                 throw missingRequired(reader, Collections.singleton(name));
             }
-            result[i] = value;
+            result[i] = replace ? replaceProperties(value) : value;
         }
         return result;
+    }
+
+    public static String[] requireAttributes(final XMLStreamReader reader, final String... attributeNames)
+          throws XMLStreamException {
+        return requireAttributes(reader, false, attributeNames);
     }
 
     public static boolean isNoNamespaceAttribute(final XMLStreamReader reader, final int index) {

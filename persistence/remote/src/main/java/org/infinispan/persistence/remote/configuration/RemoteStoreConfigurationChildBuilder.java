@@ -54,13 +54,13 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate);
 
    /**
-    * Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to
+    * Allows you to specify a custom {@link org.infinispan.commons.marshall.Marshaller} implementation to
     * serialize and deserialize user objects.
     */
    RemoteStoreConfigurationBuilder marshaller(String marshaller);
 
    /**
-    * Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to
+    * Allows you to specify a custom {@link org.infinispan.commons.marshall.Marshaller} implementation to
     * serialize and deserialize user objects.
     */
    RemoteStoreConfigurationBuilder marshaller(Class<? extends Marshaller> marshaller);
@@ -89,6 +89,12 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
     * unspecified, the default cache will be used
     */
    RemoteStoreConfigurationBuilder remoteCacheName(String remoteCacheName);
+
+
+   /**
+    * Configures connection security
+    */
+   SecurityConfigurationBuilder remoteSecurity();
 
    /**
     * This property defines the maximum socket read timeout in milliseconds before giving up waiting

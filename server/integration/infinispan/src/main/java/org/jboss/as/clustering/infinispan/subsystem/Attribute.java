@@ -109,6 +109,7 @@ public enum Attribute {
     MAX_RETRIES(ModelKeys.MAX_RETRIES),
     MAX_THREADS(ModelKeys.MAX_THREADS),
     MAX_TOTAL_CONNECTIONS(ModelKeys.MAX_TOTAL_CONNECTIONS),
+    MECHANISM(ModelKeys.MECHANISM),
     MIN_THREADS(ModelKeys.MIN_THREADS),
     MODE(ModelKeys.MODE),
     MODIFICATION_QUEUE_SIZE(ModelKeys.MODIFICATION_QUEUE_SIZE),
@@ -119,6 +120,7 @@ public enum Attribute {
     OUTBOUND_SOCKET_BINDING(ModelKeys.OUTBOUND_SOCKET_BINDING),
     OWNERS(ModelKeys.OWNERS),
     PASSIVATION(ModelKeys.PASSIVATION),
+    PASSWORD(ModelKeys.PASSWORD),
     PATH(ModelKeys.PATH),
     PERMISSIONS(ModelKeys.PERMISSIONS),
     PREFIX(ModelKeys.PREFIX),
@@ -132,6 +134,7 @@ public enum Attribute {
     RACK(ModelKeys.RACK),
     RAW_VALUES(ModelKeys.RAW_VALUES),
     READ_ONLY(ModelKeys.READ_ONLY),
+    REALM(ModelKeys.REALM),
     RELATIVE_TO(ModelKeys.RELATIVE_TO),
     REMOTE_CACHE(ModelKeys.REMOTE_CACHE),
     @Deprecated
@@ -141,6 +144,7 @@ public enum Attribute {
     @Deprecated
     REPLICATION_QUEUE_EXECUTOR(ModelKeys.REPLICATION_QUEUE_EXECUTOR),
     ROLES(ModelKeys.ROLES),
+    SECURITY_REALM(ModelKeys.SECURITY_REALM),
     SEGMENTS(ModelKeys.SEGMENTS),
     SHARED(ModelKeys.SHARED),
     SHUTDOWN_TIMEOUT(ModelKeys.SHUTDOWN_TIMEOUT),
@@ -150,6 +154,7 @@ public enum Attribute {
     SITE(ModelKeys.SITE),
     SIZE(ModelKeys.SIZE),
     SOCKET_TIMEOUT(ModelKeys.SOCKET_TIMEOUT),
+    SNI_HOSTNAME(ModelKeys.SNI_HOSTNAME),
     STACK(ModelKeys.STACK),
     START(ModelKeys.START),
     @Deprecated
@@ -168,18 +173,19 @@ public enum Attribute {
     @Deprecated
     TOTAL_ORDER_EXECUTOR(ModelKeys.TOTAL_ORDER_EXECUTOR),
     TYPE(ModelKeys.TYPE),
+    USERNAME(ModelKeys.USERNAME),
     WAIT_TIME(ModelKeys.WAIT_TIME),
     ;
 
     private final String name;
     private final AttributeDefinition definition;
 
-    private Attribute(final String name) {
+    Attribute(final String name) {
         this.name = name;
         this.definition = null;
     }
 
-    private Attribute(final AttributeDefinition definition) {
+    Attribute(final AttributeDefinition definition) {
         this.name = definition.getXmlName();
         this.definition = definition;
     }

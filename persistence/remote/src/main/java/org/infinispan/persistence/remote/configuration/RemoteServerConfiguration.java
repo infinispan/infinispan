@@ -14,8 +14,8 @@ public class RemoteServerConfiguration {
 
    private final AttributeSet attributes;
 
-   RemoteServerConfiguration(AttributeSet attibutes) {
-      this.attributes = attibutes;
+   RemoteServerConfiguration(AttributeSet attributes) {
+      this.attributes = attributes;
    }
 
    AttributeSet attributes() {
@@ -32,28 +32,17 @@ public class RemoteServerConfiguration {
 
    @Override
    public String toString() {
-      return "RemoteServerConfiguration{" +
-            "host='" + host() + '\'' +
-            ", port=" + port() +
-            '}';
+      return attributes.toString();
    }
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      RemoteServerConfiguration that = (RemoteServerConfiguration) o;
-
-      if (port() != that.port()) return false;
-      return host() != null ? host().equals(that.host()) : that.host() == null;
-
+      RemoteServerConfiguration other = (RemoteServerConfiguration) o;
+      return attributes.equals(other.attributes);
    }
 
    @Override
    public int hashCode() {
-      int result = host() != null ? host().hashCode() : 0;
-      result = 31 * result + port();
-      return result;
+      return attributes.hashCode();
    }
 }

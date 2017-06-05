@@ -24,6 +24,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ATTRIBUTE;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 import java.util.Collections;
@@ -1483,6 +1484,22 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     parseStoreWriteBehind(reader, store, additionalConfigurationOperations);
                     break;
                 }
+                case ENCRYPTION: {
+                    if (namespace.since(Namespace.INFINISPAN_SERVER_9_1)) {
+                        parseRemoteStoreEncryption(reader, store, additionalConfigurationOperations);
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                    break;
+                }
+                case AUTHENTICATION: {
+                    if (namespace.since(Namespace.INFINISPAN_SERVER_9_1)) {
+                        parseRemoteStoreAuthentication(reader, store, additionalConfigurationOperations);
+                    } else {
+                        throw ParseUtils.unexpectedElement(reader);
+                    }
+                    break;
+                }
                 default: {
                     this.parseStoreProperty(reader, store, additionalConfigurationOperations);
                 }
@@ -1495,6 +1512,70 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
 
         operations.put(storeAddress, store);
         operations.putAll(additionalConfigurationOperations);
+    }
+
+    private void parseRemoteStoreAuthentication(XMLExtendedStreamReader reader, ModelNode store, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress authenticationAddress = PathAddress.pathAddress(store.get(OP_ADDR)).append(ModelKeys.AUTHENTICATION, ModelKeys.AUTHENTICATION_NAME);
+        ModelNode authentication = Util.createAddOperation(authenticationAddress);
+
+        ParseUtils.requireNoAttributes(reader);
+        while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+            Element element = Element.forName(reader.getLocalName());
+            switch (element) {
+                case PLAIN: {
+                    AuthenticationResource.MECHANISM.parseAndSetParameter("PLAIN", authentication, reader);
+                    String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName());
+                    AuthenticationResource.USERNAME.parseAndSetParameter(attributes[0], authentication, reader);
+                    AuthenticationResource.PASSWORD.parseAndSetParameter(attributes[1], authentication, reader);
+                    ParseUtils.requireNoContent(reader);
+                    break;
+                }
+                case DIGEST: {
+                    AuthenticationResource.MECHANISM.parseAndSetParameter("DIGEST-MD5", authentication, reader);
+                    String[] attributes = ParseUtils.requireAttributes(reader, Attribute.USERNAME.getLocalName(), Attribute.PASSWORD.getLocalName(), Attribute.REALM.getLocalName());
+                    AuthenticationResource.USERNAME.parseAndSetParameter(attributes[0], authentication, reader);
+                    AuthenticationResource.PASSWORD.parseAndSetParameter(attributes[1], authentication, reader);
+                    AuthenticationResource.REALM.parseAndSetParameter(attributes[2], authentication, reader);
+                    ParseUtils.requireNoContent(reader);
+                    break;
+                }
+                case EXTERNAL: {
+                    AuthenticationResource.MECHANISM.parseAndSetParameter("EXTERNAL", authentication, reader);
+                    ParseUtils.requireNoContent(reader);
+                    break;
+                }
+
+                default: {
+                    throw ParseUtils.unexpectedElement(reader);
+                }
+            }
+        }
+
+        operations.put(authenticationAddress, authentication);
+    }
+
+    private void parseRemoteStoreEncryption(XMLExtendedStreamReader reader, ModelNode store, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress encryptionAddress = PathAddress.pathAddress(store.get(OP_ADDR)).append(ModelKeys.ENCRYPTION, ModelKeys.ENCRYPTION_NAME);
+        ModelNode encryption = Util.createAddOperation(encryptionAddress);
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case SECURITY_REALM: {
+                    EncryptionResource.SECURITY_REALM.parseAndSetParameter(value, encryption, reader);
+                    break;
+                }
+                case SNI_HOSTNAME: {
+                    EncryptionResource.SNI_HOSTNAME.parseAndSetParameter(value, encryption, reader);
+                    break;
+                }
+                default:
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+        }
+        ParseUtils.requireNoContent(reader);
+        operations.put(encryptionAddress, encryption);
     }
 
     private void parseLevelDBStore(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
