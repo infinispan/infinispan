@@ -96,7 +96,7 @@ Object result = cache.execute("multiplication.js", params);
 ----
 
 ==== Distributed execution
-The following is a script which runs within a Distributed Executor.
+The following is a script which runs on all nodes.
 Each node will return its address, and the results from all nodes will be collected in a List and returned to the client.
 [source,javascript]
 ----

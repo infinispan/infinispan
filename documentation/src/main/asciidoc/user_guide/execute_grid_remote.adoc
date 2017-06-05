@@ -1,0 +1,11 @@
+==  Executing code in the Remote Grid
+
+In an earlier section we described executing code in the grid. Unfortunately
+these methods are designed to be used in an embedded scenario with direct
+access to the grid. This section will detail how you can perform similar
+functions but while using a remote client connected to the grid.
+
+include::scripting.adoc[]
+
+include::server_tasks.adoc[]
+

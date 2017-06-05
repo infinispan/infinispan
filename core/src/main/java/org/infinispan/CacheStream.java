@@ -273,13 +273,7 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
 
    /**
     * {@inheritDoc}
-    * <p>This operation is performed entirely on the local node irrespective of the backing cache.  This
-    * operation will act as an intermediate iterator operation requiring data be brought locally for proper behavior.
-    * This is described in more detail in the {@link CacheStream} documentation</p>
-    * <p>Depending on the terminal operator this may or may not require all entries or a subset after skip is applied
-    * to be in memory all at once.</p>
-    * <p>Any subsequent intermediate operations and the terminal operation are then performed locally.</p>
-    * @param  action the action to perform on this node locally for each entry
+    * @param  action the action to perform on the stream
     * @return the new stream
     */
    @Override
