@@ -49,6 +49,8 @@ import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -103,6 +105,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private ReAddMyAddressListener topologyChangeListener;
    protected ExecutorService executor;
    private IterationManager iterationManager;
+   private RemoveCacheListener removeCacheListener;
 
    public ServerAddress getAddress() {
       return address;
@@ -150,6 +153,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       loadFilterConverterFactories(CacheEventFilterConverterFactory.class, this::addCacheEventFilterConverterFactory);
       loadFilterConverterFactories(CacheEventConverterFactory.class, this::addCacheEventConverterFactory);
       loadFilterConverterFactories(KeyValueFilterConverterFactory.class, this::addKeyValueFilterConverterFactory);
+
+      removeCacheListener = new RemoveCacheListener();
+      cacheManager.addListener(removeCacheListener);
 
       // Start default cache and the endpoint before adding self to
       // topology in order to avoid topology updates being used before
@@ -286,7 +292,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return builder;
    }
 
-   AdvancedCache getKnownCacheInstance(String cacheName) {
+   AdvancedCache getKnownCache(String cacheName) {
       return knownCaches.get(cacheName);
    }
 
@@ -402,6 +408,9 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    @Override
    public void stop() {
+      if (removeCacheListener != null) {
+         SecurityActions.removeListener(cacheManager, removeCacheListener);
+      }
       if (viewChangeListener != null) {
          SecurityActions.removeListener(cacheManager, viewChangeListener);
       }
@@ -461,6 +470,16 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
                log.debug("Error re-adding address to topology cache, retrying", e);
             }
          }
+      }
+   }
+
+   @Listener
+   class RemoveCacheListener {
+      @CacheStopped
+      public void cacheStopped(CacheStoppedEvent event) {
+         knownCaches.remove(event.getCacheName());
+         knownCacheConfigurations.remove(event.getCacheName());
+         knownCacheRegistries.remove(event.getCacheName());
       }
    }
 }

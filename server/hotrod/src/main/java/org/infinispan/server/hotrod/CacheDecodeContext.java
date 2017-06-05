@@ -14,6 +14,7 @@ import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -103,7 +104,7 @@ public final class CacheDecodeContext {
    void obtainCache(EmbeddedCacheManager cacheManager, boolean loopback) throws RequestParsingException {
       String cacheName = header.cacheName;
       // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
-      AdvancedCache<byte[], byte[]> cache = server.getKnownCacheInstance(cacheName);
+      AdvancedCache<byte[], byte[]> cache = server.getKnownCache(cacheName);
       if (cache == null) {
          // Talking to the wrong cache are really request parsing errors
          // and hence should be treated as client errors
