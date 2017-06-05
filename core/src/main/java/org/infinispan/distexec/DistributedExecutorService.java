@@ -8,7 +8,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -46,7 +45,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Vladimir Blagojevic
  *
  * @since 5.0
- * @deprecated since 9.1 Please use {@link EmbeddedCacheManager#executor()} or {@link org.infinispan.CacheStream} instead.
+ * @deprecated since 9.1 Please use {@link org.infinispan.manager.ClusterExecutor} or {@link org.infinispan.CacheStream} instead.
  */
 public interface DistributedExecutorService extends ExecutorService {
 

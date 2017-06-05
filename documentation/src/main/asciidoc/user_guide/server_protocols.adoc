@@ -86,3 +86,5 @@ include::server_protocols_hotrod.adoc[]
 include::server_protocols_rest.adoc[]
 include::server_protocols_memcached.adoc[]
 include::server_protocols_websocket.adoc[]
+
+include::execute_grid_remote.adoc[]
