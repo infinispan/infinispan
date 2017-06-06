@@ -16,7 +16,7 @@ import org.infinispan.commons.util.Util;
  */
 public class WrappedByteArray implements WrappedBytes {
    private final byte[] bytes;
-   private transient int hashCode;
+   private final int hashCode;
 
    public WrappedByteArray(byte[] bytes) {
       this.bytes = bytes;
@@ -100,12 +100,12 @@ public class WrappedByteArray implements WrappedBytes {
       @Override
       public void writeObject(ObjectOutput output, WrappedByteArray object) throws IOException {
          MarshallUtil.marshallByteArray(object.bytes, output);
+         output.writeInt(object.hashCode);
       }
 
       @Override
       public WrappedByteArray readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte[] bytes = MarshallUtil.unmarshallByteArray(input);
-         return new WrappedByteArray(bytes);
+         return new WrappedByteArray(MarshallUtil.unmarshallByteArray(input), input.readInt());
       }
    }
 }
