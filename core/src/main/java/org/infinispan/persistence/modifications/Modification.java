@@ -7,7 +7,7 @@ package org.infinispan.persistence.modifications;
  * @since 4.0
  */
 public interface Modification {
-   static enum Type {
+   enum Type {
       STORE, REMOVE, CLEAR, LIST
    }
 

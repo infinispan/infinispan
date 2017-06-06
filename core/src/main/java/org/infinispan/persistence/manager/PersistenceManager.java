@@ -27,7 +27,7 @@ public interface PersistenceManager extends Lifecycle {
    /**
     * Loads the data from the external store into memory during cache startup.
     */
-   public void preload();
+   void preload();
 
    /**
     * Marks the given storage as disabled.
@@ -67,7 +67,7 @@ public interface PersistenceManager extends Lifecycle {
 
    int size();
 
-   public static enum AccessMode {
+   enum AccessMode {
       /**
        * The operation is performed in all {@link org.infinispan.persistence.spi.CacheWriter} or {@link
        * org.infinispan.persistence.spi.CacheLoader}
@@ -158,4 +158,22 @@ public interface PersistenceManager extends Lifecycle {
     * @param accessMode the type of access to the underlying store.
     */
    void rollbackAllTxStores(Transaction transaction, AccessMode accessMode);
+
+   /**
+    * Write all entries to the underlying non-transactional stores as a single batch.
+    *
+    * @param entries a List of MarshalledEntry to be written to the store.
+    * @param accessMode the type of access to the underlying store.
+    * @param flags Flags used during command invocation
+    */
+   void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags);
+
+   /**
+    * Remove all entries from the underlying non-transactional stores as a single batch.
+    *
+    * @param entries a List of Keys to be removed from the store.
+    * @param accessMode the type of access to the underlying store.
+    * @param flags Flags used during command invocation
+    */
+   void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags);
 }

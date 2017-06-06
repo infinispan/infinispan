@@ -522,6 +522,31 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    @Override
+   public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags) {
+      storesMutex.readLock().lock();
+      try {
+         nonTxWriters.stream()
+               .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
+               .filter(writer -> accessMode.canPerform(configMap.get(writer)))
+               .forEach(writer -> writer.writeBatch(entries));
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+   }
+
+   @Override
+   public void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags) {
+      storesMutex.readLock().lock();
+      try {
+         nonTxWriters.stream()
+               .filter(writer -> accessMode.canPerform(configMap.get(writer)))
+               .forEach(writer -> writer.deleteBatch(keys));
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+   }
+
+   @Override
    public void prepareAllTxStores(Transaction transaction, BatchModification batchModification,
                                   AccessMode accessMode) throws PersistenceException {
       storesMutex.readLock().lock();

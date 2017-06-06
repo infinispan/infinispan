@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -44,7 +45,7 @@ public class PassivationManagerImpl implements PassivationManager {
    private DistributionManager distributionManager;
 
    @Inject
-   public void inject(PersistenceManager persistenceManager, CacheNotifier notifier, Configuration cfg, DataContainer container,
+   public void inject(PersistenceManager persistenceManager,CacheNotifier notifier, Configuration cfg, DataContainer container,
                       TimeService timeService, MarshalledEntryFactory marshalledEntryFactory,
                       DistributionManager distributionManager) {
       this.persistenceManager = persistenceManager;
@@ -99,13 +100,11 @@ public class PassivationManagerImpl implements PassivationManager {
       if (enabled && !skipOnStop) {
          long start = timeService.time();
          log.passivatingAllEntries();
-         long count = 0;
-         for (InternalCacheEntry e : container) {
-            count++;
-            if (trace) log.tracef("Passivating %s", e.getKey());
-            persistenceManager.writeToAllNonTxStores(marshalledEntryFactory.newMarshalledEntry(e.getKey(), e.getValue(),
-                                                                                               internalMetadata(e)), BOTH);
-         }
+
+         int count = container.sizeIncludingExpired();
+         Iterable<MarshalledEntry> iterable = () -> new IteratorMapper<>(container.iterator(), e ->
+            marshalledEntryFactory.newMarshalledEntry(e.getKey(), e.getValue(), internalMetadata(e)));
+         persistenceManager.writeBatchToAllNonTxStores(iterable, BOTH, 0);
          log.passivatedEntries(count, Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       }
    }

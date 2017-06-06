@@ -9,7 +9,10 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.transaction.TransactionManager;
 
@@ -27,6 +30,7 @@ import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerStub;
+import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -260,12 +264,11 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
             }
 
             @Override
-            public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode modes) {
+            public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags) {
                passivate.set(true);
             }
          };
-         cache.getAdvancedCache().getComponentRegistry().registerComponent(stub, PersistenceManager.class);
-         cache.getAdvancedCache().getComponentRegistry().rewire();
+         TestingUtil.replaceComponent(cache, PersistenceManager.class, stub, true);
          local.removeCache(cacheName);
          assertFalse(local.isRunning(cacheName));
          assertFalse(passivate.get());
@@ -273,6 +276,25 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       } finally {
          TestingUtil.killCacheManagers(local);
       }
+   }
+
+   public void testPutAllBatch() throws Exception {
+      int numberOfEntries = 100;
+      String cacheName = "testPutAllBatch";
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.read(cacheManager.getDefaultCacheConfiguration());
+      createCacheStoreConfig(cb.persistence(), false);
+      cacheManager.defineConfiguration(cacheName, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+      Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
+            .collect(Collectors.toMap(i -> i.toString(), i -> wrap(i.toString(), "Val"+i)));
+      cache.putAll(entriesMap);
+
+      assertEquals(numberOfEntries, cache.size());
+      CacheLoader cl = TestingUtil.getCacheLoader(cache);
+      if (cl != null)
+         IntStream.range(0, numberOfEntries).forEach(i -> assertNotNull(cl.load(Integer.toString(i))));
    }
 
    private ConfigurationBuilder configureCacheLoader(ConfigurationBuilder base, boolean purge) {

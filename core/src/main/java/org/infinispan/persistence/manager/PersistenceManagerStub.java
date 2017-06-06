@@ -113,4 +113,12 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public void rollbackAllTxStores(Transaction transaction, AccessMode accessMode) {
    }
+
+   @Override
+   public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags) {
+   }
+
+   @Override
+   public void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags) {
+   }
 }

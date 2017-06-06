@@ -35,7 +35,7 @@ public interface AdvancedCacheWriter<K, V> extends CacheWriter<K, V> {
     * Callback to be notified when an entry is removed by the {@link #purge(java.util.concurrent.Executor,
     * org.infinispan.persistence.spi.AdvancedCacheWriter.PurgeListener)} method.
     */
-   public interface PurgeListener<K> {
+   interface PurgeListener<K> {
 
       /**
        * Optional. If possible, {@link AdvancedCacheWriter} implementors should invoke this method for every entry that
