@@ -161,4 +161,10 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Unable to notify the PurgeListener of expired cache entries as the configured key2StringMapper " +
          "does not implement %s", id = 8036)
    void twoWayKey2StringMapperIsMissing(String className);
+
+   @Message(value = "Error while writing entries in batch to the database:", id = 8037)
+   PersistenceException sqlFailureWritingBatch(@Cause Exception e);
+
+   @Message(value = "Error whilst removing keys in batch from the database. Keys: %s", id = 8038)
+   PersistenceException sqlFailureDeletingBatch(Iterable<Object> keys, @Cause Exception e);
 }
