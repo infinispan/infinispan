@@ -14,7 +14,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
@@ -31,7 +34,6 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
-import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -207,12 +209,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    protected void assertEventuallyExpires(final String key) throws Exception {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cl.load(key) == null;
-         }
-      });
+      eventually(() -> cl.load(key) == null);
    }
 
    /* Override if the store cannot purge all expired entries upon request */
@@ -242,17 +239,11 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
          };
          ((AdvancedCacheExpirationWriter) cl).purge(new WithinThreadExecutor(), purgeListener);
       } else {
-         final AdvancedCacheWriter.PurgeListener purgeListener = new AdvancedCacheWriter.PurgeListener<String>() {
-            @Override
-            public void entryPurged(String key) {
-               if (!expired.remove(key)) {
-                  incorrect.add(key);
-               }
-            }
-         };
-
          //noinspection unchecked
-         cl.purge(new WithinThreadExecutor(), purgeListener);
+         cl.purge(new WithinThreadExecutor(), key -> {
+            if (!expired.remove(key))
+               incorrect.add(key);
+         });
       }
 
       assertEmpty(incorrect, true);
@@ -530,7 +521,26 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       assertTrue(cl.delete(key));
    }
 
+   public void testWriteAndDeleteBatch() throws Exception {
+      int numberOfEntries = 100;
+      assertIsEmpty();
+      assertNull("should not be present in the store", cl.load(0));
+      List<MarshalledEntry<?, ?>> entries = IntStream.range(0, numberOfEntries).boxed()
+            .map(i -> marshalledEntry(i.toString(), "Val" + i, null))
+            .collect(Collectors.toList());
 
+      cl.writeBatch(entries);
+      Set<MarshalledEntry> set = TestingUtil.allEntries(cl);
+      assertSize(set, numberOfEntries);
+      assertNotNull(cl.load("56"));
+
+      int batchSize = numberOfEntries / 2;
+      List<Object> keys = IntStream.range(0, batchSize).mapToObj(Integer::toString).collect(Collectors.toList());
+      cl.deleteBatch(keys);
+      set = TestingUtil.allEntries(cl);
+      assertSize(set, batchSize);
+      assertNull(cl.load("20"));
+   }
 
    protected final InitializationContext createContext(Configuration configuration) {
       return PersistenceMockUtil.createContext(getClass().getSimpleName(), configuration, getMarshaller(), timeService);
