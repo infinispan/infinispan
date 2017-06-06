@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -12,9 +14,13 @@ import javax.persistence.EntityTransaction;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.IdentifiableType;
 import javax.persistence.metamodel.ManagedType;
+import javax.persistence.metamodel.Metamodel;
+import javax.persistence.metamodel.SingularAttribute;
 import javax.persistence.metamodel.Type;
 
 import org.hibernate.Criteria;
@@ -54,7 +60,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Store(shared = true)
 @ConfiguredBy(JpaStoreConfiguration.class)
-public class JpaStore implements AdvancedLoadWriteStore {
+public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(JpaStore.class);
    private static boolean trace = log.isTraceEnabled();
 
@@ -274,6 +280,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
       }
    }
 
+   @Override
    public boolean delete(Object key) {
       if (!isValidKeyType(key)) {
          return false;
@@ -285,17 +292,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
          if (entity == null) {
             return false;
          }
-         MetadataEntity metadata = null;
-         if (configuration.storeMetadata()) {
-            byte[] keyBytes;
-            try {
-               keyBytes = marshaller.objectToByteBuffer(key);
-            } catch (Exception e) {
-               throw new JpaStoreException("Failed to marshall key", e);
-            }
-            metadata = findMetadata(em, new MetadataEntityKey(keyBytes));
-         }
-
+         MetadataEntity metadata = getMetadata(key, em);
          EntityTransaction txn = em.getTransaction();
          if (trace) log.trace("Removing " + entity + "(" + toString(metadata) + ")");
          long txnBegin = timeService.time();
@@ -321,6 +318,66 @@ public class JpaStore implements AdvancedLoadWriteStore {
    }
 
    @Override
+   public void deleteBatch(Iterable<Object> keys) {
+      EntityManager em = emf.createEntityManager();
+      try {
+         EntityTransaction txn = em.getTransaction();
+         long txnBegin = timeService.time();
+         try {
+            txn.begin();
+
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            CriteriaDelete query = cb.createCriteriaDelete(configuration.entityClass());
+            Root root = query.from(configuration.entityClass());
+            SingularAttribute id = getEntityId(em, configuration.entityClass());
+            query.where(root.get(id).in(keys));
+            em.createQuery(query).executeUpdate();
+
+            if (configuration.storeMetadata()) {
+               List<MetadataEntityKey> metaKeys = StreamSupport.stream(keys.spliterator(), false).map(this::getMetadataKey).collect(Collectors.toList());
+               CriteriaDelete<MetadataEntity> metaQuery = cb.createCriteriaDelete(MetadataEntity.class);
+               Root<MetadataEntity> metaRoot = metaQuery.from(MetadataEntity.class);
+               id = getEntityId(em, MetadataEntity.class);
+               query.where(metaRoot.get(id).in(metaKeys));
+               em.createQuery(metaQuery).executeUpdate();
+            }
+            txn.commit();
+            stats.addBatchRemoveTxCommitted(timeService.time() - txnBegin);
+         } catch (Exception e) {
+            stats.addBatchRemoveTxFailed(timeService.time() - txnBegin);
+            if (e instanceof JpaStoreException)
+               throw e;
+            throw new JpaStoreException("Exception caught in deleteBatch()", e);
+         } finally {
+            if (txn != null && txn.isActive())
+               txn.rollback();
+         }
+      } finally {
+         em.close();
+      }
+   }
+
+   private SingularAttribute getEntityId(EntityManager em, Class clazz) {
+      Metamodel meta = em.getMetamodel();
+      IdentifiableType identifiableType = (IdentifiableType) meta.managedType(clazz);
+      return identifiableType.getId(identifiableType.getIdType().getJavaType());
+   }
+
+   private MetadataEntityKey getMetadataKey(Object key) {
+      byte[] keyBytes;
+      try {
+         keyBytes = marshaller.objectToByteBuffer(key);
+      } catch (Exception e) {
+         throw new JpaStoreException("Failed to marshall key", e);
+      }
+      return new MetadataEntityKey(keyBytes);
+   }
+
+   private MetadataEntity getMetadata(Object key, EntityManager em) {
+      return configuration.storeMetadata() ? findMetadata(em, getMetadataKey(key)) : null;
+   }
+
+   @Override
    public void write(MarshalledEntry entry) {
       EntityManager em = emf.createEntityManager();
 
@@ -329,43 +386,87 @@ public class JpaStore implements AdvancedLoadWriteStore {
             new MetadataEntity(entry.getKeyBytes(), entry.getMetadataBytes(),
                   entry.getMetadata() == null ? Long.MAX_VALUE : entry.getMetadata().expiryTime()) : null;
       try {
-         if (!configuration.entityClass().isAssignableFrom(entity.getClass())) {
-            throw new JpaStoreException(String.format(
-                  "This cache is configured with JPA CacheStore to only store values of type %s - cannot write %s = %s",
-                  configuration.entityClass().getName(), entity, entity.getClass().getName()));
-         } else {
-            EntityTransaction txn = em.getTransaction();
-            Object id = emf.getPersistenceUnitUtil().getIdentifier(entity);
-            if (!entry.getKey().equals(id)) {
-               throw new JpaStoreException(
-                     "Entity id value must equal to key of cache entry: "
-                           + "key = [" + entry.getKey() + "], id = ["
-                           + id + "]");
-            }
-            long txnBegin = timeService.time();
-            try {
-               if (trace) log.trace("Writing " + entity + "(" + toString(metadata) + ")");
-               txn.begin();
+         validateEntityIsAssignable(entity);
+         validateObjectId(entry);
+         EntityTransaction txn = em.getTransaction();
 
-               mergeEntity(em, entity);
-               if (metadata != null && metadata.hasBytes()) {
-                  mergeMetadata(em, metadata);
-               }
+         long txnBegin = timeService.time();
+         try {
+            if (trace) log.trace("Writing " + entity + "(" + toString(metadata) + ")");
+            txn.begin();
 
-               txn.commit();
-               stats.addWriteTxCommited(timeService.time() - txnBegin);
-            } catch (Exception e) {
-               stats.addWriteTxFailed(timeService.time() - txnBegin);
-               throw new JpaStoreException("Exception caught in write()", e);
-            } finally {
-               if (txn != null && txn.isActive())
-                  txn.rollback();
+            mergeEntity(em, entity);
+            if (metadata != null && metadata.hasBytes()) {
+               mergeMetadata(em, metadata);
             }
+
+            txn.commit();
+            stats.addWriteTxCommited(timeService.time() - txnBegin);
+         } catch (Exception e) {
+            stats.addWriteTxFailed(timeService.time() - txnBegin);
+            throw new JpaStoreException("Exception caught in write()", e);
+         } finally {
+            if (txn != null && txn.isActive())
+               txn.rollback();
          }
       } finally {
          em.close();
       }
+   }
 
+   @Override
+   public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
+      EntityManager em = emf.createEntityManager();
+      try {
+         EntityTransaction txn = em.getTransaction();
+         long txnBegin = timeService.time();
+         try {
+            txn.begin();
+            for (MarshalledEntry entry : marshalledEntries) {
+               Object entity = entry.getValue();
+               validateEntityIsAssignable(entity);
+               validateObjectId(entry);
+
+               MetadataEntity metadata = configuration.storeMetadata() ?
+                     new MetadataEntity(entry.getKeyBytes(), entry.getMetadataBytes(),
+                           entry.getMetadata() == null ? Long.MAX_VALUE : entry.getMetadata().expiryTime()) : null;
+
+               mergeEntity(em, entity);
+               if (metadata != null && metadata.hasBytes())
+                  mergeMetadata(em, metadata);
+            }
+            txn.commit();
+            stats.addBatchWriteTxCommitted(timeService.time() - txnBegin);
+         } catch (Exception e) {
+            stats.addBatchWriteTxFailed(timeService.time() - txnBegin);
+            if (e instanceof JpaStoreException)
+               throw e;
+            throw new JpaStoreException("Exception caught in writeBatch()", e);
+         } finally {
+            if (txn != null && txn.isActive())
+               txn.rollback();
+         }
+      } finally {
+         em.close();
+      }
+   }
+
+   private void validateObjectId(MarshalledEntry entry) {
+      Object id = emf.getPersistenceUnitUtil().getIdentifier(entry.getValue());
+      if (!entry.getKey().equals(id)) {
+         throw new JpaStoreException(
+               "Entity id value must equal to key of cache entry: "
+                     + "key = [" + entry.getKey() + "], id = ["
+                     + id + "]");
+      }
+   }
+
+   private void validateEntityIsAssignable(Object entity) {
+      if (!configuration.entityClass().isAssignableFrom(entity.getClass())) {
+         throw new JpaStoreException(String.format(
+               "This cache is configured with JPA CacheStore to only store values of type %s - cannot write %s = %s",
+               configuration.entityClass().getName(), entity, entity.getClass().getName()));
+      }
    }
 
    @Override
@@ -385,13 +486,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
             try {
                if (entity == null) return false;
                if (configuration.storeMetadata()) {
-                  byte[] keyBytes;
-                  try {
-                     keyBytes = marshaller.objectToByteBuffer(key);
-                  } catch (Exception e) {
-                     throw new JpaStoreException("Cannot marshall key", e);
-                  }
-                  MetadataEntity metadata = findMetadata(em, new MetadataEntityKey(keyBytes));
+                  MetadataEntity metadata = findMetadata(em, getMetadataKey(key));
                   if (trace) log.trace("Metadata " + key + " -> " + toString(metadata));
                   return metadata == null || metadata.getExpiration() > timeService.wallClockTime();
                } else {
@@ -431,13 +526,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
                   return null;
                InternalMetadata m = null;
                if (configuration.storeMetadata()) {
-                  byte[] keyBytes;
-                  try {
-                     keyBytes = marshaller.objectToByteBuffer(key);
-                  } catch (Exception e) {
-                     throw new JpaStoreException("Failed to marshall key", e);
-                  }
-                  MetadataEntity metadata = findMetadata(em, new MetadataEntityKey(keyBytes));
+                  MetadataEntity metadata = findMetadata(em, getMetadataKey(key));
                   if (metadata != null && metadata.getMetadata() != null) {
                      try {
                         m = (InternalMetadata) marshaller.objectFromByteBuffer(metadata.getMetadata());
@@ -573,13 +662,7 @@ public class JpaStore implements AdvancedLoadWriteStore {
    }
 
    private InternalMetadata getMetadata(EntityManager em, Object key) {
-      byte[] keyBytes;
-      try {
-         keyBytes = marshaller.objectToByteBuffer(key);
-      } catch (Exception e) {
-         throw new JpaStoreException("Failed to marshall key", e);
-      }
-      MetadataEntity m = findMetadata(em, new MetadataEntityKey(keyBytes));
+      MetadataEntity m = findMetadata(em, getMetadataKey(key));
       if (m == null) return null;
 
       try {
