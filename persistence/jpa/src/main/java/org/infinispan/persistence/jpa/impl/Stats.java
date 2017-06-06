@@ -33,9 +33,13 @@ public class Stats {
    private final Operation txReadCommitted = new Operation();
    private final Operation txWriteCommitted = new Operation();
    private final Operation txRemoveCommitted = new Operation();
+   private final Operation txBatchWriteCommitted = new Operation();
+   private final Operation txBatchRemoveCommitted = new Operation();
    private final Operation txReadFailed = new Operation();
    private final Operation txWriteFailed = new Operation();
    private final Operation txRemoveFailed = new Operation();
+   private final Operation txBatchWriteFailed = new Operation();
+   private final Operation txBatchRemoveFailed = new Operation();
 
 
    public void addEntityMerge(long duration) {
@@ -86,6 +90,22 @@ public class Stats {
       txRemoveFailed.add(duration);
    }
 
+   public void addBatchWriteTxCommitted(long duration) {
+      txBatchWriteCommitted.add(duration);
+   }
+
+   public void addBatchWriteTxFailed(long duration) {
+      txBatchWriteFailed.add(duration);
+   }
+
+   public void addBatchRemoveTxCommitted(long duration) {
+      txBatchRemoveCommitted.add(duration);
+   }
+
+   public void addBatchRemoveTxFailed(long duration) {
+      txBatchRemoveFailed.add(duration);
+   }
+
    @Override
    public String toString() {
       return "Stats{" +
@@ -96,11 +116,15 @@ public class Stats {
             "\nmetadataMerge=" + metadataMerge +
             "\nmetadataRemove=" + metadataRemove +
             "\ntxReadCommitted=" + txReadCommitted +
-            "\ntxReadFailed=" + txReadFailed +
             "\ntxWriteCommitted=" + txWriteCommitted +
-            "\ntxWriteFailed=" + txWriteFailed +
             "\ntxRemoveCommitted=" + txRemoveCommitted +
+            "\ntxBatchWriteCommitted=" + txBatchWriteCommitted +
+            "\ntxBatchRemoveCommitted=" + txBatchRemoveCommitted +
+            "\ntxReadFailed=" + txReadFailed +
+            "\ntxWriteFailed=" + txWriteFailed +
             "\ntxRemoveFailed=" + txRemoveFailed +
+            "\ntxBatchWriteFailed=" + txBatchWriteFailed +
+            "\ntxBatchRemoveFailed=" + txBatchRemoveFailed +
             '}';
    }
 }
