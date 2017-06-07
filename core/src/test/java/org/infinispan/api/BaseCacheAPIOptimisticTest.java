@@ -18,4 +18,28 @@ public abstract class BaseCacheAPIOptimisticTest extends CacheAPITest {
    public void testLockedStreamSetValue() {
       super.testLockedStreamSetValue();
    }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testLockedStreamFunctionalCommand() throws Throwable {
+      super.testLockedStreamFunctionalCommand();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testLockedStreamPutAll() throws Throwable {
+      super.testLockedStreamPutAll();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testLockedStreamWithinLockedStream() {
+      super.testLockedStreamWithinLockedStream();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testLockedStreamPutAsync() throws Throwable {
+      super.testLockedStreamPutAsync();
+   }
 }

@@ -79,6 +79,10 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       } else {
          invocationContext = fmap.invCtxFactory.createInvocationContext(isWrite, keyCount);
       }
+      // Functional map has no way to lock key so we only have to add lock owner for writes
+      if (isWrite && fmap.lockOwner != null) {
+         invocationContext.setLockOwner(fmap.lockOwner);
+      }
       return invocationContext;
    }
 

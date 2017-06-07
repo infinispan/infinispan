@@ -4,6 +4,7 @@ import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.assertNoLocks;
 import static org.infinispan.test.TestingUtil.createMapEntry;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
@@ -11,6 +12,7 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -25,15 +28,22 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.infinispan.Cache;
 import org.infinispan.LockedStream;
+import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
 import org.testng.annotations.Test;
 
 /**
@@ -669,7 +679,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       }
    }
 
-   public void testLockedStream() throws Throwable {
+   void assertLockStream(BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>> consumer) throws Throwable {
       for (int i = 0; i < 10; i++) {
          cache.put(i, "value" + i);
       }
@@ -680,10 +690,15 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       LockedStream<Object, Object> stream = cache.getAdvancedCache().lockedStream();
       Future<?> forEachFuture = fork(() -> stream.forEach((c, e) -> {
-         if (e.getKey().equals(key)) {
+         Object innerKey = e.getKey();
+         if (innerKey.equals(key)) {
             try {
                barrier.await(10, TimeUnit.SECONDS);
-               assertEquals("value" + key, c.put(e.getKey(), String.valueOf(e.getValue() + "-other")));
+               consumer.accept(c, e);
+
+               InfinispanLock lock = TestingUtil.extractComponent(c, LockManager.class).getLock(innerKey);
+               assertNotNull(lock);
+               assertEquals(innerKey, lock.getLockOwner());
 
                barrier.await(10, TimeUnit.SECONDS);
             } catch (InterruptedException | BrokenBarrierException | TimeoutException e1) {
@@ -694,13 +709,10 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       barrier.await(10, TimeUnit.SECONDS);
 
-      Future<Object> putFuture = fork(() -> cache.put(key, "value" + key + "-new"));
-      try {
-         putFuture.get(50, TimeUnit.MILLISECONDS);
-         fail("Test should have thrown TimeoutException");
-      } catch (TimeoutException e) {
 
-      }
+      Future<Object> putFuture = fork(() -> cache.put(key, "value" + key + "-new"));
+
+      Exceptions.expectException(TimeoutException.class, () -> putFuture.get(50, TimeUnit.MILLISECONDS));
 
       // Let the forEach with lock complete
       barrier.await(10, TimeUnit.SECONDS);
@@ -713,8 +725,41 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertEquals("value" + key + "-new", cache.get(key));
 
       // Make sure the locks were cleaned up properly
-      LockManager lockManager = cache.getAdvancedCache().getComponentRegistry().getComponent(LockManager.class);
+      LockManager lockManager = TestingUtil.extractComponent(cache, LockManager.class);
       assertEquals(0, lockManager.getNumberOfLocksHeld());
+   }
+
+   public void testLockedStream() throws Throwable {
+      assertLockStream((c, e) -> assertEquals("value" + e.getKey(), c.put(e.getKey(), String.valueOf(e.getValue() + "-other"))));
+   }
+
+   public void testLockedStreamFunctionalCommand() throws Throwable {
+      assertLockStream((c, e) -> {
+         FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(c.getAdvancedCache()));
+         try {
+            assertEquals("value" + e.getKey(), rwMap.eval(e.getKey(), view -> {
+               Object prev = view.get();
+               view.set(prev + "-other");
+               return prev;
+            }).get());
+         } catch (InterruptedException | ExecutionException e1) {
+            throw new AssertionError(e1);
+         }
+      });
+   }
+
+   public void testLockedStreamPutAll() throws Throwable {
+      assertLockStream((c, e) -> c.putAll(Collections.singletonMap(e.getKey(), e.getValue() + "-other")));
+   }
+
+   public void testLockedStreamPutAsync() throws Throwable {
+      assertLockStream((c, e) -> {
+         try {
+            c.putAsync(e.getKey(), e.getValue() + "-other").get(10, TimeUnit.SECONDS);
+         } catch (InterruptedException | ExecutionException | TimeoutException e1) {
+            throw new AssertionError(e1);
+         }
+      });
    }
 
    public void testLockedStreamSetValue() {
@@ -727,5 +772,11 @@ public class APINonTxTest extends SingleCacheManagerTest {
       for (int i = 0; i < 5; i++) {
          assertEquals("value" + i + "-changed", cache.get(i));
       }
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class)
+   public void testLockedStreamWithinLockedStream() {
+      cache.put("key", "value");
+      cache.getAdvancedCache().lockedStream().forEach((c, e) -> c.getAdvancedCache().lockedStream());
    }
 }

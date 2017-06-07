@@ -45,6 +45,9 @@ public interface LockManager {
 
    /**
     * Releases the lock for the {@code key} if the {@code lockOwner} is the lock owner.
+    * <p>
+    * Note this method <b>will</b> unlock a lock where the key is the lockOwner
+    * </p>
     *
     * @param key       key to unlock.
     * @param lockOwner the owner of the lock.
@@ -53,7 +56,9 @@ public interface LockManager {
 
    /**
     * Same as {@link #unlock(Object, Object)} but for multiple keys.
-    *
+    * <p>
+    * Note this method will <b>not</b> unlock a lock where the key is the lockOwner
+    * </p>
     * @param keys      keys to unlock.
     * @param lockOwner the owner of the lock.
     */
@@ -61,7 +66,9 @@ public interface LockManager {
 
    /**
     * Same as {@code unlockAll(context.getLockedKeys(), context.getKeyLockOwner();}.
-    *
+    * <p>
+    * Note this method will <b>not</b> unlock a lock where the key is the lockOwner
+    * </p>
     * @param context the context with the locked keys and the lock owner.
     */
    void unlockAll(InvocationContext context);

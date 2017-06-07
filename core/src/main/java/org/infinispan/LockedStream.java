@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
+import org.infinispan.configuration.cache.LockingConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.util.function.SerializableBiConsumer;
@@ -16,6 +17,10 @@ import org.infinispan.util.function.SerializablePredicate;
  * Stream that allows for operation upon data solely with side effects by using {@link LockedStream#forEach(BiConsumer)}
  * where the <b>BiConsumer</b> is invoked while guaranteeing that the entry being passed is properly locked for the
  * entire duration of the invocation.
+ * <p>
+ * An attempt is made to acquire the lock for an entry using the default
+ * {@link LockingConfiguration#lockAcquisitionTimeout()} before invoking any operations on it.
+ * </p>
  * @author wburns
  * @since 9.1
  */
@@ -55,10 +60,13 @@ public interface LockedStream<K, V> extends BaseCacheStream<CacheEntry<K, V>, Lo
     * transaction in this consumer which also must be completed before returning. A transaction can be started in
     * the consumer and if done it will share the same lock used to obtain the key.
     * <p>
+    * Remember that if you are using an explicit transaction or an async method that these must be completed before
+    * the consumer returns to guarantee that they are operating within the scope of the lock for the given key. Failure
+    * to do so will lead into possible inconsistency as they will be performing operations without the proper locking.
+    * <p>
     * Some methods on the provided cache may not work as expected. These include
     * {@link AdvancedCache#putForExternalRead(Object, Object)}, {@link AdvancedCache#lock(Object[])},
-    * {@link AdvancedCache#lock(Collection)}, {@link AdvancedCache#removeGroup(String)}, all of the async methods on
-    * {@link org.infinispan.commons.api.AsyncCache}.
+    * {@link AdvancedCache#lock(Collection)}, and {@link AdvancedCache#removeGroup(String)}.
     * If these methods are used inside of the Consumer on the cache it will throw a {@link IllegalStateException}.
     * This is due to possible interactions with transactions while using these commands.
     * @param biConsumer the biConsumer to run for each entry under their lock

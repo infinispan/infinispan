@@ -477,7 +477,7 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public LockedStream<K, V> lockedStream() {
-      return null;
+      throw new UnsupportedOperationException();
    }
 
    @Override
