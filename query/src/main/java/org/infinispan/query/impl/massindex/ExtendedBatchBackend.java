@@ -1,7 +1,6 @@
 package org.infinispan.query.impl.massindex;
 
-import static java.util.Arrays.stream;
-
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.hibernate.search.backend.FlushLuceneWork;
@@ -73,8 +72,8 @@ public class ExtendedBatchBackend implements BatchBackend {
       for (IndexedTypeIdentifier type : entityTypes) {
          EntityIndexBinding indexBindingForEntity = integrator.getIndexBinding(type);
          if (indexBindingForEntity != null) {
-            IndexManager[] indexManagers = indexBindingForEntity.getSelectionStrategy().getIndexManagersForDeletion(type.getPojoType(), null, null);
-            stream(indexManagers).forEach(im -> operation.accept(im, type));
+            Set<IndexManager> indexManagers = indexBindingForEntity.getIndexManagerSelector().forExisting(type, null, null);
+            indexManagers.forEach(im -> operation.accept(im, type));
          }
       }
    }
