@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.LockedStream;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -112,6 +113,16 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
          return new DecoratedCache<>(cacheImplementation, lockOwner, flags);
       }
       return this;
+   }
+
+   public Object getLockOwner() {
+      return lockOwner;
+   }
+
+   @Override
+   public LockedStream<K, V> lockedStream() {
+      assertNoLockOwner("lockedStream");
+      return super.lockedStream();
    }
 
    @Override
@@ -303,136 +314,137 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      assertNoLockOwner("putAllAsync");
-      return cacheImplementation.putAllAsync(data, cacheImplementation.defaultMetadata, flags);
+      return putAllAsync(data, cacheImplementation.defaultMetadata);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
-      assertNoLockOwner("putAllAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
-      return cacheImplementation.putAllAsync(data, metadata, flags);
+      return putAllAsync(data, metadata);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      assertNoLockOwner("putAllAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
-      return cacheImplementation.putAllAsync(data, metadata, flags);
+      return putAllAsync(data, metadata);
+   }
+
+   CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata) {
+      return cacheImplementation.putAllAsync(data, metadata, flags, writeContext(data.size()));
    }
 
    @Override
    public CompletableFuture<Void> clearAsync() {
-      assertNoLockOwner("clearAsync");
       return cacheImplementation.clearAsync(flags);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
-      assertNoLockOwner("putIfAbsentAsync");
-      return cacheImplementation.putIfAbsentAsync(key, value, cacheImplementation.defaultMetadata, flags);
+      return putIfAbsentAsync(key, value, cacheImplementation.defaultMetadata);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      assertNoLockOwner("putIfAbsentAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags);
+      return putIfAbsentAsync(key, value, metadata);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      assertNoLockOwner("putIfAbsentAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
 
-      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags);
+      return putIfAbsentAsync(key, value, metadata);
+   }
+
+   CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata) {
+      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, writeContext(1));
    }
 
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
-      assertNoLockOwner("removeAsync");
-      return cacheImplementation.removeAsync(key, flags);
+      return cacheImplementation.removeAsync(key, flags, writeContext(1));
    }
 
    @Override
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      assertNoLockOwner("removeAsync");
-      return cacheImplementation.removeAsync(key, value, flags);
+      return cacheImplementation.removeAsync(key, value, flags, writeContext(1));
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
-      assertNoLockOwner("replaceAsync");
-      return cacheImplementation.replaceAsync(key, value, cacheImplementation.defaultMetadata, flags);
+      return replaceAsync(key, value, cacheImplementation.defaultMetadata);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      assertNoLockOwner("replaceAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.replaceAsync(key, value, metadata, flags);
+      return replaceAsync(key, value, metadata);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      assertNoLockOwner("replaceAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
 
-      return cacheImplementation.replaceAsync(key, value, metadata, flags);
+      return replaceAsync(key, value, metadata);
+   }
+
+   CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata) {
+      return cacheImplementation.replaceAsync(key, value, metadata, flags, writeContext(1));
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      assertNoLockOwner("replaceAsync");
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, cacheImplementation.defaultMetadata, flags);
+      return replaceAsync(key, oldValue, newValue, cacheImplementation.defaultMetadata);
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      assertNoLockOwner("replaceAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, unit)
             .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
             .build();
 
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags);
+      return replaceAsync(key, oldValue, newValue, metadata);
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      assertNoLockOwner("replaceAsync");
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit)
             .build();
 
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags);
+      return replaceAsync(key, oldValue, newValue, metadata);
+   }
+
+   CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
+         final Metadata metadata) {
+      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, writeContext(1));
    }
 
    @Override
    public CompletableFuture<V> getAsync(K key) {
-      assertNoLockOwner("getAsync");
-      return cacheImplementation.getAsync(key, flags);
+      return cacheImplementation.getAsync(key, flags, readContext(1));
    }
 
    @Override
@@ -569,8 +581,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
-      assertNoLockOwner("putAsync");
-      return cacheImplementation.putAsync(key, value, metadata, flags);
+      return cacheImplementation.putAsync(key, value, metadata, flags, writeContext(1));
    }
 
    @Override

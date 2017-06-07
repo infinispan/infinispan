@@ -1,7 +1,12 @@
 package org.infinispan.api;
 
 import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.withTx;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -59,68 +64,92 @@ public abstract class CacheAPITest extends APINonTxTest {
     */
    public void testConfiguration() {
       Configuration c = cache.getCacheConfiguration();
-      assert CacheMode.LOCAL.equals(c.clustering().cacheMode());
-      assert null != c.transaction().transactionManagerLookup();
+      assertEquals(CacheMode.LOCAL, c.clustering().cacheMode());
+      assertNotNull(c.transaction().transactionManagerLookup());
    }
 
    public void testGetMembersInLocalMode() {
-      assert manager(cache).getAddress() == null : "Cache members should be null if running in LOCAL mode";
+      assertNull("Cache members should be null if running in LOCAL mode", manager(cache).getAddress());
    }
 
    public void testRollbackAfterOverwrite() throws Exception {
       String key = "key", value = "value", value2 = "value2";
-      int size;
+      int size = 1;
       cache.put(key, value);
-      assert cache.get(key).equals(value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      assertEquals(value, cache.get(key));
+      assertEquals(size, cache.size());
+      assertEquals(size, cache.keySet().size());
+      assertEquals(size, cache.values().size());
+      assertEquals(size, cache.entrySet().size());
 
-      TestingUtil.getTransactionManager(cache).begin();
-      try {
-         cache.put(key, value2);
-         assert cache.get(key).equals(value2);
-         size = 1;
-         assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-         assert cache.keySet().contains(key);
-         assert cache.values().contains(value2);
-      } finally {
-         TestingUtil.getTransactionManager(cache).rollback();
-      }
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
 
-      assert cache.get(key).equals(value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      TestingUtil.withTx(tm, () -> {
+         assertEquals(value, cache.put(key, value2));
+         assertEquals(value2, cache.get(key));
+         assertEquals(size, cache.size());
+         assertEquals(size, cache.keySet().size());
+         assertEquals(size, cache.values().size());
+         assertEquals(size, cache.entrySet().size());
+
+         assertTrue(cache.keySet().contains(key));
+         assertTrue(cache.values().contains(value2));
+         assertFalse(cache.values().contains(value));
+         tm.setRollbackOnly();
+         return null;
+      });
+
+      assertEquals(value, cache.get(key));
+      assertEquals(size, cache.size());
+      assertEquals(size, cache.keySet().size());
+      assertEquals(size, cache.values().size());
+      assertEquals(size, cache.entrySet().size());
+
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
    }
 
    public void testRollbackAfterRemove() throws Exception {
       String key = "key", value = "value";
-      int size;
       cache.put(key, value);
-      assert cache.get(key).equals(value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      assertEquals(value, cache.get(key));
+      int size = 1;
+      assertEquals(size, cache.size());
+      assertEquals(size, cache.keySet().size());
+      assertEquals(size, cache.values().size());
+      assertEquals(size, cache.entrySet().size());
 
-      TestingUtil.getTransactionManager(cache).begin();
-      try {
-         cache.remove(key);
-         assert cache.get(key) == null;
-         size = 0;
-         assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      } finally {
-         TestingUtil.getTransactionManager(cache).rollback();
-      }
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
 
-      assert cache.get(key).equals(value);
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
+         assertEquals(value, cache.remove(key));
+         assertNull(value, cache.get(key));
+
+         int tmSize = 0;
+         assertEquals(tmSize, cache.size());
+         assertEquals(tmSize, cache.keySet().size());
+         assertEquals(tmSize, cache.values().size());
+         assertEquals(tmSize, cache.entrySet().size());
+
+         assertFalse(cache.keySet().contains(key));
+         assertFalse(cache.values().contains(value));
+         tm.setRollbackOnly();
+         return false;
+      });
+
+      assertEquals(value, cache.get(key));
       size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      assertEquals(size, cache.size());
+      assertEquals(size, cache.keySet().size());
+      assertEquals(size, cache.values().size());
+      assertEquals(size, cache.entrySet().size());
+
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
    }
 
    public void testEntrySetEqualityInTx(Method m) throws Exception {
@@ -131,8 +160,7 @@ public abstract class CacheAPITest extends APINonTxTest {
       cache.putAll(dataIn);
 
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
-      tm.begin();
-      try {
+      withTx(tm, () -> {
          Map<Integer, String> txDataIn = new HashMap<>();
          txDataIn.put(3, v(m, 3));
          Map<Object, Object> allEntriesIn = new HashMap<>(dataIn);
@@ -145,9 +173,8 @@ public abstract class CacheAPITest extends APINonTxTest {
 
          Set<Map.Entry<Object, Object>> entries = cache.entrySet();
          assertEquals(allEntriesIn.entrySet(), entries);
-      } finally {
-         tm.rollback();
-      }
+         return null;
+      });
    }
 
    public void testEntrySetIterationBeforeInTx(Method m) throws Exception {
@@ -159,8 +186,7 @@ public abstract class CacheAPITest extends APINonTxTest {
 
       Map<Object, Object> foundValues = new HashMap<>();
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
-      tm.begin();
-      try {
+      withTx(tm, () -> {
          Set<Entry<Object, Object>> entries = cache.entrySet();
 
          // Add an entry within tx
@@ -170,9 +196,9 @@ public abstract class CacheAPITest extends APINonTxTest {
          for (Entry<Object, Object> entry : entries) {
             foundValues.put(entry.getKey(), entry.getValue());
          }
-      } finally {
-         tm.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
       assertEquals(4, foundValues.size());
       assertEquals(v(m, 1), foundValues.get(1));
       assertEquals(v(m, 2), foundValues.get(2));
@@ -189,8 +215,7 @@ public abstract class CacheAPITest extends APINonTxTest {
 
       Map<Object, Object> foundValues = new HashMap<>();
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
-      tm.begin();
-      try {
+      withTx(tm, () -> {
          Set<Entry<Object, Object>> entries = cache.entrySet();
 
          Iterator<Entry<Object, Object>> itr = entries.iterator();
@@ -203,9 +228,9 @@ public abstract class CacheAPITest extends APINonTxTest {
             Entry<Object, Object> entry = itr.next();
             foundValues.put(entry.getKey(), entry.getValue());
          }
-      } finally {
-         tm.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
       assertEquals(4, foundValues.size());
       assertEquals(v(m, 1), foundValues.get(1));
       assertEquals(v(m, 2), foundValues.get(2));
@@ -215,35 +240,41 @@ public abstract class CacheAPITest extends APINonTxTest {
 
    public void testRollbackAfterPut() throws Exception {
       String key = "key", value = "value", key2 = "keyTwo", value2 = "value2";
-      int size;
       cache.put(key, value);
-      assert cache.get(key).equals(value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+      assertEquals(value, cache.get(key));
+      int size = 1;
+      assertEquals(size, cache.size());
+      assertEquals(size, cache.keySet().size());
+      assertEquals(size, cache.values().size());
+      assertEquals(size, cache.entrySet().size());
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
 
-      TestingUtil.getTransactionManager(cache).begin();
-      try {
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
          cache.put(key2, value2);
-         assert cache.get(key2).equals(value2);
-         assert cache.keySet().contains(key2);
-         size = 2;
-         log.trace(cache.size());
-         assert size == cache.size();
-         assert size == cache.keySet().size();
-         assert size == cache.values().size();
-         assert size == cache.entrySet().size();
-         assert cache.values().contains(value2);
-      } finally {
-         TestingUtil.getTransactionManager(cache).rollback();
-      }
+         assertEquals(value2, cache.get(key2));
+         assertTrue(cache.keySet().contains(key2));
+         int tmSize = 2;
+         assertEquals(tmSize, cache.size());
+         assertEquals(tmSize, cache.keySet().size());
+         assertEquals(tmSize, cache.values().size());
+         assertEquals(tmSize, cache.entrySet().size());
 
-      assert cache.get(key).equals(value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
+         assertTrue(cache.values().contains(value2));
+         assertTrue(cache.values().contains(value));
+
+         tm.setRollbackOnly();
+         return null;
+      });
+
+      assertEquals(value, cache.get(key));
+      assertEquals(size, cache.size());
+      assertEquals(size, cache.keySet().size());
+      assertEquals(size, cache.values().size());
+      assertEquals(size, cache.entrySet().size());
+      assertTrue(cache.keySet().contains(key));
+      assertTrue(cache.values().contains(value));
    }
 
    public void testSizeAfterClear() {
@@ -253,132 +284,126 @@ public abstract class CacheAPITest extends APINonTxTest {
 
       cache.clear();
 
-      assert cache.isEmpty();
+      assertTrue(cache.isEmpty());
    }
 
-   public void testPutIfAbsentAfterRemoveInTx() throws SystemException, NotSupportedException {
+   public void testPutIfAbsentAfterRemoveInTx() throws Exception {
       String key = "key_1", old_value = "old_value";
       cache.put(key, old_value);
-      assert cache.get(key).equals(old_value);
+      assertEquals(old_value, cache.get(key));
 
-      TestingUtil.getTransactionManager(cache).begin();
-      try {
-         assert cache.remove(key).equals(old_value);
-         assert cache.get(key) == null;
-   //      assertEquals(cache.putIfAbsent(key, new_value), null);
-      } finally {
-         TestingUtil.getTransactionManager(cache).rollback();
-      }
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
+         assertEquals(old_value, cache.remove(key));
+         assertNull(cache.get(key));
+         assertEquals(cache.putIfAbsent(key, "new_value"), null);
+         tm.setRollbackOnly();
+         return null;
+      });
 
       assertEquals(old_value, cache.get(key));
    }
 
-   public void testSizeInExplicitTxWithNonExistent() throws SystemException, NotSupportedException {
+   public void testSizeInExplicitTxWithNonExistent() throws Exception {
       assertEquals(0, cache.size());
       cache.put("k", "v");
 
-      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
-      tm1.begin();
-      try {
-         cache.get("no-exist");
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
+         assertNull(cache.get("no-exist"));
          assertEquals(1, cache.size());
-         cache.put("no-exist", "value");
+         assertNull(cache.put("no-exist", "value"));
          assertEquals(2, cache.size());
-      } finally {
-         tm1.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
    }
 
-   public void testSizeInExplicitTxWithRemoveNonExistent() throws SystemException, NotSupportedException {
+   public void testSizeInExplicitTxWithRemoveNonExistent() throws Exception {
       assertEquals(0, cache.size());
       cache.put("k", "v");
 
-      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
-      tm1.begin();
-      try {
-         cache.remove("no-exist");
-         assertEquals(1, cache.size());
-         cache.put("no-exist", "value");
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
+         assertNull(cache.remove("no-exist"));
+         assertEquals(
+               1, cache.size());
+         assertNull(cache.put("no-exist", "value"));
          assertEquals(2, cache.size());
-      } finally {
-         tm1.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
    }
 
-   public void testSizeInExplicitTxWithRemoveExistent() throws SystemException, NotSupportedException {
+   public void testSizeInExplicitTxWithRemoveExistent() throws Exception {
       assertEquals(0, cache.size());
       cache.put("k", "v");
 
-      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
-      tm1.begin();
-      try {
-         cache.put("exist", "value");
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
+         assertNull(cache.put("exist", "value"));
          assertEquals(2, cache.size());
-         cache.remove("exist");
+         assertEquals("value", cache.remove("exist"));
          assertEquals(1, cache.size());
-      } finally {
-         tm1.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
    }
 
-   public void testSizeInExplicitTx() throws SystemException, NotSupportedException {
+   public void testSizeInExplicitTx() throws Exception {
       assertEquals(0, cache.size());
       cache.put("k", "v");
 
-      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
-      tm1.begin();
-      try {
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
          assertEquals(1, cache.size());
-      } finally {
-         tm1.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
    }
 
-   public void testSizeInExplicitTxWithModification() throws SystemException, NotSupportedException {
+   public void testSizeInExplicitTxWithModification() throws Exception {
       assertEquals(0, cache.size());
       cache.put("k1", "v1");
 
-      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
-      tm1.begin();
-      try {
-         cache.put("k2", "v2");
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
+         assertNull(cache.put("k2", "v2"));
          assertEquals(2, cache.size());
-      } finally {
-         tm1.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
    }
 
-   public void testEntrySetIteratorRemoveInExplicitTx() throws SystemException, NotSupportedException {
+   public void testEntrySetIteratorRemoveInExplicitTx() throws Exception {
       assertEquals(0, cache.size());
       cache.put("k1", "v1");
 
-      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
-      tm1.begin();
-      try {
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
          try (CloseableIterator<Entry<Object, Object>> entryIterator = cache.entrySet().iterator()) {
             entryIterator.next();
             entryIterator.remove();
             assertEquals(0, cache.size());
          }
-      } finally {
-         tm1.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
    }
 
-   public void testKeySetIteratorRemoveInExplicitTx() throws SystemException, NotSupportedException {
+   public void testKeySetIteratorRemoveInExplicitTx() throws Exception {
       assertEquals(0, cache.size());
       cache.put("k1", "v1");
 
-      TransactionManager tm1 = TestingUtil.getTransactionManager(cache);
-      tm1.begin();
-      try {
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      withTx(tm, () -> {
          try (CloseableIterator<Object> entryIterator = cache.keySet().iterator()) {
             entryIterator.next();
             entryIterator.remove();
             assertEquals(0, cache.size());
          }
-      } finally {
-         tm1.rollback();
-      }
+         tm.setRollbackOnly();
+         return null;
+      });
    }
 }

@@ -33,6 +33,7 @@ import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 /**
@@ -577,19 +578,28 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * being processed by the user the entry is locked for the invocation preventing a different thread from modifying
     * it.
     * <p>
-    * Note that this stream is not supported when using a optimistic transactional or simple cache. Both non transactional and
-    * pessimistc transactions are supported.
+    * Note that this stream is not supported when using a optimistic transactional or simple cache. Both non
+    * transactional and pessimistic transactional caches are supported.
     * <p>
     * The stream will not share any ongoing transaction the user may have. Code executed by the stream should be treated
     * as completely independent. That is any operation performed via the stream will require the user to start their
-    * own transaction or will be done intrinsically on the invocation. Note this means that if you lock a key from
-    * the cache it could cause the stream operation to deadlock.
-    * {@link org.infinispan.configuration.cache.ConfigurationBuilder#simpleCache(boolean)} was set to true. This
-    * restriction may be removed in a future version
+    * own transaction or will be done intrinsically on the invocation. Note that if there is an ongoing transaction
+    * that has a lock on a key from the cache, that it will cause a deadlock.
+    * <p>
+    * Currently simple cache, {@link org.infinispan.configuration.cache.ConfigurationBuilder#simpleCache(boolean)}
+    * was set to true, and optimistic caches,
+    * {@link org.infinispan.configuration.cache.TransactionConfigurationBuilder#lockingMode(LockingMode)} was set to
+    * {@link LockingMode#OPTIMISTIC}, do not support this method. In this case it will throw an
+    * {@link UnsupportedOperationException}. This restriction may be removed in a
+    * future version. Also this method cannot be used on a cache that has a lock owner already specified via
+    * {@link AdvancedCache#lockAs(Object)} as this could lead to a deadlock or the release of locks early and will
+    * throw an {@link IllegalStateException}.
     * @return the locked stream
+    * @throws UnsupportedOperationException this is thrown if invoked from a cache that doesn't support this
+    * @throws IllegalStateException if this cache has already explicitly set a lock owner
     * @since 9.1
     */
-   LockedStream<K, V> lockedStream() throws UnsupportedOperationException;
+   LockedStream<K, V> lockedStream();
 
    /**
     * Attempts to remove the entry if it is expired.  Due to expired entries not being consistent across nodes, this

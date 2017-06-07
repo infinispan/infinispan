@@ -294,7 +294,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return putAllAsync(data, defaultMetadata, EnumUtil.EMPTY_BIT_SET);
+      return putAllAsync(data, defaultMetadata);
    }
 
    @Override
@@ -304,7 +304,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<V> putIfAbsentAsync(K key, V value) {
-      return putIfAbsentAsync(key, value, defaultMetadata, EnumUtil.EMPTY_BIT_SET);
+      return putIfAbsentAsync(key, value, defaultMetadata);
    }
 
    @Override
@@ -314,7 +314,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<V> replaceAsync(K key, V value) {
-      return replaceAsync(key, value, defaultMetadata, EnumUtil.EMPTY_BIT_SET);
+      return replaceAsync(key, value, defaultMetadata);
    }
 
    @Override
@@ -324,7 +324,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return replaceAsync(key, oldValue, newValue, defaultMetadata, EnumUtil.EMPTY_BIT_SET);
+      return replaceAsync(key, oldValue, newValue, defaultMetadata);
    }
 
    @Override
@@ -1279,12 +1279,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return putAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET);
+      return putAsync(key, value, metadata);
    }
 
-   final CompletableFuture<V> putAsync(final K key, final V value, final Metadata metadata, final long explicitFlags) {
+   final CompletableFuture<V> putAsync(final K key, final V value, final Metadata metadata, final long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       PutKeyValueCommand command = createPutCommand(key, value, metadata, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
    }
@@ -1294,11 +1293,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return putAllAsync(data, metadata, EnumUtil.EMPTY_BIT_SET);
+      return putAllAsync(data, metadata);
    }
 
-   final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata, final long explicitFlags) {
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, data.size());
+   final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata) {
+      return putAllAsync(data, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, data.size()));
+   }
+
+   final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata,
+         final long explicitFlags, InvocationContext ctx) {
       PutMapCommand command = createPutAllCommand(data, metadata, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
    }
@@ -1319,37 +1322,39 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return putIfAbsentAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET);
+      return putIfAbsentAsync(key, value, metadata);
+   }
+
+   final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata) {
+      return putIfAbsentAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
 
    final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
-         final long explicitFlags) {
+         final long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
    }
 
    @Override
    public final CompletableFuture<V> removeAsync(Object key) {
-      return removeAsync(key, EnumUtil.EMPTY_BIT_SET);
+      return removeAsync(key, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
 
-   final CompletableFuture<V> removeAsync(final Object key, final long explicitFlags) {
+   final CompletableFuture<V> removeAsync(final Object key, final long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       RemoveCommand command = createRemoveCommand(key, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
    }
 
    @Override
    public final CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      return removeAsync(key, value, EnumUtil.EMPTY_BIT_SET);
+      return removeAsync(key, value, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
 
-   final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final long explicitFlags) {
+   final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final long explicitFlags,
+         InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       RemoveCommand command = createRemoveConditionalCommand(key, value, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
    }
@@ -1359,13 +1364,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return replaceAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET);
+      return replaceAsync(key, value, metadata);
+   }
+
+   final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata) {
+      return replaceAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
 
    final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
-                                         final long explicitFlags) {
+                                         final long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
    }
@@ -1375,27 +1383,30 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Metadata metadata = new EmbeddedMetadata.Builder()
             .lifespan(lifespan, lifespanUnit)
             .maxIdle(maxIdle, maxIdleUnit).build();
-      return replaceAsync(key, oldValue, newValue, metadata, EnumUtil.EMPTY_BIT_SET);
+      return replaceAsync(key, oldValue, newValue, metadata);
    }
 
    final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
-                                               final Metadata metadata, final long explicitFlags) {
+         final Metadata metadata) {
+      return replaceAsync(key, oldValue, newValue, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
+   }
+
+   final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
+                                               final Metadata metadata, final long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, newValue);
       assertValueNotNull(oldValue);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       ReplaceCommand command = createReplaceConditionalCommand(key, oldValue, newValue, metadata, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
    }
 
    @Override
    public CompletableFuture<V> getAsync(K key) {
-      return getAsync(key, EnumUtil.EMPTY_BIT_SET);
+      return getAsync(key, EnumUtil.EMPTY_BIT_SET, invocationContextFactory.createInvocationContext(false, 1));
    }
 
    @SuppressWarnings("unchecked")
-   CompletableFuture<V> getAsync(final K key, final long explicitFlags) {
+   CompletableFuture<V> getAsync(final K key, final long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      InvocationContext ctx = invocationContextFactory.createInvocationContext(false, 1);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
       return (CompletableFuture<V>) invoker.invokeAsync(ctx, command);
    }
@@ -1589,7 +1600,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return putAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET);
+      return putAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
 
    private Transaction suspendOngoingTransactionIfExists() {
