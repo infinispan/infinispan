@@ -63,6 +63,7 @@ public final class ReflectionHelper {
 
       FieldPropertyAccessor(Field field) {
          this.field = field;
+         field.setAccessible(true);
       }
 
       @Override
@@ -87,7 +88,7 @@ public final class ReflectionHelper {
       }
    }
 
-   private static class ArrayFieldPropertyAccessor extends FieldPropertyAccessor {
+   private static final class ArrayFieldPropertyAccessor extends FieldPropertyAccessor {
 
       ArrayFieldPropertyAccessor(Field field) {
          super(field);
@@ -108,7 +109,7 @@ public final class ReflectionHelper {
       }
    }
 
-   private static class CollectionFieldPropertyAccessor extends FieldPropertyAccessor {
+   private static final class CollectionFieldPropertyAccessor extends FieldPropertyAccessor {
 
       CollectionFieldPropertyAccessor(Field field) {
          super(field);
@@ -129,7 +130,7 @@ public final class ReflectionHelper {
       }
    }
 
-   private static class MapFieldPropertyAccessor extends FieldPropertyAccessor {
+   private static final class MapFieldPropertyAccessor extends FieldPropertyAccessor {
 
       MapFieldPropertyAccessor(Field field) {
          super(field);
@@ -156,6 +157,7 @@ public final class ReflectionHelper {
 
       MethodPropertyAccessor(Method method) {
          this.method = method;
+         method.setAccessible(true);
       }
 
       @Override
@@ -180,7 +182,7 @@ public final class ReflectionHelper {
       }
    }
 
-   private static class ArrayMethodPropertyAccessor extends MethodPropertyAccessor {
+   private static final class ArrayMethodPropertyAccessor extends MethodPropertyAccessor {
 
       ArrayMethodPropertyAccessor(Method method) {
          super(method);
@@ -201,7 +203,7 @@ public final class ReflectionHelper {
       }
    }
 
-   private static class CollectionMethodPropertyAccessor extends MethodPropertyAccessor {
+   private static final class CollectionMethodPropertyAccessor extends MethodPropertyAccessor {
 
       CollectionMethodPropertyAccessor(Method method) {
          super(method);
@@ -222,7 +224,7 @@ public final class ReflectionHelper {
       }
    }
 
-   private static class MapMethodPropertyAccessor extends MethodPropertyAccessor {
+   private static final class MapMethodPropertyAccessor extends MethodPropertyAccessor {
 
       MapMethodPropertyAccessor(Method method) {
          super(method);
@@ -250,13 +252,26 @@ public final class ReflectionHelper {
       if (propertyName == null || propertyName.length() == 0) {
          throw new IllegalArgumentException("Property name cannot be null or empty");
       }
-      if (propertyName.contains(".")) {
+      if (propertyName.indexOf('.') != -1) {
          throw new IllegalArgumentException("The argument cannot be a nested property name");
       }
+      String propertyNameSuffix = Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
 
+      Class<?> c = clazz;
+      while (c != null) {
+         PropertyAccessor m = getAccessor(c, propertyName, propertyNameSuffix);
+         if (m != null) {
+            return m;
+         }
+         c = c.getSuperclass();
+      }
+
+      throw new IntrospectionException("Property not found: " + propertyName);
+   }
+
+   private static PropertyAccessor getAccessor(Class<?> clazz, String propertyName, String propertyNameSuffix) {
       // try getter method access
       // we need to find a no-arg public "getXyz" or "isXyz" method which has a suitable return type
-      String propertyNameSuffix = Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
       try {
          Method m = clazz.getDeclaredMethod("get" + propertyNameSuffix);
          if (Modifier.isPublic(m.getModifiers()) && !m.getReturnType().equals(Void.class)) {
@@ -283,7 +298,7 @@ public final class ReflectionHelper {
          // ignored, continue
       }
 
-      throw new IntrospectionException("Property not found: " + propertyName);
+      return null;
    }
 
    private static PropertyAccessor getFieldAccessor(Field f) {
