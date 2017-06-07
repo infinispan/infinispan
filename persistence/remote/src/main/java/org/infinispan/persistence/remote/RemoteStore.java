@@ -2,6 +2,8 @@ package org.infinispan.persistence.remote;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -61,7 +63,7 @@ import net.jcip.annotations.ThreadSafe;
 @Store(shared = true)
 @ThreadSafe
 @ConfiguredBy(RemoteStoreConfiguration.class)
-public class RemoteStore implements AdvancedLoadWriteStore, FlagAffectedStore {
+public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffectedStore<K, V> {
 
    private static final Log log = LogFactory.getLog(RemoteStore.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -194,21 +196,33 @@ public class RemoteStore implements AdvancedLoadWriteStore, FlagAffectedStore {
       InternalMetadata metadata = entry.getMetadata();
       long lifespan = metadata != null ? metadata.lifespan() : -1;
       long maxIdle = metadata != null ? metadata.maxIdle() : -1;
-      Object key = entry.getKey();
-      if (key instanceof WrappedByteArray) {
-         key = ((WrappedByteArray) key).getBytes();
-      }
-      Object value;
-      if (configuration.rawValues()) {
-         value = entry.getValue();
-         if (value instanceof WrappedByteArray) {
-            value = ((WrappedByteArray) value).getBytes();
-         }
-      } else {
-         value = entry;
-      }
+      Object key = getKey(entry);
+      Object value = getValue(entry);
+
       remoteCache.put(key, value, toSeconds(lifespan, entry.getKey(), LIFESPAN), TimeUnit.SECONDS,
             toSeconds(maxIdle, entry.getKey(), MAXIDLE), TimeUnit.SECONDS);
+   }
+
+   private Object getKey(MarshalledEntry entry) {
+      Object key = entry.getKey();
+      if (key instanceof WrappedByteArray)
+         return ((WrappedByteArray) key).getBytes();
+      return key;
+   }
+
+   private Object getValue(MarshalledEntry entry) {
+      if (configuration.rawValues()) {
+         Object value = entry.getValue();
+         return value instanceof  WrappedByteArray ? ((WrappedByteArray) value).getBytes() : value;
+      }
+      return entry;
+   }
+
+   @Override
+   public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
+      remoteCache.putAll(
+            StreamSupport.stream(marshalledEntries.spliterator(), false)
+                  .collect(Collectors.toMap(this::getKey, this::getValue)));
    }
 
    @Override
