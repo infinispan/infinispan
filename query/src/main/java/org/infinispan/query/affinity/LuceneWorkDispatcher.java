@@ -1,10 +1,10 @@
 package org.infinispan.query.affinity;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.backend.LuceneWork;
@@ -60,9 +60,9 @@ class LuceneWorkDispatcher {
 
    private IndexManager getIndexManagerByName(LuceneWork luceneWork, String name, SearchIntegrator searchFactory) {
       IndexedTypeIdentifier entityClass = luceneWork.getEntityType();
-      IndexManager[] indexManagersForAllShards =
-            searchFactory.getIndexBinding(entityClass).getSelectionStrategy().getIndexManagersForAllShards();
-      return Arrays.stream(indexManagersForAllShards).filter(im -> im.getIndexName().equals(name)).iterator().next();
+      Set<IndexManager> indexManagersForAllShards =
+            searchFactory.getIndexBinding(entityClass).getIndexManagerSelector().all();
+      return indexManagersForAllShards.stream().filter(im -> im.getIndexName().equals(name)).iterator().next();
    }
 
    private boolean shouldSendSync(boolean originLocal) {
