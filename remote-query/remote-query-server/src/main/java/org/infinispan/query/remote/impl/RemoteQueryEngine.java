@@ -12,6 +12,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.CustomTypeMetadata;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -72,8 +73,8 @@ final class RemoteQueryEngine extends BaseRemoteQueryEngine {
    protected CacheQuery<?> makeCacheQuery(IckleParsingResult<Descriptor> ickleParsingResult, Query luceneQuery) {
       CustomTypeMetadata customTypeMetadata = new CustomTypeMetadata() {
          @Override
-         public Class<?> getEntityType() {
-            return ProtobufValueWrapper.class;
+         public IndexedTypeIdentifier getEntityType() {
+            return ProtobufValueWrapper.INDEXING_TYPE;
          }
 
          @Override

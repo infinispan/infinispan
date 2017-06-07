@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.lucene.document.Document;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.indexes.spi.IndexManager;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ModuleCommandIds;
 import org.infinispan.query.indexmanager.AbstractUpdateCommand;
@@ -67,16 +68,16 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
    }
 
    private List<IndexManager> getIndexManagerForModifications(LuceneWork luceneWork) {
-      Class<?> entityClass = luceneWork.getEntityClass();
+      IndexedTypeIdentifier type = luceneWork.getEntityType();
       Serializable id = luceneWork.getId();
       if (id != null) {
          String idInString = luceneWork.getIdInString();
          Document document = luceneWork.getDocument();
-         return Arrays.asList(searchFactory.getIndexBinding(entityClass).getSelectionStrategy()
-               .getIndexManagerForAddition(entityClass, id, idInString, document));
+         return Arrays.asList(searchFactory.getIndexBinding(type).getSelectionStrategy()
+               .getIndexManagerForAddition(type.getPojoType(), id, idInString, document));
       } else {
-         return Arrays.asList(searchFactory.getIndexBinding(entityClass)
-               .getSelectionStrategy().getIndexManagersForDeletion(entityClass, null, null));
+         return Arrays.asList(searchFactory.getIndexBinding(type)
+               .getSelectionStrategy().getIndexManagersForDeletion(type.getPojoType(), null, null));
       }
    }
 

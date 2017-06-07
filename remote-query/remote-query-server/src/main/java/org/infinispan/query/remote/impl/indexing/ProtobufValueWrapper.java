@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
+import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -20,6 +22,8 @@ import org.infinispan.query.remote.impl.ExternalizerIds;
  * @since 6.0
  */
 public final class ProtobufValueWrapper {
+
+   public static final IndexedTypeIdentifier INDEXING_TYPE = new PojoIndexedTypeIdentifier(ProtobufValueWrapper.class);
 
    // The protobuf encoded payload
    private final byte[] binary;

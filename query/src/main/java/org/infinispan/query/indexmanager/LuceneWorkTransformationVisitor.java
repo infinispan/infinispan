@@ -75,7 +75,7 @@ public class LuceneWorkTransformationVisitor implements IndexWorkVisitor<KeyTran
          if (id == null) {
             //this is serialized work received from a remote node: take the getIdAsString instead
             final String idInString = lw.getIdInString();
-            return new AddLuceneWork(idInString, idInString, lw.getEntityClass(), lw.getDocument(), lw.getFieldToAnalyzerMap());
+            return new AddLuceneWork(idInString, idInString, lw.getEntityType(), lw.getDocument(), lw.getFieldToAnalyzerMap());
          }
          else {
             return lw;
@@ -90,7 +90,7 @@ public class LuceneWorkTransformationVisitor implements IndexWorkVisitor<KeyTran
          if (id == null) {
             //this is serialized work received from a remote node: take the getIdAsString instead
             final String idInString = lw.getIdInString();
-            return new UpdateLuceneWork(idInString, idInString, lw.getEntityClass(), lw.getDocument(), lw.getFieldToAnalyzerMap());
+            return new UpdateLuceneWork(idInString, idInString, lw.getEntityType(), lw.getDocument(), lw.getFieldToAnalyzerMap());
          }
          else {
             return lw;
@@ -105,7 +105,7 @@ public class LuceneWorkTransformationVisitor implements IndexWorkVisitor<KeyTran
          if (id == null) {
             //this is serialized work received from a remote node: take the getIdAsString instead
             final String idInString = lw.getIdInString();
-            return new DeleteLuceneWork(idInString, idInString, lw.getEntityClass());
+            return new DeleteLuceneWork(idInString, idInString, lw.getEntityType());
          }
          else {
             return lw;

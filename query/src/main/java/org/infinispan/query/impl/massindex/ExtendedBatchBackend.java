@@ -2,8 +2,6 @@ package org.infinispan.query.impl.massindex;
 
 import static java.util.Arrays.stream;
 
-import java.util.Collection;
-import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.hibernate.search.backend.FlushLuceneWork;
@@ -15,6 +13,8 @@ import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.IndexManager;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.hibernate.search.spi.IndexedTypeSet;
 import org.hibernate.search.spi.SearchIntegrator;
 
 /**
@@ -35,7 +35,7 @@ public class ExtendedBatchBackend implements BatchBackend {
       this.defaultBatchBackend = new DefaultBatchBackend(integrator.unwrap(ExtendedSearchIntegrator.class), progressMonitor);
    }
 
-   public void purge(Set<Class<?>> entityTypes) {
+   public void purge(IndexedTypeSet entityTypes) {
       performShardAwareOperation(entityTypes, (im, type) -> {
          im.performStreamOperation(new PurgeAllLuceneWork(type), progressMonitor, false);
       });
@@ -58,22 +58,22 @@ public class ExtendedBatchBackend implements BatchBackend {
    }
 
    @Override
-   public void flush(Set<Class<?>> indexedRootTypes) {
-      performShardAwareOperation(indexedRootTypes, (im, type) -> {
+   public void flush(IndexedTypeSet entityTypes) {
+      performShardAwareOperation(entityTypes, (im, type) -> {
          im.performStreamOperation(new FlushLuceneWork(null, type), progressMonitor, false);
       });
    }
 
    @Override
-   public void optimize(Set<Class<?>> targetedClasses) {
-      defaultBatchBackend.optimize(targetedClasses);
+   public void optimize(IndexedTypeSet entityTypes) {
+      defaultBatchBackend.optimize(entityTypes);
    }
 
-   private void performShardAwareOperation(Set<Class<?>> entityTypes, BiConsumer<IndexManager, Class<?>> operation) {
-      for (Class<?> type : entityTypes) {
+   private void performShardAwareOperation(IndexedTypeSet entityTypes, BiConsumer<IndexManager, IndexedTypeIdentifier> operation) {
+      for (IndexedTypeIdentifier type : entityTypes) {
          EntityIndexBinding indexBindingForEntity = integrator.getIndexBinding(type);
          if (indexBindingForEntity != null) {
-            IndexManager[] indexManagers = indexBindingForEntity.getSelectionStrategy().getIndexManagersForDeletion(type, null, null);
+            IndexManager[] indexManagers = indexBindingForEntity.getSelectionStrategy().getIndexManagersForDeletion(type.getPojoType(), null, null);
             stream(indexManagers).forEach(im -> operation.accept(im, type));
          }
       }

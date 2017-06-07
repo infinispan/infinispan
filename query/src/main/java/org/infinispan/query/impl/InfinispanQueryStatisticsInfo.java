@@ -98,4 +98,15 @@ public class InfinispanQueryStatisticsInfo implements InfinispanQueryStatisticsI
    public Map<String, Integer> indexedEntitiesCount() {
       return sf.getStatistics().indexedEntitiesCount();
    }
+
+   @Override
+   public long getIndexSize(String indexName) {
+      return sf.getStatistics().getIndexSize(indexName);
+   }
+
+   @Override
+   public Map<String, Long> indexSizes() {
+      return sf.getStatistics().indexSizes();
+   }
+
 }

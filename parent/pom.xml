@@ -116,7 +116,7 @@
       <version.commons.io>2.5</version.commons.io>
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.math>2.2</version.commons.math>
-      <version.elasticsearch>5.3.0</version.elasticsearch>
+      <version.elasticsearch>5.4.1</version.elasticsearch>
       <version.elasticsearch.plugin>5.7</version.elasticsearch.plugin>
       <version.geronimo.tm>3.1.1</version.geronimo.tm>
       <version.h2.driver>1.4.180</version.h2.driver>

@@ -104,16 +104,19 @@ public final class IndexingMetadata {
     * This annotation does not have a plural.
     * @deprecated
     */
+   @Deprecated
    public static final String INDEXED_FIELD_ANNOTATION = "IndexedField";
 
    /**
     * @deprecated
     */
+   @Deprecated
    public static final String INDEXED_FIELD_INDEX_ATTRIBUTE = "index";
 
    /**
     * @deprecated
     */
+   @Deprecated
    public static final String INDEXED_FIELD_STORE_ATTRIBUTE = "store";
 
    /**

@@ -10,7 +10,10 @@ import java.util.Set;
 
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
+import org.hibernate.search.spi.IndexedTypeMap;
+import org.hibernate.search.spi.IndexedTypeSet;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.IndexedTypeSets;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -54,11 +57,11 @@ public class IndexedEntityAutodetectTest extends LocalCacheTest {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
       assertNotNull(searchIntegrator);
-      Map<Class<?>, EntityIndexBinding> indexBindingForEntity = searchIntegrator.unwrap(ExtendedSearchIntegrator.class).getIndexBindings();
+      IndexedTypeMap<EntityIndexBinding> indexBindingForEntity = searchIntegrator.unwrap(ExtendedSearchIntegrator.class).getIndexBindings();
       assertNotNull(indexBindingForEntity);
-      Set<Class<?>> keySet = indexBindingForEntity.keySet();
+      IndexedTypeSet keySet = indexBindingForEntity.keySet();
       assertEquals(types.length, keySet.size());
-      assertTrue(keySet.containsAll(Arrays.asList(types)));
+      assertTrue(keySet.containsAll(IndexedTypeSets.fromClasses(types)));
    }
 
    @Override

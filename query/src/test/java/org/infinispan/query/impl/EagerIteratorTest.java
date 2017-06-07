@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.backend.KeyTransformationHandler;
@@ -123,6 +124,11 @@ public class EagerIteratorTest {
 
       @Override
       public void populateWithEntityInstance(Object entity) {
+      }
+
+      @Override
+      public IndexedTypeIdentifier getType() {
+         return null;
       }
    }
 }
