@@ -35,6 +35,24 @@ public class StaticTestingErrorHandler implements ErrorHandler {
    }
 
    public static void assertAllGood(Cache cache) {
+      StaticTestingErrorHandler instance = extract(cache);
+      instance.assertNoErrors();
+   }
+
+   public static void assertAllGood(Cache... caches) {
+      for (Cache cache : caches) {
+         assertAllGood(cache);
+      }
+   }
+
+   private void assertNoErrors() {
+      Object fault = getAndReset();
+      if (fault != null) {
+         fail(fault.toString());
+      }
+   }
+
+   public static StaticTestingErrorHandler extract(Cache cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
       SearchIntegrator searchFactory = searchManager.unwrap(SearchIntegrator.class);
       ErrorHandler errorHandler = searchFactory.getErrorHandler();
@@ -43,17 +61,7 @@ public class StaticTestingErrorHandler implements ErrorHandler {
          errorHandler = ((WrappingErrorHandler) errorHandler).unwrap();
       }
       assertTrue(errorHandler instanceof StaticTestingErrorHandler);
-      StaticTestingErrorHandler instance = (StaticTestingErrorHandler) errorHandler;
-      Object fault = instance.getAndReset();
-      if (fault != null) {
-         fail(fault.toString());
-      }
-   }
-
-   public static void assertAllGood(Cache... caches) {
-      for (Cache cache : caches) {
-         assertAllGood(cache);
-      }
+      return (StaticTestingErrorHandler) errorHandler;
    }
 
    public static class ThrowableWrapper {

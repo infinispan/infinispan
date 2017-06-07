@@ -1,18 +1,18 @@
 package org.infinispan.query.backend;
 
-import org.hibernate.search.analyzer.definition.spi.LuceneAnalyzerDefinitionProvider;
-import org.hibernate.search.analyzer.definition.spi.LuceneAnalyzerDefinitionSourceService;
+import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
+import org.hibernate.search.analyzer.definition.spi.LuceneAnalysisDefinitionSourceService;
 
-public class LuceneAnalyzerDefinitionsBuilderService implements LuceneAnalyzerDefinitionSourceService {
+public class LuceneAnalyzerDefinitionsBuilderService implements LuceneAnalysisDefinitionSourceService {
 
-   private final LuceneAnalyzerDefinitionProvider defsProvider;
+   private final LuceneAnalysisDefinitionProvider defsProvider;
 
-   LuceneAnalyzerDefinitionsBuilderService(LuceneAnalyzerDefinitionProvider defsProvider) {
+   LuceneAnalyzerDefinitionsBuilderService(LuceneAnalysisDefinitionProvider defsProvider) {
       this.defsProvider = defsProvider;
    }
 
    @Override
-   public LuceneAnalyzerDefinitionProvider getLuceneAnalyzerDefinitionProvider() {
+   public LuceneAnalysisDefinitionProvider getLuceneAnalyzerDefinitionProvider() {
       return defsProvider;
    }
 

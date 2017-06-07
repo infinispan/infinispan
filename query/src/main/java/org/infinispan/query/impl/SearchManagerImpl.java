@@ -62,7 +62,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       if (timeoutExceptionFactory != null) {
          hSearchQuery.timeoutExceptionFactory(timeoutExceptionFactory);
       }
-      Class<?>[] classes = hSearchQuery.getTargetedEntities().toArray(new Class[hSearchQuery.getTargetedEntities().size()]);
+      Class<?>[] classes = hSearchQuery.getTargetedEntities().toPojosSet().toArray(new Class[hSearchQuery.getTargetedEntities().size()]);
       queryInterceptor.enableClasses(classes);
       return new CacheQueryImpl<>(hSearchQuery, cache, queryInterceptor.getKeyTransformationHandler());
    }

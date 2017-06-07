@@ -156,7 +156,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
                typeMetadata = resolvedProperty.embeddedTypeMetadataList.get(resolvedProperty.embeddedTypeMetadataList.size() - 1);
             }
             if (resolvedProperty.propertyMetadata != null) {
-               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType(), resolvedProperty.propertyMetadata.getPropertyAccessorName());
+               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType().getPojoType(), resolvedProperty.propertyMetadata.getPropertyAccessorName());
                Class<?> c = accessor.getPropertyType();
                if (c.isEnum()) {
                   return c;
@@ -177,14 +177,14 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          if (resolvedProperty != null) {
             TypeMetadata typeMetadata = resolvedProperty.rootTypeMetadata;
             for (EmbeddedTypeMetadata embeddedTypeMetadata : resolvedProperty.embeddedTypeMetadataList) {
-               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType(), embeddedTypeMetadata.getEmbeddedPropertyName());
+               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType().getPojoType(), embeddedTypeMetadata.getEmbeddedPropertyName());
                if (accessor.isMultiple()) {
                   return true;
                }
                typeMetadata = embeddedTypeMetadata;
             }
             if (resolvedProperty.propertyMetadata != null) {
-               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType(), resolvedProperty.propertyMetadata.getPropertyAccessorName());
+               ReflectionHelper.PropertyAccessor accessor = getPropertyAccessor(typeMetadata.getType().getPojoType(), resolvedProperty.propertyMetadata.getPropertyAccessorName());
                return accessor.isMultiple();
             }
             return false;

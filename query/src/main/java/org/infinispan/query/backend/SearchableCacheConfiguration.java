@@ -11,8 +11,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
-import org.hibernate.search.analyzer.definition.spi.LuceneAnalyzerDefinitionProvider;
-import org.hibernate.search.analyzer.definition.spi.LuceneAnalyzerDefinitionSourceService;
+import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
+import org.hibernate.search.analyzer.definition.spi.LuceneAnalysisDefinitionSourceService;
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
@@ -55,7 +55,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    private final DefaultClassLoaderService classLoaderService = new DefaultClassLoaderService();
 
    //TODO customize this to plug in custom analyzers
-   private final LuceneAnalyzerDefinitionProvider analyzerDefProvider = null;
+   private final LuceneAnalysisDefinitionProvider analyzerDefProvider = null;
    private boolean hasAffinity;
 
    public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties, EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
@@ -95,7 +95,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       //Register the SelfLoopedCacheManagerServiceProvider to allow custom IndexManagers to access the CacheManager
       final InfinispanLoopbackService loopService = new InfinispanLoopbackService(cr, uninitializedCacheManager);
       HashMap map = new HashMap(3);
-      map.put(LuceneAnalyzerDefinitionSourceService.class, new LuceneAnalyzerDefinitionsBuilderService(analyzerDefProvider));
+      map.put(LuceneAnalysisDefinitionSourceService.class, new LuceneAnalyzerDefinitionsBuilderService(analyzerDefProvider));
       map.put(ComponentRegistryService.class, loopService);
       map.put(CacheManagerService.class, loopService);
       return Collections.unmodifiableMap(map);

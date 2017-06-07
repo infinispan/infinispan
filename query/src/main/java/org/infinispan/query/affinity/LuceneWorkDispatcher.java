@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.indexes.spi.IndexManager;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.indexmanager.LuceneWorkConverter;
@@ -58,7 +59,7 @@ class LuceneWorkDispatcher {
    }
 
    private IndexManager getIndexManagerByName(LuceneWork luceneWork, String name, SearchIntegrator searchFactory) {
-      Class<?> entityClass = luceneWork.getEntityClass();
+      IndexedTypeIdentifier entityClass = luceneWork.getEntityType();
       IndexManager[] indexManagersForAllShards =
             searchFactory.getIndexBinding(entityClass).getSelectionStrategy().getIndexManagersForAllShards();
       return Arrays.stream(indexManagersForAllShards).filter(im -> im.getIndexName().equals(name)).iterator().next();
