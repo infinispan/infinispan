@@ -19,7 +19,7 @@ import io.netty.handler.ssl.ApplicationProtocolNames;
  */
 public class RestChannelInitializer extends NettyChannelInitializer {
 
-   private final AlpnHandler alpnHandler;
+   private final Http11To2UpgradeHandler http11To2UpgradeHandler;
 
    /**
     * Creates new {@link RestChannelInitializer}.
@@ -29,16 +29,16 @@ public class RestChannelInitializer extends NettyChannelInitializer {
     */
    public RestChannelInitializer(RestServer server, NettyTransport transport) {
       super(server, transport, null, null);
-      alpnHandler = new AlpnHandler(server);
+      http11To2UpgradeHandler = new Http11To2UpgradeHandler(server);
    }
 
    @Override
    public void initializeChannel(Channel ch) throws Exception {
       super.initializeChannel(ch);
       if (server.getConfiguration().ssl().enabled()) {
-         ch.pipeline().addLast(alpnHandler);
+         ch.pipeline().addLast(http11To2UpgradeHandler);
       } else {
-         alpnHandler.configurePipeline(ch.pipeline(), ApplicationProtocolNames.HTTP_1_1);
+         http11To2UpgradeHandler.configurePipeline(ch.pipeline(), ApplicationProtocolNames.HTTP_1_1);
       }
    }
 
@@ -57,7 +57,7 @@ public class RestChannelInitializer extends NettyChannelInitializer {
       return null;
    }
 
-   public AlpnHandler getAlpnHandler() {
-      return alpnHandler;
+   public Http11To2UpgradeHandler getHttp11To2UpgradeHandler() {
+      return http11To2UpgradeHandler;
    }
 }
