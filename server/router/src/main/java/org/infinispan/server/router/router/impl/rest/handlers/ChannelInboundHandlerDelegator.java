@@ -45,7 +45,7 @@ public class ChannelInboundHandlerDelegator extends SimpleChannelInboundHandler<
             .findAny();
 
       NettyRestServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDesitnation();
-      Http11RequestHandler restHandler = routeDestination.getRestServer().getRestChannelInitializer().getAlpnHandler().getHttp1Handler();
+      Http11RequestHandler restHandler = routeDestination.getRestServer().getRestChannelInitializer().getHttp11To2UpgradeHandler().getHttp1Handler();
 
       //before passing it to REST Handler, we need to replace path. The handler should not be aware of additional context
       //used for multi-tenant prefixes

@@ -24,9 +24,7 @@ import org.assertj.core.api.Assertions;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.rest.http2.Http2Client;
 import org.testng.SkipException;
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -48,24 +46,14 @@ public final class Http2Test {
     private Http2Client client;
     private RestServerHelper restServer;
 
-    @BeforeSuite
-    public void beforeSuite() {
-        restServer = RestServerHelper.defaultRestServer("http2testcache")
-              .withKeyStore(KEY_STORE_PATH, "secret")
-              .start();
-    }
-
-    @AfterSuite
-    public void afterSuite() {
-        restServer.stop();
+    @BeforeMethod
+    public void afterMethod() {
+        if (restServer != null) {
+            restServer.stop();
+        }
         if (client != null) {
             client.stop();
         }
-    }
-
-    @BeforeMethod
-    public void beforeMethod() {
-        restServer.clear();
     }
 
     @Test
@@ -75,7 +63,32 @@ public final class Http2Test {
         }
 
         //given
+        restServer = RestServerHelper.defaultRestServer("http2testcache")
+              .withKeyStore(KEY_STORE_PATH, "secret")
+              .start();
+
         client = Http2Client.newClientWithAlpn(KEY_STORE_PATH, "secret");
+        client.start(restServer.getHost(), restServer.getPort());
+
+        FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/http2testcache/test",
+              wrappedBuffer("test".getBytes(CharsetUtil.UTF_8)));
+
+        //when
+        client.sendRequest(putValueInCacheRequest);
+        Queue<FullHttpResponse> responses = client.getResponses();
+
+        //then
+        Assertions.assertThat(responses).hasSize(1);
+        Assertions.assertThat(responses.element().status().code()).isEqualTo(200);
+        Assertions.assertThat(restServer.getCacheManager().getCache("http2testcache").size()).isEqualTo(1);
+    }
+
+    @Test
+    public void shouldUpgradeUsingHTTP11Upgrade() throws Exception {
+        //given
+        restServer = RestServerHelper.defaultRestServer("http2testcache").start();
+
+        client = Http2Client.newClientWithHttp11Upgrade();
         client.start(restServer.getHost(), restServer.getPort());
 
         FullHttpRequest putValueInCacheRequest = new DefaultFullHttpRequest(HTTP_1_1, POST, "/rest/http2testcache/test",
