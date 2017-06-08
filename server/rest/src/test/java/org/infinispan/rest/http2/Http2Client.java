@@ -107,7 +107,7 @@ public class Http2Client {
 
          // Wait for the HTTP/2 upgrade to occur.
       Http2SettingsHandler http2SettingsHandler = initializer.settingsHandler();
-      http2SettingsHandler.awaitSettings(5, TimeUnit.SECONDS);
+      http2SettingsHandler.awaitSettings(15, TimeUnit.SECONDS);
    }
 
    public void stop() {
@@ -116,7 +116,7 @@ public class Http2Client {
 
    public void awaitForResponses() {
       HttpResponseHandler responseHandler = initializer.responseHandler();
-      responseHandler.awaitResponses(10, TimeUnit.SECONDS);
+      responseHandler.awaitResponses(60, TimeUnit.SECONDS);
    }
 
    public Queue<FullHttpResponse> getResponses() {
