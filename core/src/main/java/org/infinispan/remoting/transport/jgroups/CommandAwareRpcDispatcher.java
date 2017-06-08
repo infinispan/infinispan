@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -238,6 +239,9 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
          // Always set the NO_FC flag
          short flags = (short) (req.getFlags() | REPLY_FLAGS_TO_SET & ~REPLY_FLAGS_TO_CLEAR);
          Message rsp = req.makeReply().setFlag(flags).setBuffer(rsp_buf);
+         if (command instanceof ClusteredGetCommand) {
+            rsp.clearFlag(Message.Flag.OOB);
+         }
 
          //exceptionThrown is always false because the exceptions are wrapped in an ExceptionResponse
          try {

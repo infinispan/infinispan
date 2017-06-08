@@ -78,8 +78,8 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    }
 
    private void initRpcOptions() {
-      singleTargetStaggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS).build();
-      multiTargetStaggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE)
+      singleTargetStaggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.PER_SENDER).build();
+      multiTargetStaggeredOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.PER_SENDER)
             .responseFilter(SUCCESSFUL_OR_EXCEPTIONAL).build();
       defaultSyncOptions = rpcManager.getDefaultRpcOptions(true);
       syncIgnoreLeavers = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
