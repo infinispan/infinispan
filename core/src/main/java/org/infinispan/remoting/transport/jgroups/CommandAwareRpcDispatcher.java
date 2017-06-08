@@ -137,28 +137,45 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
     */
    @Override
    public void handle(Message req, org.jgroups.blocks.Response response) throws Exception {
-      if (isValid(req)) {
-         ReplicableCommand cmd = null;
-         try {
-            cmd = (ReplicableCommand) ispnMarshaller.objectFromByteBuffer(req.getRawBuffer(), req.getOffset(),
-                  req.getLength());
-            if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
-            if (req.getSrc() instanceof SiteAddress) {
-               executeCommandFromRemoteSite(cmd, req, response);
-            } else {
-               executeCommandFromLocalCluster(cmd, req, response);
-            }
-         } catch (IllegalLifecycleStateException e) {
-            if (trace) log.trace("Ignoring command unmarshalling error during shutdown");
-            // If this wasn't a CacheRpcCommand, it means the channel is already stopped, and the response won't matter
-            reply(response, CacheNotFoundResponse.INSTANCE, cmd, req);
-         } catch (Throwable x) {
-            if (cmd == null) log.errorUnMarshallingCommand(x);
-            else log.exceptionHandlingCommand(cmd, x);
-            reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", x)), cmd, req);
+      throw new IllegalStateException();
+   }
+
+   void handleCommand(Message req, org.jgroups.blocks.Response response) {
+      ReplicableCommand cmd = null;
+      try {
+         cmd = (ReplicableCommand) ispnMarshaller.objectFromByteBuffer(req.getRawBuffer(), req.getOffset(),
+               req.getLength());
+         if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+         if (req.getSrc() instanceof SiteAddress) {
+            executeCommandFromRemoteSite(cmd, req, response);
+         } else {
+            executeCommandFromLocalCluster(cmd, req, response);
          }
-      } else {
-         reply(response, null, null, req);
+      } catch (IllegalLifecycleStateException e) {
+         if (trace) log.trace("Ignoring command unmarshalling error during shutdown");
+         // If this wasn't a CacheRpcCommand, it means the channel is already stopped, and the response won't matter
+         reply(response, CacheNotFoundResponse.INSTANCE, cmd, req);
+      } catch (Throwable x) {
+         if (cmd == null) log.errorUnMarshallingCommand(x);
+         else log.exceptionHandlingCommand(cmd, x);
+         reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", x)), cmd, req);
+      }
+   }
+
+   void handleCommand(ReplicableCommand cmd, Message req, org.jgroups.blocks.Response response) {
+      try {
+         if (req.getSrc() instanceof SiteAddress) {
+            executeCommandFromRemoteSite(cmd, req, response);
+         } else {
+            executeCommandFromLocalCluster(cmd, req, response);
+         }
+      } catch (IllegalLifecycleStateException e) {
+         if (trace) log.trace("Ignoring command unmarshalling error during shutdown");
+         // If this wasn't a CacheRpcCommand, it means the channel is already stopped, and the response won't matter
+         reply(response, CacheNotFoundResponse.INSTANCE, cmd, req);
+      } catch (Throwable x) {
+         log.exceptionHandlingCommand(cmd, x);
+         reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", x)), cmd, req);
       }
    }
 
@@ -177,7 +194,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
             decodeDeliverMode(req));
    }
 
-   private static DeliverOrder decodeDeliverMode(Message request) {
+   static DeliverOrder decodeDeliverMode(Message request) {
       boolean noTotalOrder = request.isFlagSet(Message.Flag.NO_TOTAL_ORDER);
       boolean oob = request.isFlagSet(Message.Flag.OOB);
       if (!noTotalOrder && oob) {
@@ -213,7 +230,7 @@ public class CommandAwareRpcDispatcher extends MessageDispatcher {
       return getClass().getSimpleName() + "[Marshaller: " + ispnMarshaller + "]";
    }
 
-   private void reply(org.jgroups.blocks.Response response, Object retVal, ReplicableCommand command, Message req) {
+   public void reply(org.jgroups.blocks.Response response, Object retVal, ReplicableCommand command, Message req) {
       if (response != null) {
          if (trace) log.tracef("About to send back response %s for command %s", retVal, command);
          Buffer rsp_buf;
