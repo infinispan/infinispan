@@ -1,7 +1,15 @@
 ===  REST Server
 
-The Infinispan Server distribution contains a server module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the Infinispan data grid, built on JAX_RS.
+The Infinispan Server distribution contains a server module that implements link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP access to the Infinispan data grid, built on https://github.com/netty/netty[Netty].
 Please refer to Infinispan Server's link:../infinispan_server_guide/infinispan_server_guide.html[documentation] for instructions on how to configure and run a REST server.
+
+==== Supported protocols
+
+The REST Server supports HTTP/1.1 as well as HTTP/2 protocols. It is possible to switch to HTTP/2 by either performing a https://http2.github.io/http2-spec/#discover-http[HTTP/1.1 Upgrade procedure] or
+by negotiating communication protocol using https://http2.github.io/http2-spec/#versioning[TLS/ALPN extension].
+
+Note: TLS/ALPN with JDK8 requires additional steps from the client perspective. Please refer to your client documentation but it is very likely
+that you will need Jetty ALPN Agent or OpenSSL bindings.
 
 ==== REST API
 HTTP PUT and POST methods are used to place data in the cache, with URLs to address the cache name and key(s) - the data being the body of the request (the data can be anything you like). It is important that a Content-Type header is set. Other headers are used to control the cache settings and behaviour (detailed in that link).
