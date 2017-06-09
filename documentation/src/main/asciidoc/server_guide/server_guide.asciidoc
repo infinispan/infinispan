@@ -120,6 +120,10 @@ Currently there are two supported protocols for accessing the data - using Hot R
 
 Multi-tenancy router uses URL prefixes to separate containers using the following template: `https://<server_ip>:<server_port>/rest/<rest_connector_name>/<cache_name>/<key>`. All HTTP operations remain exactly the same as using standard `rest-connector`.
 
+The REST connector by default support both HTTP/1.1 and HTTP/2 protocols. The switching from HTTP/1.1 to HTTP/2 procedure involves
+either using TLS/ALPN negotiation or HTTP/1.1 upgrade procedure. The former requires proper encryption to be enabled. The latter
+is always enabled.
+
 === Using Hot Rod client
 
 Multi-tenant routing for binary protocols requires using a standard, transport layer mechanism such as link:$$https://en.wikipedia.org/wiki/Server_Name_Indication$$[SSL/TLS Server Name Indication]. The server needs to be configured to support encryption and additional SNI routing needs to be added to the `router-connector`.
