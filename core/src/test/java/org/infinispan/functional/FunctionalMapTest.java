@@ -63,6 +63,8 @@ import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.function.SerializableConsumer;
+import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.Test;
 
 /**
@@ -560,8 +562,8 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       assertReadOnlyViewEquals(k, "one", await(ro.eval(k, identity())));
    }
 
-   private Consumer<WriteEntryView<String>> setOneWriteOnly() {
-      return (Consumer<WriteEntryView<String>> & Serializable) wv -> wv.set("one");
+   private SerializableConsumer<WriteEntryView<String>> setOneWriteOnly() {
+      return wv -> wv.set("one");
    }
 
    public void testLocalReturnViewFromReadWriteEval() {
@@ -594,9 +596,8 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       assertReadWriteViewEquals(k, "uno", await(readMap.eval(k, returnReadWriteView())));
    }
 
-   private <K> Function<ReadWriteEntryView<K, String>, ReadWriteEntryView<K, String>> setOneReadWrite() {
-      return (Function<ReadWriteEntryView<K, String>, ReadWriteEntryView<K, String>> & Serializable)
-         rw -> {
+   private <K> SerializableFunction<ReadWriteEntryView<K, String>, ReadWriteEntryView<K, String>> setOneReadWrite() {
+      return rw -> {
             rw.set("one");
             return rw;
          };

@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,7 +21,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Traversable;
 import org.infinispan.configuration.cache.CacheMode;
@@ -154,7 +152,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
    private Object readWriteKey(MagicKey key, int index) {
       FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache(0).getAdvancedCache()));
-      CompletableFuture cf = rwMap.eval(key, (Function<EntryView.ReadWriteEntryView<Object, Object>, Object> & Serializable) view -> {
+      CompletableFuture cf = rwMap.eval(key, view -> {
          assertFalse(view.find().isPresent());
          view.set("v" + index);
          return "r" + index;
@@ -167,7 +165,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       MagicKey otherKey = new MagicKey("other", cache(0), cache(2));
       FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache(0).getAdvancedCache()));
       HashSet<MagicKey> keys = new HashSet<>(Arrays.asList(key, otherKey));
-      Traversable<Object> traversable = rwMap.evalMany(keys, (Function<EntryView.ReadWriteEntryView<Object, Object>, Object> & Serializable) view -> {
+      Traversable<Object> traversable = rwMap.evalMany(keys, view -> {
          assertFalse(view.find().isPresent());
          view.set("v" + index);
          return "r" + index;
@@ -177,7 +175,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
    private Object readWriteKeyValue(MagicKey key, int index) {
       FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(cache(0).getAdvancedCache()));
-      CompletableFuture cfa = rwMap.eval(key, "v" + index, (BiFunction<Object, EntryView.ReadWriteEntryView<Object, Object>, Object> & Serializable) (value, view) -> {
+      CompletableFuture cfa = rwMap.eval(key, "v" + index, (value, view) -> {
          assertFalse(view.find().isPresent());
          view.set(value);
          return "r" + index;
@@ -192,7 +190,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       HashMap<MagicKey, Object> map = new HashMap();
       map.put(key, "v" + index);
       map.put(otherKey, "something");
-      Traversable<Object> traversable = rwMap.evalMany(map, (BiFunction<Object, EntryView.ReadWriteEntryView<Object, Object>, Object> & Serializable) (value, view) -> {
+      Traversable<Object> traversable = rwMap.evalMany(map, (value, view) -> {
          assertFalse(view.find().isPresent());
          view.set(value);
          return "r" + index;

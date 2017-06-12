@@ -5,11 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.concurrent.CompletionException;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.transaction.RollbackException;
@@ -87,14 +84,12 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
    }
 
    enum ReadOp {
-      READ(true, (cache, key, ro, rw) ->
-            ro.eval(key, (Serializable & Function<EntryView.ReadEntryView, Object>) EntryView.ReadEntryView::get).join()),
-      READ_MANY(true, (cache, key, ro, rw) ->
-            ro.evalMany(Collections.singleton(key), (Serializable & Function<EntryView.ReadEntryView, Object>) EntryView.ReadEntryView::get).findAny().get()),
-      READ_WRITE_KEY(true, (cache, key, ro, rw) -> rw.eval(key, (Serializable & Function<EntryView.ReadWriteEntryView, Object>) EntryView.ReadEntryView::get).join()),
-      READ_WRITE_KEY_VALUE(true, (cache, key, ro, rw) -> rw.eval(key, null, (Serializable & BiFunction<Object, EntryView.ReadWriteEntryView, Object>) (value, v) -> v.get()).join()),
-      READ_WRITE_MANY(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singleton(key), (Serializable & Function<EntryView.ReadWriteEntryView, Object>) EntryView.ReadEntryView::get).findAny().get()),
-      READ_WRITE_MANY_ENTRIES(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singletonMap(key, null), (Serializable & BiFunction<Object, EntryView.ReadWriteEntryView, Object>) (value, v) -> v.get()).findAny().get()),
+      READ(true, (cache, key, ro, rw) -> ro.eval(key, EntryView.ReadEntryView::get).join()),
+      READ_MANY(true, (cache, key, ro, rw) -> ro.evalMany(Collections.singleton(key), EntryView.ReadEntryView::get).findAny().get()),
+      READ_WRITE_KEY(true, (cache, key, ro, rw) -> rw.eval(key, EntryView.ReadEntryView::get).join()),
+      READ_WRITE_KEY_VALUE(true, (cache, key, ro, rw) -> rw.eval(key, null, (value, v) -> v.get()).join()),
+      READ_WRITE_MANY(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singleton(key), EntryView.ReadEntryView::get).findAny().get()),
+      READ_WRITE_MANY_ENTRIES(true, (cache, key, ro, rw) -> rw.evalMany(Collections.singletonMap(key, null), (value, v) -> v.get()).findAny().get()),
       GET(false, (cache, key, ro, rw) -> cache.get(key))
       ;
 
@@ -112,7 +107,7 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
 
       @FunctionalInterface
       private interface Performer {
-         Object eval(Cache cache, Object key, FunctionalMap.ReadOnlyMap ro, FunctionalMap.ReadWriteMap rw) throws Throwable;
+         Object eval(Cache cache, Object key, FunctionalMap.ReadOnlyMap<Object, String> ro, FunctionalMap.ReadWriteMap<Object, String> rw) throws Throwable;
       }
    }
 }
