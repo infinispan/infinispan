@@ -130,7 +130,7 @@ class ProtocolServerService implements Service<ProtocolServer>, EncryptableServi
          final String qual;
          if (encryptionRealm != null) {
             EncryptableServiceHelper.fillSecurityConfiguration(this, configurationBuilder.ssl());
-            qual = isSniEnabled() ? " (SSL+SNI)" : " (SSL)";
+            qual = isSniEnabled() ? " (TLS+SNI)" : " (TLS)";
          } else {
             qual = "";
          }

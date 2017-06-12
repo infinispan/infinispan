@@ -85,7 +85,7 @@ public class RestService implements Service<RestServer>, EncryptableService {
 
       String protocolName = getProtocolName();
 
-      ROOT_LOGGER.endpointStarting(protocolName);
+      ROOT_LOGGER.endpointStarting(serverName);
       try {
          SocketBinding socketBinding = getSocketBinding().getOptionalValue();
          if(socketBinding == null) {
@@ -128,7 +128,7 @@ public class RestService implements Service<RestServer>, EncryptableService {
 
       try {
          restServer.start(builder.build(), cacheManagerInjector.getValue());
-         ROOT_LOGGER.httpEndpointStarted(protocolName, restServer.getHost() + ":" + restServer.getPort(), contextPath, "rest");
+         ROOT_LOGGER.httpEndpointStarted(protocolName, restServer.getHost() + ":" + restServer.getPort(), contextPath);
       } catch (Exception e) {
          throw ROOT_LOGGER.restContextStartFailed(e);
       }
@@ -136,7 +136,7 @@ public class RestService implements Service<RestServer>, EncryptableService {
 
    private String getProtocolName() {
       return EncryptableServiceHelper.isSecurityEnabled(this) ?
-            (EncryptableServiceHelper.isSniEnabled(this) ? serverName + "+SNI" : serverName + "+SSL") : serverName;
+            (EncryptableServiceHelper.isSniEnabled(this) ? serverName + " (TLS/SNI)" : serverName + " (TLS)") : serverName;
    }
 
    /** {@inheritDoc} */
