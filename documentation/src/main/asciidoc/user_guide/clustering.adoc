@@ -31,12 +31,38 @@ DefaultCacheManager manager = new DefaultCacheManager(gcb.build());
 Individual caches can then be configured in different modes:
 
 * *Local*: changes and reads are never replicated. This is the only mode available in
-standalone cache managers.
+non-clustered cache managers.
 * *Invalidation*: changes are not replicated, instead the key is invalidated on all
 nodes; reads are local.
 * *Replicated*: changes are replicated to all nodes, reads are always local.
 * *Distributed*: changes are replicated to a fixed number of nodes, reads request the
 value from at least one of the owner nodes.
+
+=== Which cache mode should I use?
+
+Which cache you should use depends on the qualities/guarantees you need for your data. The following table summarizes the most important ones:
+
+[cols="20,^15,^15,^15,^15,^15",options="header"]
+|============================================================
+|                  | Simple      | Local       | Invalidation | Replicated | Distributed
+| Clustered        | [red]*No*    | [red]*No*    | [green]*Yes*   | [green]*Yes* | [green]*Yes*
+| Read performance | [green]*Highest* +
+(local) | [green]*High* +
+(local) | [green]*High* +
+(local) | [green]*High* +
+(local) | [yellow]*Medium* +
+(owners)
+| Write performance| [green]*Highest* +
+(local) | [green]*High* +
+(local) | [red]*Low* +
+(all nodes, no data)| [red]*Lowest* +
+(all nodes)| [yellow]*Medium* +
+(owner nodes)
+| Capacity         | [red]*Single node*| [red]*Single node*| [red]*Single node*| [red]*Smallest node*| [green]*Cluster* +
+stem:[(sum_(i=1)^"nodes""node_capacity")/"owners"]
+| Availability     | [red]*Single node*| [red]*Single node*| [red]*Single node*| [green]*All nodes*| [yellow]*Owner nodes*
+| Features         | [red]*No TX, persistence, indexing*| [green]*All* | [green]*All* | [green]*All* | [green]*All* |
+|============================================================
 
 
 === Local Mode

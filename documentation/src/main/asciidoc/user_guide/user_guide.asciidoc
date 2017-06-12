@@ -4,6 +4,7 @@ The Infinispan community
 :icons: font
 :toclevels: 3
 :numbered:
+:stem: asciimath
 
 // Load all default values here for use in all sub-chapters
 include::{defaults}[]
