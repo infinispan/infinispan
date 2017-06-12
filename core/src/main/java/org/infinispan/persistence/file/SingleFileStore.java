@@ -8,13 +8,11 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -505,38 +503,33 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             if (filter.accept(e.getKey()))
                keysToLoad.add(new KeyValuePair<>(e.getKey(), e.getValue()));
          }
-         Collections.sort(keysToLoad, new Comparator<KeyValuePair<K, FileEntry>>() {
-            @Override
-            public int compare(KeyValuePair<K, FileEntry> o1, KeyValuePair<K, FileEntry> o2) {
-               long offset1 = o1.getValue().offset;
-               long offset2 = o2.getValue().offset;
-               return offset1 < offset2 ? -1 : offset1 == offset2 ? 0 : 1;
-            }
-         });
-         // keysToLoad values (i.e. FileEntries) must not be used past this point
       }
 
-      ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
+      keysToLoad.sort((o1, o2) -> {
+         long offset1 = o1.getValue().offset;
+         long offset2 = o2.getValue().offset;
+         return offset1 < offset2 ? -1 : offset1 == offset2 ? 0 : 1;
+      });
+      // keysToLoad values (i.e. FileEntries) must not be used past this point
 
+
+      ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
       final TaskContextImpl taskContext = new TaskContextImpl();
-      for (KeyValuePair<K, FileEntry> e : keysToLoad) {
+      for (KeyValuePair<K, FileEntry> entry : keysToLoad) {
          if (taskContext.isStopped())
             break;
 
-         final K key = e.getKey();
-         eacs.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-               try {
-                  final MarshalledEntry marshalledEntry = _load(key, fetchValue, fetchMetadata);
-                  if (marshalledEntry != null) {
-                     task.processEntry(marshalledEntry, taskContext);
-                  }
-                  return null;
-               } catch (Exception e) {
-                  log.errorExecutingParallelStoreTask(e);
-                  throw e;
+         final K key = entry.getKey();
+         eacs.submit(() -> {
+            try {
+               final MarshalledEntry marshalledEntry = _load(key, fetchValue, fetchMetadata);
+               if (marshalledEntry != null) {
+                  task.processEntry(marshalledEntry, taskContext);
                }
+               return null;
+            } catch (Exception e) {
+               log.errorExecutingParallelStoreTask(e);
+               throw e;
             }
          });
       }
@@ -550,10 +543,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     * Manipulates the free entries for optimizing disk space.
     */
    private void processFreeEntries() {
-      // Get a reverse sorted list of free entries based on file offset
+      // Get a reverse sorted list of free entries based on file offset (bigger entries will be ahead of smaller entries)
       // This helps to work backwards with free entries at end of the file
-      List<FileEntry> l  = new ArrayList<FileEntry>(freeList);
-      Collections.sort(l, new FileEntryByOffsetComparator());
+      List<FileEntry> l  = new ArrayList<>(freeList);
+      l.sort((o1, o2) -> {
+         long diff = o1.offset - o2.offset;
+         return (diff == 0) ? 0 : ((diff > 0) ? -1 : 1);
+      });
 
       truncateFile(l);
       mergeFreeEntries(l);
@@ -609,11 +605,9 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       FileEntry lastEntry = null;
       FileEntry newEntry = null;
       int mergeCounter = 0;
-      for (Iterator<FileEntry> it = entries.iterator() ; it.hasNext(); ) {
-         FileEntry fe = it.next();
-         if (fe.isLocked()) {
+      for (FileEntry fe : entries) {
+         if (fe.isLocked())
             continue;
-         }
 
          // Merge any holes created (consecutive free entries) in the file
          if ((lastEntry != null) && (lastEntry.offset == (fe.offset + fe.size))) {
@@ -628,12 +622,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             mergeCounter++;
          } else {
             if (newEntry != null) {
-               try {
-                  addNewFreeEntry(newEntry);
-                  if (trace) log.tracef("Merged %d entries at %d:%d, %d free entries", mergeCounter, newEntry.offset, newEntry.size, freeList.size());
-               } catch (IOException e) {
-                  throw new PersistenceException("Could not add new merged entry", e);
-               }
+               mergeAndLogEntry(newEntry, mergeCounter);
                newEntry = null;
                mergeCounter = 0;
             }
@@ -641,18 +630,20 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          lastEntry = fe;
       }
 
-      if (newEntry != null) {
-         try {
-            addNewFreeEntry(newEntry);
-            if (trace) log.tracef("Merged %d entries at %d:%d, %d free entries", mergeCounter, newEntry.offset, newEntry.size, freeList.size());
-         } catch (IOException e) {
-            throw new PersistenceException("Could not add new merged entry", e);
-         }
-      }
+      if (newEntry != null)
+         mergeAndLogEntry(newEntry, mergeCounter);
 
       if (trace) log.tracef("Total time taken for mergeFreeEntries: " + (timeService.wallClockTime() - startTime) + " (ms)");
    }
 
+   private void mergeAndLogEntry(FileEntry entry, int mergeCounter) {
+      try {
+         addNewFreeEntry(entry);
+         if (trace) log.tracef("Merged %d entries at %d:%d, %d free entries", mergeCounter, entry.offset, entry.size, freeList.size());
+      } catch (IOException e) {
+         throw new PersistenceException("Could not add new merged entry", e);
+      }
+   }
    @Override
    public void purge(Executor threadPool, final PurgeListener task) {
       long now = timeService.wallClockTime();
@@ -849,18 +840,6 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
                "{size=" + size +
                ", actual=" + actualSize() +
                '}';
-      }
-   }
-
-   /**
-    * Compares two file entries based on their offset in the file
-    * in the reverse order (bigger entries will be ahead of smaller entries)
-    */
-   private static class FileEntryByOffsetComparator implements Comparator<FileEntry> {
-      @Override
-      public int compare(FileEntry o1, FileEntry o2) {
-         long diff = o1.offset - o2.offset;
-         return (diff == 0) ? 0 : ((diff > 0) ? -1 : 1);
       }
    }
 }
