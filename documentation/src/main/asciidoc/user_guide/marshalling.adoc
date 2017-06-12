@@ -440,6 +440,7 @@ This is the list of Externalizer identifiers that are used by Infinispan based m
 |Infinispan Server Event Logger Module:|1850 - 1899
 |Infinispan Remote Store:|1900 - 1999
 |Infinispan Counters:|2000 - 2049
+|Infinispan Multimap:|2050 - 2099
 |===============
 
 

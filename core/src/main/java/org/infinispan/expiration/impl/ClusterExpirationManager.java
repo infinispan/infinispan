@@ -54,6 +54,10 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    private AdvancedCache<K, V> cache;
    private boolean needTransaction;
 
+   public ExecutorService getAsyncExecutor() {
+      return asyncExecutor;
+   }
+
    @Inject
    public void inject(AdvancedCache<K, V> cache, Configuration configuration,
            @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) ExecutorService asyncExecutor) {

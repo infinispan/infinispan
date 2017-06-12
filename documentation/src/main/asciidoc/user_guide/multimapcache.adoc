@@ -1,0 +1,155 @@
+== Multimap Cache
+
+Infinispan Multimap Cache is a new distributed and clustered collection type introduced in Infinispan 9.2.
+MutimapCache is a type of Infinispan Cache that maps keys to values in which each key can contain multiple values.
+
+=== Installation and configuration
+
+.pom.xml
+[source,xml]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-multimap</artifactId>
+   <version>...</version> <!-- 9.2.0.Final or higher -->
+</dependency>
+----
+
+=== MultimapCache API
+
+MultimapCache API exposes several methods to interact with the Multimap Cache.
+All these methods are non-blocking in most of the cases. See [limitations]
+
+[source,java]
+----
+
+public interface MultimapCache<K, V> {
+
+   CompletableFuture<Void> put(K key, V value);
+
+   CompletableFuture<Collection<V>> get(K key);
+
+   CompletableFuture<Boolean> remove(K key);
+
+   CompletableFuture<Boolean> remove(K key, V value);
+
+   CompletableFuture<Void> remove(Predicate<? super V> p);
+
+   CompletableFuture<Boolean> containsKey(K key);
+
+   CompletableFuture<Boolean> containsValue(V value);
+
+   CompletableFuture<Boolean> containsEntry(K key, V value);
+
+   CompletableFuture<Long> size();
+
+   boolean supportsDuplicates();
+
+}
+
+----
+
+==== CompletableFuture<Void> put(K key, V value)
+Puts a key-value pair in the multimap cache.
+
+[source,java]
+----
+MultimapCache<String, String> multimapCache = ...;
+
+multimapCache.put("girlNames", "marie")
+             .thenCompose(r1 -> multimapCache.put("girlNames", "oihana"))
+             .thenCompose(r3 -> multimapCache.get("girlNames"))
+             .thenAccept(names -> {
+                          if(names.contains("marie"))
+                              System.out.println("Marie is a girl name");
+
+                           if(names.contains("oihana"))
+                              System.out.println("Oihana is a girl name");
+                        });
+----
+The output of this code is :
+
+[source, txt]
+----
+Marie is a girl name
+Oihana is a girl name
+----
+
+==== CompletableFuture<Collection<V>> get(K key)
+
+Asynchronous that returns a view collection of the values associated with key in this multimap cache, if any. Any changes to the retrieved collection won't change the values in this multimap cache.
+When this method returns an empty collection, it means the key was not found.
+
+==== CompletableFuture<Boolean> remove(K key)
+Asynchronous that removes the entry associated with the key from the multimap cache, if such exists.
+
+==== CompletableFuture<Boolean> remove(K key, V value)
+Asynchronous that removes a key-value pair from the multimap cache, if such exists.
+
+==== CompletableFuture<Void> remove(Predicate<? super V> p)
+Asynchronous method. Removes every value that match the given predicate.
+
+==== CompletableFuture<Boolean> containsKey(K key)
+Asynchronous that returns true if this multimap contains the key.
+
+==== CompletableFuture<Boolean> containsValue(V value)
+Asynchronous that returns true if this multimap contains the value in at least one key.
+
+==== CompletableFuture<Boolean> containsEntry(K key, V value)
+
+Asynchronous that returns true if this multimap contains at least one key-value pair with the value.
+
+==== CompletableFuture<Long> size()
+Asynchronous that returns the number of key-value pairs in the multimap cache. It doesn't return the distinct number of keys.
+
+==== boolean supportsDuplicates()
+Asynchronous that returns true if the multimap cache supports duplicates. This means that the content of the multimap can be
+'a' -> ['1', '1', '2']. For now this method will always return false, as duplicates are not yet supported.
+The existence of a given value is determined by 'equals' and `hashcode' method's contract.
+
+=== Creating a Multimap Cache
+
+Currently the MultimapCache is configured as a regular cache. This can be done either by code or XML configuration.
+See how to configure a regular Cache in the section link to [configure a cache].
+
+==== Embedded mode
+
+[source,java]
+----
+// create or obtain your EmbeddedCacheManager
+EmbeddedCacheManager cm = ... ;
+
+// create or obtain a MultimapCacheManager passing the EmbeddedCacheManager
+MultimapCacheManager multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cm);
+
+// define the configuration for the multimap cache
+multimapCacheManager.defineConfiguration(multimapCacheName, c.build());
+
+// get the multimap cache
+multimapCache = multimapCacheManager.get(multimapCacheName);
+----
+
+==== Server mode
+
+TODO
+
+=== Limitations
+
+In almost every case the Multimap Cache will behave as a regular Cache, but some limitations exist in the current version.
+
+==== Support for duplicates
+Duplicates are not supported yet. This means that the multimap won't contain any duplicate key-value pair.
+Whenever put method is called, if the key-value pair already exist, this key-value par won't be added.
+Methods used to check if a key-value pair is already present in the Multimap are the `equals` and `hashcode`.
+
+==== Eviction
+
+For now, the eviction works per key, and not per key-value pair.
+This means that whenever a key is evicted, all the values associated with the key will be evicted too.
+Eviction per key-value could be supported in the future.
+
+==== Transactions
+
+Implicit transactions are supported through the auto-commit and all the methods are non blocking.
+Explicit transactions work without blocking in most of the cases.
+Methods that will block are `size`, `containsEntry` and `remove(Predicate<? super V> p)`
