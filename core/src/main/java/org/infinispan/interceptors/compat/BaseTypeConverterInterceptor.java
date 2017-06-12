@@ -20,6 +20,8 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -98,6 +100,39 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends DDAsyncIntercep
       }
       // There is no return value for putAll so nothing to convert
       return invokeNext(ctx, command);
+   }
+
+
+   @Override
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) {
+         return super.visitComputeCommand(ctx, command);
+      }
+      Object key = command.getKey();
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
+      command.setKey(converter.boxKey(key));
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         if (rv == null) {
+            return rv;
+         }
+         return converter.unboxValue(rv);
+      });
+   }
+
+   @Override
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+      if (!ctx.isOriginLocal()) {
+         return super.visitComputeIfAbsentCommand(ctx, command);
+      }
+      Object key = command.getKey();
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command);
+      command.setKey(converter.boxKey(key));
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         if (rv == null) {
+            return rv;
+         }
+         return converter.unboxValue(rv);
+      });
    }
 
    @Override

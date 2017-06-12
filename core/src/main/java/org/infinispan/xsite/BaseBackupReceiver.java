@@ -16,6 +16,8 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -120,6 +122,19 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
          }
          return backupCache.replace(command.getKey(), command.getNewValue(),
                                     command.getMetadata());
+      }
+
+      @Override
+      public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+         if (command.isConditional()) {
+            return backupCache.computeIfPresent(command.getKey(), command.getRemappingBiFunction(), command.getMetadata());
+         }
+         return backupCache.compute(command.getKey(), command.getRemappingBiFunction(), command.getMetadata());
+      }
+
+      @Override
+      public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+         return backupCache.computeIfAbsent(command.getKey(), command.getMappingFunction(), command.getMetadata());
       }
 
       @Override

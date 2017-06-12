@@ -1,10 +1,11 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,14 +16,19 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.context.Flag;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "distribution.DistSyncFuncTest")
@@ -43,11 +49,11 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
             boolean isOwner = isOwner(c, key);
             if (isOwner) owners.add(addressOf(c));
             boolean secondCheck = getCacheTopology(c).getWriteOwners(key).contains(addressOf(c));
-            assertTrue(isOwner == secondCheck, "Second check failed for key " + key + " on cache " + addressOf(c) + " isO = " + isOwner + " sC = " + secondCheck);
+            assertTrue("Second check failed for key " + key + " on cache " + addressOf(c) + " isO = " + isOwner + " sC = " + secondCheck, isOwner == secondCheck);
          }
          // check consensus
          assertOwnershipConsensus(key);
-         assertEquals(2, owners.size(),"Expected 2 owners for key " + key + " but was " + owners);
+         assertEquals("Expected 2 owners for key " + key + " but was " + owners, 2, owners.size());
       }
    }
 
@@ -57,9 +63,9 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       List l3 = getCacheTopology(c3).getDistribution(key).writeOwners();
       List l4 = getCacheTopology(c4).getDistribution(key).writeOwners();
 
-      assertEquals(l1, l2, "L1 "+l1+" and L2 "+l2+" don't agree.");
-      assertEquals(l2, l3, "L2 "+l2+" and L3 "+l3+" don't agree.");
-      assertEquals(l3, l4, "L3 "+l3+" and L4 "+l4+" don't agree.");
+      assertEquals("L1 "+l1+" and L2 "+l2+" don't agree.", l1, l2);
+      assertEquals("L2 "+l2+" and L3 "+l3+" don't agree.", l2, l3);
+      assertEquals("L3 "+l3+" and L4 "+l4+" don't agree.", l3, l4);
 
    }
 
@@ -102,7 +108,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       Object retval = nonOwner.put("k1", "value2");
       asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
 
-      if (testRetVals) assert "value".equals(retval);
+      if (testRetVals) assertEquals("value", retval);
       assertOnAllCachesAndOwnership("k1", "value2");
    }
 
@@ -146,7 +152,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       initAndTest();
       log.trace("Here we start");
       boolean retval = getFirstNonOwner("k1").remove("k1", "value2");
-      if (testRetVals) assertFalse(retval,"Should not have removed entry");
+      if (testRetVals) assertFalse("Should not have removed entry", retval);
 
       assertOnAllCachesAndOwnership("k1", "value");
 
@@ -156,9 +162,9 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       retval = owner.remove("k1", "value");
       asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
-      if (testRetVals) assertTrue(retval, "Should have removed entry");
+      if (testRetVals) assertTrue("Should have removed entry", retval);
 
-      assertNull(caches.get(1).get("k1"), "expected null but received " + caches.get(1).get("k1"));
+      assertNull("expected null but received " + caches.get(1).get("k1"), caches.get(1).get("k1"));
       assertRemovedOnAllCaches("k1");
    }
 
@@ -184,14 +190,14 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       initAndTest();
       Cache<Object, String> nonOwner = getFirstNonOwner("k1");
       boolean retval = nonOwner.replace("k1", "valueX", "value2");
-      if (testRetVals) assertFalse(retval, "Should not have replaced");
+      if (testRetVals) assertFalse("Should not have replaced", retval);
 
       assertOnAllCachesAndOwnership("k1", "value");
 
       assertFalse(extractComponent(nonOwner, DistributionManager.class).getCacheTopology().isWriteOwner("k1"));
       retval = nonOwner.replace("k1", "value", "value2");
       asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
-      if (testRetVals) assertTrue(retval,"Should have replaced");
+      if (testRetVals) assertTrue("Should have replaced", retval);
 
       assertOnAllCachesAndOwnership("k1", "value2");
    }
@@ -240,20 +246,20 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          Set keys = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet();
          for (Object key : keys)
             assertTrue(expKeys.remove(key));
-         assertTrue(expKeys.isEmpty(), "Did not see keys " + expKeys + " in iterator!");
+         assertTrue("Did not see keys " + expKeys + " in iterator!", expKeys.isEmpty());
 
          Collection values = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).values();
          for (Object value : values)
             assertTrue(expValues.remove(value));
-         assertTrue(expValues.isEmpty(), "Did not see keys " + expValues + " in iterator!");
+         assertTrue("Did not see keys " + expValues + " in iterator!", expValues.isEmpty());
 
          Set<Map.Entry> entries = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet();
          for (Map.Entry entry : entries) {
             assertTrue(expKeyEntries.remove(entry.getKey()));
             assertTrue(expValueEntries.remove(entry.getValue()));
          }
-         assertTrue(expKeyEntries.isEmpty(), "Did not see keys " + expKeyEntries + " in iterator!");
-         assertTrue(expValueEntries.isEmpty(), "Did not see keys " + expValueEntries + " in iterator!");
+         assertTrue("Did not see keys " + expKeyEntries + " in iterator!", expKeyEntries.isEmpty());
+         assertTrue("Did not see keys " + expValueEntries + " in iterator!", expValueEntries.isEmpty());
       }
    }
 
@@ -299,5 +305,100 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
                   () -> cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get("k" + offset));
          }
       }
+   }
+
+   public void testComputeFromNonOwner() throws InterruptedException {
+      // compute function applied
+      initAndTest();
+      Object retval = getFirstNonOwner("k1").compute("k1", (k, v) -> "computed_" + k + "_" + v);
+      if (testRetVals) assertEquals("computed_k1_value", retval);
+      asyncWait("k1", ComputeCommand.class);
+      assertOnAllCachesAndOwnership("k1", "computed_k1_value");
+
+      // remove if after compute value is null
+      retval = getFirstNonOwner("k1").compute("k1", (v1, v2) -> null);
+      asyncWait("k1", ComputeCommand.class);
+      if (testRetVals) assertNull(retval);
+      assertRemovedOnAllCaches("k1");
+
+      // put computed value if absent
+      retval = getFirstNonOwner("notThere").compute("notThere", (k, v) -> "add_" + k);
+      eventually(() -> {
+         try {
+            assertOnAllCachesAndOwnership("notThere", "add_notThere");
+         } catch (AssertionError e) {
+            log.debugf("Assertion failed once", e);
+            return false;
+         }
+         return true;
+      });
+      if (testRetVals) assertEquals("add_notThere", retval);
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      SerializableBiFunction<Object, Object, String> mappingToException = (k, v) -> {
+         throw computeRaisedException;
+      };
+      expectException(RemoteException.class, () -> getFirstNonOwner("k1").compute("k1", mappingToException));
+   }
+
+   public void testComputeIfPresentFromNonOwner() throws InterruptedException {
+      // compute function applied
+      initAndTest();
+      Object retval = getFirstNonOwner("k1").computeIfPresent("k1", (k, v) -> "computed_" + k + "_" + v);
+      if (testRetVals) assertEquals("computed_k1_value", retval);
+      asyncWait("k1", ComputeCommand.class);
+      assertOnAllCachesAndOwnership("k1", "computed_k1_value");
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      SerializableBiFunction<Object, Object, String> mappingToException = (k, v) -> {
+         throw computeRaisedException;
+      };
+      expectException(RemoteException.class, () -> getFirstNonOwner("k1").computeIfPresent("k1", mappingToException));
+
+      // remove if after compute value is null
+      retval = getFirstNonOwner("k1").computeIfPresent("k1", (v1, v2) -> null);
+      asyncWait("k1", ComputeCommand.class);
+      if (testRetVals) assertNull(retval);
+      assertRemovedOnAllCaches("k1");
+
+      // do nothing if absent
+      retval = getFirstNonOwner("notThere").computeIfPresent("notThere", (k, v) -> "add_" + k);
+      asyncWait("notThere", ComputeCommand.class);
+      if (testRetVals) assertNull(retval);
+      assertRemovedOnAllCaches("notThere");
+   }
+
+   public void testComputeIfAbsentFromNonOwner() throws InterruptedException {
+      // do nothing if value exists
+      initAndTest();
+      Object retval = getFirstNonOwner("k1").computeIfAbsent("k1", (k) -> "computed_" + k);
+      if (testRetVals) assertEquals("value", retval);
+      asyncWait("k1", ComputeIfAbsentCommand.class);
+      assertOnAllCachesAndOwnership("k1", "value");
+
+      // Compute key and add result value if absent
+      retval = getFirstNonOwner("notExists").computeIfAbsent("notExists", (k) -> "computed_" + k);
+      eventually(() -> {
+         try {
+            assertOnAllCachesAndOwnership("notExists", "computed_notExists");
+         } catch (AssertionError e) {
+            log.debugf("Assertion failed once", e);
+            return false;
+         }
+         return true;
+      });
+      if (testRetVals) assertEquals("computed_notExists", retval);
+
+      // do nothing if function result is null
+      retval = getFirstNonOwner("doNothing").computeIfAbsent("doNothing", k -> null);
+      asyncWait("doNothing", ComputeIfAbsentCommand.class);
+      if (testRetVals) assertNull(retval);
+      assertRemovedOnAllCaches("doNothing");
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      SerializableFunction<Object, String> mappingToException = k -> {
+         throw computeRaisedException;
+      };
+      expectException(RemoteException.class, () -> getFirstNonOwner("somethingWrong").computeIfAbsent("somethingWrong", mappingToException));
    }
 }

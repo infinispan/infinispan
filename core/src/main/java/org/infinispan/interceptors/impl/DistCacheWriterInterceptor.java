@@ -6,6 +6,8 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
 import java.util.Map;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -137,6 +139,48 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return rv;
 
          storeEntry(rCtx, key, replaceCommand);
+         if (getStatisticsEnabled())
+            cacheStores.incrementAndGet();
+
+         return rv;
+      });
+   }
+
+   @Override
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         ComputeCommand computeCommand = (ComputeCommand) rCommand;
+         Object key = computeCommand.getKey();
+         if (!isStoreEnabled(computeCommand) || rCtx.isInTxScope() || !computeCommand.isSuccessful())
+            return rv;
+         if (!isProperWriter(rCtx, computeCommand, computeCommand.getKey()))
+            return rv;
+
+         if(command.isSuccessful() && rv == null){
+            boolean resp = persistenceManager
+                  .deleteFromAllStores(key, skipSharedStores(rCtx, key, command) ? PRIVATE : BOTH);
+            if (trace)
+               log.tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
+         } else if (command.isSuccessful()){
+            storeEntry(rCtx, key, computeCommand);
+            if (getStatisticsEnabled())
+               cacheStores.incrementAndGet();
+         }
+         return rv;
+      });
+   }
+
+   @Override
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+         ComputeIfAbsentCommand computeIfAbsentCommand = (ComputeIfAbsentCommand) rCommand;
+         Object key = computeIfAbsentCommand.getKey();
+         if (!isStoreEnabled(computeIfAbsentCommand) || rCtx.isInTxScope() || !computeIfAbsentCommand.isSuccessful())
+            return rv;
+         if (!isProperWriter(rCtx, computeIfAbsentCommand, computeIfAbsentCommand.getKey()))
+            return rv;
+
+         storeEntry(rCtx, key, computeIfAbsentCommand);
          if (getStatisticsEnabled())
             cacheStores.incrementAndGet();
 

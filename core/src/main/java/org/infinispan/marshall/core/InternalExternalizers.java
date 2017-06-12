@@ -14,9 +14,11 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.compat.BiFunctionMapper;
+import org.infinispan.compat.ConverterEntryMapper;
 import org.infinispan.compat.ConverterKeyMapper;
 import org.infinispan.compat.ConverterValueMapper;
-import org.infinispan.compat.ConverterEntryMapper;
+import org.infinispan.compat.FunctionMapper;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
@@ -131,6 +133,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new AtomicKeySetImpl.FunctionExternalizer(), exts);
       addInternalExternalizer(new AtomicMapProxyImpl.Externalizer(), exts);
       addInternalExternalizer(new AvailabilityMode.Externalizer(), exts);
+      addInternalExternalizer(new BiFunctionMapper.Externalizer(), exts);
       addInternalExternalizer(new ByteBufferImpl.Externalizer(), exts);
       addInternalExternalizer(new CacheEventConverterAsConverter.Externalizer(), exts);
       addInternalExternalizer(new CacheEventFilterAsKeyValueFilter.Externalizer(), exts);
@@ -166,6 +169,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new ExceptionResponse.Externalizer(), exts);
       addInternalExternalizer(new Flag.Externalizer(), exts);
       addInternalExternalizer(new FunctionalEntryVersionAdapter.Externalizer(), exts);
+      addInternalExternalizer(new FunctionMapper.Externalizer(), exts);
       addInternalExternalizer(new GlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new KeyFilterAsCacheEventFilter.Externalizer(), exts);
       addInternalExternalizer(new KeyFilterAsKeyValueFilter.Externalizer(), exts);

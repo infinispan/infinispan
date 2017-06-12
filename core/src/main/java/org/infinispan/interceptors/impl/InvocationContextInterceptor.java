@@ -10,6 +10,7 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
 import org.infinispan.InvalidCacheUsageException;
+import org.infinispan.util.UserRaisedFunctionalException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -54,6 +55,8 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Throwable throwable) throws Throwable {
          if (throwable instanceof InvalidCacheUsageException || throwable instanceof InterruptedException) {
             throw throwable;
+         } if (throwable instanceof UserRaisedFunctionalException) {
+            throw throwable.getCause();
          } else {
             rethrowException(rCtx, rCommand, throwable);
          }
