@@ -47,7 +47,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
       waitForClusterToForm(DIST, REPL);
    }
 
-   private void configureCache(ConfigurationBuilder builder) {
+   protected void configureCache(ConfigurationBuilder builder) {
       if (transactional != null) {
          builder.transaction().transactionMode(transactionMode());
          if (lockingMode != null) {

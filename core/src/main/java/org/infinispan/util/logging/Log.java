@@ -550,7 +550,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = INFO)
    @Message(value = "Failed invalidating remote cache", id = 137)
-   void failedInvalidatingRemoteCache(@Cause Exception e);
+   void failedInvalidatingRemoteCache(@Cause Throwable e);
 
    @LogMessage(level = INFO)
    @Message(value = "Could not register object with name: %s", id = 138)
