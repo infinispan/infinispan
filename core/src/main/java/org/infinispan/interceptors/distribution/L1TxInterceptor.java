@@ -1,8 +1,9 @@
 package org.infinispan.interceptors.distribution;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ComputeCommand;
@@ -13,7 +14,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * Interceptor that handles L1 logic for transactional caches.
@@ -56,16 +57,15 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (command.isOnePhaseCommit() && shouldFlushL1(ctx)) {
-         blockOnL1FutureIfNeeded(flushL1Caches(ctx));
+         return flushL1CachesAndInvokeNext(ctx, command);
       }
-
       return invokeNext(ctx, command);
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldFlushL1(ctx)) {
-         blockOnL1FutureIfNeeded(flushL1Caches(ctx));
+        return flushL1CachesAndInvokeNext(ctx, command);
       }
       return invokeNext(ctx, command);
    }
@@ -80,20 +80,16 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
       return !ctx.getAffectedKeys().isEmpty();
    }
 
-   private Future<?> flushL1Caches(TxInvocationContext ctx) {
-      return l1Manager.flushCache(ctx.getAffectedKeys(), ctx.getOrigin(), true);
-   }
-
-   private void blockOnL1FutureIfNeeded(Future<?> f) {
-      if (f != null) {
-         try {
-            f.get();
-         } catch (Exception e) {
-            // Ignore SuspectExceptions - if the node has gone away then there is nothing to invalidate anyway.
-            if (!(e.getCause() instanceof SuspectException)) {
-               getLog().failedInvalidatingRemoteCache(e);
-            }
-         }
+   private Object flushL1CachesAndInvokeNext(TxInvocationContext ctx, VisitableCommand command) {
+      CompletableFuture<?> f = (CompletableFuture<?>) l1Manager.flushCache(ctx.getAffectedKeys(), ctx.getOrigin(), true);
+      if (f != null && !f.isDone()) {
+         return asyncInvokeNext(ctx, command, f.exceptionally(throwable -> {
+            getLog().failedInvalidatingRemoteCache(throwable);
+            throw CompletableFutures.asCompletionException(throwable);
+         }));
+      } else {
+         return invokeNext(ctx, command);
       }
    }
+
 }

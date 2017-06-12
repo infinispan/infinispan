@@ -135,7 +135,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    }
 
    @Override
-   public Future<?> flushCache(Collection<Object> keys, Address origin, boolean assumeOriginKeptEntryInL1) {
+   public CompletableFuture<?> flushCache(Collection<Object> keys, Address origin, boolean assumeOriginKeptEntryInL1) {
       final Collection<Address> invalidationAddresses = buildInvalidationAddressList(keys, origin, assumeOriginKeptEntryInL1);
 
       int nodes = invalidationAddresses.size();

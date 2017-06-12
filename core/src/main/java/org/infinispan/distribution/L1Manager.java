@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
 import java.util.Collection;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -24,7 +24,7 @@ public interface L1Manager {
     */
    void addRequestor(Object key, Address requestor);
 
-   Future<?> flushCache(Collection<Object> key, Address origin, boolean assumeOriginKeptEntryInL1);
+   CompletableFuture<?> flushCache(Collection<Object> key, Address origin, boolean assumeOriginKeptEntryInL1);
 
    /**
     * Registers the given write synchronizer to be notified whenever a remote value is looked up for the given key.
