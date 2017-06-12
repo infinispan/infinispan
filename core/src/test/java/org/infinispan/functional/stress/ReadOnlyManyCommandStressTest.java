@@ -24,9 +24,7 @@ public class ReadOnlyManyCommandStressTest extends GetAllCommandStressTest {
    @Override
    protected void workerLogic(Cache<Integer, Integer> cache, Set<Integer> threadKeys, int iteration) {
       FunctionalMap.ReadOnlyMap<Integer, Integer> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(cache.getAdvancedCache()));
-      Function<EntryView.ReadEntryView<Integer, Integer>, Pair> func =
-         (Function<EntryView.ReadEntryView<Integer, Integer>, Pair> & Serializable) (view -> new Pair(view.key(), view.get() + 1));
-      Traversable<Pair> results = ro.evalMany(threadKeys, func);
+      Traversable<Pair> results = ro.evalMany(threadKeys, view -> new Pair(view.key(), view.get() + 1));
       Counter counter = new Counter();
       results.forEach(p -> { counter.inc(); assertEquals(p.key + 1, p.value); });
       assertEquals(threadKeys.size(), counter.get());

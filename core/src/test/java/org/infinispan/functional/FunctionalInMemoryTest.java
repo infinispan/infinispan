@@ -8,19 +8,14 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-import java.io.Serializable;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionException;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import javax.transaction.RollbackException;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.remoting.RemoteException;
 import org.testng.annotations.Test;
@@ -39,9 +34,9 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testWriteLoad(boolean isOwner, WriteMethod method) {
       Object key = getKey(isOwner);
 
-      method.action.eval(key, wo, rw,
-            (Function<ReadEntryView<Object, String>, Void> & Serializable) view -> { assertFalse(view.find().isPresent()); return null; },
-            (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> view.set("value"), getClass());
+      method.eval(key, wo, rw,
+            view -> { assertFalse(view.find().isPresent()); return null; },
+            (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && !method.doesRead ? 3 : 2);
 
@@ -54,14 +49,13 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
          }
       });
 
-      method.action.eval(key, wo, rw,
-            (Function<ReadEntryView<Object, String>, Void> & Serializable) view -> {
+      method.eval(key, wo, rw,
+            view -> {
                assertTrue(view.find().isPresent());
                assertEquals(view.get(), "value");
                return null;
             },
-            (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> {
-            }, getClass());
+            (view, nil) -> {}, getClass());
 
       assertInvocations(Boolean.TRUE.equals(transactional) && !isOwner && !method.doesRead ? 6 : 4);
    }
@@ -70,20 +64,20 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testWriteLoadLocal(WriteMethod method) {
       Integer key = 1;
 
-      method.action.eval(key, lwo, lrw,
-            (Function<ReadEntryView<Integer, String>, Void> & Serializable) view -> { assertFalse(view.find().isPresent()); return null; },
-            (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> view.set("value"), getClass());
+      method.eval(key, lwo, lrw,
+            view -> { assertFalse(view.find().isPresent()); return null; },
+            (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(1);
       assertEquals(cacheManagers.get(0).getCache().get(key), "value");
 
-      method.action.eval(key, lwo, lrw,
-            (Function<ReadEntryView<Integer, String>, Void> & Serializable) view -> {
+      method.eval(key, lwo, lrw,
+            view -> {
                assertTrue(view.find().isPresent());
                assertEquals(view.get(), "value");
                return null;
             },
-            (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> {}, getClass());
+            (view, nil) -> {}, getClass());
 
       assertInvocations(2);
    }
@@ -92,9 +86,9 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testExceptionPropagation(boolean isOwner, WriteMethod method) {
       Object key = getKey(isOwner);
       try {
-         method.action.eval(key, wo, rw,
-               (Function<ReadEntryView<Object, String>, Void> & Serializable) view -> null,
-               (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> {
+         method.eval(key, wo, rw,
+               view -> null,
+               (view, nil) -> {
                   throw new TestException();
                }, getClass());
          fail("Should throw CompletionException:CacheException:[RemoteException:]*TestException");
@@ -122,9 +116,9 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testWriteOnMissingValue(boolean isOwner, WriteMethod method) {
       Object key = getKey(isOwner);
       try {
-         method.action.eval(key, null, rw,
-               (Function<ReadEntryView<Object, String>, Object> & Serializable) view -> view.get(),
-               (BiConsumer<WriteEntryView<String>, Void> & Serializable) (view, nil) -> {}, getClass());
+         method.eval(key, null, rw,
+               view -> view.get(),
+               (view, nil) -> {}, getClass());
          fail("Should throw CompletionException:CacheException:[RemoteException:]*NoSuchElementException");
       } catch (CompletionException e) { // catches RemoteExceptions, too
          Throwable t = e;
@@ -142,8 +136,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testReadLoad(boolean isOwner, ReadMethod method) {
       Object key = getKey(isOwner);
 
-      assertTrue((Boolean) method.action.eval(key, ro,
-            (Function<ReadEntryView<Object, String>, Boolean> & Serializable) view -> { assertFalse(view.find().isPresent()); return true; }));
+      assertTrue(method.eval(key, ro, view -> { assertFalse(view.find().isPresent()); return true; }));
 
       // we can't add from read-only cache, so we put manually:
       cache(0, DIST).put(key, "value");
@@ -157,8 +150,8 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
          }
       });
 
-      assertEquals(method.action.eval(key, ro,
-            (Function<ReadEntryView<Object, String>, String> & Serializable) view -> {
+      assertEquals(method.eval(key, ro,
+            view -> {
                assertTrue(view.find().isPresent());
                assertEquals(view.get(), "value");
                return "OK";
@@ -169,8 +162,8 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    public void testReadLoadLocal(ReadMethod method) {
       Integer key = 1;
 
-      assertTrue((Boolean) method.action.eval(key, lro,
-            (Function<ReadEntryView<Object, String>, Boolean> & Serializable) view -> { assertFalse(view.find().isPresent()); return true; }));
+      assertTrue((Boolean) method.eval(key, lro,
+            view -> { assertFalse(view.find().isPresent()); return true; }));
 
       // we can't add from read-only cache, so we put manually:
       Cache<Integer, String> cache = cacheManagers.get(0).getCache();
@@ -178,8 +171,8 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
       assertEquals(cache.get(key), "value");
 
-      assertEquals(method.action.eval(key, lro,
-            (Function<ReadEntryView<Object, String>, String> & Serializable) view -> {
+      assertEquals(method.eval(key, lro,
+            view -> {
                assertTrue(view.find().isPresent());
                assertEquals(view.get(), "value");
                return "OK";
@@ -197,10 +190,9 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
    }
 
    private <K> void testReadOnMissingValue(K key, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) {
-      assertEquals(ro.eval(key,
-            (Function<ReadEntryView<K, String>, Boolean> & Serializable) (view -> view.find().isPresent())).join(), Boolean.FALSE);
+      assertEquals(ro.eval(key, view -> view.find().isPresent()).join(), Boolean.FALSE);
       expectExceptionNonStrict(CompletionException.class, CacheException.class, NoSuchElementException.class, () ->
-            method.action.eval(key, ro, (Function<ReadEntryView<K, String>, Object> & Serializable) view -> view.get())
+            method.eval(key, ro, view -> view.get())
       );
    }
 

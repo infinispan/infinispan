@@ -83,8 +83,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
    }
 
    private void iterate(Object key, ReadWriteMap<Object, Integer> rw, int expectedValue) throws InterruptedException {
-      rw.eval(key, (Function<ReadWriteEntryView<Object, Integer>, Void> & Serializable)
-            entry -> {
+      rw.eval(key, entry -> {
                // we need a small delay so that the value gets committed before the replication finishes:
                TestingUtil.sleepThread(10);
                return entry.set(entry.find().orElse(0) + 1);

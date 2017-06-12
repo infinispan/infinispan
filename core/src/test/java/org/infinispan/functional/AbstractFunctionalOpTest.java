@@ -1,6 +1,5 @@
 package org.infinispan.functional;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -9,8 +8,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -22,7 +19,6 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
 import org.infinispan.commands.functional.TxReadOnlyManyCommand;
 import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
@@ -34,6 +30,8 @@ import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.CountingCARD;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -169,38 +167,35 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
 
    enum WriteMethod {
       WO_EVAL(false, (key, wo, rw, read, write, clazz) ->
-            wo.eval(key, (Consumer<WriteEntryView<String>> & Serializable) view -> {
+            wo.eval(key, view -> {
                if (isModifying()) {
                   incrementInvocationCount(clazz);
                }
                write.accept(view, null);
             }).join()),
       WO_EVAL_VALUE(false, (key, wo, rw, read, write, clazz) ->
-            wo.eval(key, null, (BiConsumer<String, WriteEntryView<String>> & Serializable)
-                  (v, view) -> {
+            wo.eval(key, null, (v, view) -> {
                      if (isModifying()) {
                         incrementInvocationCount(clazz);
                      }
                      write.accept(view, null);
                   }).join()),
       WO_EVAL_MANY(false, (key, wo, rw, read, write, clazz) ->
-            wo.evalMany(Collections.singleton(key), (Consumer<WriteEntryView<String>> & Serializable) view -> {
+            wo.evalMany(Collections.singleton(key), view -> {
                if (isModifying()) {
                   incrementInvocationCount(clazz);
                }
                write.accept(view, null);
             }).join()),
       WO_EVAL_MANY_ENTRIES(false, (key, wo, rw, read, write, clazz) ->
-            wo.evalMany(Collections.singletonMap(key, null),
-                  (BiConsumer<String, WriteEntryView<String>> & Serializable) (v, view) -> {
+            wo.evalMany(Collections.singletonMap(key, null), (v, view) -> {
                      if (isModifying()) {
                         incrementInvocationCount(clazz);
                      }
                      write.accept(view, null);
                   }).join()),
       RW_EVAL(true, (key, wo, rw, read, write, clazz) ->
-            rw.eval(key,
-                  (Function<ReadWriteEntryView<Object, String>, Object> & Serializable) view -> {
+            rw.eval(key, view -> {
                      if (isModifying()) {
                         incrementInvocationCount(clazz);
                      }
@@ -209,8 +204,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                      return ret;
                   }).join()),
       RW_EVAL_VALUE(true, (key, wo, rw, read, write, clazz) ->
-            rw.eval(key, null,
-                  (BiFunction<String, ReadWriteEntryView<Object, String>, Object> & Serializable) (v, view) -> {
+            rw.eval(key, null, (v, view) -> {
                      if (isModifying()) {
                         incrementInvocationCount(clazz);
                      }
@@ -219,8 +213,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                      return ret;
                   }).join()),
       RW_EVAL_MANY(true, (key, wo, rw, read, write, clazz) ->
-            rw.evalMany(Collections.singleton(key),
-                  (Function<ReadWriteEntryView<Object, String>, Object> & Serializable) view -> {
+            rw.evalMany(Collections.singleton(key), view -> {
                      if (isModifying()) {
                         incrementInvocationCount(clazz);
                      }
@@ -229,8 +222,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                      return ret;
                   }).filter(Objects::nonNull).findAny().orElse(null)),
       RW_EVAL_MANY_ENTRIES(true, (key, wo, rw, read, write, clazz) ->
-            rw.evalMany(Collections.singletonMap(key, null),
-                  (BiFunction<String, ReadWriteEntryView<Object, String>, Object> & Serializable) (v, view) -> {
+            rw.evalMany(Collections.singletonMap(key, null), (v, view) -> {
                      if (isModifying()) {
                         incrementInvocationCount(clazz);
                      }
@@ -239,19 +231,36 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                      return ret;
                   }).filter(Objects::nonNull).findAny().orElse(null)),;
 
-      final Performer action;
+      private final Performer action;
       final boolean doesRead;
 
-      WriteMethod(boolean doesRead, Performer action) {
+      <K, R> WriteMethod(boolean doesRead, Performer<K, R> action) {
          this.doesRead = doesRead;
          this.action = action;
       }
 
+      public <K, R> R eval(K key,
+                           WriteOnlyMap<K, String> wo, ReadWriteMap<K, String> rw,
+                           SerializableFunction<ReadEntryView<K, String>, R> read,
+                           SerializableBiConsumer<WriteEntryView<String>, R> write,
+                           Class<? extends AbstractFunctionalOpTest> clazz) {
+         return ((Performer<K, R>) action).eval(key, wo, rw, read, write, clazz);
+      }
+
+      public <K, R> R eval(K key,
+                           WriteOnlyMap<K, String> wo, ReadWriteMap<K, String> rw,
+                           Function<ReadEntryView<K, String>, R> read,
+                           SerializableBiConsumer<WriteEntryView<String>, R> write,
+                           Class<? extends AbstractFunctionalOpTest> clazz) {
+         return ((Performer<K, R>) action).eval(key, wo, rw, read, write, clazz);
+      }
+
       @FunctionalInterface
-      interface Performer<K, R> {
+      private interface Performer<K, R> {
          R eval(K key,
                 WriteOnlyMap<K, String> wo, ReadWriteMap<K, String> rw,
-                Function<ReadEntryView<K, String>, R> read, BiConsumer<WriteEntryView<String>, R> write,
+                Function<ReadEntryView<K, String>, R> read,
+                BiConsumer<WriteEntryView<String>, R> write,
                 Class<? extends AbstractFunctionalOpTest> clazz);
       }
    }
@@ -261,17 +270,27 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       RO_EVAL_MANY((key, ro, read) -> ro.evalMany(Collections.singleton(key), read).filter(Objects::nonNull).findAny().orElse(null)),
       ;
 
-      final Performer action;
+      private final Performer action;
 
       ReadMethod(Performer action) {
          this.action = action;
       }
 
+      public <K, R> R eval(K key, FunctionalMap.ReadOnlyMap<K, String> ro,
+                           SerializableFunction<ReadEntryView<K, String>, R> read) {
+         return ((Performer<K, R>) action).eval(key, ro, read);
+      }
+
+      public <K, R> R eval(K key, FunctionalMap.ReadOnlyMap<K, String> ro,
+                           Function<ReadEntryView<K, String>, R> read) {
+         return ((Performer<K, R>) action).eval(key, ro, read);
+      }
+
       @FunctionalInterface
-      interface Performer<K, R> {
+      private interface Performer<K, R> {
          R eval(K key,
                    FunctionalMap.ReadOnlyMap<K, String> ro,
-                   Function<ReadEntryView<Object, String>, R> read);
+                   Function<ReadEntryView<K, String>, R> read);
       }
    }
 

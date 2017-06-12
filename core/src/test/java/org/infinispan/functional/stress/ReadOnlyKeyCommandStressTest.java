@@ -23,11 +23,9 @@ public class ReadOnlyKeyCommandStressTest extends GetAllCommandStressTest {
    @Override
    protected void workerLogic(Cache<Integer, Integer> cache, Set<Integer> threadKeys, int iteration) {
       FunctionalMap.ReadOnlyMap<Integer, Integer> ro = ReadOnlyMapImpl.create(FunctionalMapImpl.create(cache.getAdvancedCache()));
-      Function<EntryView.ReadEntryView<Integer, Integer>, Integer> func =
-         (Function<EntryView.ReadEntryView<Integer, Integer>, Integer> & Serializable) (view -> view.get() + 1);
       List<CompletableFuture> futures = new ArrayList(threadKeys.size());
       for (Integer key : threadKeys) {
-         futures.add(ro.eval(key, func).thenAccept(value -> assertEquals(Integer.valueOf(key + 1), value)));
+         futures.add(ro.eval(key, (view -> view.get() + 1)).thenAccept(value -> assertEquals(Integer.valueOf(key + 1), value)));
       }
       futures.stream().forEach(f -> f.join());
    }
