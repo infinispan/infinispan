@@ -80,8 +80,8 @@ public interface EndpointLogger extends BasicLogger {
     *           the port on which the protocol is listening
     */
    @LogMessage(level = INFO)
-   @Message(id = 10002, value = "%s listening on %s (mapped to %s/%s)")
-   void httpEndpointStarted(String protocolName, String listenAddress, String contextPath, String servletPath);
+   @Message(id = 10002, value = "%s listening on %s (mapped to %s)")
+   void httpEndpointStarted(String protocolName, String listenAddress, String contextPath);
 
    @Message(id = 10003, value = "No connector is defined in the endpoint subsystem")
    StartException noConnectorDefined();
