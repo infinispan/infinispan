@@ -47,7 +47,6 @@ public class DistributionTestHelper {
          log.fatal(msg);
          assert false : msg;
       }
-
       if (!(ice instanceof ImmortalCacheEntry)) {
          String msg = "Entry for key [" + key + "] on cache at [" + addressOf(cache) + "] should be immortal but was [" + ice + "]!";
          log.fatal(msg);
