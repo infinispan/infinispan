@@ -128,7 +128,6 @@ public class EmbeddedCompatContinuousQueryTest extends MultiHotRodServersTest {
       continuousQuery.addContinuousQueryListener(query, listener);
    }
 
-   @Test(enabled = false, description = "Disabled due to https://issues.jboss.org/browse/ISPN-6730")
    public void testContinuousQuery() {
       User user1 = new UserPB();
       user1.setId(1);

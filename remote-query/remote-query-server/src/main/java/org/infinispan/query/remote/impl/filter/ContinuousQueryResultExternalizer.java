@@ -28,7 +28,7 @@ public final class ContinuousQueryResultExternalizer extends AbstractExternalize
          Object[] projection = continuousQueryResult.getProjection();
          if (projection == null) {
             output.writeInt(continuousQueryResult.getValue().length);
-            output.writeObject(continuousQueryResult.getValue());
+            output.write(continuousQueryResult.getValue());
          } else {
             // skip serializing the instance if there is a projection
             output.writeInt(-1);
