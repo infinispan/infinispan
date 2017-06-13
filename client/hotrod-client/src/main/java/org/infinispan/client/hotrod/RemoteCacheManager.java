@@ -322,7 +322,8 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       OperationsFactory operationsFactory = new OperationsFactory(
               transportFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue, codec, listenerNotifier,
             asyncExecutorService, configuration);
-      remoteCache.init(marshaller, asyncExecutorService, operationsFactory, configuration.keySizeEstimate(), configuration.valueSizeEstimate());
+      remoteCache.init(marshaller, asyncExecutorService, operationsFactory, configuration.keySizeEstimate(),
+            configuration.valueSizeEstimate(), configuration.batchSize());
    }
 
    @Override

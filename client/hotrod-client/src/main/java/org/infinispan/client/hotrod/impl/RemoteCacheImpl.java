@@ -4,16 +4,23 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
 import java.io.IOException;
+import java.util.AbstractCollection;
+import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.Flag;
@@ -30,7 +37,6 @@ import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedExcep
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.impl.iteration.RemoteCloseableIterator;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
-import org.infinispan.client.hotrod.impl.operations.BulkGetKeysOperation;
 import org.infinispan.client.hotrod.impl.operations.BulkGetOperation;
 import org.infinispan.client.hotrod.impl.operations.ClearOperation;
 import org.infinispan.client.hotrod.impl.operations.ContainsKeyOperation;
@@ -55,6 +61,12 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorCollection;
+import org.infinispan.commons.util.CloseableIteratorMapper;
+import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.query.dsl.Query;
 
 /**
@@ -73,6 +85,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    protected OperationsFactory operationsFactory;
    private int estimateKeySize;
    private int estimateValueSize;
+   private int batchSize;
    private volatile boolean hasCompatibility;
 
    private final Runnable clear = this::clear;
@@ -85,12 +98,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       this.remoteCacheManager = rcm;
    }
 
-   public void init(Marshaller marshaller, ExecutorService executorService, OperationsFactory operationsFactory, int estimateKeySize, int estimateValueSize) {
+   public void init(Marshaller marshaller, ExecutorService executorService, OperationsFactory operationsFactory,
+         int estimateKeySize, int estimateValueSize, int batchSize) {
       this.marshaller = marshaller;
       this.executorService = executorService;
       this.operationsFactory = operationsFactory;
       this.estimateKeySize = estimateKeySize;
       this.estimateValueSize = estimateValueSize;
+      this.batchSize = batchSize;
    }
 
    public OperationsFactory getOperationsFactory() {
@@ -142,21 +157,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
       assertRemoteCacheManagerIsStarted();
       if (segments != null && segments.isEmpty()) {
-         return new CloseableIterator<Entry<Object, Object>>() {
-            @Override
-            public void close() {
-            }
-
-            @Override
-            public boolean hasNext() {
-               return false;
-            }
-
-            @Override
-            public Entry<Object, Object> next() {
-               throw new NoSuchElementException();
-            }
-         };
+         return Closeables.iterator(Collections.emptyIterator());
       }
       byte[][] params = marshallParams(filterConverterParams);
       RemoteCloseableIterator remoteCloseableIterator = new RemoteCloseableIterator(operationsFactory,
@@ -290,6 +291,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      VersionedValue<V> versionedValue = getWithMetadata(key);
+      return versionedValue != null && versionedValue.getValue().equals(oldValue) &&
+            replaceWithVersion(key, value, versionedValue.getVersion(), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   @Override
    public CompletableFuture<V> putAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
       assertRemoteCacheManagerIsStarted();
       int flags = operationsFactory.flags();
@@ -348,6 +356,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
+   public boolean containsValue(Object value) {
+      Objects.requireNonNull(value);
+      return values().contains(value);
+   }
+
+   @Override
    public V get(Object key) {
       assertRemoteCacheManagerIsStarted();
       byte[] keyBytes = obj2bytes(key, true);
@@ -394,6 +408,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       // TODO: It sucks that you need the prev value to see if it works...
       // We need to find a better API for RemoteCache...
       return removeOperation.execute();
+   }
+
+   @Override
+   public boolean remove(Object key, Object value) {
+      return removeEntry((K) key, (V) value);
    }
 
    @Override
@@ -522,11 +541,216 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
-   public Set<K> keySet() {
-      assertRemoteCacheManagerIsStarted();
-      // Use default scope
-      BulkGetKeysOperation<K> op = operationsFactory.newBulkGetKeysOperation(0);
-      return Collections.unmodifiableSet(op.execute());
+   public CloseableIteratorSet<K> keySet() {
+      return new KeySet();
+   }
+
+   @Override
+   public CloseableIteratorSet<Entry<K, V>> entrySet() {
+      return new EntrySet();
+   }
+
+   @Override
+   public CloseableIteratorCollection<V> values() {
+      return new ValuesCollection();
+   }
+
+   private class KeySet extends AbstractCollection<K> implements CloseableIteratorSet<K> {
+
+      @Override
+      public CloseableIterator<K> iterator() {
+         return new RemovableCloseableIterator<>(
+               // Use the ToEmptyBytesKeyValueFilterConverter to reduce value payload
+               new CloseableIteratorMapper<>(retrieveEntries(
+                     "org.infinispan.server.hotrod.HotRodServer$ToEmptyBytesKeyValueFilterConverter",
+                     batchSize), e -> (K) e.getKey()),
+               RemoteCacheImpl.this::remove);
+      }
+
+      @Override
+      public CloseableSpliterator<K> spliterator() {
+         return Closeables.spliterator(iterator(), Long.MAX_VALUE, Spliterator.NONNULL | Spliterator.CONCURRENT |
+               Spliterator.DISTINCT);
+      }
+
+      @Override
+      public Stream<K> stream() {
+         return Closeables.stream(spliterator(), false);
+      }
+
+      @Override
+      public Stream<K> parallelStream() {
+         return Closeables.stream(spliterator(), true);
+      }
+
+      @Override
+      public int size() {
+         return RemoteCacheImpl.this.size();
+      }
+
+      @Override
+      public void clear() {
+         RemoteCacheImpl.this.clear();
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         return RemoteCacheImpl.this.containsKey(o);
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         return RemoteCacheImpl.this.remove(o) != null;
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         boolean removedSomething = false;
+         for (Object key : c) {
+            removedSomething |= remove(key);
+         }
+         return removedSomething;
+      }
+   }
+
+   private CloseableIterator<Entry<K, VersionedValue<V>>> castIterator(CloseableIterator iterator) {
+      return iterator;
+   }
+
+   private boolean removeEntry(Map.Entry<K, V> entry) {
+      return removeEntry(entry.getKey(), entry.getValue());
+   }
+
+   private boolean removeEntry(K key, V value) {
+      VersionedValue<V> versionedValue = getWithMetadata(key);
+      return versionedValue != null && value.equals(versionedValue.getValue()) &&
+            RemoteCacheImpl.this.removeWithVersion(key, versionedValue.getVersion());
+   }
+
+   private class EntrySet extends AbstractCollection<Map.Entry<K, V>> implements CloseableIteratorSet<Entry<K, V>> {
+
+      @Override
+      public CloseableIterator<Entry<K, V>> iterator() {
+         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(
+               // First make <K, VersionedValue<V>>
+               castIterator(retrieveEntriesWithMetadata(null, batchSize)),
+               // Apply remove using version
+               e -> removeWithVersion(e.getKey(), e.getValue().getVersion())),
+               // Convert to <K, V> for user
+               e -> new AbstractMap.SimpleImmutableEntry<>(e.getKey(), e.getValue().getValue()));
+      }
+
+      @Override
+      public CloseableSpliterator<Entry<K, V>> spliterator() {
+         return Closeables.spliterator(iterator(), Long.MAX_VALUE, Spliterator.NONNULL | Spliterator.CONCURRENT);
+      }
+
+      @Override
+      public Stream<Entry<K, V>> stream() {
+         return Closeables.stream(spliterator(), false);
+      }
+
+      @Override
+      public Stream<Entry<K, V>> parallelStream() {
+         return Closeables.stream(spliterator(), true);
+      }
+
+      @Override
+      public int size() {
+         return RemoteCacheImpl.this.size();
+      }
+
+      @Override
+      public void clear() {
+         RemoteCacheImpl.this.clear();
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         Map.Entry entry = toEntry(o);
+         if (entry != null) {
+            V value = RemoteCacheImpl.this.get(entry.getKey());
+            return value != null && value.equals(entry.getValue());
+         }
+         return false;
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         Map.Entry<K, V> entry = toEntry(o);
+         return entry != null && RemoteCacheImpl.this.removeEntry(entry);
+      }
+
+      private Map.Entry<K, V> toEntry(Object obj) {
+         if (obj instanceof Map.Entry) {
+            return (Map.Entry) obj;
+         } else {
+            return null;
+         }
+      }
+   }
+
+   private class ValuesCollection extends AbstractCollection<V> implements CloseableIteratorCollection<V> {
+
+      @Override
+      public CloseableIterator<V> iterator() {
+         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(
+               // First make <K, VersionedValue<V>>
+               castIterator(retrieveEntriesWithMetadata(null, batchSize)),
+               // Apply remove using version
+               e -> removeWithVersion(e.getKey(), e.getValue().getVersion())),
+               // Convert to V for user
+               e -> e.getValue().getValue());
+      }
+
+      @Override
+      public CloseableSpliterator<V> spliterator() {
+         return Closeables.spliterator(iterator(), Long.MAX_VALUE, Spliterator.NONNULL | Spliterator.CONCURRENT);
+      }
+
+      @Override
+      public Stream<V> stream() {
+         return Closeables.stream(spliterator(), false);
+      }
+
+      @Override
+      public Stream<V> parallelStream() {
+         return Closeables.stream(spliterator(), true);
+      }
+
+      @Override
+      public int size() {
+         return RemoteCacheImpl.this.size();
+      }
+
+      @Override
+      public void clear() {
+         RemoteCacheImpl.this.clear();
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         // TODO: This would be more efficient if done on the server as a task or separate protocol
+         // Have to close the stream, just in case stream terminates early
+         try (Stream<V> stream = stream()) {
+            return stream.anyMatch(v -> Objects.equals(v, o));
+         }
+      }
+
+      // This method can terminate early so we have to make sure to close iterator
+      @Override
+      public boolean remove(Object o) {
+         Objects.requireNonNull(o);
+         try (CloseableIterator<V> iter = iterator()) {
+            while (iter.hasNext()) {
+               if (o.equals(iter.next())) {
+                  iter.remove();
+                  return true;
+               }
+            }
+         }
+         return false;
+      }
    }
 
    @Override
@@ -550,7 +774,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public StreamingRemoteCache<K> streaming() {
       assertRemoteCacheManagerIsStarted();
-      return new StreamingRemoteCacheImpl(this);
+      return new StreamingRemoteCacheImpl<>(this);
    }
 
    public PingOperation.PingResult resolveCompatibility() {

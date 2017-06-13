@@ -1,5 +1,8 @@
 package org.infinispan.server.hotrod;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +32,9 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -41,10 +46,13 @@ import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.filter.AbstractKeyValueFilterConverter;
+import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
@@ -138,6 +146,50 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       return new HotRodDecoder(cacheManager, transport, this, this::isCacheIgnored);
    }
 
+   /**
+    * Class used to create to empty filter converters that ignores marshalling of keys and values
+    */
+   class ToEmptyBytesFactory implements ParamKeyValueFilterConverterFactory {
+      @Override
+      public KeyValueFilterConverter getFilterConverter(Object[] params) {
+         return ToEmptyBytesKeyValueFilterConverter.INSTANCE;
+      }
+
+      @Override
+      public boolean binaryParam() {
+         // No reason to unmarshall keys/values as we just ignore them anyways
+         return true;
+      }
+   }
+
+   /**
+    * Class used to allow for remote clients to essentially ignore the value by returning an empty byte[].
+    */
+   @SerializeWith(value=ToEmptyBytesKeyValueFilterConverter.ToEmptyBytesKeyValueFilterConverterExternalizer.class)
+   static class ToEmptyBytesKeyValueFilterConverter extends AbstractKeyValueFilterConverter {
+      private ToEmptyBytesKeyValueFilterConverter() { }
+
+      public static ToEmptyBytesKeyValueFilterConverter INSTANCE = new ToEmptyBytesKeyValueFilterConverter();
+
+      static final byte[] bytes = new byte[0];
+
+      @Override
+      public Object filterAndConvert(Object key, Object value, Metadata metadata) {
+         return bytes;
+      }
+
+      public static final class ToEmptyBytesKeyValueFilterConverterExternalizer implements Externalizer<ToEmptyBytesKeyValueFilterConverter> {
+
+         @Override
+         public void writeObject(ObjectOutput output, ToEmptyBytesKeyValueFilterConverter object) throws IOException { }
+
+         @Override
+         public ToEmptyBytesKeyValueFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return INSTANCE;
+         }
+      }
+   }
+
    @Override
    protected void startInternal(HotRodServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       // These are also initialized by super.startInternal, but we need them before
@@ -152,6 +204,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       List<QueryFacade> queryFacades = loadQueryFacades();
       queryFacade = queryFacades.size() > 0 ? queryFacades.get(0) : null;
       clientListenerRegistry = new ClientListenerRegistry(configuration);
+
+      addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());
 
       addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory());
       loadFilterConverterFactories(ParamKeyValueFilterConverterFactory.class, this::addKeyValueFilterConverterFactory);

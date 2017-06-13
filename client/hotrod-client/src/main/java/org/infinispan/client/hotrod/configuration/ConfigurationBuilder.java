@@ -71,6 +71,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
    private final NearCacheConfigurationBuilder nearCache;
    private final List<String> whiteListRegExs = new ArrayList<>();
+   private int batchSize = ConfigurationProperties.DEFAULT_BATCH_SIZE;
 
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<ClusterConfigurationBuilder>();
 
@@ -291,6 +292,15 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder batchSize(int batchSize) {
+      if (batchSize <= 0) {
+         throw new IllegalArgumentException("batchSize must be greater than 0");
+      }
+      this.batchSize = batchSize;
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
 
@@ -341,6 +351,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          Collections.addAll(this.whiteListRegExs, classes);
       }
 
+      this.batchSize(typed.getIntProperty(ConfigurationProperties.BATCH_SIZE, batchSize, true));
+
       return this;
    }
 
@@ -381,7 +393,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs);
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize);
    }
 
    @Override

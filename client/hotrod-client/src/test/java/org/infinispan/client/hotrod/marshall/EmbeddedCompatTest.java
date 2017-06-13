@@ -30,6 +30,7 @@ import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -157,9 +158,8 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       // try to get the object through the remote cache interface and check it's the same object we put
       assertEquals(1, remoteCache.keySet().size());
-      Object key = remoteCache.keySet().iterator().next();
-      Object remoteObject = remoteCache.get(key);
-      assertAccount((Account) remoteObject, AccountPB.class);
+      Map.Entry<Integer, Account> entry = remoteCache.entrySet().iterator().next();
+      assertAccount(entry.getValue(), AccountPB.class);
 
       // get the object through the embedded cache interface and check it's the same object we put
       Account fromEmbeddedCache = (Account) embeddedCache.get(1);

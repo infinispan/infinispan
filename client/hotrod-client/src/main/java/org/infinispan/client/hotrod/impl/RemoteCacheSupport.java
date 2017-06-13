@@ -61,7 +61,7 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      throw new UnsupportedOperationException();
+      return replace(key, oldValue, newValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @Override
@@ -141,26 +141,6 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
    }
 
    @Override
-   public boolean containsValue(Object value) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Collection<V> values() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Set<Entry<K, V>> entrySet() {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public boolean remove(Object key, Object value) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
       throw new UnsupportedOperationException();
    }
@@ -187,12 +167,6 @@ public abstract class RemoteCacheSupport<K,V> implements RemoteCache<K,V> {
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
-      throw new UnsupportedOperationException();
+      return replace(key, oldValue, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
-
-   @Override
-   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      throw new UnsupportedOperationException();
-   }
-
 }

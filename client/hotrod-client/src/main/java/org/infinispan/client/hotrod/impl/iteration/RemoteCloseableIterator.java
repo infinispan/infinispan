@@ -104,6 +104,9 @@ public class RemoteCloseableIterator<E> implements CloseableIterator<Entry<Objec
             IterationNextResponse<E> iterationNextResponse = iterationNextOperation.execute();
             if (!iterationNextResponse.hasMore()) {
                endOfIteration = true;
+               // May as well close out iterator early. This way iterator is always closed when fully iterating upon
+               // lowering chance for user to leave it open.
+               close();
                break;
             }
             nextElements.addAll(iterationNextResponse.getEntries());

@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -20,6 +21,7 @@ import javax.management.MBeanServer;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheListenerAdapter;
@@ -302,9 +304,10 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public void removeAll() {
       checkNotClosed();
 
-      Iterator<K> it = cacheWithoutStats.keySet().iterator();
-      while (it.hasNext()) {
-         remove(it.next());
+      try (CloseableIterator<K> it = cacheWithoutStats.keySet().iterator()) {
+         while (it.hasNext()) {
+            remove(it.next());
+         }
       }
       //FIXME locks
    }
@@ -313,9 +316,10 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public void clear() {
       checkNotClosed();
 
-      Iterator<K> it = cacheWithoutStats.keySet().iterator();
-      while (it.hasNext()) {
-         cacheWithoutStats.remove(it.next());
+      try (CloseableIterator<K> it = cacheWithoutStats.keySet().iterator()) {
+         while (it.hasNext()) {
+            cacheWithoutStats.remove(it.next());
+         }
       }
       //FIXME locks
    }
@@ -431,7 +435,8 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    private class Itr implements Iterator<Cache.Entry<K, V>> {
 
-      private final Iterator<K> it = cache.keySet().iterator();
+      // This forces all keys into memory at once
+      private final Iterator<K> it = cache.keySet().stream().collect(Collectors.toSet()).iterator();
       private Entry<K, V> current;
       private Entry<K, V> next;
 

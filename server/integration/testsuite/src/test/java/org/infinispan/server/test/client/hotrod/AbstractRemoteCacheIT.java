@@ -12,6 +12,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.Flag;
@@ -180,6 +182,55 @@ public abstract class AbstractRemoteCacheIT {
     }
 
     @Test
+    public void testReplaceOldValue() throws Exception {
+        remoteCache.put("aKey", "aValue");
+        VersionedValue previous = remoteCache.getWithMetadata("aKey");
+        assertTrue(remoteCache.replace("aKey", "aValue", "aNewValue"));
+
+
+        // version should have changed; value should have changed
+        VersionedValue entry2 = remoteCache.getWithMetadata("aKey");
+        assertNotEquals(entry2.getVersion(), previous.getVersion());
+        assertEquals("aNewValue", entry2.getValue());
+    }
+
+    @Test
+    public void testReplaceOldValueWithLifespan() throws Exception {
+        int lifespanInMillis = 10;
+        remoteCache.put("aKey", "aValue");
+        VersionedValue previous = remoteCache.getWithMetadata("aKey");
+        assertTrue(remoteCache.replace("aKey", "aValue", "aNewValue", lifespanInMillis, TimeUnit.MILLISECONDS));
+
+
+        // version should have changed; value should have changed
+        VersionedValue entry2 = remoteCache.getWithMetadata("aKey");
+        assertNotEquals(entry2.getVersion(), previous.getVersion());
+        assertEquals("aNewValue", entry2.getValue());
+
+        Thread.sleep(2 * lifespanInMillis);
+        assertNull(remoteCache.getWithMetadata("aKey"));
+    }
+
+    @Test
+    public void testReplaceOldValueWithLifespanAndExpiration() throws Exception {
+        int lifespanInMillis = 10;
+        remoteCache.put("aKey", "aValue");
+        VersionedValue previous = remoteCache.getWithMetadata("aKey");
+        // Max idle should expire
+        assertTrue(remoteCache.replace("aKey", "aValue", "aNewValue", lifespanInMillis, TimeUnit.MINUTES,
+              lifespanInMillis, TimeUnit.MILLISECONDS));
+
+
+        // version should have changed; value should have changed
+        VersionedValue entry2 = remoteCache.getWithMetadata("aKey");
+        assertNotEquals(entry2.getVersion(), previous.getVersion());
+        assertEquals("aNewValue", entry2.getValue());
+
+        Thread.sleep(2 * lifespanInMillis);
+        assertNull(remoteCache.getWithMetadata("aKey"));
+    }
+
+    @Test
     public void testPut() throws Exception {
         assertNull(remoteCache.put("aKey", "aValue"));
         assertTrue(remoteCache.containsKey("aKey"));
@@ -239,6 +290,13 @@ public abstract class AbstractRemoteCacheIT {
         assertTrue(!remoteCache.containsKey("aKey"));
         remoteCache.put("aKey", "aValue");
         assertTrue(remoteCache.containsKey("aKey"));
+    }
+
+    @Test
+    public void testContainsValue() {
+        assertTrue(!remoteCache.containsValue("aValue"));
+        remoteCache.put("aKey", "aValue");
+        assertTrue(remoteCache.containsValue("aValue"));
     }
 
     @Test
@@ -323,6 +381,32 @@ public abstract class AbstractRemoteCacheIT {
         expectedKeySet.add("k2");
         expectedKeySet.add("k3");
         assertEquals(expectedKeySet, remoteCache.keySet());
+    }
+
+    @Test
+    public void testEntrySet() {
+        remoteCache.put("k1", "v1");
+        remoteCache.put("k2", "v2");
+        remoteCache.put("k3", "v3");
+
+        Set<Map.Entry<String, String>> expectedEntrySet = new HashSet<>();
+        expectedEntrySet.add(new AbstractMap.SimpleEntry<>("k1", "v1"));
+        expectedEntrySet.add(new AbstractMap.SimpleEntry<>("k2", "v2"));
+        expectedEntrySet.add(new AbstractMap.SimpleEntry<>("k3", "v3"));
+        assertEquals(expectedEntrySet, remoteCache.entrySet());
+    }
+
+    @Test
+    public void testValues() {
+        remoteCache.put("k1", "v1");
+        remoteCache.put("k2", "v2");
+        remoteCache.put("k3", "v3");
+
+        List<String> values = ((RemoteCache<?, String>) remoteCache).values().stream().collect(Collectors.toList());
+        assertEquals(3, values.size());
+        assertTrue(values.contains("v1"));
+        assertTrue(values.contains("v2"));
+        assertTrue(values.contains("v3"));
     }
 
     @Test
@@ -438,6 +522,17 @@ public abstract class AbstractRemoteCacheIT {
     }
 
     @Test
+    public void testRemoveConditional() throws IOException {
+        assertNull(remoteCache.put("aKey", "aValue"));
+        assertEquals(remoteCache.get("aKey"), "aValue");
+
+        assertFalse(remoteCache.remove("aKey", "aValue2"));
+        assertTrue(remoteCache.containsKey("aKey"));
+        assertTrue(remoteCache.remove("aKey", "aValue"));
+        assertFalse(remoteCache.containsKey("aKey"));
+    }
+
+    @Test
     public void testRemoveWithVersion() {
 
         assertTrue(!remoteCache.removeWithVersion("aKey", 12321212l));
@@ -516,36 +611,12 @@ public abstract class AbstractRemoteCacheIT {
     public void testUnsupportedOperations() {
 
         try {
-            remoteCache.remove("aKey", "aValue");
-            fail("call to remove() did not raise UnsupportedOperationException ");
-        } catch (UnsupportedOperationException uoe) {
-            // Unsupported operation exception correctly thrown
-        }
-        try {
             remoteCache.removeAsync("aKey", "aValue");
             fail("call to removeAsync() did not raise UnsupportedOperationException ");
         } catch (UnsupportedOperationException uoe) {
             // Unsupported operation exception correctly thrown
         }
 
-        try {
-            remoteCache.replace("aKey", "oldValue", "newValue");
-            fail("call to replace() did not raise UnsupportedOperationException ");
-        } catch (UnsupportedOperationException uoe) {
-            // Unsupported operation exception correctly thrown
-        }
-        try {
-            remoteCache.replace("aKey", "oldValue", "newValue", -1, TimeUnit.SECONDS);
-            fail("call to replace() did not raise UnsupportedOperationException ");
-        } catch (UnsupportedOperationException uoe) {
-            // Unsupported operation exception correctly thrown
-        }
-        try {
-            remoteCache.replace("aKey", "oldValue", "newValue", -1, TimeUnit.SECONDS, -1, TimeUnit.SECONDS);
-            fail("call to replace() did not raise UnsupportedOperationException ");
-        } catch (UnsupportedOperationException uoe) {
-            // Unsupported operation exception correctly thrown
-        }
         try {
             remoteCache.replaceAsync("aKey", "oldValue", "newValue");
             fail("call to replaceAsync() did not raise UnsupportedOperationException ");
@@ -561,24 +632,6 @@ public abstract class AbstractRemoteCacheIT {
         try {
             remoteCache.replaceAsync("aKey", "oldValue", "newValue", -1, TimeUnit.SECONDS, -1, TimeUnit.SECONDS);
             fail("call to replaceAsync() did not raise UnsupportedOperationException ");
-        } catch (UnsupportedOperationException uoe) {
-            // Unsupported operation exception correctly thrown
-        }
-        try {
-            remoteCache.containsValue("aValue");
-            fail("call to containsValue() did not raise UnsupportedOperationException ");
-        } catch (UnsupportedOperationException uoe) {
-            // Unsupported operation exception correctly thrown
-        }
-        try {
-            remoteCache.entrySet();
-            fail("call to entrySet() did not raise UnsupportedOperationException ");
-        } catch (UnsupportedOperationException uoe) {
-            // Unsupported operation exception correctly thrown
-        }
-        try {
-            remoteCache.values();
-            fail("call to values() did not raise UnsupportedOperationException ");
         } catch (UnsupportedOperationException uoe) {
             // Unsupported operation exception correctly thrown
         }

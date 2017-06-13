@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -8,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorCollection;
+import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.query.dsl.Query;
 
 /**
@@ -78,6 +81,55 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     * @see #getVersioned(Object)
     */
    boolean removeWithVersion(K key, long version);
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * The returned value is only sent back if {@link Flag#FORCE_RETURN_VALUE} is enabled.
+    */
+   V remove(Object key);
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * This method requires 2 round trips to the server. The first to retrieve the value and version and a second to
+    * remove the key with the version if the value matches. If possible user should use
+    * {@link RemoteCache#getWithMetadata(Object)} and {@link RemoteCache#removeWithVersion(Object, long)}.
+    */
+   boolean remove(Object key, Object value);
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * This method requires 2 round trips to the server. The first to retrieve the value and version and a second to
+    * replace the key with the version if the value matches. If possible user should use
+    * {@link RemoteCache#getWithMetadata(Object)} and
+    * {@link RemoteCache#replaceWithVersion(Object, Object, long)}.
+    */
+   @Override
+   boolean replace(K key, V oldValue, V newValue);
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * This method requires 2 round trips to the server. The first to retrieve the value and version and a second to
+    * replace the key with the version if the value matches. If possible user should use
+    * {@link RemoteCache#getWithMetadata(Object)} and
+    * {@link RemoteCache#replaceWithVersion(Object, Object, long, long, TimeUnit, long, TimeUnit)}.
+    */
+   @Override
+   boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit);
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * This method requires 2 round trips to the server. The first to retrieve the value and version and a second to
+    * replace the key with the version if the value matches. If possible user should use
+    * {@link RemoteCache#getWithMetadata(Object)} and
+    * {@link RemoteCache#replaceWithVersion(Object, Object, long, long, TimeUnit, long, TimeUnit)} if possible.
+    */
+   @Override
+   boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
    /**
     * @see #remove(Object, Object)
@@ -207,42 +259,62 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    MetadataValue<V> getWithMetadata(K key);
 
    /**
-    * @throws UnsupportedOperationException
+    * @inheritDoc
+    * <p>
+    * Due to this set being backed by the remote cache, each invocation on this set may require remote invocations
+    * to retrieve or update the remote cache. The main benefit of this set being backed by the remote cache is that
+    * this set internally does not require having to store any keys locally in memory and allows for the user to
+    * iteratively retrieve keys from the cache which is more memory conservative.
+    * <p>
+    * If you do wish to create a copy of this set (requires all entries in memory), the user may invoke
+    * <code>keySet().stream().collect(Collectors.toSet())</code> to copy the data locally. Then all operations on the
+    * resulting set will not require remote access, however updates will not be reflected from the remote cache.
+    * <p>
+    * NOTE: this method returns a {@link CloseableIteratorSet} which requires the iterator, spliterator or stream
+    * returned from it to be closed. Failure to do so may cause additional resources to not be freed.
     */
    @Override
-   int size();
+   CloseableIteratorSet<K> keySet();
 
    /**
-    * @throws UnsupportedOperationException
+    * @inheritDoc
+    * <p>
+    * Due to this collection being backed by the remote cache, each invocation on this collection may require remote
+    * invocations to retrieve or update the remote cache. The main benefit of this collection being backed by the remote
+    * cache is that this collection internally does not require having to store any values locally in memory and allows
+    * for the user to iteratively retrieve values from the cache which is more memory conservative.
+    * <p>
+    * If you do wish to create a copy of this collection (requires all entries in memory), the user may invoke
+    * <code>values().stream().collect(Collectors.toList())</code> to copy the data locally. Then all operations on the
+    * resulting list will not require remote access, however updates will not be reflected from the remote cache.
+    * <p>
+    * NOTE: this method returns a {@link CloseableIteratorCollection} which requires the iterator, spliterator or stream
+    * returned from it to be closed. Failure to do so may cause additional resources to not be freed.
     */
    @Override
-   boolean isEmpty();
+   CloseableIteratorCollection<V> values();
 
    /**
-    * @throws UnsupportedOperationException
+    * @inheritDoc
+    * <p>
+    * Due to this set being backed by the remote cache, each invocation on this set may require remote invocations
+    * to retrieve or update the remote cache. The main benefit of this set being backed by the remote cache is that
+    * this set internally does not require having to store any entries locally in memory and allows for the user to
+    * iteratively retrieve entries from the cache which is more memory conservative.
+    * <p>
+    * The {@link CloseableIteratorSet#remove(Object)} method requires two round trips to the server to properly remove
+    * an entry. This is because they first must retrieve the value and version
+    * to see if it matches and if it does remove it using it's version.
+    * <p>
+    * If you do wish to create a copy of this set (requires all entries in memory), the user may invoke
+    * <code>entrySet().stream().collect(Collectors.toSet())</code> to copy the data locally. Then all operations on the
+    * resulting set will not require remote access, however updates will not be reflected from the remote cache.
+    * <p>
+    * NOTE: this method returns a {@link CloseableIteratorSet} which requires the iterator, spliterator or stream
+    * returned from it to be closed. Failure to do so may cause additional resources to not be freed.
     */
    @Override
-   boolean containsValue(Object value);
-
-   /**
-    * Returns all keys in the remote server.  It'll invoke a command over the network each time this method is called.
-    * If the remote cache is a distributed cache, it will retrieve all of the keys from all nodes in the cluster.
-    * Please use with care for cache with large data set.
-    */
-   @Override
-   Set<K> keySet();
-
-   /**
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   Collection<V> values();
-
-   /**
-    * @throws UnsupportedOperationException
-    */
-   @Override
-   Set<Entry<K, V>> entrySet();
+   CloseableIteratorSet<Entry<K, V>> entrySet();
 
    /**
     * Synthetic operation. The client iterates over the set of keys and calls put for each one of them. This results in

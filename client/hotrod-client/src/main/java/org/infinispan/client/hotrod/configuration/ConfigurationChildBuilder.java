@@ -190,6 +190,13 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder addJavaSerialWhiteList(String... regEx);
 
    /**
+    * Sets the batch size of internal iterators (ie. <code>keySet().iterator()</code>. Defaults to 10_000
+    * @param batchSize the batch size to set
+    * @return this configuration builder with the batch size set
+    */
+   ConfigurationBuilder batchSize(int batchSize);
+
+   /**
     * Configures this builder using the specified properties
     */
    ConfigurationBuilder withProperties(Properties properties);
