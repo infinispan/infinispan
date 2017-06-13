@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Optional;
 
-import org.infinispan.functional.EntryVersion.NumericEntryVersion;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.functional.MetaParam.MetaCreated;
 import org.infinispan.functional.MetaParam.MetaEntryVersion;
 import org.infinispan.functional.MetaParam.MetaLastUsed;
@@ -49,22 +49,21 @@ public class MetaParamsTest {
    @Test
    public void testAddFindMultipleMetaParams() {
       MetaParams metas = MetaParams.empty();
-      metas.addMany(new MetaLifespan(1000), new MetaMaxIdle(1000), new MetaEntryVersion<>(new NumericEntryVersion(12345)));
+      metas.addMany(new MetaLifespan(1000), new MetaMaxIdle(1000), new MetaEntryVersion(new NumericVersion(12345)));
       assertFalse(metas.isEmpty());
       assertEquals(3, metas.size());
       Optional<MetaMaxIdle> maxIdle = metas.find(MetaMaxIdle.class);
-      Class<MetaEntryVersion<Long>> type = MetaEntryVersion.type();
-      Optional<MetaEntryVersion<Long>> entryVersion = metas.find(type);
+      Optional<MetaEntryVersion> entryVersion = metas.find(MetaEntryVersion.class);
       assertEquals(Optional.of(new MetaMaxIdle(1000)), maxIdle);
       assertFalse(900 == maxIdle.get().get().longValue());
-      assertEquals(new MetaEntryVersion<>(new NumericEntryVersion(12345)), entryVersion.get());
-      assertFalse(new MetaEntryVersion<>(new NumericEntryVersion(23456)).equals(entryVersion.get()));
+      assertEquals(new MetaEntryVersion(new NumericVersion(12345)), entryVersion.get());
+      assertFalse(new MetaEntryVersion(new NumericVersion(23456)).equals(entryVersion.get()));
    }
 
    @Test
    public void testReplaceFindMultipleMetaParams() {
       MetaParams metas = MetaParams.empty();
-      metas.addMany(new MetaLifespan(1000), new MetaMaxIdle(1000), new MetaEntryVersion<>(new NumericEntryVersion(12345)));
+      metas.addMany(new MetaLifespan(1000), new MetaMaxIdle(1000), new MetaEntryVersion(new NumericVersion(12345)));
       assertFalse(metas.isEmpty());
       assertEquals(3, metas.size());
       metas.addMany(new MetaLifespan(2000), new MetaMaxIdle(2000));
@@ -72,7 +71,7 @@ public class MetaParamsTest {
       assertEquals(3, metas.size());
       assertEquals(Optional.of(new MetaMaxIdle(2000)), metas.find(MetaMaxIdle.class));
       assertEquals(Optional.of(new MetaLifespan(2000)), metas.find(MetaLifespan.class));
-      assertEquals(Optional.of(new MetaEntryVersion<>(new NumericEntryVersion(12345))),
+      assertEquals(Optional.of(new MetaEntryVersion(new NumericVersion(12345))),
          metas.find(MetaEntryVersion.class));
    }
 
@@ -92,33 +91,33 @@ public class MetaParamsTest {
 
    @Test
    public void testDuplicateParametersOnConstruction() {
-      MetaEntryVersion<Long> versionParam1 = new MetaEntryVersion<>(new NumericEntryVersion(100));
-      MetaEntryVersion<Long> versionParam2 = new MetaEntryVersion<>(new NumericEntryVersion(200));
+      MetaEntryVersion versionParam1 = new MetaEntryVersion(new NumericVersion(100));
+      MetaEntryVersion versionParam2 = new MetaEntryVersion(new NumericVersion(200));
       MetaParams metas = MetaParams.of(versionParam1, versionParam2);
       assertEquals(1, metas.size());
-      assertEquals(Optional.of(new MetaEntryVersion<>(new NumericEntryVersion(200))),
+      assertEquals(Optional.of(new MetaEntryVersion(new NumericVersion(200))),
          metas.find(MetaEntryVersion.class));
    }
 
    @Test
    public void testDuplicateParametersOnAdd() {
-      MetaEntryVersion<Long> versionParam1 = new MetaEntryVersion<>(new NumericEntryVersion(100));
+      MetaEntryVersion versionParam1 = new MetaEntryVersion(new NumericVersion(100));
       MetaParams metas = MetaParams.of(versionParam1);
       assertEquals(1, metas.size());
-      assertEquals(Optional.of(new MetaEntryVersion<>(new NumericEntryVersion(100))),
+      assertEquals(Optional.of(new MetaEntryVersion(new NumericVersion(100))),
          metas.find(MetaEntryVersion.class));
 
-      MetaEntryVersion<Long> versionParam2 = new MetaEntryVersion<>(new NumericEntryVersion(200));
+      MetaEntryVersion versionParam2 = new MetaEntryVersion(new NumericVersion(200));
       metas.add(versionParam2);
       assertEquals(1, metas.size());
-      assertEquals(Optional.of(new MetaEntryVersion<>(new NumericEntryVersion(200))),
+      assertEquals(Optional.of(new MetaEntryVersion(new NumericVersion(200))),
          metas.find(MetaEntryVersion.class));
 
-      MetaEntryVersion<Long> versionParam3 = new MetaEntryVersion<>(new NumericEntryVersion(300));
-      MetaEntryVersion<Long> versionParam4 = new MetaEntryVersion<>(new NumericEntryVersion(400));
+      MetaEntryVersion versionParam3 = new MetaEntryVersion(new NumericVersion(300));
+      MetaEntryVersion versionParam4 = new MetaEntryVersion(new NumericVersion(400));
       metas.addMany(versionParam3, versionParam4);
       assertEquals(1, metas.size());
-      assertEquals(Optional.of(new MetaEntryVersion<>(new NumericEntryVersion(400))),
+      assertEquals(Optional.of(new MetaEntryVersion(new NumericVersion(400))),
          metas.find(MetaEntryVersion.class));
    }
 

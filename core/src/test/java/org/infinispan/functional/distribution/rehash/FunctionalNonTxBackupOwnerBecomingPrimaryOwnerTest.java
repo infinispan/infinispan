@@ -1,13 +1,13 @@
 package org.infinispan.functional.distribution.rehash;
 
-import static org.infinispan.functional.EntryVersion.CompareResult.EQUAL;
+import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
 
 import java.io.Serializable;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.functional.EntryVersion.NumericEntryVersion;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
@@ -49,7 +49,7 @@ public class FunctionalNonTxBackupOwnerBecomingPrimaryOwnerTest extends NonTxBac
       // TODO: Move initial set and replace with meta logic to TestWriteOperation
       WriteOnlyMap<String, String> wo0 = wo(0);
       Consumer<WriteEntryView<String>> f = (Consumer<WriteEntryView<String>> & Serializable) wo ->
-         wo.set("v0", new MetaEntryVersion<>(new NumericEntryVersion(1)));
+         wo.set("v0", new MetaEntryVersion(new NumericVersion(1)));
       wo0.eval("testkey", f);
       doTest(TestWriteOperation.REPLACE_META_FUNCTIONAL);
    }
@@ -63,11 +63,10 @@ public class FunctionalNonTxBackupOwnerBecomingPrimaryOwnerTest extends NonTxBac
             case REPLACE_META_FUNCTIONAL:
                BiFunction<Object, ReadWriteEntryView<Object, Object>, Boolean> f =
                   (BiFunction<Object, ReadWriteEntryView<Object, Object>, Boolean> & Serializable) (v, rw) -> {
-                     Class<MetaEntryVersion<Long>> type = MetaEntryVersion.type();
-                     return rw.findMetaParam(type)
-                        .filter(ver -> ver.get().compareTo(new NumericEntryVersion(1)) == EQUAL)
+                     return rw.findMetaParam(MetaEntryVersion.class)
+                        .filter(ver -> ver.get().compareTo(new NumericVersion(1)) == EQUAL)
                         .map(ver -> {
-                           rw.set(v, new MetaEntryVersion<>(new NumericEntryVersion(2)));
+                           rw.set(v, new MetaEntryVersion(new NumericVersion(2)));
                            return true;
                         }).orElse(false);
                   };

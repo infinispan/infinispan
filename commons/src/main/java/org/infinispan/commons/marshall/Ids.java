@@ -128,7 +128,6 @@ public interface Ids {
    // TODO: Add other meta params
    int META_LIFESPAN = 91;
    int META_ENTRY_VERSION = 92;
-   int NUMERIC_ENTRY_VERSION = 93;
 
    int READ_WRITE_SNAPSHOT_VIEW = 94;
 
@@ -167,7 +166,6 @@ public interface Ids {
 
    int VERSIONED_RESULT = 115;
    int VERSIONED_RESULTS = 116;
-   int FUNCTIONAL_ENTRY_VERSION_ADAPTER = 117;
 
    int XID_IMPL = 118;
 
