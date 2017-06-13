@@ -50,7 +50,7 @@ public class GroupingInterceptor extends DDAsyncInterceptor {
    public Object visitGetKeysInGroupCommand(InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final Object groupName = command.getGroupName();
       //no need to contact the primary owner if we are a backup owner.
-      command.setGroupOwner(distributionManager.getCacheTopology().isWriteOwner(groupName));
+      command.setGroupOwner(distributionManager == null || distributionManager.getCacheTopology().isWriteOwner(groupName));
       if (!command.isGroupOwner() || !isPassivationEnabled) {
          return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
             if (rv instanceof List) {

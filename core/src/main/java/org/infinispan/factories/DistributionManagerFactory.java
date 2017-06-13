@@ -9,8 +9,7 @@ public class DistributionManagerFactory extends AbstractNamedCacheComponentFacto
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      // Grouping interceptor consumes DistributionManager
-      if (configuration.clustering().cacheMode().isClustered() || configuration.clustering().hash().groups().enabled())
+      if (configuration.clustering().cacheMode().isClustered())
          return (T) new DistributionManagerImpl();
       else
          return null;
