@@ -32,7 +32,6 @@ import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheValue;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
-import org.infinispan.container.versioning.FunctionalEntryVersionAdapter;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.context.Flag;
@@ -161,7 +160,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new EquivalenceExternalizer(), exts);
       addInternalExternalizer(new ExceptionResponse.Externalizer(), exts);
       addInternalExternalizer(new Flag.Externalizer(), exts);
-      addInternalExternalizer(new FunctionalEntryVersionAdapter.Externalizer(), exts);
       addInternalExternalizer(new GlobalTransaction.Externalizer(), exts);
       addInternalExternalizer(new KeyFilterAsCacheEventFilter.Externalizer(), exts);
       addInternalExternalizer(new KeyFilterAsKeyValueFilter.Externalizer(), exts);
@@ -195,7 +193,6 @@ final class InternalExternalizers {
       addInternalExternalizer(new MetadataTransientMortalCacheValue.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new MetaParamExternalizers.LifespanExternalizer(), exts);
       addInternalExternalizer(new MetaParamExternalizers.EntryVersionParamExternalizer(), exts);
-      addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer(), exts);
       addInternalExternalizer(new MetaParams.Externalizer(), exts);
       addInternalExternalizer(new MetaParamsInternalMetadata.Externalizer(), exts);
       addInternalExternalizer(new MIMECacheEntry.Externalizer(), exts); // new

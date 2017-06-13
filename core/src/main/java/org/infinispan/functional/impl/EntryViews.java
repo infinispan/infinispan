@@ -17,7 +17,6 @@ import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.FunctionalEntryVersionAdapter;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
@@ -461,7 +460,7 @@ public final class EntryViews {
       Optional<EntryVersion> version = Optional.ofNullable(entry.getMetadata()).map(m -> m.version());
       MetaParams metaParams = MetaParams.empty();
       if (version.isPresent()) {
-         metaParams.add(new MetaParam.MetaEntryVersion(new FunctionalEntryVersionAdapter(version.get())));
+         metaParams.add(new MetaParam.MetaEntryVersion(version.get()));
       }
       if (metas.length != 0) {
          metaParams.addMany(metas);

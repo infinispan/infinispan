@@ -17,7 +17,6 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.container.versioning.FunctionalEntryVersionAdapter;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
@@ -88,12 +87,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    @Override
    public EntryVersion version() {
-      return params.find(MetaEntryVersion.class).map(MetaParamsInternalMetadata::versionOrNull).orElse(null);
-   }
-
-   private static EntryVersion versionOrNull(MetaEntryVersion mev) {
-      org.infinispan.functional.EntryVersion entryVersion = mev.get();
-      return entryVersion instanceof FunctionalEntryVersionAdapter ? ((FunctionalEntryVersionAdapter) entryVersion).get() : null;
+      return params.find(MetaEntryVersion.class).map(MetaEntryVersion::get).orElse(null);
    }
 
    @Override
@@ -146,7 +140,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
       @Override
       public Metadata.Builder version(EntryVersion version) {
-         params.add(new MetaEntryVersion<>(new FunctionalEntryVersionAdapter(version)));
+         params.add(new MetaEntryVersion(version));
          return this;
       }
 

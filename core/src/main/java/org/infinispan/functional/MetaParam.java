@@ -3,6 +3,7 @@ package org.infinispan.functional;
 import java.util.Optional;
 
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.container.versioning.EntryVersion;
 
 /**
  * An easily extensible metadata parameter that's stored along with the value
@@ -197,21 +198,16 @@ public interface MetaParam<T> {
     * @since 8.0
     */
    @Experimental
-   class MetaEntryVersion<T> implements Writable<EntryVersion<T>> {
-      private final EntryVersion<T> entryVersion;
+   class MetaEntryVersion implements Writable<EntryVersion> {
+      private final EntryVersion entryVersion;
 
-      public MetaEntryVersion(EntryVersion<T> entryVersion) {
+      public MetaEntryVersion(EntryVersion entryVersion) {
          this.entryVersion = entryVersion;
       }
 
       @Override
-      public EntryVersion<T> get() {
+      public EntryVersion get() {
          return entryVersion;
-      }
-
-      @SuppressWarnings("unchecked")
-      public static <T> T type() {
-         return (T) MetaEntryVersion.class;
       }
 
       @Override
@@ -219,7 +215,7 @@ public interface MetaParam<T> {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
 
-         MetaEntryVersion<?> that = (MetaEntryVersion<?>) o;
+         MetaEntryVersion that = (MetaEntryVersion) o;
 
          return entryVersion.equals(that.entryVersion);
 
