@@ -62,6 +62,7 @@ public class ConfigurationProperties {
    public static final Pattern SASL_PROPERTIES_PREFIX_REGEX =
          Pattern.compile('^' + ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.');
    public static final String JAVA_SERIAL_WHITELIST = "infinispan.client.hotrod.java_serial_whitelist";
+   public static final String BATCH_SIZE = "infinispan.client.hotrod.batch_size";
 
    // defaults
 
@@ -71,6 +72,7 @@ public class ConfigurationProperties {
    public static final int DEFAULT_SO_TIMEOUT = 60000;
    public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
    public static final int DEFAULT_MAX_RETRIES = 10;
+   public static final int DEFAULT_BATCH_SIZE = 10000;
 
    private final TypedProperties props;
 
@@ -186,6 +188,10 @@ public class ConfigurationProperties {
 
    public int getMaxRetries() {
       return props.getIntProperty(MAX_RETRIES, DEFAULT_MAX_RETRIES);
+   }
+
+   public int getBatchSize() {
+      return props.getIntProperty(BATCH_SIZE, DEFAULT_BATCH_SIZE);
    }
 
    /**

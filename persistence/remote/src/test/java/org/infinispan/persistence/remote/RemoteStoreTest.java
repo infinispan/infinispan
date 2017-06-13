@@ -49,6 +49,8 @@ public class RemoteStoreTest extends BaseStoreTest {
       gcr.rewire();
       localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
       hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
+      // In case if the server has to unmarshall the value, make sure to use the same marshaller
+      hrServer.setMarshaller(getMarshaller());
 
       ConfigurationBuilder builder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false);
