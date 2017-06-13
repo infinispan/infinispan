@@ -30,7 +30,7 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.LockedStream;
-import org.infinispan.commons.api.functional.FunctionalMap;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;

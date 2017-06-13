@@ -6,7 +6,7 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
-import org.infinispan.commons.api.functional.MetaParam;
+import org.infinispan.functional.MetaParam;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;

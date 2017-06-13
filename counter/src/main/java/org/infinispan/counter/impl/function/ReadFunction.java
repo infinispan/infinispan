@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.infinispan.commons.api.functional.EntryView;
+import org.infinispan.functional.EntryView;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.exts.NoStateExternalizer;
 import org.infinispan.counter.impl.entries.CounterValue;

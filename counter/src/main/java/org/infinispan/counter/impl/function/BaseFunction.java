@@ -3,7 +3,7 @@ package org.infinispan.counter.impl.function;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.infinispan.commons.api.functional.EntryView;
+import org.infinispan.functional.EntryView;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.metadata.ConfigurationMetadata;

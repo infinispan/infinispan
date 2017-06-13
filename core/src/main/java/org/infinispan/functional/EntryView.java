@@ -1,4 +1,4 @@
-package org.infinispan.commons.api.functional;
+package org.infinispan.functional;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;

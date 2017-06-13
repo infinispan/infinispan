@@ -9,8 +9,8 @@ import javax.transaction.TransactionManager;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.functional.FunctionalMap;
-import org.infinispan.commons.api.functional.Status;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -50,7 +50,7 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
    }
 
    @Override
-   public Status getStatus() {
+   public ComponentStatus getStatus() {
       return fmap.getStatus();
    }
 

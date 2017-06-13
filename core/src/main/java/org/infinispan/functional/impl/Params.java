@@ -6,10 +6,10 @@ import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
 
-import org.infinispan.commons.api.functional.Param;
-import org.infinispan.commons.api.functional.Param.ExecutionMode;
-import org.infinispan.commons.api.functional.Param.LockingMode;
-import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.functional.Param;
+import org.infinispan.functional.Param.ExecutionMode;
+import org.infinispan.functional.Param.LockingMode;
+import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.impl.FlagBitSets;
 

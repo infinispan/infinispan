@@ -1,4 +1,4 @@
-package org.infinispan.commons.marshall;
+package org.infinispan.marshall.core;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -6,10 +6,10 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.api.functional.MetaParam;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.EntryView.WriteEntryView;
+import org.infinispan.functional.MetaParam;
 
 public final class MarshallableFunctions {
 

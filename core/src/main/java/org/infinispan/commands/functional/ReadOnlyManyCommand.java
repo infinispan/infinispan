@@ -12,7 +12,7 @@ import java.util.function.Function;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;

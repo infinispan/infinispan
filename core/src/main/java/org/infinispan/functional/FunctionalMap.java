@@ -1,4 +1,4 @@
-package org.infinispan.commons.api.functional;
+package org.infinispan.functional;
 
 import java.util.Map;
 import java.util.Set;
@@ -9,12 +9,13 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
-import org.infinispan.commons.api.functional.Listeners.WriteListeners;
-import org.infinispan.commons.marshall.MarshallableFunctions;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.EntryView.WriteEntryView;
+import org.infinispan.functional.Listeners.ReadWriteListeners;
+import org.infinispan.functional.Listeners.WriteListeners;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.commons.util.Experimental;
 
 /**
@@ -78,7 +79,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
    /**
     * Functional map's status.
     */
-   Status getStatus();
+   ComponentStatus getStatus();
 
    /**
     * Exposes read-only operations that can be executed against the functional map.

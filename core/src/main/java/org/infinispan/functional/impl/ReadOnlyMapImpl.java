@@ -10,10 +10,10 @@ import java.util.stream.StreamSupport;
 
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
-import org.infinispan.commons.api.functional.Param;
-import org.infinispan.commons.api.functional.Traversable;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
+import org.infinispan.functional.Param;
+import org.infinispan.functional.Traversable;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.entries.CacheEntry;
