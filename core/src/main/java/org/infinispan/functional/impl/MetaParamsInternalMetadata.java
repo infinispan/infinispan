@@ -7,12 +7,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.api.functional.MetaParam;
-import org.infinispan.commons.api.functional.MetaParam.MetaCreated;
-import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
-import org.infinispan.commons.api.functional.MetaParam.MetaLastUsed;
-import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
-import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
+import org.infinispan.functional.MetaParam;
+import org.infinispan.functional.MetaParam.MetaCreated;
+import org.infinispan.functional.MetaParam.MetaEntryVersion;
+import org.infinispan.functional.MetaParam.MetaLastUsed;
+import org.infinispan.functional.MetaParam.MetaLifespan;
+import org.infinispan.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
@@ -92,7 +92,7 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    }
 
    private static EntryVersion versionOrNull(MetaEntryVersion mev) {
-      org.infinispan.commons.api.functional.EntryVersion entryVersion = mev.get();
+      org.infinispan.functional.EntryVersion entryVersion = mev.get();
       return entryVersion instanceof FunctionalEntryVersionAdapter ? ((FunctionalEntryVersionAdapter) entryVersion).get() : null;
    }
 

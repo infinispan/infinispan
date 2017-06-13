@@ -6,12 +6,12 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Optional;
 
-import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
-import org.infinispan.commons.api.functional.MetaParam.MetaCreated;
-import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
-import org.infinispan.commons.api.functional.MetaParam.MetaLastUsed;
-import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
-import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
+import org.infinispan.functional.EntryVersion.NumericEntryVersion;
+import org.infinispan.functional.MetaParam.MetaCreated;
+import org.infinispan.functional.MetaParam.MetaEntryVersion;
+import org.infinispan.functional.MetaParam.MetaLastUsed;
+import org.infinispan.functional.MetaParam.MetaLifespan;
+import org.infinispan.functional.MetaParam.MetaMaxIdle;
 import org.testng.annotations.Test;
 
 /**

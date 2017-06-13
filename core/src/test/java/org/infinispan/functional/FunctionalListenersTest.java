@@ -1,9 +1,9 @@
 package org.infinispan.functional;
 
-import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
-import static org.infinispan.commons.marshall.MarshallableFunctions.removeReturnPrevOrNull;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueConsumer;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueReturnPrevOrNull;
+import static org.infinispan.marshall.core.MarshallableFunctions.removeConsumer;
+import static org.infinispan.marshall.core.MarshallableFunctions.removeReturnPrevOrNull;
+import static org.infinispan.marshall.core.MarshallableFunctions.setValueConsumer;
+import static org.infinispan.marshall.core.MarshallableFunctions.setValueReturnPrevOrNull;
 import static org.infinispan.functional.FunctionalTestUtils.rw;
 import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
 import static org.infinispan.functional.FunctionalTestUtils.wo;
@@ -20,11 +20,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
-import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener;
-import org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListener;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.FunctionalMap.ReadWriteMap;
+import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
+import org.infinispan.functional.Listeners.ReadWriteListeners.ReadWriteListener;
+import org.infinispan.functional.Listeners.WriteListeners.WriteListener;
 import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnReadWrite;
 import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnWriteOnly;
 import org.testng.annotations.Test;

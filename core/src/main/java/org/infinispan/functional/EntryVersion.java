@@ -1,4 +1,4 @@
-package org.infinispan.commons.api.functional;
+package org.infinispan.functional;
 
 // TODO: Entry version defined in core/ and does not expose internal entry
 

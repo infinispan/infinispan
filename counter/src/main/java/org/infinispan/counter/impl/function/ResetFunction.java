@@ -7,7 +7,7 @@ import java.io.ObjectInput;
 import java.util.Collections;
 import java.util.Set;
 
-import org.infinispan.commons.api.functional.EntryView;
+import org.infinispan.functional.EntryView;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.exts.NoStateExternalizer;

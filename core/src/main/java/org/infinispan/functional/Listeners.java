@@ -1,9 +1,9 @@
-package org.infinispan.commons.api.functional;
+package org.infinispan.functional;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.util.Experimental;
 
 /**

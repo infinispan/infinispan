@@ -1,4 +1,4 @@
-package org.infinispan.commons.api.functional;
+package org.infinispan.functional;
 
 import org.infinispan.commons.util.Experimental;
 
@@ -51,9 +51,8 @@ public interface Param<P> {
     * @apiNote Amongst the old flags, there's one that allows cache store
     * to be skipped for loading or reading. There's no need for such
     * per-invocation parameter here, because to avoid loading or reading from
-    * the store, {@link org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap}
-    * operations can be called which do not read previous values from the
-    * persistence store.
+    * the store, Write-only operations can be called which do not read previous
+    * values from the persistence store.
     *
     * @since 8.0
     */

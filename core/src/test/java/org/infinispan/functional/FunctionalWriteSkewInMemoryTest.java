@@ -18,8 +18,6 @@ import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.api.functional.EntryView;
-import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.WriteSkewException;

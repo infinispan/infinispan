@@ -18,9 +18,7 @@ import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.functional.EntryView;
-import org.infinispan.commons.api.functional.FunctionalMap;
-import org.infinispan.commons.marshall.MarshallableFunctions;
+import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;

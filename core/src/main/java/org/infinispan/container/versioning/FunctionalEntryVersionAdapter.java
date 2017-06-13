@@ -9,7 +9,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
-public class FunctionalEntryVersionAdapter implements org.infinispan.commons.api.functional.EntryVersion<EntryVersion> {
+public class FunctionalEntryVersionAdapter implements org.infinispan.functional.EntryVersion<EntryVersion> {
    final EntryVersion delegate;
 
    public FunctionalEntryVersionAdapter(EntryVersion delegate) {
@@ -22,7 +22,7 @@ public class FunctionalEntryVersionAdapter implements org.infinispan.commons.api
    }
 
    @Override
-   public CompareResult compareTo(org.infinispan.commons.api.functional.EntryVersion<EntryVersion> other) {
+   public CompareResult compareTo(org.infinispan.functional.EntryVersion<EntryVersion> other) {
       switch (delegate.compareTo(other.get())) {
          case BEFORE:
             return CompareResult.BEFORE;

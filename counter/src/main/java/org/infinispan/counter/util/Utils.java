@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
-import org.infinispan.commons.api.functional.Param;
+import org.infinispan.functional.Param;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.exception.CounterException;

@@ -5,9 +5,8 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commons.api.functional.FunctionalMap;
-import org.infinispan.commons.api.functional.Param;
-import org.infinispan.commons.api.functional.Status;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.Param;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
@@ -95,17 +94,12 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    }
 
    @Override
-   public Status getStatus() {
-      return toStatus(cache.getStatus());
+   public ComponentStatus getStatus() {
+      return cache.getStatus();
    }
 
    @Override
    public void close() throws Exception {
       cache.stop();
    }
-
-   private static Status toStatus(ComponentStatus cacheStatus) {
-      return Status.valueOf(cacheStatus.name());
-   }
-
 }

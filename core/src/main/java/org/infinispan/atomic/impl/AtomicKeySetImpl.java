@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import org.infinispan.atomic.FineGrainedAtomicMap;
 import org.infinispan.atomic.MergeOnStore;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.commons.api.functional.EntryView;
+import org.infinispan.functional.EntryView;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.MarshallUtil;

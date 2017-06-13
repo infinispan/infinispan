@@ -18,8 +18,7 @@ import java.util.stream.IntStream;
 
 import javax.cache.Cache;
 
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.Listeners;
+import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.decorators.FunctionalListeners;
 
 public class FunctionalListenerAssertions<K, V> implements AutoCloseable {

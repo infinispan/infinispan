@@ -1,6 +1,6 @@
 package org.infinispan.commands.functional;
 
-import org.infinispan.commons.api.functional.EntryView;
+import org.infinispan.functional.EntryView;
 
 /**
  * Simplified version of functional command used for read-only operations after transactional modifications.

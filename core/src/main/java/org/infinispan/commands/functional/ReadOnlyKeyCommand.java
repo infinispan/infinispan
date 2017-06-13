@@ -9,7 +9,7 @@ import java.util.function.Function;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;

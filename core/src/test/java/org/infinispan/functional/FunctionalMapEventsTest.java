@@ -15,7 +15,6 @@ import static org.infinispan.functional.FunctionalTestUtils.wo;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.infinispan.commons.api.functional.Listeners;
 import org.infinispan.functional.decorators.FunctionalListeners;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.testng.annotations.BeforeClass;

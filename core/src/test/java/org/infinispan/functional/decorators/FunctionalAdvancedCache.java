@@ -1,11 +1,11 @@
 package org.infinispan.functional.decorators;
 
-import static org.infinispan.commons.marshall.MarshallableFunctions.removeConsumer;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueIfEqualsReturnBoolean;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasConsumer;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfAbsentReturnPrevOrNull;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasIfPresentReturnPrevOrNull;
-import static org.infinispan.commons.marshall.MarshallableFunctions.setValueMetasReturnPrevOrNull;
+import static org.infinispan.marshall.core.MarshallableFunctions.removeConsumer;
+import static org.infinispan.marshall.core.MarshallableFunctions.setValueIfEqualsReturnBoolean;
+import static org.infinispan.marshall.core.MarshallableFunctions.setValueMetasConsumer;
+import static org.infinispan.marshall.core.MarshallableFunctions.setValueMetasIfAbsentReturnPrevOrNull;
+import static org.infinispan.marshall.core.MarshallableFunctions.setValueMetasIfPresentReturnPrevOrNull;
+import static org.infinispan.marshall.core.MarshallableFunctions.setValueMetasReturnPrevOrNull;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -28,11 +28,11 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
-import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
-import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
-import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.functional.FunctionalMap.ReadWriteMap;
+import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
+import org.infinispan.functional.MetaParam.MetaLifespan;
+import org.infinispan.functional.MetaParam.MetaMaxIdle;
+import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CloseableIterator;

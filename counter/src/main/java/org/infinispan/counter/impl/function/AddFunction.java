@@ -8,7 +8,7 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
-import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.counter.api.CounterState;
