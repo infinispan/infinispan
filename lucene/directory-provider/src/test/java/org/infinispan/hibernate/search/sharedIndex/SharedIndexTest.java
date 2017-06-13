@@ -13,9 +13,14 @@ import org.hibernate.search.FullTextSession;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.query.dsl.QueryBuilder;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.hibernate.search.spi.IndexedTypeSet;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.IndexedTypeSets;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.test.util.FullTextSessionBuilder;
 import org.infinispan.hibernate.search.ClusterSharedConnectionProvider;
+import org.infinispan.hibernate.search.SimpleEmail;
 import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -30,10 +35,12 @@ import org.junit.Test;
  *
  * @author Zach Kurey
  */
-
 public class SharedIndexTest {
+
+   private static final IndexedTypeSet TEST_TYPES = IndexedTypeSets.fromClasses(Device.class, Robot.class, Toaster.class);
+   private static final IndexedTypeIdentifier TOASTER_TYPE = new PojoIndexedTypeIdentifier(Toaster.class);
+
    FullTextSessionBuilder node;
-   HashSet<Class<?>> entityTypes;
 
    @Test
    public void testSingleResultFromDeviceIndex() {
@@ -70,12 +77,8 @@ public class SharedIndexTest {
 
    @Before
    public void setUp() throws Exception {
-      entityTypes = new HashSet<Class<?>>();
-      entityTypes.add(Device.class);
-      entityTypes.add(Robot.class);
-      entityTypes.add(Toaster.class);
-      node = createClusterNode(entityTypes, true);
-      waitMembersCount(node, Toaster.class, 1);
+      node = createClusterNode(TEST_TYPES, true);
+      waitMembersCount(node, TOASTER_TYPE, 1);
    }
 
    @After
@@ -103,7 +106,7 @@ public class SharedIndexTest {
     */
    protected int clusterSize(FullTextSessionBuilder node, Class<?> entityType) {
       SearchIntegrator integrator = node.getSearchFactory().unwrap(SearchIntegrator.class);
-      EntityIndexBinding indexBinding = integrator.getIndexBinding(Toaster.class);
+      EntityIndexBinding indexBinding = integrator.getIndexBinding(TOASTER_TYPE);
       DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) indexBinding.getIndexManagers()[0];
       InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) indexManager.getDirectoryProvider();
       EmbeddedCacheManager cacheManager = directoryProvider.getCacheManager();

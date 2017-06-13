@@ -69,7 +69,7 @@ public class StoredIndexTest {
       try {
          TermQuery termQuery = new TermQuery(new Term("message", termMatch));
          FullTextQuery fullTextQuery = fullTextSession.createFullTextQuery(termQuery, SimpleEmail.class);
-         List<SimpleEmail> list = fullTextQuery.list();
+         List<SimpleEmail> list = fullTextQuery.getResultList();
          Assert.assertEquals(expectedMatches, list.size());
          if (expectedMatches != 0) {
             Assert.assertEquals("complaints-office@world.com", list.get(0).to);

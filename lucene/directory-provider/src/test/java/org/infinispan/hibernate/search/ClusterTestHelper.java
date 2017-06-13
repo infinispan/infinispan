@@ -1,12 +1,13 @@
 package org.infinispan.hibernate.search;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.cfg.Environment;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.hibernate.search.spi.IndexedTypeSet;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.test.util.FullTextSessionBuilder;
 import org.infinispan.hibernate.search.impl.DefaultCacheManagerService;
@@ -35,12 +36,12 @@ public final class ClusterTestHelper {
     * @param exclusiveIndexUse set to true to enable the EXCLUSIVE_INDEX_USE configuration option
     * @return a started FullTextSessionBuilder
     */
-   public static FullTextSessionBuilder createClusterNode(Set<Class<?>> entityTypes, boolean exclusiveIndexUse) {
+   public static FullTextSessionBuilder createClusterNode(IndexedTypeSet entityTypes, boolean exclusiveIndexUse) {
       return createClusterNode(entityTypes, exclusiveIndexUse, true, false);
    }
 
    /**
-    * As {@link #createClusterNode(Set, boolean)} but allows more options
+    * As {@link #createClusterNode(IndexedTypeSet, boolean)} but allows more options
     *
     * @param entityTypes               the set of indexed classes
     * @param exclusiveIndexUse         set to true to enable the EXCLUSIVE_INDEX_USE configuration option
@@ -48,7 +49,7 @@ public final class ClusterTestHelper {
     * @param setInfinispanIndexManager set to true to enable the indexmanager setting to 'infinispan'
     * @return
     */
-   public static FullTextSessionBuilder createClusterNode(Set<Class<?>> entityTypes, boolean exclusiveIndexUse,
+   public static FullTextSessionBuilder createClusterNode(IndexedTypeSet entityTypes, boolean exclusiveIndexUse,
                                                           boolean setInfinispanDirectory, boolean setInfinispanIndexManager) {
       FullTextSessionBuilder node = new FullTextSessionBuilder();
       if (setInfinispanDirectory) {
@@ -72,17 +73,17 @@ public final class ClusterTestHelper {
             Environment.CONNECTION_PROVIDER,
             org.infinispan.hibernate.search.ClusterSharedConnectionProvider.class.getName()
       );
-      for (Class<?> entityType : entityTypes) {
-         node.addAnnotatedClass(entityType);
+      for (IndexedTypeIdentifier entityType : entityTypes) {
+         node.addAnnotatedClass(entityType.getPojoType());
       }
 
       return node.build();
    }
 
    /**
-    * delegates {@link #waitMembersCount(FullTextSessionBuilder, Class, int, long, TimeUnit)} with 10s.
+    * delegates {@link #waitMembersCount(FullTextSessionBuilder, IndexedTypeIdentifier, int, long, TimeUnit)} with 10s.
     */
-   public static void waitMembersCount(FullTextSessionBuilder node, Class<?> entityType, int expectedSize) {
+   public static void waitMembersCount(FullTextSessionBuilder node, IndexedTypeIdentifier entityType, int expectedSize) {
       waitMembersCount(node, entityType, expectedSize, 10, TimeUnit.SECONDS);
    }
 
@@ -95,7 +96,7 @@ public final class ClusterTestHelper {
     * @param timeout Desired timeout
     * @param timeoutUnit Timeout units
      */
-   public static void waitMembersCount(FullTextSessionBuilder node, Class<?> entityType, int expectedSize, long timeout, TimeUnit timeoutUnit) {
+   public static void waitMembersCount(FullTextSessionBuilder node, IndexedTypeIdentifier entityType, int expectedSize, long timeout, TimeUnit timeoutUnit) {
       long endTime = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(timeout, timeoutUnit);
       int currentSize = 0;
       do {
@@ -113,7 +114,7 @@ public final class ClusterTestHelper {
     * @param node the FullTextSessionBuilder representing the current node
     * @return the number of nodes as seen by the current node
     */
-   public static int clusterSize(FullTextSessionBuilder node, Class<?> entityType) {
+   public static int clusterSize(FullTextSessionBuilder node, IndexedTypeIdentifier entityType) {
       SearchIntegrator integrator = node.getSearchFactory().unwrap(SearchIntegrator.class);
       EntityIndexBinding indexBinding = integrator.getIndexBinding(entityType);
       DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) indexBinding.getIndexManagers()[0];
