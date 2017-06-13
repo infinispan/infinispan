@@ -52,6 +52,14 @@
          </rest-connector>
       </replacement>
    </supplement>
+   <supplement name="rest-ssl">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <rest-connector socket-binding="rest-ssl" cache-container="local">
+            <encryption security-realm="ApplicationRealm"/>
+         </rest-connector>
+      </replacement>
+   </supplement>
    <supplement name="rest-rolling-upgrade">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local"/>
       <replacement placeholder="CONNECTORS">
