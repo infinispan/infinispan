@@ -11,8 +11,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.IntStream;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
@@ -562,37 +562,27 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    }
 
    private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStream() {
-      int limit = memoryAddressCount / lockCount;
-      return IntStream.range(0, lockCount)
-            // REALLY REALLY stupid there is no flatMapToObj on IntStream...
-            .boxed()
-            .flatMap(l -> {
-               int value = l;
-               return LongStream.iterate(value, i -> i + lockCount).limit(limit)
-                     .boxed()
-                     .flatMap(a -> {
-                     Lock lock = locks.getLockWithOffset(value).readLock();
-                     lock.lock();
-                     try {
-                        checkDeallocation();
-                        long address = memoryLookup.getMemoryAddressOffset(a.intValue());
-                        if (address == 0) {
-                           return Stream.empty();
-                        }
-                        Stream.Builder<InternalCacheEntry<WrappedBytes, WrappedBytes>> builder = Stream.builder();
-                        while (address != 0) {
-                           long nextAddress;
-                           do {
-                              nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
-                              builder.accept(offHeapEntryFactory.fromMemory(address));
-                           } while ((address = nextAddress) != 0);
-                        }
-                        return builder.build();
-                     } finally {
-                        lock.unlock();
-                     }
-                  });
-            });
+      return IntStream.range(0, memoryAddressCount)
+            .mapToObj(a -> {
+               Lock lock = locks.getLockWithOffset(a % lockCount).readLock();
+               lock.lock();
+               try {
+                  checkDeallocation();
+                  long address = memoryLookup.getMemoryAddressOffset(a);
+                  if (address == 0) {
+                     return null;
+                  }
+                  Stream.Builder<InternalCacheEntry<WrappedBytes, WrappedBytes>> builder = Stream.builder();
+                  long nextAddress;
+                  do {
+                     nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+                     builder.accept(offHeapEntryFactory.fromMemory(address));
+                  } while ((address = nextAddress) != 0);
+                  return builder.build();
+               } finally {
+                  lock.unlock();
+               }
+            }).flatMap(Function.identity());
    }
 
    @Override
