@@ -454,7 +454,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the previous value associated with the specified key, or
     *         <tt>null</tt> if remapping function is gives null.
     *
-    * @since 9.x
+    * @since 9.1
     */
    V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
 
@@ -477,7 +477,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the previous value associated with the specified key, or
     *         <tt>null</tt> if there was no mapping for the key.
     *
-    * @since 9.x
+    * @since 9.1
     */
    V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
 
@@ -501,12 +501,12 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the value created with the mapping function associated with the specified key, or
     *        the previous value associated with the specified key if the key is not absent.
     *
-    * @since 9.x
+    * @since 9.1
     */
    V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata);
 
    /**
-    * Overloaded {@link #computeIfAbsent(Object, SerializableFunction, Metadata)} with {@link SerializableFunction}
+    * Overloaded {@link #computeIfAbsent(Object, Function, Metadata)} with {@link SerializableFunction}
     */
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
       return this.computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, metadata);

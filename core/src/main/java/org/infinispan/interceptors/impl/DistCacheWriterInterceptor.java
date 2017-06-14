@@ -156,7 +156,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
          if (!isProperWriter(rCtx, computeCommand, computeCommand.getKey()))
             return rv;
 
-         if(command.isSuccessful() && rv == null){
+         if (command.isSuccessful() && rv == null) {
             boolean resp = persistenceManager
                   .deleteFromAllStores(key, skipSharedStores(rCtx, key, command) ? PRIVATE : BOTH);
             if (trace)
