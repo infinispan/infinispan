@@ -34,20 +34,20 @@ import org.infinispan.factories.GlobalComponentRegistry;
  */
 public interface ModuleLifecycle {
 
-    void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration);
+    default void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {}
 
-    void cacheManagerStarted(GlobalComponentRegistry gcr);
+    default void cacheManagerStarted(GlobalComponentRegistry gcr) {}
 
-    void cacheManagerStopping(GlobalComponentRegistry gcr);
+    default void cacheManagerStopping(GlobalComponentRegistry gcr) {}
 
-    void cacheManagerStopped(GlobalComponentRegistry gcr);
+    default void cacheManagerStopped(GlobalComponentRegistry gcr) {}
 
-    void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName);
+    default void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {}
 
-    void cacheStarted(ComponentRegistry cr, String cacheName);
+    default void cacheStarted(ComponentRegistry cr, String cacheName) {}
 
-    void cacheStopping(ComponentRegistry cr, String cacheName);
+    default void cacheStopping(ComponentRegistry cr, String cacheName) {}
 
-    void cacheStopped(ComponentRegistry cr, String cacheName);
+    default void cacheStopped(ComponentRegistry cr, String cacheName) {}
 
 }

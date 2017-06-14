@@ -9,7 +9,6 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -222,10 +221,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       c.injectDependencies();
 
       if (old == null) getLog().tracef("Registering component %s under name %s", c, name);
-      if (state == ComponentStatus.RUNNING) {
+      if (state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING) {
          populateLifeCycleMethods(c);
          try {
-            invokeStartMethods(Arrays.asList(c.startMethods));
+            invokePrioritizedMethods(Arrays.asList(c.startMethods));
          } catch (Throwable t) {
             // the component hasn't started properly, remove its registration
             componentLookup.remove(name);
@@ -512,6 +511,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          // START methods first
          c.startMethods = processPrioritizedMethods(c.metadata.getStartMethods(), componentClass, c);
 
+         // POSTSTART methods next
+         c.postStartMethods = processPrioritizedMethods(c.metadata.getPostStartMethods(), componentClass, c);
+
          // And now the STOP methods
          c.stopMethods = processPrioritizedMethods(c.metadata.getStopMethods(), componentClass, c);
       }
@@ -539,11 +541,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    //   These methods perform a check for appropriate transition and then delegate to similarly named internal methods.
 
    /**
-    * This starts the components in the cache, connecting to channels, starting service threads, etc.  If the cache is
+    * This starts the components in the registry, connecting to channels, starting service threads, etc.  If the component is
     * not in the {@link org.infinispan.lifecycle.ComponentStatus#INITIALIZING} state, it will be initialized first.
     */
    @Override
-   public synchronized void start() {
+   public void start() {
       state = ComponentStatus.INITIALIZING;
       try {
          internalStart();
@@ -552,9 +554,19 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
    }
 
+   protected void postStart() {
+      List<PrioritizedMethod> methods = new ArrayList<>(componentLookup.size());
+      for (Component c : componentLookup.values()) {
+         Collections.addAll(methods, c.postStartMethods);
+      }
+
+      // fire all POSTSTART methods according to priority
+      invokePrioritizedMethods(methods);
+   }
+
    /**
-    * Stops the cache and sets the cache status to {@link org.infinispan.lifecycle.ComponentStatus#TERMINATED} once it
-    * is done.  If the cache is not in the {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} state, this is a
+    * Stops the component and sets its status to {@link org.infinispan.lifecycle.ComponentStatus#TERMINATED} once it
+    * is done.  If the component is not in the {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} state, this is a
     * no-op.
     */
    @Override
@@ -611,27 +623,25 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       // first cache all start, stop and destroy methods.
       populateLifecycleMethods();
 
-      List<PrioritizedMethod> startMethods = new ArrayList<>(componentLookup.size());
+      List<PrioritizedMethod> methods = new ArrayList<>(componentLookup.size());
       for (Component c : componentLookup.values()) {
-         Collections.addAll(startMethods, c.startMethods);
+         Collections.addAll(methods, c.startMethods);
       }
 
-      // sort the start methods by priority
-      Collections.sort(startMethods);
-
       // fire all START methods according to priority
-
-      invokeStartMethods(startMethods);
+      invokePrioritizedMethods(methods);
       addShutdownHook();
 
       state = ComponentStatus.RUNNING;
    }
 
-   private void invokeStartMethods(Collection<PrioritizedMethod> startMethods) {
+   private void invokePrioritizedMethods(List<PrioritizedMethod> methods) {
       boolean traceEnabled = getLog().isTraceEnabled();
-      for (PrioritizedMethod em : startMethods) {
+      // sort the methods by priority
+      Collections.sort(methods);
+      for (PrioritizedMethod em : methods) {
          if (traceEnabled)
-            getLog().tracef("Invoking start method %s on component %s", em.metadata, em.component.getName());
+            getLog().tracef("Invoking method %s on component %s", em.metadata, em.component.getName());
          em.invoke();
       }
    }
@@ -775,6 +785,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
        */
       ComponentMetadata.InjectMetadata[] injectionMethods;
       PrioritizedMethod[] startMethods;
+      PrioritizedMethod[] postStartMethods;
       PrioritizedMethod[] stopMethods;
       ComponentMetadata metadata;
 

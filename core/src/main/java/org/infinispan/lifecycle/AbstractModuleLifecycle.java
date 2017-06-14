@@ -12,7 +12,9 @@ import org.infinispan.factories.GlobalComponentRegistry;
  *
  * @author Manik Surtani
  * @version 4.0
+ * @deprecated since 9.1. Just implement {@link ModuleLifecycle} instead.
  */
+@Deprecated
 public class AbstractModuleLifecycle implements ModuleLifecycle {
 
    @Override

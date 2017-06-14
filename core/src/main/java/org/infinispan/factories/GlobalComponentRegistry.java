@@ -226,23 +226,28 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public synchronized void start() {
+   public void start() {
       try {
-         // Do nothing if the global components are already running
-         if (!state.startAllowed())
-            return;
+         boolean needToNotify;
+         synchronized (this) {
+            // Do nothing if the global components are already running
+            if (!state.startAllowed())
+               return;
 
-         boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
-         if (needToNotify) {
-            for (ModuleLifecycle l : moduleLifecycles) {
-               l.cacheManagerStarting(this, globalConfiguration);
+            needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
+            if (needToNotify) {
+               for (ModuleLifecycle l : moduleLifecycles) {
+                  l.cacheManagerStarting(this, globalConfiguration);
+               }
             }
+            super.start();
          }
-         super.start();
 
          if (versionLogged.compareAndSet(false, true)) {
             log.version(Version.printVersion());
          }
+
+         super.postStart();
 
          if (needToNotify && state == ComponentStatus.RUNNING) {
             for (ModuleLifecycle l : moduleLifecycles) {

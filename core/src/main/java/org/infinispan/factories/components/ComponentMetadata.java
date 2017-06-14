@@ -12,6 +12,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.PostStart;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -45,6 +46,7 @@ public class ComponentMetadata implements Serializable {
    private transient Map<String, String> dependencies;
    private InjectMetadata[] injectMetadata;
    private PrioritizedMethodMetadata[] startMethods;
+   private PrioritizedMethodMetadata[] postStartMethods;
    private PrioritizedMethodMetadata[] stopMethods;
    private boolean globalScope = false;
    private boolean survivesRestarts = false;
@@ -55,7 +57,9 @@ public class ComponentMetadata implements Serializable {
       survivesRestarts = true;
    }
 
-   public ComponentMetadata(Class<?> component, List<Method> injectMethods, List<Method> startMethods, List<Method> stopMethods, boolean global, boolean survivesRestarts) {
+   public ComponentMetadata(Class<?> component, List<Method> injectMethods, List<Method> startMethods,
+                            List<Method> postStartMethods, List<Method> stopMethods, boolean global,
+                            boolean survivesRestarts) {
       clazz = component;
       name = component.getName();
       globalScope = global;
@@ -67,6 +71,15 @@ public class ComponentMetadata implements Serializable {
          for (Method m : startMethods) {
             Start s = m.getAnnotation(Start.class);
             this.startMethods[i++] = new PrioritizedMethodMetadata(m.getName(), s.priority());
+         }
+      }
+
+      if (postStartMethods != null && !postStartMethods.isEmpty()) {
+         this.postStartMethods = new PrioritizedMethodMetadata[postStartMethods.size()];
+         int i=0;
+         for (Method m : postStartMethods) {
+            PostStart s = m.getAnnotation(PostStart.class);
+            this.postStartMethods[i++] = new PrioritizedMethodMetadata(m.getName(), s.priority());
          }
       }
 
@@ -145,6 +158,11 @@ public class ComponentMetadata implements Serializable {
       return startMethods;
    }
 
+   public PrioritizedMethodMetadata[] getPostStartMethods() {
+      if (postStartMethods == null) return EMPTY_PRIORITIZED_METHODS;
+      return postStartMethods;
+   }
+
    public PrioritizedMethodMetadata[] getStopMethods() {
       if (stopMethods == null) return EMPTY_PRIORITIZED_METHODS;
       return stopMethods;
@@ -177,6 +195,7 @@ public class ComponentMetadata implements Serializable {
             ", dependencies=" + dependencies +
             ", injectMetadata=" + Arrays.toString(injectMetadata) +
             ", startMethods=" + Arrays.toString(startMethods) +
+            ", postStartMethods=" + Arrays.toString(postStartMethods) +
             ", stopMethods=" + Arrays.toString(stopMethods) +
             ", globalScope=" + globalScope +
             ", survivesRestarts=" + survivesRestarts +
