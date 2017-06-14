@@ -11,6 +11,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
@@ -33,6 +35,8 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.local.ValueCacheCollection;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableFunction;
 
 /**
  * A decorator to a cache, which can be built with a specific set of {@link Flag}s.  This
@@ -559,6 +563,21 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       return replace(key, value, cacheImplementation.defaultMetadata);
    }
 
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return compute(key, remappingFunction, cacheImplementation.defaultMetadata);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeIfPresent(key, remappingFunction, cacheImplementation.defaultMetadata);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+      return computeIfAbsent(key, mappingFunction, cacheImplementation.defaultMetadata);
+   }
+
    //Not exposed on interface
    public long getFlagsBitSet() {
       return flags;
@@ -597,6 +616,21 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public V replace(K key, V value, Metadata metadata) {
       return cacheImplementation.replace(key, value, metadata, flags, writeContext(1));
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cacheImplementation.computeInternal(key, remappingFunction, false, metadata, flags, writeContext(1));
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cacheImplementation.computeInternal(key, remappingFunction, true, metadata, flags, writeContext(1));
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return cacheImplementation.computeIfAbsentInternal(key, mappingFunction, metadata, flags, writeContext(1));
    }
 
    @Override

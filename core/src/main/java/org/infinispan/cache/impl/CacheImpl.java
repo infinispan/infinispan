@@ -342,9 +342,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent, Metadata metadata, long flags) {
+      return computeInternal(key, remappingFunction, computeIfPresent, metadata, flags, getInvocationContextWithImplicitTransaction(false, 1));
+   }
+
+   V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent, Metadata metadata, long flags, InvocationContext ctx) {
       assertKeyNotNull(key);
       assertFunctionNotNull(remappingFunction);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       ComputeCommand command = commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent, metadata, flags);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(command.getKeyLockOwner());
@@ -354,18 +357,18 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-      return computeIfAbsentInternal(key, mappingFunction, applyDefaultMetadata(defaultMetadata), addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+      return computeIfAbsent(key, mappingFunction, defaultMetadata);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
-      return computeIfAbsentInternal(key, mappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+      return computeIfAbsentInternal(key, mappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            getInvocationContextWithImplicitTransaction(false, 1));
    }
 
-   private V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata, long flags) {
+   V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata, long flags, InvocationContext ctx) {
       assertKeyNotNull(key);
       assertFunctionNotNull(mappingFunction);
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
       ComputeIfAbsentCommand command = commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction, metadata, flags);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(command.getKeyLockOwner());

@@ -363,11 +363,21 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    }
 
    /**
-    * Overloaded {@link Map#computeIfAbsent(Object, Function)} with Infinispan {@link SerializableFunction}
-    *
+    * {@inheritDoc}
+    * <p>
+    * When this method is used on a clustered cache, either replicated or distributed, the function will be serialized
+    * to owning nodes to perform the operation in the most performant way. However this means the function must
+    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * <p>
     * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
     * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
     * This limitation could disappear in following releases if technically possible.
+    */
+   @Override
+   V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction);
+
+   /**
+    * Overloaded {@link Cache#computeIfAbsent(Object, Function)} with Infinispan {@link SerializableFunction}
     *
     * @param key, the key to be computed
     * @param mappingFunction, mapping function to be appliyed to the key
@@ -379,11 +389,21 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    }
 
    /**
-    * Overloaded {@link Map#computeIfPresent(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
-    *
-    * For transactional caches, whenever the values of the caches are collections, and the bifunction modifies the collection, the collection
+    * {@inheritDoc}
+    * <p>
+    * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
+    * to owning nodes to perform the operation in the most performant way. However this means the bifunction must
+    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * <p>
+    * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
     * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
     * This limitation could disappear in following releases if technically possible.
+    */
+   @Override
+   V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
+
+   /**
+    * Overloaded {@link Cache#computeIfPresent(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
     *
     * @param key, the key to be computed
     * @param remappingFunction, mapping function to be appliyed to the key
@@ -395,7 +415,21 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    }
 
    /**
-    * Overloaded {@link Map#compute(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
+    * {@inheritDoc}
+    * <p>
+    * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
+    * to owning nodes to perform the operation in the most performant way. However this means the bifunction must
+    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * <p>
+    * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
+    * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
+    * This limitation could disappear in following releases if technically possible.
+    */
+   @Override
+   V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
+
+   /**
+    * Overloaded {@link Cache#compute(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
     *
     * For transactional caches, whenever the values of the caches are collections, and the bifunction modifies the collection, the collection
     * must be copied and not directly modified, otherwise whenever rollback is called it won't work.

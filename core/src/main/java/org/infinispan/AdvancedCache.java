@@ -508,7 +508,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata);
 
    /**
-    * Overloaded {@link #computeIfAbsent(Object, SerializableFunction, Metadata)} with {@link SerializableFunction}
+    * Overloaded {@link #computeIfAbsent(Object, Function, Metadata)} with {@link SerializableFunction}
     */
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
       return this.computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, metadata);

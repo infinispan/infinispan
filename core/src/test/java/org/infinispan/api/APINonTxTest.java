@@ -786,6 +786,14 @@ public class APINonTxTest extends SingleCacheManagerTest {
       });
    }
 
+   public void testLockedStreamCompute() throws Throwable {
+      assertLockStream((c, e) -> c.compute(e.getKey(), (k, v) -> v + "-other"));
+   }
+
+   public void testLockedStreamComputeIfPresent() throws Throwable {
+      assertLockStream((c, e) -> c.computeIfPresent(e.getKey(), (k, v) -> v + "-other"));
+   }
+
    public void testLockedStreamSetValue() {
       for (int i = 0; i < 5; i++) {
          cache.put(i, "value" + i);
