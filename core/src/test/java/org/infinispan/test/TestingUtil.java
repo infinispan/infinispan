@@ -80,7 +80,6 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
-import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
@@ -984,7 +983,7 @@ public class TestingUtil {
       extractField(gcr, "moduleLifecycles");
       TestingUtil.<Collection<ModuleLifecycle>>replaceField(gcr, "moduleLifecycles", moduleLifecycles -> {
          Collection<ModuleLifecycle> copy = new ArrayList<>(moduleLifecycles);
-         copy.add(new AbstractModuleLifecycle() {
+         copy.add(new ModuleLifecycle() {
             @Override
             public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
                consumer.accept(cacheName, cr);

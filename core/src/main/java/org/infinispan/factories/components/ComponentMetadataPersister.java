@@ -16,6 +16,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.PostStart;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -126,6 +127,7 @@ public class ComponentMetadataPersister {
 
       List<Method> injectMethods = ReflectionUtil.getAllMethods(clazz, Inject.class);
       List<Method> startMethods = ReflectionUtil.getAllMethods(clazz, Start.class);
+      List<Method> postStartMethods = ReflectionUtil.getAllMethods(clazz, PostStart.class);
       List<Method> stopMethods = ReflectionUtil.getAllMethods(clazz, Stop.class);
 
       ComponentMetadata metadata = null;
@@ -134,13 +136,13 @@ public class ComponentMetadataPersister {
          List<Method> managedAttributeMethods = ReflectionUtil.getAllMethods(clazz, ManagedAttribute.class);
          List<Field> managedAttributeFields = ReflectionUtil.getAnnotatedFields(clazz, ManagedAttribute.class);
          List<Method> managedOperationMethods = ReflectionUtil.getAllMethods(clazz, ManagedOperation.class);
-         metadata = new ManageableComponentMetadata(clazz, injectMethods, startMethods, stopMethods, isGlobal,
+         metadata = new ManageableComponentMetadata(clazz, injectMethods, startMethods, postStartMethods, stopMethods, isGlobal,
                                                     survivesRestarts, managedAttributeFields, managedAttributeMethods,
                                                     managedOperationMethods, mbean);
       } else if (!injectMethods.isEmpty() || !startMethods.isEmpty() || !stopMethods.isEmpty()
             || isGlobal || survivesRestarts || ReflectionUtil.isAnnotationPresent(clazz, Scope.class)) {
          // Then this still is a component!
-         metadata = new ComponentMetadata(clazz, injectMethods, startMethods, stopMethods, isGlobal, survivesRestarts);
+         metadata = new ComponentMetadata(clazz, injectMethods, startMethods, postStartMethods, stopMethods, isGlobal, survivesRestarts);
       }
 
       if (metadata != null) {

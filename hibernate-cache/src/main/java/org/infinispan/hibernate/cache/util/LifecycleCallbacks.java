@@ -6,14 +6,14 @@
  */
 package org.infinispan.hibernate.cache.util;
 
+import java.util.Map;
+
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.lifecycle.ModuleLifecycle;
 
-import java.util.Map;
-
-public class LifecycleCallbacks extends AbstractModuleLifecycle {
+public class LifecycleCallbacks implements ModuleLifecycle {
 
 	@Override
 	public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {

@@ -5,7 +5,7 @@ import java.util.Map;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.tree.Fqn;
 import org.kohsuke.MetaInfServices;
 
@@ -19,7 +19,7 @@ import org.kohsuke.MetaInfServices;
  * @since 5.0
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
-public class LifecycleCallbacks extends AbstractModuleLifecycle {
+public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
