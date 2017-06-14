@@ -13,20 +13,11 @@ import org.infinispan.commons.util.CloseableIterator;
  *
  * @author wburns
  * @since 8.0
+ * @deprecated Users should use {@link org.infinispan.commons.util.RemovableCloseableIterator} instead
  */
-public class RemovableCloseableIterator<K, C> extends RemovableIterator<K, C> implements CloseableIterator<C> {
-   protected final CloseableIterator<C> realIterator;
-
+public class RemovableCloseableIterator<K, C> extends org.infinispan.commons.util.RemovableCloseableIterator<C> {
    public RemovableCloseableIterator(CloseableIterator<C> realIterator, Cache<K, ?> cache,
            Function<? super C, K> removeFunction) {
-      super(realIterator, cache, removeFunction);
-      this.realIterator = realIterator;
-   }
-
-   @Override
-   public void close() {
-      currentValue = null;
-      previousValue = null;
-      realIterator.close();
+      super(realIterator, c -> cache.remove(removeFunction.apply(c)));
    }
 }
