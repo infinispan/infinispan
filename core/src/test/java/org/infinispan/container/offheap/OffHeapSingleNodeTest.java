@@ -85,7 +85,7 @@ public class OffHeapSingleNodeTest extends OffHeapMultiNodeTest {
    public void testLotsOfWrites() {
       Cache<String, String> cache = cache(0);
 
-      for (int i = 0; i < 100000; ++i) {
+      for (int i = 0; i < 5_000; ++i) {
          cache.put("key" + i, "value" + i);
       }
 
