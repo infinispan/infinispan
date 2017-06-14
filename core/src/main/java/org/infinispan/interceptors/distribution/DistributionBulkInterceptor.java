@@ -22,6 +22,8 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.RemovableCloseableIterator;
+import org.infinispan.commons.util.RemovableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -34,8 +36,6 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.DistributedCacheStream;
-import org.infinispan.stream.impl.RemovableCloseableIterator;
-import org.infinispan.stream.impl.RemovableIterator;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.object.MapOperation;
 import org.infinispan.stream.impl.tx.TxClusterStreamManager;
@@ -89,8 +89,8 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(Closeables.iterator(stream()), cache,
-                 CacheEntry::getKey), e -> new EntryWrapper<>(cache, e));
+         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(Closeables.iterator(stream()),
+               e -> cache.remove(e.getKey(), e.getValue())), e -> new EntryWrapper<>(cache, e));
       }
 
       @Override
@@ -140,7 +140,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
                int size = intermediateOperations.size();
                if (size == 0) {
                   // If no intermediate operations we can support remove
-                  return new RemovableIterator<>(super.iterator(), cache, CacheEntry::getKey);
+                  return new RemovableIterator<>(super.iterator(), e -> cache.remove(e.getKey(), e.getValue()));
                }
                else if (size == 1) {
                   IntermediateOperation intOp = intermediateOperations.peek();
@@ -148,7 +148,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
                      MapOperation map = (MapOperation) intOp;
                      if (map.getFunction() instanceof RemovableFunction) {
                         // If function was removable means we can just use remove as is
-                        return new RemovableIterator<>(super.iterator(), cache, CacheEntry::getKey);
+                        return new RemovableIterator<>(super.iterator(), e -> cache.remove(e.getKey(), e.getValue()));
                      }
                   }
                }
@@ -247,7 +247,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
 
       @Override
       public CloseableIterator<K> iterator() {
-         return new RemovableCloseableIterator(Closeables.iterator(stream()), cache, Function.identity());
+         return new RemovableCloseableIterator<>(Closeables.iterator(stream()), cache::remove);
       }
 
       @Override
@@ -281,7 +281,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
                int size = intermediateOperations.size();
                // The act of mapping to key requires 1 intermediate operation
                if (size == 1) {
-                  return new RemovableIterator<>(super.iterator(), cache, Function.identity());
+                  return new RemovableIterator<>(super.iterator(), cache::remove);
                } else if (size == 2) {
                   Iterator<IntermediateOperation> iter = intermediateOperations.iterator();
                   iter.next();
@@ -290,7 +290,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
                      MapOperation map = (MapOperation) intOp;
                      if (map.getFunction() instanceof RemovableFunction) {
                         // If function was removable means we can just use remove as is
-                        return new RemovableIterator<>(super.iterator(), cache, Function.identity());
+                        return new RemovableIterator<>(super.iterator(), cache::remove);
                      }
                   }
                }

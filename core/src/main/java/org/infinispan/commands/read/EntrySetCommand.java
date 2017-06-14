@@ -15,13 +15,13 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.RemovableIterator;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.stream.impl.RemovableIterator;
 import org.infinispan.stream.impl.local.EntryStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
@@ -83,8 +83,7 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
          Iterator<CacheEntry<K, V>> iterator = new DataContainerRemoveIterator<>(cache);
-         RemovableIterator<K, CacheEntry<K, V>> removableIterator = new RemovableIterator<>(iterator, cache,
-               CacheEntry::getKey);
+         RemovableIterator<CacheEntry<K, V>> removableIterator = new RemovableIterator<>(iterator, e -> cache.remove(e.getKey(), e.getValue()));
          return Closeables.iterator(new IteratorMapper<>(removableIterator, e -> new EntryWrapper<>(cache, e)));
       }
 

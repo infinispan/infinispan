@@ -14,51 +14,11 @@ import org.infinispan.Cache;
  *
  * @author wburns
  * @since 8.0
+ * @deprecated Users should use {@link org.infinispan.commons.util.RemovableIterator} instead
  */
-public class RemovableIterator<K, C> implements Iterator<C> {
-   protected final Iterator<C> realIterator;
-   protected final Cache<K, ?> cache;
-   protected final Function<? super C, K> removeFunction;
-
-   protected C previousValue;
-   protected C currentValue;
-
+public class RemovableIterator<K, C> extends org.infinispan.commons.util.RemovableIterator<C> {
    public RemovableIterator(Iterator<C> realIterator, Cache<K, ?> cache,
            Function<? super C, K> removeFunction) {
-      this.realIterator = realIterator;
-      this.cache = cache;
-      this.removeFunction = removeFunction;
-   }
-
-   protected C getNextFromIterator() {
-      if (realIterator.hasNext()) {
-         return realIterator.next();
-      } else {
-         return null;
-      }
-   }
-
-   @Override
-   public boolean hasNext() {
-      return currentValue != null || (currentValue = getNextFromIterator()) != null;
-   }
-
-   @Override
-   public C next() {
-      if (!hasNext()) {
-         throw new NoSuchElementException();
-      }
-      previousValue = currentValue;
-      currentValue = null;
-      return previousValue;
-   }
-
-   @Override
-   public void remove() {
-      if (previousValue == null) {
-         throw new IllegalStateException();
-      }
-      cache.remove(removeFunction.apply(previousValue));
-      previousValue = null;
+      super(realIterator, c -> cache.remove(removeFunction.apply(c)));
    }
 }

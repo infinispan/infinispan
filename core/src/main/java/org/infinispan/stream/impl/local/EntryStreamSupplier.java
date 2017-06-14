@@ -75,6 +75,6 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
 
    @Override
    public CloseableIterator<CacheEntry<K, V>> removableIterator(CloseableIterator<CacheEntry<K, V>> realIterator) {
-      return new RemovableCloseableIterator<>(realIterator, cache, CacheEntry::getKey);
+      return new RemovableCloseableIterator<>(realIterator, e -> cache.remove(e.getKey(), e.getValue()));
    }
 }
