@@ -178,7 +178,7 @@
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>2.3.4.Final</version.weld>
       <version.weld-se>2.3.4.Final</version.weld-se>
-      <version.jgroups.kubernetes>0.9.1</version.jgroups.kubernetes>
+      <version.jgroups.kubernetes>1.0.0.Beta1</version.jgroups.kubernetes>
       <version.jmh>1.12</version.jmh>
       <version.oauth.core>20090531</version.oauth.core>
 
@@ -965,23 +965,7 @@
          </dependency>
          <dependency>
             <groupId>org.jgroups.kubernetes</groupId>
-            <artifactId>kubernetes</artifactId>
-            <version>${version.jgroups.kubernetes}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jgroups.kubernetes</groupId>
-            <artifactId>common</artifactId>
-            <version>${version.jgroups.kubernetes}</version>
-            <exclusions>
-               <exclusion>
-                  <groupId>io.undertow</groupId>
-                  <artifactId>undertow-core</artifactId>
-               </exclusion>
-            </exclusions>
-         </dependency>
-         <dependency>
-            <groupId>org.jgroups.kubernetes</groupId>
-            <artifactId>dns</artifactId>
+            <artifactId>jgroups-kubernetes</artifactId>
             <version>${version.jgroups.kubernetes}</version>
          </dependency>
          <dependency>
