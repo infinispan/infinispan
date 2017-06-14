@@ -9,6 +9,12 @@ This guide walks you through the process of upgrading Infinispan.
 
 == Upgrading from 9.0 to 9.1
 
+=== Kubernetes Ping changes
+
+The latest version of Kubernetes Ping uses unified environmental variables for both Kubernetes and OpenShift.
+Some of them were shortened for example `OPENSHIFT_KUBE_PING_NAMESPACE` was changed to `KUBERNETES_NAMESPACE`.
+Please refer to link:https://github.com/jgroups-extras/jgroups-kubernetes/blob/master/README.adoc[Kubernetes Ping documentation].
+
 === Stat Changes
 Average values for read, write and removals are now returned in Nanoseconds, opposed to Milliseconds.
 
