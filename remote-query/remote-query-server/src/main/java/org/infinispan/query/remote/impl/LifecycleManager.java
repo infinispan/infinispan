@@ -19,7 +19,7 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
-import org.infinispan.lifecycle.AbstractModuleLifecycle;
+import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -48,7 +48,7 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
 @SuppressWarnings("unused")
-public final class LifecycleManager extends AbstractModuleLifecycle {
+public final class LifecycleManager implements ModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 

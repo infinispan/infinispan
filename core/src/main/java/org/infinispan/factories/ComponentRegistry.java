@@ -232,6 +232,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
       super.start();
 
+      super.postStart();
+
       if (needToNotify && state == ComponentStatus.RUNNING) {
          cacheManagerNotifier.notifyCacheStarted(cacheName);
       }
