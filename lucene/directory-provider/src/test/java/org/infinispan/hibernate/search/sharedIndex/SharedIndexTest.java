@@ -20,7 +20,10 @@ import org.hibernate.search.spi.impl.IndexedTypeSets;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.test.util.FullTextSessionBuilder;
 import org.infinispan.hibernate.search.ClusterSharedConnectionProvider;
+import org.infinispan.hibernate.search.ClusterTestHelper;
 import org.infinispan.hibernate.search.SimpleEmail;
+import org.infinispan.hibernate.search.ClusterTestHelper.ExclusiveIndexUse;
+import org.infinispan.hibernate.search.ClusterTestHelper.IndexingFlushMode;
 import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -77,7 +80,7 @@ public class SharedIndexTest {
 
    @Before
    public void setUp() throws Exception {
-      node = createClusterNode(TEST_TYPES, true);
+      node = createClusterNode(TEST_TYPES, ExclusiveIndexUse.EXCLUSIVE, IndexingFlushMode.SYNC);
       waitMembersCount(node, TOASTER_TYPE, 1);
    }
 

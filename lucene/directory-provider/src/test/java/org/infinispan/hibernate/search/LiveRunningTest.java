@@ -17,6 +17,8 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.IndexedTypeSet;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.test.util.FullTextSessionBuilder;
+import org.infinispan.hibernate.search.ClusterTestHelper.ExclusiveIndexUse;
+import org.infinispan.hibernate.search.ClusterTestHelper.IndexingFlushMode;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,12 +36,12 @@ import org.junit.Test;
 public class LiveRunningTest {
 
    private static final int TEST_RUNS = 17;
-   private static final int MAX_SLAVES = 5;
+   private static final int MAX_SLAVES = 7;
 
    private static final IndexedTypeIdentifier EMAIL_TYPE = new PojoIndexedTypeIdentifier(SimpleEmail.class);
    private static final IndexedTypeSet TEST_TYPES = EMAIL_TYPE.asTypeSet();
 
-   private final FullTextSessionBuilder master = createClusterNode(TEST_TYPES, true);
+   private final FullTextSessionBuilder master = createClusterNode(TEST_TYPES, ExclusiveIndexUse.EXCLUSIVE, IndexingFlushMode.SYNC);
    private final List<FullTextSessionBuilder> slaves = new LinkedList<>();
 
    private boolean growCluster = true;
@@ -86,7 +88,7 @@ public class LiveRunningTest {
          if (slaves.size() >= MAX_SLAVES) {
             growCluster = false;
          } else {
-            slaves.add(createClusterNode(TEST_TYPES, false));
+            slaves.add(createClusterNode(TEST_TYPES, ExclusiveIndexUse.SHARED, IndexingFlushMode.SYNC));
          }
       } else {
          if (slaves.size() == 0) {
