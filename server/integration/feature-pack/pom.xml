@@ -616,27 +616,7 @@
 
         <dependency>
             <groupId>org.jgroups.kubernetes</groupId>
-            <artifactId>kubernetes</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.jgroups.kubernetes</groupId>
-            <artifactId>common</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.jgroups.kubernetes</groupId>
-            <artifactId>dns</artifactId>
+            <artifactId>jgroups-kubernetes</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>
