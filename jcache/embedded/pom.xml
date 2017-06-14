@@ -22,7 +22,6 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <scope>provided</scope>
       </dependency>
 
       <dependency>
@@ -53,7 +52,7 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cdi-embedded</artifactId>
-         <scope>provided</scope>
+         <optional>true</optional>
       </dependency>
 
       <dependency>
