@@ -1,7 +1,6 @@
 package org.infinispan.hibernate.search;
 
 import static org.infinispan.hibernate.search.ClusterTestHelper.clusterSize;
-import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNode;
 import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
 
 import static org.junit.Assert.assertEquals;
@@ -17,6 +16,8 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.IndexedTypeSet;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.test.util.FullTextSessionBuilder;
+import org.infinispan.hibernate.search.ClusterTestHelper.ExclusiveIndexUse;
+import org.infinispan.hibernate.search.ClusterTestHelper.IndexingFlushMode;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -60,7 +61,7 @@ public class TwoNodesTest {
       // verify nodeb is able to find it:
       verifyNodeSeesUpdatedIndex(nodeb);
       // now start a new node, it will join the cluster and receive the current index state:
-      FullTextSessionBuilder nodeC = createClusterNode(TEST_TYPES, true);
+      FullTextSessionBuilder nodeC = createClusterNode();
       assertEquals(3, clusterSize(nodea, EMAIL_TYPE));
       try {
          // verify the new node is able to perform the same searches:
@@ -100,9 +101,13 @@ public class TwoNodesTest {
    public void setUp() throws Exception {
       entityTypes = new HashSet<Class<?>>();
       entityTypes.add(SimpleEmail.class);
-      nodea = createClusterNode(TEST_TYPES, true);
-      nodeb = createClusterNode(TEST_TYPES, true);
+      nodea = createClusterNode();
+      nodeb = createClusterNode();
       waitMembersCount(nodea, EMAIL_TYPE, 2);
+   }
+
+   private FullTextSessionBuilder createClusterNode() {
+      return ClusterTestHelper.createClusterNode(TEST_TYPES, ExclusiveIndexUse.EXCLUSIVE, IndexingFlushMode.SYNC);
    }
 
    @After

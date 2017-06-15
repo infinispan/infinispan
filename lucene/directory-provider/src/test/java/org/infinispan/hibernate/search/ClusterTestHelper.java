@@ -23,6 +23,56 @@ import org.infinispan.remoting.transport.Address;
  */
 public final class ClusterTestHelper {
 
+   public enum ExclusiveIndexUse {
+      EXCLUSIVE {
+         void apply(FullTextSessionBuilder node) {
+            node.setProperty(key, "true");
+         }
+      },
+      SHARED {
+         void apply(FullTextSessionBuilder node) {
+            node.setProperty(key, "false");
+         }
+      };
+      private static final String key = "hibernate.search.default." + org.hibernate.search.cfg.Environment.EXCLUSIVE_INDEX_USE;
+      abstract void apply(FullTextSessionBuilder node);
+   }
+
+   public enum IndexManagerType {
+      TRADITIONAL_DIRECTORYPROVIDER {
+         void apply(FullTextSessionBuilder node) {
+            node.setProperty("hibernate.search.default.directory_provider", "infinispan");
+         }
+      },
+      DEDICATED_INDEXMANAGER {
+         void apply(FullTextSessionBuilder node) {
+            node.setProperty("hibernate.search.default.indexmanager", "infinispan");
+         }
+      };
+      abstract void apply(FullTextSessionBuilder node);
+   }
+
+   public enum IndexingFlushMode {
+      ASYNC_PERIODIC {
+         void apply(FullTextSessionBuilder node) {
+            node.setProperty("hibernate.search.default.index_flush_interval", "1");
+            node.setProperty("hibernate.search.default.worker.execution", "async");
+         }
+      },
+      ASYNC { //Deprecated?
+         void apply(FullTextSessionBuilder node) {
+            node.setProperty("hibernate.search.default.worker.execution", "async");
+         }
+      },
+      SYNC {
+         void apply(FullTextSessionBuilder node) {
+            // It also happens to be the default, but things might change:
+            node.setProperty("hibernate.search.default.worker.execution", "sync");
+         }
+      };
+      abstract void apply(FullTextSessionBuilder node);
+   }
+
    private ClusterTestHelper() {
       //not allowed
    }
@@ -36,8 +86,8 @@ public final class ClusterTestHelper {
     * @param exclusiveIndexUse set to true to enable the EXCLUSIVE_INDEX_USE configuration option
     * @return a started FullTextSessionBuilder
     */
-   public static FullTextSessionBuilder createClusterNode(IndexedTypeSet entityTypes, boolean exclusiveIndexUse) {
-      return createClusterNode(entityTypes, exclusiveIndexUse, true, false);
+   public static FullTextSessionBuilder createClusterNode(IndexedTypeSet entityTypes, ExclusiveIndexUse exclusiveIndexUse, IndexingFlushMode flushMode) {
+      return createClusterNode(entityTypes, exclusiveIndexUse, IndexManagerType.TRADITIONAL_DIRECTORYPROVIDER, flushMode);
    }
 
    /**
@@ -49,15 +99,12 @@ public final class ClusterTestHelper {
     * @param setInfinispanIndexManager set to true to enable the indexmanager setting to 'infinispan'
     * @return
     */
-   public static FullTextSessionBuilder createClusterNode(IndexedTypeSet entityTypes, boolean exclusiveIndexUse,
-                                                          boolean setInfinispanDirectory, boolean setInfinispanIndexManager) {
+   public static FullTextSessionBuilder createClusterNode(IndexedTypeSet entityTypes, ExclusiveIndexUse exclusiveIndexUse, IndexManagerType storageType, IndexingFlushMode flushMode) {
       FullTextSessionBuilder node = new FullTextSessionBuilder();
-      if (setInfinispanDirectory) {
-         node.setProperty("hibernate.search.default.directory_provider", "infinispan");
-      }
-      if (setInfinispanIndexManager) {
-         node.setProperty("hibernate.search.default.indexmanager", "infinispan");
-      }
+      // Set the DirectoryProvider or the IndexManager:
+      storageType.apply(node);
+      // Set async / synch, with or without a periodic flush:
+      flushMode.apply(node);
       // fragment on every 13 bytes: don't use this on a real case!
       // only done to make sure we generate lots of small fragments.
       node.setProperty("hibernate.search.default.indexwriter.chunk_size", "13");
@@ -66,8 +113,7 @@ public final class ClusterTestHelper {
       // this schema is shared across nodes, so don't drop it on shutdown:
       node.setProperty(Environment.HBM2DDL_AUTO, "create");
       // if we should allow aggressive index locking:
-      node.setProperty("hibernate.search.default." + org.hibernate.search.cfg.Environment.EXCLUSIVE_INDEX_USE,
-                       String.valueOf(exclusiveIndexUse));
+      exclusiveIndexUse.apply(node);
       // share the same in-memory database connection pool
       node.setProperty(
             Environment.CONNECTION_PROVIDER,
