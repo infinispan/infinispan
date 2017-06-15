@@ -101,7 +101,7 @@ public final class CacheDecodeContext {
          return notExecutedResp(prev);
    }
 
-   void obtainCache(EmbeddedCacheManager cacheManager, boolean loopback) throws RequestParsingException {
+   void obtainCache(EmbeddedCacheManager cacheManager) throws RequestParsingException {
       String cacheName = header.cacheName;
       // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
       AdvancedCache<byte[], byte[]> cache = server.getKnownCache(cacheName);
@@ -114,15 +114,9 @@ public final class CacheDecodeContext {
                   String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
                   header.version, header.messageId);
          } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
-            if (!cacheManager.getCacheManagerConfiguration().security().authorization().enabled() && !loopback) {
-               throw new RequestParsingException(
-                     String.format("Remote requests are allowed to protected caches only over loopback or if authorization is enabled. Do no send remote requests to cache '%s'", cacheName),
-                     header.version, header.messageId);
-            } else {
-               // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
-               // expensive, but these caches should not be accessed frequently
-               cache = server.getCacheInstance(cacheName, cacheManager, true, false);
-            }
+            // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
+            // expensive, but these caches should not be accessed frequently
+            cache = server.getCacheInstance(cacheName, cacheManager, true, false);
          } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
             throw new CacheNotFoundException(
                   String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
