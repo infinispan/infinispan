@@ -1200,11 +1200,23 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
       Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       ByRef<V> newValueRef = new ByRef<>(null);
-      return computeIfAbsentInternal(key, mappingFunction, newValueRef);
+      return computeIfAbsentInternal(key, mappingFunction, newValueRef, defaultMetadata);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      ByRef<V> newValueRef = new ByRef<>(null);
+      return computeIfAbsentInternal(key, mappingFunction, newValueRef, metadata);
    }
 
    protected V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, ByRef<V> newValueRef) {
+      return computeIfAbsentInternal(key, mappingFunction, newValueRef, defaultMetadata);
+   }
+
+   private  V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, ByRef<V> newValueRef, Metadata metadata) {
       boolean hasListeners = this.hasListeners;
+      componentRegistry.wireDependencies(mappingFunction);
       InternalCacheEntry<K, V> returnEntry = getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
          if (oldValue == null) {
@@ -1213,10 +1225,10 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
                return null;
             } else {
                if (hasListeners) {
-                  cacheNotifier.notifyCacheEntryCreated(k, newValue, defaultMetadata, true, ImmutableContext.INSTANCE, null);
+                  cacheNotifier.notifyCacheEntryCreated(k, newValue, metadata, true, ImmutableContext.INSTANCE, null);
                }
                newValueRef.set(newValue);
-               return factory.create(k, newValue, defaultMetadata);
+               return factory.create(k, newValue, metadata);
             }
          } else {
             return oldEntry;
@@ -1224,7 +1236,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       });
       V newValue = newValueRef.get();
       if (hasListeners && newValue != null) {
-         cacheNotifier.notifyCacheEntryCreated(key, newValueRef.get(), defaultMetadata, false, ImmutableContext.INSTANCE, null);
+         cacheNotifier.notifyCacheEntryCreated(key, newValueRef.get(), metadata, false, ImmutableContext.INSTANCE, null);
       }
       return returnEntry == null ? null : returnEntry.getValue();
    }
@@ -1233,11 +1245,23 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
       CacheEntryChange<K, V> ref = new CacheEntryChange<>();
-      return computeIfPresentInternal(key, remappingFunction, ref);
+      return computeIfPresentInternal(key, remappingFunction, ref, defaultMetadata);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
+      return computeIfPresentInternal(key, remappingFunction, ref, metadata);
    }
 
    protected V computeIfPresentInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref) {
+      return computeIfPresentInternal(key, remappingFunction, ref, defaultMetadata);
+   }
+
+   private V computeIfPresentInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref, Metadata metadata) {
       boolean hasListeners = this.hasListeners;
+      componentRegistry.wireDependencies(remappingFunction);
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
          if (oldValue != null) {
@@ -1250,10 +1274,10 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
                return null;
             } else {
                if (hasListeners) {
-                  cacheNotifier.notifyCacheEntryModified(k, newValue, defaultMetadata, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+                  cacheNotifier.notifyCacheEntryModified(k, newValue, metadata, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
                }
                ref.set(k, newValue, oldValue, oldEntry.getMetadata());
-               return factory.update(oldEntry, newValue, defaultMetadata);
+               return factory.update(oldEntry, newValue, metadata);
             }
          } else {
             return null;
@@ -1262,7 +1286,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       V newValue = ref.getNewValue();
       if (hasListeners) {
          if (newValue != null) {
-            cacheNotifier.notifyCacheEntryModified(ref.getKey(), newValue, defaultMetadata, ref.getOldValue(), ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
+            cacheNotifier.notifyCacheEntryModified(ref.getKey(), newValue, metadata, ref.getOldValue(), ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
          } else {
             cacheNotifier.notifyCacheEntryRemoved(ref.getKey(), ref.getOldValue(), ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
          }
@@ -1273,17 +1297,28 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       CacheEntryChange<K, V> ref = new CacheEntryChange<>();
-      return computeInternal(key, remappingFunction, ref);
+      return computeInternal(key, remappingFunction, ref, defaultMetadata);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
+      return computeInternal(key, remappingFunction, ref, metadata);
    }
 
    protected V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref) {
+      return computeInternal(key, remappingFunction, ref, defaultMetadata);
+   }
+
+   private V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref, Metadata metadata) {
       boolean hasListeners = this.hasListeners;
+      componentRegistry.wireDependencies(remappingFunction);
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
          V newValue = remappingFunction.apply(k, oldValue);
          return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, ref, hasListeners);
       });
-      return notifyAndReturn(ref, hasListeners);
+      return notifyAndReturn(ref, hasListeners, metadata);
    }
 
    @Override
@@ -1299,10 +1334,10 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          V newValue = oldValue == null ? value : remappingFunction.apply(oldValue, value);
          return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, ref, hasListeners);
       });
-      return notifyAndReturn(ref, hasListeners);
+      return notifyAndReturn(ref, hasListeners, defaultMetadata);
    }
 
-   private V notifyAndReturn(CacheEntryChange<K, V> ref, boolean hasListeners) {
+   private V notifyAndReturn(CacheEntryChange<K, V> ref, boolean hasListeners, Metadata metadata) {
       K key = ref.getKey();
       V newValue = ref.getNewValue();
       if (key != null) {
@@ -1311,9 +1346,9 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
             if (newValue == null) {
                cacheNotifier.notifyCacheEntryRemoved(key, oldValue, ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
             } else if (oldValue == null) {
-               cacheNotifier.notifyCacheEntryCreated(key, newValue, defaultMetadata, false, ImmutableContext.INSTANCE, null);
+               cacheNotifier.notifyCacheEntryCreated(key, newValue, metadata, false, ImmutableContext.INSTANCE, null);
             } else {
-               cacheNotifier.notifyCacheEntryModified(key, newValue, defaultMetadata, oldValue, ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
+               cacheNotifier.notifyCacheEntryModified(key, newValue, metadata, oldValue, ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
             }
          }
       }

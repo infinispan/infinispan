@@ -30,6 +30,8 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.CloseableSpliteratorMapper;
+import org.infinispan.compat.BiFunctionMapper;
+import org.infinispan.compat.FunctionMapper;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
@@ -149,10 +151,6 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    private BiFunction<? super K, ? super V, ? extends V> convertFunction(
          BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return (k, v) -> remappingFunction.apply(keyFromStorage(k), valueFromStorage(v));
-   }
-
-   private Function<? super K, ? extends V> convertFunction(Function<? super K, ? extends V> mappingFunction) {
-      return k -> mappingFunction.apply(keyToStorage(k));
    }
 
    private Map<K, CacheEntry<K, V>> decodeEntryMapForRead(Map<K, CacheEntry<K, V>> map) {
@@ -615,19 +613,22 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      V returned = super.compute(keyToStorage(key), convertFunction(remappingFunction));
+      Object returned = super.compute(keyToStorage(key),
+            new BiFunctionMapper(remappingFunction, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass));
       return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      V ret = super.computeIfPresent(keyToStorage(key), convertFunction(remappingFunction));
-      return valueFromStorage(ret);
+      Object returned = super.computeIfPresent(keyToStorage(key),
+            new BiFunctionMapper(remappingFunction, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass));
+      return valueFromStorage(returned);
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
-      V ret = super.computeIfAbsent(keyToStorage(key), convertFunction(mappingFunction));
+      Object ret = super.computeIfAbsent(keyToStorage(key),
+            new FunctionMapper(mappingFunction, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass));
       return valueFromStorage(ret);
    }
 

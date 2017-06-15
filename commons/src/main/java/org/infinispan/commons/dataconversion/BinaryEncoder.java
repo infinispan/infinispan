@@ -53,7 +53,7 @@ public class BinaryEncoder implements Encoder {
    }
 
    private boolean skipEncoding(Object source) {
-      return isTypeExcluded(source.getClass());
+      return source == null || isTypeExcluded(source.getClass());
    }
 
    protected Object unmarshall(byte[] source) throws IOException, ClassNotFoundException {

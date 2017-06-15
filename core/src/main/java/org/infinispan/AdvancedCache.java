@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
@@ -37,6 +39,8 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableFunction;
 
 /**
  * An advanced interface that exposes additional methods not available on {@link Cache}.
@@ -439,6 +443,76 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 7.0
     */
    void putForExternalRead(K key, V value, Metadata metadata);
+
+   /**
+    * An overloaded form of {@link #compute(K, BiFunction)}, which takes in an
+    * instance of {@link Metadata} which can be used to provide metadata
+    * information for the entry being stored, such as lifespan, version
+    * of value...etc.
+    *
+    * @param key key with which the specified value is associated
+    * @param remappingFunction function to be applied to the specified key/value
+    * @param metadata information to store alongside the new value
+    * @return the previous value associated with the specified key, or
+    *         <tt>null</tt> if remapping function is gives null.
+    *
+    * @since 9.1
+    */
+   V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
+
+   /**
+    * Overloaded {@link #compute(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
+    */
+   default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return this.compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
+   }
+   /**
+    * An overloaded form of {@link #computeIfPresent(K, BiFunction)}, which takes in an
+    * instance of {@link Metadata} which can be used to provide metadata
+    * information for the entry being stored, such as lifespan, version
+    * of value...etc. The {@link Metadata} is only stored if the call is
+    * successful.
+    *
+    * @param key key with which the specified value is associated
+    * @param remappingFunction function to be applied to the specified key/value
+    * @param metadata information to store alongside the new value
+    * @return the previous value associated with the specified key, or
+    *         <tt>null</tt> if there was no mapping for the key.
+    *
+    * @since 9.1
+    */
+   V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
+
+   /**
+    * Overloaded {@link #computeIfPresent(Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
+    */
+   default V computeIfPresent(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return this.computeIfPresent(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
+   }
+
+   /**
+    * An overloaded form of {@link #computeIfAbsent(K, Function)}, which takes in an
+    * instance of {@link Metadata} which can be used to provide metadata
+    * information for the entry being stored, such as lifespan, version
+    * of value...etc. The {@link Metadata} is only stored if the call is
+    * successful.
+    *
+    * @param key key with which the specified value is associated
+    * @param mappingFunction function to be applied to the specified key
+    * @param metadata information to store alongside the new value
+    * @return the value created with the mapping function associated with the specified key, or
+    *        the previous value associated with the specified key if the key is not absent.
+    *
+    * @since 9.1
+    */
+   V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata);
+
+   /**
+    * Overloaded {@link #computeIfAbsent(Object, SerializableFunction, Metadata)} with {@link SerializableFunction}
+    */
+   default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return this.computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, metadata);
+   }
 
    /**
     * Asynchronous version of {@link #put(Object, Object, Metadata)} which stores

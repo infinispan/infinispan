@@ -722,4 +722,34 @@ public class SecureCacheTestDriver {
       cache.withWrapping(ByteArrayWrapper.class, ByteArrayWrapper.class);
    }
 
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testCompute_Object_SerializableBiFunction(SecureCache<String, String> cache) {
+      cache.compute("a", (k, v) -> "yes");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testCompute_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
+      cache.compute("a", (k, v) -> "yes", metadata);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfPresent_Object_SerializableBiFunction(SecureCache<String, String> cache) {
+      cache.computeIfPresent("a", (k, v) -> "yes");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfPresent_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
+      cache.computeIfPresent("a", (k, v) -> "yes", metadata);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfAbsent_Object_SerializableFunction_Metadata(SecureCache<String, String> cache) {
+      cache.computeIfAbsent("b", k -> "no", metadata);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfAbsent_Object_SerializableFunction(SecureCache<String, String> cache) {
+      cache.computeIfAbsent("b", k -> "no");
+   }
+
 }

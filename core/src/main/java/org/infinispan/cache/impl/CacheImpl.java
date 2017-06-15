@@ -1,5 +1,6 @@
 package org.infinispan.cache.impl;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.FAIL_SILENTLY;
 import static org.infinispan.context.Flag.FORCE_ASYNCHRONOUS;
@@ -21,6 +22,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.security.auth.Subject;
 import javax.transaction.SystemException;
@@ -47,6 +50,8 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -243,24 +248,23 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
    }
 
-   void assertKeyNotNull(Object key) {
-      if (key == null) {
-         throw new NullPointerException("Null keys are not supported!");
-      }
+   private void assertKeyNotNull(Object key) {
+      requireNonNull(key, "Null keys are not supported!");
+   }
+
+   private void assertValueNotNull(Object value) {
+      requireNonNull(value, "Null values are not supported!");
    }
 
    void assertKeyValueNotNull(Object key, Object value) {
       assertKeyNotNull(key);
-      if (value == null) {
-         throw new NullPointerException("Null values are not supported!");
-      }
+      assertValueNotNull(value);
    }
 
-   void assertValueNotNull(Object value) {
-      if (value == null) {
-         throw new NullPointerException("Null values are not supported!");
-      }
+   private void assertFunctionNotNull(Object function) {
+      requireNonNull(function, "Null functions are not supported!");
    }
+
 
    // CacheSupport does not extend AdvancedCache, so it cannot really call up
    // to the cache methods that take Metadata parameter. Since CacheSupport
@@ -310,6 +314,63 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public final V replace(K key, V value) {
       return replace(key, value, defaultMetadata);
+   }
+
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+     return compute(key, remappingFunction, false);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return computeInternal(key, remappingFunction, false, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return compute(key, remappingFunction, true);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return computeInternal(key, remappingFunction, true, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   private V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent) {
+      return computeInternal(key, remappingFunction, computeIfPresent, applyDefaultMetadata(defaultMetadata), addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   private V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent, Metadata metadata, long flags) {
+      assertKeyNotNull(key);
+      assertFunctionNotNull(remappingFunction);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
+      ComputeCommand command = commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent, metadata, flags);
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
+      return (V) executeCommandAndCommitIfNeeded(ctx, command);
+   }
+
+   @Override
+   public final V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+      return computeIfAbsentInternal(key, mappingFunction, applyDefaultMetadata(defaultMetadata), addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return computeIfAbsentInternal(key, mappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET));
+   }
+
+   private V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata, long flags) {
+      assertKeyNotNull(key);
+      assertFunctionNotNull(mappingFunction);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
+      ComputeIfAbsentCommand command = commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction, metadata, flags);
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
+      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    @Override

@@ -20,6 +20,7 @@ public class MarshallerEncoder implements Encoder {
    }
 
    public Object toStorage(Object content) {
+      if (content == null) return null;
       try {
          return marshall(content);
       } catch (IOException | InterruptedException e) {

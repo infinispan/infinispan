@@ -177,6 +177,9 @@ public interface Ids {
    int ENCODER_VALUE_MAPPER = 123;
    int ENCODER_ENTRY_MAPPER = 124;
 
+   int FUNCTION_MAPPER = 125;
+   int BI_FUNCTION_MAPPER = 126;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

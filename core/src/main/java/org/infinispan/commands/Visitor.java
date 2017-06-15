@@ -24,6 +24,8 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
@@ -48,6 +50,10 @@ public interface Visitor {
    Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable;
 
    Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable;
+
+   Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable;
+
+   Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable;
 
    Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable;
 
@@ -111,5 +117,4 @@ public interface Visitor {
    Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable;
 
    Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable;
-
 }
