@@ -178,6 +178,12 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          mergedTopology = maxDegradedTopology;
          actualMembers.retainAll(mergedTopology.getMembers());
          mergedAvailabilityMode = AvailabilityMode.DEGRADED_MODE;
+      } else if (maxActiveTopology == null && maxStableTopology != null) {
+         // There is no ActiveTopology so we left the cluster,
+         // however, there is some stable topology, so we need to ensure that cache topology is null but there is
+         // no sense in doing rebalance of availability update.
+         context.updateTopologiesAfterMerge(null, null, AvailabilityMode.AVAILABLE);
+         return;
       } else {
          log.debugf("No current topology, recovered only joiners for cache %s. Skipping availability update.", context.getCacheName());
          return;
