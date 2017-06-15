@@ -398,6 +398,12 @@
             <artifactId>wildfly-arquillian-container-managed</artifactId>
             <version>${version.org.wildfly.arquillian}</version>
             <scope>test</scope>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.jboss.marshalling</groupId>
+                  <artifactId>jboss-marshalling</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
 
          <dependency>
@@ -412,6 +418,12 @@
             <artifactId>infinispan-arquillian-impl</artifactId>
             <version>${version.org.infinispan.arquillian.container}</version>
             <scope>test</scope>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.jboss.marshalling</groupId>
+                  <artifactId>jboss-marshalling</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
 
          <dependency>
