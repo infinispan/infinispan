@@ -87,6 +87,7 @@ import org.kohsuke.MetaInfServices;
 /**
  * Lifecycle of the Query module: initializes the Hibernate Search engine and shuts it down
  * at cache stop.
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
@@ -168,7 +169,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchFactory) {
       QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
       if (queryInterceptor == null) {
-         queryInterceptor = buildQueryInterceptor(cfg, searchFactory);
+         queryInterceptor = buildQueryInterceptor(cfg, searchFactory, cr.getComponent(Cache.class));
 
          // Interceptor registration not needed, core configuration handling
          // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
@@ -199,9 +200,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       }
    }
 
-   private QueryInterceptor buildQueryInterceptor(Configuration cfg, SearchIntegrator searchFactory) {
+   private QueryInterceptor buildQueryInterceptor(Configuration cfg, SearchIntegrator searchFactory, Cache cache) {
       IndexModificationStrategy indexingStrategy = IndexModificationStrategy.configuredStrategy(searchFactory, cfg);
-      return new QueryInterceptor(searchFactory, indexingStrategy);
+      return new QueryInterceptor(searchFactory, indexingStrategy, cache);
    }
 
    @Override
@@ -335,6 +336,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
     * The default in Hibernate Search is to throw an exception rather than logging a warning;
     * we opt to be more lenient by default in the Infinispan use case, matching the behaviour
     * of previous versions of Hibernate Search.
+    *
     * @param indexingProperties
     */
    private void allowDynamicSortingByDefault(Properties indexingProperties) {

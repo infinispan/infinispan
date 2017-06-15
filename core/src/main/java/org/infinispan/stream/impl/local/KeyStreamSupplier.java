@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
+import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.stream.impl.RemovableCloseableIterator;
@@ -43,13 +43,12 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
             log.tracef("Applying key filtering %s", keysToFilter);
          }
          // Make sure we aren't going remote to retrieve these
-         AdvancedCache<K, V> advancedCache =  AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
+         AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
                .withFlags(Flag.CACHE_MODE_LOCAL);
+         EncoderCache cache1 = (EncoderCache) cache;
          // Need to box the key to get the correct segment
-         TypeConverter<Object, Object, Object, Object> typeConverter =
-               advancedCache.getComponentRegistry().getComponent(TypeConverter.class);
          stream = (Stream<K>) keysToFilter.stream()
-               .map(typeConverter::boxKey)
+               .map(k -> cache1.keyToStorage(k))
                .filter(advancedCache::containsKey);
       } else {
          stream = supplier.get();

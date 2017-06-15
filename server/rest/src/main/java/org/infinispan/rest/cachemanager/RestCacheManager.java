@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -56,8 +57,9 @@ public class RestCacheManager<V> {
          }
          Cache<String, V> cache = name.equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ? instance.getCache() : instance.getCache(name);
          tryRegisterMigrationManager(cache);
-         knownCaches.put(name, cache.getAdvancedCache());
-         return cache.getAdvancedCache();
+         AdvancedCache<String, V> restCache = (AdvancedCache<String, V>) cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
+         knownCaches.put(name, restCache);
+         return restCache;
       }
    }
 

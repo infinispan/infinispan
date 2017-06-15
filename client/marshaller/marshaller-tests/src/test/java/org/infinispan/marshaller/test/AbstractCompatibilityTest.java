@@ -7,6 +7,8 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.MarshallerEncoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.it.compatibility.CompatibilityCacheFactory;
 import org.infinispan.it.compatibility.EmbeddedRestMemcachedHotRodTest;
@@ -41,7 +43,7 @@ public abstract class AbstractCompatibilityTest extends EmbeddedRestMemcachedHot
       assertEquals("", put.getResponseBodyAsString().trim());
 
       // 2. Get with Embedded (given a marshaller, it can unmarshall the result)
-      assertEquals(value, cacheFactory.getEmbeddedCache().get(key));
+      assertEquals(value, cacheFactory.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class, MarshallerEncoder.class).get(key));
 
       // 3. Get with Memcached (given a marshaller, it can unmarshall the result)
       bytes = (byte[]) cacheFactory.getMemcachedClient().get(key);

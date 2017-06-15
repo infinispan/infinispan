@@ -9,13 +9,16 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 
-import org.infinispan.Cache;
+import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.hash.MurmurHash3;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -29,7 +32,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
-import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
@@ -44,7 +47,7 @@ import org.testng.annotations.Test;
 @Test(testName = "notifications.cachelistener.OnlyPrimaryOwnerTest", groups = "unit")
 public class OnlyPrimaryOwnerTest {
    CacheNotifierImpl n;
-   Cache mockCache;
+   EncoderCache mockCache;
    PrimaryOwnerCacheListener cl;
    InvocationContext ctx;
    MockCDL cdl = new MockCDL();
@@ -52,17 +55,22 @@ public class OnlyPrimaryOwnerTest {
    @BeforeMethod
    public void setUp() {
       n = new CacheNotifierImpl();
-      mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
+      mockCache = mock(EncoderCache.class, RETURNS_DEEP_STUBS);
+      when(mockCache.getAdvancedCache().getKeyEncoder()).thenReturn(IdentityEncoder.INSTANCE);
+      when(mockCache.getAdvancedCache().getValueEncoder()).thenReturn(IdentityEncoder.INSTANCE);
+      when(mockCache.getAdvancedCache().getKeyWrapper()).thenReturn(ByteArrayWrapper.INSTANCE);
+      when(mockCache.getAdvancedCache().getValueWrapper()).thenReturn(ByteArrayWrapper.INSTANCE);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
+      when(config.memory().storageType()).thenReturn(StorageType.OBJECT);
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(
             invocationOnMock -> Mockito.mock((Class<?>) invocationOnMock.getArguments()[0]));
-      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
-            new WrappedByteArrayConverter());
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(
             invocationOnMock -> Mockito.mock((Class<?>) invocationOnMock.getArguments()[0]));
+      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(Encoder.class)).thenReturn(new IdentityEncoder());
+
       n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class),
-                           mock(InternalEntryFactory.class), mock(ClusterEventManager.class));
+            mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(ComponentRegistry.class));
       cl = new PrimaryOwnerCacheListener();
       n.start();
       n.addListener(cl);

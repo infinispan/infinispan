@@ -25,8 +25,9 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -73,13 +74,13 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private SearchFactoryHandler searchFactoryHandler;
 
    private DataContainer dataContainer;
+   private final Encoder valueEncoder;
+   private final Wrapper valueWrapper;
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    private DistributionManager distributionManager;
    private RpcManager rpcManager;
    protected ExecutorService asyncExecutor;
-   protected TypeConverter typeConverter;
-   protected Cache<?, ?> cache;
    protected InternalCacheRegistry internalCacheRegistry;
 
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
@@ -89,31 +90,31 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     * were declared and we are running in the (deprecated) autodetect mode. Autodetect mode will be removed in 9.0.
     */
    private Class<?>[] indexedEntities;
+   private final Cache cache;
 
-   public QueryInterceptor(SearchIntegrator searchFactory, IndexModificationStrategy indexingMode) {
+   public QueryInterceptor(SearchIntegrator searchFactory, IndexModificationStrategy indexingMode, Cache cache) {
       this.searchFactory = searchFactory;
       this.indexingMode = indexingMode;
+      this.cache = cache;
+      this.valueEncoder = cache.getAdvancedCache().getValueEncoder();
+      this.valueWrapper = cache.getAdvancedCache().getValueWrapper();
    }
 
    @Inject
    @SuppressWarnings("unused")
    protected void injectDependencies(TransactionManager transactionManager,
                                      TransactionSynchronizationRegistry transactionSynchronizationRegistry,
-                                     Cache cache,
                                      InternalCacheRegistry internalCacheRegistry,
                                      DistributionManager distributionManager,
                                      RpcManager rpcManager,
                                      DataContainer dataContainer,
-                                     @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-                                     TypeConverter typeConverter) {
+                                     @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
       this.transactionManager = transactionManager;
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.distributionManager = distributionManager;
       this.rpcManager = rpcManager;
       this.asyncExecutor = e;
       this.dataContainer = dataContainer;
-      this.typeConverter = typeConverter;
-      this.cache = cache;
       this.internalCacheRegistry = internalCacheRegistry;
    }
 
@@ -224,14 +225,14 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
 
    protected void updateIndexes(final boolean usingSkipIndexCleanupFlag, final Object value, final Object key,
-         final TransactionContext transactionContext) {
+                                final TransactionContext transactionContext) {
       // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
       // unless the specific flag is allowing this.
       performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
    }
 
    private void performSearchWork(Object value, Serializable id, WorkType workType,
-         TransactionContext transactionContext) {
+                                  TransactionContext transactionContext) {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
       Collection<Work> works = searchWorkCreator.createPerEntityWorks(value, id, workType);
       performSearchWorks(works, transactionContext);
@@ -249,10 +250,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private Object extractValue(Object wrappedValue) {
-      if (typeConverter != null) {
-         return typeConverter.unboxValue(wrappedValue);
-      }
-         return wrappedValue;
+      return valueEncoder.fromStorage(valueWrapper.unwrap(wrappedValue));
    }
 
    public void enableClasses(Class[] classes) {
@@ -281,6 +279,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    /**
     * Customize work creation during indexing
+    *
     * @param searchWorkCreator custom {@link org.infinispan.query.backend.SearchWorkCreator}
     */
    public void setSearchWorkCreator(SearchWorkCreator<Object> searchWorkCreator) {
@@ -358,9 +357,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Indexing management of a ReplaceCommand
     *
-    * @param command the ReplaceCommand
-    * @param ctx the InvocationContext
-    * @param valueReplaced the previous value on this key
+    * @param command            the ReplaceCommand
+    * @param ctx                the InvocationContext
+    * @param valueReplaced      the previous value on this key
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processReplaceCommand(final ReplaceCommand command, final InvocationContext ctx, final Object valueReplaced, TransactionContext transactionContext) {
@@ -390,9 +389,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Indexing management of a RemoveCommand
     *
-    * @param command the visited RemoveCommand
-    * @param ctx the InvocationContext of the RemoveCommand
-    * @param valueRemoved the value before the removal
+    * @param command            the visited RemoveCommand
+    * @param ctx                the InvocationContext of the RemoveCommand
+    * @param valueRemoved       the value before the removal
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processRemoveCommand(final RemoveCommand command, final InvocationContext ctx, final Object valueRemoved, TransactionContext transactionContext) {
@@ -411,9 +410,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Indexing management of a PutMapCommand
     *
-    * @param command the visited PutMapCommand
-    * @param ctx the InvocationContext of the PutMapCommand
-    * @param previousValues a map with the previous values, before processing the given PutMapCommand
+    * @param command            the visited PutMapCommand
+    * @param ctx                the InvocationContext of the PutMapCommand
+    * @param previousValues     a map with the previous values, before processing the given PutMapCommand
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processPutMapCommand(final PutMapCommand command, final InvocationContext ctx, final Map<Object, Object> previousValues, TransactionContext transactionContext) {
@@ -443,9 +442,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Indexing management of a PutKeyValueCommand
     *
-    * @param command the visited PutKeyValueCommand
-    * @param ctx the InvocationContext of the PutKeyValueCommand
-    * @param previousValue the value being replaced by the put operation
+    * @param command            the visited PutKeyValueCommand
+    * @param ctx                the InvocationContext of the PutKeyValueCommand
+    * @param previousValue      the value being replaced by the put operation
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
    private void processPutKeyValueCommand(final PutKeyValueCommand command, final InvocationContext ctx, final Object previousValue, TransactionContext transactionContext) {
@@ -480,8 +479,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Indexing management of the Clear command
     *
-    * @param command the ClearCommand
-    * @param ctx the InvocationContext of the PutKeyValueCommand
+    * @param command            the ClearCommand
+    * @param ctx                the InvocationContext of the PutKeyValueCommand
     * @param transactionContext Optional for lazy initialization, or to reuse an existing transactional context.
     */
    private void processClearCommand(final ClearCommand command, final InvocationContext ctx, TransactionContext transactionContext) {

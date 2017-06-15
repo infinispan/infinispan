@@ -30,6 +30,8 @@ import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
@@ -114,7 +116,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertEquals("v1", get.getResponseBodyAsString());
    }
 
-   public void testCustomObjectHotRodPutEmbeddedRestGet() throws Exception{
+   public void testCustomObjectHotRodPutEmbeddedRestGet() throws Exception {
       final String key = "4";
       Person p = new Person("Martin");
 
@@ -134,7 +136,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertEquals(p, new ObjectInputStream(get.getResponseBodyAsStream()).readObject());
    }
 
-   public void testCustomObjectEmbeddedPutHotRodRestGet() throws Exception{
+   public void testCustomObjectEmbeddedPutHotRodRestGet() throws Exception {
       final String key = "5";
       Person p = new Person("Galder");
 
@@ -155,7 +157,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertEquals(p, new ObjectInputStream(get.getResponseBodyAsStream()).readObject());
    }
 
-   public void testCustomObjectEmbeddedPutRestGetAcceptJSONAndXML() throws Exception{
+   public void testCustomObjectEmbeddedPutRestGetAcceptJSONAndXML() throws Exception {
       final String key = "6";
       final Person p = new Person("Anna");
 
@@ -177,7 +179,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertTrue(getXml.getResponseBodyAsString().contains("<name>Anna</name>"));
    }
 
-   public void testCustomObjectHotRodPutRestGetAcceptJSONAndXML() throws Exception{
+   public void testCustomObjectHotRodPutRestGetAcceptJSONAndXML() throws Exception {
       final String key = "7";
       final Person p = new Person("Jakub");
 
@@ -200,7 +202,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertTrue(getXml.getResponseBodyAsString().contains("<name>Jakub</name>"));
    }
 
-   public void testCustomObjectRestPutHotRodEmbeddedGet() throws Exception{
+   public void testCustomObjectRestPutHotRodEmbeddedGet() throws Exception {
       final String key = "77";
       Person p = new Person("Iker");
 
@@ -219,7 +221,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertEquals(p, remote.get(key));
 
       // 3. Get with Embedded
-      assertEquals(p, cacheFactory.getEmbeddedCache().get(key));
+      assertEquals(p, cacheFactory.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class, JavaSerializationEncoder.class).get(key));
    }
 
    public void testHotRodEmbeddedPutRestHeadExpiry() throws Exception {
@@ -301,7 +303,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
             parsedDate.after(new GregorianCalendar(2013, 1, 1).getTime()));
    }
 
-   public void testByteArrayHotRodEmbeddedPutRestGet() throws Exception{
+   public void testByteArrayHotRodEmbeddedPutRestGet() throws Exception {
       final String key1 = "14";
       final String key2 = "15";
 

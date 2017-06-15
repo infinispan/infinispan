@@ -26,6 +26,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
@@ -51,6 +53,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
+import org.infinispan.query.remote.ProtostreamCompatEncoder;
+import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
+import org.infinispan.query.remote.impl.ProtostreamWrapper;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -305,12 +310,30 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          Cache<byte[], byte[]> tmpCache = SecurityActions.getCache(cacheManager, validCacheName);
          Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(tmpCache.getAdvancedCache());
          boolean compatibility = cacheConfiguration.compatibility().enabled();
+         Marshaller marshaller = cacheConfiguration.compatibility().marshaller();
          boolean indexing = cacheConfiguration.indexing().index().isEnabled();
+         ComponentRegistry cacheComponentRegistry = SecurityActions.getCacheComponentRegistry(tmpCache.getAdvancedCache());
+         if (marshaller != null) {
+            cacheComponentRegistry.wireDependencies(marshaller);
+         }
 
          // Use flag when compatibility is enabled, otherwise it's unnecessary
-         if (compatibility || indexing)
+         if (compatibility || indexing) {
             cache = tmpCache.getAdvancedCache().withFlags(Flag.OPERATION_HOTROD);
-         else
+            if (compatibility && !indexing) {
+               cache = cache.getAdvancedCache().withEncoding(CompatModeEncoder.class);
+            }
+            if (compatibility && indexing) {
+               if (marshaller instanceof BaseProtoStreamMarshaller) {
+                  cache = cache.getAdvancedCache().withEncoding(ProtostreamCompatEncoder.class).withWrapping(ByteArrayWrapper.class, ProtostreamWrapper.class);
+               } else {
+                  cache = cache.getAdvancedCache().withEncoding(CompatModeEncoder.class);
+               }
+            }
+            if (!compatibility) {
+               cache = cache.getAdvancedCache().withWrapping(ByteArrayWrapper.class, ProtostreamWrapper.class);
+            }
+         } else
             cache = tmpCache.getAdvancedCache();
 
          // We don't need synchronization as long as we store the cache last

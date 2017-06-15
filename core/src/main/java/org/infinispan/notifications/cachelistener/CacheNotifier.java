@@ -3,15 +3,14 @@ package org.infinispan.notifications.cachelistener;
 import java.util.Collection;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
+import org.infinispan.notifications.DataConversionAwareListenable;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -23,36 +22,41 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable<K, V>, ClassLoaderAwareListenable {
+public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>, ClassLoaderAwareListenable {
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent}
+    * event.
     */
    void notifyCacheEntryCreated(K key, V value, Metadata metadata, boolean pre, InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent}
+    * event.
     */
    void notifyCacheEntryModified(K key, V value, Metadata metadata, V previousValue, Metadata previousMetadata, boolean pre,
                                  InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent}
+    * event.
     */
    void notifyCacheEntryRemoved(K key, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
                                 FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent}
+    * event.
     */
    void notifyCacheEntryVisited(K key, V value, boolean pre,
-         InvocationContext ctx, FlagAffectedCommand command);
+                                InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent}
+    * event.
     */
    void notifyCacheEntriesEvicted(Collection<InternalCacheEntry<? extends K, ? extends V>> entries,
-         InvocationContext ctx, FlagAffectedCommand command);
+                                  InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryExpired event.
@@ -60,28 +64,32 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
    void notifyCacheEntryExpired(K key, V value, Metadata metadata, InvocationContext ctx);
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}
+    * event.
     */
    void notifyCacheEntryInvalidated(K key, V value, Metadata metadata, boolean pre,
-         InvocationContext ctx, FlagAffectedCommand command);
+                                    InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent}
+    * event.
     */
    void notifyCacheEntryLoaded(K key, V value, boolean pre,
-         InvocationContext ctx, FlagAffectedCommand command);
+                               InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent}
+    * event.
     */
    void notifyCacheEntryActivated(K key, V value, boolean pre,
-         InvocationContext ctx, FlagAffectedCommand command);
+                                  InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent} event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent}
+    * event.
     */
    void notifyCacheEntryPassivated(K key, V value, boolean pre,
-         InvocationContext ctx, FlagAffectedCommand command);
+                                   InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a transaction completion event.
@@ -104,10 +112,4 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
 
    void notifyPartitionStatusChanged(AvailabilityMode mode, boolean pre);
 
-   /**
-    * Set an optional converter to be used for converting the key/value of the event before notifying the listeners.
-    *
-    * @param typeConverter the converter instance; can be {@code null}
-    */
-   void setTypeConverter(TypeConverter typeConverter);
 }

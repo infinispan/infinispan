@@ -10,8 +10,9 @@ import java.util.function.Function;
  * <p>
  * If a <b>function</b> is implemented with this and it doesn't produce distinct values, the operation of the
  * consumer of this function may be undefined.
+ *
  * @author wburns
  * @since 9.0
  */
-public interface InjectiveFunction<T, R> {
+public interface InjectiveFunction<T, R> extends Function<T, R> {
 }

@@ -24,7 +24,6 @@ import org.infinispan.query.remote.client.ContinuousQueryResult;
 import org.infinispan.query.remote.impl.CompatibilityReflectionMatcher;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
 /**
  * @author anistor@redhat.com
@@ -33,8 +32,6 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends IckleContinuousQueryCacheEventFilterConverter<Object, Object, Object> {
 
    private SerializationContext serCtx;
-
-   private boolean usesValueWrapper;
 
    private boolean isCompatMode;
 
@@ -47,7 +44,6 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
       serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
       Configuration cfg = cache.getCacheConfiguration();
       isCompatMode = cfg.compatibility().enabled();
-      usesValueWrapper = cfg.indexing().index().isEnabled() && !isCompatMode;
       if (isCompatMode) {
          matcherImplClass = CompatibilityReflectionMatcher.class;
       }
@@ -56,11 +52,6 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
 
    @Override
    public Object filterAndConvert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
-      if (usesValueWrapper) {
-         oldValue = oldValue != null ? ((ProtobufValueWrapper) oldValue).getBinary() : null;
-         newValue = newValue != null ? ((ProtobufValueWrapper) newValue).getBinary() : null;
-      }
-
       if (eventType.isExpired()) {
          oldValue = newValue;   // expired events have the expired value as newValue
          newValue = null;

@@ -6,6 +6,7 @@ import java.util.Optional;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
@@ -17,51 +18,54 @@ import org.infinispan.tasks.TaskExecutionMode;
  */
 public class DistributedCacheUsingTask implements ServerTask {
 
-    public static final String NAME = "serverTask_distributed_cacheUsage";
-    public static final String CACHE_NAME = "customTaskReplTx";
-    public static final String VALUE_PREFIX = "modified:";
-    public static final String PARAM_KEY = "param";
+   public static final String NAME = "serverTask_distributed_cacheUsage";
+   public static final String CACHE_NAME = "customTaskReplTx";
+   public static final String VALUE_PREFIX = "modified:";
+   public static final String PARAM_KEY = "param";
 
-    private TaskContext taskContext;
+   private TaskContext taskContext;
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public Object call() throws Exception {
-        Cache<Object, Object> cache = (Cache<Object, Object>) taskContext.getCache().get();
-        Map<String, String> parameters = (Map<String, String>) taskContext.getParameters().get();
+   @Override
+   @SuppressWarnings("unchecked")
+   public Object call() throws Exception {
+      Cache<Object, Object> cache = (Cache<Object, Object>) taskContext.getCache().get()
+            .getAdvancedCache()
+            .withEncoding(IdentityEncoder.class);
 
-        assert taskContext.getMarshaller().isPresent();
-        Map.Entry<Object, Object> entry = cache.getCacheManager().getCache(CACHE_NAME).entrySet().iterator().next();
+      Map<String, String> parameters = (Map<String, String>) taskContext.getParameters().get();
 
-        TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
-        transactionManager.begin();
-        cache.getCacheManager().getCache(CACHE_NAME).getAdvancedCache().lock(entry.getKey());
+      assert taskContext.getMarshaller().isPresent();
+      Map.Entry<Object, Object> entry = cache.entrySet().iterator().next();
 
-        cache.getCacheManager().getCache(CACHE_NAME).put(entry.getKey(),
-                VALUE_PREFIX + entry.getValue() + ":" + parameters.get(PARAM_KEY));
-        transactionManager.commit();
-        return null;
-    }
+      TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
+      transactionManager.begin();
+      cache.getAdvancedCache().lock(entry.getKey());
 
-    @Override
-    public void setTaskContext(TaskContext taskContext) {
-        this.taskContext = taskContext;
-    }
+      cache.put(entry.getKey(),
+            VALUE_PREFIX + entry.getValue() + ":" + parameters.get(PARAM_KEY));
+      transactionManager.commit();
+      return null;
+   }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
+   @Override
+   public void setTaskContext(TaskContext taskContext) {
+      this.taskContext = taskContext;
+   }
 
-    @Override
-    public Optional<String> getAllowedRole() {
-        return Optional.empty();
-    }
+   @Override
+   public String getName() {
+      return NAME;
+   }
 
-    @Override
-    public TaskExecutionMode getExecutionMode() {
-        return TaskExecutionMode.ALL_NODES;
-    }
+   @Override
+   public Optional<String> getAllowedRole() {
+      return Optional.empty();
+   }
+
+   @Override
+   public TaskExecutionMode getExecutionMode() {
+      return TaskExecutionMode.ALL_NODES;
+   }
 
 
 }

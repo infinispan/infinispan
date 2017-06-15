@@ -12,28 +12,23 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ManageableComponentMetadata;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.impl.BatchingInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.query.remote.ProtostreamCompatEncoder;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
 import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
@@ -42,7 +37,6 @@ import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCache
 import org.infinispan.query.remote.impl.filter.IckleProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
-import org.infinispan.query.remote.impl.indexing.RemoteValueWrapperInterceptor;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.kohsuke.MetaInfServices;
@@ -120,47 +114,19 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
+      EncoderRegistry encoderRegistry = cr.getEncoderRegistry();
+      EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
+      encoderRegistry.registerEncoder(new ProtostreamCompatEncoder(cacheManager));
+      encoderRegistry.registerWrapper(new ProtostreamWrapper());
+
       GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
       InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) gcr.getComponent(ProtobufMetadataManager.class);
          protobufMetadataManager.addCacheDependency(cacheName);
-
-         boolean isIndexed = cfg.indexing().index().isEnabled();
-         boolean isCompatMode = cfg.compatibility().enabled();
-         if (isIndexed && !isCompatMode) {
-            log.infof("Registering RemoteValueWrapperInterceptor for cache %s", cacheName);
-            createRemoteValueWrapperInterceptor(cr, cfg);
-         }
       }
    }
 
-   private void createRemoteValueWrapperInterceptor(ComponentRegistry cr, Configuration cfg) {
-      RemoteValueWrapperInterceptor wrapperInterceptor = cr.getComponent(RemoteValueWrapperInterceptor.class);
-      if (wrapperInterceptor == null) {
-         wrapperInterceptor = new RemoteValueWrapperInterceptor();
-
-         // Interceptor registration not needed, core configuration handling
-         // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
-         AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class);
-
-         ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
-         InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
-         interceptorBuilder.interceptor(wrapperInterceptor);
-
-         if (cfg.invocationBatching().enabled()) {
-            if (ic != null) ic.addInterceptorAfter(wrapperInterceptor, BatchingInterceptor.class);
-            interceptorBuilder.after(BatchingInterceptor.class);
-         } else {
-            if (ic != null) ic.addInterceptorAfter(wrapperInterceptor, InvocationContextInterceptor.class);
-            interceptorBuilder.after(InvocationContextInterceptor.class);
-         }
-         if (ic != null) {
-            cr.registerComponent(wrapperInterceptor, RemoteValueWrapperInterceptor.class);
-         }
-         cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
-      }
-   }
 
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
@@ -169,13 +135,6 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
          Configuration cfg = cr.getComponent(Configuration.class);
          boolean isIndexed = cfg.indexing().index().isEnabled();
          boolean isCompatMode = cfg.compatibility().enabled();
-         if (isIndexed && !isCompatMode) {
-            if (!verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
-               throw new IllegalStateException("It was expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain but it wasn't found");
-            }
-         } else if (verifyChainContainsRemoteValueWrapperInterceptor(cr)) {
-            throw new IllegalStateException("It was NOT expected to find the RemoteValueWrapperInterceptor registered in the InterceptorChain as indexing was disabled, but it was found");
-         }
 
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
@@ -209,27 +168,4 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
       }
    }
 
-   private boolean verifyChainContainsRemoteValueWrapperInterceptor(ComponentRegistry cr) {
-      AsyncInterceptorChain interceptorChain = cr.getComponent(AsyncInterceptorChain.class);
-      return interceptorChain != null && interceptorChain.containsInterceptorType(RemoteValueWrapperInterceptor.class, true);
-   }
-
-   @Override
-   public void cacheStopped(ComponentRegistry cr, String cacheName) {
-      Configuration cfg = cr.getComponent(Configuration.class);
-      removeRemoteIndexingInterceptorFromConfig(cfg);
-   }
-
-   private void removeRemoteIndexingInterceptorFromConfig(Configuration cfg) {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      CustomInterceptorsConfigurationBuilder customInterceptorsBuilder = builder.customInterceptors();
-
-      for (InterceptorConfiguration interceptorConfig : cfg.customInterceptors().interceptors()) {
-         if (!(interceptorConfig.asyncInterceptor() instanceof RemoteValueWrapperInterceptor)) {
-            customInterceptorsBuilder.addInterceptor().read(interceptorConfig);
-         }
-      }
-
-      cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
-   }
 }

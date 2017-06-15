@@ -27,16 +27,14 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
-import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.metadata.Metadata;
@@ -185,8 +183,8 @@ class ClientListenerRegistry {
    }
 
    private void addCacheListener(AdvancedCache<byte[], byte[]> cache, Object clientEventSender,
-         KeyValuePair<CacheEventFilter<byte[], byte[]>, CacheEventConverter<byte[], byte[], byte[]>> kvp,
-         int listenerInterests) {
+                                 KeyValuePair<CacheEventFilter<byte[], byte[]>, CacheEventConverter<byte[], byte[], byte[]>> kvp,
+                                 int listenerInterests) {
       Set<Class<? extends Annotation>> filterAnnotations;
       if (listenerInterests == 0x00) {
          filterAnnotations = new HashSet<>(Arrays.asList(
@@ -303,17 +301,19 @@ class ClientListenerRegistry {
    @Listener(clustered = true, includeCurrentState = true)
    private class StatefulClientEventSender extends BaseClientEventSender {
 
-      protected StatefulClientEventSender(Channel ch, byte[] listenerId, byte version,
-                                          org.infinispan.server.hotrod.ClientEventType targetEventType) {
-         super(ch, listenerId, version, targetEventType);
+      protected StatefulClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version,
+                                          ClientEventType targetEventType, Encoder keyEncoder, Encoder valueEncoder,
+                                          Wrapper keyWrapper, Wrapper valueWrapper) {
+         super(cache, ch, listenerId, version, targetEventType, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
       }
    }
 
    @Listener(clustered = true, includeCurrentState = false)
    private class StatelessClientEventSender extends BaseClientEventSender {
 
-      protected StatelessClientEventSender(Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType) {
-         super(ch, listenerId, version, targetEventType);
+      protected StatelessClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType,
+                                           Encoder keyEncoder, Encoder valueEncoder, Wrapper keyWrapper, Wrapper valueWrapper) {
+         super(cache, ch, listenerId, version, targetEventType, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
       }
    }
 
@@ -322,16 +322,27 @@ class ClientListenerRegistry {
       protected final byte[] listenerId;
       protected final byte version;
       protected final ClientEventType targetEventType;
+      private final Encoder keyEncoder;
+      private final Encoder valueEncoder;
+      private final Wrapper keyWrapper;
+      private final Wrapper valueWrapper;
+      protected final Cache cache;
 
       BlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(100);
 
       private final Runnable writeEventsIfPossible = this::writeEventsIfPossible;
 
-      protected BaseClientEventSender(Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType) {
+      protected BaseClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType,
+                                      Encoder keyEncoder, Encoder valueEncoder, Wrapper keyWrapper, Wrapper valueWrapper) {
+         this.cache = cache;
          this.ch = ch;
          this.listenerId = listenerId;
          this.version = version;
          this.targetEventType = targetEventType;
+         this.keyEncoder = keyEncoder;
+         this.valueEncoder = valueEncoder;
+         this.keyWrapper = keyWrapper;
+         this.valueWrapper = valueWrapper;
       }
 
       boolean hasChannel(Channel channel) {
@@ -364,7 +375,16 @@ class ClientListenerRegistry {
             } else {
                version = 0;
             }
-            sendEvent(event.getKey(), event.getValue(), version, event);
+            Object k = event.getKey();
+            Object v = event.getValue();
+            if (keyEncoder.isStorageFormatFilterable()) {
+               k = keyEncoder.fromStorage(keyWrapper.unwrap(k));
+            }
+            if (valueEncoder.isStorageFormatFilterable()) {
+               v = valueEncoder.fromStorage(keyWrapper.unwrap(v));
+            }
+
+            sendEvent((byte[]) k, (byte[]) v, version, event);
          }
       }
 
@@ -467,61 +487,14 @@ class ClientListenerRegistry {
 
    Object getClientEventSender(boolean includeState, Channel ch, byte version,
                                Cache cache, byte[] listenerId, ClientEventType eventType) {
-      CompatibilityModeConfiguration compatibility = cache.getCacheConfiguration().compatibility();
-      if (compatibility.enabled()) {
-         if (includeState) {
-            StatelessClientEventSender delegate = new StatelessClientEventSender(ch, listenerId, version, eventType);
-            return new StatefulCompatibilityClientEventSender(delegate, new HotRodTypeConverter(compatibility.marshaller()));
-         } else {
-            StatelessClientEventSender delegate = new StatelessClientEventSender(ch, listenerId, version, eventType);
-            return new StatelessCompatibilityClientEventSender(delegate, new HotRodTypeConverter(compatibility.marshaller()));
-         }
+      Encoder keyEncoder = cache.getAdvancedCache().getKeyEncoder();
+      Encoder valueEncoder = cache.getAdvancedCache().getValueEncoder();
+      Wrapper keyWrapper = cache.getAdvancedCache().getKeyWrapper();
+      Wrapper valueWrapper = cache.getAdvancedCache().getValueWrapper();
+      if (includeState) {
+         return new StatefulClientEventSender(cache, ch, listenerId, version, eventType, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
       } else {
-         if (includeState) {
-            return new StatefulClientEventSender(ch, listenerId, version, eventType);
-         } else {
-            return new StatelessClientEventSender(ch, listenerId, version, eventType);
-         }
-      }
-   }
-
-   @Listener(clustered = true, includeCurrentState = true)
-   private class StatefulCompatibilityClientEventSender extends BaseCompatibilityClientEventSender {
-      protected StatefulCompatibilityClientEventSender(BaseClientEventSender delegate, HotRodTypeConverter converter) {
-         super(delegate, converter);
-      }
-   }
-
-   @Listener(clustered = true, includeCurrentState = false)
-   private class StatelessCompatibilityClientEventSender extends BaseCompatibilityClientEventSender {
-      protected StatelessCompatibilityClientEventSender(BaseClientEventSender delegate,
-                                                        org.infinispan.server.hotrod.HotRodTypeConverter converter) {
-         super(delegate, converter);
-      }
-   }
-
-   private abstract class BaseCompatibilityClientEventSender {
-      protected final BaseClientEventSender delegate;
-      protected final HotRodTypeConverter converter;
-
-      protected BaseCompatibilityClientEventSender(BaseClientEventSender delegate, HotRodTypeConverter converter) {
-         this.delegate = delegate;
-         this.converter = converter;
-      }
-
-      @CacheEntryCreated
-      @CacheEntryModified
-      @CacheEntryRemoved
-      @CacheEntryExpired
-      public void onCacheEvent(CacheEntryEvent event) {
-         Object key = converter.unboxKey(event.getKey());
-         Object value = converter.unboxValue(event.getValue());
-         if (delegate.isSendEvent(event)) {
-            // In compatibility mode, version could be null if stored via embedded
-            EntryVersion version = event.getMetadata().version();
-            long dataVersion = version == null ? 0 : ((NumericVersion) version).getVersion();
-            delegate.sendEvent((byte[]) key, (byte[]) value, dataVersion, event);
-         }
+         return new StatelessClientEventSender(cache, ch, listenerId, version, eventType, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
       }
    }
 

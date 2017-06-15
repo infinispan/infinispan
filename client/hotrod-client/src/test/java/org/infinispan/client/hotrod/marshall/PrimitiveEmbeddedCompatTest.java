@@ -6,10 +6,12 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -30,6 +32,7 @@ public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Object, Object> remoteCache;
+   private Cache embeddedCache;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -37,6 +40,8 @@ public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
 
       cacheManager = TestCacheManagerFactory.createCacheManager(builder);
       cache = cacheManager.getCache();
+
+      embeddedCache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
 
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
@@ -78,10 +83,10 @@ public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals(value, remoteValue);
 
       // try to get the value through the embedded cache interface and check it's equals with the value we put
-      assertEquals(1, cache.keySet().size());
-      Object localKey = cache.keySet().iterator().next();
+      assertEquals(1, embeddedCache.keySet().size());
+      Object localKey = embeddedCache.keySet().iterator().next();
       assertEquals(key, localKey);
-      Object localObject = cache.get(localKey);
+      Object localObject = embeddedCache.get(localKey);
       assertEquals(value, localObject);
    }
 
@@ -95,11 +100,11 @@ public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
    }
 
    private void embeddedPutAndGet(Object key, Object value) {
-      cache.clear();
+      embeddedCache.clear();
 
-      cache.put(key, value);
-      assertTrue(cache.keySet().contains(key));
-      Object localValue = cache.get(key);
+      embeddedCache.put(key, value);
+      assertTrue(embeddedCache.keySet().contains(key));
+      Object localValue = embeddedCache.get(key);
       assertEquals(value, localValue);
 
       // try to get the value through the remote cache interface and check it's equals with the value we put

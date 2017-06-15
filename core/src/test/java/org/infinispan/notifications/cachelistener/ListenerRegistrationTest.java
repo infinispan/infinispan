@@ -12,8 +12,10 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
@@ -31,11 +33,13 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
    private CacheNotifierImpl newNotifier() {
       CacheNotifierImpl notifier = new CacheNotifierImpl();
       Cache mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
+      ComponentRegistry registry = mock(ComponentRegistry.class);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(CacheMode.LOCAL);
+      when(config.memory().storageType()).thenReturn(StorageType.OBJECT);
       notifier.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
-                           mock(DistributionManager.class), new InternalEntryFactoryImpl(),
-                           mock(ClusterEventManager.class));
+            mock(DistributionManager.class), new InternalEntryFactoryImpl(),
+            mock(ClusterEventManager.class), mock(ComponentRegistry.class));
       return notifier;
    }
 
@@ -60,8 +64,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       try {
          n.addListener(l);
          fail("Should not accept an un-annotated cache listener");
-      }
-      catch (IncorrectListenerException icle) {
+      } catch (IncorrectListenerException icle) {
          // expected
       }
       assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
@@ -73,8 +76,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       try {
          n.addListener(l);
          fail("Should not accept a private callback class");
-      }
-      catch (IncorrectListenerException icle) {
+      } catch (IncorrectListenerException icle) {
          // expected
       }
       assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
@@ -96,8 +98,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       try {
          n.addListener(l);
          fail("Should not accept a listener method with a return type");
-      }
-      catch (IncorrectListenerException icle) {
+      } catch (IncorrectListenerException icle) {
          // expected
       }
       assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
@@ -109,8 +110,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       try {
          n.addListener(l);
          fail("Should not accept a cache listener with a bad method signature");
-      }
-      catch (IncorrectListenerException icle) {
+      } catch (IncorrectListenerException icle) {
          // expected
       }
       assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
@@ -122,8 +122,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       try {
          n.addListener(l);
          fail("Should not accept a cache listener with a bad method signature");
-      }
-      catch (IncorrectListenerException icle) {
+      } catch (IncorrectListenerException icle) {
          // expected
       }
       assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
@@ -135,8 +134,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       try {
          n.addListener(l);
          fail("Should not accept a cache listener with a bad method signature");
-      }
-      catch (IncorrectListenerException icle) {
+      } catch (IncorrectListenerException icle) {
          // expected
       }
       assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
@@ -148,8 +146,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       try {
          n.addListener(l);
          fail("Should not accept a cache listener with a bad method signature");
-      }
-      catch (IncorrectListenerException icle) {
+      } catch (IncorrectListenerException icle) {
          // expected
       }
       assertTrue("No listeners should be registered.", n.getListeners().isEmpty());
@@ -161,8 +158,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       try {
          n.addListener(l);
          fail("Should not accept a cache listener with a bad method signature");
-      }
-      catch (IncorrectListenerException icle) {
+      } catch (IncorrectListenerException icle) {
          // expected
       }
    }

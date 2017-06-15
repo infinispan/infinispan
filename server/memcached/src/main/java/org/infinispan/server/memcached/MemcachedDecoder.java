@@ -49,6 +49,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
@@ -81,10 +82,12 @@ import io.netty.util.CharsetUtil;
 public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
 
    public MemcachedDecoder(AdvancedCache<String, byte[]> memcachedCache, ScheduledExecutorService scheduler,
-           NettyTransport transport, Predicate<? super String> ignoreCache) {
+                           NettyTransport transport, Predicate<? super String> ignoreCache) {
       super(MemcachedDecoderState.DECODE_HEADER);
-      cache = memcachedCache.getCacheConfiguration().compatibility().enabled() ?
-              memcachedCache.withFlags(Flag.OPERATION_MEMCACHED) : memcachedCache;
+      boolean compat = memcachedCache.getCacheConfiguration().compatibility().enabled();
+      AdvancedCache<?, ?> c = compat ? memcachedCache.getAdvancedCache()
+            .withEncoding(IdentityEncoder.class, MemcachedCompatEncoder.class) : memcachedCache;
+      cache = (AdvancedCache<String, byte[]>) c;
       this.scheduler = scheduler;
       this.transport = transport;
       this.ignoreCache = ignoreCache;
@@ -191,7 +194,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    }
 
    void decodeHeader(ChannelHandlerContext ctx, ByteBuf buffer, MemcachedDecoderState state, List<Object> out)
-           throws CacheUnavailableException, IOException {
+         throws CacheUnavailableException, IOException {
       header = new RequestHeader();
       Optional<Boolean> endOfOp = readHeader(buffer, header);
       if (!endOfOp.isPresent()) {
@@ -260,7 +263,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    }
 
    private void decodeValue(ChannelHandlerContext ctx, ByteBuf buffer, MemcachedDecoderState state)
-           throws StreamCorruptedException {
+         throws StreamCorruptedException {
       Channel ch = ctx.channel();
       Object ret;
       switch (header.operation) {
@@ -355,7 +358,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             } else if (errorResponse instanceof CharSequence) {
                ch.writeAndFlush(Unpooled.copiedBuffer((CharSequence) errorResponse, CharsetUtil.UTF_8), ch.voidPromise());
             } else {
-              ch.writeAndFlush(errorResponse, ch.voidPromise());
+               ch.writeAndFlush(errorResponse, ch.voidPromise());
             }
          }
       }
@@ -395,21 +398,21 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
          if (isTrace) log.tracef("Operation parameters: %s", args);
          try {
             switch (header.operation) {
-               case PutRequest :
+               case PutRequest:
                   params = readStorageParameters(args, b);
                   break;
-               case RemoveRequest :
+               case RemoveRequest:
                   params = readRemoveParameters(args);
                   break;
-               case IncrementRequest :
+               case IncrementRequest:
                case DecrementRequest:
                   endOfOp = true;
                   params = readIncrDecrParameters(args);
                   break;
-               case FlushAllRequest :
+               case FlushAllRequest:
                   params = readFlushAllParameters(args);
                   break;
-               default :
+               default:
                   params = readStorageParameters(args, b);
                   break;
             }
@@ -434,20 +437,20 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    private MemcachedParameters readFlushAllParameters(List<String> args) throws StreamCorruptedException {
       boolean noReplyFound = false;
       int flushDelay;
-         try {
-            flushDelay = friendlyMaxIntCheck(args.get(0), "Flush delay");
-         } catch (NumberFormatException n) {
-            if (n.getMessage().contains("noreply")) {
-               noReplyFound = true;
-               flushDelay = 0;
-            } else throw n;
-         }
+      try {
+         flushDelay = friendlyMaxIntCheck(args.get(0), "Flush delay");
+      } catch (NumberFormatException n) {
+         if (n.getMessage().contains("noreply")) {
+            noReplyFound = true;
+            flushDelay = 0;
+         } else throw n;
+      }
       boolean noReply = noReplyFound || parseNoReply(1, args);
       return new MemcachedParameters(-1, -1, -1, -1, noReply, 0, "", flushDelay);
    }
 
    private MemcachedParameters readStorageParameters(List<String> args, ByteBuf b) throws StreamCorruptedException,
-           EOFException {
+         EOFException {
       int index = 0;
       long flags = getFlags(args.get(index));
       if (flags < 0) throw new StreamCorruptedException("Flags cannot be negative: " + flags);
@@ -477,7 +480,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
          // The reason for that is that if no other component depends on the
          // version generator, the factory does not get invoked.
          NumericVersionGenerator newVersionGenerator = new NumericVersionGenerator()
-         .clustered(registry.getComponent(RpcManager.class) != null);
+               .clustered(registry.getComponent(RpcManager.class) != null);
          registry.registerComponent(newVersionGenerator, VersionGenerator.class);
          return newVersionGenerator.generateNew();
       } else {
@@ -525,20 +528,17 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             return true;
          else
             throw new StreamCorruptedException("Unable to parse noreply optional argument");
-      }
-      else return false;
+      } else return false;
    }
 
    private int parseDelayedDeleteTime(List<String> args) {
       if (args.size() > 0) {
          try {
             return Integer.parseInt(args.get(0));
-         }
-         catch (NumberFormatException e) {
+         } catch (NumberFormatException e) {
             return -1; // Either unformatted number, or noreply found
          }
-      }
-      else return 0;
+      } else return 0;
    }
 
    private Configuration getCacheConfiguration() {
@@ -687,7 +687,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       BigInteger bigIntDelta = new BigInteger(delta);
       if (bigIntDelta.compareTo(MAX_UNSIGNED_LONG) > 0)
          throw new StreamCorruptedException("Increment or decrement delta sent (" + delta + ") exceeds unsigned limit ("
-                 + MAX_UNSIGNED_LONG + ")");
+               + MAX_UNSIGNED_LONG + ")");
       else if (bigIntDelta.compareTo(MIN_UNSIGNED) < 0)
          throw new StreamCorruptedException("Increment or decrement delta cannot be negative: " + delta);
       return bigIntDelta;
@@ -807,15 +807,14 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             log.exceptionReported(cause);
             return null; // no-op, only log
          } else if (cause instanceof IOException || cause instanceof NumberFormatException ||
-                 cause instanceof IllegalStateException) {
+               cause instanceof IllegalStateException) {
             return logAndCreateErrorMessage(sb, (MemcachedException) t);
          } else {
             return sb.append(t.getMessage()).append(CRLF);
          }
-      }
-      else if (t instanceof ClosedChannelException) {
-            log.exceptionReported(t);
-            return null; // no-op, only log
+      } else if (t instanceof ClosedChannelException) {
+         log.exceptionReported(t);
+         return null; // no-op, only log
       } else {
          return sb.append(SERVER_ERROR).append(t.getMessage()).append(CRLF);
       }
@@ -839,12 +838,12 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    /**
     * Transforms lifespan pass as seconds into milliseconds
     * following this rule:
-    *
+    * <p>
     * If lifespan is bigger than number of seconds in 30 days,
     * then it is considered unix time. After converting it to
     * milliseconds, we substract the current time in and the
     * result is returned.
-    *
+    * <p>
     * Otherwise it's just considered number of seconds from
     * now and it's returned in milliseconds unit.
     */
@@ -886,44 +885,44 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       Stats stats = cache.getAdvancedCache().getStats();
       StringBuilder sb = new StringBuilder();
       return new ByteBuf[]{
-           buildStat("pid", 0, sb),
-           buildStat("uptime", stats.getTimeSinceStart(), sb),
-           buildStat("uptime", stats.getTimeSinceStart(), sb),
-           buildStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), sb),
-           buildStat("version", cache.getVersion(), sb),
-           buildStat("pointer_size", 0, sb), // Unsupported
-           buildStat("rusage_user", 0, sb), // Unsupported
-           buildStat("rusage_system", 0, sb), // Unsupported
-           buildStat("curr_items", stats.getCurrentNumberOfEntries(), sb),
-           buildStat("total_items", stats.getTotalNumberOfEntries(), sb),
-           buildStat("bytes", 0, sb), // Unsupported
-           buildStat("curr_connections", 0, sb), // TODO: Through netty?
-           buildStat("total_connections", 0, sb), // TODO: Through netty?
-           buildStat("connection_structures", 0, sb), // Unsupported
-           buildStat("cmd_get", stats.getRetrievals(), sb),
-           buildStat("cmd_set", stats.getStores(), sb),
-           buildStat("get_hits", stats.getHits(), sb),
-           buildStat("get_misses", stats.getMisses(), sb),
-           buildStat("delete_misses", stats.getRemoveMisses(), sb),
-           buildStat("delete_hits", stats.getRemoveHits(), sb),
-           buildStat("incr_misses", incrMisses, sb),
-           buildStat("incr_hits", incrHits, sb),
-           buildStat("decr_misses", decrMisses, sb),
-           buildStat("decr_hits", decrHits, sb),
-           buildStat("cas_misses", replaceIfUnmodifiedMisses, sb),
-           buildStat("cas_hits", replaceIfUnmodifiedHits, sb),
-           buildStat("cas_badval", replaceIfUnmodifiedBadval, sb),
-           buildStat("auth_cmds", 0, sb), // Unsupported
-           buildStat("auth_errors", 0, sb), // Unsupported
-           //TODO: Evictions are measure by evict calls, but not by nodes are that are expired after the entry's lifespan has expired.
-           buildStat("evictions", stats.getEvictions(), sb),
-           buildStat("bytes_read", transport.getTotalBytesRead(), sb),
-           buildStat("bytes_written", transport.getTotalBytesWritten(), sb),
-           buildStat("limit_maxbytes", 0, sb), // Unsupported
-           buildStat("threads", 0, sb), // TODO: Through netty?
-           buildStat("conn_yields", 0, sb), // Unsupported
-           buildStat("reclaimed", 0, sb), // Unsupported
-           wrappedBuffer(END)
+            buildStat("pid", 0, sb),
+            buildStat("uptime", stats.getTimeSinceStart(), sb),
+            buildStat("uptime", stats.getTimeSinceStart(), sb),
+            buildStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), sb),
+            buildStat("version", cache.getVersion(), sb),
+            buildStat("pointer_size", 0, sb), // Unsupported
+            buildStat("rusage_user", 0, sb), // Unsupported
+            buildStat("rusage_system", 0, sb), // Unsupported
+            buildStat("curr_items", stats.getCurrentNumberOfEntries(), sb),
+            buildStat("total_items", stats.getTotalNumberOfEntries(), sb),
+            buildStat("bytes", 0, sb), // Unsupported
+            buildStat("curr_connections", 0, sb), // TODO: Through netty?
+            buildStat("total_connections", 0, sb), // TODO: Through netty?
+            buildStat("connection_structures", 0, sb), // Unsupported
+            buildStat("cmd_get", stats.getRetrievals(), sb),
+            buildStat("cmd_set", stats.getStores(), sb),
+            buildStat("get_hits", stats.getHits(), sb),
+            buildStat("get_misses", stats.getMisses(), sb),
+            buildStat("delete_misses", stats.getRemoveMisses(), sb),
+            buildStat("delete_hits", stats.getRemoveHits(), sb),
+            buildStat("incr_misses", incrMisses, sb),
+            buildStat("incr_hits", incrHits, sb),
+            buildStat("decr_misses", decrMisses, sb),
+            buildStat("decr_hits", decrHits, sb),
+            buildStat("cas_misses", replaceIfUnmodifiedMisses, sb),
+            buildStat("cas_hits", replaceIfUnmodifiedHits, sb),
+            buildStat("cas_badval", replaceIfUnmodifiedBadval, sb),
+            buildStat("auth_cmds", 0, sb), // Unsupported
+            buildStat("auth_errors", 0, sb), // Unsupported
+            //TODO: Evictions are measure by evict calls, but not by nodes are that are expired after the entry's lifespan has expired.
+            buildStat("evictions", stats.getEvictions(), sb),
+            buildStat("bytes_read", transport.getTotalBytesRead(), sb),
+            buildStat("bytes_written", transport.getTotalBytesWritten(), sb),
+            buildStat("limit_maxbytes", 0, sb), // Unsupported
+            buildStat("threads", 0, sb), // TODO: Through netty?
+            buildStat("conn_yields", 0, sb), // Unsupported
+            buildStat("reclaimed", 0, sb), // Unsupported
+            wrappedBuffer(END)
       };
    }
 
@@ -954,7 +953,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    }
 
    private ByteBuf buildGetHeaderBegin(String k, CacheEntry<String, byte[]> entry,
-           int extraSpace) {
+                                       int extraSpace) {
       byte[] data = entry.getValue();
       byte[] dataSize = String.valueOf(data.length).getBytes();
       byte[] key = k.getBytes();
@@ -1013,7 +1012,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    private int numericLimitCheck(String number, long maxValue, String message, NumberFormatException n) {
       if (Long.parseLong(number) > maxValue)
          throw new NumberFormatException(message + " sent (" + number
-         + ") exceeds the limit (" + maxValue + ")");
+               + ") exceeds the limit (" + maxValue + ")");
       else throw n;
    }
 
@@ -1021,30 +1020,46 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       long numeric = Long.parseLong(number);
       if (numeric > maxValue)
          throw new NumberFormatException(message + " sent (" + number
-         + ") exceeds the limit (" + maxValue + ")");
+               + ") exceeds the limit (" + maxValue + ")");
       return numeric;
    }
 
    private MemcachedOperation toRequest(String commandName, Boolean endOfOp, ByteBuf buffer) throws UnknownOperationException {
       if (isTrace) log.tracef("Operation: '%s'", commandName);
       switch (commandName) {
-         case "get" : return MemcachedOperation.GetRequest;
-         case "set" : return MemcachedOperation.PutRequest;
-         case "add" : return MemcachedOperation.PutIfAbsentRequest;
-         case "delete" : return MemcachedOperation.RemoveRequest;
-         case "replace" : return MemcachedOperation.ReplaceRequest;
-         case "cas" : return MemcachedOperation.ReplaceIfUnmodifiedRequest;
-         case "append" : return MemcachedOperation.AppendRequest;
-         case "prepend" : return MemcachedOperation.PrependRequest;
-         case "gets" : return MemcachedOperation.GetWithVersionRequest;
-         case "incr" : return MemcachedOperation.IncrementRequest;
-         case "decr" : return MemcachedOperation.DecrementRequest;
-         case "flush_all" : return MemcachedOperation.FlushAllRequest;
-         case "version" : return MemcachedOperation.VersionRequest;
-         case "stats" : return MemcachedOperation.StatsRequest;
-         case "verbosity" : return MemcachedOperation.VerbosityRequest;
-         case "quit" : return MemcachedOperation.QuitRequest;
-         default :
+         case "get":
+            return MemcachedOperation.GetRequest;
+         case "set":
+            return MemcachedOperation.PutRequest;
+         case "add":
+            return MemcachedOperation.PutIfAbsentRequest;
+         case "delete":
+            return MemcachedOperation.RemoveRequest;
+         case "replace":
+            return MemcachedOperation.ReplaceRequest;
+         case "cas":
+            return MemcachedOperation.ReplaceIfUnmodifiedRequest;
+         case "append":
+            return MemcachedOperation.AppendRequest;
+         case "prepend":
+            return MemcachedOperation.PrependRequest;
+         case "gets":
+            return MemcachedOperation.GetWithVersionRequest;
+         case "incr":
+            return MemcachedOperation.IncrementRequest;
+         case "decr":
+            return MemcachedOperation.DecrementRequest;
+         case "flush_all":
+            return MemcachedOperation.FlushAllRequest;
+         case "version":
+            return MemcachedOperation.VersionRequest;
+         case "stats":
+            return MemcachedOperation.StatsRequest;
+         case "verbosity":
+            return MemcachedOperation.VerbosityRequest;
+         case "quit":
+            return MemcachedOperation.QuitRequest;
+         default:
             if (!endOfOp) {
                String line = readDiscardedLine(buffer); // Read rest of line to clear the operation
                log.debugf("Unexpected operation '%s', rest of line contains: %s", commandName, line);
@@ -1066,7 +1081,7 @@ class MemcachedParameters {
    final int flushDelay;
 
    MemcachedParameters(int valueLength, int lifespan, int maxIdle, long streamVersion, boolean noReply, long flags,
-           String delta, int flushDelay) {
+                       String delta, int flushDelay) {
       this.valueLength = valueLength;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
@@ -1080,15 +1095,15 @@ class MemcachedParameters {
    @Override
    public String toString() {
       return "MemcachedParameters{" +
-              "valueLength=" + valueLength +
-              ", lifespan=" + lifespan +
-              ", maxIdle=" + maxIdle +
-              ", streamVersion=" + streamVersion +
-              ", noReply=" + noReply +
-              ", flags=" + flags +
-              ", delta='" + delta + '\'' +
-              ", flushDelay=" + flushDelay +
-              '}';
+            "valueLength=" + valueLength +
+            ", lifespan=" + lifespan +
+            ", maxIdle=" + maxIdle +
+            ", streamVersion=" + streamVersion +
+            ", noReply=" + noReply +
+            ", flags=" + flags +
+            ", delta='" + delta + '\'' +
+            ", flushDelay=" + flushDelay +
+            '}';
    }
 }
 
@@ -1111,8 +1126,8 @@ class RequestHeader {
    @Override
    public String toString() {
       return "RequestHeader{" +
-              "operation=" + operation +
-              '}';
+            "operation=" + operation +
+            '}';
    }
 }
 

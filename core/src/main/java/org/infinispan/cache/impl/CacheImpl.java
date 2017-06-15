@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +56,10 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -74,7 +77,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -91,9 +93,11 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -140,7 +144,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    protected RpcManager rpcManager;
    protected StreamingMarshaller marshaller;
    protected Metadata defaultMetadata;
+   protected EncoderRegistry encoderRegistry;
    private final String name;
+   private Encoder keyEncoder;
+   private Encoder valueEncoder;
+   private Wrapper keyWrapper;
+   private Wrapper valueWrapper;
+   Class<? extends Encoder> keyEncoderClass;
+   Class<? extends Encoder> valueEncoderClass;
+   Class<? extends Wrapper> keyWrapperClass;
+   Class<? extends Wrapper> valueWrapperClass;
    private EvictionManager evictionManager;
    private ExpirationManager<K, V> expirationManager;
    private DataContainer dataContainer;
@@ -160,6 +173,19 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    public CacheImpl(String name) {
       this.name = name;
+      this.keyEncoderClass = IdentityEncoder.class;
+      this.valueEncoderClass = IdentityEncoder.class;
+      this.keyWrapperClass = ByteArrayWrapper.class;
+      this.valueWrapperClass = ByteArrayWrapper.class;
+   }
+
+   public CacheImpl(String name, Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
+                    Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+      this.name = name;
+      this.keyEncoderClass = keyEncoderClass;
+      this.valueEncoderClass = valueEncoderClass;
+      this.keyWrapperClass = keyWrapperClass;
+      this.valueWrapperClass = valueWrapperClass;
    }
 
    @Inject
@@ -182,7 +208,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   AuthorizationManager authorizationManager,
                                   GlobalConfiguration globalCfg,
                                   PartitionHandlingManager partitionHandlingManager,
-                                  LocalTopologyManager localTopologyManager) {
+                                  LocalTopologyManager localTopologyManager, EncoderRegistry encoderRegistry) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -208,9 +234,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       // We have to do this before start, since some components may start before the actual cache and they
       // have to have access to the default metadata on some operations
       defaultMetadata = new EmbeddedMetadata.Builder()
-              .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
+            .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
       transactional = config.transaction().transactionMode().isTransactional();
       batchingEnabled = config.invocationBatching().enabled();
+      this.keyEncoder = encoderRegistry.getEncoder(keyEncoderClass);
+      this.valueEncoder = encoderRegistry.getEncoder(valueEncoderClass);
+      this.keyWrapper = encoderRegistry.getWrapper(keyWrapperClass);
+      this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
    }
 
    void assertKeyNotNull(Object key) {
@@ -424,7 +454,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       Map<K, V> map = (Map<K, V>) invoker.invoke(ctx, command);
       Iterator<Map.Entry<K, V>> entryIterator = map.entrySet().iterator();
       while (entryIterator.hasNext()) {
-         Map.Entry<K , V> entry = entryIterator.next();
+         Map.Entry<K, V> entry = entryIterator.next();
          if (entry.getValue() == null) {
             entryIterator.remove();
          }
@@ -439,12 +469,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    public final Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys,
-         long explicitFlags, InvocationContext ctx) {
+                                                            long explicitFlags, InvocationContext ctx) {
       GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, true);
       Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) invoker.invoke(ctx, command);
       Iterator<Map.Entry<K, CacheEntry<K, V>>> entryIterator = map.entrySet().iterator();
       while (entryIterator.hasNext()) {
-         Map.Entry<K , CacheEntry<K, V>> entry = entryIterator.next();
+         Map.Entry<K, CacheEntry<K, V>> entry = entryIterator.next();
          if (entry.getValue() == null) {
             entryIterator.remove();
          }
@@ -552,6 +582,47 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       executeCommandAndCommitIfNeeded(ctx, command);
    }
 
+   @Override
+   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
+      return new EncoderCache<>(this, encoderClass, encoderClass, keyWrapperClass, valueWrapperClass);
+   }
+
+
+   @Override
+   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
+      return new EncoderCache<>(this, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
+      return new EncoderCache<>(this, keyEncoderClass, valueEncoderClass, wrapperClass, wrapperClass);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+      return new EncoderCache<>(this, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+   }
+
+   @Override
+   public Encoder getKeyEncoder() {
+      return keyEncoder;
+   }
+
+   @Override
+   public Encoder getValueEncoder() {
+      return valueEncoder;
+   }
+
+   @Override
+   public Wrapper getKeyWrapper() {
+      return keyWrapper;
+   }
+
+   @Override
+   public Wrapper getValueWrapper() {
+      return valueWrapper;
+   }
+
    @ManagedOperation(
          description = "Clears the cache",
          displayName = "Clears the cache", name = "clear"
@@ -649,8 +720,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
-       .lifespan(lifespan, lifespanUnit)
-       .maxIdle(maxIdleTime, idleTimeUnit).build();
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, idleTimeUnit).build();
       putForExternalRead(key, value, metadata);
    }
 
@@ -672,8 +743,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          putIfAbsent(key, value, metadata, EnumUtil.mergeBitSets(PFER_FLAGS, explicitFlags));
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
-      }
-      finally {
+      } finally {
          resumePreviousOngoingTransaction(ongoingTransaction, true, "Had problems trying to resume a transaction after putForExternalRead()");
       }
    }
@@ -707,6 +777,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       notifier.addListener(listener);
    }
 
+   void addListener(ListenerHolder listenerHolder) {
+      notifier.addListener(listenerHolder, null, null, null);
+   }
+
+   <C> void addListener(ListenerHolder listenerHolder, CacheEventFilter<? super K, ? super V> filter,
+                        CacheEventConverter<? super K, ? super V, C> converter) {
+      notifier.addListener(listenerHolder, filter, converter, null);
+   }
+
+
    @Override
    public void addListener(Object listener, KeyFilter<? super K> filter) {
       notifier.addListener(listener, filter);
@@ -730,8 +810,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public <C> void addFilteredListener(Object listener,
-         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
-         Set<Class<? extends Annotation>> filterAnnotations) {
+                                       CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+                                       Set<Class<? extends Annotation>> filterAnnotations) {
+      notifier.addFilteredListener(listener, filter, converter, filterAnnotations);
+   }
+
+   <C> void addFilteredListener(ListenerHolder listener,
+                                CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+                                Set<Class<? extends Annotation>> filterAnnotations) {
       notifier.addFilteredListener(listener, filter, converter, filterAnnotations);
    }
 
@@ -792,7 +878,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
       InvocationContext ctx = invocationContextFactory.createInvocationContext(true, UNBOUNDED);
       ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta,
-                                                                         Arrays.asList(locksToAcquire));
+            Arrays.asList(locksToAcquire));
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(command.getKeyLockOwner());
       }
@@ -1063,7 +1149,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public String toString() {
-      return "Cache '" + name + "'@" + (config !=null && config.clustering().cacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(getCacheManager()));
+      return "Cache '" + name + "'@" + (config != null && config.clustering().cacheMode().isClustered() ? getCacheManager().getAddress() : Util.hexIdHashCode(getCacheManager()));
    }
 
    @Override
@@ -1301,7 +1387,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata,
-         final long explicitFlags, InvocationContext ctx) {
+                                             final long explicitFlags, InvocationContext ctx) {
       PutMapCommand command = createPutAllCommand(data, metadata, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
    }
@@ -1330,7 +1416,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
-         final long explicitFlags, InvocationContext ctx) {
+                                               final long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
       PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
@@ -1353,7 +1439,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final long explicitFlags,
-         InvocationContext ctx) {
+                                                InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
       RemoveCommand command = createRemoveConditionalCommand(key, value, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
@@ -1372,7 +1458,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
-                                         final long explicitFlags, InvocationContext ctx) {
+                                           final long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
       ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, ctx);
       return executeCommandAndCommitIfNeededAsync(ctx, command);
@@ -1387,12 +1473,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
-         final Metadata metadata) {
+                                                 final Metadata metadata) {
       return replaceAsync(key, oldValue, newValue, metadata, EnumUtil.EMPTY_BIT_SET, getInvocationContextWithImplicitTransaction(false, 1));
    }
 
    final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
-                                               final Metadata metadata, final long explicitFlags, InvocationContext ctx) {
+                                                 final Metadata metadata, final long explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, newValue);
       assertValueNotNull(oldValue);
       ReplaceCommand command = createReplaceConditionalCommand(key, oldValue, newValue, metadata, explicitFlags, ctx);

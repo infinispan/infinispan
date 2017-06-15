@@ -21,12 +21,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.ObjectDuplicator;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -98,23 +98,35 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
 
       DataContainer dc1 = extractComponent(cache1, DataContainer.class);
 
-      //noinspection unchecked
-      TypeConverter<Object, Object, Object, Object> converter = cache1.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class);
-
-      InternalCacheEntry ice = dc1.get(converter.boxKey("key"));
+      InternalCacheEntry ice = dc1.get(boxKey(cache1, "key"));
       Object o = ice.getValue();
       assertTrue(o instanceof WrappedByteArray);
       assertEquals(value, cache1.get("key"));
-      assertEquals(value, converter.unboxValue(o));
+      assertEquals(value, unboxValue(cache1, o));
 
       // now on cache 2
-      DataContainer dc2 = extractComponent(cache2, DataContainer.class);
-      ice = dc2.get(converter.boxKey("key"));
+      DataContainer dc2 = TestingUtil.extractComponent(cache2, DataContainer.class);
+      ice = dc2.get(boxKey(cache2, "key"));
       o = ice.getValue();
 
       assertTrue(o instanceof WrappedByteArray);
       assertEquals(value, cache2.get("key"));
-      assertEquals(value, converter.unboxValue(o));
+      assertEquals(value, unboxValue(cache2, o));
+   }
+
+   private Object boxKey(Cache cache, Object key) {
+      EncoderCache c = (EncoderCache) cache;
+      return c.keyToStorage(key);
+   }
+
+   private Object unboxKey(Cache cache, Object key) {
+      EncoderCache c = (EncoderCache) cache;
+      return c.keyFromStorage(key);
+   }
+
+   private Object unboxValue(Cache cache, Object value) {
+      EncoderCache c = (EncoderCache) cache;
+      return c.valueFromStorage(value);
    }
 
    public void testReleaseObjectKeyReferences() {
@@ -514,7 +526,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       try {
          Pojo pojo = new Pojo();
          cache1.put("key", pojo);
-         assertTrue("recieved " + l.newValue.getClass().getName(), l.newValue instanceof Pojo);
+         assertTrue("received " + l.newValue.getClass().getName(), l.newValue instanceof Pojo);
       } finally {
          cache1.removeListener(l);
       }
@@ -601,7 +613,8 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
          this.i = i;
       }
 
-      public Pojo() {}
+      public Pojo() {
+      }
 
       @Override
       public boolean equals(Object o) {
@@ -650,7 +663,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
 
    public static class ObjectThatContainsACustomReadObjectMethod implements Serializable, ExternalPojo {
       private static final long serialVersionUID = 1L;
-//      Integer id;
+      //      Integer id;
       CustomReadObjectMethod anObjectWithCustomReadObjectMethod;
       Integer balance;
 //      String branch;
@@ -712,7 +725,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public int hashCode( ) {
+      public int hashCode() {
          int result = 17;
          result = result * 31 + lastName.hashCode();
          result = result * 31 + ssn.hashCode();
