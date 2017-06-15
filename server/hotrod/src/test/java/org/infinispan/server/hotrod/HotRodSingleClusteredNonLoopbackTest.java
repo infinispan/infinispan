@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod;
 
 import static org.infinispan.server.core.test.ServerTestingUtil.killServer;
 import static org.infinispan.server.hotrod.OperationStatus.ParseError;
+import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.findNetworkInterfaces;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.getDefaultHotRodConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -23,6 +24,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
+import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
@@ -72,10 +74,9 @@ public class HotRodSingleClusteredNonLoopbackTest extends MultipleCacheManagersT
                                                   new ConfigurationBuilder().build(),
                                                   EnumSet.of(InternalCacheRegistry.Flag.USER,
                                                              InternalCacheRegistry.Flag.PROTECTED));
-      TestErrorResponse resp = (TestErrorResponse) hotRodClient
+      TestResponse resp = hotRodClient
             .execute(0xA0, (byte) 0x01, "MyInternalCache", k(m), 0, 0, v(m), 0, (byte) 1, 0);
-      assertTrue(resp.msg.contains("protected caches only over loopback"));
-      assertEquals(resp.status, ParseError, "Status should have been 'ParseError' but instead was: " + resp.status);
+      assertEquals(resp.status, Success, "Status should have been 'Success' but instead was: " + resp.status);
       hotRodClient.assertPut(m);
    }
 
