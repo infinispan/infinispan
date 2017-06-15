@@ -14,6 +14,7 @@ import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -86,8 +87,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
     * @param dependantCacheName the name of the cache depending on the protobuf metadata cache
     */
    protected void addCacheDependency(String dependantCacheName) {
-      protobufSchemaCache = SecurityActions.getCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME);
-
+      protobufSchemaCache = (Cache<String, String>) SecurityActions.getCache(cacheManager, PROTOBUF_METADATA_CACHE_NAME).getAdvancedCache().withEncoding(IdentityEncoder.class);
       // add stop dependency
       cacheManager.addCacheDependency(dependantCacheName, ProtobufMetadataManagerImpl.PROTOBUF_METADATA_CACHE_NAME);
    }

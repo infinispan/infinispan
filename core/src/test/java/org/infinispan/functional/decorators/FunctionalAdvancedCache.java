@@ -16,14 +16,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
@@ -35,6 +33,8 @@ import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
@@ -486,6 +486,46 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
+   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder) {
+      return cache.withEncoding(encoder);
+   }
+
+   @Override
+   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
+      return cache.withEncoding(keyEncoder, valueEncoder);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
+      return cache.withWrapping(keyWrapper, valueWrapper);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
+      return cache.withWrapping(wrapper);
+   }
+
+   @Override
+   public Encoder getKeyEncoder() {
+      return cache.getKeyEncoder();
+   }
+
+   @Override
+   public Encoder getValueEncoder() {
+      return cache.getValueEncoder();
+   }
+
+   @Override
+   public Wrapper getKeyWrapper() {
+      return cache.getKeyWrapper();
+   }
+
+   @Override
+   public Wrapper getValueWrapper() {
+      return cache.getValueWrapper();
+   }
+
+   @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
       // TODO: Customise this generated block
    }
@@ -662,8 +702,8 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public <C> void addFilteredListener(Object listener,
-         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
-         Set<Class<? extends Annotation>> filterAnnotations) {
+                                       CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+                                       Set<Class<? extends Annotation>> filterAnnotations) {
       // TODO: Customise this generated block
    }
 
@@ -710,8 +750,8 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       @Override
       public String toString() {
          return "SetAsCacheSet{" +
-            "set=" + set +
-            '}';
+               "set=" + set +
+               '}';
       }
    }
 

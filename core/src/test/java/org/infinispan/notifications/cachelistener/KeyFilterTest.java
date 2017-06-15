@@ -6,15 +6,16 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.infinispan.Cache;
-import org.infinispan.compat.TypeConverter;
+import org.infinispan.cache.impl.EncoderCache;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.interceptors.impl.WrappedByteArrayConverter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
@@ -29,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(testName = "notifications.cachelistener.KeyFilterTest", groups = "unit")
 public class KeyFilterTest extends AbstractInfinispanTest {
    CacheNotifierImpl n;
-   Cache mockCache;
+   EncoderCache mockCache;
    CacheListener cl;
    InvocationContext ctx;
 
@@ -38,19 +39,21 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       KeyFilter kf = key -> key.toString().equals("accept");
 
       n = new CacheNotifierImpl();
-      mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
+      mockCache = mock(EncoderCache.class, RETURNS_DEEP_STUBS);
+      when(mockCache.getAdvancedCache().getKeyEncoder()).thenReturn(IdentityEncoder.INSTANCE);
+      when(mockCache.getAdvancedCache().getValueEncoder()).thenReturn(IdentityEncoder.INSTANCE);
+      when(mockCache.getAdvancedCache().getKeyWrapper()).thenReturn(ByteArrayWrapper.INSTANCE);
+      when(mockCache.getAdvancedCache().getValueWrapper()).thenReturn(ByteArrayWrapper.INSTANCE);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
-      Answer answer = (Answer<Object>) invocationOnMock -> Mockito.mock((Class)invocationOnMock.getArguments()[0]);
+      Answer answer = (Answer<Object>) invocationOnMock -> Mockito.mock((Class) invocationOnMock.getArguments()[0]);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
-      when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(TypeConverter.class)).thenReturn(
-            new WrappedByteArrayConverter());
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null);
       n.injectDependencies(mockCache, cdl, null, config,
-                           mock(DistributionManager.class), mock(InternalEntryFactory.class),
-                           mock(ClusterEventManager.class));
+            mock(DistributionManager.class), mock(InternalEntryFactory.class),
+            mock(ClusterEventManager.class), mock(ComponentRegistry.class));
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);

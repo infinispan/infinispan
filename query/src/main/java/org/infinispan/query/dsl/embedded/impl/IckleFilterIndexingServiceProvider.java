@@ -3,6 +3,7 @@ package org.infinispan.query.dsl.embedded.impl;
 import java.util.Map;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.notifications.cachelistener.EventWrapper;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
@@ -40,13 +41,15 @@ public class IckleFilterIndexingServiceProvider extends BaseJPAFilterIndexingSer
       return false;
    }
 
-   protected void matchEvent(CacheEntryEvent event, Matcher matcher) {
+   @Override
+   protected <K, V> void matchEvent(EventWrapper<K, V, CacheEntryEvent<K, V>> eventWrapper, Matcher matcher) {
+      CacheEntryEvent<?, ?> event = eventWrapper.getEvent();
       Object instance = event.getValue();
       if (instance != null) {
          if (instance.getClass() == WrappedByteArray.class) {
             instance = ((WrappedByteArray) instance).getBytes();
          }
-         matcher.match(event, event.getType(), instance);
+         matcher.match(eventWrapper, event.getType(), instance);
       }
    }
 

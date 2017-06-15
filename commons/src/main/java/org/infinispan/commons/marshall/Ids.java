@@ -175,6 +175,10 @@ public interface Ids {
    int ATOMIC_KEY_SET = 120;
    int ATOMIC_FINE_GRAINED_MAP_FUNCTIONS = 121;
 
+   int ENCODER_KEY_MAPPER = 122;
+   int ENCODER_VALUE_MAPPER = 123;
+   int ENCODER_ENTRY_MAPPER = 124;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

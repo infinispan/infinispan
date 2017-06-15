@@ -8,6 +8,8 @@ import javax.transaction.SystemException;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.KeyFilter;
@@ -30,7 +32,8 @@ public class SecureCacheTestDriver {
    private CacheEventFilter<String, String> keyValueFilter;
 
    public SecureCacheTestDriver() {
-      interceptor = new CommandInterceptor() { };
+      interceptor = new CommandInterceptor() {
+      };
       keyFilter = key -> true;
       keyValueFilter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> true;
       converter = (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> null;
@@ -143,7 +146,7 @@ public class SecureCacheTestDriver {
       cache.putAsync("a", "a", metadata);
    }
 
-   @TestCachePermission(value=AuthorizationPermission.LIFECYCLE, needsSecurityManager=true)
+   @TestCachePermission(value = AuthorizationPermission.LIFECYCLE, needsSecurityManager = true)
    public void testStop(SecureCache<String, String> cache) {
       cache.stop();
       cache.start();
@@ -625,7 +628,7 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testPutAll_Map_Metadata(SecureCache<String, String> cache) {
       cache.putAll(Collections.singletonMap("a", "a"), new EmbeddedMetadata.Builder().
-              lifespan(10, TimeUnit.SECONDS).maxIdle(5, TimeUnit.SECONDS).build());
+            lifespan(10, TimeUnit.SECONDS).maxIdle(5, TimeUnit.SECONDS).build());
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_READ)
@@ -660,7 +663,8 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
-   public void testWithSubject_Subject(SecureCache<String, String> cache) {}
+   public void testWithSubject_Subject(SecureCache<String, String> cache) {
+   }
 
    @TestCachePermission(AuthorizationPermission.BULK_WRITE)
    public void testLockedStream(SecureCache<String, String> cache) {
@@ -671,4 +675,45 @@ public class SecureCacheTestDriver {
    public void testLockAs_Object(SecureCache<String, String> cache) {
       cache.lockAs(new Object());
    }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithEncoding_Class(SecureCache<String, String> cache) {
+      cache.withEncoding(IdentityEncoder.class);
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testGetKeyEncoder(SecureCache<String, String> cache) {
+      cache.getKeyEncoder();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testGetValueEncoder(SecureCache<String, String> cache) {
+      cache.getValueEncoder();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testGetKeyWrapper(SecureCache<String, String> cache) {
+      cache.getKeyWrapper();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testGetValueWrapper(SecureCache<String, String> cache) {
+      cache.getValueWrapper();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithEncoding_Class_Class(SecureCache<String, String> cache) {
+      cache.withEncoding(IdentityEncoder.class, IdentityEncoder.class);
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithWrapping_Class(SecureCache<String, String> cache) {
+      cache.withWrapping(ByteArrayWrapper.class);
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithWrapping_Class_Class(SecureCache<String, String> cache) {
+      cache.withWrapping(ByteArrayWrapper.class, ByteArrayWrapper.class);
+   }
+
 }

@@ -56,7 +56,7 @@ public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K,
                throw new CacheException(e);
             }
          } else {
-            return (C) f.filterAndConvert(key, value, metadata);
+            return f.filterAndConvert(key, value, metadata);
          }
       } else {
          return (C) value;

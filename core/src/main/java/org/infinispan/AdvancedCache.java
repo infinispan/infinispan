@@ -13,6 +13,8 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
@@ -616,4 +618,59 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param lifespan the lifespan that should match.  If null is provided it will match any lifespan value
     */
    void removeExpired(K key, V value, Long lifespan);
+
+   /**
+    * Performs any cache operations using the specified pair of {@link Encoder}.
+    *
+    * @param keyEncoder   {@link Encoder} for the keys.
+    * @param valueEncoder {@link Encoder} for the values.
+    * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoders.
+    */
+   AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder);
+
+   /**
+    * Performs any cache operations using the specified pair of {@link Wrapper}.
+    *
+    * @param keyWrapper   {@link Wrapper} for the keys.
+    * @param valueWrapper {@link Wrapper} for the values.
+    * @return {@link AdvancedCache} where all operations will use the supplied wrappers.
+    */
+   AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper);
+
+   /**
+    * Performs any cache operations using the specified {@link Encoder}.
+    *
+    * @param encoder {@link Encoder} used for both keys and values.
+    * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoder.
+    */
+   AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder);
+
+   /**
+    * Performs any cache operations using the specified {@link Wrapper}.
+    *
+    * @param wrapper {@link Wrapper} for the keys and values.
+    * @return an instance of {@link AdvancedCache} where all operations will use the supplied wrapper.
+    */
+   AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper);
+
+   /**
+    * @return The associated {@link Encoder} for the keys.
+    */
+   Encoder getKeyEncoder();
+
+   /**
+    * @return The associated {@link Encoder} for the cache's values.
+    */
+   Encoder getValueEncoder();
+
+   /**
+    * @return The associated {@link Wrapper} for the cache's keys.
+    */
+   Wrapper getKeyWrapper();
+
+   /**
+    * @return The associated {@link Wrapper} for the cache's values.
+    */
+   Wrapper getValueWrapper();
+
 }

@@ -2,6 +2,7 @@ package org.infinispan.scripting.impl;
 
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -17,6 +18,10 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.UTF8Encoder;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CacheMode;
@@ -85,7 +90,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    Cache<String, String> getScriptCache() {
       if (scriptCache == null) {
-         scriptCache = cacheManager.getCache(SCRIPT_CACHE);
+         scriptCache = (Cache<String, String>) cacheManager.getCache(SCRIPT_CACHE).getAdvancedCache().withEncoding(IdentityEncoder.class);
       }
       return scriptCache;
    }
@@ -168,7 +173,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       ScriptMetadata metadata = getScriptMetadata(scriptName);
       if (globalAuthzHelper != null) {
          AuthorizationManager authorizationManager = context.getCache().isPresent() ?
-            SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
+               SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
          if (authorizationManager != null) {
             authorizationManager.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
          } else {
@@ -177,21 +182,33 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
       }
 
+      DataType dataType = metadata.dataType();
       Bindings userBindings = context.getParameters()
-         .map(p -> {
-            Map<String, ?> params = metadata.dataType().transformer.toDataType(context.getParameters().get(), context.getMarshaller());
-            return new SimpleBindings((Map<String, Object>) params);
-         })
-         .orElseGet(() -> new SimpleBindings());
+            .map(p -> {
+               Map<String, ?> params = metadata.dataType().transformer.toDataType(context.getParameters().get(), context.getMarshaller());
+               return new SimpleBindings((Map<String, Object>) params);
+            })
+            .orElseGet(() -> new SimpleBindings());
 
       SimpleBindings systemBindings = new SimpleBindings();
-      DataTypedCacheManager cm = new DataTypedCacheManager(metadata.dataType(), context.getMarshaller(), cacheManager, context.getSubject().orElse(null));
-      systemBindings.put(SystemBindings.CACHE_MANAGER.toString(), cm);
+      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(dataType, context.getMarshaller(), cacheManager, context.getSubject().orElse(null));
+      systemBindings.put(SystemBindings.CACHE_MANAGER.toString(), dataTypedCacheManager);
       systemBindings.put(SystemBindings.SCRIPTING_MANAGER.toString(), this);
       context.getCache().ifPresent(cache -> {
-         Cache<?, ?> c = cm.getCacheConfiguration(cache.getName()).compatibility().enabled()
-               ? cache : new DataTypedCache<>(cm, cache);
-         systemBindings.put(SystemBindings.CACHE.toString(), c);
+         if (dataType == DataType.UTF8) {
+            cache = cache.getAdvancedCache().withEncoding(UTF8Encoder.class);
+         } else {
+            boolean compat = SecurityActions.getCacheConfiguration(cache).compatibility().enabled();
+            Optional<Marshaller> marshaller = context.getMarshaller();
+            if (compat) {
+               cache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);
+            } else {
+               if (marshaller.isPresent()) {
+                  cache = cache.getAdvancedCache().withEncoding(GenericJbossMarshallerEncoder.class);
+               }
+            }
+         }
+         systemBindings.put(SystemBindings.CACHE.toString(), cache);
       });
 
       context.getMarshaller().ifPresent(marshaller -> {
@@ -223,7 +240,8 @@ public class ScriptingManagerImpl implements ScriptingManager {
             return CompletableFuture.completedFuture(result);
          } else {
             ScriptEngine engine = getEngineForScript(metadata);
-            T result = (T) engine.eval(getScriptCache().get(metadata.name()), bindings);
+            String script = getScriptCache().get(metadata.name());
+            T result = (T) engine.eval(script, bindings);
             return CompletableFuture.completedFuture(result);
          }
       } catch (ScriptException e) {
@@ -258,8 +276,8 @@ public class ScriptingManagerImpl implements ScriptingManager {
    }
 
    private static ScriptEngine withClassLoader(ClassLoader cl,
-         ScriptEngineManager manager, String name,
-         BiFunction<ScriptEngineManager, String, ScriptEngine> f) {
+                                               ScriptEngineManager manager, String name,
+                                               BiFunction<ScriptEngineManager, String, ScriptEngine> f) {
       ClassLoader curr = Thread.currentThread().getContextClassLoader();
       try {
          Thread.currentThread().setContextClassLoader(cl);

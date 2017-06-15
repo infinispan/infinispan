@@ -8,8 +8,10 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -28,6 +30,7 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    private final Cache<K, V> cache;
    private final ConsistentHash hash;
    private final Supplier<Stream<CacheEntry<K, V>>> supplier;
+   private final Wrapper wrapper = new ByteArrayWrapper();
 
    public EntryStreamSupplier(Cache<K, V> cache, ConsistentHash hash, Supplier<Stream<CacheEntry<K, V>>> supplier) {
       this.cache = cache;
@@ -43,15 +46,17 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
             log.tracef("Applying key filtering %s", keysToFilter);
          }
          // Make sure we aren't going remote to retrieve these
-         AdvancedCache<K, V> advancedCache =  AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
+         AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
                .withFlags(Flag.CACHE_MODE_LOCAL);
+
+         Encoder encoder = advancedCache.getKeyEncoder();
+
          // Need to box the key to get the correct segment
-         TypeConverter<Object, Object, Object, Object> typeConverter =
-               advancedCache.getComponentRegistry().getComponent(TypeConverter.class);
+
          // We do type converter before getting CacheEntry, otherwise wrapper classes would have to both box and
          // unbox, this way we avoid multiple calls and just do the one.
          stream = keysToFilter.stream()
-               .map(typeConverter::boxKey)
+               .map(o -> wrapper.wrap(encoder.toStorage(o)))
                .map(advancedCache::getCacheEntry)
                .filter(e -> e != null);
       } else {

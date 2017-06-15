@@ -6,19 +6,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -256,13 +256,13 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire){
+   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
       cache.applyDelta(deltaAwareValueKey, delta, locksToAcquire);
    }
 
    @Override
    public Stats getStats() {
-       return cache.getStats();
+      return cache.getStats();
    }
 
    @Override
@@ -353,6 +353,66 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public void removeExpired(K key, V value, Long lifespan) {
       cache.removeExpired(key, value, lifespan);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoder) {
+      AdvancedCache encoderCache = this.cache.withEncoding(encoder);
+      if (encoderCache != cache) {
+         return this.wrapper.wrap(encoderCache);
+      } else {
+         return this;
+      }
+   }
+
+   @Override
+   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
+      AdvancedCache encoderCache = this.cache.withEncoding(keyEncoder, valueEncoder);
+      if (encoderCache != cache) {
+         return this.wrapper.wrap(encoderCache);
+      } else {
+         return this;
+      }
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
+      AdvancedCache encoderCache = this.cache.withWrapping(wrapper);
+      if (encoderCache != cache) {
+         return this.wrapper.wrap(encoderCache);
+      } else {
+         return this;
+      }
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
+      AdvancedCache encoderCache = this.cache.withWrapping(keyWrapper, valueWrapper);
+      if (encoderCache != cache) {
+         return this.wrapper.wrap(encoderCache);
+      } else {
+         return this;
+      }
+   }
+
+   @Override
+   public Encoder getKeyEncoder() {
+      return cache.getKeyEncoder();
+   }
+
+   @Override
+   public Encoder getValueEncoder() {
+      return cache.getValueEncoder();
+   }
+
+   @Override
+   public Wrapper getKeyWrapper() {
+      return cache.getKeyWrapper();
+   }
+
+   @Override
+   public Wrapper getValueWrapper() {
+      return cache.getValueWrapper();
    }
 
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {

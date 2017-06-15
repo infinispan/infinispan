@@ -16,9 +16,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.BaseCacheStream;
+import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.CompatModeEncoder;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
@@ -28,7 +33,6 @@ import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.hotrod.HotRodTypeConverter;
 import org.infinispan.server.hotrod.OperationStatus;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.util.KeyValuePair;
@@ -90,16 +94,16 @@ class IterationState {
 
 class CompatInfo {
    final boolean enabled;
-   final Optional<HotRodTypeConverter> hotRodTypeConverter;
+   final Encoder valueEncoder;
 
-   CompatInfo(boolean enabled, Optional<HotRodTypeConverter> hotRodTypeConverter) {
+   CompatInfo(boolean enabled, Encoder valueEncoder) {
       this.enabled = enabled;
-      this.hotRodTypeConverter = hotRodTypeConverter;
+      this.valueEncoder = valueEncoder;
    }
 
    static CompatInfo create(CompatibilityModeConfiguration config) {
       return new CompatInfo(config.enabled(), config.enabled() ?
-            Optional.of(new HotRodTypeConverter(config.marshaller())) : Optional.empty());
+            new CompatModeEncoder(config.marshaller()) : IdentityEncoder.INSTANCE);
    }
 }
 
@@ -119,13 +123,19 @@ public class DefaultIterationManager implements IterationManager {
    }
 
    @Override
-   public String start(String cacheName, Optional<BitSet> segments, Optional<KeyValuePair<String, List<byte[]>>> namedFactory, int batch, boolean metadata) {
+   public String start(Cache cache, Optional<BitSet> segments, Optional<KeyValuePair<String, List<byte[]>>> namedFactory, int batch, boolean metadata) {
       String iterationId = UUID.randomUUID().toString();
-      CacheStream<CacheEntry<Object, Object>> stream = cacheManager.getCache(cacheName).getAdvancedCache().cacheEntrySet().stream();
+      AdvancedCache<Object, Object> advancedCache = cache.getAdvancedCache();
+      CompatibilityModeConfiguration compatibilityConfig = advancedCache.getCacheConfiguration().compatibility();
+
+      AdvancedCache<Object, Object> iterationCache = compatibilityConfig.enabled() ?
+            (AdvancedCache<Object, Object>) advancedCache.withEncoding(IdentityEncoder.class) : advancedCache;
+
+      CacheStream<CacheEntry<Object, Object>> stream = iterationCache.cacheEntrySet().stream();
       segments.map(bitSet -> stream.filterKeySegments(bitSet.stream().boxed().collect(Collectors.toSet())));
 
       IterationSegmentsListener segmentListener = new IterationSegmentsListener();
-      CompatInfo compatInfo = CompatInfo.create(cacheManager.getCache(cacheName).getCacheConfiguration().compatibility());
+      CompatInfo compatInfo = CompatInfo.create(compatibilityConfig);
 
       Stream<CacheEntry<Object, Object>> filteredStream;
       if (namedFactory.isPresent()) {

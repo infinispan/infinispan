@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DistributedCallable;
@@ -25,6 +25,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 /**
  * Base class for mass indexer tasks.
+ *
  * @author gustavonalle
  * @since 7.1
  */
@@ -35,11 +36,11 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    private final boolean clean;
    private final boolean primaryOwner;
    protected Cache<Object, Object> cache;
-   protected TypeConverter typeConverter;
    protected IndexUpdater indexUpdater;
    private Set<Object> everywhereKeys;
    private Set<Object> keys = new HashSet<>();
    private ClusteringDependentLogic clusteringDependentLogic;
+   private Encoder valueEncoder;
 
    public IndexWorker(Class<?> entity, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
       this.entity = entity;
@@ -55,11 +56,12 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       this.indexUpdater = new IndexUpdater(cache);
       ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
-      this.typeConverter = componentRegistry.getComponent(TypeConverter.class);
       if (everywhereKeys != null && everywhereKeys.size() > 0)
          keys.addAll(everywhereKeys);
       if (inputKeys != null && inputKeys.size() > 0)
          keys.addAll(inputKeys);
+
+      valueEncoder = cache.getAdvancedCache().getValueEncoder();
    }
 
    protected void preIndex() {
@@ -76,10 +78,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    private Object extractValue(Object wrappedValue) {
-      if (typeConverter != null) {
-         return typeConverter.unboxValue(wrappedValue);
-      }
-      return wrappedValue;
+      return valueEncoder.fromStorage(wrappedValue);
    }
 
    @Override

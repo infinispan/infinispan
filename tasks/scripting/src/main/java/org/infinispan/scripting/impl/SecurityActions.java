@@ -5,12 +5,14 @@ import java.security.PrivilegedAction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
+import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheEntryAction;
 import org.infinispan.security.actions.GetGlobalComponentRegistryAction;
 import org.infinispan.security.impl.SecureCacheImpl;
@@ -43,6 +45,11 @@ final class SecurityActions {
       return doPrivileged(action);
    }
 
+   static <K, V> Configuration getCacheConfiguration(final Cache<K, V> cache) {
+      GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache.getAdvancedCache());
+      return doPrivileged(action);
+   }
+
    static <K, V> CacheEntry<K, V> getCacheEntry(final AdvancedCache<K, V> cache, K key) {
       GetCacheEntryAction<K, V> action = new GetCacheEntryAction<K, V>(cache, key);
       return doPrivileged(action);
@@ -50,7 +57,7 @@ final class SecurityActions {
 
    static <K, V> Cache<K, V> getUnwrappedCache(final Cache<K, V> cache) {
       if (cache instanceof SecureCacheImpl) {
-         return doPrivileged(() ->  ((SecureCacheImpl)cache).getDelegate() );
+         return doPrivileged(() -> ((SecureCacheImpl) cache).getDelegate());
       } else {
          return cache;
       }

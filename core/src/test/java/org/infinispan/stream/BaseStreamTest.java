@@ -60,7 +60,7 @@ import org.testng.annotations.Test;
  * Base test class for streams to verify proper behavior of all of the terminal operations for all of the various
  * stream classes
  */
-@Test(groups="functional")
+@Test(groups = "functional")
 public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected ConfigurationBuilder builderUsed;
@@ -161,7 +161,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(4.5, createStream(entrySet).collect(CacheCollectors.serializableCollector(
-              () -> Collectors.averagingInt(Map.Entry::getKey))));
+            () -> Collectors.averagingInt(Map.Entry::getKey))));
    }
 
    public void testObjCollectorIntStatistics() {
@@ -174,7 +174,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       IntSummaryStatistics stats = createStream(entrySet).collect(CacheCollectors.serializableCollector(
-              () -> Collectors.summarizingInt(Map.Entry::getKey)));
+            () -> Collectors.summarizingInt(Map.Entry::getKey)));
       assertEquals(10, stats.getCount());
       assertEquals(4.5, stats.getAverage());
       assertEquals(0, stats.getMin());
@@ -191,9 +191,9 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
-            ConcurrentMap<Boolean, List<Map.Entry<Integer, String>>> grouped = createStream(entrySet).collect(
-                    CacheCollectors.serializableCollector(
-                            () -> Collectors.groupingByConcurrent(k -> k.getKey() % 2 == 0)));
+      ConcurrentMap<Boolean, List<Map.Entry<Integer, String>>> grouped = createStream(entrySet).collect(
+            CacheCollectors.serializableCollector(
+                  () -> Collectors.groupingByConcurrent(k -> k.getKey() % 2 == 0)));
       grouped.get(true).parallelStream().forEach(e -> assertTrue(e.getKey() % 2 == 0));
       grouped.get(false).parallelStream().forEach(e -> assertTrue(e.getKey() % 2 == 1));
    }
@@ -208,7 +208,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       List<Map.Entry<Integer, String>> list = createStream(entrySet).collect(ArrayList::new,
-              ArrayList::add, ArrayList::addAll);
+            ArrayList::add, ArrayList::addAll);
       assertEquals(cache.size(), list.size());
       list.parallelStream().forEach(e -> assertEquals(cache.get(e.getKey()), e.getValue()));
    }
@@ -223,8 +223,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       List<Map.Entry<Integer, String>> list = createStream(entrySet).sorted(
-              (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).collect(
-              CacheCollectors.serializableCollector(Collectors::toList));
+            (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).collect(
+            CacheCollectors.serializableCollector(Collectors::toList));
       assertEquals(cache.size(), list.size());
       AtomicInteger i = new AtomicInteger();
       list.forEach(e -> {
@@ -272,7 +272,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(0, createStream(entrySet).sorted(
-              (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).findFirst().get().getKey().intValue());
+            (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).findFirst().get().getKey().intValue());
    }
 
    public void testObjForEach() {
@@ -295,7 +295,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachInjected<E> implements Consumer<E>,
-           CacheAware<Integer, String>, Serializable, ExternalPojo {
+         CacheAware<Integer, String>, Serializable, ExternalPojo {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -387,7 +387,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       try {
          testIntOperation(() -> {
             createStream(cache.values()).forEach(new ForEachInjected<>(cacheOffset, atomicOffset,
-                    e -> Integer.valueOf(e.substring(0, 1))));
+                  e -> Integer.valueOf(e.substring(0, 1))));
             return ((AtomicInteger) getForEachObject(atomicOffset)).get();
          }, cache);
       } finally {
@@ -409,11 +409,11 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int queueOffset = populateNextForEachStructure(queue);
       try {
          createStream(entrySet).distributedBatchSize(5)
-                 .flatMap(e -> Arrays.stream(e.getValue().split("a")))
-                 .forEach(e -> {
-                    Queue<String> localQueue = getForEachObject(queueOffset);
-                    localQueue.add(e);
-                 });
+               .flatMap(e -> Arrays.stream(e.getValue().split("a")))
+               .forEach(e -> {
+                  Queue<String> localQueue = getForEachObject(queueOffset);
+                  localQueue.add(e);
+               });
          assertEquals(range * 2, queue.size());
 
          int lueCount = 0;
@@ -438,7 +438,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       List<Map.Entry<Integer, String>> list = new ArrayList<>(range);
       // we sort inverted order
       createStream(entrySet).sorted((e1, e2) -> Integer.compare(e2.getKey(), e1.getKey())).forEachOrdered(
-              list::add);
+            list::add);
       assertEquals(range, list.size());
       for (int i = 0; i < range; ++i) {
          // 0 based so we have to also subtract by 1
@@ -456,7 +456,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(Integer.valueOf(9),
-              createStream(entrySet).max((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).get().getKey());
+            createStream(entrySet).max((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).get().getKey());
    }
 
    public void testObjMin() {
@@ -469,7 +469,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(Integer.valueOf(0),
-              createStream(entrySet).min((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).get().getKey());
+            createStream(entrySet).min((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).get().getKey());
    }
 
    public void testObjNoneMatch() {
@@ -499,7 +499,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       // This isn't the best usage of this, but should be a usable example
       Optional<Map.Entry<Integer, String>> optional = createStream(entrySet).reduce(
-              (e1, e2) -> new ImmortalCacheEntry(e1.getKey() + e2.getKey(), e1.getValue() + e2.getValue()));
+            (e1, e2) -> new ImmortalCacheEntry(e1.getKey() + e2.getKey(), e1.getValue() + e2.getValue()));
       assertTrue(optional.isPresent());
       Map.Entry<Integer, String> result = optional.get();
       assertEquals((range - 1) * (range / 2), result.getKey().intValue());
@@ -517,7 +517,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       // This isn't the best usage of this, but should be a usable example
       Map.Entry<Integer, String> result = createStream(entrySet).reduce(new ImmortalCacheEntry(0, ""),
-              (e1, e2) -> new ImmortalCacheEntry(e1.getKey() + e2.getKey(), e1.getValue() + e2.getValue()));
+            (e1, e2) -> new ImmortalCacheEntry(e1.getKey() + e2.getKey(), e1.getValue() + e2.getValue()));
       assertEquals((range - 1) * (range / 2), result.getKey().intValue());
       assertEquals(range * 7, result.getValue().length());
    }
@@ -556,7 +556,10 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       testIntOperation(() -> {
          Iterator<Map.Entry<Integer, String>> iterator = createStream(cache.entrySet()).iterator();
          AtomicInteger count = new AtomicInteger();
-         iterator.forEachRemaining(e -> { assertEquals(cache.get(e.getKey()), e.getValue()); count.addAndGet(e.getKey());});
+         iterator.forEachRemaining(e -> {
+            assertEquals(cache.get(e.getKey()), e.getValue());
+            count.addAndGet(e.getKey());
+         });
          return count.get();
       }, cache);
    }
@@ -571,7 +574,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       Iterator<Map.Entry<Integer, String>> iterator = createStream(entrySet).sorted(
-              (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).iterator();
+            (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).iterator();
       AtomicInteger i = new AtomicInteger();
       iterator.forEachRemaining(e -> {
          assertEquals(i.getAndIncrement(), e.getKey().intValue());
@@ -621,8 +624,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       Object[] array = createStream(entrySet).toArray();
       assertEquals(cache.size(), array.length);
-      Spliterator<Map.Entry<Integer,String>> spliterator = Spliterators.spliterator(array, Spliterator.DISTINCT |
-              Spliterator.NONNULL);
+      Spliterator<Map.Entry<Integer, String>> spliterator = Spliterators.spliterator(array, Spliterator.DISTINCT |
+            Spliterator.NONNULL);
       StreamSupport.stream(spliterator, false).forEach(e -> assertEquals(cache.get(e.getKey()), e.getValue()));
    }
 
@@ -637,8 +640,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       Map.Entry<Integer, String>[] array = createStream(entrySet).toArray(Map.Entry[]::new);
       assertEquals(cache.size(), array.length);
-      Spliterator<Map.Entry<Integer,String>> spliterator = Spliterators.spliterator(array, Spliterator.DISTINCT |
-              Spliterator.NONNULL);
+      Spliterator<Map.Entry<Integer, String>> spliterator = Spliterators.spliterator(array, Spliterator.DISTINCT |
+            Spliterator.NONNULL);
       StreamSupport.stream(spliterator, false).forEach(e -> assertEquals(cache.get(e.getKey()), e.getValue()));
    }
 
@@ -653,7 +656,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       for (int i = 0; i < range; ++i) {
          Iterator<Map.Entry<Integer, String>> iterator = createStream(entrySet).sorted(
-                 (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).skip(i).iterator();
+               (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).skip(i).iterator();
          AtomicInteger atomicInteger = new AtomicInteger(i);
          iterator.forEachRemaining(e -> {
             assertEquals(atomicInteger.getAndIncrement(), e.getKey().intValue());
@@ -674,7 +677,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       for (int i = 1; i < range; ++i) {
          Iterator<Map.Entry<Integer, String>> iterator = createStream(entrySet).sorted(
-                 (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).limit(i).iterator();
+               (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).limit(i).iterator();
          AtomicInteger atomicInteger = new AtomicInteger();
          iterator.forEachRemaining(e -> {
             assertEquals(atomicInteger.getAndIncrement(), e.getKey().intValue());
@@ -694,7 +697,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       IntSummaryStatistics stats = createStream(entrySet).sorted((e1, e2) -> Integer.compare(e1.getKey(), e2.getKey()))
-              .mapToInt(Map.Entry::getKey).summaryStatistics();
+            .mapToInt(Map.Entry::getKey).summaryStatistics();
       assertEquals(range, stats.getCount());
       assertEquals(0, stats.getMin());
       assertEquals(9, stats.getMax());
@@ -827,11 +830,11 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int offset = populateNextForEachStructure(new AtomicInteger());
       try {
          createStream(entrySet).distributedBatchSize(5).mapToInt(toInt).flatMap(i -> IntStream.of(i, 2))
-                 .forEach(e -> {
+               .forEach(e -> {
 
-                    AtomicInteger atomic = getForEachObject(offset);
-                    atomic.addAndGet(e);
-                 });
+                  AtomicInteger atomic = getForEachObject(offset);
+                  atomic.addAndGet(e);
+               });
          AtomicInteger atomic = getForEachObject(offset);
          assertEquals((range - 1) * (range / 2) + 2 * range, atomic.get());
       } finally {
@@ -851,7 +854,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       List<Integer> list = new ArrayList<>(range);
       // we sort inverted order
       createStream(entrySet).mapToInt(toInt).sorted().forEachOrdered(
-              list::add);
+            list::add);
       assertEquals(range, list.size());
       for (int i = 0; i < range; ++i) {
          // 0 based so we have to also subtract by 1
@@ -860,7 +863,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachIntInjected implements IntConsumer,
-           CacheAware<Integer, String>, Serializable, ExternalPojo {
+         CacheAware<Integer, String>, Serializable, ExternalPojo {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -947,11 +950,11 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int offset = populateNextForEachStructure(new AtomicInteger());
       try {
          createStream(entrySet).distributedBatchSize(5).mapToInt(toInt).flatMap(i -> IntStream.of(i, 2))
-                 .forEach((c, e) -> {
-                    assertEquals(cacheName, c.getName());
-                    AtomicInteger atomic = getForEachObject(offset);
-                    atomic.addAndGet(e);
-                 });
+               .forEach((c, e) -> {
+                  assertEquals(cacheName, c.getName());
+                  AtomicInteger atomic = getForEachObject(offset);
+                  atomic.addAndGet(e);
+               });
          AtomicInteger atomic = getForEachObject(offset);
          assertEquals((range - 1) * (range / 2) + 2 * range, atomic.get());
       } finally {
@@ -965,7 +968,10 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       testIntOperation(() -> {
          PrimitiveIterator.OfInt iterator = createStream(cache.entrySet()).mapToInt(toInt).iterator();
          AtomicInteger count = new AtomicInteger();
-         iterator.forEachRemaining((int e) -> { assertTrue(cache.containsKey(e)); count.addAndGet(e); });
+         iterator.forEachRemaining((int e) -> {
+            assertTrue(cache.containsKey(e));
+            count.addAndGet(e);
+         });
          return count.get();
       }, cache);
    }
@@ -994,7 +1000,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfInt iterator = createStream(entrySet).flatMapToInt(
-                      e -> IntStream.of(e.getKey(), e.getValue().length())).iterator();
+            e -> IntStream.of(e.getKey(), e.getValue().length())).iterator();
 
       int pos = 0;
       int halfCount = 0;
@@ -1053,7 +1059,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(0, createStream(entrySet).mapToInt(toInt).reduce((i1, i2) -> i1 * i2).getAsInt());
 
       assertEquals(362880, createStream(entrySet).mapToInt(toInt).filter(i -> i != 0).reduce((i1, i2) -> i1 * i2)
-              .getAsInt());
+            .getAsInt());
    }
 
    public void testIntSummaryStatistics() {
@@ -1135,7 +1141,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       for (int i = 0; i < range; i++) {
          IntSummaryStatistics stats = createStream(entrySet).mapToInt(toInt)
-                 .sorted().skip(i).summaryStatistics();
+               .sorted().skip(i).summaryStatistics();
          assertEquals(range - i, stats.getCount());
          assertEquals(i, stats.getMin());
          assertEquals(range - 1, stats.getMax());
@@ -1152,7 +1158,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       for (int i = 1; i < range; i++) {
          IntSummaryStatistics stats = createStream(entrySet).mapToInt(toInt)
-                 .sorted().limit(i).summaryStatistics();
+               .sorted().limit(i).summaryStatistics();
          assertEquals(i, stats.getCount());
          assertEquals(0, stats.getMin());
          assertEquals(i - 1, stats.getMax());
@@ -1287,10 +1293,10 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int offset = populateNextForEachStructure(new AtomicLong());
       try {
          createStream(entrySet).distributedBatchSize(5).mapToLong(toLong).flatMap(i -> LongStream.of(i, 2))
-                 .forEach(e -> {
-                    AtomicLong atomic = getForEachObject(offset);
-                    atomic.addAndGet(e);
-                 });
+               .forEach(e -> {
+                  AtomicLong atomic = getForEachObject(offset);
+                  atomic.addAndGet(e);
+               });
          AtomicLong atomic = getForEachObject(offset);
          assertEquals((range - 1) * (range / 2) + 2 * range, atomic.get());
       } finally {
@@ -1310,7 +1316,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       List<Long> list = new ArrayList<>(range);
       // we sort inverted order
       createStream(entrySet).mapToLong(toLong).sorted().forEachOrdered(
-              list::add);
+            list::add);
       assertEquals(range, list.size());
       for (int i = 0; i < range; ++i) {
          // 0 based so we have to also subtract by 1
@@ -1319,7 +1325,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachLongInjected implements LongConsumer,
-           CacheAware<Long, String>, Serializable, ExternalPojo {
+         CacheAware<Long, String>, Serializable, ExternalPojo {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -1406,11 +1412,11 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int offset = populateNextForEachStructure(new AtomicLong());
       try {
          createStream(entrySet).distributedBatchSize(5).mapToLong(toLong).flatMap(i -> LongStream.of(i, 2))
-                 .forEach((c, e) -> {
-                    assertEquals(cacheName, c.getName());
-                    AtomicLong atomic = getForEachObject(offset);
-                    atomic.addAndGet(e);
-                 });
+               .forEach((c, e) -> {
+                  assertEquals(cacheName, c.getName());
+                  AtomicLong atomic = getForEachObject(offset);
+                  atomic.addAndGet(e);
+               });
          AtomicLong atomic = getForEachObject(offset);
          assertEquals((range - 1) * (range / 2) + 2 * range, atomic.get());
       } finally {
@@ -1424,7 +1430,10 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       testLongOperation(() -> {
          PrimitiveIterator.OfLong iterator = createStream(cache.entrySet()).mapToLong(toLong).iterator();
          AtomicLong count = new AtomicLong();
-         iterator.forEachRemaining((long e) -> { assertTrue(cache.containsKey(e)); count.addAndGet(e); });
+         iterator.forEachRemaining((long e) -> {
+            assertTrue(cache.containsKey(e));
+            count.addAndGet(e);
+         });
          return count.get();
       }, cache);
    }
@@ -1453,7 +1462,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Long, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfLong iterator = createStream(entrySet).flatMapToLong(
-                      e -> LongStream.of(e.getKey(), e.getValue().length())).iterator();
+            e -> LongStream.of(e.getKey(), e.getValue().length())).iterator();
 
       int pos = 0;
       int halfCount = 0;
@@ -1512,7 +1521,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(0, createStream(entrySet).mapToLong(toLong).reduce((i1, i2) -> i1 * i2).getAsLong());
 
       assertEquals(362880, createStream(entrySet).mapToLong(toLong).filter(i -> i != 0).reduce((i1, i2) -> i1 * i2)
-              .getAsLong());
+            .getAsLong());
    }
 
    public void testLongSummaryStatistics() {
@@ -1594,7 +1603,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       for (int i = 0; i < range; i++) {
          LongSummaryStatistics stats = createStream(entrySet).mapToLong(toLong)
-                 .sorted().skip(i).summaryStatistics();
+               .sorted().skip(i).summaryStatistics();
          assertEquals(range - i, stats.getCount());
          assertEquals(i, stats.getMin());
          assertEquals(range - 1, stats.getMax());
@@ -1611,7 +1620,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       for (int i = 1; i < range; i++) {
          LongSummaryStatistics stats = createStream(entrySet).mapToLong(toLong)
-                 .sorted().limit(i).summaryStatistics();
+               .sorted().limit(i).summaryStatistics();
          assertEquals(i, stats.getCount());
          assertEquals(0, stats.getMin());
          assertEquals(i - 1, stats.getMax());
@@ -1675,7 +1684,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       HashSet<Double> set = createStream(entrySet).mapToDouble(toDouble).collect(HashSet::new,
-              Set::add, Set::addAll);
+            Set::add, Set::addAll);
       assertEquals(10, set.size());
    }
 
@@ -1749,12 +1758,12 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int offset = populateNextForEachStructure(new DoubleSummaryStatistics());
       try {
          createStream(entrySet).distributedBatchSize(5).mapToDouble(toDouble).flatMap(e -> DoubleStream.of(e, 2.25))
-                 .forEach(e -> {
-                    DoubleSummaryStatistics stats = getForEachObject(offset);
-                    synchronized (stats) {
-                       stats.accept(e);
-                    }
-                 });
+               .forEach(e -> {
+                  DoubleSummaryStatistics stats = getForEachObject(offset);
+                  synchronized (stats) {
+                     stats.accept(e);
+                  }
+               });
          DoubleSummaryStatistics stats = getForEachObject(offset);
          assertEquals(2.25, stats.getAverage());
          assertEquals(0.0, stats.getMin());
@@ -1778,7 +1787,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       List<Double> list = new ArrayList<>(range);
       // we sort inverted order
       createStream(entrySet).mapToDouble(toDouble).sorted().forEachOrdered(
-              list::add);
+            list::add);
       assertEquals(range, list.size());
       for (int i = 0; i < range; ++i) {
          // 0 based so we have to also subtract by 1
@@ -1787,7 +1796,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
    }
 
    private static class ForEachDoubleInjected<E> implements DoubleConsumer,
-           CacheAware<Double, String>, Serializable, ExternalPojo {
+         CacheAware<Double, String>, Serializable, ExternalPojo {
       private transient Cache<?, ?> cache;
       private final int cacheOffset;
       private final int atomicOffset;
@@ -1839,7 +1848,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       try {
          testDoubleOperation(() -> {
             createStream(cache.entrySet()).mapToDouble(toDouble).forEach(new ForEachDoubleInjected<>(cacheOffset,
-                    offset));
+                  offset));
             return getForEachObject(offset);
          }, cache);
       } finally {
@@ -1886,13 +1895,13 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int offset = populateNextForEachStructure(new DoubleSummaryStatistics());
       try {
          createStream(entrySet).distributedBatchSize(5).mapToDouble(toDouble).flatMap(e -> DoubleStream.of(e, 2.25))
-                 .forEach((c, e) -> {
-                    assertEquals(cacheName, c.getName());
-                    DoubleSummaryStatistics stats = getForEachObject(offset);
-                    synchronized (stats) {
-                       stats.accept(e);
-                    }
-                 });
+               .forEach((c, e) -> {
+                  assertEquals(cacheName, c.getName());
+                  DoubleSummaryStatistics stats = getForEachObject(offset);
+                  synchronized (stats) {
+                     stats.accept(e);
+                  }
+               });
          DoubleSummaryStatistics stats = getForEachObject(offset);
          assertEquals(2.25, stats.getAverage());
          assertEquals(0.0, stats.getMin());
@@ -1941,7 +1950,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Double, String>> entrySet = cache.entrySet();
 
       PrimitiveIterator.OfDouble iterator = createStream(entrySet).flatMapToDouble(
-                      e -> DoubleStream.of(e.getKey(), .5)).iterator();
+            e -> DoubleStream.of(e.getKey(), .5)).iterator();
 
       int pos = 0;
       int halfCount = 0;
@@ -1985,7 +1994,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).reduce(1.0, (i1, i2) -> i1 * i2));
 
       assertEquals(708.75, createStream(entrySet).mapToDouble(toDouble).filter(i -> i != 0).reduce(1.0,
-              (i1, i2) -> i1 * i2));
+            (i1, i2) -> i1 * i2));
    }
 
    public void testDoubleReduce2() {
@@ -2001,7 +2010,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(0.0, createStream(entrySet).mapToDouble(toDouble).reduce((i1, i2) -> i1 * i2).getAsDouble());
 
       assertEquals(708.75, createStream(entrySet).mapToDouble(toDouble).filter(i -> i != 0)
-              .reduce((i1, i2) -> i1 * i2).getAsDouble());
+            .reduce((i1, i2) -> i1 * i2).getAsDouble());
    }
 
    public void testDoubleSummaryStatistics() {
@@ -2071,7 +2080,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       for (int i = 0; i < range; i++) {
          DoubleSummaryStatistics stats = createStream(entrySet).mapToDouble(toDouble)
-                 .sorted().skip(i).summaryStatistics();
+               .sorted().skip(i).summaryStatistics();
          assertEquals(range - i, stats.getCount());
          assertEquals((double) i, stats.getMin());
          assertEquals((double) range - 1, stats.getMax());
@@ -2088,7 +2097,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       for (int i = 1; i < range; i++) {
          DoubleSummaryStatistics stats = createStream(entrySet).mapToDouble(toDouble)
-                 .sorted().limit(i).summaryStatistics();
+               .sorted().limit(i).summaryStatistics();
          assertEquals(i, stats.getCount());
          assertEquals(0d, stats.getMin());
          assertEquals((double) i - 1, stats.getMax());
@@ -2120,7 +2129,10 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       Iterator<Integer> iterator = createStream(keySet).iterator();
       AtomicInteger count = new AtomicInteger();
-      iterator.forEachRemaining(e -> { assertTrue(cache.containsKey(e)); count.addAndGet(e);});
+      iterator.forEachRemaining(e -> {
+         assertTrue(cache.containsKey(e));
+         count.addAndGet(e);
+      });
       assertEquals((range - 1) * (range / 2), count.get());
    }
 
@@ -2137,7 +2149,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       AtomicInteger count = new AtomicInteger();
       iterator.forEachRemaining(e -> {
          Integer key = Integer.valueOf(e.substring(0, 1));
-         assertEquals(cache.get(key), e); count.addAndGet(key);
+         assertEquals(cache.get(key), e);
+         count.addAndGet(key);
       });
       assertEquals((range - 1) * (range / 2), count.get());
    }
@@ -2152,7 +2165,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Integer> keySet = cache.keySet();
 
       PrimitiveIterator.OfInt iterator = createStream(keySet).flatMapToInt(
-              i -> IntStream.of(i, 3)).iterator();
+            i -> IntStream.of(i, 3)).iterator();
       int pos = 0;
       int halfCount = 0;
       while (iterator.hasNext()) {
@@ -2178,9 +2191,9 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheCollection<String> keySet = cache.values();
 
       assertEquals("9-value",
-              createStream(keySet).max((e1, e2) -> Integer.compare(
-                              Integer.valueOf(e1.substring(0, 1)),
-                              Integer.valueOf(e2.substring(0, 1)))).get());
+            createStream(keySet).max((e1, e2) -> Integer.compare(
+                  Integer.valueOf(e1.substring(0, 1)),
+                  Integer.valueOf(e2.substring(0, 1)))).get());
    }
 
    public void testObjValuesIterator() {
@@ -2196,7 +2209,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       AtomicInteger count = new AtomicInteger();
       iterator.forEachRemaining(e -> {
          Integer key = Integer.valueOf(e.substring(0, 1));
-         assertEquals(cache.get(key), e); count.addAndGet(key);
+         assertEquals(cache.get(key), e);
+         count.addAndGet(key);
       });
       assertEquals((range - 1) * (range / 2), count.get());
    }
@@ -2211,7 +2225,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheCollection<String> values = cache.values();
 
       PrimitiveIterator.OfInt iterator = createStream(values).mapToInt(
-                      e -> Integer.valueOf(e.substring(0, 1))).iterator();
+            e -> Integer.valueOf(e.substring(0, 1))).iterator();
 
       AtomicInteger count = new AtomicInteger();
       iterator.forEachRemaining((int e) -> {
@@ -2231,7 +2245,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheCollection<String> values = cache.values();
 
       PrimitiveIterator.OfInt iterator = createStream(values).flatMapToInt(
-                      e -> IntStream.of(Integer.valueOf(e.substring(0, 1)), e.length())).iterator();
+            e -> IntStream.of(Integer.valueOf(e.substring(0, 1)), e.length())).iterator();
 
       int pos = 0;
       int halfCount = 0;
@@ -2268,7 +2282,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       });
 
       assertEquals(realCount.get(), createStream(entrySet).filterKeySegments(
-              IntStream.range(0, segments).boxed().collect(Collectors.toSet())).count());
+            IntStream.range(0, segments).boxed().collect(Collectors.toSet())).count());
    }
 
    public void testKeyFilter() {

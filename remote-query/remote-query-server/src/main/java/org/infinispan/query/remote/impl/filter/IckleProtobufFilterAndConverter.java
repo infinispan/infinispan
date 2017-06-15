@@ -18,7 +18,6 @@ import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.remote.impl.CompatibilityReflectionMatcher;
 import org.infinispan.query.remote.impl.ExternalizerIds;
-import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 
 /**
  * A subclass of JPAFilterAndConverter that is able to deal with binary values wrapped in a ProtobufValueWrapper.
@@ -27,8 +26,6 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
  * @since 7.2
  */
 public final class IckleProtobufFilterAndConverter extends IckleFilterAndConverter<Object, Object> {
-
-   private boolean usesValueWrapper;
 
    private boolean isCompatMode;
 
@@ -43,7 +40,6 @@ public final class IckleProtobufFilterAndConverter extends IckleFilterAndConvert
       if (isCompatMode) {
          matcherImplClass = CompatibilityReflectionMatcher.class;
       }
-      usesValueWrapper = cfg.indexing().index().isEnabled() && !isCompatMode;
       super.injectDependencies(cache);
    }
 
@@ -51,9 +47,6 @@ public final class IckleProtobufFilterAndConverter extends IckleFilterAndConvert
    public ObjectFilter.FilterResult filterAndConvert(Object key, Object value, Metadata metadata) {
       if (value == null) {
          return null;
-      }
-      if (usesValueWrapper) {
-         value = ((ProtobufValueWrapper) value).getBinary();
       }
       return getObjectFilter().filter(value);
    }

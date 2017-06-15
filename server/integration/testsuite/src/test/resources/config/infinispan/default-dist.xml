@@ -41,6 +41,11 @@
                         timeout="600000" />
                 </distributed-cache>
                 <distributed-cache name="namedCache" />
+                <distributed-cache name="offHeapCache">
+                    <memory>
+                        <off-heap/>
+                    </memory>
+                </distributed-cache>
                 <distributed-cache name="streamingTestCache" />
             </cache-container>
             <cache-container name="security"/>

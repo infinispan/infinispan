@@ -8,7 +8,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.it.compatibility.EmbeddedRestMemcachedHotRodTest.SpyMemcachedCompatibleMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -34,8 +33,8 @@ public class DistMemcachedEmbeddedTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new CompatibilityCacheFactory<String, Object>(cacheName, new SpyMemcachedCompatibleMarshaller(), CacheMode.DIST_SYNC, numOwners).setup();
-      cacheFactory2 = new CompatibilityCacheFactory<String, Object>(cacheName, new SpyMemcachedCompatibleMarshaller(), CacheMode.DIST_SYNC, numOwners)
+      cacheFactory1 = new CompatibilityCacheFactory<String, Object>(cacheName, new SpyMemcachedCompatibleMarshaller(), CacheMode.DIST_SYNC, numOwners, new MemcachedEncoder()).setup();
+      cacheFactory2 = new CompatibilityCacheFactory<String, Object>(cacheName, new SpyMemcachedCompatibleMarshaller(), CacheMode.DIST_SYNC, numOwners, new MemcachedEncoder())
             .setup(cacheFactory1.getMemcachedPort(), 100);
    }
 
@@ -46,13 +45,13 @@ public class DistMemcachedEmbeddedTest extends AbstractInfinispanTest {
 
    public void testMemcachedPutEmbeddedGet() throws Exception {
       // 1. Put with Memcached
-      for (int i=0; i != numEntries; i++) {
+      for (int i = 0; i != numEntries; i++) {
          Future<Boolean> f = cacheFactory2.getMemcachedClient().set("k" + i, 0, "v" + i);
          assertTrue(f.get(60, TimeUnit.SECONDS));
       }
 
       // 2. Get with Embedded from a different node
-      for (int i=0; i != numEntries; i++) {
+      for (int i = 0; i != numEntries; i++) {
          assertEquals("v" + i, cacheFactory1.getEmbeddedCache().get("k" + i));
          cacheFactory1.getEmbeddedCache().remove("k" + i);
       }
@@ -60,12 +59,12 @@ public class DistMemcachedEmbeddedTest extends AbstractInfinispanTest {
 
    public void testEmbeddedPutMemcachedGet() throws IOException {
       // 1. Put with Embedded
-      for (int i=0; i != numEntries; i++) {
+      for (int i = 0; i != numEntries; i++) {
          assertEquals(null, cacheFactory2.getEmbeddedCache().put("k" + i, "v" + i));
       }
 
       // 2. Get with Memcached from a different node
-      for (int i=0; i != numEntries; i++) {
+      for (int i = 0; i != numEntries; i++) {
          assertEquals("v" + i, cacheFactory1.getMemcachedClient().get("k" + i));
       }
    }

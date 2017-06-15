@@ -15,7 +15,6 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.util.BulkUtil;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.KeyValuePair;
@@ -137,7 +136,7 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
                log.tracef("About to create bulk get keys response scope = %d", scope);
             }
             writeResponse(msg, ctx.channel(), new BulkGetKeysResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-                  h.topologyId, scope, BulkUtil.getAllKeys(msg.cache, scope)));
+                  h.topologyId, scope, msg.cache.keySet().iterator()));
             break;
          case QUERY:
             byte[] queryResult = server.query(msg.cache, (byte[]) msg.operationDecodeContext);
@@ -167,7 +166,7 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
             } else {
                optionBitSet = Optional.empty();
             }
-            String iterationId = server.getIterationManager().start(msg.cache.getName(), optionBitSet,
+            String iterationId = server.getIterationManager().start(msg.cache, optionBitSet,
                   iterationStart.getFactory(), iterationStart.getBatch(), iterationStart.isMetadata());
             writeResponse(msg, ctx.channel(), new IterationStartResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, h.topologyId, iterationId));

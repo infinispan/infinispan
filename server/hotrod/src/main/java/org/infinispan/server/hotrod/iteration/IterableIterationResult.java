@@ -49,6 +49,6 @@ public class IterableIterationResult {
    }
 
    public Object unbox(Object value) {
-      return compatInfo.hotRodTypeConverter.get().unboxValue(value);
+      return compatInfo.valueEncoder.fromStorage(value);
    }
 }

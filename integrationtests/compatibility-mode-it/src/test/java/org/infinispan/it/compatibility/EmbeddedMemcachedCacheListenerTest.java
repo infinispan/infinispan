@@ -9,19 +9,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import net.spy.memcached.CachedData;
 import net.spy.memcached.MemcachedClient;
-import net.spy.memcached.transcoders.SerializingTranscoder;
-import net.spy.memcached.transcoders.Transcoder;
 
 /**
  * Test cache listeners bound to embedded cache and operation over Memcached cache.
@@ -36,7 +30,7 @@ public class EmbeddedMemcachedCacheListenerTest extends AbstractInfinispanTest {
    @BeforeMethod
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<String, String>(
-            "memcachedCache", new SpyMemcachedCompatibleMarshaller(), CacheMode.LOCAL).setup();
+            "memcachedCache", new SpyMemcachedCompatibleMarshaller(), CacheMode.LOCAL, new MemcachedEncoder()).setup();
    }
 
    @AfterMethod
@@ -115,29 +109,4 @@ public class EmbeddedMemcachedCacheListenerTest extends AbstractInfinispanTest {
       l.reset();
    }
 
-   private class SpyMemcachedCompatibleMarshaller extends AbstractMarshaller {
-
-      private final Transcoder<Object> transcoder = new SerializingTranscoder();
-
-      @Override
-      protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
-         CachedData encoded = transcoder.encode(o);
-         return new ByteBufferImpl(encoded.getData(), 0, encoded.getData().length);
-      }
-
-      @Override
-      public Object objectFromByteBuffer(byte[] buf, int offset, int length) {
-         return transcoder.decode(new CachedData(0, buf, length));
-      }
-
-      @Override
-      public boolean isMarshallable(Object o) throws Exception {
-         try {
-            transcoder.encode(o);
-            return true;
-         } catch (Throwable t) {
-            return false;
-         }
-      }
-   }
 }

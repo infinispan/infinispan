@@ -7,19 +7,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -108,8 +108,8 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public <C> void addFilteredListener(Object listener,
-         CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
-         Set<Class<? extends Annotation>> filterAnnotations) {
+                                       CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter,
+                                       Set<Class<? extends Annotation>> filterAnnotations) {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
       delegate.addFilteredListener(listener, filter, converter, filterAnnotations);
    }
@@ -169,7 +169,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
-         TimeUnit maxIdleUnit) {
+                                        TimeUnit maxIdleUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
@@ -241,7 +241,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit,
-         long maxIdle, TimeUnit maxIdleUnit) {
+                                              long maxIdle, TimeUnit maxIdleUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
@@ -405,7 +405,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
-         TimeUnit maxIdleUnit) {
+                                                TimeUnit maxIdleUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
@@ -454,7 +454,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime,
-         TimeUnit maxIdleTimeUnit) {
+                      TimeUnit maxIdleTimeUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       delegate.putAll(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
@@ -571,6 +571,48 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoderClass) {
+      return new SecureCacheImpl<>(delegate.withEncoding(encoderClass), authzManager, subject);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
+      return new SecureCacheImpl<>(delegate.withWrapping(wrapperClass), authzManager, subject);
+   }
+
+   @Override
+   public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoderClass,
+                                           Class<? extends Encoder> valueEncoderClass) {
+      return new SecureCacheImpl<>(delegate.withEncoding(keyEncoderClass, valueEncoderClass), authzManager, subject);
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass,
+                                           Class<? extends Wrapper> valueWrapperClass) {
+      return new SecureCacheImpl<>(delegate.withWrapping(keyWrapperClass, valueWrapperClass), authzManager, subject);
+   }
+
+   @Override
+   public Encoder getKeyEncoder() {
+      return delegate.getKeyEncoder();
+   }
+
+   @Override
+   public Encoder getValueEncoder() {
+      return delegate.getValueEncoder();
+   }
+
+   @Override
+   public Wrapper getKeyWrapper() {
+      return delegate.getKeyWrapper();
+   }
+
+   @Override
+   public Wrapper getValueWrapper() {
+      return delegate.getValueWrapper();
+   }
+
+   @Override
    public int size() {
       authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
       return delegate.size();
@@ -578,7 +620,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime,
-         TimeUnit maxIdleTimeUnit) {
+                          TimeUnit maxIdleTimeUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
@@ -591,7 +633,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle,
-         TimeUnit maxIdleUnit) {
+                                            TimeUnit maxIdleUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
@@ -667,7 +709,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit,
-         long maxIdle, TimeUnit maxIdleUnit) {
+                                                  long maxIdle, TimeUnit maxIdleUnit) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }

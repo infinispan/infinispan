@@ -89,10 +89,10 @@ public class QueryEngine<TypeMetadata> {
     */
    private SearchIntegrator searchFactory;
 
-   private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
+   private static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass, LuceneQueryMaker.FieldBridgeAndAnalyzerProvider<TypeMetadata> fieldBridgeAndAnalyzerProvider) {
-      this.cache = cache;
+      this.cache = wrapCache(cache, isIndexed);
       this.isIndexed = isIndexed;
       this.matcherImplClass = matcherImplClass;
       this.queryCache = ComponentRegistryUtils.getQueryCache(cache);
@@ -103,6 +103,10 @@ public class QueryEngine<TypeMetadata> {
       } else {
          this.fieldBridgeAndAnalyzerProvider = fieldBridgeAndAnalyzerProvider;
       }
+   }
+
+   protected AdvancedCache<?, ?> wrapCache(AdvancedCache<?, ?> cache, boolean isIndexed) {
+      return cache;
    }
 
    protected SearchManager getSearchManager() {
@@ -200,7 +204,7 @@ public class QueryEngine<TypeMetadata> {
          }
          if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
             havingClause = SyntaxTreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult.getTargetEntityMetadata(),
-                    columns, namedParameters, propertyHelper));
+                  columns, namedParameters, propertyHelper));
          }
       }
 

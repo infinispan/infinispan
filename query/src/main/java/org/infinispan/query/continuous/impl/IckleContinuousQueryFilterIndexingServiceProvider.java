@@ -3,6 +3,7 @@ package org.infinispan.query.continuous.impl;
 import java.util.Map;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.notifications.cachelistener.EventWrapper;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -61,7 +62,8 @@ public class IckleContinuousQueryFilterIndexingServiceProvider extends BaseJPAFi
    }
 
    @Override
-   protected void matchEvent(CacheEntryEvent event, Matcher matcher) {
+   protected <K, V> void matchEvent(EventWrapper<K, V, CacheEntryEvent<K, V>> eventWrapper, Matcher matcher) {
+      CacheEntryEvent<?, ?> event = eventWrapper.getEvent();
       Object oldValue = event.getType() == Event.Type.CACHE_ENTRY_REMOVED ? ((CacheEntryRemovedEvent) event).getOldValue() : null;
       if (event.getType() == Event.Type.CACHE_ENTRY_MODIFIED) {
          oldValue = ((EventImpl) event).getOldValue();
@@ -80,7 +82,7 @@ public class IckleContinuousQueryFilterIndexingServiceProvider extends BaseJPAFi
          if (newValue != null && newValue.getClass() == WrappedByteArray.class) {
             newValue = ((WrappedByteArray) newValue).getBytes();
          }
-         matcher.matchDelta(event, event.getType(), oldValue, newValue, joiningEvent, updatedEvent, leavingEvent);
+         matcher.matchDelta(eventWrapper, event.getType(), oldValue, newValue, joiningEvent, updatedEvent, leavingEvent);
       }
    }
 

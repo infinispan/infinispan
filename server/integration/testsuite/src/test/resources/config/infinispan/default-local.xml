@@ -19,6 +19,11 @@
                 </local-cache>
                 <local-cache name="namedCache" />
                 <local-cache name="restNamedCache" />
+                <local-cache name="offHeapCache">
+                    <memory>
+                        <off-heap/>
+                    </memory>
+                </local-cache>
                 <local-cache name="compatibilityCache">
                     <compatibility enabled="true"/>
                 </local-cache>

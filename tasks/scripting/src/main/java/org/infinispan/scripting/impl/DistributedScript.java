@@ -9,6 +9,7 @@ import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.scripting.ScriptingManager;
 
@@ -39,11 +40,15 @@ class DistributedScript<T> implements DistributedCallable<Object, Object, T>, Se
       scriptManager = (ScriptingManagerImpl) SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(ScriptingManager.class);
       bindings = new SimpleBindings();
       bindings.put("inputKeys", inputKeys);
-      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(metadata.dataType(), Optional.empty(), cache.getCacheManager(), null);
+      DataType dataType = metadata.dataType();
+      DataTypedCacheManager dataTypedCacheManager = new DataTypedCacheManager(dataType, Optional.empty(), cache.getCacheManager(), null);
       bindings.put("cacheManager", dataTypedCacheManager);
-      Cache<?, ?> c = cache.getCacheConfiguration().compatibility().enabled()
-            ? cache : new DataTypedCache<>(dataTypedCacheManager, cache);
-      bindings.put("cache", c);
+      if (dataType == DataType.UTF8) {
+         cache = (Cache<Object, Object>) cache.getAdvancedCache().withEncoding(UTF8Encoder.class);
+      } else {
+         cache = cache.getAdvancedCache();
+      }
+      bindings.put("cache", cache);
       ctxParams.entrySet().stream().forEach(e -> bindings.put(e.getKey(), e.getValue()));
    }
 }
