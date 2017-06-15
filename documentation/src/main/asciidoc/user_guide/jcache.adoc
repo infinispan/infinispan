@@ -11,17 +11,21 @@ specifies how to use JCache with Infinispan's implementation of the
 specification, and explains key aspects of the API.
 
 === Dependencies
-In order to start using Infinispan JCache implementation, a single dependency
-needs to be added to the Maven pom.xml file:
+In order to start using Infinispan JCache implementation, the following dependencies
+need to be added to the Maven pom.xml file:
 
 .pom.xml
 [source,xml]
 ----
 <dependency>
    <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-core</artifactId>
+   <version>...</version> <!-- i.e. 7.0.0.Final -->
+</dependency>
+<dependency>
+   <groupId>org.infinispan</groupId>
    <artifactId>infinispan-jcache</artifactId>
    <version>...</version> <!-- i.e. 7.0.0.Final -->
-   <scope>test</scope>
 </dependency>
 ----
 
