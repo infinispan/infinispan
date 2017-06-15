@@ -27,6 +27,8 @@ import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -205,6 +207,44 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         ComputeCommand computeCommand = (ComputeCommand) rCommand;
+         if (!isStoreEnabled(computeCommand) || rCtx.isInTxScope() || !computeCommand.isSuccessful())
+            return;
+         if (!isProperWriter(rCtx, computeCommand, computeCommand.getKey()))
+            return;
+
+         Object key = computeCommand.getKey();
+         if(rv == null) {
+            boolean resp = persistenceManager.deleteFromAllStores(key, BOTH);
+            if (trace)
+               getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, resp);
+         } else {
+            storeEntry(rCtx, key, computeCommand);
+            if (getStatisticsEnabled())
+               cacheStores.incrementAndGet();
+         }
+      });
+   }
+
+   @Override
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
+         ComputeIfAbsentCommand computeIfAbsentCommand = (ComputeIfAbsentCommand) rCommand;
+         if (!isStoreEnabled(computeIfAbsentCommand) || rCtx.isInTxScope() || !computeIfAbsentCommand.isSuccessful())
+            return;
+         if (!isProperWriter(rCtx, computeIfAbsentCommand, computeIfAbsentCommand.getKey()))
+            return;
+
+         Object key = computeIfAbsentCommand.getKey();
+         storeEntry(rCtx, key, computeIfAbsentCommand);
+         if (getStatisticsEnabled())
+            cacheStores.incrementAndGet();
+      });
+   }
+
+   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return invokeNextThenAccept(ctx, command, handlePutMapCommandReturn);
    }
@@ -252,7 +292,6 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          throws Throwable {
       return visitWriteCommand(ctx, command);
    }
-
 
    private <T extends DataWriteCommand & FunctionalCommand> Object visitWriteCommand(InvocationContext ctx,
          VisitableCommand command) throws Throwable {

@@ -1,6 +1,8 @@
 package org.infinispan.interceptors.xsite;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -45,6 +47,16 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+      return handleSingleKeyWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+      return handleSingleKeyWriteCommand(ctx, command);
+   }
+
+   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
@@ -65,13 +77,19 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       if (command instanceof PutKeyValueCommand) {
          PutKeyValueCommand putCommand = (PutKeyValueCommand) command;
          return commandsFactory.buildPutKeyValueCommand(putCommand.getKey(), putCommand.getValue(),
-                                                        putCommand.getMetadata(), putCommand.getFlagsBitSet());
+               putCommand.getMetadata(), putCommand.getFlagsBitSet());
       } else if (command instanceof ReplaceCommand) {
          ReplaceCommand replaceCommand = (ReplaceCommand) command;
          return commandsFactory.buildPutKeyValueCommand(replaceCommand.getKey(), replaceCommand.getNewValue(),
-                                                        replaceCommand.getMetadata(), replaceCommand.getFlagsBitSet());
+               replaceCommand.getMetadata(), replaceCommand.getFlagsBitSet());
       } else if (command instanceof RemoveCommand) {
          return commandsFactory.buildRemoveCommand(command.getKey(), null, command.getFlagsBitSet());
+      } else if (command instanceof ComputeCommand) {
+         ComputeCommand computeCommand = (ComputeCommand) command;
+         return commandsFactory.buildComputeCommand(computeCommand.getKey(), computeCommand.getRemappingBiFunction(), computeCommand.isComputeIfPresent(), computeCommand.getMetadata(), computeCommand.getFlagsBitSet());
+      } else if (command instanceof ComputeIfAbsentCommand) {
+         ComputeIfAbsentCommand computeIfAbsentCommand = (ComputeIfAbsentCommand) command;
+         return commandsFactory.buildComputeIfAbsentCommand(computeIfAbsentCommand.getKey(), computeIfAbsentCommand.getMappingFunction(), computeIfAbsentCommand.getMetadata(), computeIfAbsentCommand.getFlagsBitSet());
       }
       throw new IllegalArgumentException("Command " + command + " is not valid!");
    }

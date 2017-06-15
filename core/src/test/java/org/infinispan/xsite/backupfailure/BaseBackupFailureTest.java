@@ -4,6 +4,8 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -46,6 +48,8 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
       protected volatile boolean putFailed;
       protected volatile boolean removeFailed;
       protected volatile boolean replaceFailed;
+      protected volatile boolean computeFailed;
+      protected volatile boolean computeIfAbsentFailed;
       protected volatile boolean clearFailed;
       protected volatile boolean putMapFailed;
 
@@ -56,6 +60,8 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
          putFailed = false;
          removeFailed = false;
          replaceFailed = false;
+         computeFailed = false;
+         computeIfAbsentFailed = false;
          clearFailed = false;
          putMapFailed = false;
          isFailing = false;
@@ -115,6 +121,26 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (isFailing) {
             replaceFailed = true;
+            throw new CacheException("Induced failure");
+         } else {
+            return invokeNextInterceptor(ctx, command);
+         }
+      }
+
+      @Override
+      public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+         if (isFailing) {
+            computeFailed = true;
+            throw new CacheException("Induced failure");
+         } else {
+            return invokeNextInterceptor(ctx, command);
+         }
+      }
+
+      @Override
+      public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+         if (isFailing) {
+            computeIfAbsentFailed = true;
             throw new CacheException("Induced failure");
          } else {
             return invokeNextInterceptor(ctx, command);

@@ -42,6 +42,8 @@ import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.BackupPutMapRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -122,6 +124,12 @@ public class RemoteCommandsFactory {
                break;
             case ReplaceCommand.COMMAND_ID:
                command = new ReplaceCommand();
+               break;
+            case ComputeCommand.COMMAND_ID:
+               command = new ComputeCommand();
+               break;
+            case ComputeIfAbsentCommand.COMMAND_ID:
+               command = new ComputeIfAbsentCommand();
                break;
             case GetKeyValueCommand.COMMAND_ID:
                command = new GetKeyValueCommand();

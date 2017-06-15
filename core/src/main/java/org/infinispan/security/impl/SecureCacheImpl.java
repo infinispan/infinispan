@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.security.auth.Subject;
 import javax.transaction.TransactionManager;
@@ -346,6 +348,42 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public void putForExternalRead(K key, V value, Metadata metadata) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       delegate.putForExternalRead(key, value);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.compute(key, remappingFunction);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.compute(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfPresent(key, remappingFunction);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfPresent(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfAbsent(key, mappingFunction);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.computeIfAbsent(key, mappingFunction, metadata);
    }
 
    @Override
