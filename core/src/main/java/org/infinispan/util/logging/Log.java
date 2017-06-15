@@ -13,7 +13,6 @@ import java.security.Permission;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -1507,11 +1506,11 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = INFO)
    @Message(value = "Received new x-site view: %s", id = 439)
-   void receivedXSiteClusterView(Set<String> view);
+   void receivedXSiteClusterView(Collection<String> view);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Error sending response for command %s", id = 440)
-   void errorSendingResponse(ReplicableCommand command);
+   @Message(value = "Error sending response for request %d@%s, command %s", id = 440)
+   void errorSendingResponse(long requestId, org.jgroups.Address origin, ReplicableCommand command);
 
    @Message(value = "Unsupported async cache mode '%s' for transactional caches", id = 441)
    CacheConfigurationException unsupportedAsyncCacheMode(CacheMode cacheMode);
@@ -1567,7 +1566,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache contains %s which is not of expected type %s", id = 457)
    IllegalStateException atomicMapHasWrongType(Object value, Class<?> type);
 
-
    @Message(value = "Fine grained maps require clustering.hash.groups enabled.", id = 458)
    IllegalStateException atomicFineGrainedNeedsGroups();
 
@@ -1613,4 +1611,22 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Failed processing values received from remote node during rebalance.", id = 471)
    void failedProcessingValuesDuringRebalance(@Cause Throwable t);
+
+   @Message(value = "Cache manager is stopping", id = 472)
+   IllegalLifecycleStateException cacheManagerIsStopping();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Invalid message type %s received from %s", id = 473)
+   void invalidMessageType(int messageType, org.jgroups.Address origin);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error processing request %d@%s", id = 474)
+   void errorProcessingRequest(long requestId, org.jgroups.Address origin);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error processing response for request %d from %s", id = 475)
+   void errorProcessingResponse(long requestId, org.jgroups.Address sender);
+
+   @Message(value = "Timed out waiting for responses for request %d from %s", id = 476)
+   TimeoutException requestTimedOut(long requestId, String targetsWithoutResponses);
 }

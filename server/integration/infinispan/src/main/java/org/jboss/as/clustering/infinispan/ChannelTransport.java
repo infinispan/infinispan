@@ -22,7 +22,6 @@
 
 package org.jboss.as.clustering.infinispan;
 
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.server.jgroups.spi.ChannelFactory;
 import org.jgroups.JChannel;
@@ -38,13 +37,6 @@ public class ChannelTransport extends JGroupsTransport {
     public ChannelTransport(JChannel channel, ChannelFactory factory) {
         super(channel);
         this.factory = factory;
-    }
-
-    @Override
-    protected void initRPCDispatcher() {
-        this.dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, timeoutExecutor, timeService,
-              remoteExecutor, marshaller);
-        this.dispatcher.start();
     }
 
     @Override

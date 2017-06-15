@@ -13,7 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.JGroupsConfigBuilder;
@@ -119,8 +119,7 @@ public class ConcurrentStartForkChannelTest extends MultipleCacheManagersTest {
             RequestCorrelator.Header header = message.getHeader(id);
             if (header != null) {
                log.debugf("Sending CacheNotFoundResponse reply for %s", header);
-               short flags = (short) ((message.getFlags() | CommandAwareRpcDispatcher.REPLY_FLAGS_TO_SET) &
-                     ~CommandAwareRpcDispatcher.REPLY_FLAGS_TO_CLEAR);
+               short flags = JGroupsTransport.REPLY_FLAGS;
                Message response = message.makeReply().setFlag(flags);
 
                response.putHeader(FORK.ID, message.getHeader(FORK.ID));

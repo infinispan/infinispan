@@ -33,7 +33,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
    }
 
    @Test(dataProvider = "owningModeAndWriteMethod")
-   public void testWriteLoad(boolean isSourceOwner, WriteMethod method) throws InterruptedException {
+   public void testWriteLoad(boolean isSourceOwner, WriteMethod method) throws Exception {
       Object key = getKey(isSourceOwner);
 
       List<Cache<Object, Object>> owners = caches(DIST).stream()

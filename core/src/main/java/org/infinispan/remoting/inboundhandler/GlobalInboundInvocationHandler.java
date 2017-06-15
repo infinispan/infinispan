@@ -128,7 +128,8 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
 
    private void runXSiteReplicableCommand(XSiteReplicateCommand command, BackupReceiver receiver, Reply reply) {
       try {
-         reply.reply(command.performInLocalSite(receiver));
+         Object returnValue = command.performInLocalSite(receiver);
+         reply.reply(SuccessfulResponse.create(returnValue));
       } catch (InterruptedException e) {
          log.shutdownHandlingCommand(command);
          reply.reply(shuttingDownResponse());
@@ -175,10 +176,13 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          future.join();
       } else {
          future.whenComplete((retVal, throwable) -> {
-            if (retVal != null && !(retVal instanceof Response)) {
-               retVal = SuccessfulResponse.create(retVal);
+            Response response;
+            if (retVal == null || retVal instanceof Response) {
+               response = (Response) retVal;
+            } else {
+               response = SuccessfulResponse.create(retVal);
             }
-            reply.reply(retVal);
+            reply.reply(response);
          });
       }
    }

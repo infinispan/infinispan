@@ -75,35 +75,30 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       assertEquals(numKeys, c0.entrySet().size());
       assertEquals(numKeys, c1.entrySet().size());
 
+      DISCARD d1 = TestingUtil.getDiscardForCache(c1);
       GlobalConfigurationBuilder gcb2 = new GlobalConfigurationBuilder();
       gcb2.transport().transport(new JGroupsTransport() {
          @Override
          public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                              ReplicableCommand rpcCommand,
+                                                                              ReplicableCommand command,
                                                                               ResponseMode mode,
                                                                               long timeout,
                                                                               ResponseFilter responseFilter,
                                                                               DeliverOrder deliverOrder,
-                                                                              boolean anycast)
-               throws Exception {
-            if (rpcCommand instanceof StateRequestCommand &&
-                  ((StateRequestCommand) rpcCommand).getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
+                                                                              boolean anycast) {
+            if (command instanceof StateRequestCommand &&
+                  ((StateRequestCommand) command).getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
                   recipients.contains(address(1))) {
-               DISCARD d1 = TestingUtil.getDiscardForCache(c1);
                d1.setDiscardAll(true);
                d1.setExcludeItself(true);
 
                fork((Callable<Void>) () -> {
                   log.info("KILLING the c1 cache");
-                  try {
-                     TestingUtil.killCacheManagers(manager(c1));
-                  } catch (Exception e) {
-                     log.info("there was some exception while killing cache");
-                  }
+                  TestingUtil.killCacheManagers(manager(c1));
                   return null;
                });
             }
-            return super.invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder,
+            return super.invokeRemotelyAsync(recipients, command, mode, timeout, responseFilter, deliverOrder,
                                              anycast);
          }
       });

@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -187,4 +190,38 @@ public abstract class AbstractDelegatingTransport implements Transport {
       return actual.getSitesView();
    }
 
+   @Override
+   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                               ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                               long timeout, TimeUnit unit) {
+      return actual.invokeCommand(target, command, collector, deliverOrder, timeout, unit);
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                               ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                               long timeout, TimeUnit unit) {
+      return actual.invokeCommand(targets, command, collector, deliverOrder, timeout, unit);
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                                    DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+      return actual.invokeCommandOnAll(command, collector, deliverOrder, timeout, unit);
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                        ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                        long timeout, TimeUnit unit) {
+      return actual.invokeCommandStaggered(targets, command, collector, deliverOrder, timeout, unit);
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
+                                                Function<Address, ReplicableCommand> commandGenerator,
+                                                ResponseCollector<T> responseCollector, long timeout,
+                                                DeliverOrder deliverOrder) {
+      return actual.invokeCommands(targets, commandGenerator, responseCollector, timeout, deliverOrder);
+   }
 }

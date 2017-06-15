@@ -59,7 +59,7 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
          barrier.await();
          log.tracef("Command completed blocking completion of %s", command);
       } else {
-         log.trace("Command arrived but already found a blocker");
+         log.tracef("Not blocking command %s", command);
       }
    }
 

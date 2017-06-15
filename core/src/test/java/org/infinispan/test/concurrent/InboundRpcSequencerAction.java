@@ -80,12 +80,7 @@ public class InboundRpcSequencerAction {
          try {
             handler.handle(command, reply, order);
          } finally {
-            advance(accepted, statesAfter, new Reply() {
-               @Override
-               public void reply(Object returnValue) {
-                  //no-op
-               }
-            });
+            advance(accepted, statesAfter, Reply.NO_OP);
          }
       }
 

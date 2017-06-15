@@ -171,7 +171,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void viewAccepted(View newView) {
+      public void receiveClusterView(View newView) {
          // check if this is an event of node going down, and if so wait for a signal to apply new view
          if (waitLatch != null && getMembers().size() > newView.getMembers().size()) {
             try {
@@ -180,8 +180,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
                Thread.currentThread().interrupt();
             }
          }
-         super.viewAccepted(newView);
+         super.receiveClusterView(newView);
       }
-
    }
 }

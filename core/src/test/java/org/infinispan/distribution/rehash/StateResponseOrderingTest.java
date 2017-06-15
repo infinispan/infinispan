@@ -18,7 +18,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -109,19 +108,14 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       // Cache 0 didn't manage to request any segments yet, but it has registered all the inbound transfer tasks.
       // We'll pretend it got a StateResponseCommand with an older topology id.
       PerCacheInboundInvocationHandler handler = TestingUtil.extractComponent(cache(0), PerCacheInboundInvocationHandler.class);
-      StateChunk stateChunk0 = new StateChunk(0, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
-      StateChunk stateChunk1 = new StateChunk(1, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
+      StateChunk stateChunk0 = new StateChunk(0, Arrays.asList(new ImmortalCacheEntry("k0", "v0")), true);
+      StateChunk stateChunk1 = new StateChunk(1, Arrays.asList(new ImmortalCacheEntry("k0", "v0")), true);
       StateResponseCommand stateResponseCommand = new StateResponseCommand(ByteString.fromString(CacheContainer.DEFAULT_CACHE_NAME),
             address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1), true, false);
       // Call with preserveOrder = true to force the execution in the same thread
       stateResponseCommand.setOrigin(address(3));
       stateResponseCommand.init(TestingUtil.extractComponent(cache(0), StateConsumer.class), TestingUtil.extractComponent(cache(0), StateReceiver.class));
-      handler.handle(stateResponseCommand, new Reply() {
-         @Override
-         public void reply(Object returnValue) {
-            //no-op
-         }
-      }, DeliverOrder.PER_SENDER);
+      handler.handle(stateResponseCommand, Reply.NO_OP, DeliverOrder.PER_SENDER);
 
       sequencer.exit("st:simulate_old_response");
 
@@ -144,12 +138,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       consistentHashFactory.triggerRebalance(cache(0));
       // waitForStableTopology doesn't work here, since the cache looks already "balanced"
       // So we wait for the primary owner of segment 1 to change
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return advancedCache(0).getDistributionManager().getReadConsistentHash().locatePrimaryOwnerForSegment(1).equals(address(2));
-         }
-      });
+      eventuallyEquals(address(2), () -> advancedCache(0).getDistributionManager().getReadConsistentHash().locatePrimaryOwnerForSegment(1));
 
       // See https://issues.jboss.org/browse/ISPN-3120?focusedCommentId=12777231
       // Start with segment 0 owned by [cache1, cache2, cache3], and segment 1 owned by [cache2, cache1, cache3]
@@ -226,12 +215,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       int nodeToKill = nodeToKeep == 1 ? 2 : 1;
       log.debugf("Blocked state response from %s, killing %s", firstResponseSender.get(), manager(nodeToKill));
       cache(nodeToKill).stop();
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return stm0.getCacheTopology().getMembers().size() == 3;
-         }
-      });
+      eventuallyEquals(3, () -> stm0.getCacheTopology().getMembers().size());
 
       sequencer.exit("st:kill_node");
 

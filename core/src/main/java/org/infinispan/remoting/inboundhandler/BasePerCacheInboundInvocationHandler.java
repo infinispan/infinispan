@@ -16,6 +16,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -133,9 +134,9 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       return new ExceptionResponse(exception);
    }
 
-   final ExceptionResponse interruptedException(CacheRpcCommand command) {
+   final Response interruptedException(CacheRpcCommand command) {
       getLog().shutdownHandlingCommand(command);
-      return new ExceptionResponse(new CacheException("Cache is shutting down"));
+      return CacheNotFoundResponse.INSTANCE;
    }
 
    final void unexpectedDeliverMode(ReplicableCommand command, DeliverOrder deliverOrder) {

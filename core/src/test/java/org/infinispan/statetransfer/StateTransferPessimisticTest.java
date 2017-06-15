@@ -4,10 +4,16 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -27,6 +33,7 @@ import org.testng.annotations.Test;
 public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
 
    public static final int NUM_KEYS = 100;
+   public static final int CLUSTER_SIZE = 2;
    private ConfigurationBuilder dccc;
 
    @Override
@@ -38,11 +45,16 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
             .lockingMode(LockingMode.PESSIMISTIC);
       dccc.clustering().hash().numOwners(1).l1().disable();
       dccc.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      createCluster(dccc, 2);
+      createCluster(dccc, CLUSTER_SIZE);
       waitForClusterToForm();
    }
 
    public void testStateTransfer() throws Exception {
+      CyclicBarrier barrier = new CyclicBarrier(2);
+      BlockingInterceptor<InvalidateCommand> blockerBefore =
+            new BlockingInterceptor<>(barrier, InvalidateCommand.class, false, true);
+      cache(0).getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockerBefore, CallInterceptor.class);
+
       Set<Object> keys = new HashSet<>();
       for (int i = 0; i < NUM_KEYS; i++) {
          Object key = getKeyForCache(0);
@@ -57,32 +69,41 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(dccc);
       waitForClusterToForm();
 
+      // Wait for the stale entries invalidation to block
+      barrier.await(10, TimeUnit.SECONDS);
+
       log.trace("Checking the values from caches...");
       for (Object key : keys) {
-         log.tracef("Checking key: %s", key);
-         // check them directly in data container
-         InternalCacheEntry d0 = advancedCache(0).getDataContainer().get(key);
-         InternalCacheEntry d1 = advancedCache(1).getDataContainer().get(key);
-         InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
-         int c = 0;
-         if (d0 != null && !d0.isExpired(TIME_SERVICE.wallClockTime())) {
-            assertEquals(key, d0.getValue());
-            c++;
-         }
-         if (d1 != null && !d1.isExpired(TIME_SERVICE.wallClockTime())) {
-            assertEquals(key, d1.getValue());
-            c++;
-         }
-         if (d2 != null && !d2.isExpired(TIME_SERVICE.wallClockTime())) {
-            assertEquals(key, d2.getValue());
-            c++;
-         }
-         assertEquals(1, c);
-
-         // look at them also via cache API
-         assertEquals(key, cache(0).get(key));
-         assertEquals(key, cache(1).get(key));
-         assertEquals(key, cache(2).get(key));
+         // Expect one copy of each entry on the old owner, cache 0
+         assertEquals(1, checkKey(key, cache(0)));
       }
+
+      // Unblock the stale entries invalidation
+      barrier.await(10, TimeUnit.SECONDS);
+      cache(0).getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+
+      for (Object key : keys) {
+         // Check that the stale entries on the old nodes are eventually deleted
+         eventuallyEquals(1, () -> checkKey(key, cache(0), cache(1), cache(2)));
+      }
+   }
+
+   public int checkKey(Object key, Cache... caches) {
+      log.tracef("Checking key: %s", key);
+      int c = 0;
+      // check them directly in data container
+      for (Cache cache : caches) {
+         InternalCacheEntry e = cache.getAdvancedCache().getDataContainer().get(key);
+         if (e != null) {
+            assertEquals(key, e.getValue());
+            c++;
+         }
+      }
+
+      // look at them also via cache API
+      for (Cache cache : caches) {
+         assertEquals(key, cache.get(key));
+      }
+      return c;
    }
 }

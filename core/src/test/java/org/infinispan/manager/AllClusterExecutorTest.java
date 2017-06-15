@@ -384,7 +384,9 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                   executor(cm1).timeout(10, TimeUnit.MILLISECONDS).submitConsumer(m -> {
                      TestingUtil.sleepThread(100);
                      return null;
-                  }, (a, i, t) -> { });
+                  }, (a, i, t) -> {
+                     log.tracef("Consumer invoked with %s, %s, %s", a, i, t);
+                  });
             Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, future);
          }
       });

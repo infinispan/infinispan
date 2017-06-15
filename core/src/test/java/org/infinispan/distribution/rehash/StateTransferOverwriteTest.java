@@ -33,7 +33,7 @@ public class StateTransferOverwriteTest extends BaseTxStateTransferOverwriteTest
    }
 
    @Override
-   protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<? extends Object> callable) {
+   protected Callable<Object> runWithTx(final TransactionManager tm, final Callable<?> callable) {
       return (Callable<Object>)callable;
    }
 }

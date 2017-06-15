@@ -36,6 +36,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -44,7 +45,6 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.stats.CacheStatisticManager;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.logging.Log;
@@ -70,15 +70,10 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    private final TimeService timeService;
 
    public ExtendedStatisticRpcManager(RpcManager actual, CacheStatisticManager cacheStatisticManager,
-                                      TimeService timeService) {
+                                      TimeService timeService, StreamingMarshaller marshaller) {
       this.actual = actual;
       this.cacheStatisticManager = cacheStatisticManager;
-      Transport t = actual.getTransport();
-      if (t instanceof JGroupsTransport) {
-         marshaller = ((JGroupsTransport) t).getCommandAwareRpcDispatcher().getIspnMarshaller();
-      } else {
-         marshaller = null;
-      }
+      this.marshaller = marshaller;
       this.timeService = timeService;
    }
 

@@ -20,8 +20,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -29,9 +27,12 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -39,9 +40,6 @@ import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
-import org.jgroups.Address;
-import org.jgroups.Message;
-import org.jgroups.blocks.Response;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -59,9 +57,8 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cacheManager;
    private DummyTaskCountExecutorService executorService;
-   private CommandAwareRpcDispatcher commandAwareRpcDispatcher;
+   private InboundInvocationHandler invocationHandler;
    private Address address;
-   private StreamingMarshaller marshaller;
    private CommandsFactory commandsFactory;
    private ReplicableCommand blockingCacheRpcCommand;
    private ReplicableCommand nonBlockingCacheRpcCommand;
@@ -88,13 +85,8 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       Cache<Object, Object> cache = cacheManager.getCache();
       ByteString cacheName = ByteString.fromString(cache.getName());
       Transport transport = extractGlobalComponent(cacheManager, Transport.class);
-      if (transport instanceof JGroupsTransport) {
-         commandAwareRpcDispatcher = ((JGroupsTransport) transport).getCommandAwareRpcDispatcher();
-         address = ((JGroupsTransport) transport).getChannel().getAddress();
-         marshaller = TestingUtil.extractGlobalMarshaller(cacheManager);
-      } else {
-         Assert.fail("Expected a JGroups Transport");
-      }
+      address = transport.getAddress();
+      invocationHandler = TestingUtil.extractGlobalComponent(cacheManager, InboundInvocationHandler.class);
       ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
       registry.registerComponent(remoteExecutorService, KnownComponentNames.REMOTE_COMMAND_EXECUTOR);
       registry.rewire();
@@ -154,45 +146,18 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private void assertDispatchForCommand(ReplicableCommand command, boolean expected) throws Exception {
       log.debugf("Testing " + command.getClass().getCanonicalName());
       commandsFactory.initializeReplicableCommand(command, true);
-      Message oobRequest = serialize(command, true, address);
-      if (oobRequest == null) {
-         log.debugf("Don't test " + command.getClass() + ". it is not Serializable");
-         return;
-      }
       executorService.reset();
       CountDownLatchResponse response = new CountDownLatchResponse();
-      commandAwareRpcDispatcher.handle(oobRequest, response);
+      invocationHandler.handleFromCluster(address, command, response, DeliverOrder.NONE);
       response.await(30, TimeUnit.SECONDS);
       Assert.assertEquals(executorService.hasExecutedCommand, expected,
                           "Command " + command.getClass() + " dispatched wrongly.");
 
-      Message nonOobRequest = serialize(command, false, address);
-      if (nonOobRequest == null) {
-         log.debugf("Don't test " + command.getClass() + ". it is not Serializable");
-         return;
-      }
       executorService.reset();
       response = new CountDownLatchResponse();
-      commandAwareRpcDispatcher.handle(nonOobRequest, response);
+      invocationHandler.handleFromCluster(address, command, response, DeliverOrder.PER_SENDER);
       response.await(30, TimeUnit.SECONDS);
       Assert.assertFalse(executorService.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
-   }
-
-   private Message serialize(ReplicableCommand command, boolean oob, Address from) {
-      ByteBuffer buffer;
-      try {
-         buffer = marshaller.objectToBuffer(command);
-      } catch (Exception e) {
-         //ignore, it will not be replicated
-         return null;
-      }
-      Message message = new Message(null, buffer.getBuf(), buffer.getOffset(), buffer.getLength());
-      message.setFlag(Message.Flag.NO_TOTAL_ORDER);
-      if (oob) {
-         message.setFlag(Message.Flag.OOB);
-      }
-      message.src(from);
-      return message;
    }
 
    private class DummyTaskCountExecutorService extends AbstractExecutorService {
@@ -235,7 +200,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       }
    }
 
-   private static class CountDownLatchResponse implements Response {
+   private static class CountDownLatchResponse implements Reply {
 
       private final CountDownLatch countDownLatch;
 
@@ -243,18 +208,13 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
          countDownLatch = new CountDownLatch(1);
       }
 
-      @Override
-      public void send(Object reply, boolean is_exception) {
-         countDownLatch.countDown();
-      }
-
-      @Override
-      public void send(Message reply, boolean is_exception) {
-         countDownLatch.countDown();
-      }
-
       public boolean await(long time, TimeUnit unit) throws InterruptedException {
          return countDownLatch.await(time, unit);
+      }
+
+      @Override
+      public void reply(Response response) {
+         countDownLatch.countDown();
       }
    }
 }

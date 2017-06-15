@@ -76,6 +76,10 @@ public class JGroupsAddress implements Address {
       @Override
       public JGroupsAddress doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          try {
+            // Note: Use org.jgroups.Address, not the concrete UUID class.
+            // Otherwise applications that only use local caches would have to bundle the JGroups jar,
+            // because the verifier needs to check the arguments of fromJGroupsAddress
+            // even if this method is never called.
             org.jgroups.Address address = org.jgroups.util.Util.readAddress(unmarshaller);
             return (JGroupsAddress) JGroupsAddressCache.fromJGroupsAddress(address);
          } catch (Exception e) {
