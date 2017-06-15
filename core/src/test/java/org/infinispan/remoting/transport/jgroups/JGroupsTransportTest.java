@@ -35,7 +35,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
 
    public void testSynchronousIgnoreLeaversInvocationToNonMembers() throws Exception {
       UUID randomUuid = UUID.randomUUID();
-      Address randomAddress = JGroupsTransport.fromJGroupsAddress(randomUuid);
+      Address randomAddress = JGroupsAddressCache.fromJGroupsAddress(randomUuid);
 
       Transport transport = manager(0).getTransport();
       ReplicableCommand command = TestingUtil.extractCommandsFactory(cache(0)).buildClusteredGetCommand("key", 0);

@@ -9,18 +9,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.remoting.transport.jgroups.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.blocks.ResponseMode;
 
 /**
  * Cluster executor implementation that sends requests to a single node at a time
@@ -49,9 +52,9 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
       return new SingleClusterExecutor(predicate, manager, transport, time, unit, localExecutor, timeoutExecutor);
    }
 
-   private org.jgroups.Address findTarget() {
-      List<org.jgroups.Address> possibleTargets = getJGroupsTargets(true);
-      org.jgroups.Address target;
+   private Address findTarget() {
+      List<Address> possibleTargets = getRealTargets(true);
+      Address target;
       int size = possibleTargets.size();
       if (size == 0) {
          target = null;
@@ -65,24 +68,28 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
 
    @Override
    public void execute(Runnable runnable) {
-      org.jgroups.Address target = findTarget();
+      Address target = findTarget();
       if (target != null) {
          if (isTrace) {
             log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
          }
-         if (target == convertToJGroupsAddress(me)) {
+         if (target == me) {
             // Interrupt does nothing
             super.execute(runnable);
          } else {
-            transport.getCommandAwareRpcDispatcher().invokeRemoteCommand(target, new ReplicableCommandRunnable(runnable),
-                  ResponseMode.GET_NONE, unit.toMillis(time), DeliverOrder.NONE);
+            try {
+               ReplicableCommand command = new ReplicableCommandRunnable(runnable);
+               transport.sendTo(target, command, DeliverOrder.NONE);
+            } catch (Exception e) {
+               throw new CacheException(e);
+            }
          }
       }
    }
 
    @Override
-   public CompletableFuture<Void> submit(Runnable command) {
-      org.jgroups.Address target = findTarget();
+   public CompletableFuture<Void> submit(Runnable runnable) {
+      Address target = findTarget();
       if (target == null) {
          return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
       }
@@ -90,11 +97,13 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
          log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
       }
       CompletableFuture<Void> future = new CompletableFuture<>();
-      if (target == convertToJGroupsAddress(me)) {
-         return super.submit(command);
+      if (target == me) {
+         return super.submit(runnable);
       } else {
-         transport.getCommandAwareRpcDispatcher().invokeRemoteCommand(target, new ReplicableCommandRunnable(command),
-               ResponseMode.GET_FIRST, unit.toMillis(time), DeliverOrder.NONE).whenComplete((r, t) -> {
+         ReplicableCommand command = new ReplicableCommandRunnable(runnable);
+         CompletableFuture<Response> request = transport
+               .invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
+         request.whenComplete((r, t) -> {
             if (t != null) {
                future.completeExceptionally(t);
             } else {
@@ -109,26 +118,32 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
    @Override
    public <V> CompletableFuture<Void> submitConsumer(Function<? super EmbeddedCacheManager, ? extends V> function,
          TriConsumer<? super Address, ? super V, ? super Throwable> triConsumer) {
-      org.jgroups.Address target = findTarget();
+      Address target = findTarget();
       if (target == null) {
          return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
       }
       if (isTrace) {
          log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
       }
-      if (target == convertToJGroupsAddress(me)) {
+      if (target == me) {
          return super.submitConsumer(function, triConsumer);
       } else {
          CompletableFuture<Void> future = new CompletableFuture<>();
-         transport.getCommandAwareRpcDispatcher().invokeRemoteCommand(target,
-               new ReplicableCommandManagerFunction(function), ResponseMode.GET_ALL, unit.toMillis(time),
-               DeliverOrder.NONE).whenComplete((r, t) -> {
+         ReplicableCommand command = new ReplicableCommandManagerFunction(function);
+         CompletableFuture<Response> request = transport
+               .invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
+         request.whenComplete((r, t) -> {
             try {
                if (t != null) {
-                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, t);
+                  if (t instanceof TimeoutException) {
+                     // Consumers for individual nodes should not be able to obscure the timeout
+                     future.completeExceptionally(getLog().remoteNodeTimedOut(target, time, unit));
+                  } else {
+                     triConsumer.accept(target, null, t);
+                  }
                } else {
-                  consumeResponse(r, target, v -> triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), (V) v, null),
-                        throwable -> triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, throwable), future::completeExceptionally);
+                  consumeResponse(r, target, v -> triConsumer.accept(target, (V) v, null),
+                        throwable -> triConsumer.accept(target, null, throwable));
                }
                future.complete(null);
             } catch (Throwable throwable) {

@@ -1,7 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import static org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher.constructRequestOptions;
-import static org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher.isRsvpCommand;
+import static org.infinispan.remoting.transport.jgroups.JGroupsAddressCache.fromJGroupsAddress;
+import static org.infinispan.util.logging.LogFactory.CLUSTER;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -11,12 +11,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -26,64 +28,77 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.IllegalLifecycleStateException;
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.transport.AbstractTransport;
+import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
+import org.infinispan.remoting.transport.impl.MultiTargetRequest;
+import org.infinispan.remoting.transport.Request;
+import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.AnycastAddress;
 import org.jgroups.Event;
+import org.jgroups.Header;
 import org.jgroups.JChannel;
-import org.jgroups.MembershipListener;
 import org.jgroups.MergeView;
+import org.jgroups.Message;
+import org.jgroups.Receiver;
 import org.jgroups.UpHandler;
 import org.jgroups.View;
-import org.jgroups.blocks.RequestOptions;
-import org.jgroups.blocks.RspFilter;
+import org.jgroups.blocks.RequestCorrelator;
+import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.jmx.JmxConfigurator;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.RouteStatusListener;
+import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.protocols.tom.TOA;
-import org.jgroups.util.Buffer;
 import org.jgroups.util.ExtendedUUID;
-import org.jgroups.util.Rsp;
+import org.jgroups.util.MessageBatch;
 
 /**
  * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of
@@ -103,52 +118,64 @@ import org.jgroups.util.Rsp;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class JGroupsTransport extends AbstractTransport implements MembershipListener {
+public class JGroupsTransport implements Transport {
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
    public static final String CHANNEL_LOOKUP = "channelLookup";
+   public static final short REPLY_FLAGS =
+         (short) (Message.Flag.NO_FC.value() | Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
    protected static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "default-configs/default-jgroups-udp.xml";
-
    private static final Log log = LogFactory.getLog(JGroupsTransport.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final CompletableFuture<Map<Address, Response>> EMPTY_RESPONSES_FUTURE =
+         CompletableFuture.completedFuture(Collections.emptyMap());
+   private static final ResponseCollector<Map<Address, Response>>
+         SINGLE_RESPONSE_COLLECTOR = new SingletonMapResponseCollector(false);
+   private static final ResponseCollector<Map<Address, Response>>
+         SINGLE_IGNORE_LEAVERS_COLLECTOR = new SingletonMapResponseCollector(true);
+   private static final short CORRELATOR_ID = (short) 0;
+   private static final short HEADER_ID = ClassConfigurator.getProtocolId(RequestCorrelator.class);
+   private static final byte REQUEST = 0;
+   private static final byte RESPONSE = 1;
+   private static final byte SINGLE_MESSAGE = 2;
 
+   private final Lock viewUpdateLock = new ReentrantLock();
+   private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
+   private final ThreadPoolProbeHandler probeHandler;
+   private final ChannelCallbacks channelCallbacks = new ChannelCallbacks();
    protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
-   protected CommandAwareRpcDispatcher dispatcher;
+   protected GlobalConfiguration configuration;
    protected TypedProperties props;
    protected StreamingMarshaller marshaller;
    protected CacheManagerNotifier notifier;
    protected TimeService timeService;
-   protected InboundInvocationHandler globalHandler;
+   protected InboundInvocationHandler invocationHandler;
    protected ScheduledExecutorService timeoutExecutor;
    protected Executor remoteExecutor;
-
-   private boolean globalStatsEnabled;
-   private MBeanServer mbeanServer;
-   private String domain;
-
    protected JChannel channel;
    protected Address address;
    protected Address physicalAddress;
-
    // these members are not valid until we have received the first view on a second thread
    // and channelConnectedLatch is signaled
-   protected volatile int viewId = -1;
-   protected volatile List<Address> members = null;
-   protected volatile Address coordinator = null;
-   protected volatile boolean isCoordinator = false;
-   private final Lock viewUpdateLock = new ReentrantLock();
-   private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
+   protected volatile ClusterView clusterView =
+         new ClusterView(ClusterView.INITIAL_VIEW_ID, Collections.emptyList(), null);
+   private volatile Set<String>  sitesView = Collections.emptySet();
    private CompletableFuture<Void> nextViewFuture = new CompletableFuture<>();
+   private RequestRepository requests;
 
-   private final ThreadPoolProbeHandler handler;
+   // ------------------------------------------------------------------------------------------------------------------
+   // Lifecycle and setup stuff
+   // ------------------------------------------------------------------------------------------------------------------
+   private boolean globalStatsEnabled;
+   private MBeanServer mbeanServer;
+   private String domain;
 
    /**
     * This form is used when the transport is created by an external source and passed in to the
     * GlobalConfiguration.
     *
-    * @param channel
-    *           created and running channel to use
+    * @param channel created and running channel to use
     */
    public JGroupsTransport(JChannel channel) {
       this.channel = channel;
@@ -156,198 +183,261 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          throw new IllegalArgumentException("Cannot deal with a null channel!");
       if (channel.isConnected())
          throw new IllegalArgumentException("Channel passed in cannot already be connected!");
-      handler = new ThreadPoolProbeHandler();
+      probeHandler = new ThreadPoolProbeHandler();
    }
 
    public JGroupsTransport() {
-      handler = new ThreadPoolProbeHandler();
+      probeHandler = new ThreadPoolProbeHandler();
    }
 
-   @Override
-   public Log getLog() {
-      return log;
+   private static List<org.jgroups.Address> toJGroupsAddressList(Collection<Address> addresses) {
+      if (addresses == null)
+         return null;
+      return addresses.stream().map(JGroupsTransport::toJGroupsAddress).collect(Collectors.toList());
    }
-
-   // ------------------------------------------------------------------------------------------------------------------
-   // Lifecycle and setup stuff
-   // ------------------------------------------------------------------------------------------------------------------
 
    /**
     * Initializes the transport with global cache configuration and transport-specific properties.
-    *
-    * @param marshaller    marshaller to use for marshalling and unmarshalling
-    * @param notifier      notifier to use
     */
    @Inject
-   public void initialize(StreamingMarshaller marshaller,
-                          CacheManagerNotifier notifier, TimeService timeService, InboundInvocationHandler globalHandler,
-                          @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
+   public void initialize(GlobalConfiguration configuration, StreamingMarshaller marshaller,
+                          CacheManagerNotifier notifier, TimeService timeService,
+                          InboundInvocationHandler globalHandler,
+                          @ComponentName(
+                                KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
                           @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteExecutor) {
+      this.configuration = configuration;
       this.marshaller = marshaller;
       this.notifier = notifier;
       this.timeService = timeService;
-      this.globalHandler = globalHandler;
+      this.invocationHandler = globalHandler;
       this.timeoutExecutor = timeoutExecutor;
       this.remoteExecutor = remoteExecutor;
-      this.handler.updateThreadPool(remoteExecutor);
+      this.probeHandler.updateThreadPool(remoteExecutor);
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand command,
+                                                ResponseMode mode, long timeout, ResponseFilter responseFilter,
+                                                DeliverOrder deliverOrder, boolean anycast) throws Exception {
+      CompletableFuture<Map<Address, Response>> future = invokeRemotelyAsync(recipients, command, mode,
+                                                                             timeout, responseFilter, deliverOrder,
+                                                                             anycast);
+      try {
+         //no need to set a timeout for the future. The rpc invocation is guaranteed to complete within the timeout milliseconds
+         return CompletableFutures.await(future);
+      } catch (ExecutionException e) {
+         throw Util.rewrapAsCacheException(e.getCause());
+      }
+   }
+
+   @Override
+   public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
+                                                                        ReplicableCommand command,
+                                                                        ResponseMode mode, long timeout,
+                                                                        ResponseFilter responseFilter,
+                                                                        DeliverOrder deliverOrder,
+                                                                        boolean anycast) {
+      if (recipients != null && recipients.isEmpty()) {
+         // don't send if recipients list is empty
+         log.tracef("Destination list is empty: no need to send command %s", command);
+         return EMPTY_RESPONSES_FUTURE;
+      }
+
+      ClusterView view = this.clusterView;
+      List<Address> localMembers = view.getMembers();
+      int membersSize = localMembers.size();
+      boolean ignoreLeavers =
+            mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
+      boolean totalOrder = deliverOrder == DeliverOrder.TOTAL;
+      boolean sendStaggeredRequest = mode == ResponseMode.WAIT_FOR_VALID_RESPONSE &&
+            deliverOrder == DeliverOrder.NONE && recipients != null && recipients.size() > 1 && timeout > 0;
+      boolean rsvp = isRsvpCommand(command);
+      // ISPN-6997: Never allow a switch from anycast -> broadcast and broadcast -> unicast
+      // We're still keeping the option to switch for a while in case forcing a broadcast in a 2-node replicated cache
+      // impacts performance significantly. If that is the case, we may need to use UNICAST3.closeConnection() instead.
+      boolean broadcast = recipients == null;
+
+      if (!totalOrder && recipients == null && membersSize == 1) {
+         // don't send if recipients list is empty
+         log.tracef("The cluster has a single node: no need to broadcast command %s", command);
+         return EMPTY_RESPONSES_FUTURE;
+      }
+
+      Address singleTarget = computeSingleTarget(recipients, localMembers, membersSize, broadcast, totalOrder);
+
+      if (!totalOrder && address.equals(singleTarget)) {
+         log.tracef("Skipping request to self for command %s", command);
+         return EMPTY_RESPONSES_FUTURE;
+      }
+
+      if (mode.isAsynchronous()) {
+         // Asynchronous RPC. Send the message, but don't wait for responses.
+         return performAsyncRemoteInvocation(recipients, command, deliverOrder, rsvp, broadcast, singleTarget);
+      }
+
+      Collection<Address> actualTargets = broadcast ? localMembers : recipients;
+      assert singleTarget != null || actualTargets != null;
+      return performSyncRemoteInvocation(actualTargets, command, mode, timeout, responseFilter, deliverOrder,
+                                         ignoreLeavers, sendStaggeredRequest, broadcast,
+                                         singleTarget);
+   }
+
+   @Override
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) throws Exception {
+      if (destination.equals(address)) { //removed requireNonNull. this will throw a NPE in that case
+         if (trace) {
+            log.trace("sendTo: not sending to self.");
+         }
+         return;
+      }
+      sendCommand(destination, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command), true);
+   }
+
+   @Override
+   public void sendToMany(Collection<Address> targets, ReplicableCommand command, DeliverOrder deliverOrder)
+         throws Exception {
+      if (targets == null) {
+         sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder, false);
+      } else {
+         sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder, false);
+      }
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> commands, ResponseMode mode,
+                                                long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
+                                                boolean totalOrder, boolean anycast)
+         throws Exception {
+      DeliverOrder deliverOrder = DeliverOrder.PER_SENDER;
+      if (totalOrder) {
+         deliverOrder = DeliverOrder.TOTAL;
+      } else if (usePriorityQueue) {
+         deliverOrder = DeliverOrder.NONE;
+      }
+      return invokeRemotely(commands, mode, timeout, responseFilter, deliverOrder, anycast);
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> commands, ResponseMode mode,
+                                                long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder,
+                                                boolean anycast)
+         throws Exception {
+      if (commands == null || commands.isEmpty()) {
+         // don't send if recipients list is empty
+         log.trace("Destination list is empty: no need to send message");
+         return Collections.emptyMap();
+      }
+
+      if (mode.isSynchronous()) {
+         SyncMapResponseCollector collector = new SyncMapResponseCollector(false, commands.size());
+         CompletableFuture<Map<Address, Response>> request =
+               invokeCommands(commands.keySet(), commands::get, collector, timeout, deliverOrder);
+
+         try {
+            return CompletableFutures.await(request);
+         } catch (ExecutionException e) {
+            throw Util.rewrapAsCacheException(e.getCause());
+         }
+      } else {
+         commands.forEach(
+               (a, command) -> sendCommand(a, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command),
+                                           true));
+         return Collections.emptyMap();
+      }
+   }
+
+   @Override
+   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand command)
+         throws Exception {
+      if (trace) {
+         log.tracef("About to send to backups %s, command %s", backups, command);
+      }
+      boolean rsvp = isRsvpCommand(command);
+      Map<XSiteBackup, Future<Response>> syncBackupCalls = new HashMap<>(backups.size());
+      for (XSiteBackup xsb : backups) {
+         Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(xsb.getSiteName()));
+         if (xsb.isSync()) {
+            long timeout = xsb.getTimeout();
+            long requestId = requests.newRequestId();
+            SingleSiteRequest<Response> request =
+                  new SingleSiteRequest<>(PassthroughSingleResponseCollector.INSTANCE, requestId, requests,
+                                          xsb.getSiteName());
+            addRequest(request);
+
+            try {
+               sendCommand(recipient, command, request.getRequestId(), DeliverOrder.NONE, rsvp, false);
+               if (timeout > 0) {
+                  request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
+               }
+            } catch (Throwable t) {
+               request.cancel(true);
+               throw t;
+            }
+            syncBackupCalls.put(xsb, request);
+         } else {
+            sendCommand(recipient, command, Request.NO_REQUEST_ID, DeliverOrder.PER_SENDER, false, false);
+         }
+      }
+      return new JGroupsBackupResponse(syncBackupCalls, timeService);
+   }
+
+   @Override
+   public boolean isCoordinator() {
+      return clusterView.isCoordinator();
+   }
+
+   @Override
+   public Address getCoordinator() {
+      return clusterView.getCoordinator();
+   }
+
+   @Override
+   public Address getAddress() {
+      return address;
+   }
+
+   @Override
+   public List<Address> getPhysicalAddresses() {
+      if (physicalAddress == null && channel != null) {
+         org.jgroups.Address addr =
+               (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
+         if (addr == null) {
+            return Collections.emptyList();
+         }
+         physicalAddress = new JGroupsAddress(addr);
+      }
+      return Collections.singletonList(physicalAddress);
+   }
+
+   @Override
+   public List<Address> getMembers() {
+      return clusterView.getMembers();
+   }
+
+   @Override
+   public boolean isMulticastCapable() {
+      return channel.getProtocolStack().getTransport().supportsMulticasting();
    }
 
    @Override
    public void start() {
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
+      requests = new RequestRepository();
 
       if (log.isInfoEnabled())
          log.startingJGroupsChannel(configuration.transport().clusterName());
 
-      initChannelAndRPCDispatcher();
-      addXSiteViewListener();
-      addSiteMasterPicker();
+      initChannel();
+
+      channel.setReceiver(channelCallbacks);
+      setXSiteViewListener(channelCallbacks);
+      setSiteMasterPicker(new SiteMasterPickerImpl());
+
       startJGroupsChannelIfNeeded();
 
       waitForInitialNodes();
-      channel.getProtocolStack().getTransport().registerProbeHandler(handler);
-   }
-
-   protected void startJGroupsChannelIfNeeded() {
-      String clusterName = configuration.transport().clusterName();
-      if (connectChannel) {
-         try {
-            channel.connect(clusterName);
-         } catch (Exception e) {
-            throw new CacheException("Unable to start JGroups Channel", e);
-         }
-
-         try {
-            // Normally this would be done by CacheManagerJmxRegistration but
-            // the channel is not started when the cache manager starts but
-            // when first cache starts, so it's safer to do it here.
-            globalStatsEnabled = configuration.globalJmxStatistics().enabled();
-            if (globalStatsEnabled) {
-               String groupName = String.format("type=channel,cluster=%s", ObjectName.quote(clusterName));
-               mbeanServer = JmxUtil.lookupMBeanServer(configuration);
-               domain = JmxUtil.buildJmxDomain(configuration, mbeanServer, groupName);
-               JmxConfigurator.registerChannel(channel, mbeanServer, domain, clusterName, true);
-            }
-         } catch (Exception e) {
-            throw new CacheException("Channel connected, but unable to register MBeans", e);
-         }
-      }
-      address = fromJGroupsAddress(channel.getAddress());
-      if (!connectChannel) {
-         // the channel was already started externally, we need to initialize our member list
-         viewAccepted(channel.getView());
-      }
-      if (log.isInfoEnabled())
-         log.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
-   }
-
-   @Override
-   public int getViewId() {
-      if (channel == null)
-         throw new CacheException("The cache has been stopped and invocations are not allowed!");
-      return viewId;
-   }
-
-   @Override
-   public CompletableFuture<Void> withView(int expectedViewId) {
-      if (viewId >= expectedViewId)
-         return CompletableFutures.completedNull();
-
-      if (trace) {
-         log.tracef("Waiting for transaction data for view %d, current view is %d", expectedViewId,
-                    viewId);
-      }
-      viewUpdateLock.lock();
-      try {
-         if (viewId >= expectedViewId) {
-            return CompletableFutures.completedNull();
-         } else if (viewId < 0) {
-            throw new IllegalLifecycleStateException();
-         } else {
-            return nextViewFuture.thenCompose(nil -> withView(expectedViewId));
-         }
-      } finally {
-         viewUpdateLock.unlock();
-      }
-   }
-
-   @Override
-   public void waitForView(int viewId) throws InterruptedException {
-      if (channel == null)
-         return;
-
-      log.tracef("Waiting on view %d being accepted", viewId);
-      long remainingNanos = Long.MAX_VALUE;
-      viewUpdateLock.lock();
-      try {
-         while (channel != null && getViewId() < viewId && remainingNanos > 0) {
-            remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
-         }
-      } finally {
-         viewUpdateLock.unlock();
-      }
-   }
-
-   @Override
-   public void stop() {
-      if (channel != null) {
-         channel.getProtocolStack().getTransport().unregisterProbeHandler(handler);
-      }
-      String clusterName = configuration.transport().clusterName();
-      try {
-         if (disconnectChannel && channel != null && channel.isConnected()) {
-            log.disconnectJGroups(clusterName);
-
-            // Unregistering before disconnecting/closing because
-            // after that the cluster name is null
-            if (globalStatsEnabled) {
-               JmxConfigurator.unregisterChannel(channel, mbeanServer, domain, channel.getClusterName());
-            }
-
-            channel.disconnect();
-         }
-         if (closeChannel && channel != null && channel.isOpen()) {
-            channel.close();
-         }
-      } catch (Exception toLog) {
-         log.problemClosingChannel(toLog, clusterName);
-      }
-
-      if (dispatcher != null) {
-         log.stoppingRpcDispatcher(clusterName);
-         dispatcher.close();
-         if (channel != null) {
-            // Remove reference to up_handler
-            UpHandler handler = channel.getUpHandler();
-            log.debugf("Removing existing UpHandler %s", handler);
-            channel.setUpHandler(null);
-         }
-      }
-
-      channel = null;
-      viewId = -1;
-      members = Collections.emptyList();
-      coordinator = null;
-      isCoordinator = false;
-      dispatcher = null;
-
-      CompletableFuture<Void> oldFuture = null;
-      viewUpdateLock.lock();
-      try {
-         // Create a completable future for the new view
-         oldFuture = nextViewFuture;
-         nextViewFuture = new CompletableFuture<>();
-
-         // Wake up any threads blocked in waitForView()
-         viewUpdateCondition.signalAll();
-      } finally {
-         viewUpdateLock.unlock();
-
-         // And finally, complete the future for the old view
-         if (oldFuture != null) {
-            oldFuture.complete(null);
-         }
-      }
+      channel.getProtocolStack().getTransport().registerProbeHandler(probeHandler);
    }
 
    protected void initChannel() {
@@ -378,13 +468,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          if (connectChannel) {
             channel.addAddressGenerator(() -> JGroupsTopologyAwareAddress
                   .randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
-                        transportCfg.machineId()));
+                              transportCfg.machineId()));
          } else {
             org.jgroups.Address jgroupsAddress = channel.getAddress();
             if (jgroupsAddress instanceof ExtendedUUID) {
                JGroupsTopologyAwareAddress address = new JGroupsTopologyAwareAddress((ExtendedUUID) jgroupsAddress);
                if (!address.matches(transportCfg.siteId(), transportCfg.rackId(), transportCfg.machineId())) {
-                  throw new CacheException("Topology information does not match the one set by the provided JGroups channel");
+                  throw new CacheException(
+                        "Topology information does not match the one set by the provided JGroups channel");
                }
             } else {
                throw new CacheException("JGroups address does not contain topology coordinates");
@@ -393,15 +484,79 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
    }
 
-   private void initChannelAndRPCDispatcher() throws CacheException {
-      initChannel();
-      initRPCDispatcher();
+   private void setXSiteViewListener(RouteStatusListener listener) {
+      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
+      if (relay2 != null) {
+         relay2.setRouteStatusListener(listener);
+      }
    }
 
-   protected void initRPCDispatcher() {
-      dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, timeoutExecutor, timeService,
-            remoteExecutor, marshaller);
-      dispatcher.start();
+   private void setSiteMasterPicker(SiteMasterPickerImpl siteMasterPicker) {
+      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
+      if (relay2 != null) {
+         relay2.siteMasterPicker(siteMasterPicker);
+      }
+   }
+
+   private void startJGroupsChannelIfNeeded() {
+      String clusterName = configuration.transport().clusterName();
+      if (connectChannel) {
+         try {
+            channel.connect(clusterName);
+         } catch (Exception e) {
+            throw new CacheException("Unable to start JGroups Channel", e);
+         }
+
+         try {
+            // Normally this would be done by CacheManagerJmxRegistration but
+            // the channel is not started when the cache manager starts but
+            // when first cache starts, so it's safer to do it here.
+            globalStatsEnabled = configuration.globalJmxStatistics().enabled();
+            if (globalStatsEnabled) {
+               String groupName = String.format("type=channel,cluster=%s", ObjectName.quote(clusterName));
+               mbeanServer = JmxUtil.lookupMBeanServer(configuration);
+               domain = JmxUtil.buildJmxDomain(configuration, mbeanServer, groupName);
+               JmxConfigurator.registerChannel(channel, mbeanServer, domain, clusterName, true);
+            }
+         } catch (Exception e) {
+            throw new CacheException("Channel connected, but unable to register MBeans", e);
+         }
+      }
+      if (!connectChannel) {
+         // the channel was already started externally, we need to initialize our member list
+         receiveClusterView(channel.getView());
+      }
+      if (log.isInfoEnabled())
+         log.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
+   }
+
+   private void waitForInitialNodes() {
+      int initialClusterSize = configuration.transport().initialClusterSize();
+      if (initialClusterSize <= 1)
+         return;
+
+      long timeout = configuration.transport().initialClusterTimeout();
+      long remainingNanos = TimeUnit.MILLISECONDS.toNanos(timeout);
+      viewUpdateLock.lock();
+      try {
+         while (channel != null && channel.getView().getMembers().size() < initialClusterSize &&
+               remainingNanos > 0) {
+            log.debugf("Waiting for %d nodes, current view has %d", initialClusterSize,
+                       channel.getView().getMembers().size());
+            remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
+         }
+      } catch (InterruptedException e) {
+         log.interruptedWaitingForCoordinator(e);
+         Thread.currentThread().interrupt();
+      } finally {
+         viewUpdateLock.unlock();
+      }
+
+      if (remainingNanos <= 0) {
+         throw log.timeoutWaitingForInitialNodes(initialClusterSize, channel.getView().getMembers());
+      }
+
+      log.debugf("Initial cluster size of %d nodes reached", initialClusterSize);
    }
 
    // This is per CM, so the CL in use should be the CM CL
@@ -466,7 +621,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                channel = new JChannel(new ByteArrayInputStream(cfg.getBytes()));
             } catch (Exception e) {
                throw log.errorCreatingChannelFromConfigString(cfg, e);
-
             }
          }
       }
@@ -474,534 +628,55 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       if (channel == null) {
          log.unableToUseJGroupsPropertiesProvided(props);
          try {
-            channel = new JChannel(fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader()));
+            channel = new JChannel(
+                  fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader()));
          } catch (Exception e) {
             throw log.errorCreatingChannelFromConfigFile(DEFAULT_JGROUPS_CONFIGURATION_FILE, e);
          }
       }
    }
 
-   // ------------------------------------------------------------------------------------------------------------------
-   // querying cluster status
-   // ------------------------------------------------------------------------------------------------------------------
-
-   @Override
-   public boolean isCoordinator() {
-      return isCoordinator;
-   }
-
-   @Override
-   public Address getCoordinator() {
-      return coordinator;
-   }
-
-   private void waitForInitialNodes() {
-      int initialClusterSize = configuration.transport().initialClusterSize();
-      if (initialClusterSize <= 1)
-         return;
-
-      long timeout = configuration.transport().initialClusterTimeout();
-      long remainingNanos = TimeUnit.MILLISECONDS.toNanos(timeout);
-      viewUpdateLock.lock();
-      try {
-         while (channel != null && channel.getView().getMembers().size() < initialClusterSize &&
-               remainingNanos > 0) {
-            log.debugf("Waiting for %d nodes, current view has %d", initialClusterSize,
-                  channel.getView().getMembers().size());
-            remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
+   protected void receiveClusterView(View newView) {
+      // The first view is installed before returning from JChannel.connect
+      // So we need to set the local address here
+      if (address == null) {
+         address = fromJGroupsAddress(channel.getAddress());
+      }
+      List<List<Address>> subGroups;
+      if (newView instanceof MergeView) {
+         CLUSTER.receivedMergedView(channel.clusterName(), newView);
+         subGroups = new ArrayList<>();
+         List<View> jgroupsSubGroups = ((MergeView) newView).getSubgroups();
+         for (View group : jgroupsSubGroups) {
+            subGroups.add(fromJGroupsAddressList(group.getMembers()));
          }
-      } catch (InterruptedException e) {
-         log.interruptedWaitingForCoordinator(e);
-         Thread.currentThread().interrupt();
-      } finally {
-         viewUpdateLock.unlock();
-      }
-
-      if (remainingNanos <= 0) {
-         throw log.timeoutWaitingForInitialNodes(initialClusterSize, channel.getView().getMembers());
-      }
-
-      log.debugf("Initial cluster size of %d nodes reached", initialClusterSize);
-   }
-
-   @Override
-   public List<Address> getMembers() {
-      return members != null ? members : Collections.emptyList();
-   }
-
-   @Override
-   public boolean isMulticastCapable() {
-      return channel.getProtocolStack().getTransport().supportsMulticasting();
-   }
-
-   @Override
-   public Address getAddress() {
-      return address;
-   }
-
-   @Override
-   public List<Address> getPhysicalAddresses() {
-      if (physicalAddress == null && channel != null) {
-         org.jgroups.Address addr = (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
-         if (addr == null) {
-            return Collections.emptyList();
-         }
-         physicalAddress = new JGroupsAddress(addr);
-      }
-      return Collections.singletonList(physicalAddress);
-   }
-
-   // ------------------------------------------------------------------------------------------------------------------
-   // outbound RPC
-   // ------------------------------------------------------------------------------------------------------------------
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
-                                                ResponseMode mode, long timeout, ResponseFilter responseFilter,
-                                                DeliverOrder deliverOrder, boolean anycast) throws Exception {
-      CompletableFuture<Map<Address, Response>> future = invokeRemotelyAsync(recipients, rpcCommand, mode,
-            timeout, responseFilter, deliverOrder, anycast);
-      try {
-         //no need to set a timeout for the future. The rpc invocation is guaranteed to complete within the timeout milliseconds
-         return CompletableFutures.await(future);
-      } catch (ExecutionException e) {
-         throw Util.rewrapAsCacheException(e.getCause());
-      }
-   }
-
-   @Override
-   public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                        ReplicableCommand rpcCommand,
-                                                                        ResponseMode mode, long timeout,
-                                                                        ResponseFilter responseFilter,
-                                                                        DeliverOrder deliverOrder,
-                                                                        boolean anycast) throws Exception {
-      if (recipients != null && recipients.isEmpty()) {
-         // don't send if recipients list is empty
-         log.trace("Destination list is empty: no need to send message");
-         return CompletableFuture.completedFuture(Collections.emptyMap());
-      }
-      boolean totalOrder = deliverOrder == DeliverOrder.TOTAL;
-
-      if (trace)
-         log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
-      Address self = getAddress();
-      boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
-      List<org.jgroups.Address> jgAddressList = toJGroupsAddressListExcludingSelf(recipients, totalOrder);
-      if (jgAddressList != null && jgAddressList.isEmpty()) {
-         return CompletableFutures.completedEmptyMap();
-      }
-
-      boolean broadcast = jgAddressList == null;
-      CompletableFuture<Responses> rspListFuture = null;
-      SingleResponseFuture singleResponseFuture = null;
-      org.jgroups.Address singleJGAddress = null;
-
-      if (broadcast) {
-         rspListFuture = dispatcher.invokeRemoteCommands(null, rpcCommand, toJGroupsMode(mode), timeout,
-               toJGroupsFilter(responseFilter), deliverOrder);
-      } else if (totalOrder) {
-         rspListFuture = dispatcher
-               .invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
-                     toJGroupsFilter(responseFilter), deliverOrder);
       } else {
-         boolean singleRecipient = !ignoreLeavers && jgAddressList.size() == 1;
-         if (singleRecipient) {
-            singleJGAddress = jgAddressList.get(0);
-         }
-
-         if (singleRecipient) {
-            singleResponseFuture = dispatcher
-                  .invokeRemoteCommand(singleJGAddress, rpcCommand, toJGroupsMode(mode), timeout,
-                        deliverOrder);
-         } else {
-            rspListFuture = dispatcher
-                  .invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
-                        toJGroupsFilter(responseFilter), deliverOrder);
-         }
+         CLUSTER.receivedClusterView(channel.clusterName(), newView);
+         subGroups = Collections.emptyList();
       }
-
-      if (mode.isAsynchronous()) {
-         return CompletableFutures.completedEmptyMap();
-      }
-
-      if (singleResponseFuture != null) {
-         // Unicast request
-         org.jgroups.Address finalSingleJGAddress = singleJGAddress;
-         return singleResponseFuture.thenApply(rsp -> {
-            if (trace)
-               log.tracef("Responses: %s", rsp);
-            Address sender = fromJGroupsAddress(finalSingleJGAddress);
-            Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), false);
-            return Collections.singletonMap(sender, response);
-         });
-      } else if (rspListFuture != null) {
-         // Broadcast/anycast request
-         return rspListFuture.thenApply(rsps -> {
-            if (trace)
-               log.tracef("Responses: %s", rsps);
-
-            if (broadcast && rsps.size() == 0) {
-               // JGroups returns an empty RspList if we're the only node in the cluster, no need to validate
-               return Collections.emptyMap();
-            }
-
-            Map<Address, Response> responseMap =
-                  new HashMap<>(CollectionFactory.computeCapacity(rsps.size()));
-            boolean hasResponses = false;
-            boolean hasValidResponses = false;
-            if (rsps.isTimedOut()) {
-               throw addSuppressedExceptions(new TimeoutException("Replication timeout"), rsps);
-            }
-            for (Map.Entry<org.jgroups.Address, Rsp<Response>> e : rsps) {
-               Rsp<Response> rsp = e.getValue();
-               if (rsp == null) {
-                  // This happens with WAIT_FOR_VALID_RESPONSE
-                  continue;
-               }
-               hasResponses |= rsp.wasReceived();
-               Address sender = fromJGroupsAddress(e.getKey());
-               Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), ignoreLeavers);
-               if (response != null) {
-                  hasValidResponses = true;
-                  responseMap.put(sender, response);
-               }
-            }
-
-            if (!hasValidResponses) {
-               // PartitionHandlingInterceptor relies on receiving a RpcException if there are only invalid responses
-               // But we still need to throw a TimeoutException if there are no responses at all.
-               if (hasResponses) {
-                  throw new RpcException(String.format("Received invalid responses from all of %s", recipients));
-               } else {
-                  throw new TimeoutException("Timed out waiting for valid responses!");
-               }
-            }
-
-            return responseMap;
-         });
-      } else {
-         throw new IllegalStateException("Should have one remote invocation future");
-      }
-   }
-
-   private TimeoutException addSuppressedExceptions(TimeoutException timeoutException, Responses rsps) {
-      for (Map.Entry<org.jgroups.Address, Rsp<Response>> e : rsps) {
-         Rsp<Response> rsp = e.getValue();
-         Throwable exception;
-         if (rsp == null) {
-            // no need to add suppression
-         } else if (rsp.wasSuspected()) {
-            timeoutException.addSuppressed(new RpcException(e.getKey() + " was suspected"));
-         } else if (rsp.wasUnreachable()) {
-            timeoutException.addSuppressed(new RpcException(e.getKey() + " was unreachable"));
-         } else if ((exception = rsp.getException()) != null) {
-            timeoutException.addSuppressed(exception);
-         } else if (rsp.getValue() instanceof ExceptionResponse) {
-            timeoutException.addSuppressed(((ExceptionResponse) rsp.getValue()).getException());
-         } else {
-            timeoutException.addSuppressed(new RpcException("Not accepted: " + rsp.getValue()));
-         }
-      }
-      return timeoutException;
-   }
-
-   @Override
-   public void sendTo(Address destination, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
-      if (trace) {
-         log.tracef("sendTo: destination=%s, command=%s, order=%s", destination, rpcCommand, deliverOrder);
-      }
-      if (destination.equals(address)) { //removed requireNonNull. this will throw a NPE in that case
-         if (trace) {
-            log.trace("sendTo: not sending to self.");
-         }
-         return;
-      }
-      dispatcher.sendMessage(
-            toJGroupsAddress(destination),
-            dispatcher.marshallCall(rpcCommand),
-            asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder));
-   }
-
-   @Override
-   public void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
-      if (destinations == null) {
-         sendToAll(rpcCommand, deliverOrder);
-         return;
-      }
-      switch (destinations.size()) {
-         case 0:
-            return;
-         case 1:
-            sendTo(destinations.iterator().next(), rpcCommand, deliverOrder);
-            return;
-      }
-
-      if (trace) {
-         log.tracef("sendTo: destinations=%s, command=%s, order=%s", destinations, rpcCommand, deliverOrder);
-      }
-
-      final List<org.jgroups.Address> jgrpAddrList = toJGroupsAddressListExcludingSelf(destinations, deliverOrder == DeliverOrder.TOTAL);
-
-      final Buffer buffer = dispatcher.marshallCall(rpcCommand);
-      final RequestOptions options = asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder);
-      if (deliverOrder == DeliverOrder.TOTAL) {
-         AnycastAddress anycastAddress = new AnycastAddress(jgrpAddrList);
-         dispatcher.sendMessage(anycastAddress, buffer, options);
-      } else if (jgrpAddrList.size() == 1) {
-         dispatcher.sendMessage(jgrpAddrList.get(0), buffer, options);
-      } else {
-         dispatcher.castMessage(jgrpAddrList, buffer, options.anycasting(true).useAnycastAddresses(false));
-      }
-   }
-
-   private static RequestOptions asyncRequestOptions(boolean rsvp, DeliverOrder deliverOrder) {
-      return constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE, rsvp, deliverOrder, 0, true);
-   }
-
-   private void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
-      if (trace) {
-         log.tracef("sendToAll: command=%s, order=%s", rpcCommand, deliverOrder);
-      }
-      final Buffer buffer = dispatcher.marshallCall(rpcCommand);
-      final RequestOptions options = asyncRequestOptions(isRsvpCommand(rpcCommand), deliverOrder);
-      if (deliverOrder == DeliverOrder.TOTAL) {
-         dispatcher.sendMessage(new AnycastAddress(), buffer, options);
-      } else {
-         dispatcher.castMessage(null, buffer, options.anycasting(false));
-      }
-   }
-
-   private boolean ignoreTimeout(ResponseFilter responseFilter) {
-      return responseFilter != null && !responseFilter.needMoreResponses();
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
-                                                long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
-                                                boolean totalOrder, boolean anycast)
-         throws Exception {
-      DeliverOrder deliverOrder = DeliverOrder.PER_SENDER;
-      if (totalOrder) {
-         deliverOrder = DeliverOrder.TOTAL;
-      } else if (usePriorityQueue) {
-         deliverOrder = DeliverOrder.NONE;
-      }
-      return invokeRemotely(rpcCommands, mode, timeout, responseFilter, deliverOrder, anycast);
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
-         long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast)
-         throws Exception {
-      if (rpcCommands == null || rpcCommands.isEmpty()) {
-         // don't send if recipients list is empty
-         log.trace("Destination list is empty: no need to send message");
-         return Collections.emptyMap();
-      }
-
-      if (trace)
-         log.tracef("commands=%s, mode=%s, timeout=%s", rpcCommands, mode, timeout);
-      boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
-
-      CompletableFuture<Rsp<Response>>[] futures = new SingleResponseFuture[rpcCommands.size()];
-      int i = 0;
-      for (Map.Entry<Address, ReplicableCommand> entry : rpcCommands.entrySet()) {
-         org.jgroups.Address recipient = toJGroupsAddress(entry.getKey());
-         ReplicableCommand command = entry.getValue();
-         SingleResponseFuture future = dispatcher.invokeRemoteCommand(recipient, command, toJGroupsMode(mode),
-               timeout, deliverOrder);
-         futures[i] = future;
-         i++;
-      }
-
-      if (mode.isAsynchronous())
-         return Collections.emptyMap();
-
-      CompletableFuture<Void> bigFuture = CompletableFuture.allOf(futures);
-      CompletableFutures.await(bigFuture);
-
-      Map<Address, Response> retval = new HashMap<>(CollectionFactory.computeCapacity(futures.length));
-      boolean hasResponses = false;
-      i = 0;
-      // We are not modifying the rpcCommands map, so the iteration order must stay the same even in a HashMap
-      for (Map.Entry<Address, ReplicableCommand> addressReplicableCommandEntry : rpcCommands.entrySet()) {
-         Address sender = addressReplicableCommandEntry.getKey();
-         Rsp<Response> rsp = futures[i].get();
-         Response response = checkRsp(rsp, sender, ignoreTimeout(responseFilter), ignoreLeavers);
-         if (response != null) {
-            retval.put(sender, response);
-            hasResponses = true;
-         }
-         i++;
-      }
-
-      if (!hasResponses) {
-         // It is possible for their to be no valid response if we ignored leavers and
-         // all of our targets left
-         // If all the targets were suspected we didn't have a timeout
-         throw new TimeoutException("Timed out waiting for valid responses!");
-      }
-      return retval;
-   }
-
-   @Override
-   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception {
-      if (trace) {
-         log.tracef("About to send to backups %s, command %s", backups, rpcCommand);
-      }
-      Buffer buf = dispatcher.marshallCall(rpcCommand);
-      Map<XSiteBackup, Future<Object>> syncBackupCalls = new HashMap<>(backups.size());
-      for (XSiteBackup xsb : backups) {
-         SiteMaster recipient = new SiteMaster(xsb.getSiteName());
-         if (xsb.isSync()) {
-            RequestOptions sync = constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_ALL,
-                  false, DeliverOrder.NONE, xsb.getTimeout(), false);
-            syncBackupCalls.put(xsb, dispatcher.sendMessageWithFuture(recipient, buf.getBuf(), buf.getOffset(), buf.getLength(), sync));
-         } else {
-            RequestOptions async = constructRequestOptions(org.jgroups.blocks.ResponseMode.GET_NONE,
-                  false, DeliverOrder.PER_SENDER, xsb.getTimeout(), false);
-            dispatcher.sendMessage(recipient, buf.getBuf(), buf.getOffset(), buf.getLength(), async);
-         }
-      }
-      return new JGroupsBackupResponse(syncBackupCalls, timeService);
-   }
-
-   private static org.jgroups.blocks.ResponseMode toJGroupsMode(ResponseMode mode) {
-      switch (mode) {
-         case ASYNCHRONOUS:
-            return org.jgroups.blocks.ResponseMode.GET_NONE;
-         case WAIT_FOR_VALID_RESPONSE:
-            return org.jgroups.blocks.ResponseMode.GET_FIRST;
-         case SYNCHRONOUS:
-         case SYNCHRONOUS_IGNORE_LEAVERS:
-            return org.jgroups.blocks.ResponseMode.GET_ALL;
-      }
-      throw new CacheException("Unknown response mode " + mode);
-   }
-
-   private RspFilter toJGroupsFilter(ResponseFilter responseFilter) {
-      return responseFilter == null ? null : new JGroupsResponseFilterAdapter(responseFilter);
-   }
-
-   protected Response checkRsp(Rsp<Response> rsp, Address sender, boolean ignoreTimeout,
-                               boolean ignoreLeavers) {
-      Response response;
-      if (rsp.wasReceived()) {
-         if (rsp.hasException()) {
-            log.tracef(rsp.getException(), "Unexpected exception from %s", sender);
-            throw log.remoteException(sender, rsp.getException());
-         } else {
-            response = checkResponse(rsp.getValue(), sender, ignoreLeavers);
-         }
-      } else if (rsp.wasSuspected()) {
-         response = checkResponse(CacheNotFoundResponse.INSTANCE, sender, ignoreLeavers);
-      } else {
-         if (!ignoreTimeout) {
-            throw new TimeoutException("Replication timeout for " + sender);
-         }
-         response = null;
-      }
-
-      return response;
-   }
-
-   private void addXSiteViewListener() {
-      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
-      if (relay2 != null && relay2.getRouteStatusListener() == null) {
-         relay2.setRouteStatusListener(new DefaultRouteStatusListener());
-      }
-   }
-
-   private void addSiteMasterPicker() {
-      RELAY2 relay2 = channel.getProtocolStack().findProtocol(RELAY2.class);
-      if (relay2 != null) {
-         relay2.siteMasterPicker(new SiteMasterPickerImpl());
-      }
-   }
-
-   @Override
-   public Set<String> getSitesView() {
-      RELAY2 relay = channel.getProtocolStack().findProtocol(RELAY2.class);
-      RouteStatusListener listener = relay != null ?
-            relay.getRouteStatusListener() : null;
-      return (listener instanceof Supplier) ?
-            ((Supplier<Set<String>>) listener).get() : null;
-   }
-
-   // ------------------------------------------------------------------------------------------------------------------
-   // Implementations of JGroups interfaces
-   // ------------------------------------------------------------------------------------------------------------------
-
-
-   private interface Notify {
-      void emitNotification(List<Address> oldMembers, View newView);
-   }
-
-   private class NotifyViewChange implements Notify {
-      @Override
-      public void emitNotification(List<Address> oldMembers, View newView) {
-         notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getViewId().getId());
-      }
-   }
-
-   private class NotifyMerge implements Notify {
-
-      @Override
-      public void emitNotification(List<Address> oldMembers, View newView) {
-         MergeView mv = (MergeView) newView;
-
-         final Address address = getAddress();
-         final int viewId = (int) newView.getViewId().getId();
-         notifier.notifyMerge(members, oldMembers, address, viewId, getSubgroups(mv.getSubgroups()));
-      }
-
-      private List<List<Address>> getSubgroups(List<View> subviews) {
-         List<List<Address>> l = new ArrayList<>(subviews.size());
-         for (View v : subviews)
-            l.add(fromJGroupsAddressList(v.getMembers()));
-         return l;
-      }
-   }
-
-   @Override
-   public void viewAccepted(View newView) {
-      log.debugf("New view accepted: %s", newView);
-      List<org.jgroups.Address> newMembers = newView.getMembers();
-      if (newMembers == null || newMembers.isEmpty()) {
-         log.debugf("Received null or empty member list from JGroups channel: " + newView);
+      long viewId = newView.getViewId().getId();
+      List<Address> members = fromJGroupsAddressList(newView.getMembers());
+      if (members.isEmpty()) {
          return;
       }
 
-      List<Address> oldMembers = members;
+      ClusterView oldView = this.clusterView;
 
       // Update every view-related field while holding the lock so that waitForView only returns
       // after everything was updated.
       CompletableFuture<Void> oldFuture = null;
       viewUpdateLock.lock();
       try {
-         viewId = (int) newView.getViewId().getId();
-
-         // we need a defensive copy anyway
-         members = fromJGroupsAddressList(newMembers);
-
          // Delta view debug log for large cluster
-         if (log.isDebugEnabled() && oldMembers != null) {
+         if (log.isDebugEnabled() && oldView.getMembers() != null) {
             List<Address> joined = new ArrayList<>(members);
-            joined.removeAll(oldMembers);
-            List<Address> left = new ArrayList<>(oldMembers);
+            joined.removeAll(oldView.getMembers());
+            List<Address> left = new ArrayList<>(oldView.getMembers());
             left.removeAll(members);
             log.debugf("Joined: %s, Left: %s", joined, left);
          }
 
-         // The first view is installed before returning from JChannel.connect
-         // So we need to set the local address here
-         if (address == null) {
-            address = fromJGroupsAddress(channel.getAddress());
-         }
-         // Now that we have a view, figure out if we are the isCoordinator
-         coordinator = fromJGroupsAddress(newView.getCreator());
-         isCoordinator = coordinator != null && coordinator.equals(address);
+         this.clusterView = new ClusterView((int) viewId, members, address);
 
          // Create a completable future for the new view
          oldFuture = nextViewFuture;
@@ -1013,96 +688,142 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       } finally {
          viewUpdateLock.unlock();
 
-         // And finally, complete the future for the old view
+         // Complete the future for the old view
          if (oldFuture != null) {
-            oldFuture.complete(null);
+            CompletableFuture<Void> future = oldFuture;
+            remoteExecutor.execute(() -> future.complete(null));
          }
       }
 
       // now notify listeners - *after* updating the isCoordinator. - JBCACHE-662
       boolean hasNotifier = notifier != null;
       if (hasNotifier) {
-         String clusterName = configuration.transport().clusterName();
-         Notify n;
-         if (newView instanceof MergeView) {
-            log.receivedMergedView(clusterName, newView);
-            n = new NotifyMerge();
+         if (!subGroups.isEmpty()) {
+            final Address address1 = getAddress();
+            notifier.notifyMerge(members, oldView.getMembers(), address1, (int) viewId, subGroups);
          } else {
-            log.receivedClusterView(clusterName, newView);
-            n = new NotifyViewChange();
+            notifier.notifyViewChange(members, oldView.getMembers(), getAddress(), (int) viewId);
          }
-
-         n.emitNotification(oldMembers, newView);
       }
+
+      // Targets leaving may finish some requests and potentially potentially block for a long time.
+      // We don't want to block view handling, so we unblock the commands on a separate thread.
+      remoteExecutor.execute(() -> requests.forEach(request -> request.onNewView(clusterView.getMembersSet())));
 
       JGroupsAddressCache.pruneAddressCache();
    }
 
-   @Override
-   public void suspect(org.jgroups.Address suspected_mbr) {
-      // no-op
+   private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
+      return Collections.unmodifiableList(list.stream()
+                                              .map(JGroupsAddressCache::fromJGroupsAddress)
+                                              .collect(Collectors.toList()));
    }
 
    @Override
-   public void block() {
-      // no-op since ISPN-83 has been resolved
-   }
+   public void stop() {
+      if (channel != null) {
+         channel.getProtocolStack().getTransport().unregisterProbeHandler(probeHandler);
+      }
+      String clusterName = configuration.transport().clusterName();
+      try {
+         if (disconnectChannel && channel != null && channel.isConnected()) {
+            log.disconnectJGroups(clusterName);
 
-   @Override
-   public void unblock() {
-      // no-op since ISPN-83 has been resolved
-   }
+            // Unregistering before disconnecting/closing because
+            // after that the cluster name is null
+            if (globalStatsEnabled) {
+               JmxConfigurator.unregisterChannel(channel, mbeanServer, domain, channel.getClusterName());
+            }
 
-   // ------------------------------------------------------------------------------------------------------------------
-   // Helpers to convert between Address types
-   // ------------------------------------------------------------------------------------------------------------------
-
-   protected static org.jgroups.Address toJGroupsAddress(Address a) {
-      return ((JGroupsAddress) a).address;
-   }
-
-   static Address fromJGroupsAddress(final org.jgroups.Address addr) {
-      return JGroupsAddressCache.fromJGroupsAddress(addr);
-   }
-
-   private List<org.jgroups.Address> toJGroupsAddressListExcludingSelf(Collection<Address> list, boolean totalOrder) {
-      if (list == null)
-         return null;
-      if (list.isEmpty())
-         return Collections.emptyList();
-
-      List<org.jgroups.Address> retval = new ArrayList<>(list.size());
-      boolean ignoreSelf = !totalOrder; //in total order, we need to send the message to ourselves!
-      Address self = getAddress();
-      for (Address a : list) {
-         if (!ignoreSelf || !a.equals(self)) {
-            retval.add(toJGroupsAddress(a));
-         } else {
-            ignoreSelf = false; // short circuit address equality for future iterations
+            channel.disconnect();
          }
+         if (closeChannel && channel != null && channel.isOpen()) {
+            channel.close();
+         }
+      } catch (Exception toLog) {
+         log.problemClosingChannel(toLog, clusterName);
       }
 
-      return retval;
+      IllegalLifecycleStateException stoppingException = log.cacheManagerIsStopping();
+      requests.forEach(request -> request.cancel(stoppingException));
+
+      channel = null;
+      address = null;
+      clusterView = new ClusterView(ClusterView.FINAL_VIEW_ID, Collections.emptyList(), null);
+
+      requests = null;
+
+      CompletableFuture<Void> oldFuture = null;
+      viewUpdateLock.lock();
+      try {
+         // Create a completable future for the new view
+         oldFuture = nextViewFuture;
+         nextViewFuture = new CompletableFuture<>();
+
+         // Wake up any threads blocked in waitForView()
+         viewUpdateCondition.signalAll();
+      } finally {
+         viewUpdateLock.unlock();
+
+         // And finally, complete the future for the old view
+         if (oldFuture != null) {
+            oldFuture.complete(null);
+         }
+      }
    }
 
-   private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
-      if (list == null || list.isEmpty())
-         return Collections.emptyList();
-
-      List<Address> retval = new ArrayList<>(list.size());
-      for (org.jgroups.Address a : list)
-         retval.add(fromJGroupsAddress(a));
-      return Collections.unmodifiableList(retval);
+   @Override
+   public int getViewId() {
+      if (channel == null)
+         throw new CacheException("The cache has been stopped and invocations are not allowed!");
+      return clusterView.getViewId();
    }
 
-   // mainly for unit testing
+   @Override
+   public CompletableFuture<Void> withView(int expectedViewId) {
+      ClusterView view = this.clusterView;
+      if (view.isViewIdAtLeast(expectedViewId))
+         return CompletableFutures.completedNull();
 
-   public CommandAwareRpcDispatcher getCommandAwareRpcDispatcher() {
-      return dispatcher;
+      if (trace) {
+         log.tracef("Waiting for transaction data for view %d, current view is %d", expectedViewId,
+                    view.getViewId());
+      }
+      viewUpdateLock.lock();
+      try {
+         view = this.clusterView;
+         if (view.isViewIdAtLeast(ClusterView.FINAL_VIEW_ID)) {
+            throw new IllegalLifecycleStateException();
+         } else if (view.isViewIdAtLeast(expectedViewId)) {
+            return CompletableFutures.completedNull();
+         } else {
+            return nextViewFuture.thenCompose(nil -> withView(expectedViewId));
+         }
+      } finally {
+         viewUpdateLock.unlock();
+      }
    }
 
-   public JChannel getChannel() {
-      return channel;
+   @Override
+   public void waitForView(int viewId) throws InterruptedException {
+      if (channel == null)
+         return;
+
+      log.tracef("Waiting on view %d being accepted", viewId);
+      long remainingNanos = Long.MAX_VALUE;
+      viewUpdateLock.lock();
+      try {
+         while (channel != null && getViewId() < viewId && remainingNanos > 0) {
+            remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
+         }
+      } finally {
+         viewUpdateLock.unlock();
+      }
+   }
+
+   @Override
+   public Log getLog() {
+      return log;
    }
 
    @Override
@@ -1110,31 +831,558 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       //For replicated and distributed tx caches, we use TOA as total order protocol.
       if (channel.getProtocolStack().findProtocol(TOA.class) == null) {
          throw new CacheConfigurationException("In order to support total order based transaction, the TOA protocol " +
-                                                "must be present in the JGroups's config.");
+                                                     "must be present in the JGroups's config.");
       }
    }
 
-   class DefaultRouteStatusListener implements RouteStatusListener, Supplier<Set<String>> {
+   @Override
+   public Set<String> getSitesView() {
+      return sitesView;
+   }
 
-      private final Set<String> view = new ConcurrentSkipListSet<>();
+   @Override
+   public <T> CompletableFuture<T> invokeCommand(Address target, ReplicableCommand command,
+                                                 ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                 long timeout, TimeUnit unit) {
+      long requestId = requests.newRequestId();
+      SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, target);
+      addRequest(request);
+      sendCommand(target, command, requestId, deliverOrder, isRsvpCommand(command), true);
+      if (timeout > 0) {
+         request.setTimeout(timeoutExecutor, timeout, unit);
+      }
+      return request;
+   }
+
+   @Override
+   public <T> CompletableFuture<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                                 ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                 long timeout, TimeUnit unit) {
+      long requestId = requests.newRequestId();
+      Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
+      MultiTargetRequest<T> request =
+            new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
+      try {
+         addRequest(request);
+         sendCommand(targets, command, requestId, deliverOrder, isRsvpCommand(command));
+      } catch (Throwable t) {
+         request.cancel(true);
+         throw t;
+      }
+      if (timeout > 0) {
+         request.setTimeout(timeoutExecutor, timeout, unit);
+      }
+      return request;
+   }
+
+   @Override
+   public <T> CompletableFuture<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                                      DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+      long requestId = requests.newRequestId();
+      Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
+      MultiTargetRequest<T> request =
+            new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget);
+      try {
+         addRequest(request);
+         sendCommandToAll(command, requestId, deliverOrder, isRsvpCommand(command));
+      } catch (Throwable t) {
+         request.cancel(true);
+         throw t;
+      }
+      if (timeout > 0) {
+         request.setTimeout(timeoutExecutor, timeout, unit);
+      }
+      return request;
+   }
+
+   @Override
+   public <T> CompletableFuture<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                          ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                          long timeout, TimeUnit unit) {
+      long requestId = requests.newRequestId();
+      StaggeredRequest<T> request =
+            new StaggeredRequest<>(collector, requestId, requests, targets, getAddress(), command, deliverOrder,
+                                   timeout, unit, this);
+      try {
+         addRequest(request);
+         request.sendNextMessage();
+      } catch (Throwable t) {
+         request.cancel(true);
+         throw t;
+      }
+      return request;
+   }
+
+   @Override
+   public <T> CompletableFuture<T> invokeCommands(Collection<Address> targets,
+                                                  Function<Address, ReplicableCommand> commandGenerator,
+                                                  ResponseCollector<T> responseCollector, long timeout,
+                                                  DeliverOrder deliverOrder) {
+      long requestId;
+      requestId = requests.newRequestId();
+      Address excludedTarget = getAddress();
+      MultiTargetRequest<T> request =
+            new MultiTargetRequest<>(responseCollector, requestId, requests, targets, excludedTarget);
+      addRequest(request);
+      try {
+         for (Address target : targets) {
+            ReplicableCommand command = commandGenerator.apply(target);
+
+            boolean rsvp = isRsvpCommand(command);
+            sendCommand(target, command, requestId, deliverOrder, rsvp, true);
+         }
+      } catch (Throwable t) {
+         request.cancel(true);
+         throw t;
+      }
+
+      if (timeout > 0) {
+         request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
+      }
+      return request;
+   }
+
+   private void addRequest(AbstractRequest<?> request) {
+      try {
+         requests.addRequest(request);
+         request.onNewView(clusterView.getMembersSet());
+      } catch (Throwable t) {
+         // Removes the request and the scheduled task, if necessary
+         request.cancel(true);
+         throw t;
+      }
+   }
+
+   void sendCommand(Address target, ReplicableCommand command, long requestId, DeliverOrder deliverOrder,
+                    boolean rsvp, boolean noRelay) {
+      Message message = new Message(toJGroupsAddress(target));
+      marshallRequest(message, command, requestId);
+      setMessageFlags(message, deliverOrder, rsvp, noRelay);
+
+      if (trace)
+         logCommand(command, requestId, target.toString());
+      send(message);
+   }
+
+   private static boolean isRsvpCommand(ReplicableCommand command) {
+      return command instanceof FlagAffectedCommand &&
+            ((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.GUARANTEED_DELIVERY);
+   }
+
+   private static org.jgroups.Address toJGroupsAddress(Address address) {
+      return ((JGroupsAddress) address).getJGroupsAddress();
+   }
+
+   private void marshallRequest(Message message, ReplicableCommand command, long requestId) {
+      try {
+         ByteBuffer bytes = marshaller.objectToBuffer(command);
+         message.setBuffer(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
+         addRequestHeader(message, requestId);
+      } catch (RuntimeException e) {
+         throw e;
+      } catch (Exception e) {
+         throw new RuntimeException("Failure to marshal argument(s)", e);
+      }
+   }
+
+   private static void setMessageFlags(Message message, DeliverOrder deliverOrder, boolean rsvp, boolean noRelay) {
+      if (noRelay) {
+         message.setFlag(Message.Flag.NO_RELAY.value());
+      }
+      short flags = encodeDeliverMode(deliverOrder);
+      message.setFlag(flags);
+      // Only the commands in total order must be received by the originator.
+      if (deliverOrder != DeliverOrder.TOTAL) {
+         message.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK.value());
+      }
+      if (rsvp) {
+         message.setFlag(Message.Flag.RSVP.value());
+      }
+   }
+
+   private void logCommand(ReplicableCommand command, long requestId, String targets) {
+      if (requestId != Request.NO_REQUEST_ID) {
+         log.tracef("%s sending request %d to %s: %s", address, requestId, targets, command);
+      } else {
+         log.tracef("%s sending command to %s: %s", address, targets, command);
+      }
+   }
+
+   private void send(Message message) {
+      try {
+         channel.send(message);
+      } catch (Exception e) {
+         if (channel.isConnected()) {
+            throw new CacheException(e);
+         } else {
+            throw log.cacheManagerIsStopping();
+         }
+      }
+   }
+
+   private void addRequestHeader(Message message, long requestId) {
+      // TODO Remove the header and store the request id in the buffer
+      if (requestId != Request.NO_REQUEST_ID) {
+         Header header = new RequestCorrelator.Header(REQUEST, requestId, CORRELATOR_ID);
+         message.putHeader(HEADER_ID, header);
+      }
+   }
+
+   private static short encodeDeliverMode(DeliverOrder deliverOrder) {
+      switch (deliverOrder) {
+         case TOTAL:
+            return Message.Flag.OOB.value();
+         case PER_SENDER:
+            return Message.Flag.NO_TOTAL_ORDER.value();
+         case NONE:
+            return (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
+         default:
+            throw new IllegalArgumentException("Unsupported deliver mode " + deliverOrder);
+      }
+   }
+
+   /**
+    * @return The single target's address, or {@code null} if there are multiple targets.
+    */
+   private Address computeSingleTarget(Collection<Address> targets, List<Address> localMembers, int membersSize,
+                                       boolean broadcast, boolean totalOrder) {
+      Address singleTarget;
+      if (broadcast || totalOrder) {
+         singleTarget = null;
+      } else {
+         if (targets == null) {
+            // No broadcast means we eliminated the membersSize == 1 and membersSize > 2 possibilities
+            assert membersSize == 2;
+            singleTarget = localMembers.get(0).equals(address) ? localMembers.get(1) : localMembers.get(0);
+         } else if (targets.size() == 1) {
+            singleTarget = targets.iterator().next();
+         } else {
+            singleTarget = null;
+         }
+      }
+      return singleTarget;
+   }
+
+   private CompletableFuture<Map<Address, Response>> performAsyncRemoteInvocation(Collection<Address> recipients,
+                                                                                  ReplicableCommand command,
+                                                                                  DeliverOrder deliverOrder,
+                                                                                  boolean rsvp, boolean broadcast,
+                                                                                  Address singleTarget) {
+      if (broadcast) {
+         sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder, rsvp);
+      } else if (singleTarget != null) {
+         sendCommand(singleTarget, command, Request.NO_REQUEST_ID, deliverOrder, rsvp, true);
+      } else {
+         sendCommand(recipients, command, Request.NO_REQUEST_ID, deliverOrder, rsvp);
+      }
+      return EMPTY_RESPONSES_FUTURE;
+   }
+
+   private CompletableFuture<Map<Address, Response>> performSyncRemoteInvocation(
+         Collection<Address> targets, ReplicableCommand command, ResponseMode mode, long timeout,
+         ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean ignoreLeavers, boolean sendStaggeredRequest,
+         boolean broadcast, Address singleTarget) {
+      CompletableFuture<Map<Address, Response>> request;
+      if (sendStaggeredRequest) {
+         FilterMapResponseCollector collector = new FilterMapResponseCollector(responseFilter, false, targets.size());
+         request = invokeCommandStaggered(targets, command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
+      } else {
+         if (singleTarget != null) {
+            ResponseCollector<Map<Address, Response>> collector =
+                  ignoreLeavers ? SINGLE_IGNORE_LEAVERS_COLLECTOR : SINGLE_RESPONSE_COLLECTOR;
+            request = invokeCommand(singleTarget, command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
+         } else {
+            ResponseCollector<Map<Address, Response>> collector;
+            if (mode == ResponseMode.WAIT_FOR_VALID_RESPONSE) {
+               collector = new FilterMapResponseCollector(responseFilter, false, targets.size());
+            } else if (responseFilter != null) {
+               collector = new FilterMapResponseCollector(responseFilter, true, targets.size());
+            } else {
+               collector = new SyncMapResponseCollector(ignoreLeavers, targets.size());
+            }
+            if (broadcast) {
+               request = invokeCommandOnAll(command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
+            } else {
+               request = invokeCommand(targets, command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
+            }
+         }
+      }
+      return request;
+   }
+
+   public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder)
+         throws Exception {
+      sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder, false);
+   }
+
+   /**
+    * Send a command to the entire cluster.
+    *
+    * Doesn't send the command to itself unless {@code deliverOrder == TOTAL}.
+    */
+   private void sendCommandToAll(ReplicableCommand command, long requestId, DeliverOrder deliverOrder, boolean rsvp) {
+      Message message = new Message();
+      marshallRequest(message, command, requestId);
+      setMessageFlags(message, deliverOrder, rsvp, true);
+
+      if (deliverOrder == DeliverOrder.TOTAL) {
+         message.dest(new AnycastAddress());
+      }
+
+      if (trace)
+         logCommand(command, requestId, "all");
+      send(message);
+   }
+
+   public JChannel getChannel() {
+      return channel;
+   }
+
+   private void updateSitesView(Collection<String> sitesUp, Collection<String> sitesDown) {
+      viewUpdateLock.lock();
+      try {
+         Set<String> reachableSites = new HashSet<>(sitesView);
+         reachableSites.addAll(sitesUp);
+         reachableSites.removeAll(sitesDown);
+         log.tracef("Sites view changed: up %s, down %s, new view is %s", sitesUp, sitesDown, reachableSites);
+         log.receivedXSiteClusterView(reachableSites);
+         sitesView = Collections.unmodifiableSet(reachableSites);
+      } finally {
+         viewUpdateLock.unlock();
+      }
+   }
+
+   private void siteUnreachable(String site) {
+      requests.forEach(request -> {
+         if (request instanceof SingleSiteRequest) {
+            ((SingleSiteRequest) request).sitesUnreachable(Collections.singleton(site));
+         }
+      });
+   }
+
+   /**
+    * Send a command to multiple targets.
+    *
+    * Doesn't send the command to itself unless {@code deliverOrder == TOTAL}.
+    */
+   private void sendCommand(Collection<Address> targets, ReplicableCommand command, long requestId,
+                            DeliverOrder deliverOrder, boolean rsvp) {
+      Objects.requireNonNull(targets);
+      Message message = new Message();
+      marshallRequest(message, command, requestId);
+      setMessageFlags(message, deliverOrder, rsvp, true);
+
+      if (trace) {
+         logCommand(command, requestId, targets.toString());
+      }
+
+      if (deliverOrder == DeliverOrder.TOTAL) {
+         message.dest(new AnycastAddress(toJGroupsAddressList(targets)));
+         send(message);
+      } else {
+         Iterator<Address> it = targets.iterator();
+         sendSkippingSelf(message, it.next());
+         for (; it.hasNext(); ) {
+            Message copy = message.copy(true);
+            sendSkippingSelf(copy, it.next());
+         }
+      }
+   }
+
+   private void sendSkippingSelf(Message message, Address address) {
+      if (!address.equals(getAddress())) {
+         message.dest(toJGroupsAddress(address));
+         send(message);
+      }
+   }
+
+   TimeService getTimeService() {
+      return timeService;
+   }
+
+   ScheduledExecutorService getTimeoutExecutor() {
+      return timeoutExecutor;
+   }
+
+   private void processMessage(Message message) {
+      org.jgroups.Address src = message.src();
+      short flags = message.getFlags();
+      byte[] buffer = message.rawBuffer();
+      int offset = message.offset();
+      int length = message.length();
+      RequestCorrelator.Header header = message.getHeader(HEADER_ID);
+      byte type;
+      long requestId;
+      if (header != null) {
+         type = header.type;
+         requestId = header.requestId();
+      } else {
+         type = SINGLE_MESSAGE;
+         requestId = Request.NO_REQUEST_ID;
+      }
+      if (address == null) {
+         if (trace)
+            log.tracef("Ignoring message received before initial view");
+         if (type == REQUEST) {
+            sendResponse(src, CacheNotFoundResponse.INSTANCE, requestId, null);
+         }
+         return;
+      }
+      switch (type) {
+         case SINGLE_MESSAGE:
+         case REQUEST:
+            processRequest(src, flags, buffer, offset, length, requestId);
+            break;
+         case RESPONSE:
+            processResponse(src, buffer, offset, length, requestId);
+            break;
+         default:
+            log.invalidMessageType(type, src);
+      }
+   }
+
+   private void sendResponse(org.jgroups.Address target, Response response, long requestId, ReplicableCommand command) {
+      if (trace)
+         log.tracef("%s sending response for request %d to %s: %s", getAddress(), requestId, target, response);
+      ByteBuffer bytes;
+      try {
+         bytes = marshaller.objectToBuffer(response);
+      } catch (Throwable t) {
+         try {
+            // this call should succeed (all exceptions are serializable)
+            Exception e = t instanceof Exception ? ((Exception) t) : new CacheException(t);
+            bytes = marshaller.objectToBuffer(new ExceptionResponse(e));
+         } catch (Throwable tt) {
+            if (channel.isConnected()) {
+               log.errorSendingResponse(requestId, target, command);
+            }
+            return;
+         }
+      }
+
+      try {
+         Message message = new Message(target).setFlag(REPLY_FLAGS);
+         message.setBuffer(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
+         RequestCorrelator.Header header = new RequestCorrelator.Header(RESPONSE, requestId,
+                                                                        CORRELATOR_ID);
+         message.putHeader(HEADER_ID, header);
+
+         channel.send(message);
+      } catch (Throwable t) {
+         if (channel.isConnected()) {
+            log.errorSendingResponse(requestId, target, command);
+         }
+      }
+   }
+
+   private void processRequest(org.jgroups.Address src, short flags, byte[] buffer, int offset, int length,
+                               long requestId) {
+      try {
+         DeliverOrder deliverOrder = decodeDeliverMode(flags);
+         ReplicableCommand command = (ReplicableCommand) marshaller.objectFromByteBuffer(buffer, offset, length);
+         Reply reply;
+         if (requestId != Request.NO_REQUEST_ID) {
+            if (trace)
+               log.tracef("%s received request %d from %s: %s", getAddress(), requestId, src, command);
+            reply = response -> sendResponse(src, response, requestId, command);
+         } else {
+            if (trace)
+               log.tracef("%s received command from %s: %s", getAddress(), src, command);
+            reply = Reply.NO_OP;
+         }
+         if (src instanceof SiteAddress) {
+            String originSite = ((SiteAddress) src).getSite();
+            ((XSiteReplicateCommand) command).setOriginSite(originSite);
+            invocationHandler.handleFromRemoteSite(originSite, (XSiteReplicateCommand) command, reply, deliverOrder);
+         } else {
+            invocationHandler.handleFromCluster(fromJGroupsAddress(src), command, reply, deliverOrder);
+         }
+      } catch (Throwable t) {
+         log.errorProcessingRequest(requestId, src);
+         Exception e = t instanceof Exception ? ((Exception) t) : new CacheException(t);
+         sendResponse(src, new ExceptionResponse(e), requestId, null);
+      }
+   }
+
+   private void processResponse(org.jgroups.Address src, byte[] buffer, int offset, int length, long requestId) {
+      try {
+         Response response;
+         if (length == 0) {
+            // Empty buffer signals the ForkChannel with this name is not running on the remote node
+            response = CacheNotFoundResponse.INSTANCE;
+         } else {
+            response = (Response) marshaller.objectFromByteBuffer(buffer, offset, length);
+            if (response == null) {
+               response = SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
+            }
+         }
+         if (trace)
+            log.tracef("%s received response for request %d from %s: %s", getAddress(), requestId, src, response);
+         Address address = fromJGroupsAddress(src);
+         requests.addResponse(requestId, address, response);
+      } catch (Throwable t) {
+         log.errorProcessingResponse(requestId, src);
+      }
+   }
+
+   private DeliverOrder decodeDeliverMode(short flags) {
+      boolean noTotalOrder = Message.isFlagSet(flags, Message.Flag.NO_TOTAL_ORDER);
+      boolean oob = Message.isFlagSet(flags, Message.Flag.OOB);
+      if (!noTotalOrder && oob) {
+         return DeliverOrder.TOTAL;
+      } else if (noTotalOrder && oob) {
+         return DeliverOrder.NONE;
+      } else if (noTotalOrder) {
+         //oob is not set at this point, but the no total order flag should.
+         return DeliverOrder.PER_SENDER;
+      }
+      throw new IllegalArgumentException("Unable to decode order from flags " + flags);
+   }
+
+   private class ChannelCallbacks implements Receiver, RouteStatusListener, UpHandler {
+      @Override
+      public void viewAccepted(View new_view) {
+         receiveClusterView(new_view);
+      }
 
       @Override
       public void sitesUp(String... sites) {
-         this.view.addAll(Arrays.asList(sites));
-         log.receivedXSiteClusterView(this.view);
+         updateSitesView(Arrays.asList(sites), Collections.emptyList());
       }
 
       @Override
       public void sitesDown(String... sites) {
-         this.view.removeAll(Arrays.asList(sites));
-         log.receivedXSiteClusterView(this.view);
+         updateSitesView(Collections.emptyList(), Arrays.asList(sites));
       }
 
       @Override
-      public Set<String> get() {
-         return Collections.unmodifiableSet(this.view);
+      public void receive(Message message) {
+         processMessage(message);
       }
 
-   }
+      @Override
+      public void receive(MessageBatch batch) {
+         batch.forEach((message, messages) -> processMessage(message));
+      }
 
+      @Override
+      public Object up(Event evt) {
+         switch (evt.getType()) {
+            case Event.SITE_UNREACHABLE:
+               siteUnreachable(evt.getArg());
+               break;
+         }
+         return null;
+      }
+
+      @Override
+      public Object up(Message msg) {
+         return null;
+      }
+
+      @Override
+      public void up(MessageBatch batch) {
+
+      }
+   }
 }

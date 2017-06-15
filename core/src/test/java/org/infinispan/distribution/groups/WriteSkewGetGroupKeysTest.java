@@ -166,11 +166,7 @@ public class WriteSkewGetGroupKeysTest extends TransactionalGetGroupKeysTest {
       }
    }
 
-   private static void assertCommitOk(TransactionManager tm) throws SystemException {
-      try {
-         tm.commit();
-      } catch (RollbackException | HeuristicMixedException | HeuristicRollbackException e) {
-         AssertJUnit.fail("Commit should fail!");
-      }
+   private static void assertCommitOk(TransactionManager tm) throws Exception {
+      tm.commit();
    }
 }

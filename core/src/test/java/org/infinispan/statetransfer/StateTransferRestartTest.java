@@ -50,12 +50,12 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
 
       @Override
       public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
-                                                                           ReplicableCommand rpcCommand,
+                                                                           ReplicableCommand command,
                                                                            ResponseMode mode, long timeout,
                                                                            ResponseFilter responseFilter,
                                                                            DeliverOrder deliverOrder,
-                                                                           boolean anycast) throws Exception {
-         if (callOnStateResponseCommand != null && rpcCommand.getClass() == StateResponseCommand.class) {
+                                                                           boolean anycast) {
+         if (callOnStateResponseCommand != null && command.getClass() == StateResponseCommand.class) {
             log.trace("Ignoring StateResponseCommand");
             try {
                callOnStateResponseCommand.call();
@@ -64,7 +64,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             }
             return CompletableFuture.completedFuture(Collections.emptyMap());
          }
-         return super.invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
+         return super.invokeRemotelyAsync(recipients, command, mode, timeout, responseFilter, deliverOrder, anycast);
       }
    }
 

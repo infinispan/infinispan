@@ -29,7 +29,7 @@ import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.CountingCARD;
+import org.infinispan.util.CountingRequestRepository;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.BeforeMethod;
@@ -52,7 +52,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    AdvancedCache<Object, String> cache;
    WriteOnlyMap<Integer, String> lwo;
    ReadWriteMap<Integer, String> lrw;
-   List<CountingCARD> countingCARDs;
+   List<CountingRequestRepository> countingRequestRepositories;
 
    public AbstractFunctionalOpTest() {
       numNodes = 4;
@@ -119,16 +119,16 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
-      countingCARDs = cacheManagers.stream().map(cm -> CountingCARD.replaceDispatcher(cm)).collect(Collectors.toList());
+      countingRequestRepositories = cacheManagers.stream().map(cm -> CountingRequestRepository.replaceDispatcher(cm)).collect(Collectors.toList());
       Stream.of(null, DIST, REPL).forEach(name -> caches(name).forEach(c -> {
          c.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(new CommandCachingInterceptor(), CallInterceptor.class);
       }));
    }
 
-   protected void advanceGenerationsAndAwait(long timeout, TimeUnit timeUnit) throws InterruptedException {
+   protected void advanceGenerationsAndAwait(long timeout, TimeUnit timeUnit) throws Exception {
       long now = System.currentTimeMillis();
       long deadline = now + timeUnit.toMillis(timeout);
-      for (CountingCARD card : countingCARDs) {
+      for (CountingRequestRepository card : countingRequestRepositories) {
          card.advanceGenerationAndAwait(deadline - now, TimeUnit.MILLISECONDS);
          now = System.currentTimeMillis();
       }

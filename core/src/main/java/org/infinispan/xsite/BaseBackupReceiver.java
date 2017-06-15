@@ -101,27 +101,33 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          log.tracef("Processing a remote put %s", command);
          if (command.isConditional()) {
-            return backupCache.putIfAbsent(command.getKey(), command.getValue(), command.getMetadata());
+            backupCache.putIfAbsent(command.getKey(), command.getValue(), command.getMetadata());
+         } else {
+            backupCache.put(command.getKey(), command.getValue(), command.getMetadata());
          }
-         return backupCache.put(command.getKey(), command.getValue(), command.getMetadata());
+         return null;
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (command.isConditional()) {
-            return backupCache.remove(command.getKey(), command.getValue());
+            backupCache.remove(command.getKey(), command.getValue());
+         } else {
+            backupCache.remove(command.getKey());
          }
-         return backupCache.remove(command.getKey());
+         return null;
       }
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (command.isConditional() && command.getOldValue() != null) {
-            return backupCache.replace(command.getKey(), command.getOldValue(), command.getNewValue(),
+            backupCache.replace(command.getKey(), command.getOldValue(), command.getNewValue(),
                                        command.getMetadata());
+         } else {
+            backupCache.replace(command.getKey(), command.getNewValue(),
+                                command.getMetadata());
          }
-         return backupCache.replace(command.getKey(), command.getNewValue(),
-                                    command.getMetadata());
+         return null;
       }
 
       @Override

@@ -138,7 +138,11 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       @Override
       public JGroupsTopologyAwareAddress doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          try {
-            ExtendedUUID jgroupsAddress = (ExtendedUUID) org.jgroups.util.Util.readAddress(unmarshaller);
+            org.jgroups.Address jgroupsAddress = (org.jgroups.Address) org.jgroups.util.Util.readAddress(unmarshaller);
+            // Note: Use org.jgroups.Address, not the concrete UUID class.
+            // Otherwise applications that only use local caches would have to bundle the JGroups jar,
+            // because the verifier needs to check the arguments of fromJGroupsAddress
+            // even if this method is never called.
             return (JGroupsTopologyAwareAddress) JGroupsAddressCache.fromJGroupsAddress(jgroupsAddress);
          } catch (Exception e) {
             throw new IOException(e);

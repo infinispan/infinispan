@@ -1,6 +1,9 @@
 package org.infinispan.manager.impl;
 
+import static org.infinispan.util.concurrent.CompletableFutures.asCompletionException;
+
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -9,20 +12,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddressCache;
+import org.infinispan.remoting.transport.PassthroughMapResponseCollector;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.remoting.transport.jgroups.SingleResponseFuture;
+import org.infinispan.remoting.transport.jgroups.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.blocks.ResponseMode;
 
 /**
  * Cluster executor implementation that sends a request to all available nodes
@@ -76,23 +81,23 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
 
    @Override
    public void execute(Runnable runnable) {
-      executeRunnable(runnable, ResponseMode.GET_ALL);
+      executeRunnable(runnable);
    }
 
-   private CompletableFuture<?> executeRunnable(Runnable runnable, ResponseMode mode) {
+   private CompletableFuture<?> executeRunnable(Runnable runnable) {
       CompletableFuture<?> localFuture = startLocalInvocation(runnable);
-      List<org.jgroups.Address> targets = getJGroupsTargets(false);
+      List<Address> targets = getRealTargets(false);
       int size = targets.size();
       CompletableFuture<?> remoteFuture;
       if (size == 1) {
-         org.jgroups.Address target = targets.get(0);
+         Address target = targets.get(0);
          if (isTrace) {
             log.tracef("Submitting runnable to single remote node - JGroups Address %s", target);
          }
-         CommandAwareRpcDispatcher card = transport.getCommandAwareRpcDispatcher();
          remoteFuture = new CompletableFuture<>();
-         card.invokeRemoteCommand(target, new ReplicableCommandRunnable(runnable), mode,
-                 unit.toMillis(time), DeliverOrder.NONE).handle((r, t) -> {
+         ReplicableCommand command = new ReplicableCommandRunnable(runnable);
+         CompletableFuture<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
+         request.handle((r, t) -> {
             if (t != null) {
                remoteFuture.completeExceptionally(t);
             } else {
@@ -103,14 +108,15 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
             return null;
          });
       } else if (size > 1) {
-         CommandAwareRpcDispatcher card = transport.getCommandAwareRpcDispatcher();
          remoteFuture = new CompletableFuture<>();
-         card.invokeRemoteCommands(targets, new ReplicableCommandRunnable(runnable), mode,
-                 unit.toMillis(time), null, DeliverOrder.NONE).handle((r, t) -> {
+         ReplicableCommand command = new ReplicableCommandRunnable(runnable);
+         ResponseCollector<Map<Address, Response>> collector = new PassthroughMapResponseCollector(targets.size());
+         CompletableFuture<Map<Address, Response>> request = transport.invokeCommand(targets, command, collector, DeliverOrder.NONE, time, unit);
+         request.handle((r, t) -> {
             if (t != null) {
                remoteFuture.completeExceptionally(t);
             } else {
-               r.forEach(e -> consumeResponse(e.getValue(), e.getKey(), remoteFuture::completeExceptionally));
+               r.forEach((key, value) -> consumeResponse(value, key, remoteFuture::completeExceptionally));
                remoteFuture.complete(null);
             }
             return null;
@@ -121,7 +127,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
          return CompletableFutures.completedExceptionFuture(new SuspectException("No available nodes!"));
       }
       // remoteFuture is guaranteed to be non null at this point
-      if (localFuture != null && mode != ResponseMode.GET_NONE) {
+      if (localFuture != null) {
          CompletableFuture<Void> future = new CompletableFuture<>();
          CompletableFuture.allOf(localFuture, remoteFuture).whenComplete((v, t) -> {
             if (t != null) {
@@ -142,7 +148,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
    @Override
    public CompletableFuture<Void> submit(Runnable command) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      executeRunnable(command, ResponseMode.GET_ALL).handle((r, t) -> {
+      executeRunnable(command).handle((r, t) -> {
          if (t != null) {
             future.completeExceptionally(t);
          }
@@ -156,34 +162,45 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
    public <V> CompletableFuture<Void> submitConsumer(Function<? super EmbeddedCacheManager, ? extends V> function,
                                                      TriConsumer<? super Address, ? super V, ? super Throwable> triConsumer) {
       CompletableFuture<Void> localFuture = startLocalInvocation(function, triConsumer);
-      List<org.jgroups.Address> targets = getJGroupsTargets(false);
+      List<Address> targets = getRealTargets(false);
       int size = targets.size();
       if (size > 0) {
-         CompletableFuture<?>[] futures = new CompletableFuture[size];
+         CompletableFuture<?>[] futures;
+         if (localFuture != null) {
+            futures = new CompletableFuture[size + 1];
+            futures[size] = localFuture;
+         } else {
+            futures = new CompletableFuture[size];
+         }
          for (int i = 0; i < size; ++i) {
-            CommandAwareRpcDispatcher card = transport.getCommandAwareRpcDispatcher();
-            org.jgroups.Address target = targets.get(i);
+            Address target = targets.get(i);
             if (isTrace) {
                log.tracef("Submitting consumer to single remote node - JGroups Address %s", target);
             }
-            SingleResponseFuture srf = card.invokeRemoteCommand(target, new ReplicableCommandManagerFunction(function),
-                    ResponseMode.GET_ALL, unit.toMillis(time), DeliverOrder.NONE);
-            futures[i] = srf.whenComplete((r, t) -> {
+            ReplicableCommand command = new ReplicableCommandManagerFunction(function);
+            CompletableFuture<Response> request = transport.invokeCommand(target, command, PassthroughSingleResponseCollector.INSTANCE, DeliverOrder.NONE, time, unit);
+            futures[i] = request.whenComplete((r, t) -> {
                if (t != null) {
-                  triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, t);
+                  if (t instanceof TimeoutException) {
+                     // Consumers for individual nodes should not be able to obscure the timeout
+                     throw asCompletionException(t);
+                  } else {
+                     triConsumer.accept(target, null, t);
+                  }
                } else {
-                  consumeResponse(r, target, v -> triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), (V) v, null),
-                        // TODO: check if obtrude works here?
-                        throwable -> triConsumer.accept(JGroupsAddressCache.fromJGroupsAddress(target), null, throwable), srf::obtrudeException);
+                  consumeResponse(r, target, v -> triConsumer.accept(target, (V) v, null),
+                        throwable -> triConsumer.accept(target, null, throwable));
                }
             });
          }
          CompletableFuture<Void> resultFuture = new CompletableFuture<>();
-         CompletableFuture<Void> remoteFutures = CompletableFuture.allOf(futures);
-         (localFuture != null ? localFuture.thenCombine(remoteFutures, (t, u) -> null) : remoteFutures).whenComplete((v, t) -> {
+         CompletableFuture<Void> allFuture = CompletableFuture.allOf(futures);
+         allFuture.whenComplete((v, t) -> {
             if (t != null) {
                if (t instanceof CompletionException) {
                   resultFuture.completeExceptionally(t.getCause());
+               } else {
+                  resultFuture.completeExceptionally(t);
                }
             } else {
                resultFuture.complete(null);
@@ -213,4 +230,5 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
    public ClusterExecutor allNodeSubmission() {
       return this;
    }
+
 }

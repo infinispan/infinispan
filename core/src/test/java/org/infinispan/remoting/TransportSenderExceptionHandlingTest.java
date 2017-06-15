@@ -1,18 +1,16 @@
 package org.infinispan.remoting;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
-
 import java.io.EOFException;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
 import java.util.EmptyStackException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -21,11 +19,8 @@ import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "remoting.TransportSenderExceptionHandlingTest")
@@ -41,29 +36,8 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
    public void testInvokeAndExceptionWhileUnmarshalling() throws Exception {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
-      JGroupsTransport transport2 = (JGroupsTransport) TestingUtil.extractComponent(cache2, Transport.class);
-      CommandAwareRpcDispatcher dispatcher2 = transport2.getCommandAwareRpcDispatcher();
-      StreamingMarshaller originalMarshaller2 = TestingUtil.extractGlobalMarshaller(manager(1));
-      try {
-         StreamingMarshaller mockMarshaller2 = spy(originalMarshaller2);
-         PutKeyValueCommand putCommand = new PutKeyValueCommand();
-         putCommand.setKey(key);
-         putCommand.setValue(value);
-         doAnswer(invocation -> invocation.callRealMethod())
-               .when(mockMarshaller2).objectToByteBuffer(any());
-         doAnswer(invocation -> {
-            throw new EOFException();
-         }).when(mockMarshaller2).objectFromByteBuffer(any(), anyInt(), anyInt());
-         dispatcher2.setIspnMarshaller(mockMarshaller2);
-         cache1.put(key, value);
-         assert false : "Should have thrown an exception";
-      } catch (RemoteException ce) {
-         assert !(ce.getCause() instanceof ClassCastException) : "No way a ClassCastException must be sent back to user!";
-         assert ce.getCause() instanceof CacheException;
-         assert ce.getCause().getCause() instanceof EOFException;
-      } finally {
-         dispatcher2.setIspnMarshaller(originalMarshaller2);
-      }
+      Exceptions.expectException(RemoteException.class, EOFException.class,
+                                 () -> cache1.put(key, new BrokenDeserializationPojo()));
    }
 
    @Test(expectedExceptions = ArrayStoreException.class)
@@ -164,6 +138,19 @@ public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersT
             throw new ClassCircularityError();
          else
             return super.visitPutKeyValueCommand(ctx, command);
+      }
+   }
+
+   public static class BrokenDeserializationPojo implements Externalizable, ExternalPojo {
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         throw new EOFException();
       }
    }
 }

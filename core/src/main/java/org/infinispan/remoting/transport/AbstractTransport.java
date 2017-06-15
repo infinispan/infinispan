@@ -17,7 +17,9 @@ import org.infinispan.util.logging.Log;
  *
  * @author Manik Surtani
  * @version 4.2
+ * @deprecated Since 9.1, please implement {@link Transport} directly.
  */
+@Deprecated
 public abstract class AbstractTransport implements Transport {
 
    protected GlobalConfiguration configuration;

@@ -56,7 +56,7 @@ public class SuccessfulResponse extends ValidResponse {
 
    @Override
    public String toString() {
-      return "SuccessfulResponse{responseValue=" + Util.toStr(responseValue) + "} ";
+      return "SuccessfulResponse(" + Util.toStr(responseValue) + ")";
    }
 
    public static class Externalizer extends AbstractExternalizer<SuccessfulResponse> {
