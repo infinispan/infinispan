@@ -1,6 +1,8 @@
 package org.infinispan.xsite;
 
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.transaction.Transaction;
 
@@ -33,6 +35,10 @@ public interface CustomFailurePolicy<K, V> {
    void handleRemoveFailure(String site, K key, V oldValue);
 
    void handleReplaceFailure(String site, K key, V oldValue, V newValue);
+
+   void handleComputeFailure(String site, K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent);
+
+   void handleComputeIfAbsentFailure(String site, K key, Function<? super K, ? extends V> mappingFunction);
 
    void handleClearFailure(String site);
 

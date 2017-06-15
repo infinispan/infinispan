@@ -22,6 +22,8 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -316,6 +318,20 @@ public class BackupSenderImpl implements BackupSender {
          } else if (writeCommand instanceof RemoveCommand && writeCommand.isConditional()) {
             filteredCommand = commandsFactory.buildRemoveCommand(((RemoveCommand) writeCommand).getKey(), null,
                                                                  writeCommand.getFlagsBitSet());
+         } else if (writeCommand instanceof ComputeCommand) {
+            ComputeCommand computeCommand = (ComputeCommand) writeCommand;
+            filteredCommand = commandsFactory.buildComputeCommand(computeCommand.getKey(),
+                  computeCommand.getRemappingBiFunction(),
+                  computeCommand.isComputeIfPresent(),
+                  computeCommand.getMetadata(),
+                  computeCommand.getFlagsBitSet());
+
+         } else if (writeCommand instanceof ComputeIfAbsentCommand) {
+            ComputeIfAbsentCommand computeIfAbsentCommand = (ComputeIfAbsentCommand) writeCommand;
+            filteredCommand = commandsFactory.buildComputeIfAbsentCommand(computeIfAbsentCommand.getKey(),
+                  computeIfAbsentCommand.getMappingFunction(),
+                  computeIfAbsentCommand.getMetadata(),
+                  computeIfAbsentCommand.getFlagsBitSet());
          }
          filtered.add(filteredCommand);
       }
@@ -362,6 +378,18 @@ public class BackupSenderImpl implements BackupSender {
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          failurePolicy.handleReplaceFailure(site, command.getKey(), command.getOldValue(), command.getNewValue());
+         return null;
+      }
+
+      @Override
+      public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+         failurePolicy.handleComputeFailure(site, command.getKey(), command.getRemappingBiFunction(), command.isComputeIfPresent());
+         return null;
+      }
+
+      @Override
+      public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+         failurePolicy.handleComputeIfAbsentFailure(site, command.getKey(), command.getMappingFunction());
          return null;
       }
 

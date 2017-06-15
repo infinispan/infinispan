@@ -54,6 +54,8 @@ import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.BackupPutMapRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
@@ -157,6 +159,28 @@ public interface CommandsFactory {
     * @return a ReplaceCommand
     */
    ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet);
+
+
+   /**
+    * Builds a ComputeCommand
+    * @param key key to compute if this key is absent
+    * @param mappingFunction BiFunction for the key and the value
+    * @param computeIfPresent flag to apply as computeIfPresent mode
+    * @param metadata metadata of entry
+    * @param flagsBitSet Command flags provided by cache
+    * @return a ComputeCommand
+    */
+   ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent, Metadata metadata, long flagsBitSet);
+
+   /**
+    * Builds a ComputeIfAbsentCommand
+    * @param key key to compute if this key is absent
+    * @param mappingFunction mappingFunction for the key
+    * @param metadata metadata of entry
+    * @param flagsBitSet Command flags provided by cache
+    * @return a ComputeCommand
+    */
+   ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, Metadata metadata, long flagsBitSet);
 
    /**
     * Builds a SizeCommand

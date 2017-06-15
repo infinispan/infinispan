@@ -16,6 +16,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
@@ -428,6 +430,36 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public void putForExternalRead(K key, V value, Metadata metadata) {
       // TODO: Customise this generated block
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      throw new UnsupportedOperationException();
    }
 
    @Override

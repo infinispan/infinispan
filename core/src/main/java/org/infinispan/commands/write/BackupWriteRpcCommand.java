@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -14,6 +16,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -37,6 +40,8 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    private CommandInvocationId commandInvocationId;
    private Object key;
    private Object value;
+   private Function function;
+   private BiFunction biFunction;
    private Metadata metadata;
    private int topologyId;
    private long flags;
@@ -45,6 +50,7 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
    private InvocationContextFactory invocationContextFactory;
    private AsyncInterceptorChain interceptorChain;
    private CacheNotifier cacheNotifier;
+   private ComponentRegistry componentRegistry;
 
    //for org.infinispan.commands.CommandIdUniquenessTest
    public BackupWriteRpcCommand() {
@@ -86,11 +92,27 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
       this.metadata = metadata;
    }
 
+   public void setCompute(CommandInvocationId id, Object key, BiFunction remappingFunction, boolean computeIfPresent, Metadata metadata, long flags,
+                          int topologyId) {
+      this.operation = computeIfPresent ? Operation.COMPUTE_IF_PRESENT : Operation.COMPUTE;
+      setCommonAttributes(id, key, flags, topologyId);
+      this.biFunction = remappingFunction;
+      this.metadata = metadata;
+   }
+
+   public void setComputeIfAbsent(CommandInvocationId id, Object key, Function mappingFunction, Metadata metadata, long flagsBitSet, int topologyId) {
+      this.operation = Operation.COMPUTE_IF_ABSENT;
+      setCommonAttributes(id, key, flags, topologyId);
+      this.function = mappingFunction;
+      this.metadata = metadata;
+   }
+
    public void init(InvocationContextFactory invocationContextFactory, AsyncInterceptorChain interceptorChain,
-         CacheNotifier cacheNotifier) {
+         CacheNotifier cacheNotifier, ComponentRegistry componentRegistry) {
       this.invocationContextFactory = invocationContextFactory;
       this.interceptorChain = interceptorChain;
       this.cacheNotifier = cacheNotifier;
+      this.componentRegistry = componentRegistry;
    }
 
    @Override
@@ -109,6 +131,15 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
             break;
          case REPLACE:
             command = new ReplaceCommand(key, null, value, cacheNotifier, metadata, flags, commandInvocationId);
+            break;
+         case COMPUTE:
+            command = new ComputeCommand(key, biFunction, false, flags, commandInvocationId, metadata, cacheNotifier, componentRegistry);
+            break;
+         case COMPUTE_IF_PRESENT:
+            command = new ComputeCommand(key, biFunction, true, flags, commandInvocationId, metadata, cacheNotifier, componentRegistry);
+            break;
+         case COMPUTE_IF_ABSENT:
+            command = new ComputeIfAbsentCommand(key, function, flags, commandInvocationId, metadata, cacheNotifier, componentRegistry);
             break;
          default:
             throw new IllegalStateException();
@@ -158,6 +189,18 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
          case REMOVE_EXPIRED:
             output.writeObject(value);
             break;
+         case COMPUTE:
+            output.writeObject(metadata);
+            output.writeObject(biFunction);
+            break;
+         case COMPUTE_IF_PRESENT:
+            output.writeObject(metadata);
+            output.writeObject(biFunction);
+            break;
+         case COMPUTE_IF_ABSENT:
+            output.writeObject(metadata);
+            output.writeObject(function);
+            break;
          default:
       }
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
@@ -178,6 +221,17 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
          case REMOVE_EXPIRED:
             value = input.readObject();
             break;
+         case COMPUTE:
+            metadata = (Metadata) input.readObject();
+            biFunction = (BiFunction) input.readObject();
+            break;
+         case COMPUTE_IF_PRESENT:
+            metadata = (Metadata) input.readObject();
+            biFunction = (BiFunction) input.readObject();
+            break;
+         case COMPUTE_IF_ABSENT:
+            metadata = (Metadata) input.readObject();
+            function = (Function) input.readObject();
          default:
       }
       this.flags = input.readLong();
@@ -192,6 +246,8 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
             ", key=" + key +
             ", value=" + value +
             ", metadata=" + metadata +
+            ", function=" + function +
+            ", biFunction=" + biFunction +
             ", topologyId=" + topologyId +
             ", flags=" + EnumUtil.prettyPrintBitSet(flags, Flag.class) +
             ", sequence=" + sequence +
@@ -227,6 +283,9 @@ public class BackupWriteRpcCommand extends BaseRpcCommand implements TopologyAff
       WRITE,
       REMOVE,
       REMOVE_EXPIRED,
-      REPLACE
+      REPLACE,
+      COMPUTE,
+      COMPUTE_IF_PRESENT,
+      COMPUTE_IF_ABSENT
    }
 }

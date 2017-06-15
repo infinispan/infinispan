@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BatchingCache;
@@ -14,6 +16,8 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.FilteringListenable;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableFunction;
 
 /**
  * The central interface of Infinispan.  A Cache provides a highly concurrent, optionally distributed data structure
@@ -356,5 +360,87 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     */
    default void shutdown() {
       stop();
+   }
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * When this method is used on a clustered cache, either replicated or distributed, the function will be serialized
+    * to owning nodes to perform the operation in the most performant way. However this means the function must
+    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * <p>
+    * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
+    * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
+    * This limitation could disappear in following releases if technically possible.
+    */
+   @Override
+   V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction);
+
+   /**
+    * Overloaded {@link Cache#computeIfAbsent(Object, Function)} with Infinispan {@link SerializableFunction}
+    *
+    * @param key, the key to be computed
+    * @param mappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation value is null
+    */
+   default V computeIfAbsent(K key,
+                             SerializableFunction<? super K, ? extends V> mappingFunction) {
+      return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction);
+   }
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
+    * to owning nodes to perform the operation in the most performant way. However this means the bifunction must
+    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * <p>
+    * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
+    * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
+    * This limitation could disappear in following releases if technically possible.
+    */
+   @Override
+   V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
+
+   /**
+    * Overloaded {@link Cache#computeIfPresent(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
+    *
+    * @param key, the key to be computed
+    * @param remappingFunction, mapping function to be appliyed to the key
+    * @return computed value or null if nothing is computed or computation result is null
+    */
+   default V computeIfPresent(K key,
+                              SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return computeIfPresent(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
+   }
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
+    * to owning nodes to perform the operation in the most performant way. However this means the bifunction must
+    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * <p>
+    * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
+    * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
+    * This limitation could disappear in following releases if technically possible.
+    */
+   @Override
+   V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
+
+   /**
+    * Overloaded {@link Cache#compute(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
+    *
+    * For transactional caches, whenever the values of the caches are collections, and the bifunction modifies the collection, the collection
+    * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
+    * This limitation could disappear in following releases if technically possible.
+    *
+    * @param key, the key to be computed
+    * @param remappingFunction, mapping function to be appliyed to the key
+    * @return computation result (can be null)
+    */
+   default V compute(K key,
+                     SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
    }
 }

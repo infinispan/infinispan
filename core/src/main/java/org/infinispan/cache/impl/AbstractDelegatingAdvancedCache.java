@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
@@ -256,13 +258,13 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire){
+   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
       cache.applyDelta(deltaAwareValueKey, delta, locksToAcquire);
    }
 
    @Override
    public Stats getStats() {
-       return cache.getStats();
+      return cache.getStats();
    }
 
    @Override
@@ -333,6 +335,21 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public void putForExternalRead(K key, V value, Metadata metadata) {
       cache.putForExternalRead(key, value, metadata);
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.compute(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.computeIfPresent(key, remappingFunction, metadata);
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
+      return cache.computeIfAbsent(key, mappingFunction, metadata);
    }
 
    @Override

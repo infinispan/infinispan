@@ -42,4 +42,16 @@ public abstract class BaseCacheAPIOptimisticTest extends CacheAPITest {
    public void testLockedStreamPutAsync() throws Throwable {
       super.testLockedStreamPutAsync();
    }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testLockedStreamCompute() throws Throwable {
+      super.testLockedStreamCompute();
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testLockedStreamComputeIfPresent() throws Throwable {
+      super.testLockedStreamComputeIfPresent();
+   }
 }

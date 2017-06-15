@@ -599,9 +599,17 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertEquals("hello world", cache.computeIfAbsent("hello", functionAfterPut));
       assertEquals("hello world", cache.get("hello"));
 
+      int cacheSizeBeforeNullValueCompute = cache.size();
       Function<Object, String> functionMapsToNull = k -> null;
-      assertNull( cache.computeIfAbsent("kaixo", functionMapsToNull), "with function mapping to null returns null");
+      assertNull(cache.computeIfAbsent("kaixo", functionMapsToNull), "with function mapping to null returns null");
       assertNull(cache.get("kaixo"), "the key does not exist");
+      assertEquals(cacheSizeBeforeNullValueCompute, cache.size());
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      Function<Object, String> functionMapsToException = k -> {
+         throw computeRaisedException;
+      };
+      expectException(RuntimeException.class, "hi there", () -> cache.computeIfAbsent("es", functionMapsToException));
    }
 
    public void testComputeIfPresent() {
@@ -610,6 +618,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       assertEquals("hello_es:hola", cache.computeIfPresent("es", mappingFunction));
       assertEquals("hello_es:hola", cache.get("es"));
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      BiFunction<Object, Object, String> mappingToException = (k, v) -> {
+         throw computeRaisedException;
+      };
+      expectException(RuntimeException.class, "hi there", () -> cache.computeIfPresent("es", mappingToException));
 
       BiFunction<Object, Object, String> mappingForNotPresentKey = (k, v) -> "absent_" + k + ":" + v;
       assertNull(cache.computeIfPresent("fr", mappingForNotPresentKey), "unexisting key should return null");
@@ -634,6 +648,17 @@ public class APINonTxTest extends SingleCacheManagerTest {
       BiFunction<Object, Object, String> mappingToNull = (k, v) -> null;
       assertNull(cache.compute("es", mappingToNull), "mapping to null returns null");
       assertNull(cache.get("es"), "the key is removed");
+
+      int cacheSizeBeforeNullValueCompute = cache.size();
+      assertNull(cache.compute("eus", mappingToNull), "mapping to null returns null");
+      assertNull(cache.get("eus"), "the key does not exist");
+      assertEquals(cacheSizeBeforeNullValueCompute, cache.size());
+
+      RuntimeException computeRaisedException = new RuntimeException("hi there");
+      BiFunction<Object, Object, String> mappingToException = (k, v) -> {
+         throw computeRaisedException;
+      };
+      expectException(RuntimeException.class, "hi there", () -> cache.compute("es", mappingToException));
    }
 
    public void testReplaceAll() {
@@ -760,6 +785,14 @@ public class APINonTxTest extends SingleCacheManagerTest {
             throw new AssertionError(e1);
          }
       });
+   }
+
+   public void testLockedStreamCompute() throws Throwable {
+      assertLockStream((c, e) -> c.compute(e.getKey(), (k, v) -> v + "-other"));
+   }
+
+   public void testLockedStreamComputeIfPresent() throws Throwable {
+      assertLockStream((c, e) -> c.computeIfPresent(e.getKey(), (k, v) -> v + "-other"));
    }
 
    public void testLockedStreamSetValue() {

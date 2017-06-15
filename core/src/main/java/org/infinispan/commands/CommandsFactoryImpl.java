@@ -61,6 +61,8 @@ import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.BackupPutMapRpcCommand;
 import org.infinispan.commands.write.BackupWriteRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
@@ -88,6 +90,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.impl.GroupManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -168,6 +171,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private ClusterStreamManager clusterStreamManager;
    private ClusteringDependentLogic clusteringDependentLogic;
    private CommandAckCollector commandAckCollector;
+   private ComponentRegistry componentRegistry;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
    private StreamingMarshaller marshaller;
@@ -185,7 +189,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  GroupManager groupManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
                                  ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
-                                 CommandAckCollector commandAckCollector) {
+                                 CommandAckCollector commandAckCollector,
+                                 ComponentRegistry componentRegistry) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -212,6 +217,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.marshaller = marshaller;
       this.commandAckCollector = commandAckCollector;
+      this.componentRegistry = componentRegistry;
    }
 
    @Start(priority = 1)
@@ -265,6 +271,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, long flagsBitSet) {
       return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flagsBitSet,
                                 generateUUID(transactional));
+   }
+
+   @Override
+   public ComputeCommand buildComputeCommand(Object key, BiFunction mappingFunction, boolean computeIfPresent, Metadata metadata, long flagsBitSet) {
+      return new ComputeCommand(key, mappingFunction, computeIfPresent, flagsBitSet, generateUUID(transactional), metadata, notifier, componentRegistry);
+   }
+
+   @Override
+   public ComputeIfAbsentCommand buildComputeIfAbsentCommand(Object key, Function mappingFunction, Metadata metadata, long flagsBitSet) {
+      return new ComputeIfAbsentCommand(key, mappingFunction, flagsBitSet, generateUUID(transactional), metadata, notifier, componentRegistry);
    }
 
    @Override
@@ -365,12 +381,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case RemoveCommand.COMMAND_ID:
             ((RemoveCommand) c).init(notifier);
             break;
+         case ComputeCommand.COMMAND_ID:
+            ((ComputeCommand)c).init(notifier, componentRegistry);
+            break;
+         case ComputeIfAbsentCommand.COMMAND_ID:
+            ((ComputeIfAbsentCommand)c).init(notifier, componentRegistry);
+            break;
          case SingleRpcCommand.COMMAND_ID:
             SingleRpcCommand src = (SingleRpcCommand) c;
             src.init(interceptorChain, icf);
             if (src.getCommand() != null)
                initializeReplicableCommand(src.getCommand(), false);
-
             break;
          case InvalidateCommand.COMMAND_ID:
             InvalidateCommand ic = (InvalidateCommand) c;
@@ -500,7 +521,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case BackupWriteRpcCommand.COMMAND_ID:
             BackupWriteRpcCommand bwc = (BackupWriteRpcCommand) c;
-            bwc.init(icf, interceptorChain, notifier);
+            bwc.init(icf, interceptorChain, notifier, componentRegistry);
             break;
          case BackupMultiKeyAckCommand.COMMAND_ID:
             ((BackupMultiKeyAckCommand) c).setCommandAckCollector(commandAckCollector);

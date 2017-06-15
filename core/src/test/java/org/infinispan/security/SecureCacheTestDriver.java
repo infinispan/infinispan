@@ -19,6 +19,8 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.infinispan.util.function.SerializableFunction;
 
 public class SecureCacheTestDriver {
 
@@ -671,4 +673,34 @@ public class SecureCacheTestDriver {
    public void testLockAs_Object(SecureCache<String, String> cache) {
       cache.lockAs(new Object());
    }
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testCompute_Object_SerializableBiFunction(SecureCache<String, String> cache) {
+      cache.compute("a", (k, v) -> "yes");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testCompute_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
+      cache.compute("a", (k, v) -> "yes", metadata);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfPresent_Object_SerializableBiFunction(SecureCache<String, String> cache) {
+      cache.computeIfPresent("a", (k, v) -> "yes");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfPresent_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
+      cache.computeIfPresent("a", (k, v) -> "yes", metadata);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfAbsent_Object_SerializableFunction_Metadata(SecureCache<String, String> cache) {
+      cache.computeIfAbsent("b", k -> "no", metadata);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testComputeIfAbsent_Object_SerializableFunction(SecureCache<String, String> cache) {
+      cache.computeIfAbsent("b", k -> "no");
+   }
+
 }

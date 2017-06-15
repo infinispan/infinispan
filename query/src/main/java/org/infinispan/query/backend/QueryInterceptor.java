@@ -19,7 +19,10 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -171,6 +174,20 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    @Override
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+      InternalCacheEntry internalCacheEntry = dataContainer.get(command.getKey());
+      Object stateBeforeCompute = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processComputeCommand(((ComputeCommand) rCommand), rCtx, stateBeforeCompute, rv,null));
+   }
+
+   @Override
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+      InternalCacheEntry internalCacheEntry = dataContainer.get(command.getKey());
+      Object stateBeforeCompute = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processComputeIfAbsentCommand(((ComputeIfAbsentCommand) rCommand), rCtx, stateBeforeCompute, rv, null));
+   }
+
+   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       command.setFlagsBitSet(EnumUtil.diffBitSets(command.getFlagsBitSet(), FlagBitSets.IGNORE_RETURN_VALUES));
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
@@ -316,6 +333,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          } else if (writeCommand instanceof ReplaceCommand) {
             InternalCacheEntry internalCacheEntry = dataContainer.get(((ReplaceCommand) writeCommand).getKey());
             stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+         } else if (writeCommand instanceof ComputeCommand) {
+            InternalCacheEntry internalCacheEntry = dataContainer.get(((ComputeCommand) writeCommand).getKey());
+            stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+         } else if (writeCommand instanceof ComputeIfAbsentCommand) {
+            InternalCacheEntry internalCacheEntry = dataContainer.get(((ComputeIfAbsentCommand) writeCommand).getKey());
+            stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
          }
       }
 
@@ -337,6 +360,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                } else if (writeCommand instanceof ReplaceCommand) {
                   processReplaceCommand((ReplaceCommand) writeCommand, txInvocationContext, stateBeforePrepare[i],
                         transactionContext);
+               } else if (writeCommand instanceof ComputeCommand) {
+                  processComputeCommand((ComputeCommand) writeCommand, txInvocationContext, stateBeforePrepare[i], transactionContext);
+               } else if (writeCommand instanceof ComputeIfAbsentCommand) {
+                     processComputeIfAbsentCommand((ComputeIfAbsentCommand) writeCommand, txInvocationContext, stateBeforePrepare[i], transactionContext);
                } else if (writeCommand instanceof ClearCommand) {
                   processClearCommand((ClearCommand) writeCommand, txInvocationContext, transactionContext);
                }
@@ -383,6 +410,83 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
                updateIndexes(usingSkipIndexCleanupFlag, p2, key, transactionContext);
             }
+         }
+      }
+   }
+
+   /**
+    * Indexing management of a ComputeCommand
+    *
+    * @param command the ComputeCommand
+    * @param ctx the InvocationContext
+    * @param prevValue the previous value on this key
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processComputeCommand(final ComputeCommand command, final InvocationContext ctx, final Object prevValue, TransactionContext transactionContext) {
+      if (command.isSuccessful()) {
+         processComputes(command, ctx, prevValue, ctx.lookupEntry(command.getKey()).getValue(), transactionContext);
+      }
+   }
+
+   /**
+    * Indexing management of a ComputeCommand
+    *
+    * @param command the ComputeCommand
+    * @param ctx the InvocationContext
+    * @param prevValue the previous value on this key
+    * @param computedValue the computedValue
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processComputeCommand(final ComputeCommand command, final InvocationContext ctx, final Object prevValue, final Object computedValue, TransactionContext transactionContext) {
+      if (command.isSuccessful()) {
+         processComputes(command, ctx, prevValue, computedValue, transactionContext);
+      }
+   }
+
+   /**
+    * Indexing management of a ComputeIfAbsentCommand
+    *
+    * @param command the ComputeIfAbsentCommand
+    * @param ctx the InvocationContext
+    * @param prevValue the value before the call
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processComputeIfAbsentCommand(final ComputeIfAbsentCommand command, final InvocationContext ctx, final Object prevValue, TransactionContext transactionContext) {
+      if (command.isSuccessful()) {
+         processComputes(command, ctx, prevValue, ctx.lookupEntry(command.getKey()).getValue(), transactionContext);
+      }
+   }
+
+   /**
+    * Indexing management of a ComputeIfAbsentCommand
+    *
+    * @param command the ComputeIfAbsentCommand
+    * @param ctx the InvocationContext
+    * @param prevValue the value before the call
+    * @param computedValue the computedValue
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processComputeIfAbsentCommand(final ComputeIfAbsentCommand command, final InvocationContext ctx, final Object prevValue, final Object computedValue, TransactionContext transactionContext) {
+      if (command.isSuccessful()) {
+         processComputes(command, ctx, prevValue, computedValue, transactionContext);
+      }
+   }
+   private void processComputes(AbstractDataWriteCommand command, InvocationContext ctx, Object prevValue, Object computedValue, TransactionContext transactionContext) {
+      Object key = extractValue(command.getKey());
+      if (shouldModifyIndexes(command, ctx, key)) {
+         final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
+         Object p2 = extractValue(computedValue);
+         final boolean newValueIsIndexed = updateKnownTypesIfNeeded(p2);
+
+         if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(prevValue) && shouldRemove(p2, prevValue)) {
+            if (shouldModifyIndexes(command, ctx, key)) {
+               transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+               removeFromIndexes(prevValue, extractValue(key), transactionContext);
+            }
+         }
+         if (newValueIsIndexed) {
+            transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+            updateIndexes(usingSkipIndexCleanupFlag, p2, key, transactionContext);
          }
       }
    }

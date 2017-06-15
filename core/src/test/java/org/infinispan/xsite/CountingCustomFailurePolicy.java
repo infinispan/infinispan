@@ -1,6 +1,8 @@
 package org.infinispan.xsite;
 
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.transaction.Transaction;
 
@@ -13,6 +15,8 @@ public class CountingCustomFailurePolicy extends AbstractCustomFailurePolicy {
    public static volatile boolean PUT_INVOKED;
    public static volatile boolean REMOVE_INVOKED;
    public static volatile boolean REPLACE_INVOKED;
+   public static volatile boolean COMPUTE_INVOKED;
+   public static volatile boolean COMPUTE_IF_ABSENT_INVOKED;
    public static volatile boolean CLEAR_INVOKED;
    public static volatile boolean PUT_ALL_INVOKED;
    public static volatile boolean PREPARE_INVOKED;
@@ -32,6 +36,16 @@ public class CountingCustomFailurePolicy extends AbstractCustomFailurePolicy {
    @Override
    public void handleReplaceFailure(String site, Object key, Object oldValue, Object newValue) {
       REPLACE_INVOKED = true;
+   }
+
+   @Override
+   public void handleComputeFailure(String site, Object key, BiFunction remappingFunction, boolean computeIfPresent) {
+      COMPUTE_INVOKED = true;
+   }
+
+   @Override
+   public void handleComputeIfAbsentFailure(String site, Object key, Function mappingFunction) {
+      COMPUTE_IF_ABSENT_INVOKED = true;
    }
 
    @Override

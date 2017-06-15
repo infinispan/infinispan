@@ -12,6 +12,8 @@ import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.write.ComputeCommand;
+import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -162,6 +164,30 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return updateStoreStatistics(ctx, command);
+   }
+
+   @Override
+   public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
+      boolean statisticsEnabled = getStatisticsEnabled(command);
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return invokeNext(ctx, command);
+
+      long start = timeService.time();
+      return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+         if (rv == null && command.isSuccessful()) {
+            increaseRemoveMisses();
+         } else if (command.isSuccessful()) {
+            long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
+            StripeB stripe = counters.stripeForCurrentThread();
+            counters.add(StripeB.storeTimesFieldUpdater, stripe, intervalMilliseconds);
+            counters.increment(StripeB.storesFieldUpdater, stripe);
+         }
+      });
+   }
+
+   @Override
+   public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
       return updateStoreStatistics(ctx, command);
    }
 
