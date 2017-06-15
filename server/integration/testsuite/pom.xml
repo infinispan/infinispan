@@ -163,6 +163,12 @@
             <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-infinispan</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jboss.marshalling</groupId>
+                    <artifactId>jboss-marshalling</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>ant-contrib</groupId>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <module xmlns="urn:jboss:module:1.3" name="org.jboss.marshalling.river">
-    <resources>
-        <artifact name="${org.jboss.marshalling:jboss-marshalling-river}"/>
-    </resources>
+   <resources>
+      <artifact name="${org.jboss.marshalling:jboss-marshalling-river}"/>
+   </resources>
 
-    <dependencies>
-        <module name="org.jboss.modules"/>
-    </dependencies>
+   <dependencies>
+      <module name="org.jboss.marshalling"/>
+   </dependencies>
 </module>
