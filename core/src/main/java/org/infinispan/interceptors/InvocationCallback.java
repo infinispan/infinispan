@@ -11,5 +11,9 @@ import org.infinispan.context.InvocationContext;
  */
 @FunctionalInterface
 public interface InvocationCallback {
+   /**
+    * Process the result or the exception from an invocation stage and either return a simple value,
+    * return a new {@link InvocationStage}, or throw an exception.
+    */
    Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable;
 }
