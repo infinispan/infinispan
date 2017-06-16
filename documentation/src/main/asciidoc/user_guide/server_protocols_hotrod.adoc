@@ -53,6 +53,7 @@ infinispan.client.hotrod.key_size_estimate = 64
 infinispan.client.hotrod.value_size_estimate = 512
 infinispan.client.hotrod.force_return_values = false
 infinispan.client.hotrod.client_intelligence = HASH_DISTRIBUTION_AWARE
+infinispan.client.hotrod.batch_Size = 10000
 
 ## below is connection pooling config
 maxActive=-1
@@ -104,11 +105,54 @@ assert !cache.containsKey("car") : "Value must have been removed!";
 
 The client API maps the local API: link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager] corresponds to link:{javadocroot}/org/infinispan/manager/DefaultCacheManager.html[DefaultCacheManager] (both implement link:{javadocroot}/org/infinispan/manager/CacheContainer.html[CacheContainer] ). This common API facilitates an easy migration from local calls to remote calls through Hot Rod: all one needs to do is switch between link:{javadocroot}/org/infinispan/manager/DefaultCacheManager.html[DefaultCacheManager] and link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager] - which is further simplified by the common link:{javadocroot}/org/infinispan/manager/CacheContainer.html[CacheContainer] interface that both inherit.
 
-All keys can be retrieved from the remote cache (whether it's local, replicated, or
-distributed) by using +keySet()+ method. If the remote cache is a distributed cache,
-the server will perform a distributed stream operation to retrieve all keys from
-clustered nodes, and return all keys to the client.  Please use this method with
-care if there are large number of keys.
+==== RemoteCache(.keySet|.entrySet|.values)
+
+The collection methods `keySet`, `entrySet` and `values` are backed by the remote cache.
+That is that every method is called back into the `RemoteCache`. This is useful as
+it allows for the various keys, entries or values to be retrieved lazily, and not
+requiring them all be stored in the client memory at once if the user does not want.
+These collections adhere to the `Map` specification being that `add` and `addAll`
+are not supported but all other methods are supported.
+
+One thing to note is the `Iterator.remove` and `Set.remove` or `Collection.remove`
+methods require more than 1 round trip to the server to operate. You can check
+out the link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache]
+Javadoc to see more details about these and the other methods.
+
+*Iterator Usage*
+
+The iterator method of these collections uses `retrieveEntries` internally, which
+is described below. If you notice `retrieveEntries` takes an argument for the batch
+size. There is no way to provide this to the iterator. As such the batch size can be
+configured via system property `infinispan.client.hotrod.batch_size` or through
+the link:{javadocroot}/org/infinispan/client/hotrod/configuraion/ConfigurationBuilder.html#batchSize-int-[ConfigurationBuilder]
+when configuring the `RemoteCacheManager`.
+
+Also the `retrieveEntries` iterator returned is `Closeable` as such the iterators
+from `keySet`, `entrySet` and `values` return an `AutoCloseable` variant. Therefore
+you should always close these `Iterator`s when you are done with them.
+
+[source,java]
+----
+try (CloseableIterator<Entry<K, V>> iterator = remoteCache.entrySet().iterator) {
+ ...
+}
+----
+
+*What if I want a deep copy and not a backing collection?*
+
+Previous version of `RemoteCache` allowed for the retrieval of a deep copy
+of the `keySet`. This is still possible with the new backing map, you just
+have to copy the contents yourself. Also you can do this with `entrySet` and
+`values`, which we didn't support before.
+
+[source,java]
+----
+Set<K> keysCopy = remoteCache.keySet().stream().collect(Collectors.toSet());
+----
+
+Please use extreme cautiong with this as a large number of keys can and will cause
+OutOfMemoryError in the client.
 
 [source,java]
 ----
@@ -116,7 +160,12 @@ Set keys = remoteCache.keySet();
 
 ----
 
-Alternatively, if memory is a concern, use the remote iterator api to retrieve entries from the server:
+==== Remote Iterator
+
+Alternatively, if memory is a concern (different batch size) or you wish to do server side
+filtering or conversion), use the remote iterator api to retrieve entries from the server.
+With this method you can limit the entries that are retrieved or even returned a converted
+value if you dont' need all properties of your entry.
 
 [source,java]
 ----
