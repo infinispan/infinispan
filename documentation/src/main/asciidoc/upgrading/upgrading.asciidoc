@@ -26,6 +26,22 @@ There are no changes needed for `AtomicMap`, but it now supports non-transaction
 
 `FineGrainedAtomicMap` now uses the link:../user_guide/user_guide.html#grouping[Grouping API] and therefore you need to link:../user_guide/user_guide.html#how_do_i_use_the_grouping_api[enable groups in configuration]. Also it holds entries as regular cache entries, plus one cache entry for cached key set (the map itself). Therefore the cache size or iteration/streaming results may differ. Note that fine grained atomic maps are still supported on transactional caches only.
 
+=== RemoteCache keySet/entrySet/values
+
+RemoteCache now implements all of the collection backed methods from `Map` interface.
+Previously `keySet` was implemented, however it was a deep copy. This has now changed
+and it is a backing set. That is that the set retrieves the updated values on each
+invocation or updates to the backing remote cache for writes. The entrySet and values
+methods are also now supported as backing variants as well.
+
+If you wish to have a copy like was provided before it is recommended to copy the
+contents into a in memory local set such as
+
+[source,java]
+----
+Set<K> keysCopy = remoteCache.keySet().stream().collect(Collectors.toSet());
+----
+
 == Upgrading from 8.x to 9.0
 
 === Default transaction mode changed
