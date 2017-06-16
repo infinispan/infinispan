@@ -11,6 +11,9 @@ import org.infinispan.context.InvocationContext;
  */
 @FunctionalInterface
 public interface InvocationFinallyAction extends InvocationCallback {
+   /**
+    * Process the result or the exception from an invocation stage and possibly throw an exception.
+    */
    void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable;
 
    @Override
