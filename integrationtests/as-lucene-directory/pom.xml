@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>9.1.0-SNAPSHOT</version>
+      <version>9.0.2.Final</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -105,11 +105,7 @@
          <groupId>com.h2database</groupId>
          <artifactId>h2</artifactId>
          <scope>test</scope>
-         <!--
-           This H2 version has to match the version bundled within WildFly
-           as we start the server and then connect to it from within WildFly:
-           it can not connect between different versions.
-           -->
+         
          <version>${version.h2.driver-within-wildfly}</version>
       </dependency>
       <dependency>
@@ -229,9 +225,7 @@
                             <overWrite>false</overWrite>
                             <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>
                         </artifactItem>
-                        <!-- Order matters: it might happen that both the Infinispan and the Hibernate Search modules
-                            contain the same org.apache.lucene modules. The Infinispan "edition" contains a superset of the Lucene libraries,
-                            so make sure these overwrite the other one. See also HSEARCH-2578 -->
+                        
                         <artifactItem>
                            <groupId>org.infinispan</groupId>
                            <artifactId>infinispan-wildfly-modules</artifactId>
