@@ -8,7 +8,7 @@ import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(testName = "security.RoleMapperTest")
+@Test(groups="functional", testName = "security.RoleMapperTest")
 public class RoleMapperTest {
 
    public void testCommonNameRoleMapper() {
