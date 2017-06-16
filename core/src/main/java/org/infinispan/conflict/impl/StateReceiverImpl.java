@@ -75,8 +75,8 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    }
 
    @DataRehashed
-   @SuppressWarnings("unused")
-   synchronized void onDataRehash(DataRehashedEvent dataRehashedEvent) {
+   @SuppressWarnings("WeakerAccess")
+   public synchronized void onDataRehash(DataRehashedEvent dataRehashedEvent) {
       if (dataRehashedEvent.isPre()) {
          log.debugf("Cancelling all segment requests as rehash has started %s", dataRehashedEvent);
 
