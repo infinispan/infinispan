@@ -56,7 +56,7 @@ public class RemoteQueryDMRRegisterIT extends RemoteQueryIT {
       ModelControllerClient client = ModelControllerClient.Factory.create(
             getServer().getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
 
-      ModelNode addProtobufFileOp = getOperation("clustered", "upload-proto-schemas", nameList, urlList);
+      ModelNode addProtobufFileOp = getOperation("upload-proto-schemas", nameList, urlList);
 
       ModelNode result = client.execute(addProtobufFileOp);
       assertEquals(SUCCESS, result.get(OUTCOME).asString());
@@ -70,10 +70,10 @@ public class RemoteQueryDMRRegisterIT extends RemoteQueryIT {
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
    }
 
-   private ModelNode getOperation(String containerName, String operationName, ModelNode nameList, ModelNode urlList) {
+   private ModelNode getOperation(String operationName, ModelNode nameList, ModelNode urlList) {
       PathAddress address = PathAddress.pathAddress(
             PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, InfinispanExtension.SUBSYSTEM_NAME))
-            .append("cache-container", containerName);
+            .append("cache-container", cacheContainerName);
       ModelNode op = new ModelNode();
       op.get(OP).set(operationName);
       op.get(OP_ADDR).set(address.toModelNode());

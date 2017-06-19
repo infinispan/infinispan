@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
  * @author Sebastian Laskawiec
  */
 @RunWith(Arquillian.class)
-@Category({CacheStore.class})
+@Category(CacheStore.class)
 public class CustomCacheStoreIT {
    private static final Log log = LogFactory.getLog(CustomCacheStoreIT.class);
 

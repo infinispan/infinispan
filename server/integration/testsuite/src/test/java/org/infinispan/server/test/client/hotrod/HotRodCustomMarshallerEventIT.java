@@ -81,7 +81,7 @@ public class HotRodCustomMarshallerEventIT {
                     .port(server.getHotrodEndpoint().getPort());
         }
 
-        config.marshaller("org.infinispan.server.test.client.hotrod.HotRodCustomMarshallerEventIT$IdMarshaller");
+        config.marshaller(IdMarshaller.class.getName());
         return config.build();
     }
 
