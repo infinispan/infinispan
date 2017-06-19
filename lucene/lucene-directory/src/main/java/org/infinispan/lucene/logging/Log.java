@@ -7,6 +7,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 import java.io.IOException;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -87,4 +88,8 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Lucene Directory for index '%s' can not set affinity location to segment id '%d': must be a positive integer!", id = 15021)
    IllegalArgumentException affinityLocationIntoSegmentValueShallNotBeNegative(String indexName, int segmentId);
+
+   @Message(value = "Lucene Directory for index '%s' cannot use cache '%s' with mode '%s'. Only SYNC caches are supported!", id = 15022)
+   IllegalArgumentException cannotStoreIndexOnAsyncCaches(String indexName, String cacheName, CacheMode used);
+
 }
