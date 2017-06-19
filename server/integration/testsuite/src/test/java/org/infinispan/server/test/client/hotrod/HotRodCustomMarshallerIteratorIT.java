@@ -99,15 +99,15 @@ public class HotRodCustomMarshallerIteratorIT {
             // Add custom marshaller classes
             .addClasses(CustomProtoStreamMarshaller.class, ProtoStreamMarshaller.class, BaseProtoStreamMarshaller.class)
             .addClasses(HotRodClientException.class, UserMarshaller.class, GenderMarshaller.class, User.class, Address.class)
-                  // Add marshaller dependencies
+            // Add marshaller dependencies
             .add(new StringAsset(protoFile), "/sample_bank_account/bank.proto")
             .add(new StringAsset("Dependencies: org.infinispan.protostream"), "META-INF/MANIFEST.MF")
-                  // Register marshaller
+            // Register marshaller
             .addAsServiceProvider(Marshaller.class, CustomProtoStreamMarshaller.class)
-                  // Add custom filterConverter classes
+            // Add custom filterConverter classes
             .addClasses(CustomFilterFactory.class, CustomFilterFactory.CustomFilter.class, ParamCustomFilterFactory.class,
-                    ParamCustomFilterFactory.ParamCustomFilter.class)
-                  // Register custom filterConverterFactories
+                  ParamCustomFilterFactory.ParamCustomFilter.class)
+            // Register custom filterConverterFactories
             .addAsServiceProviderAndClasses(KeyValueFilterConverterFactory.class, ParamCustomFilterFactory.class, CustomFilterFactory.class);
    }
 
