@@ -185,7 +185,7 @@
                             <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
                             <arguments>
                                 <argument>${project.build.outputDirectory}</argument>
-                                <argument>${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat</argument>
+                                <argument>${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat</argument>
                             </arguments>
                             <systemProperties>
                                 <systemProperty>
@@ -210,31 +210,6 @@
                         </goals>
                         <configuration>
                             <attributeDefType>SERVER</attributeDefType>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.ant</groupId>
-                        <artifactId>ant</artifactId>
-                        <version>1.9.4</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <id>copy_serialized_metadata</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}" />
-                            </target>
                         </configuration>
                     </execution>
                 </executions>

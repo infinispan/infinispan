@@ -1325,11 +1325,12 @@
                 <configuration>
                     <instructions>
                         <Bundle-DocURL>http://www.infinispan.org/</Bundle-DocURL>
-                        <Export-Package>${project.groupId}.*;version=${project.version};-split-package:=error
-                        </Export-Package>
+                        <Export-Package>${project.groupId}.*;version=${project.version};-split-package:=error</Export-Package>
                         <_consumer-policy>${bnd.consumer.policy}</_consumer-policy>
                         <_provider-policy>${bnd.provider.policy}</_provider-policy>
-                        <Include-Resource>{maven-resources}</Include-Resource>
+                        <Include-Resource>
+                            {maven-resources}
+                        </Include-Resource>
                     </instructions>
                 </configuration>
             </plugin>
@@ -1363,6 +1364,58 @@
                 <configuration>
                     <downloadSources>true</downloadSources>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>serialize_component_metadata</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <classpathScope>compile</classpathScope>
+                            <skip>${module.skipComponentMetaDataProcessing}</skip>
+                            <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
+                            <arguments>
+                                <argument>${project.build.outputDirectory}</argument>
+                                <argument>${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
+                            </argument>
+                            </arguments>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>infinispan.isCoreModule</key>
+                                    <value>${module.metadata.isCoreModule}</value>
+                                </systemProperty>
+                            </systemProperties>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>serialize_test_component_metadata</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${module.skipTestComponentMetaDataProcessing}</skip>
+                            <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
+                            <classpathScope>test</classpathScope>
+                            <arguments>
+                                <argument>${project.build.testOutputDirectory}</argument>
+                                <argument>${project.build.testOutputDirectory}/${project.artifactId}-tests-component-metadata.dat</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -1411,13 +1464,6 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.2.2</version>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -1459,54 +1505,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>serialize_component_metadata</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <classpathScope>compile</classpathScope>
-                            <skip>${module.skipComponentMetaDataProcessing}</skip>
-                            <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
-                            <arguments>
-                                <argument>${project.build.outputDirectory}</argument>
-                                <argument>${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat
-                                </argument>
-                            </arguments>
-                            <systemProperties>
-                                <systemProperty>
-                                    <key>infinispan.isCoreModule</key>
-                                    <value>${module.metadata.isCoreModule}</value>
-                                </systemProperty>
-                            </systemProperties>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>serialize_test_component_metadata</id>
-                        <phase>process-test-classes</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${module.skipTestComponentMetaDataProcessing}</skip>
-                            <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
-                            <classpathScope>test</classpathScope>
-                            <arguments>
-                                <argument>${project.build.testOutputDirectory}</argument>
-                                <argument>
-                                    ${basedir}/src/test/resources/${project.artifactId}-tests-component-metadata.dat
-                                </argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <dependencies>
@@ -1517,34 +1515,6 @@
                     </dependency>
                 </dependencies>
                 <executions>
-                    <execution>
-                        <id>copy_serialized_metadata</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${module.skipComponentMetaDataProcessing}</skip>
-                            <target>
-                                <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat"
-                                      todir="${project.build.outputDirectory}"/>
-                            </target>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy_serialized_test_metadata</id>
-                        <phase>process-test-classes</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${module.skipTestComponentMetaDataProcessing}</skip>
-                            <target>
-                                <copy file="${basedir}/src/test/resources/${project.artifactId}-tests-component-metadata.dat"
-                                      todir="${project.build.testOutputDirectory}"/>
-                            </target>
-                        </configuration>
-                    </execution>
                     <execution>
                         <id>generate-blueprint</id>
                         <goals>
