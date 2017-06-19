@@ -6,7 +6,6 @@ import java.util.function.Predicate;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;

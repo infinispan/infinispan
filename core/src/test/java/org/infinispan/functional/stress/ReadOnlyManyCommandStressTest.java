@@ -4,11 +4,9 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.GetAllCommandStressTest;
-import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.Traversable;
 import org.infinispan.configuration.cache.CacheMode;

@@ -8,7 +8,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import org.infinispan.configuration.cache.LockingConfiguration;
-import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializablePredicate;
