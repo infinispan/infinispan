@@ -167,6 +167,10 @@
                   <Export-Package>
                      ${project.groupId}.server.hotrod.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Include-Resource>
+                     {maven-resources},
+                     ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
+                  </Include-Resource>
                </instructions>
             </configuration>
          </plugin>

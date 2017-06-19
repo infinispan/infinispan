@@ -138,7 +138,8 @@
                   <Include-Resource>
                      {maven-resources},
                      /META-INF/services=${project.basedir}/target/classes/META-INF/services,
-                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml,
+                     ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
                   </Include-Resource>
                </instructions>
             </configuration>

@@ -51,6 +51,10 @@
                   <Export-Package>
                      ${project.groupId}.server.websocket.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Include-Resources>
+                     {maven-resources},
+                     ${project.build.outputDirectory}/${project.artifactId}-component-metadata.dat
+                  </Include-Resources>
                </instructions>
             </configuration>
          </plugin>
