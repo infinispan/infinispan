@@ -2,7 +2,6 @@ package org.infinispan.xsite.backupfailure.tx;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.fail;
 
 import javax.transaction.xa.XAException;
 
