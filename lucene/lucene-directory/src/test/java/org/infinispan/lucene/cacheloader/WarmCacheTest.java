@@ -62,7 +62,7 @@ public class WarmCacheTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       indexDir = Files.createTempDirectory("test-").toFile();
       createIndex(indexDir, INDEX_NAME, TERMS_NUMBER, false);
-      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_ASYNC, false);
+      ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       c.clustering().hash().numOwners(1);
       c.jmxStatistics().enable();
       c.persistence()
