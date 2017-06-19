@@ -51,8 +51,8 @@ public class BiFunctionMapper implements BiFunction {
    public Object apply(Object k, Object v) {
       Object key = keyEncoder.fromStorage(keyWrapper.unwrap(k));
       Object value = valueEncoder.fromStorage(valueWrapper.unwrap(v));
-      Object result = valueEncoder.toStorage(biFunction.apply(key, value));
-      return valueWrapper.wrap(result);
+      Object result = biFunction.apply(key, value);
+      return result != null ? valueWrapper.wrap(valueEncoder.toStorage(result)) : null;
    }
 
    public static class Externalizer implements AdvancedExternalizer<BiFunctionMapper> {

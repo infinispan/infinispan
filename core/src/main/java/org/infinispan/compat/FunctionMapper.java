@@ -51,7 +51,8 @@ public class FunctionMapper implements Function {
    @Override
    public Object apply(Object k) {
       Object key = keyEncoder.fromStorage(keyWrapper.unwrap(k));
-      return valueWrapper.wrap(valueEncoder.toStorage(function.apply(key)));
+      Object result = function.apply(key);
+      return result != null ? valueWrapper.wrap(valueEncoder.toStorage(result)) : null;
    }
 
    public static class Externalizer implements AdvancedExternalizer<FunctionMapper> {
