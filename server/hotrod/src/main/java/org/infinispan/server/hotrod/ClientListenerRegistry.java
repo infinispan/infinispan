@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -377,11 +379,11 @@ class ClientListenerRegistry {
             }
             Object k = event.getKey();
             Object v = event.getValue();
-            if (keyEncoder.isStorageFormatFilterable()) {
-               k = keyEncoder.fromStorage(keyWrapper.unwrap(k));
+            if (keyEncoder.isStorageFormatFilterable() && k != null) {
+               k = fromStorage(k, keyEncoder, keyWrapper);
             }
-            if (valueEncoder.isStorageFormatFilterable()) {
-               v = valueEncoder.fromStorage(keyWrapper.unwrap(v));
+            if (valueEncoder.isStorageFormatFilterable() && v != null) {
+               v = fromStorage(v, valueEncoder, valueWrapper);
             }
 
             sendEvent((byte[]) k, (byte[]) v, version, event);

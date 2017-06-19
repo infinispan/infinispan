@@ -49,6 +49,7 @@ public class IterableIterationResult {
    }
 
    public Object unbox(Object value) {
+      if(value == null) return null;
       return compatInfo.valueEncoder.fromStorage(value);
    }
 }

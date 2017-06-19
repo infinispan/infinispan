@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.CACHE_ENTRY_ACTIVATED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.CACHE_ENTRY_CREATED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.CACHE_ENTRY_EVICTED;
@@ -294,6 +295,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    private K convertKey(Encoder keyEncoder, Wrapper keyWrapper, K key) {
+      if(key == null) return null;
       Wrapper wrp = keyWrapper != null ? keyWrapper : defaultWrapper;
       Encoder enc = keyEncoder != null ? keyEncoder : defaultEncoder;
       Object unwrappedKey = wrp.unwrap(key);
@@ -301,6 +303,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    private V convertValue(Encoder valueEncoder, Wrapper valueWrapper, V value) {
+      if(value == null) return null;
       Wrapper wrp = valueWrapper != null ? valueWrapper : defaultWrapper;
       Encoder enc = valueEncoder != null ? valueEncoder : defaultEncoder;
       Object unwrappedValue = wrp.unwrap(value);
@@ -600,10 +603,10 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             Wrapper keyWrapper = listener.getKeyWrapper();
             Wrapper valueWrapper = listener.getKeyWrapper();
             if (keyEncoder != null) {
-               key = (K) keyEncoder.fromStorage(keyWrapper.unwrap(key));
+               key = (K) fromStorage(key, keyEncoder, keyWrapper);
             }
             if (valueEncoder != null) {
-               value = (V) valueEncoder.fromStorage(valueWrapper.unwrap(value));
+               value = (V) fromStorage(value, valueEncoder, valueWrapper);
             }
             e.setPre(pre);
             e.setKey(key);

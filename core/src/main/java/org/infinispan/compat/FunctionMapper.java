@@ -1,5 +1,8 @@
 package org.infinispan.compat;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
+import static org.infinispan.commons.dataconversion.EncodingUtils.toStorage;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -50,9 +53,9 @@ public class FunctionMapper implements Function {
 
    @Override
    public Object apply(Object k) {
-      Object key = keyEncoder.fromStorage(keyWrapper.unwrap(k));
+      Object key = fromStorage(k, keyEncoder, keyWrapper);
       Object result = function.apply(key);
-      return result != null ? valueWrapper.wrap(valueEncoder.toStorage(result)) : null;
+      return result != null ? toStorage(result, valueEncoder, valueWrapper) : null;
    }
 
    public static class Externalizer implements AdvancedExternalizer<FunctionMapper> {

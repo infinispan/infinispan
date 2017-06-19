@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -52,9 +53,9 @@ public class MarshalledValuesFineGrainedTest extends AbstractInfinispanTest {
       Object value = entry.getValue();
 
       assertTrue(key instanceof WrappedBytes);
-      assertEquals(encoder.fromStorage(wrapper.unwrap(key)), this.key);
+      assertEquals(fromStorage(key, encoder, wrapper), this.key);
 
       assertTrue(value instanceof WrappedBytes);
-      assertEquals(encoder.fromStorage(wrapper.unwrap(value)), this.value);
+      assertEquals(fromStorage(value, encoder, wrapper), this.value);
    }
 }

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.EncodingUtils;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
@@ -51,6 +52,11 @@ public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K,
       this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
    }
 
+   private Object decode(Object o, Encoder encoder) {
+      if (o == null) return null;
+      return encoder.fromStorage(o);
+   }
+
    @Override
    @SuppressWarnings("unchecked")
    public CacheEntry<K, V> apply(CacheEntry<K, V> e) {
@@ -58,11 +64,11 @@ public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K,
       boolean valueFilterable = valueEncoder.isStorageFormatFilterable();
       K key = e.getKey();
       Object unwrapped = keyWrapper.unwrap(key);
-      Object newKey = keyFilterable ? unwrapped : keyEncoder.fromStorage(unwrapped);
+      Object newKey = keyFilterable ? unwrapped : decode(unwrapped, keyEncoder);
       V value = e.getValue();
 
       Object unwrappedValue = valueWrapper.unwrap(value);
-      Object newValue = valueFilterable ? unwrappedValue : valueEncoder.fromStorage(unwrappedValue);
+      Object newValue = valueFilterable ? unwrappedValue : decode(unwrappedValue, valueEncoder);
       if (key != newKey || value != newValue) {
          return (CacheEntry<K, V>) entryFactory.create(newKey, newValue, e.getMetadata().version(), e.getCreated(),
                e.getLifespan(), e.getLastUsed(), e.getMaxIdle());

@@ -19,7 +19,6 @@ public class UTF8Encoder implements Encoder {
    }
 
    public Object fromStorage(Object stored) {
-      if (stored == null) return null;
       return new String((byte[]) stored, CHARSET_UTF8);
    }
 

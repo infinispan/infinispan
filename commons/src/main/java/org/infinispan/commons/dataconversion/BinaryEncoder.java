@@ -29,7 +29,7 @@ public class BinaryEncoder implements Encoder {
 
    public Object fromStorage(Object stored) {
       try {
-         if (stored == null || isTypeExcluded(stored.getClass())) {
+         if (isTypeExcluded(stored.getClass())) {
             return stored;
          }
          return stored instanceof byte[] ? marshaller.objectFromByteBuffer((byte[]) stored) : stored;

@@ -1,5 +1,7 @@
 package org.infinispan.cache.impl;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -40,7 +42,7 @@ public class EncoderKeyMapper<K> implements RemovableFunction<K, K> {
    @Override
    @SuppressWarnings("unchecked")
    public K apply(K k) {
-      return (K) keyEncoder.fromStorage(keyWrapper.unwrap(k));
+      return (K) fromStorage(k, keyEncoder, keyWrapper);
    }
 
    public static class Externalizer implements AdvancedExternalizer<EncoderKeyMapper> {

@@ -28,7 +28,6 @@ public class MarshallerEncoder implements Encoder {
    }
 
    public Object fromStorage(Object stored) {
-      if (stored == null) return null;
       try {
          return stored instanceof byte[] ? marshaller.objectFromByteBuffer((byte[]) stored) : stored;
       } catch (IOException | ClassNotFoundException e) {

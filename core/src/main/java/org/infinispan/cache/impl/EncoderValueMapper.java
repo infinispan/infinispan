@@ -1,5 +1,7 @@
 package org.infinispan.cache.impl;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -7,6 +9,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.EncodingUtils;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
@@ -17,6 +20,7 @@ import org.infinispan.util.function.RemovableFunction;
 /**
  * {@link java.util.function.Function} that uses a valueEncoder to converter values from the configured storage format
  * to the requested format.
+ *
  * @since 9.1
  */
 public class EncoderValueMapper<V> implements RemovableFunction<V, V> {
@@ -41,7 +45,7 @@ public class EncoderValueMapper<V> implements RemovableFunction<V, V> {
    @Override
    @SuppressWarnings("unchecked")
    public V apply(V v) {
-      return (V) valueEncoder.fromStorage(valueWrapper.unwrap(v));
+      return (V) fromStorage(v, valueEncoder, valueWrapper);
    }
 
    public static class Externalizer implements AdvancedExternalizer<EncoderValueMapper> {
