@@ -1,5 +1,6 @@
 package org.infinispan.dataconversion;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
 import static org.infinispan.notifications.Listener.Observation.POST;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
@@ -252,7 +253,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
          assertNotNull(valueEncoder);
          Object value = command.getValue();
-         assertEquals(i, valueEncoder.fromStorage(valueWrapper.unwrap(value)));
+         assertEquals(i, fromStorage(value, valueEncoder, valueWrapper));
          return invokeNext(ctx, command);
       }
    }

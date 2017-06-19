@@ -1,6 +1,9 @@
 package org.infinispan.stream.impl.local;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.toStorage;
+
 import java.util.BitSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -56,7 +59,8 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
          // We do type converter before getting CacheEntry, otherwise wrapper classes would have to both box and
          // unbox, this way we avoid multiple calls and just do the one.
          stream = keysToFilter.stream()
-               .map(o -> wrapper.wrap(encoder.toStorage(o)))
+               .filter(Objects::nonNull)
+               .map(o -> toStorage(o, encoder, wrapper))
                .map(advancedCache::getCacheEntry)
                .filter(e -> e != null);
       } else {

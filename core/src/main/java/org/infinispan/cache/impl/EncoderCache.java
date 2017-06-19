@@ -1,5 +1,8 @@
 package org.infinispan.cache.impl;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
+import static org.infinispan.commons.dataconversion.EncodingUtils.toStorage;
+
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,19 +104,19 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    public K keyToStorage(Object key) {
-      return (K) keyWrapper.wrap(keyEncoder.toStorage(key));
+      return (K) toStorage(key, keyEncoder, keyWrapper);
    }
 
    public V valueToStorage(Object value) {
-      return (V) valueWrapper.wrap(valueEncoder.toStorage(value));
+      return (V) toStorage(value, valueEncoder, valueWrapper);
    }
 
    public K keyFromStorage(Object key) {
-      return (K) keyEncoder.fromStorage(keyWrapper.unwrap(key));
+      return (K) fromStorage(key, keyEncoder, keyWrapper);
    }
 
    public V valueFromStorage(Object value) {
-      return (V) valueEncoder.fromStorage(valueWrapper.unwrap(value));
+      return (V) fromStorage(value, valueEncoder, valueWrapper);
    }
 
    @Inject

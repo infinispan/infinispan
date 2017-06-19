@@ -1,5 +1,7 @@
 package org.infinispan.query.backend;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,6 +31,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.EncodingUtils;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
@@ -266,8 +269,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return searchFactoryHandler.hasIndex(c);
    }
 
-   private Object extractValue(Object wrappedValue) {
-      return valueEncoder.fromStorage(valueWrapper.unwrap(wrappedValue));
+   private Object extractValue(Object storedValue) {
+      return fromStorage(storedValue, valueEncoder, valueWrapper);
    }
 
    public void enableClasses(Class[] classes) {

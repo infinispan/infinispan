@@ -31,7 +31,6 @@ public class CompatModeEncoder implements Encoder {
    }
 
    public Object fromStorage(Object content) {
-      if (content == null) return null;
       try {
          return marshall(content);
       } catch (InterruptedException | IOException e) {

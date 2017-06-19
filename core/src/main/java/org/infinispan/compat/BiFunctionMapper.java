@@ -1,5 +1,8 @@
 package org.infinispan.compat;
 
+import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
+import static org.infinispan.commons.dataconversion.EncodingUtils.toStorage;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -49,10 +52,10 @@ public class BiFunctionMapper implements BiFunction {
 
    @Override
    public Object apply(Object k, Object v) {
-      Object key = keyEncoder.fromStorage(keyWrapper.unwrap(k));
-      Object value = valueEncoder.fromStorage(valueWrapper.unwrap(v));
+      Object key = fromStorage(k, keyEncoder, keyWrapper);
+      Object value = fromStorage(v, valueEncoder, valueWrapper);
       Object result = biFunction.apply(key, value);
-      return result != null ? valueWrapper.wrap(valueEncoder.toStorage(result)) : null;
+      return result != null ? toStorage(result, valueEncoder, valueWrapper) : null;
    }
 
    public static class Externalizer implements AdvancedExternalizer<BiFunctionMapper> {

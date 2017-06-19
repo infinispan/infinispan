@@ -10,7 +10,7 @@ public interface Encoder {
    /**
     * Convert data in the read/write format to the storage format.
     *
-    * @param content data to be converted.
+    * @param content data to be converted, never null.
     * @return Object in the storage format.
     */
    Object toStorage(Object content);
@@ -18,7 +18,7 @@ public interface Encoder {
    /**
     * Convert from storage format to the read/write format.
     *
-    * @param content data as stored in the cache.
+    * @param content data as stored in the cache, never null.
     * @return data in the read/write format
     */
    Object fromStorage(Object content);
