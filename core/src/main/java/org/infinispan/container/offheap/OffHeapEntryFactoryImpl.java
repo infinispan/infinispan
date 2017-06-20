@@ -259,18 +259,18 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
                break;
             case MORTAL:
                maxIdle = -1;
-               lifespan = Bits.getLong(metadataBytes, offset++);
+               lifespan = Bits.getLong(metadataBytes, offset);
                created = Bits.getLong(metadataBytes, offset += 8);
                lastUsed = -1;
                break;
             case TRANSIENT:
                lifespan = -1;
-               maxIdle = Bits.getLong(metadataBytes, offset++);
+               maxIdle = Bits.getLong(metadataBytes, offset);
                created = -1;
                lastUsed = Bits.getLong(metadataBytes, offset += 8);
                break;
             case TRANSIENT_MORTAL:
-               lifespan = Bits.getLong(metadataBytes, offset++);
+               lifespan = Bits.getLong(metadataBytes, offset);
                maxIdle = Bits.getLong(metadataBytes, offset += 8);
                created = Bits.getLong(metadataBytes, offset += 8);
                lastUsed = Bits.getLong(metadataBytes, offset += 8);
