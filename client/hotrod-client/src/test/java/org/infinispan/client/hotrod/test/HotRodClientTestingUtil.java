@@ -1,11 +1,18 @@
 package org.infinispan.client.hotrod.test;
 
-import io.netty.channel.ChannelException;
+import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+
+import java.io.IOException;
+import java.net.BindException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.util.Collection;
+import java.util.Random;
+
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
@@ -21,16 +28,6 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
-import java.net.BindException;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.util.Collection;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.infinispan.distribution.DistributionTestHelper.getFirstOwner;
-import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 
 /**
  * Utility methods for the Hot Rod client
@@ -42,39 +39,44 @@ public class HotRodClientTestingUtil {
 
    private static final Log log = LogFactory.getLog(HotRodClientTestingUtil.class, Log.class);
 
-   /**
-    * This needs to be different than the one used in the server tests in order to make sure that there's no clash.
-    */
-   private static final AtomicInteger uniquePort = new AtomicInteger(15232);
+   private static final int DEFAULT_PORT = 15232;
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(cacheManager, uniquePort.incrementAndGet(), builder);
+      return startHotRodServer(cacheManager, findFreePort(), builder);
    }
 
-   public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, int startPort, HotRodServerConfigurationBuilder builder) {
-      // TODO: This is very rudimentary!! HotRodTestingUtil needs a more robust solution where ports are generated randomly and retries if already bound
+   private static boolean isBindException(Throwable e) {
+      if (e instanceof BindException)
+         return true;
+      return false;
+   }
+
+   private static int findFreePort() {
+      try {
+         try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+         }
+      } catch (IOException e) {
+         log.debug("Error finding free port, using default of " + DEFAULT_PORT);
+      }
+      return DEFAULT_PORT;
+   }
+
+   public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, int port, HotRodServerConfigurationBuilder builder) {
       HotRodServer server = null;
       int maxTries = 10;
       int currentTries = 0;
       Throwable lastError = null;
-      int port = startPort;
       while (server == null && currentTries < maxTries) {
          try {
-            server = HotRodTestingUtil.startHotRodServer(cacheManager, port++, builder);
-         } catch (ChannelException e) {
-            if (!(e.getCause() instanceof BindException)) {
-               throw e;
-            } else {
-               log.debug("Address already in use: [" + e.getMessage() + "], so let's try next port");
-               currentTries++;
-               lastError = e;
-            }
+            server = HotRodTestingUtil.startHotRodServer(cacheManager, port, builder);
          } catch (Throwable t) {
             if (!(t instanceof BindException)) {
                throw t;
             } else {
-               log.debug("Address already in use: [" + t.getMessage() + "], so let's try next port");
+               log.debug("Address already in use: [" + t.getMessage() + "], retrying");
                currentTries++;
+               port = findFreePort();
                lastError = t;
             }
          }
@@ -105,8 +107,7 @@ public class HotRodClientTestingUtil {
    /**
     * Kills a group of remote cache managers.
     *
-    * @param rcm
-    *           the remote cache manager instances to kill
+    * @param rcms the remote cache manager instances to kill
     */
    public static void killRemoteCacheManagers(RemoteCacheManager... rcms) {
       if (rcms != null) {
@@ -325,7 +326,7 @@ public class HotRodClientTestingUtil {
 
 
    public static void findServerAndKill(RemoteCacheManager client,
-         Collection<HotRodServer> servers, Collection<EmbeddedCacheManager> cacheManagers) {
+                                        Collection<HotRodServer> servers, Collection<EmbeddedCacheManager> cacheManagers) {
       InetSocketAddress addr = (InetSocketAddress) getLoadBalancer(client).nextServer(null);
       for (HotRodServer server : servers) {
          if (server.getPort() == addr.getPort()) {
