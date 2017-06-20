@@ -90,6 +90,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    private static final Log log = LogFactory.getLog(HotRodServer.class, Log.class);
 
+   private static final String WORKER_THREADS_SYS_PROP = "infinispan.server.hotrod.workerThreads";
+
    public HotRodServer() {
       super("HotRod");
    }
@@ -190,9 +192,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    public ExecutorService getExecutor(String threadPrefix) {
       if (this.executor == null || this.executor.isShutdown()) {
          DefaultThreadFactory factory = new DefaultThreadFactory(threadPrefix + "-ServerHandler");
+         int workerThreads = Integer.getInteger(WORKER_THREADS_SYS_PROP, configuration.workerThreads());
          this.executor = new ThreadPoolExecutor(
-               getConfiguration().workerThreads(),
-               getConfiguration().workerThreads(),
+               workerThreads,
+               workerThreads,
                0L, TimeUnit.MILLISECONDS,
                new LinkedBlockingQueue<>(),
                factory,
