@@ -1,14 +1,18 @@
 package org.infinispan.server.core
 
 import java.net.InetSocketAddress
+
 import org.infinispan.manager.EmbeddedCacheManager
 import transport.NettyTransport
 import logging.Log
 import org.infinispan.jmx.{JmxUtil, ResourceDMBean}
-import javax.management.{ObjectName, MBeanServer}
+import javax.management.{MBeanServer, ObjectName}
+
 import org.infinispan.server.core.transport.TimeoutEnabledChannelInitializer
 import org.infinispan.server.core.transport.NettyChannelInitializer
 import io.netty.channel.{Channel, ChannelInitializer}
+import org.infinispan.commons.CacheException
+
 import scala.collection.JavaConversions._
 
 /**
@@ -59,7 +63,21 @@ abstract class AbstractProtocolServer(protocolName: String) extends ProtocolServ
       // Register transport MBean regardless
       registerTransportMBean()
 
-      transport.start()
+
+      try {
+         transport.start()
+      } catch  {
+         case t: Throwable => {
+            try {
+               unregisterTransportMBean()
+            } catch {
+               case e: Exception => {
+                  throw new CacheException(e);
+               }
+            }
+            throw t
+         }
+      }
    }
 
    override def getInitializer: ChannelInitializer[Channel] = {
