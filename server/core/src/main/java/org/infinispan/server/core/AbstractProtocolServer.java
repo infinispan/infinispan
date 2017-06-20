@@ -90,7 +90,16 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
       // Register transport MBean regardless
       registerTransportMBean();
 
-      transport.start();
+      try {
+         transport.start();
+      } catch (Throwable re) {
+         try {
+            unregisterTransportMBean();
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+         throw re;
+      }
    }
 
    protected void registerTransportMBean() {
