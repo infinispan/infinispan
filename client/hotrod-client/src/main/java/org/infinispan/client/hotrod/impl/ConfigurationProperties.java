@@ -93,7 +93,7 @@ public class ConfigurationProperties {
          String host = components[0];
          int port = DEFAULT_HOTROD_PORT;
          if (components.length > 1) port = Integer.parseInt(components[1]);
-         addresses.add(new InetSocketAddress(host, port));
+         addresses.add(InetSocketAddress.createUnresolved(host, port));
       }
 
       if (addresses.isEmpty()) throw new IllegalStateException("No Hot Rod servers specified!");

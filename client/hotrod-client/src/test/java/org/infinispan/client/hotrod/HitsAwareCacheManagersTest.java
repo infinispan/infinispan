@@ -79,7 +79,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);
-      InetSocketAddress addr = new InetSocketAddress(server.getHost(), server.getPort());
+      InetSocketAddress addr = InetSocketAddress.createUnresolved(server.getHost(), server.getPort());
       addr2hrServer.put(addr, server);
       return server;
    }
@@ -88,7 +88,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServer server = HotRodTestingUtil.startHotRodServer(
          cm, port, new HotRodServerConfigurationBuilder());
-      InetSocketAddress addr = new InetSocketAddress(server.getHost(), server.getPort());
+      InetSocketAddress addr = InetSocketAddress.createUnresolved(server.getHost(), server.getPort());
       addr2hrServer.put(addr, server);
       return server;
    }
