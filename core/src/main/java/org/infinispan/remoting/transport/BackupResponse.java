@@ -11,20 +11,20 @@ import java.util.Set;
  */
 public interface BackupResponse {
 
-   void waitForBackupToFinish() throws Exception;
+    void waitForBackupToFinish() throws Exception;
 
-   Map<String,Throwable> getFailedBackups();
+    Map<String, Throwable> getFailedBackups();
 
-   /**
-    * Returns the list of sites where the backups failed due to a bridge communication error (as opposed to an
-    * error caused by Infinispan, e.g. due to a lock acquisition timeout).
-    */
-   Set<String> getCommunicationErrors();
+    /**
+     * Returns the list of sites where the backups failed due to a bridge communication error (as opposed to an
+     * error caused by Infinispan, e.g. due to a lock acquisition timeout).
+     */
+    Set<String> getCommunicationErrors();
 
-   /**
-    * Return the time in millis when this operation was initiated.
-    */
-   long getSendTimeMillis();
+    /**
+     * Return the time in millis when this operation was initiated.
+     */
+    long getSendTimeMillis();
 
-   boolean isEmpty();
+    boolean isEmpty();
 }

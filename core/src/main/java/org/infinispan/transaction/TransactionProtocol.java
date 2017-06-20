@@ -7,16 +7,16 @@ package org.infinispan.transaction;
  * @since 5.3
  */
 public enum TransactionProtocol {
-   /**
-    * uses the 2PC protocol
-    */
-   DEFAULT,
-   /**
-    * uses the total order protocol
-    */
-   TOTAL_ORDER;
+    /**
+     * uses the 2PC protocol
+     */
+    DEFAULT,
+    /**
+     * uses the total order protocol
+     */
+    TOTAL_ORDER;
 
-   public boolean isTotalOrder() {
-      return this == TOTAL_ORDER;
-   }
+    public boolean isTotalOrder() {
+        return this == TOTAL_ORDER;
+    }
 }

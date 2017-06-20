@@ -14,12 +14,12 @@ import org.infinispan.factories.scopes.Scopes;
 @DefaultFactoryFor(classes = GroupManager.class)
 public class GroupManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
-   @Override
-   public <T> T construct(Class<T> componentType) {
-      GroupsConfiguration groupsConfiguration = configuration.clustering().hash().groups();
-      if (!groupsConfiguration.enabled())
-         return null;
+    @Override
+    public <T> T construct(Class<T> componentType) {
+        GroupsConfiguration groupsConfiguration = configuration.clustering().hash().groups();
+        if (!groupsConfiguration.enabled())
+            return null;
 
-      return componentType.cast(new GroupManagerImpl(groupsConfiguration.groupers()));
-   }
+        return componentType.cast(new GroupManagerImpl(groupsConfiguration.groupers()));
+    }
 }

@@ -1,7 +1,6 @@
 package org.infinispan.remoting.inboundhandler.action;
 
 import java.util.List;
-
 import org.infinispan.commands.ReplicableCommand;
 
 /**
@@ -14,39 +13,39 @@ import org.infinispan.commands.ReplicableCommand;
  */
 public class ActionState {
 
-   private final ReplicableCommand command;
-   private final int commandTopologyId;
-   private volatile long timeout;
-   private volatile List<Object> filteredKeys;
+    private final ReplicableCommand command;
+    private final int commandTopologyId;
+    private volatile long timeout;
+    private volatile List<Object> filteredKeys;
 
-   public ActionState(ReplicableCommand command, int commandTopologyId, long timeout) {
-      this.command = command;
-      this.commandTopologyId = commandTopologyId;
-      this.timeout = timeout;
-   }
+    public ActionState(ReplicableCommand command, int commandTopologyId, long timeout) {
+        this.command = command;
+        this.commandTopologyId = commandTopologyId;
+        this.timeout = timeout;
+    }
 
-   public final <T extends ReplicableCommand> T getCommand() {
-      //noinspection unchecked
-      return (T) command;
-   }
+    public final <T extends ReplicableCommand> T getCommand() {
+        //noinspection unchecked
+        return (T) command;
+    }
 
-   public final int getCommandTopologyId() {
-      return commandTopologyId;
-   }
+    public final int getCommandTopologyId() {
+        return commandTopologyId;
+    }
 
-   public final long getTimeout() {
-      return timeout;
-   }
+    public final long getTimeout() {
+        return timeout;
+    }
 
-   public final void updateTimeout(long newTimeout) {
-      this.timeout = newTimeout;
-   }
+    public final void updateTimeout(long newTimeout) {
+        this.timeout = newTimeout;
+    }
 
-   public final List<Object> getFilteredKeys() {
-      return filteredKeys;
-   }
+    public final List<Object> getFilteredKeys() {
+        return filteredKeys;
+    }
 
-   public final void updateFilteredKeys(List<Object> newFilteredKeys) {
-      this.filteredKeys = newFilteredKeys;
-   }
+    public final void updateFilteredKeys(List<Object> newFilteredKeys) {
+        this.filteredKeys = newFilteredKeys;
+    }
 }

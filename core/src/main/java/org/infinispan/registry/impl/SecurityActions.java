@@ -1,7 +1,6 @@
 package org.infinispan.registry.impl;
 
 import java.security.AccessController;
-
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
@@ -18,15 +17,16 @@ import org.infinispan.security.actions.DefineConfigurationAction;
  */
 final class SecurityActions {
 
-   private SecurityActions() {
-   }
+    private SecurityActions() {
+    }
 
-   static void defineConfiguration(final EmbeddedCacheManager cacheManager, final String cacheName, final Configuration configurationOverride) {
-      DefineConfigurationAction action = new DefineConfigurationAction(cacheManager, cacheName, configurationOverride);
-      if (System.getSecurityManager() != null) {
-         AccessController.doPrivileged(action);
-      } else {
-         Security.doPrivileged(action);
-      }
-   }
+    static void defineConfiguration(final EmbeddedCacheManager cacheManager,
+        final String cacheName, final Configuration configurationOverride) {
+        DefineConfigurationAction action = new DefineConfigurationAction(cacheManager, cacheName, configurationOverride);
+        if (System.getSecurityManager() != null) {
+            AccessController.doPrivileged(action);
+        } else {
+            Security.doPrivileged(action);
+        }
+    }
 }

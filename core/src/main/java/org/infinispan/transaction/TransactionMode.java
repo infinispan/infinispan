@@ -3,9 +3,8 @@ package org.infinispan.transaction;
 /**
  * Enumeration containing the available transaction modes for a cache.
  *
- * Starting with Infinispan version 5.1 a cache doesn't support mixed access:
- * i.e. won't support transactional and non-transactional operations.
- * A cache is transactional if one the following:
+ * Starting with Infinispan version 5.1 a cache doesn't support mixed access: i.e. won't support
+ * transactional and non-transactional operations. A cache is transactional if one the following:
  *
  * <pre>
  * - a transactionManagerLookup is configured for the cache
@@ -20,10 +19,10 @@ package org.infinispan.transaction;
  * @since 5.1
  */
 public enum TransactionMode {
-   NON_TRANSACTIONAL,
-   TRANSACTIONAL;
+    NON_TRANSACTIONAL,
+    TRANSACTIONAL;
 
-   public boolean isTransactional() {
-      return this == TRANSACTIONAL;
-   }
+    public boolean isTransactional() {
+        return this == TRANSACTIONAL;
+    }
 }

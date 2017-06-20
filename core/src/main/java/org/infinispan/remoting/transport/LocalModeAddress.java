@@ -7,18 +7,18 @@ package org.infinispan.remoting.transport;
  */
 public class LocalModeAddress implements Address {
 
-   public static final Address INSTANCE = new LocalModeAddress();
+    public static final Address INSTANCE = new LocalModeAddress();
 
-   private LocalModeAddress() {
-   }
+    private LocalModeAddress() {
+    }
 
-   @Override
-   public String toString() {
-      return "Local Address";
-   }
+    @Override
+    public String toString() {
+        return "Local Address";
+    }
 
-   @Override
-   public int compareTo(Address o) {
-      return o == this ? 0 : -1;
-   }
+    @Override
+    public int compareTo(Address o) {
+        return o == this ? 0 : -1;
+    }
 }

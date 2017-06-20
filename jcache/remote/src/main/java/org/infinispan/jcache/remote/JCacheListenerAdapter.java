@@ -13,38 +13,39 @@ import org.infinispan.jcache.AbstractJCacheNotifier;
 
 @ClientListener(converterFactoryName = "key-value-with-previous-converter-factory")
 public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K, V> {
-   public JCacheListenerAdapter(AbstractJCache<K, V> jcache, AbstractJCacheNotifier<K, V> notifier) {
-      super(jcache, notifier);
-   }
+    public JCacheListenerAdapter(AbstractJCache<K, V> jcache,
+        AbstractJCacheNotifier<K, V> notifier) {
+        super(jcache, notifier);
+    }
 
-   @ClientCacheEntryCreated
-   @ClientCacheEntryModified
-   @ClientCacheEntryRemoved
-   @ClientCacheEntryExpired
-   public void handleCacheEntryEvent(ClientCacheEntryCustomEvent<KeyValueWithPrevious<K, V>> e) {
-      KeyValueWithPrevious<K, V> event = e.getEventData();
-      switch (e.getType()) {
-      case CLIENT_CACHE_ENTRY_CREATED: {
-         notifier.notifyEntryCreated(jcache, event.getKey(), event.getValue());
-         break;
-      }
-      case CLIENT_CACHE_ENTRY_REMOVED: {
-         notifier.notifyEntryRemoved(jcache, event.getKey(), event.getPrev());
-         break;
-      }
-      case CLIENT_CACHE_ENTRY_MODIFIED: {
-         notifier.notifyEntryUpdated(jcache, event.getKey(), event.getValue());
-         break;
-      }
-      case CLIENT_CACHE_ENTRY_EXPIRED: {
-         notifier.notifyEntryExpired(jcache, event.getKey(), event.getValue());
-         break;
-      }
-      case CLIENT_CACHE_FAILOVER:
-         // No JSR107 correspondent.
-         break;
-      default:
-         break;
-      }
-   }
+    @ClientCacheEntryCreated
+    @ClientCacheEntryModified
+    @ClientCacheEntryRemoved
+    @ClientCacheEntryExpired
+    public void handleCacheEntryEvent(ClientCacheEntryCustomEvent<KeyValueWithPrevious<K, V>> e) {
+        KeyValueWithPrevious<K, V> event = e.getEventData();
+        switch (e.getType()) {
+            case CLIENT_CACHE_ENTRY_CREATED: {
+                notifier.notifyEntryCreated(jcache, event.getKey(), event.getValue());
+                break;
+            }
+            case CLIENT_CACHE_ENTRY_REMOVED: {
+                notifier.notifyEntryRemoved(jcache, event.getKey(), event.getPrev());
+                break;
+            }
+            case CLIENT_CACHE_ENTRY_MODIFIED: {
+                notifier.notifyEntryUpdated(jcache, event.getKey(), event.getValue());
+                break;
+            }
+            case CLIENT_CACHE_ENTRY_EXPIRED: {
+                notifier.notifyEntryExpired(jcache, event.getKey(), event.getValue());
+                break;
+            }
+            case CLIENT_CACHE_FAILOVER:
+                // No JSR107 correspondent.
+                break;
+            default:
+                break;
+        }
+    }
 }

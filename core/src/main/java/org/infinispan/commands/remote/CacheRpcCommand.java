@@ -13,19 +13,19 @@ import org.infinispan.util.ByteString;
  */
 public interface CacheRpcCommand extends ReplicableCommand {
 
-   /**
-    * @return the name of the cache that produced this command.  This will also be the name of the cache this command is
-    *         intended for.
-    */
-   ByteString getCacheName();
+    /**
+     * @return the name of the cache that produced this command.
+     * This will also be the name of the cache this command is intended for.
+     */
+    ByteString getCacheName();
 
-   /**
-    * Set the origin of the command
-    */
-   void setOrigin(Address origin);
+    /**
+     * Set the origin of the command
+     */
+    void setOrigin(Address origin);
 
-   /**
-    * Get the origin of the command
-    */
-   Address getOrigin();
+    /**
+     * Get the origin of the command
+     */
+    Address getOrigin();
 }

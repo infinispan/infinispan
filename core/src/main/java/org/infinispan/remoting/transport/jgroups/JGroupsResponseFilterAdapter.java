@@ -16,36 +16,36 @@ import org.jgroups.blocks.RspFilter;
  * @since 4.0
  */
 public final class JGroupsResponseFilterAdapter implements RspFilter {
-   private static final Log log = LogFactory.getLog(JGroupsResponseFilterAdapter.class);
+    private static final Log log = LogFactory.getLog(JGroupsResponseFilterAdapter.class);
 
-   final ResponseFilter r;
+    final ResponseFilter r;
 
-   /**
-    * Creates an instance of the adapter
-    *
-    * @param r response filter to wrap
-    */
-   public JGroupsResponseFilterAdapter(ResponseFilter r) {
-      this.r = r;
-   }
+    /**
+     * Creates an instance of the adapter
+     *
+     * @param r response filter to wrap
+     */
+    public JGroupsResponseFilterAdapter(ResponseFilter r) {
+        this.r = r;
+    }
 
-   @Override
-   public boolean isAcceptable(Object response, Address sender) {
-      try {
-         if (response instanceof Exception)
-            response = new ExceptionResponse((Exception) response);
-         else if (response instanceof Throwable)
-            response = new ExceptionResponse(new RuntimeException((Throwable) response));
+    @Override
+    public boolean isAcceptable(Object response, Address sender) {
+        try {
+            if (response instanceof Exception)
+                response = new ExceptionResponse((Exception) response);
+            else if (response instanceof Throwable)
+                response = new ExceptionResponse(new RuntimeException((Throwable) response));
 
-         return r.isAcceptable((Response) response, JGroupsTransport.fromJGroupsAddress(sender));
-      } catch (Throwable t) {
-         log.error("Exception in response filter: ", t);
-         throw t;
-      }
-   }
+            return r.isAcceptable((Response) response, JGroupsTransport.fromJGroupsAddress(sender));
+        } catch (Throwable t) {
+            log.error("Exception in response filter: ", t);
+            throw t;
+        }
+    }
 
-   @Override
-   public boolean needMoreResponses() {
-      return r.needMoreResponses();
-   }
+    @Override
+    public boolean needMoreResponses() {
+        return r.needMoreResponses();
+    }
 }

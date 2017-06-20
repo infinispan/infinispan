@@ -10,17 +10,17 @@ import org.infinispan.filter.KeyFilter;
  */
 public class GroupFilter<K> implements KeyFilter<K> {
 
-   private final String groupName;
-   private final GroupManager groupManager;
+    private final String groupName;
+    private final GroupManager groupManager;
 
-   public GroupFilter(String groupName, GroupManager groupManager) {
-      this.groupName = groupName;
-      this.groupManager = groupManager;
-   }
+    public GroupFilter(String groupName, GroupManager groupManager) {
+        this.groupName = groupName;
+        this.groupManager = groupManager;
+    }
 
-   @Override
-   public boolean accept(K key) {
-      String keyGroup = groupManager.getGroup(key);
-      return keyGroup != null && keyGroup.equals(groupName);
-   }
+    @Override
+    public boolean accept(K key) {
+        String keyGroup = groupManager.getGroup(key);
+        return keyGroup != null && keyGroup.equals(groupName);
+    }
 }

@@ -7,11 +7,15 @@ package org.infinispan.remoting.transport;
  * @since 5.0
  */
 public interface TopologyAwareAddress extends Address {
-   String getSiteId();
-   String getRackId();
-   String getMachineId();
+    String getSiteId();
 
-   boolean isSameSite(TopologyAwareAddress addr);
-   boolean isSameRack(TopologyAwareAddress addr);
-   boolean isSameMachine(TopologyAwareAddress addr);
+    String getRackId();
+
+    String getMachineId();
+
+    boolean isSameSite(TopologyAwareAddress addr);
+
+    boolean isSameRack(TopologyAwareAddress addr);
+
+    boolean isSameMachine(TopologyAwareAddress addr);
 }

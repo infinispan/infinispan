@@ -1,19 +1,14 @@
 package org.infinispan.distribution.group;
 
 /**
- * <p>
- * User applications may implement this interface in order to customize the compution of groups in cases when the modifying the
- * key is not possible, or when the value determined by the {@link Group} annotation needs customizing.
+ * <p> User applications may implement this interface in order to customize the compution of groups in cases when the
+ * modifying the key is not possible, or when the value determined by the {@link Group} annotation needs customizing.
  * </p>
  *
- * <p>
- * <code>Grouper</code> acts as an interceptor, passing the previously computed value in. The group passed to the first
- * <code>Grouper</code> will be that determined by <code>@Group</code> (if <code>@Group</code> is defined).
- * </p>
+ * <p> <code>Grouper</code> acts as an interceptor, passing the previously computed value in. The group passed to the
+ * first <code>Grouper</code> will be that determined by <code>@Group</code> (if <code>@Group</code> is defined). </p>
  *
- * <p>
- * For example:
- * </p>
+ * <p> For example: </p>
  *
  * <pre>
  * public class KXGrouper implements Grouper&lt;String&gt; {
@@ -37,16 +32,12 @@ package org.infinispan.distribution.group;
  * }
  * </pre>
  *
- * <p>
- * You must set the
- * <code>groupsEnabled<code> property to true in your configuration in order to use groups. You can specify an order list of groupers there.
- * </p>
- *
- * @see Group
- *
- * @author Pete Muir
+ * <p> You must set the <code>groupsEnabled<code> property to true in your configuration in order to use groups. You can
+ * specify an order list of groupers there. </p>
  *
  * @param <T>
+ * @author Pete Muir
+ * @see Group
  */
 public interface Grouper<T> {
 

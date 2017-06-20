@@ -2,7 +2,6 @@ package org.infinispan.remoting.transport.jgroups;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetSystemPropertyAsBooleanAction;
 import org.infinispan.security.actions.GetSystemPropertyAsIntegerAction;
@@ -17,20 +16,19 @@ import org.infinispan.security.actions.GetSystemPropertyAsIntegerAction;
  * @since 8.2
  */
 final class SecurityActions {
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(action);
-      } else {
-         return Security.doPrivileged(action);
-      }
-   }
+    private static <T> T doPrivileged(PrivilegedAction<T> action) {
+        if (System.getSecurityManager() != null) {
+            return AccessController.doPrivileged(action);
+        } else {
+            return Security.doPrivileged(action);
+        }
+    }
 
+    static boolean getBooleanProperty(String name) {
+        return doPrivileged(new GetSystemPropertyAsBooleanAction(name));
+    }
 
-   static boolean getBooleanProperty(String name) {
-      return doPrivileged(new GetSystemPropertyAsBooleanAction(name));
-   }
-
-   static int getIntProperty(String name, int defaultValue) {
-      return doPrivileged(new GetSystemPropertyAsIntegerAction(name, defaultValue));
-   }
+    static int getIntProperty(String name, int defaultValue) {
+        return doPrivileged(new GetSystemPropertyAsIntegerAction(name, defaultValue));
+    }
 }

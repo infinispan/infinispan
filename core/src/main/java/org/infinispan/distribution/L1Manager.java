@@ -2,7 +2,6 @@ package org.infinispan.distribution;
 
 import java.util.Collection;
 import java.util.concurrent.Future;
-
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
@@ -14,32 +13,35 @@ import org.infinispan.remoting.transport.Address;
  * later if needed.
  *
  * @author Pete Muir
- *
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface L1Manager {
 
-   /**
-    * Records a request that will be cached in another nodes L1
-    */
-   void addRequestor(Object key, Address requestor);
+    /**
+     * Records a request that will be cached in another nodes L1
+     */
+    void addRequestor(Object key, Address requestor);
 
-   Future<?> flushCache(Collection<Object> key, Address origin, boolean assumeOriginKeptEntryInL1);
+    Future<?> flushCache(Collection<Object> key, Address origin, boolean assumeOriginKeptEntryInL1);
 
-   /**
-    * Registers the given write synchronizer to be notified whenever a remote value is looked up for the given key.
-    * If the synchronizer is no longer needed to be signaled, the user should unregister it using
-    * {@link L1Manager#unregisterL1WriteSynchronizer(Object, org.infinispan.interceptors.distribution.L1WriteSynchronizer)}
-    * @param key The key that that when looked up will trigger the synchronizer
-    * @param sync The synchronizer to run the update when the key is looked up
-    */
-   void registerL1WriteSynchronizer(Object key, L1WriteSynchronizer sync);
+    /**
+     * Registers the given write synchronizer to be notified whenever a remote value is looked up
+     * for the given key. If the synchronizer is no longer needed to be signaled, the user should
+     * unregister it using {@link L1Manager#unregisterL1WriteSynchronizer(Object,
+     * org.infinispan.interceptors.distribution.L1WriteSynchronizer)}
+     *
+     * @param key The key that that when looked up will trigger the synchronizer
+     * @param sync The synchronizer to run the update when the key is looked up
+     */
+    void registerL1WriteSynchronizer(Object key, L1WriteSynchronizer sync);
 
-   /**
-    * Unregister the given write synchronizer if present.  Note the synchronizer is only unregistered if it matches
-    * using instance equality (==) due to possibly concurrent usage of write synchronizers
-    * @param key The key to unregister the given synchronizer for.
-    * @param sync The synchronizer to be removed if it is still present.
-    */
-   void unregisterL1WriteSynchronizer(Object key, L1WriteSynchronizer sync);
+    /**
+     * Unregister the given write synchronizer if present.  Note the synchronizer is only
+     * unregistered if it matches using instance equality (==) due to possibly concurrent usage of
+     * write synchronizers
+     *
+     * @param key The key to unregister the given synchronizer for.
+     * @param sync The synchronizer to be removed if it is still present.
+     */
+    void unregisterL1WriteSynchronizer(Object key, L1WriteSynchronizer sync);
 }

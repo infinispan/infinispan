@@ -1,7 +1,5 @@
 package org.infinispan.distribution.group;
 
-import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
-
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -9,13 +7,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
-
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
+
+import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
 
 /**
  * @private
@@ -102,22 +101,22 @@ public class GroupManagerImpl implements GroupManager {
             return applyGroupers(null, key);
     }
 
-   @Override
-   public boolean isOwner(String group) {
-      return clusteringDependentLogic.localNodeIsOwner(group);
-   }
+    @Override
+    public boolean isOwner(String group) {
+        return clusteringDependentLogic.localNodeIsOwner(group);
+    }
 
-   @Override
-   public Address getPrimaryOwner(String group) {
-      return clusteringDependentLogic.getPrimaryOwner(group);
-   }
+    @Override
+    public Address getPrimaryOwner(String group) {
+        return clusteringDependentLogic.getPrimaryOwner(group);
+    }
 
-   @Override
-   public boolean isPrimaryOwner(String group) {
-      return clusteringDependentLogic.localNodeIsPrimaryOwner(group);
-   }
+    @Override
+    public boolean isPrimaryOwner(String group) {
+        return clusteringDependentLogic.localNodeIsPrimaryOwner(group);
+    }
 
-   private String applyGroupers(String group, Object key) {
+    private String applyGroupers(String group, Object key) {
         for (Grouper<?> grouper : groupers) {
             if (grouper.getKeyType().isAssignableFrom(key.getClass()))
                 group = ((Grouper<Object>) grouper).computeGroup(key, group);
@@ -129,17 +128,17 @@ public class GroupManagerImpl implements GroupManager {
         final Class<?> keyClass = key.getClass();
         GroupMetadata groupMetadata = groupMetadataCache.get(keyClass);
         if (groupMetadata == null) {
-          //this is not ideal as it is possible for the group metadata to be redundantly calculated several times.
-          //however profiling showed that using the Map<Class,Future> cache-approach is significantly slower on
-          // the long run
-           groupMetadata = createGroupMetadata(keyClass);
-           GroupMetadata previous = groupMetadataCache.putIfAbsent(keyClass, groupMetadata);
-           if (previous != null) {
-               // in case another thread added a metadata already, discard what we created and reuse the existing.
-               return previous;
-           }
-       }
-       return groupMetadata;
+            //this is not ideal as it is possible for the group metadata to be redundantly calculated several times.
+            //however profiling showed that using the Map<Class,Future> cache-approach is significantly slower on
+            // the long run
+            groupMetadata = createGroupMetadata(keyClass);
+            GroupMetadata previous = groupMetadataCache.putIfAbsent(keyClass, groupMetadata);
+            if (previous != null) {
+                // in case another thread added a metadata already, discard what we created and reuse the existing.
+                return previous;
+            }
+        }
+        return groupMetadata;
     }
 
 }

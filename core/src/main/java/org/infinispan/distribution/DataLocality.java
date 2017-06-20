@@ -9,26 +9,26 @@ package org.infinispan.distribution;
  * @since 4.2.1
  */
 public enum DataLocality {
-   LOCAL(true,false),
+    LOCAL(true, false),
 
-   NOT_LOCAL(false,false),
+    NOT_LOCAL(false, false),
 
-   LOCAL_UNCERTAIN(true,true),
+    LOCAL_UNCERTAIN(true, true),
 
-   NOT_LOCAL_UNCERTAIN(false,true);
+    NOT_LOCAL_UNCERTAIN(false, true);
 
-   private final boolean local, uncertain;
+    private final boolean local, uncertain;
 
-   private DataLocality(boolean local, boolean uncertain) {
-      this.local = local;
-      this.uncertain = uncertain;
-   }
+    private DataLocality(boolean local, boolean uncertain) {
+        this.local = local;
+        this.uncertain = uncertain;
+    }
 
-   public boolean isLocal() {
-      return local;
-   }
+    public boolean isLocal() {
+        return local;
+    }
 
-   public boolean isUncertain() {
-      return uncertain;
-   }
+    public boolean isUncertain() {
+        return uncertain;
+    }
 }

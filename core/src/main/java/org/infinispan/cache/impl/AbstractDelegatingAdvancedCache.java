@@ -6,10 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheSet;
 import org.infinispan.atomic.Delta;
@@ -38,7 +36,8 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 /**
- * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link AdvancedCache}.
+ * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link
+ * AdvancedCache}.
  *
  * @author Mircea.Markus@jboss.com
  * @author Tristan Tarrant
@@ -47,304 +46,309 @@ import org.infinispan.util.concurrent.locks.LockManager;
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
 
-   protected final AdvancedCache<K, V> cache;
-   private final AdvancedCacheWrapper<K, V> wrapper;
+    protected final AdvancedCache<K, V> cache;
+    private final AdvancedCacheWrapper<K, V> wrapper;
 
-   public AbstractDelegatingAdvancedCache(final AdvancedCache<K, V> cache) {
-      this(cache, new AdvancedCacheWrapper<K, V>() {
-         @Override
-         public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-            return new AbstractDelegatingAdvancedCache<K, V>(cache);
-         }
-      });
-   }
+    public AbstractDelegatingAdvancedCache(final AdvancedCache<K, V> cache) {
+        this(cache, new AdvancedCacheWrapper<K, V>() {
+            @Override
+            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
+                return new AbstractDelegatingAdvancedCache<K, V>(cache);
+            }
+        });
+    }
 
-   protected AbstractDelegatingAdvancedCache(AdvancedCache<K, V> cache, AdvancedCacheWrapper<K, V> wrapper) {
-      super(cache);
-      this.cache = cache;
-      this.wrapper = wrapper;
-   }
+    protected AbstractDelegatingAdvancedCache(AdvancedCache<K, V> cache,
+        AdvancedCacheWrapper<K, V> wrapper) {
+        super(cache);
+        this.cache = cache;
+        this.wrapper = wrapper;
+    }
 
-   @Override
-   public void addInterceptor(CommandInterceptor i, int position) {
-      cache.getAsyncInterceptorChain().addInterceptor(i, position);
-   }
+    @Override
+    public void addInterceptor(CommandInterceptor i, int position) {
+        cache.getAsyncInterceptorChain().addInterceptor(i, position);
+    }
 
-   @Override
-   public AsyncInterceptorChain getAsyncInterceptorChain() {
-      return cache.getAsyncInterceptorChain();
-   }
+    @Override
+    public AsyncInterceptorChain getAsyncInterceptorChain() {
+        return cache.getAsyncInterceptorChain();
+    }
 
-   @Override
-   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
-      return cache.getAsyncInterceptorChain().addInterceptorAfter(i, afterInterceptor);
-   }
+    @Override
+    public boolean addInterceptorAfter(CommandInterceptor i,
+        Class<? extends CommandInterceptor> afterInterceptor) {
+        return cache.getAsyncInterceptorChain().addInterceptorAfter(i, afterInterceptor);
+    }
 
-   @Override
-   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
-      return cache.getAsyncInterceptorChain().addInterceptorBefore(i, beforeInterceptor);
-   }
+    @Override
+    public boolean addInterceptorBefore(CommandInterceptor i,
+        Class<? extends CommandInterceptor> beforeInterceptor) {
+        return cache.getAsyncInterceptorChain().addInterceptorBefore(i, beforeInterceptor);
+    }
 
-   @Override
-   public void removeInterceptor(int position) {
-      cache.getAsyncInterceptorChain().removeInterceptor(position);
-   }
+    @Override
+    public void removeInterceptor(int position) {
+        cache.getAsyncInterceptorChain().removeInterceptor(position);
+    }
 
-   @Override
-   public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
-      cache.getAsyncInterceptorChain().removeInterceptor(interceptorType);
-   }
+    @Override
+    public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
+        cache.getAsyncInterceptorChain().removeInterceptor(interceptorType);
+    }
 
-   @Override
-   public AdvancedCache<K, V> getAdvancedCache() {
-      //We need to override the super implementation which returns to the decorated cache;
-      //otherwise the current operation breaks out of the selected ClassLoader.
-      return this;
-   }
+    @Override
+    public AdvancedCache<K, V> getAdvancedCache() {
+        //We need to override the super implementation which returns to the decorated cache;
+        //otherwise the current operation breaks out of the selected ClassLoader.
+        return this;
+    }
 
-   @Override
-   public List<CommandInterceptor> getInterceptorChain() {
-      return cache.getInterceptorChain();
-   }
+    @Override
+    public List<CommandInterceptor> getInterceptorChain() {
+        return cache.getInterceptorChain();
+    }
 
-   @Override
-   public EvictionManager getEvictionManager() {
-      return cache.getEvictionManager();
-   }
+    @Override
+    public EvictionManager getEvictionManager() {
+        return cache.getEvictionManager();
+    }
 
-   @Override
-   public ExpirationManager<K, V> getExpirationManager() {
-      return cache.getExpirationManager();
-   }
+    @Override
+    public ExpirationManager<K, V> getExpirationManager() {
+        return cache.getExpirationManager();
+    }
 
-   @Override
-   public ComponentRegistry getComponentRegistry() {
-      return cache.getComponentRegistry();
-   }
+    @Override
+    public ComponentRegistry getComponentRegistry() {
+        return cache.getComponentRegistry();
+    }
 
-   @Override
-   public DistributionManager getDistributionManager() {
-      return cache.getDistributionManager();
-   }
+    @Override
+    public DistributionManager getDistributionManager() {
+        return cache.getDistributionManager();
+    }
 
-   @Override
-   public AuthorizationManager getAuthorizationManager() {
-      return cache.getAuthorizationManager();
-   }
+    @Override
+    public AuthorizationManager getAuthorizationManager() {
+        return cache.getAuthorizationManager();
+    }
 
-   @Override
-   public RpcManager getRpcManager() {
-      return cache.getRpcManager();
-   }
+    @Override
+    public RpcManager getRpcManager() {
+        return cache.getRpcManager();
+    }
 
-   @Override
-   public BatchContainer getBatchContainer() {
-      return cache.getBatchContainer();
-   }
+    @Override
+    public BatchContainer getBatchContainer() {
+        return cache.getBatchContainer();
+    }
 
-   @Override
-   public InvocationContextContainer getInvocationContextContainer() {
-      return cache.getInvocationContextContainer();
-   }
+    @Override
+    public InvocationContextContainer getInvocationContextContainer() {
+        return cache.getInvocationContextContainer();
+    }
 
-   @Override
-   public DataContainer<K, V> getDataContainer() {
-      return cache.getDataContainer();
-   }
+    @Override
+    public DataContainer<K, V> getDataContainer() {
+        return cache.getDataContainer();
+    }
 
-   @Override
-   public TransactionManager getTransactionManager() {
-      return cache.getTransactionManager();
-   }
+    @Override
+    public TransactionManager getTransactionManager() {
+        return cache.getTransactionManager();
+    }
 
-   @Override
-   public LockManager getLockManager() {
-      return cache.getLockManager();
-   }
+    @Override
+    public LockManager getLockManager() {
+        return cache.getLockManager();
+    }
 
-   @Override
-   public XAResource getXAResource() {
-      return cache.getXAResource();
-   }
+    @Override
+    public XAResource getXAResource() {
+        return cache.getXAResource();
+    }
 
-   @Override
-   public AvailabilityMode getAvailability() {
-      return cache.getAvailability();
-   }
+    @Override
+    public AvailabilityMode getAvailability() {
+        return cache.getAvailability();
+    }
 
-   @Override
-   public void setAvailability(AvailabilityMode availabilityMode) {
-      cache.setAvailability(availabilityMode);
-   }
+    @Override
+    public void setAvailability(AvailabilityMode availabilityMode) {
+        cache.setAvailability(availabilityMode);
+    }
 
-   @ManagedAttribute(
-         description = "Returns the cache availability",
-         displayName = "Cache availability",
-         dataType = DataType.TRAIT,
-         writable = true
-   )
-   public String getCacheAvailability() {
-      return getAvailability().toString();
-   }
+    @ManagedAttribute(
+        description = "Returns the cache availability",
+        displayName = "Cache availability",
+        dataType = DataType.TRAIT,
+        writable = true
+    )
+    public String getCacheAvailability() {
+        return getAvailability().toString();
+    }
 
-   public void setCacheAvailability(String availabilityString) throws Exception {
-      setAvailability(AvailabilityMode.valueOf(availabilityString));
-   }
+    public void setCacheAvailability(String availabilityString) throws Exception {
+        setAvailability(AvailabilityMode.valueOf(availabilityString));
+    }
 
-   @ManagedAttribute(
-         description = "Returns whether cache rebalancing is enabled",
-         displayName = "Cache rebalacing",
-         dataType = DataType.TRAIT,
-         writable = true
-   )
-   public boolean isRebalancingEnabled() {
-      LocalTopologyManager localTopologyManager = getComponentRegistry().getComponent(LocalTopologyManager.class);
-      if (localTopologyManager != null) {
-         try {
-            return localTopologyManager.isCacheRebalancingEnabled(getName());
-         } catch (Exception e) {
-            throw new CacheException(e);
-         }
-      } else {
-         return false;
-      }
-   }
+    @ManagedAttribute(
+        description = "Returns whether cache rebalancing is enabled",
+        displayName = "Cache rebalacing",
+        dataType = DataType.TRAIT,
+        writable = true
+    )
+    public boolean isRebalancingEnabled() {
+        LocalTopologyManager localTopologyManager = getComponentRegistry().getComponent(LocalTopologyManager.class);
+        if (localTopologyManager != null) {
+            try {
+                return localTopologyManager.isCacheRebalancingEnabled(getName());
+            } catch (Exception e) {
+                throw new CacheException(e);
+            }
+        } else {
+            return false;
+        }
+    }
 
-   public void setRebalancingEnabled(boolean enabled) {
-      LocalTopologyManager localTopologyManager = getComponentRegistry().getComponent(LocalTopologyManager.class);
-      if (localTopologyManager != null) {
-         try {
-            localTopologyManager.setCacheRebalancingEnabled(getName(), enabled);
-         } catch (Exception e) {
-            throw new CacheException(e);
-         }
-      }
-   }
+    public void setRebalancingEnabled(boolean enabled) {
+        LocalTopologyManager localTopologyManager = getComponentRegistry().getComponent(LocalTopologyManager.class);
+        if (localTopologyManager != null) {
+            try {
+                localTopologyManager.setCacheRebalancingEnabled(getName(), enabled);
+            } catch (Exception e) {
+                throw new CacheException(e);
+            }
+        }
+    }
 
-   @Override
-   public AdvancedCache<K, V> withFlags(Flag... flags) {
-      AdvancedCache<K, V> flagCache = this.cache.withFlags(flags);
-      if (flagCache != cache) {
-         return this.wrapper.wrap(flagCache);
-      } else {
-         return this;
-      }
-   }
+    @Override
+    public AdvancedCache<K, V> withFlags(Flag... flags) {
+        AdvancedCache<K, V> flagCache = this.cache.withFlags(flags);
+        if (flagCache != cache) {
+            return this.wrapper.wrap(flagCache);
+        } else {
+            return this;
+        }
+    }
 
-   @Override
-   public boolean lock(K... key) {
-      return cache.lock(key);
-   }
+    @Override
+    public boolean lock(K... key) {
+        return cache.lock(key);
+    }
 
-   @Override
-   public boolean lock(Collection<? extends K> keys) {
-      return cache.lock(keys);
-   }
+    @Override
+    public boolean lock(Collection<? extends K> keys) {
+        return cache.lock(keys);
+    }
 
-   @Override
-   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire){
-      cache.applyDelta(deltaAwareValueKey, delta, locksToAcquire);
-   }
+    @Override
+    public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
+        cache.applyDelta(deltaAwareValueKey, delta, locksToAcquire);
+    }
 
-   @Override
-   public Stats getStats() {
-       return cache.getStats();
-   }
+    @Override
+    public Stats getStats() {
+        return cache.getStats();
+    }
 
-   @Override
-   public ClassLoader getClassLoader() {
-      return cache.getClassLoader();
-   }
+    @Override
+    public ClassLoader getClassLoader() {
+        return cache.getClassLoader();
+    }
 
-   @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      AdvancedCache<K, V> loaderCache = this.cache.with(classLoader);
-      if (loaderCache != cache) {
-         return this.wrapper.wrap(loaderCache);
-      } else {
-         return this;
-      }
-   }
+    @Override
+    public AdvancedCache<K, V> with(ClassLoader classLoader) {
+        AdvancedCache<K, V> loaderCache = this.cache.with(classLoader);
+        if (loaderCache != cache) {
+            return this.wrapper.wrap(loaderCache);
+        } else {
+            return this;
+        }
+    }
 
-   @Override
-   public Map<K, V> getAll(Set<?> keys) {
-      return cache.getAll(keys);
-   }
+    @Override
+    public Map<K, V> getAll(Set<?> keys) {
+        return cache.getAll(keys);
+    }
 
-   @Override
-   public CacheEntry<K, V> getCacheEntry(Object key) {
-      return cache.getCacheEntry(key);
-   }
+    @Override
+    public CacheEntry<K, V> getCacheEntry(Object key) {
+        return cache.getCacheEntry(key);
+    }
 
-   @Override
-   public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
-      return cache.getAllCacheEntries(keys);
-   }
+    @Override
+    public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
+        return cache.getAllCacheEntries(keys);
+    }
 
-   @Override
-   public java.util.Map<K, V> getGroup(String groupName) {
-      return cache.getGroup(groupName);
-   }
+    @Override
+    public java.util.Map<K, V> getGroup(String groupName) {
+        return cache.getGroup(groupName);
+    }
 
-   @Override
-   public void removeGroup(String groupName) {
-      cache.removeGroup(groupName);
-   }
+    @Override
+    public void removeGroup(String groupName) {
+        cache.removeGroup(groupName);
+    }
 
-   @Override
-   public V put(K key, V value, Metadata metadata) {
-      return cache.put(key, value, metadata);
-   }
+    @Override
+    public V put(K key, V value, Metadata metadata) {
+        return cache.put(key, value, metadata);
+    }
 
-   @Override
-   public V replace(K key, V value, Metadata metadata) {
-      return cache.replace(key, value, metadata);
-   }
+    @Override
+    public V replace(K key, V value, Metadata metadata) {
+        return cache.replace(key, value, metadata);
+    }
 
-   @Override
-   public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      return cache.replace(key, oldValue, value, metadata);
-   }
+    @Override
+    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
+        return cache.replace(key, oldValue, value, metadata);
+    }
 
-   @Override
-   public V putIfAbsent(K key, V value, Metadata metadata) {
-      return cache.putIfAbsent(key, value, metadata);
-   }
+    @Override
+    public V putIfAbsent(K key, V value, Metadata metadata) {
+        return cache.putIfAbsent(key, value, metadata);
+    }
 
-   @Override
-   public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return cache.putAsync(key, value, metadata);
-   }
+    @Override
+    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
+        return cache.putAsync(key, value, metadata);
+    }
 
-   @Override
-   public void putForExternalRead(K key, V value, Metadata metadata) {
-      cache.putForExternalRead(key, value, metadata);
-   }
+    @Override
+    public void putForExternalRead(K key, V value, Metadata metadata) {
+        cache.putForExternalRead(key, value, metadata);
+    }
 
-   @Override
-   public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
-      cache.putAll(map, metadata);
-   }
+    @Override
+    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
+        cache.putAll(map, metadata);
+    }
 
-   @Override
-   public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
-      return cache.cacheEntrySet();
-   }
+    @Override
+    public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
+        return cache.cacheEntrySet();
+    }
 
-   @Override
-   public void removeExpired(K key, V value, Long lifespan) {
-      cache.removeExpired(key, value, lifespan);
-   }
+    @Override
+    public void removeExpired(K key, V value, Long lifespan) {
+        cache.removeExpired(key, value, lifespan);
+    }
 
-   protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
-      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, EnumUtil.bitSetOf(flags));
-   }
+    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags,
+        ClassLoader classLoader) {
+        ((CacheImpl<K, V>) cache).putForExternalRead(key, value, EnumUtil.bitSetOf(flags));
+    }
 
-   protected final void putForExternalRead(K key, V value, Metadata metadata, EnumSet<Flag> flags, ClassLoader classLoader) {
-      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, metadata, EnumUtil.bitSetOf(flags));
-   }
+    protected final void putForExternalRead(K key, V value, Metadata metadata, EnumSet<Flag> flags,
+        ClassLoader classLoader) {
+        ((CacheImpl<K, V>) cache).putForExternalRead(key, value, metadata, EnumUtil.bitSetOf(flags));
+    }
 
-   public interface AdvancedCacheWrapper<K, V> {
-      AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache);
-   }
+    public interface AdvancedCacheWrapper<K, V> {
+        AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache);
+    }
 }

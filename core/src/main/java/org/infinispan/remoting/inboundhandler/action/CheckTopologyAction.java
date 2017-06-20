@@ -12,16 +12,16 @@ import org.infinispan.remoting.inboundhandler.BasePerCacheInboundInvocationHandl
  */
 public class CheckTopologyAction implements Action {
 
-   private final BasePerCacheInboundInvocationHandler handler;
+    private final BasePerCacheInboundInvocationHandler handler;
 
-   public CheckTopologyAction(BasePerCacheInboundInvocationHandler handler) {
-      this.handler = handler;
-   }
+    public CheckTopologyAction(BasePerCacheInboundInvocationHandler handler) {
+        this.handler = handler;
+    }
 
-   @Override
-   public ActionStatus check(ActionState state) {
-      return handler.isCommandSentBeforeFirstTopology(state.getCommandTopologyId()) ?
+    @Override
+    public ActionStatus check(ActionState state) {
+        return handler.isCommandSentBeforeFirstTopology(state.getCommandTopologyId()) ?
             ActionStatus.CANCELED :
             ActionStatus.READY;
-   }
+    }
 }

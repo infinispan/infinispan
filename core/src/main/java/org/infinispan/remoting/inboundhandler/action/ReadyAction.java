@@ -9,25 +9,25 @@ package org.infinispan.remoting.inboundhandler.action;
  */
 public interface ReadyAction {
 
-   /**
-    * @return {@code true} if ready.
-    */
-   boolean isReady();
+    /**
+     * @return {@code true} if ready.
+     */
+    boolean isReady();
 
-   /**
-    * It adds a listener that is invoked when this action is ready.
-    *
-    * @param listener the listener to invoke.
-    */
-   void addListener(ActionListener listener);
+    /**
+     * It adds a listener that is invoked when this action is ready.
+     *
+     * @param listener the listener to invoke.
+     */
+    void addListener(ActionListener listener);
 
-   /**
-    * Cleanup when the command throws an exception while executing.
-    */
-   void onException();
+    /**
+     * Cleanup when the command throws an exception while executing.
+     */
+    void onException();
 
-   /**
-    * Invoked always after the command is executed and the reply is sent.
-    */
-   void onFinally();
+    /**
+     * Invoked always after the command is executed and the reply is sent.
+     */
+    void onFinally();
 }

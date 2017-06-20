@@ -1,9 +1,6 @@
 package org.infinispan.remoting.inboundhandler;
 
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-
 import java.util.concurrent.CompletableFuture;
-
 import org.infinispan.commands.CancellableCommand;
 import org.infinispan.commands.CancellationService;
 import org.infinispan.commands.ReplicableCommand;
@@ -26,6 +23,8 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+
 /**
  * Implementation with the default handling methods and utilities methods.
  *
@@ -33,140 +32,141 @@ import org.infinispan.util.logging.Log;
  * @since 7.1
  */
 public abstract class BasePerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
-   private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
-   protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
-   private StateTransferLock stateTransferLock;
-   protected StateTransferManager stateTransferManager;
-   private ResponseGenerator responseGenerator;
-   private CancellationService cancellationService;
+    private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
+    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
+    private StateTransferLock stateTransferLock;
+    protected StateTransferManager stateTransferManager;
+    private ResponseGenerator responseGenerator;
+    private CancellationService cancellationService;
 
-   private static int extractCommandTopologyId(SingleRpcCommand command) {
-      ReplicableCommand innerCmd = command.getCommand();
-      if (innerCmd instanceof TopologyAffectedCommand) {
-         return ((TopologyAffectedCommand) innerCmd).getTopologyId();
-      }
-      return NO_TOPOLOGY_COMMAND;
-   }
+    private static int extractCommandTopologyId(SingleRpcCommand command) {
+        ReplicableCommand innerCmd = command.getCommand();
+        if (innerCmd instanceof TopologyAffectedCommand) {
+            return ((TopologyAffectedCommand) innerCmd).getTopologyId();
+        }
+        return NO_TOPOLOGY_COMMAND;
+    }
 
-   protected static int extractCommandTopologyId(CacheRpcCommand command) {
-      switch (command.getCommandId()) {
-         case SingleRpcCommand.COMMAND_ID:
-            return extractCommandTopologyId((SingleRpcCommand) command);
-         case ClusteredGetCommand.COMMAND_ID:
-         case ClusteredGetAllCommand.COMMAND_ID:
-            // These commands are topology aware but we don't block them here - topologyId logic
-            // is handled in StateTransferInterceptor
-            return NO_TOPOLOGY_COMMAND;
-         default:
-            if (command instanceof TopologyAffectedCommand) {
-               return ((TopologyAffectedCommand) command).getTopologyId();
+    protected static int extractCommandTopologyId(CacheRpcCommand command) {
+        switch (command.getCommandId()) {
+            case SingleRpcCommand.COMMAND_ID:
+                return extractCommandTopologyId((SingleRpcCommand) command);
+            case ClusteredGetCommand.COMMAND_ID:
+            case ClusteredGetAllCommand.COMMAND_ID:
+                // These commands are topology aware but we don't block them here - topologyId logic
+                // is handled in StateTransferInterceptor
+                return NO_TOPOLOGY_COMMAND;
+            default:
+                if (command instanceof TopologyAffectedCommand) {
+                    return ((TopologyAffectedCommand) command).getTopologyId();
+                }
+        }
+        return NO_TOPOLOGY_COMMAND;
+    }
+
+    @Inject
+    public void injectDependencies(
+        @ComponentName(REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
+        ResponseGenerator responseGenerator,
+        CancellationService cancellationService,
+        StateTransferLock stateTransferLock,
+        StateTransferManager stateTransferManager) {
+        this.remoteCommandsExecutor = remoteCommandsExecutor;
+        this.responseGenerator = responseGenerator;
+        this.cancellationService = cancellationService;
+        this.stateTransferLock = stateTransferLock;
+        this.stateTransferManager = stateTransferManager;
+    }
+
+    final CompletableFuture<Response> invokeCommand(CacheRpcCommand cmd) throws Throwable {
+        try {
+            if (isTraceEnabled()) {
+                getLog().tracef("Calling perform() on %s", cmd);
             }
-      }
-      return NO_TOPOLOGY_COMMAND;
-   }
-
-   @Inject
-   public void injectDependencies(@ComponentName(REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
-                                  ResponseGenerator responseGenerator,
-                                  CancellationService cancellationService,
-                                  StateTransferLock stateTransferLock,
-                                  StateTransferManager stateTransferManager) {
-      this.remoteCommandsExecutor = remoteCommandsExecutor;
-      this.responseGenerator = responseGenerator;
-      this.cancellationService = cancellationService;
-      this.stateTransferLock = stateTransferLock;
-      this.stateTransferManager = stateTransferManager;
-   }
-
-   final CompletableFuture<Response> invokeCommand(CacheRpcCommand cmd) throws Throwable {
-      try {
-         if (isTraceEnabled()) {
-            getLog().tracef("Calling perform() on %s", cmd);
-         }
-         if (cmd instanceof CancellableCommand) {
-            cancellationService.register(Thread.currentThread(), ((CancellableCommand) cmd).getUUID());
-         }
-         CompletableFuture<Object> future = cmd.invokeAsync();
-         return future.handle((rv, throwable) -> {
             if (cmd instanceof CancellableCommand) {
-               cancellationService.unregister(((CancellableCommand) cmd).getUUID());
+                cancellationService.register(Thread.currentThread(), ((CancellableCommand) cmd).getUUID());
             }
-            CompletableFutures.rethrowException(throwable);
+            CompletableFuture<Object> future = cmd.invokeAsync();
+            return future.handle((rv, throwable) -> {
+                if (cmd instanceof CancellableCommand) {
+                    cancellationService.unregister(((CancellableCommand) cmd).getUUID());
+                }
+                CompletableFutures.rethrowException(throwable);
 
-            return responseGenerator.getResponse(cmd, rv);
-         });
-      } catch (Throwable throwable) {
-         if (cmd instanceof CancellableCommand) {
-            cancellationService.unregister(((CancellableCommand) cmd).getUUID());
-         }
-         throw throwable;
-      }
-   }
+                return responseGenerator.getResponse(cmd, rv);
+            });
+        } catch (Throwable throwable) {
+            if (cmd instanceof CancellableCommand) {
+                cancellationService.unregister(((CancellableCommand) cmd).getUUID());
+            }
+            throw throwable;
+        }
+    }
 
-   final StateTransferLock getStateTransferLock() {
-      return stateTransferLock;
-   }
+    final StateTransferLock getStateTransferLock() {
+        return stateTransferLock;
+    }
 
-   final ExceptionResponse exceptionHandlingCommand(CacheRpcCommand command, Throwable throwable) {
-      getLog().exceptionHandlingCommand(command, throwable);
-      if (throwable instanceof Exception) {
-         return new ExceptionResponse(((Exception) throwable));
-      } else {
-         return new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
-      }
-   }
+    final ExceptionResponse exceptionHandlingCommand(CacheRpcCommand command, Throwable throwable) {
+        getLog().exceptionHandlingCommand(command, throwable);
+        if (throwable instanceof Exception) {
+            return new ExceptionResponse(((Exception) throwable));
+        } else {
+            return new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
+        }
+    }
 
-   final ExceptionResponse outdatedTopology(OutdatedTopologyException exception) {
-      getLog().outdatedTopology(exception);
-      return new ExceptionResponse(exception);
-   }
+    final ExceptionResponse outdatedTopology(OutdatedTopologyException exception) {
+        getLog().outdatedTopology(exception);
+        return new ExceptionResponse(exception);
+    }
 
-   final ExceptionResponse interruptedException(CacheRpcCommand command) {
-      getLog().shutdownHandlingCommand(command);
-      return new ExceptionResponse(new CacheException("Cache is shutting down"));
-   }
+    final ExceptionResponse interruptedException(CacheRpcCommand command) {
+        getLog().shutdownHandlingCommand(command);
+        return new ExceptionResponse(new CacheException("Cache is shutting down"));
+    }
 
-   protected final void unexpectedDeliverMode(ReplicableCommand command, DeliverOrder deliverOrder) {
-      throw new IllegalArgumentException(String.format("Unexpected deliver mode %s for command%s", deliverOrder, command));
-   }
+    protected final void unexpectedDeliverMode(ReplicableCommand command, DeliverOrder deliverOrder) {
+        throw new IllegalArgumentException(String.format("Unexpected deliver mode %s for command%s", deliverOrder, command));
+    }
 
-   protected final void handleRunnable(BlockingRunnable runnable, boolean onExecutorService) {
-      if (onExecutorService) {
-         remoteCommandsExecutor.execute(runnable);
-      } else {
-         runnable.run();
-      }
-   }
+    protected final void handleRunnable(BlockingRunnable runnable, boolean onExecutorService) {
+        if (onExecutorService) {
+            remoteCommandsExecutor.execute(runnable);
+        } else {
+            runnable.run();
+        }
+    }
 
-   public final boolean isCommandSentBeforeFirstTopology(int commandTopologyId) {
-      if (0 <= commandTopologyId && commandTopologyId < stateTransferManager.getFirstTopologyAsMember()) {
-         if (isTraceEnabled()) {
-            getLog().tracef("Ignoring command sent before the local node was a member (command topology id is %d)", commandTopologyId);
-         }
-         return true;
-      }
-      return false;
-   }
+    public final boolean isCommandSentBeforeFirstTopology(int commandTopologyId) {
+        if (0 <= commandTopologyId && commandTopologyId < stateTransferManager.getFirstTopologyAsMember()) {
+            if (isTraceEnabled()) {
+                getLog().tracef("Ignoring command sent before the local node was a member (command topology id is %d)", commandTopologyId);
+            }
+            return true;
+        }
+        return false;
+    }
 
-   protected final BlockingRunnable createDefaultRunnable(CacheRpcCommand command, Reply reply, int commandTopologyId,
-                                                          boolean waitTransactionalData, boolean onExecutorService,
-                                                          boolean sync) {
-      return new DefaultTopologyRunnable(this, command, reply,
-                                         TopologyMode.create(onExecutorService, waitTransactionalData),
-                                         commandTopologyId, sync);
-   }
+    protected final BlockingRunnable createDefaultRunnable(CacheRpcCommand command, Reply reply,
+        int commandTopologyId, boolean waitTransactionalData, boolean onExecutorService,
+        boolean sync) {
+        return new DefaultTopologyRunnable(this, command, reply,
+            TopologyMode.create(onExecutorService, waitTransactionalData),
+            commandTopologyId, sync);
+    }
 
-   protected final BlockingRunnable createDefaultRunnable(final CacheRpcCommand command, final Reply reply,
-                                                          final int commandTopologyId, TopologyMode topologyMode,
-                                                          boolean sync) {
-      return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync);
-   }
+    protected final BlockingRunnable createDefaultRunnable(final CacheRpcCommand command, final Reply reply,
+        final int commandTopologyId, TopologyMode topologyMode,
+        boolean sync) {
+        return new DefaultTopologyRunnable(this, command, reply, topologyMode, commandTopologyId, sync);
+    }
 
-   protected abstract Log getLog();
+    protected abstract Log getLog();
 
-   protected abstract boolean isTraceEnabled();
+    protected abstract boolean isTraceEnabled();
 
-   protected final boolean executeOnExecutorService(DeliverOrder order, CacheRpcCommand command) {
-      return !order.preserveOrder() && command.canBlock();
-   }
+    protected final boolean executeOnExecutorService(DeliverOrder order, CacheRpcCommand command) {
+        return !order.preserveOrder() && command.canBlock();
+    }
 }

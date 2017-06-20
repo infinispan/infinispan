@@ -1,19 +1,15 @@
 package org.infinispan.distribution.group;
 
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 /**
- * <p>
- * Identifies the key for a group.
- * </p>
+ * <p> Identifies the key for a group. </p>
  *
- * <p>
- * <code>@Group</code> should be used when you have control over the key class. For example:
- * </p>
+ * <p> <code>@Group</code> should be used when you have control over the key class. For example: </p>
  *
  * <pre>
  * class User {
@@ -37,19 +33,13 @@ import java.lang.annotation.Target;
  * }
  * </pre>
  *
- * <p>
- * If you don't have control over the key class, you can specify a {@link Grouper} (in your configuration) which can be used to
- * specify the group externally.
- * </p>
+ * <p> If you don't have control over the key class, you can specify a {@link Grouper} (in your configuration) which can
+ * be used to specify the group externally. </p>
  *
- * <p>
- * You must set the <code>groupsEnabled<code> property to true in your configuration in order to use groups.
- * </p>
- *
- * @see Grouper
+ * <p> You must set the <code>groupsEnabled<code> property to true in your configuration in order to use groups. </p>
  *
  * @author Pete Muir
- *
+ * @see Grouper
  */
 @Target(METHOD)
 @Retention(RUNTIME)

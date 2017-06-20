@@ -19,25 +19,25 @@ import org.infinispan.factories.annotations.Inject;
  */
 @DefaultFactoryFor(classes = KeyPartitioner.class)
 public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
-      implements AutoInstantiableFactory {
-   private GroupManager groupManager;
+    implements AutoInstantiableFactory {
+    private GroupManager groupManager;
 
-   @Inject
-   public void inject(GroupManager groupManager) {
-      this.groupManager = groupManager;
-   }
+    @Inject
+    public void inject(GroupManager groupManager) {
+        this.groupManager = groupManager;
+    }
 
-   @Override
-   public <T> T construct(Class<T> componentType) {
-      KeyPartitioner partitioner = configuration.clustering().hash().keyPartitioner();
-      partitioner.init(configuration.clustering().hash());
-      if (groupManager == null)
-         return componentType.cast(partitioner);
+    @Override
+    public <T> T construct(Class<T> componentType) {
+        KeyPartitioner partitioner = configuration.clustering().hash().keyPartitioner();
+        partitioner.init(configuration.clustering().hash());
+        if (groupManager == null)
+            return componentType.cast(partitioner);
 
-      // Grouping is enabled. Since the configured partitioner will not be registered in the component
-      // registry, we need to inject dependencies explicitly.
-      componentRegistry.wireDependencies(partitioner);
-      GroupingPartitioner groupingPartitioner = new GroupingPartitioner(partitioner, groupManager);
-      return componentType.cast(groupingPartitioner);
-   }
+        // Grouping is enabled. Since the configured partitioner will not be registered in the component
+        // registry, we need to inject dependencies explicitly.
+        componentRegistry.wireDependencies(partitioner);
+        GroupingPartitioner groupingPartitioner = new GroupingPartitioner(partitioner, groupManager);
+        return componentType.cast(groupingPartitioner);
+    }
 }

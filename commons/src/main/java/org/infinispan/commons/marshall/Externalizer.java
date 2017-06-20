@@ -42,17 +42,17 @@ import java.io.Serializable;
  * some disadvantages:
  *
  * <ul>
- *    <li>Due to several constraints of the model, such as support different
- *    versions of the same class or the need to marshall the Externalizer
- *    class, the payload sizes generated via this method are not the most
- *    efficient.</li>
- *    <li>This model requires for the marshalled class to be annoated with
- *    {@link SerializeWith} but a user might need to provide an Externalizer
- *    for a class for which source code is not available, or for any other
- *    constraints, it cannot be modified.</li>
- *    <li>The use of annotations by this model might be limiting for framework
- *    developers or service providers that try to abstract lower level
- *    details, such as the marshalling layer, away from the user.</li>
+ * <li>Due to several constraints of the model, such as support different
+ * versions of the same class or the need to marshall the Externalizer
+ * class, the payload sizes generated via this method are not the most
+ * efficient.</li>
+ * <li>This model requires for the marshalled class to be annoated with
+ * {@link SerializeWith} but a user might need to provide an Externalizer
+ * for a class for which source code is not available, or for any other
+ * constraints, it cannot be modified.</li>
+ * <li>The use of annotations by this model might be limiting for framework
+ * developers or service providers that try to abstract lower level
+ * details, such as the marshalling layer, away from the user.</li>
  * </ul>
  *
  * If you're affected by any of these disadvantages, an alternative mechanism
@@ -78,26 +78,26 @@ import java.io.Serializable;
  */
 public interface Externalizer<T> extends Serializable {
 
-   /**
-    * Write the object reference to the stream.
-    *
-    * @param output the object output to write to
-    * @param object the object reference to write
-    * @throws IOException if an I/O error occurs
-    */
-   void writeObject(ObjectOutput output, T object) throws IOException;
+    /**
+     * Write the object reference to the stream.
+     *
+     * @param output the object output to write to
+     * @param object the object reference to write
+     * @throws IOException if an I/O error occurs
+     */
+    void writeObject(ObjectOutput output, T object) throws IOException;
 
-   /**
-    * Read an instance from the stream.  The instance will have been written by the
-    * {@link #writeObject(ObjectOutput, Object)} method.  Implementations are free
-    * to create instances of the object read from the stream in any way that they
-    * feel like. This could be via constructor, factory or reflection.
-    *
-    * @param input the object input to read from
-    * @return the object instance
-    * @throws IOException if an I/O error occurs
-    * @throws ClassNotFoundException if a class could not be found
-    */
-   T readObject(ObjectInput input) throws IOException, ClassNotFoundException;
+    /**
+     * Read an instance from the stream.  The instance will have been written by the
+     * {@link #writeObject(ObjectOutput, Object)} method.  Implementations are free
+     * to create instances of the object read from the stream in any way that they
+     * feel like. This could be via constructor, factory or reflection.
+     *
+     * @param input the object input to read from
+     * @return the object instance
+     * @throws IOException if an I/O error occurs
+     * @throws ClassNotFoundException if a class could not be found
+     */
+    T readObject(ObjectInput input) throws IOException, ClassNotFoundException;
 
 }

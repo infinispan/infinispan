@@ -12,15 +12,16 @@ import org.infinispan.context.Flag;
  * @since 9.0
  */
 public class Caches {
-   private Caches() {
-   }
+    private Caches() {
+    }
 
-   public static <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, FlagAffectedCommand command) {
-      long flags = command.getFlagsBitSet();
-      if (flags != EnumUtil.EMPTY_BIT_SET) {
-         return cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flags, Flag.class));
-      } else {
-         return cache;
-      }
-   }
+    public static <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache,
+        FlagAffectedCommand command) {
+        long flags = command.getFlagsBitSet();
+        if (flags != EnumUtil.EMPTY_BIT_SET) {
+            return cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flags, Flag.class));
+        } else {
+            return cache;
+        }
+    }
 }

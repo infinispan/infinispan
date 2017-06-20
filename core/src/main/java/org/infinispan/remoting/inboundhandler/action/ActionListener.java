@@ -8,9 +8,9 @@ package org.infinispan.remoting.inboundhandler.action;
  */
 public interface ActionListener {
 
-   /**
-    * Invoked when an {@link Action} is completed.
-    */
-   void onComplete();
+    /**
+     * Invoked when an {@link Action} is completed.
+     */
+    void onComplete();
 
 }

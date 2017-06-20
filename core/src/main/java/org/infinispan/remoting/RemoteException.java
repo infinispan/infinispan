@@ -10,8 +10,8 @@ import org.infinispan.commons.CacheException;
  */
 public class RemoteException extends CacheException {
 
-   public RemoteException(String msg, Throwable cause) {
-      super(msg, cause);
-   }
+    public RemoteException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 
 }

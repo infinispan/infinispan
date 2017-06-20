@@ -1,7 +1,6 @@
 package org.infinispan.remoting;
 
 import java.util.concurrent.Callable;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -20,60 +19,62 @@ import org.infinispan.remoting.transport.Address;
  */
 public class LocalInvocation implements Callable<Response> {
 
-   private final ResponseGenerator responseGenerator;
-   private final CacheRpcCommand command;
-   private final CommandsFactory commandsFactory;
-   private final Address self;
+    private final ResponseGenerator responseGenerator;
+    private final CacheRpcCommand command;
+    private final CommandsFactory commandsFactory;
+    private final Address self;
 
-   private LocalInvocation(ResponseGenerator responseGenerator, CacheRpcCommand command,
-                           CommandsFactory commandsFactory, Address self) {
-      this.responseGenerator = responseGenerator;
-      this.command = command;
-      this.commandsFactory = commandsFactory;
-      this.self = self;
-   }
+    private LocalInvocation(ResponseGenerator responseGenerator, CacheRpcCommand command,
+        CommandsFactory commandsFactory, Address self) {
+        this.responseGenerator = responseGenerator;
+        this.command = command;
+        this.commandsFactory = commandsFactory;
+        this.self = self;
+    }
 
-   @Override
-   public Response call() throws Exception {
-      try {
-         commandsFactory.initializeReplicableCommand(command, false);
-         command.setOrigin(self);
-         Object returnValue = command.invoke();
-         return responseGenerator.getResponse(command, returnValue);
-      } catch (Throwable throwable) {
-         throw new RemoteException("Problems invoking command locally.", throwable);
-      }
-   }
+    @Override
+    public Response call() throws Exception {
+        try {
+            commandsFactory.initializeReplicableCommand(command, false);
+            command.setOrigin(self);
+            Object returnValue = command.invoke();
+            return responseGenerator.getResponse(command, returnValue);
+        } catch (Throwable throwable) {
+            throw new RemoteException("Problems invoking command locally.", throwable);
+        }
+    }
 
-   public static LocalInvocation newInstanceFromCache(Cache<?, ?> cache, CacheRpcCommand command) {
-      ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
-      ResponseGenerator responseGenerator = registry.getResponseGenerator();
-      CommandsFactory commandsFactory = registry.getCommandsFactory();
-      Address self = registry.getComponent(ClusteringDependentLogic.class).getAddress();
-      return newInstance(responseGenerator, command, commandsFactory, self);
-   }
+    public static LocalInvocation newInstanceFromCache(Cache<?, ?> cache, CacheRpcCommand command) {
+        ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
+        ResponseGenerator responseGenerator = registry.getResponseGenerator();
+        CommandsFactory commandsFactory = registry.getCommandsFactory();
+        Address self = registry.getComponent(ClusteringDependentLogic.class).getAddress();
+        return newInstance(responseGenerator, command, commandsFactory, self);
+    }
 
-   public static LocalInvocation newInstance(ResponseGenerator responseGenerator, CacheRpcCommand command,
-                                             CommandsFactory commandsFactory, Address self) {
-      if (responseGenerator == null || command == null || commandsFactory == null || self == null) {
-         throw new NullPointerException("Null arguments are not allowed.");
-      }
-      return new LocalInvocation(responseGenerator, command, commandsFactory, self);
-   }
+    public static LocalInvocation newInstance(ResponseGenerator responseGenerator, CacheRpcCommand command,
+        CommandsFactory commandsFactory, Address self) {
+        if (responseGenerator == null || command == null || commandsFactory == null || self == null) {
+            throw new NullPointerException("Null arguments are not allowed.");
+        }
+        return new LocalInvocation(responseGenerator, command, commandsFactory, self);
+    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
-      LocalInvocation that = (LocalInvocation) o;
+        LocalInvocation that = (LocalInvocation) o;
 
-      return command.equals(that.command);
+        return command.equals(that.command);
 
-   }
+    }
 
-   @Override
-   public int hashCode() {
-      return command.hashCode();
-   }
+    @Override
+    public int hashCode() {
+        return command.hashCode();
+    }
 }

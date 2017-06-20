@@ -10,21 +10,21 @@ import org.infinispan.commons.CacheException;
  */
 public class RpcException extends CacheException {
 
-   private static final long serialVersionUID = 33172388691879866L;
+    private static final long serialVersionUID = 33172388691879866L;
 
-   public RpcException() {
-      super();
-   }
+    public RpcException() {
+        super();
+    }
 
-   public RpcException(Throwable cause) {
-      super(cause);
-   }
+    public RpcException(Throwable cause) {
+        super(cause);
+    }
 
-   public RpcException(String msg) {
-      super(msg);
-   }
+    public RpcException(String msg) {
+        super(msg);
+    }
 
-   public RpcException(String msg, Throwable cause) {
-      super(msg, cause);
-   }
+    public RpcException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }

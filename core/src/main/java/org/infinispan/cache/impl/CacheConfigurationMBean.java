@@ -17,24 +17,24 @@ import org.infinispan.jmx.annotations.Units;
 @MBean(objectName = "Configuration", description = "Runtime cache configuration attributes")
 public class CacheConfigurationMBean {
 
-   private Cache<?, ?> cache;
-   private Configuration configuration;
+    private Cache<?, ?> cache;
+    private Configuration configuration;
 
-   @Inject
-   public void injectDependencies(Cache<?, ?> cache, Configuration configuration) {
-      this.cache = cache;
-      this.configuration = configuration;
-   }
+    @Inject
+    public void injectDependencies(Cache<?, ?> cache, Configuration configuration) {
+        this.cache = cache;
+        this.configuration = configuration;
+    }
 
-   @ManagedAttribute(description = "Gets the eviction size for the cache",
-         displayName = "Gets the eviction size for the cache",
-         units = Units.NONE,
-         displayType = DisplayType.DETAIL, writable = true)
-   public long getEvictionSize() {
-      return configuration.eviction().size();
-   }
+    @ManagedAttribute(description = "Gets the eviction size for the cache",
+        displayName = "Gets the eviction size for the cache",
+        units = Units.NONE,
+        displayType = DisplayType.DETAIL, writable = true)
+    public long getEvictionSize() {
+        return configuration.eviction().size();
+    }
 
-   public void setEvictionSize(long newSize) {
-      configuration.eviction().size(newSize);
-   }
+    public void setEvictionSize(long newSize) {
+        configuration.eviction().size(newSize);
+    }
 }

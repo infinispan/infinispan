@@ -16,48 +16,48 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TriangleOrderAction implements Action {
 
-   private static final Log log = LogFactory.getLog(TriangleOrderAction.class);
-   private static final boolean trace = log.isTraceEnabled();
-   private final TriangleOrderManager triangleOrderManager;
-   private final BlockingTaskAwareExecutorService remoteExecutorService;
-   private final ClusteringDependentLogic clusteringDependentLogic;
-   private final Object key;
-   private final long sequenceNumber;
-   private volatile int segmentId = -1;
+    private static final Log log = LogFactory.getLog(TriangleOrderAction.class);
+    private static final boolean trace = log.isTraceEnabled();
+    private final TriangleOrderManager triangleOrderManager;
+    private final BlockingTaskAwareExecutorService remoteExecutorService;
+    private final ClusteringDependentLogic clusteringDependentLogic;
+    private final Object key;
+    private final long sequenceNumber;
+    private volatile int segmentId = -1;
 
-   public TriangleOrderAction(TriangleOrderManager triangleOrderManager,
-         BlockingTaskAwareExecutorService remoteExecutorService, ClusteringDependentLogic clusteringDependentLogic,
-         long sequenceNumber, Object key) {
-      this.triangleOrderManager = triangleOrderManager;
-      this.remoteExecutorService = remoteExecutorService;
-      this.clusteringDependentLogic = clusteringDependentLogic;
-      this.sequenceNumber = sequenceNumber;
-      this.key = key;
-   }
+    public TriangleOrderAction(TriangleOrderManager triangleOrderManager,
+        BlockingTaskAwareExecutorService remoteExecutorService, ClusteringDependentLogic clusteringDependentLogic,
+        long sequenceNumber, Object key) {
+        this.triangleOrderManager = triangleOrderManager;
+        this.remoteExecutorService = remoteExecutorService;
+        this.clusteringDependentLogic = clusteringDependentLogic;
+        this.sequenceNumber = sequenceNumber;
+        this.key = key;
+    }
 
-   @Override
-   public ActionStatus check(ActionState state) {
-      int localSegmentId = computeSegmentIdIfNeeded();
-      if (trace) {
-         log.tracef("Checking if next for segment %s and sequence %s", localSegmentId, sequenceNumber);
-      }
-      return triangleOrderManager.isNext(localSegmentId, sequenceNumber, state.getCommandTopologyId()) ?
+    @Override
+    public ActionStatus check(ActionState state) {
+        int localSegmentId = computeSegmentIdIfNeeded();
+        if (trace) {
+            log.tracef("Checking if next for segment %s and sequence %s", localSegmentId, sequenceNumber);
+        }
+        return triangleOrderManager.isNext(localSegmentId, sequenceNumber, state.getCommandTopologyId()) ?
             ActionStatus.READY :
             ActionStatus.NOT_READY;
-   }
+    }
 
-   @Override
-   public void onFinally(ActionState state) {
-      triangleOrderManager.markDelivered(computeSegmentIdIfNeeded(), sequenceNumber, state.getCommandTopologyId());
-      remoteExecutorService.checkForReadyTasks();
-   }
+    @Override
+    public void onFinally(ActionState state) {
+        triangleOrderManager.markDelivered(computeSegmentIdIfNeeded(), sequenceNumber, state.getCommandTopologyId());
+        remoteExecutorService.checkForReadyTasks();
+    }
 
-   private int computeSegmentIdIfNeeded() {
-      int tmp = segmentId;
-      if (tmp == -1) {
-         tmp = clusteringDependentLogic.getSegmentForKey(key);
-         segmentId = tmp;
-      }
-      return tmp;
-   }
+    private int computeSegmentIdIfNeeded() {
+        int tmp = segmentId;
+        if (tmp == -1) {
+            tmp = clusteringDependentLogic.getSegmentForKey(key);
+            segmentId = tmp;
+        }
+        return tmp;
+    }
 }

@@ -1,9 +1,8 @@
 package org.infinispan.batch;
 
+import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
-
-import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Enables for automatic batching.
@@ -13,22 +12,22 @@ import net.jcip.annotations.NotThreadSafe;
  */
 @NotThreadSafe
 public abstract class AutoBatchSupport {
-   protected BatchContainer batchContainer;
+    protected BatchContainer batchContainer;
 
-   protected static void assertBatchingSupported(Configuration c) {
-      if (!c.invocationBatching().enabled())
-         throw new CacheConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
-   }
+    protected static void assertBatchingSupported(Configuration c) {
+        if (!c.invocationBatching().enabled())
+            throw new CacheConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
+    }
 
-   protected void startAtomic() {
-      batchContainer.startBatch(true);
-   }
+    protected void startAtomic() {
+        batchContainer.startBatch(true);
+    }
 
-   protected void endAtomic() {
-      batchContainer.endBatch(true, true);
-   }
+    protected void endAtomic() {
+        batchContainer.endBatch(true, true);
+    }
 
-   protected void failAtomic() {
-      batchContainer.endBatch(true, false);
-   }
+    protected void failAtomic() {
+        batchContainer.endBatch(true, false);
+    }
 }

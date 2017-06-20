@@ -16,9 +16,9 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(ModuleLifecycle.class)
 public class LifecycleCallbacks extends AbstractModuleLifecycle {
 
-   @Override
-   public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gc) {
-      if (gcr.getComponent(TaskManager.class) == null)
-         gcr.registerComponent(new TaskManagerImpl(), TaskManager.class);
-   }
+    @Override
+    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gc) {
+        if (gcr.getComponent(TaskManager.class) == null)
+            gcr.registerComponent(new TaskManagerImpl(), TaskManager.class);
+    }
 }

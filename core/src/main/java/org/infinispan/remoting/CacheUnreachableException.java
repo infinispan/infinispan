@@ -10,8 +10,8 @@ import org.jgroups.UnreachableException;
  */
 public class CacheUnreachableException extends RuntimeException {
 
-   public CacheUnreachableException(UnreachableException e) {
-      super(e.toString());
-   }
+    public CacheUnreachableException(UnreachableException e) {
+        super(e.toString());
+    }
 
 }
