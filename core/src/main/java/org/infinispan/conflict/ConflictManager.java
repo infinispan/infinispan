@@ -51,6 +51,14 @@ public interface ConflictManager<K, V> {
    void resolveConflicts();
 
    /**
+    * Utilises {@link ConflictManager#getConflicts()} to discover conflicts between Key replicas and utilises the provided
+    * {@link EntryMergePolicy} to determine which entry should take precedence. The
+    * resulting {@link org.infinispan.container.entries.CacheEntry} is then applied on all replicas in the cluster.
+    * @param mergePolicy the policy to be applied to all detected conflicts
+    */
+   void resolveConflicts(EntryMergePolicy<K, V> mergePolicy);
+
+   /**
     * @return true if a state transfer is currently in progress.
     */
    boolean isStateTransferInProgress();

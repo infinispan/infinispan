@@ -21,6 +21,7 @@ import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
@@ -68,6 +69,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    }
 
    @Override
+   @Stop
    public synchronized void stop() {
       if (trace) log.tracef("Stop called on StateReceiverImpl for cache %s", cacheName);
       for (SegmentRequest request : requestMap.values())
@@ -78,8 +80,6 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    @SuppressWarnings("WeakerAccess")
    public synchronized void onDataRehash(DataRehashedEvent dataRehashedEvent) {
       if (dataRehashedEvent.isPre()) {
-         log.debugf("Cancelling all segment requests as rehash has started %s", dataRehashedEvent);
-
          for (SegmentRequest request : requestMap.values())
             request.cancel(new CacheException("Cancelling replica request as the owners of the requested " +
                "segment have changed."));
@@ -154,25 +154,33 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
                completableFutures.add(transferTask.requestSegments());
             }
          }
-         future = CompletableFuture
-               .allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]))
-               .thenApply(aVoid -> {
-                  List<Map<Address, CacheEntry<K, V>>> retVal = keyReplicaMap.entrySet().stream()
-                        .map(Map.Entry::getValue)
-                        .collect(Collectors.toList());
-                  keyReplicaMap.clear();
-                  transferTaskMap.clear();
-                  requestMap.remove(segmentId);
-                  return Collections.unmodifiableList(retVal);
-               });
+
+         CompletableFuture<Void> allSegmentRequests = CompletableFuture
+               .allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]));
 
          // If an exception is thrown by any of the inboundTransferTasks, then remove all segment results and cancel all tasks
-         future.exceptionally(throwable -> {
+         allSegmentRequests.exceptionally(throwable -> {
             if (trace) log.tracef(throwable, "Exception when processing InboundTransferTask for cache %s", cacheName);
             cancel(throwable);
             return null;
          });
+
+         future = allSegmentRequests.thenApply(aVoid -> {
+            List<Map<Address, CacheEntry<K, V>>> retVal = keyReplicaMap.entrySet().stream()
+                  .map(Map.Entry::getValue)
+                  .collect(Collectors.toList());
+            clear();
+            return Collections.unmodifiableList(retVal);
+         });
          return future;
+      }
+
+      synchronized void clear() {
+         keyReplicaMap.clear();
+         transferTaskMap.clear();
+         synchronized (StateReceiverImpl.this) {
+            requestMap.remove(segmentId);
+         }
       }
 
       synchronized void receiveState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
@@ -202,15 +210,14 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       }
 
       synchronized void cancel(Throwable throwable) {
-         if (trace) log.tracef(throwable, "Cancelling All Segment Requests on cache %s", cacheName);
+         log.debugf(throwable, "Cancelling request for segment %s on cache %s", segmentId, cacheName);
          transferTaskMap.forEach((address, inboundTransferTask) -> inboundTransferTask.cancel());
-         transferTaskMap.clear();
          if (throwable != null) {
             future.completeExceptionally(throwable);
          } else {
             future.cancel(true);
          }
-         requestMap.remove(segmentId);
+         clear();
       }
 
       void addKeyToReplicaMap(Address address, CacheEntry<K, V> ice) {
