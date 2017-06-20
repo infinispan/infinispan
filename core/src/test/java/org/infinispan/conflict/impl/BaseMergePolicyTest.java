@@ -26,8 +26,13 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
 import org.testng.annotations.Test;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
+
+   private static Log log = LogFactory.getLog(BaseMergePolicyTest.class);
+   private static boolean trace = log.isTraceEnabled();
 
    BaseMergePolicyTest() {
       this.partitionHandling = PartitionHandling.ALLOW_READ_WRITES;
@@ -46,7 +51,10 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
          listeners.add(listener);
       }
 
+      if (trace) log.tracef("beforeSplit()");
       beforeSplit();
+
+      if (trace) log.tracef("splitCluster");
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
 
       eventually(() -> listeners.stream().allMatch(ViewChangedHandler::isNotified));
@@ -56,10 +64,13 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       eventually(() -> clusterAndChFormed(2, 2));
       eventually(() -> clusterAndChFormed(3, 2));
 
+      if (trace) log.tracef("duringSplit()");
       duringSplit();
 
+      if (trace) log.tracef("performMerge()");
       performMerge();
 
+      if (trace) log.tracef("afterMerge()");
       afterMerge();
    }
 
@@ -112,6 +123,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
             cacheIndex = count;
          }
       }
+      if (trace) log.tracef("getCacheFromPreferredPartition: partition=%s", maxTopology != null ? maxTopology.getCurrentCH().getMembers() : null);
       return caches[cacheIndex];
    }
 

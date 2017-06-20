@@ -4,9 +4,11 @@ import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.topology.CacheTopology.Phase.READ_OLD_WRITE_ALL;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -14,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -102,35 +105,44 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
       boolean modifyDuringMerge = mergeAction != MergeAction.NONE;
       CountDownLatch conflictLatch = new CountDownLatch(1);
       CountDownLatch stateTransferLatch = new CountDownLatch(1);
-      IntStream.range(0, numMembersInCluster).forEach(i -> {
-         if (modifyDuringMerge)
+      try {
+         IntStream.range(0, numMembersInCluster).forEach(i -> {
             wrapInboundInvocationHandler(cache(i), handler -> new BlockStateResponseCommandHandler(handler, conflictLatch));
+            EmbeddedCacheManager manager = manager(i);
+            InboundInvocationHandler handler = extractGlobalComponent(manager, InboundInvocationHandler.class);
+            BlockingInboundInvocationHandler ourHandler = new BlockingInboundInvocationHandler(handler, stateTransferLatch);
+            replaceComponent(manager, InboundInvocationHandler.class, ourHandler, true);
+         });
 
-         InboundInvocationHandler handler = extractGlobalComponent(manager(i), InboundInvocationHandler.class);
-         BlockingInboundInvocationHandler ourHandler = new BlockingInboundInvocationHandler(handler, stateTransferLatch);
-         replaceComponent(manager(i), InboundInvocationHandler.class, ourHandler, true);
-      });
+         assertCacheGet(conflictKey, PARTITION_0_VAL, 0, 1);
+         assertCacheGet(conflictKey, PARTITION_1_VAL, 2, 3);
+         partition(0).merge(partition(1), false);
+         assertCacheGet(conflictKey, PARTITION_0_VAL, 0, 1);
+         assertCacheGet(conflictKey, PARTITION_1_VAL, 2, 3);
 
-      partition(0).merge(partition(1), false);
-      assertCacheGet(conflictKey, PARTITION_0_VAL, 0, 1);
-      assertCacheGet(conflictKey, PARTITION_1_VAL, 2, 3);
-
-      if (modifyDuringMerge) {
-         // Wait for CONFLICT_RESOLUTION topology to have been installed by the coordinator and then proceed
-         List<Address> allMembers = caches().stream().map(cache -> cache.getCacheManager().getAddress()).collect(Collectors.toList());
-         TestingUtil.waitForTopologyPhase(allMembers, CacheTopology.Phase.CONFLICT_RESOLUTION, caches().toArray(new Cache[numMembersInCluster]));
-         if (mergeAction == MergeAction.PUT) {
-            cache(0).put(conflictKey, mergeAction.value);
+         if (modifyDuringMerge) {
+            // Wait for CONFLICT_RESOLUTION topology to have been installed by the coordinator and then proceed
+            List<Address> allMembers = caches().stream().map(cache -> cache.getCacheManager().getAddress()).collect(Collectors.toList());
+            TestingUtil.waitForTopologyPhase(allMembers, CacheTopology.Phase.CONFLICT_RESOLUTION, caches().toArray(new Cache[numMembersInCluster]));
+            if (mergeAction == MergeAction.PUT) {
+               cache(0).put(conflictKey, mergeAction.value);
+            } else {
+               cache(0).remove(conflictKey);
+            }
+            assertCacheGetVal(mergeAction, 0, 1, 2, 3);
+            conflictLatch.countDown();
+            assertCacheGetVal(mergeAction, 0, 1, 2, 3);
          } else {
-            cache(0).remove(conflictKey);
+            conflictLatch.countDown();
          }
-         assertCacheGetVal(mergeAction, 0, 1, 2, 3);
-         conflictLatch.countDown();
-         assertCacheGetVal(mergeAction, 0, 1, 2, 3);
-      }
 
-      stateTransferLatch.countDown();
-      TestingUtil.waitForNoRebalance(caches());
+         stateTransferLatch.countDown();
+         TestingUtil.waitForNoRebalance(caches());
+      } catch (Throwable t) {
+         conflictLatch.countDown();
+         stateTransferLatch.countDown();
+         throw t;
+      }
    }
 
    @Override
@@ -155,12 +167,8 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
       public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
          if (command instanceof CacheTopologyControlCommand) {
             CacheTopologyControlCommand cmd = (CacheTopologyControlCommand) command;
-            if (cmd.getType() == CacheTopologyControlCommand.Type.CH_UPDATE && cmd.getPhase() == READ_OLD_WRITE_ALL) {
-               try {
-                  latch.await();
-               } catch (InterruptedException ignore) {
-               }
-            }
+            if (cmd.getType() == CacheTopologyControlCommand.Type.CH_UPDATE && cmd.getPhase() == READ_OLD_WRITE_ALL)
+               awaitLatch(latch);
          }
          delegate.handleFromCluster(origin, command, reply, order);
       }
@@ -182,13 +190,20 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
 
       @Override
       public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof StateResponseCommand) {
-            try {
-               latch.await();
-            } catch (InterruptedException ignore) {
-            }
-         }
+         if (command instanceof StateResponseCommand)
+            awaitLatch(latch);
          delegate.handle(command, reply, order);
+      }
+   }
+
+   private void awaitLatch(CountDownLatch latch) {
+      try {
+         // Timeout has to be large enough to allow for rebalance and subsequent operations, so we double the
+         // rebalance timeout. Timeout necessary as for some reason the latch is not always counted down in the Handler
+         if (!latch.await(120, TimeUnit.SECONDS))
+            fail("CountDownLatch await timedout");
+      } catch (InterruptedException ignore) {
+         fail("CountDownLatch Interrupted");
       }
    }
 }

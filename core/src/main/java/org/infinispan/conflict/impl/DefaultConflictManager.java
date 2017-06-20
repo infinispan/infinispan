@@ -2,6 +2,7 @@ package org.infinispan.conflict.impl;
 
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,8 +48,8 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.notifications.Listener;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -65,13 +66,14 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * @author Ryan Emerson
  */
-@Listener(observation = Listener.Observation.BOTH)
 public class DefaultConflictManager<K, V> implements InternalConflictManager<K, V> {
 
    private static Log log = LogFactory.getLog(DefaultConflictManager.class);
    private static boolean trace = log.isTraceEnabled();
 
    private static final long localFlags = EnumUtil.bitSetOf(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK, Flag.SKIP_LOCKING);
+   private static final Flag[] userMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES};
+   private static final Flag[] autoMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES, Flag.PUT_FOR_STATE_TRANSFER};
 
    private AsyncInterceptorChain interceptorChain;
    private AdvancedCache<K, V> cache;
@@ -90,9 +92,10 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
    private volatile LocalizedCacheTopology installedTopology;
+   private volatile boolean running = false;
 
    @Inject
-   public void inject(AsyncInterceptorChain interceptorChain,
+   public void init(AsyncInterceptorChain interceptorChain,
                       AdvancedCache<K, V> cache,
                       CommandsFactory commandsFactory,
                       DistributionManager distributionManager,
@@ -114,8 +117,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Start
    public void start() {
-      this.cache = cache.withFlags(Flag.IGNORE_RETURN_VALUES, Flag.PUT_FOR_STATE_TRANSFER);
-      this.cache.addListener(this);
       this.cacheName = cache.getName();
       this.localAddress = rpcManager.getAddress();
       this.installedTopology = distributionManager.getCacheTopology();
@@ -125,6 +126,18 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       cache.getCacheConfiguration().clustering()
             .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
             .addListener(((a, o) -> initRpcOptions()));
+      this.running = true;
+      if (trace) log.tracef("Starting %s. isRunning=%s", this.getClass().getSimpleName(), !running);
+   }
+
+   @Stop(priority = 0)
+   public void stop() {
+      synchronized (versionRequestMap) {
+         if (trace) log.tracef("Stopping %s. isRunning=%s. %s", this.getClass().getSimpleName(), running, Arrays.toString(Thread.currentThread().getStackTrace()));
+         cancelVersionRequests();
+         versionRequestMap.clear();
+      }
+      this.running = false;
    }
 
    private void initRpcOptions() {
@@ -133,12 +146,18 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Override
    public void onTopologyUpdate(LocalizedCacheTopology cacheTopology) {
+      if (!running)
+         return;
+
       this.installedTopology = cacheTopology;
-      if (trace) log.tracef("Installed new topology %s: %s", cacheTopology.getTopologyId(), cacheTopology);
+      if (trace) log.tracef("(isRunning=%s) Installed new topology %s: %s", running, cacheTopology.getTopologyId(), cacheTopology);
    }
 
    @Override
    public void cancelVersionRequests() {
+      if (!running)
+         return;
+
       synchronized (versionRequestMap) {
          versionRequestMap.values().forEach(VersionRequest::cancelRequestIfOutdated);
       }
@@ -146,6 +165,9 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Override
    public void restartVersionRequests() {
+      if (!running)
+         return;
+
       VersionRequest request;
       while ((request = retryQueue.poll()) != null) {
          if (trace) log.tracef("Retrying %s", request);
@@ -155,6 +177,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Override
    public Map<Address, InternalCacheValue<V>> getAllVersions(final K key) {
+      checkIsRunning();
+
       final VersionRequest request;
       synchronized (versionRequestMap) {
          request = versionRequestMap.computeIfAbsent(key, k -> new VersionRequest(k, stateConsumer.isStateTransferInProgress()));
@@ -179,6 +203,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Override
    public Stream<Map<Address, CacheEntry<K, V>>> getConflicts() {
+      checkIsRunning();
       return getConflicts(installedTopology);
    }
 
@@ -201,84 +226,109 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Override
    public void resolveConflicts() {
-      resolveConflicts(installedTopology);
+      if (entryMergePolicy == null)
+         throw new CacheException("Cannot resolve conflicts as no EntryMergePolicy has been configured");
+
+      resolveConflicts(entryMergePolicy);
+   }
+
+   @Override
+   public void resolveConflicts(EntryMergePolicy<K, V> mergePolicy) {
+      checkIsRunning();
+      doResolveConflicts(installedTopology, mergePolicy, true);
    }
 
    @Override
    public void resolveConflicts(CacheTopology topology) {
+      if (!running)
+         return;
+
       LocalizedCacheTopology localizedTopology;
       if (topology instanceof LocalizedCacheTopology) {
          localizedTopology = (LocalizedCacheTopology) topology;
       } else {
          localizedTopology = distributionManager.createLocalizedCacheTopology(topology);
       }
-      doResolveConflicts(localizedTopology);
+      doResolveConflicts(localizedTopology, entryMergePolicy, false);
    }
 
-   private void doResolveConflicts(final LocalizedCacheTopology topology) {
+   private void doResolveConflicts(final LocalizedCacheTopology topology, final EntryMergePolicy<K, V> mergePolicy,
+                                   final boolean userCall) {
       final Set<Address> preferredPartition = new HashSet<>(topology.getCurrentCH().getMembers());
+      final AdvancedCache<K, V> cache = this.cache.withFlags(userCall ? userMergeFlags : autoMergeFlags);
 
       if (trace)
          log.tracef("Attempting to resolve conflicts.  All Members %s, Installed topology %s, Preferred Partition %s",
                topology.getMembers(), topology, preferredPartition);
 
       final Phaser phaser = new Phaser(1);
-      getConflicts(topology).forEach(conflictMap -> stateTransferExecutor.execute(() -> {
+      getConflicts(topology).forEach(conflictMap -> {
          phaser.register();
-         if (trace) log.tracef("Conflict detected %s", conflictMap);
+         stateTransferExecutor.execute(() -> {
+            if (trace) log.tracef("Conflict detected %s", conflictMap);
 
-         Collection<CacheEntry<K, V>> entries = conflictMap.values();
-         Optional<K> optionalEntry = entries.stream()
-               .filter(entry -> !(entry instanceof NullCacheEntry))
-               .map(CacheEntry::getKey)
-               .findAny();
+            Collection<CacheEntry<K, V>> entries = conflictMap.values();
+            Optional<K> optionalEntry = entries.stream()
+                  .filter(entry -> !(entry instanceof NullCacheEntry))
+                  .map(CacheEntry::getKey)
+                  .findAny();
 
-         final K key = optionalEntry.orElseThrow(() -> new CacheException("All returned conflicts are NullCacheEntries. This should not happen!"));
-         Address primaryReplica = topology.getDistribution(key).primary();
+            final K key = optionalEntry.orElseThrow(() -> new CacheException("All returned conflicts are NullCacheEntries. This should not happen!"));
+            Address primaryReplica = topology.getDistribution(key).primary();
 
-         List<Address> preferredEntries = conflictMap.entrySet().stream()
-               .map(Map.Entry::getKey)
-               .filter(preferredPartition::contains)
-               .collect(Collectors.toList());
+            List<Address> preferredEntries = conflictMap.entrySet().stream()
+                  .map(Map.Entry::getKey)
+                  .filter(preferredPartition::contains)
+                  .collect(Collectors.toList());
 
-         // If only one entry exists in the preferred partition, then use that entry
-         CacheEntry<K, V> preferredEntry;
-         if (preferredEntries.size() == 1) {
-            preferredEntry = conflictMap.remove(preferredEntries.get(0));
-         } else {
-            // If multiple conflicts exist in the preferred partition, then use primary replica from the preferred partition
-            // If not a merge, then also use primary as preferred entry
-            // Preferred is null if no entry exists in preferred partition
-            preferredEntry = conflictMap.remove(primaryReplica);
-         }
+            // If only one entry exists in the preferred partition, then use that entry
+            CacheEntry<K, V> preferredEntry;
+            if (preferredEntries.size() == 1) {
+               preferredEntry = conflictMap.remove(preferredEntries.get(0));
+            } else {
+               // If multiple conflicts exist in the preferred partition, then use primary replica from the preferred partition
+               // If not a merge, then also use primary as preferred entry
+               // Preferred is null if no entry exists in preferred partition
+               preferredEntry = conflictMap.remove(primaryReplica);
+            }
 
-         if (trace) log.tracef("Applying EntryMergePolicy %s to PreferredEntry %s, otherEntries %s",
-               entryMergePolicy.getClass(), preferredEntry, entries);
+            if (trace) log.tracef("Applying EntryMergePolicy %s to PreferredEntry %s, otherEntries %s",
+                  mergePolicy.getClass().getName(), preferredEntry, entries);
 
-         CacheEntry<K, V> entry = preferredEntry instanceof NullCacheEntry ? null : preferredEntry;
-         List<CacheEntry<K, V>> otherEntries = entries.stream().filter(e -> !(e instanceof NullCacheEntry)).collect(Collectors.toList());
-         CacheEntry<K, V> mergedEntry = entryMergePolicy.merge(entry, otherEntries);
+            CacheEntry<K, V> entry = preferredEntry instanceof NullCacheEntry ? null : preferredEntry;
+            List<CacheEntry<K, V>> otherEntries = entries.stream().filter(e -> !(e instanceof NullCacheEntry)).collect(Collectors.toList());
+            CacheEntry<K, V> mergedEntry = mergePolicy.merge(entry, otherEntries);
 
-         CompletableFuture<V> future;
-         if (mergedEntry == null) {
-            if (trace) log.tracef("Executing remove on conflict: key %s", key);
-            future = cache.removeAsync(key);
-         } else {
-            if (trace) log.tracef("Executing update on conflict: key %s with entry %s", key, entry);
-            future = cache.putAsync(key, mergedEntry.getValue(), mergedEntry.getMetadata());
-         }
-         future.whenComplete((responseMap, exception) -> {
-            phaser.arriveAndDeregister();
-            if (exception != null)
-               log.exceptionDuringConflictResolution(key, exception);
+            CompletableFuture<V> future;
+            if (mergedEntry == null) {
+               if (trace) log.tracef("Executing remove on conflict: key %s", key);
+               future = cache.removeAsync(key);
+            } else {
+               if (trace) log.tracef("Executing update on conflict: key %s with value %s", key, mergedEntry.getValue());
+               future = cache.putAsync(key, mergedEntry.getValue(), mergedEntry.getMetadata());
+            }
+            future.whenComplete((responseMap, exception) -> {
+               if (trace) log.tracef("ResolveConflicts future complete for key %s: ResponseMap=%s, Exception=%s", key, responseMap, exception);
+
+               phaser.arriveAndDeregister();
+               if (exception != null)
+                  log.exceptionDuringConflictResolution(key, exception);
+            });
          });
-      }));
+      });
       phaser.arriveAndAwaitAdvance();
+
+      if (trace) log.tracef("Finished resolving conflicts for topologyId=%s", topology.getTopologyId());
    }
 
    @Override
    public boolean isStateTransferInProgress() {
       return stateConsumer.isStateTransferInProgress();
+   }
+
+   private void checkIsRunning() {
+      if (!running)
+         throw new CacheException("Unable to process request as the ConflictManager has been stopped");
    }
 
    private class VersionRequest {

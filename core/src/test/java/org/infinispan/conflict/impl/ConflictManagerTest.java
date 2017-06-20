@@ -24,12 +24,14 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.conflict.ConflictManager;
 import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
@@ -107,7 +109,8 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
    @Test(expectedExceptions = IllegalStateException.class,
          expectedExceptionsMessageRegExp = ".* Unable to retrieve conflicts as StateTransfer is currently in progress for cache .*")
    public void testGetConflictsDuringStateTransfer() throws Throwable {
-      createAndSplitCluster();
+      createCluster();
+      splitCluster();
       delayStateTransferCompletion();
       RehashListener listener = new RehashListener();
       getCache(2).addListener(listener);
@@ -119,9 +122,10 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
          getConflicts(0);
          return null;
       });
-      fork(() -> partition(0).merge(partition(1)));
+      Future<?> mergeFuture = fork(() -> partition(0).merge(partition(1)));
       try {
          conflictsFuture.get(60, TimeUnit.SECONDS); // Same timeout as used by TestingUtil::waitForNoRebalance
+         mergeFuture.get(); // No timeout as partition::merge eventually throws a TimeoutException
       } catch (ExecutionException e) {
          throw e.getCause();
       }
@@ -170,6 +174,38 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
             assertTrue("Expected one of the conflicting string values to be 'INCONSISTENT'", icvs.contains("INCONSISTENT"));
          }
       }
+   }
+
+   public void testConflictsResolvedWithProvidedMergePolicy() {
+      createCluster();
+      AdvancedCache<Object, Object> cache = getCache(0);
+      ConflictManager<Object, Object> cm = ConflictManagerFactory.get(cache);
+      MagicKey key = new MagicKey(cache(0), cache(1));
+      cache.put(key, 1);
+      cache.withFlags(Flag.CACHE_MODE_LOCAL).put(key, 2);
+      assertEquals(1, getConflicts(0).count());
+      cm.resolveConflicts(((preferredEntry, otherEntries) -> preferredEntry));
+      assertEquals(0, getConflicts(0).count());
+   }
+
+   public void testCacheOperationOnConflictStream() {
+      createCluster();
+      AdvancedCache<Object, Object> cache = getCache(0);
+      ConflictManager<Object, Object> cm = ConflictManagerFactory.get(cache);
+      MagicKey key = new MagicKey(cache(0), cache(1));
+      cache.put(key, 1);
+      cache.withFlags(Flag.CACHE_MODE_LOCAL).put(key, 2);
+      cm.getConflicts().forEach(map -> {
+         CacheEntry<Object, Object> entry = map.values().iterator().next();
+         Object conflictKey = entry.getKey();
+         cache.remove(conflictKey);
+      });
+      assertTrue(cache.isEmpty());
+   }
+
+   @Test(expectedExceptions = CacheException.class)
+   private void testNoEntryMergePolicyConfigured() {
+      ConflictManagerFactory.get(getCache(0)).resolveConflicts();
    }
 
    private void introduceCacheConflicts() {
@@ -223,11 +259,6 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
    private void splitCluster() {
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
       TestingUtil.blockUntilViewsChanged(10000, 2, getCache(0), getCache(1), getCache(2), getCache(3));
-   }
-
-   private void createAndSplitCluster() {
-      createCluster();
-      splitCluster();
    }
 
    private AdvancedCache<Object, Object> getCache(int index) {
