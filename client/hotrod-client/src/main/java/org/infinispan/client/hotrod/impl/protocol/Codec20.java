@@ -388,7 +388,7 @@ public class Codec20 implements Codec, HotRodConstants {
       for (int i = 0; i < clusterSize; i++) {
          String host = transport.readString();
          int port = transport.readUnsignedShort();
-         addresses[i] = new InetSocketAddress(host, port);
+         addresses[i] = InetSocketAddress.createUnresolved(host, port);
       }
 
       short hashFunctionVersion = transport.readByte();
@@ -432,5 +432,4 @@ public class Codec20 implements Codec, HotRodConstants {
                newTopologyId, topologyAge, addresses);
       }
    }
-
 }

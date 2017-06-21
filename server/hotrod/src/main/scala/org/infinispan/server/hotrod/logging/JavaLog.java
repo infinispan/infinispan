@@ -84,4 +84,6 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Unauthorized operation", id = 6017)
    SecurityException unauthorizedOperation();
 
+   @Message(value = "A host or proxyHost address has not been specified", id = 6019)
+   CacheConfigurationException missingHostAddress();
 }
