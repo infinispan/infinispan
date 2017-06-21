@@ -185,6 +185,8 @@ public interface Ids {
    int SCATTERED_CONSISTENT_HASH = 128;
    int METADATA_REMOTE = 129;
 
+   int MERGE_FUNCTION_MAPPER = 130;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }

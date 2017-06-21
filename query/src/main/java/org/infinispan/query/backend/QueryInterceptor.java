@@ -22,6 +22,7 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -208,6 +209,13 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processClearCommand(((ClearCommand) rCommand), rCtx, null));
    }
 
+   @Override
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+      InternalCacheEntry internalCacheEntry = dataContainer.get(command.getKey());
+      Object stateBefore = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processReadWriteKeyCommand(((ReadWriteKeyCommand) rCommand), rCtx, stateBefore, rv, null));
+   }
+
    /**
     * Remove all entries from all known indexes
     */
@@ -349,6 +357,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          } else if (writeCommand instanceof ComputeIfAbsentCommand) {
             InternalCacheEntry internalCacheEntry = dataContainer.get(((ComputeIfAbsentCommand) writeCommand).getKey());
             stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
+         } else if (writeCommand instanceof ReadWriteKeyCommand) {
+            InternalCacheEntry internalCacheEntry = dataContainer.get(((ReadWriteKeyCommand) writeCommand).getKey());
+            stateBeforePrepare[i] = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
          }
       }
 
@@ -373,9 +384,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                } else if (writeCommand instanceof ComputeCommand) {
                   processComputeCommand((ComputeCommand) writeCommand, txInvocationContext, stateBeforePrepare[i], transactionContext);
                } else if (writeCommand instanceof ComputeIfAbsentCommand) {
-                     processComputeIfAbsentCommand((ComputeIfAbsentCommand) writeCommand, txInvocationContext, stateBeforePrepare[i], transactionContext);
+                  processComputeIfAbsentCommand((ComputeIfAbsentCommand) writeCommand, txInvocationContext, stateBeforePrepare[i], transactionContext);
                } else if (writeCommand instanceof ClearCommand) {
                   processClearCommand((ClearCommand) writeCommand, txInvocationContext, transactionContext);
+               } else if (writeCommand instanceof ReadWriteKeyCommand) {
+                  processReadWriteKeyCommand((ReadWriteKeyCommand) writeCommand, txInvocationContext, stateBeforePrepare[i], transactionContext);
                }
             }
          }
@@ -434,7 +447,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processComputeCommand(final ComputeCommand command, final InvocationContext ctx, final Object prevValue, TransactionContext transactionContext) {
       if (command.isSuccessful()) {
-         processComputes(command, ctx, prevValue, ctx.lookupEntry(command.getKey()).getValue(), transactionContext);
+         processFunctionalCommand(command, ctx, prevValue, ctx.lookupEntry(command.getKey()).getValue(), transactionContext);
       }
    }
 
@@ -449,7 +462,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processComputeCommand(final ComputeCommand command, final InvocationContext ctx, final Object prevValue, final Object computedValue, TransactionContext transactionContext) {
       if (command.isSuccessful()) {
-         processComputes(command, ctx, prevValue, computedValue, transactionContext);
+         processFunctionalCommand(command, ctx, prevValue, computedValue, transactionContext);
       }
    }
 
@@ -463,7 +476,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processComputeIfAbsentCommand(final ComputeIfAbsentCommand command, final InvocationContext ctx, final Object prevValue, TransactionContext transactionContext) {
       if (command.isSuccessful()) {
-         processComputes(command, ctx, prevValue, ctx.lookupEntry(command.getKey()).getValue(), transactionContext);
+         processFunctionalCommand(command, ctx, prevValue, ctx.lookupEntry(command.getKey()).getValue(), transactionContext);
       }
    }
 
@@ -478,10 +491,39 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processComputeIfAbsentCommand(final ComputeIfAbsentCommand command, final InvocationContext ctx, final Object prevValue, final Object computedValue, TransactionContext transactionContext) {
       if (command.isSuccessful()) {
-         processComputes(command, ctx, prevValue, computedValue, transactionContext);
+         processFunctionalCommand(command, ctx, prevValue, computedValue, transactionContext);
       }
    }
-   private void processComputes(AbstractDataWriteCommand command, InvocationContext ctx, Object prevValue, Object computedValue, TransactionContext transactionContext) {
+
+   /**
+    * Indexing management of a ReadWriteKeyCommand
+    *
+    * @param command the ReadWriteKeyCommand
+    * @param ctx the InvocationContext
+    * @param prevValue the previous value on this key
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processReadWriteKeyCommand(final ReadWriteKeyCommand command, final InvocationContext ctx, final Object prevValue, TransactionContext transactionContext) {
+      if (command.isSuccessful()) {
+         processFunctionalCommand(command, ctx, prevValue, ctx.lookupEntry(command.getKey()).getValue(), transactionContext);
+      }
+   }
+   /**
+    * Indexing management of a ReadWriteKeyCommand
+    *
+    * @param command the ComputeIfAbsentCommand
+    * @param ctx the InvocationContext
+    * @param prevValue the value before the call
+    * @param resultValue the result of the command call
+    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
+    */
+   private void processReadWriteKeyCommand(final ReadWriteKeyCommand command, final InvocationContext ctx, final Object prevValue, final Object resultValue, TransactionContext transactionContext) {
+      if (command.isSuccessful()) {
+         processFunctionalCommand(command, ctx, prevValue, resultValue, transactionContext);
+      }
+   }
+
+   private void processFunctionalCommand(AbstractDataWriteCommand command, InvocationContext ctx, Object prevValue, Object computedValue, TransactionContext transactionContext) {
       Object key = extractValue(command.getKey());
       if (shouldModifyIndexes(command, ctx, key)) {
          final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
@@ -500,7 +542,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          }
       }
    }
-
    /**
     * Indexing management of a RemoveCommand
     *

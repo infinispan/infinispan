@@ -9,6 +9,7 @@ import static org.infinispan.context.Flag.PUT_FOR_EXTERNAL_READ;
 import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +45,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.functions.MergeFunction;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -91,6 +94,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -323,7 +327,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-     return compute(key, remappingFunction, false);
+      return compute(key, remappingFunction, false);
    }
 
    @Override
@@ -379,6 +383,32 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return mergeInternal(key, value, remappingFunction,
+            defaultMetadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            getInvocationContextWithImplicitTransaction(false, 1));
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return mergeInternal(key, value, remappingFunction,
+            metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
+            getInvocationContextWithImplicitTransaction(false, 1));
+   }
+
+   V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata, long flags, InvocationContext ctx) {
+      assertKeyNotNull(key);
+      assertValueNotNull(value);
+      assertFunctionNotNull(remappingFunction);
+      ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key, new MergeFunction(value, remappingFunction, metadata), Params.fromFlagsBitSet(flags));
+      if (ctx.getLockOwner() == null) {
+         ctx.setLockOwner(command.getKeyLockOwner());
+      }
+      return (V) executeCommandAndCommitIfNeeded(ctx, command);
+   }
+
 
    @Override
    public final CompletableFuture<V> putAsync(K key, V value) {

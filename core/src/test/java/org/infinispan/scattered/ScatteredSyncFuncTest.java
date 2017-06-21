@@ -3,6 +3,9 @@ package org.infinispan.scattered;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import static org.testng.AssertJUnit.fail;
+
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.DistSyncFuncTest;
@@ -187,5 +190,20 @@ public class ScatteredSyncFuncTest extends DistSyncFuncTest {
       InternalCacheEntry<Object, Object> ice = cache(node, cacheName).getAdvancedCache().getDataContainer().get(key);
       assertNotNull(ice);
       assertEquals(expectedValue, ice.getValue());
+   }
+
+   @Override
+   public void testMergeFromNonOwner() {
+      // TODO : Add support for ScatteredCaches in functional commands : https://issues.jboss.org/browse/ISPN-8078
+      RuntimeException mergeException = new RuntimeException("hi there");
+
+      try {
+         getFirstNonOwner("k1").merge("k1", "ex", (k, v) -> {
+            throw mergeException;
+         });
+         fail("Exception was not thrown");
+      } catch (CacheException ex) {
+         assertEquals(UnsupportedOperationException.class, ex.getCause().getClass());
+      }
    }
 }

@@ -124,6 +124,12 @@ public class SimpleCacheTest extends APINonTxTest {
       super.testLockedStreamComputeIfPresent();
    }
 
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testLockedStreamMerge() throws Throwable {
+      super.testLockedStreamMerge();
+   }
+
    public void testStatistics() {
       Configuration cfg = new ConfigurationBuilder().simpleCache(true).jmxStatistics().enabled(true).build();
       String name = "statsCache";

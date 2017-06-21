@@ -16,6 +16,7 @@ import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -396,5 +397,57 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          throw computeRaisedException;
       };
       expectException(RemoteException.class, () -> getFirstNonOwner("somethingWrong").computeIfAbsent("somethingWrong", mappingToException));
+   }
+
+   public void testMergeFromNonOwner() {
+      initAndTest();
+
+      // exception raised by the user
+      RuntimeException mergeException = new RuntimeException("hi there");
+      expectException(RemoteException.class, () -> getFirstNonOwner("k1").merge("k1", "ex", (k, v) -> {
+         throw mergeException;
+      }));
+
+      // merge function applied
+      Object retval = getFirstNonOwner("k1").merge("k1", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
+      asyncWait("k1", ReadWriteKeyCommand.class, getSecondNonOwner("k1"));
+      if (testRetVals) assertEquals("merged_value_value2", retval);
+      eventually(() -> {
+         try {
+            assertOnAllCachesAndOwnership("k1", "merged_value_value2");
+         } catch (AssertionError e) {
+            log.debugf("Assertion failed once", e);
+            return false;
+         }
+         return true;
+      });
+
+      // remove when null
+      retval = getFirstNonOwner("k1").merge("k1", "valueRem", (v1, v2) -> null);
+      asyncWait("k1", ReadWriteKeyCommand.class, getSecondNonOwner("k1"));
+      if (testRetVals) assertNull(retval);
+      eventually(() -> {
+         try {
+            assertRemovedOnAllCaches("k1");
+         } catch (AssertionError e) {
+            log.debugf("Assertion failed once", e);
+            return false;
+         }
+         return true;
+      });
+
+      // put if absent
+      retval = getFirstNonOwner("notThere").merge("notThere", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
+      asyncWait("notThere", ReadWriteKeyCommand.class, getSecondNonOwner("notThere"));
+      if (testRetVals) assertEquals("value2", retval);
+      eventually(() -> {
+         try {
+            assertOnAllCachesAndOwnership("notThere", "value2");
+         } catch (AssertionError e) {
+            log.debugf("Assertion failed once", e);
+            return false;
+         }
+         return true;
+      });
    }
 }

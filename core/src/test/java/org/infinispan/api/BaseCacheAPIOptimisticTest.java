@@ -54,4 +54,10 @@ public abstract class BaseCacheAPIOptimisticTest extends CacheAPITest {
    public void testLockedStreamComputeIfPresent() throws Throwable {
       super.testLockedStreamComputeIfPresent();
    }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Override
+   public void testLockedStreamMerge() throws Throwable {
+      super.testLockedStreamMerge();
+   }
 }

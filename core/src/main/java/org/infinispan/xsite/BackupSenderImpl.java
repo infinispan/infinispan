@@ -18,6 +18,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -332,6 +333,12 @@ public class BackupSenderImpl implements BackupSender {
                   computeIfAbsentCommand.getMappingFunction(),
                   computeIfAbsentCommand.getMetadata(),
                   computeIfAbsentCommand.getFlagsBitSet());
+
+         } else if (writeCommand instanceof ReadWriteKeyCommand) {
+            ReadWriteKeyCommand readWriteKeyCommand = (ReadWriteKeyCommand) writeCommand;
+            filteredCommand = commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(),
+                  readWriteKeyCommand.getFunction(),
+                  readWriteKeyCommand.getParams());
          }
          filtered.add(filteredCommand);
       }
@@ -419,6 +426,12 @@ public class BackupSenderImpl implements BackupSender {
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+         failurePolicy.handleCommitFailure(site, tx);
+         return null;
+      }
+
+      @Override
+      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
          failurePolicy.handleCommitFailure(site, tx);
          return null;
       }

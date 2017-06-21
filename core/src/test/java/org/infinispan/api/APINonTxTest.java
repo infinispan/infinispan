@@ -572,6 +572,12 @@ public class APINonTxTest extends SingleCacheManagerTest {
       // put if absent
       cache.merge("F", "42", (oldValue, newValue) -> "" + oldValue + newValue);
       assertEquals("42", cache.get("F"));
+
+      cache.put("A", "B");
+      RuntimeException mergeRaisedException = new RuntimeException("hi there");
+      expectException(RuntimeException.class, "hi there", () -> cache.merge("A", "C", (k, v) -> {
+         throw mergeRaisedException;
+      }));
    }
 
    public void testForEach() {
@@ -792,6 +798,10 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
    public void testLockedStreamComputeIfPresent() throws Throwable {
       assertLockStream((c, e) -> c.computeIfPresent(e.getKey(), (k, v) -> v + "-other"));
+   }
+
+   public void testLockedStreamMerge() throws Throwable {
+      assertLockStream((c, e) -> c.merge(e.getKey(), "-other", (v1, v2) -> "" + v1 + v2));
    }
 
    public void testLockedStreamSetValue() {

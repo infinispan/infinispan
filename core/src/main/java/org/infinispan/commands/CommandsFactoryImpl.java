@@ -541,6 +541,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
             InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
             invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager);
             break;
+         case ReadWriteKeyCommand.COMMAND_ID:
+            ((ReadWriteKeyCommand) c).init(componentRegistry);
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -711,7 +713,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
          K key, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params);
+      return new ReadWriteKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params, componentRegistry);
    }
 
    @Override

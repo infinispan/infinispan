@@ -377,8 +377,9 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction);
 
    /**
-    * Overloaded {@link Cache#computeIfAbsent(Object, Function)} with Infinispan {@link SerializableFunction}
+    * Overloaded {@link Cache#computeIfAbsent(Object, Function)} with Infinispan {@link SerializableFunction}.
     *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     * @param key, the key to be computed
     * @param mappingFunction, mapping function to be appliyed to the key
     * @return computed value or null if nothing is computed or computation value is null
@@ -405,6 +406,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    /**
     * Overloaded {@link Cache#computeIfPresent(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
     *
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
+    *
     * @param key, the key to be computed
     * @param remappingFunction, mapping function to be appliyed to the key
     * @return computed value or null if nothing is computed or computation result is null
@@ -429,11 +432,9 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
    V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction);
 
    /**
-    * Overloaded {@link Cache#compute(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}
+    * Overloaded {@link Cache#compute(Object, BiFunction)} with Infinispan {@link SerializableBiFunction}.
     *
-    * For transactional caches, whenever the values of the caches are collections, and the bifunction modifies the collection, the collection
-    * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
-    * This limitation could disappear in following releases if technically possible.
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     *
     * @param key, the key to be computed
     * @param remappingFunction, mapping function to be appliyed to the key
@@ -443,4 +444,34 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
                      SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
    }
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
+    * to owning nodes to perform the operation in the most performant way. However this means the bifunction must
+    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * <p>
+    * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
+    * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
+    * This limitation could disappear in following releases if technically possible.
+    */
+   @Override
+   V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction);
+
+
+   /**
+    * Overloaded {@link Cache#merge(Object, Object, BiFunction)} with Infinispan {@link SerializableBiFunction}.
+    * <p>
+    * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}.
+    *
+    * @param key               key with which the resulting value is to be associated
+    * @param value             the non-null value to be merged with the existing value associated with the key or, if no
+    *                          existing value or a null value is associated with the key, to be associated with the key
+    * @param remappingFunction the function to recompute a value if present
+    */
+   default V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction);
+   }
+
 }

@@ -337,13 +337,13 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
    }
 
    @Override
-   protected V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref) {
+   protected V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref, Metadata metadata) {
       boolean statisticsEnabled = statsCollector.getStatisticsEnabled();
       long start = 0;
       if (statisticsEnabled) {
          start = timeService.time();
       }
-      V ret = super.mergeInternal(key, value, remappingFunction, ref);
+      V ret = super.mergeInternal(key, value, remappingFunction, ref, metadata);
       if (statisticsEnabled) {
          long end = timeService.time();
          if (ref.getNewValue() != null) {

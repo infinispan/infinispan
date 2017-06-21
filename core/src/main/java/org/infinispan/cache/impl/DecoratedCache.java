@@ -25,6 +25,7 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.local.ValueCacheCollection;
+import org.infinispan.util.function.SerializableBiFunction;
 
 /**
  * A decorator to a cache, which can be built with a specific set of {@link Flag}s.  This
@@ -566,6 +567,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       return computeIfAbsent(key, mappingFunction, cacheImplementation.defaultMetadata);
    }
 
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      return merge(key, value, remappingFunction, cacheImplementation.defaultMetadata);
+   }
+
    //Not exposed on interface
    public long getFlagsBitSet() {
       return flags;
@@ -619,6 +625,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
       return cacheImplementation.computeIfAbsentInternal(key, mappingFunction, metadata, flags, writeContext(1));
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cacheImplementation.mergeInternal(key, value, remappingFunction, metadata, flags, writeContext(1));
    }
 
    @Override
