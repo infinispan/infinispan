@@ -48,13 +48,19 @@ public final class EntryView {
    public interface ReadEntryView<K, V> extends MetaParam.Lookup {
       /**
        * Key of the read-only entry view. Guaranteed to return a non-null value.
+       * The instance of the key must not be mutated.
        */
       K key();
 
       /**
        * Returns a non-null value if the key has a value associated with it or
        * throws {@link NoSuchElementException} if no value is associated with
-       * the.
+       * the entry.
+       *
+       * <p>The value instance is read-only and must not be mutated. If the function
+       * accessing this value is about to update the entry, it has to create
+       * a defensive copy (or completely new instance) and store it using
+       * {@link WriteEntryView#set(Object, MetaParam.Writable[])}.
        *
        * @throws NoSuchElementException if no value is associated with the key.
        */
@@ -63,6 +69,11 @@ public final class EntryView {
       /**
        * Optional value. It'll return a non-empty value when the value is present,
        * and empty when the value is not present.
+       *
+       * <p>The value instance is read-only and must not be mutated. If the function
+       * accessing this value is about to update the entry, it has to create
+       * a defensive copy (or completely new instance) and store it using
+       * {@link WriteEntryView#set(Object, MetaParam.Writable[])}.
        */
       Optional<V> find();
    }

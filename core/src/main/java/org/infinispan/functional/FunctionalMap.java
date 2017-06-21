@@ -137,6 +137,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *    <li>{@code javax.cache.Cache#containsKey(Object)}</li>
        * </ul>
        *
+       * <p>The function must not mutate neither the key returned through
+       * {@link ReadEntryView#key()} nor the internally stored value provided
+       * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
+       *
        * @param key the key associated with the {@link ReadEntryView} to be
        *            passed to the function.
        * @param f function that takes a {@link ReadEntryView} associated with
@@ -177,6 +181,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *    individually since Infinispan can do things more efficiently.
        *    </li>
        * </ul>
+       *
+       * <p>The function must not mutate neither the key returned through
+       * {@link ReadEntryView#key()} nor the internally stored value provided
+       * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
        *
        * @param keys the keys associated with each of the {@link ReadEntryView}
        *             passed in the function callbacks
@@ -503,6 +511,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *    <li>{@code javax.cache.Cache#invoke(Object, EntryProcessor, Object...)}</li>
        * </ul>
        *
+       * <p>The function must not mutate neither the key returned through
+       * {@link ReadEntryView#key()} nor the internally stored value provided
+       * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
+       *
        * @param key the key associated with the {@link ReadWriteEntryView} to be
        *            passed to the function.
        * @param f function that takes a {@link ReadWriteEntryView} associated with
@@ -563,6 +575,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * and hence, the {@link BiFunction} could be cached and reused each
        * time it's invoked.
        *
+       * <p>The function must not mutate neither the key returned through
+       * {@link ReadEntryView#key()} nor the internally stored value provided
+       * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
+       *
        * @param key the key associated with the {@link ReadWriteEntryView} to be
        *            passed to the operation
        * @param value value to write, passed in as first parameter to the {@link BiFunction}.
@@ -600,6 +616,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * iterations because the internal logic can often iterate more
        * efficiently since it knows more about the system.
        *
+       * <p>The function must not mutate neither the key returned through
+       * {@link ReadEntryView#key()} nor the internally stored value provided
+       * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
+       *
        * @param entries the key/value pairs associated with each of the
        *             {@link ReadWriteEntryView} passed in the function callbacks
        * @param f function that takes in a value associated with a key in the
@@ -630,6 +650,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * or a remove a set of keys returning previous values or metadata
        * parameters.
        *
+       * <p>The function must not mutate neither the key returned through
+       * {@link ReadEntryView#key()} nor the internally stored value provided
+       * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
+       *
        * @param keys the keys associated with each of the {@link ReadWriteEntryView}
        *             passed in the function callbacks
        * @param f function that the {@link ReadWriteEntryView} associated with
@@ -657,6 +681,10 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>This method can be used to an operation that removes all cached
        * entries individually, and returns previous value and/or metadata
        * parameters.
+       *
+       * <p>The function must not mutate neither the key returned through
+       * {@link ReadEntryView#key()} nor the internally stored value provided
+       * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
        *
        * @return a {@link Traversable} to navigate each {@link Function} return
        */
