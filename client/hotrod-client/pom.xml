@@ -14,7 +14,6 @@
    <description>Infinispan Hot Rod Client</description>
 
    <properties>
-      <infinispan.test.parallel.threads>5</infinispan.test.parallel.threads>
       <ca.dname>CN=CA,OU=Infinispan,O=JBoss,L=Red Hat</ca.dname>
       <ca.alias>infinispan-ca</ca.alias>
       <client.dname>CN=HotRodClient1,OU=Infinispan,O=JBoss,L=Red Hat</client.dname>
