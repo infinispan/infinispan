@@ -5,7 +5,6 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +57,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    /**
     * We need synchronization as the thread that calls {@link TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger, org.infinispan.client.hotrod.event.ClientListenerNotifier)}
-    * might(and likely will) be different from the thread(s) that calls {@link TransportFactory#getTransport(byte[], java.util.Set, byte[])} or other methods
+    * might(and likely will) be different from the thread(s) that calls {@link TransportFactory#getTransport(Set, byte[])} or other methods
     */
    private final Object lock = new Object();
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
@@ -98,15 +97,15 @@ public class TcpTransportFactory implements TransportFactory {
          boolean pingOnStartup = configuration.pingOnStartup();
          Collection<SocketAddress> servers = new ArrayList<>();
          initialServers = new ArrayList<>();
-         for(ServerConfiguration server : configuration.servers()) {
-            servers.add(new InetSocketAddress(server.host(), server.port()));
+         for (ServerConfiguration server : configuration.servers()) {
+            servers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
          }
          initialServers.addAll(servers);
          if (!configuration.clusters().isEmpty()) {
             configuration.clusters().stream().forEach(cluster -> {
                Collection<SocketAddress> clusterAddresses = cluster.getCluster().stream()
-                  .map(server -> new InetSocketAddress(server.host(), server.port()))
-                  .collect(Collectors.toList());
+                       .map(server -> InetSocketAddress.createUnresolved(server.host(), server.port()))
+                       .collect(Collectors.toList());
                ClusterInfo clusterInfo = new ClusterInfo(cluster.getClusterName(), clusterAddresses);
                log.debugf("Add secondary cluster: %s", clusterInfo);
                clusters.add(clusterInfo);
