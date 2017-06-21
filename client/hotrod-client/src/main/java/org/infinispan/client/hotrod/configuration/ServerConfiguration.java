@@ -23,4 +23,11 @@ public class ServerConfiguration {
       return port;
    }
 
+   @Override
+   public String toString() {
+      return "ServerConfiguration[" +
+            "host='" + host + '\'' +
+            ", port=" + port +
+            ']';
+   }
 }

@@ -101,13 +101,13 @@ public class TcpTransportFactory implements TransportFactory {
          Collection<SocketAddress> servers = new ArrayList<>();
          initialServers = new ArrayList<>();
          for (ServerConfiguration server : configuration.servers()) {
-            servers.add(new InetSocketAddress(server.host(), server.port()));
+            servers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
          }
          initialServers.addAll(servers);
          if (!configuration.clusters().isEmpty()) {
             configuration.clusters().stream().forEach(cluster -> {
                Collection<SocketAddress> clusterAddresses = cluster.getCluster().stream()
-                       .map(server -> new InetSocketAddress(server.host(), server.port()))
+                       .map(server -> InetSocketAddress.createUnresolved(server.host(), server.port()))
                        .collect(Collectors.toList());
                ClusterInfo clusterInfo = new ClusterInfo(cluster.getClusterName(), clusterAddresses);
                log.debugf("Add secondary cluster: %s", clusterInfo);

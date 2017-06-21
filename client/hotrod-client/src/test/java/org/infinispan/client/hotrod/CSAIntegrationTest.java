@@ -67,11 +67,11 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       addClusterEnabledCacheManager(builder);
 
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
-      addr2hrServer.put(new InetSocketAddress(hotRodServer1.getHost(), hotRodServer1.getPort()), hotRodServer1);
+      addr2hrServer.put(InetSocketAddress.createUnresolved(hotRodServer1.getHost(), hotRodServer1.getPort()), hotRodServer1);
       hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));
-      addr2hrServer.put(new InetSocketAddress(hotRodServer2.getHost(), hotRodServer2.getPort()), hotRodServer2);
+      addr2hrServer.put(InetSocketAddress.createUnresolved(hotRodServer2.getHost(), hotRodServer2.getPort()), hotRodServer2);
       hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(manager(2));
-      addr2hrServer.put(new InetSocketAddress(hotRodServer3.getHost(), hotRodServer3.getPort()), hotRodServer3);
+      addr2hrServer.put(InetSocketAddress.createUnresolved(hotRodServer3.getHost(), hotRodServer3.getPort()), hotRodServer3);
 
       assert manager(0).getCache() != null;
       assert manager(1).getCache() != null;

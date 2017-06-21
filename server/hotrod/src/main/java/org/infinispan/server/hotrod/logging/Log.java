@@ -87,4 +87,7 @@ public interface Log extends org.infinispan.server.core.logging.Log {
 
    @Message(value = "EXTERNAL SASL mechanism not allowed without SSL client certificate", id = 6018)
    SecurityException externalMechNotAllowedWithoutSSLClientCert();
+
+   @Message(value = "A host or proxyHost address has not been specified", id = 6019)
+   CacheConfigurationException missingHostAddress();
 }

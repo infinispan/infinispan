@@ -94,7 +94,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
 
    private Set<SocketAddress> updateFailedServers(SocketAddress address, Set<SocketAddress> failedServers) {
       if (failedServers == null) {
-         failedServers = new HashSet<SocketAddress>();
+         failedServers = new HashSet<>();
       }
 
       if (trace)
