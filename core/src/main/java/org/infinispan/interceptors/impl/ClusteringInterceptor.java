@@ -3,6 +3,7 @@ package org.infinispan.interceptors.impl;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -48,7 +49,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       return response;
    }
 
-   protected static SuccessfulResponse getSuccessfulResponseOrFail(Map<Address, Response> responseMap, CompletableFuture<?> future, Runnable cacheNotFound) {
+   protected static SuccessfulResponse getSuccessfulResponseOrFail(Map<Address, Response> responseMap, CompletableFuture<?> future, Consumer<Response> cacheNotFound) {
       Iterator<Response> it = responseMap.values().iterator();
       if (!it.hasNext()) {
          future.completeExceptionally(AllOwnersLostException.INSTANCE);
@@ -59,14 +60,12 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
          future.completeExceptionally(new IllegalStateException("Too many responses " + responseMap));
       } else if (response instanceof SuccessfulResponse) {
          return (SuccessfulResponse) response;
-      } else if (response instanceof UnsureResponse) {
-         future.completeExceptionally(OutdatedTopologyException.INSTANCE);
-      } else if (response instanceof CacheNotFoundResponse) {
+      } else if (response instanceof CacheNotFoundResponse || response instanceof UnsureResponse) {
          if (cacheNotFound == null) {
             future.completeExceptionally(unexpected(response));
          } else {
             try {
-               cacheNotFound.run();
+               cacheNotFound.accept(response);
             } catch (Throwable t) {
                future.completeExceptionally(t);
             }
@@ -100,6 +99,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    protected class ClusteredGetAllFuture extends CompletableFuture<Void> implements InvocationSuccessFunction {
       public GetAllCommand localCommand;
       public int counter;
+      public boolean hasUnsureResponse;
 
       public ClusteredGetAllFuture(int counter, GetAllCommand localCommand) {
          this.counter = counter;
@@ -114,6 +114,9 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       @Override
       public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
          assert rv == null; // value with which the allFuture has been completed
+         if (hasUnsureResponse) {
+            throw OutdatedTopologyException.INSTANCE;
+         }
          return invokeNext(rCtx, localCommand);
       }
    }

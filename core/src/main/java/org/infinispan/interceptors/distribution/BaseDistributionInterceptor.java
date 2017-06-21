@@ -432,7 +432,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
       }
 
-      private void handleMissingResponse() {
+      private void handleMissingResponse(Response response) {
+         if (response instanceof UnsureResponse) {
+            allFuture.hasUnsureResponse = true;
+         }
          GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
          LocalizedCacheTopology cacheTopology = checkTopologyId(command);
 
@@ -592,7 +595,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
       }
 
-      private void handleMissingResponse() {
+      private void handleMissingResponse(Response response) {
+         if (response instanceof UnsureResponse) {
+            allFuture.hasUnsureResponse = true;
+         }
          Map<Object, Collection<Address>> contactedNodes = this.contactedNodes == null ? new HashMap<>() : this.contactedNodes;
          Map<Address, List<Object>> requestedKeys;
          synchronized (contactedNodes) {
@@ -612,6 +618,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             pos += keysForAddress.size();
          }
          Arrays.fill(allFuture.results, pos, destinationIndex + keys.size(), LOST_PLACEHOLDER);
+         allFuture.lostData = true;
          allFuture.countDown();
       }
    }
@@ -738,7 +745,15 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       public void countDown() {
          if (counter.decrementAndGet() == 0) {
-            complete(result());
+            Object result = null;
+            try {
+               result = result();
+            } catch (Throwable t) {
+               completeExceptionally(t);
+            } finally {
+               // no-op when completed with exception
+               complete(result);
+            }
          }
       }
 
@@ -757,6 +772,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    protected static class MergingCompletableFuture<T> extends CountDownCompletableFuture {
       private final Function<T[], Object> transform;
       protected final T[] results;
+      protected volatile boolean hasUnsureResponse;
+      protected volatile boolean lostData;
 
       public MergingCompletableFuture(InvocationContext ctx, int participants, T[] results, Function<T[], Object> transform) {
          super(ctx, participants);
@@ -767,6 +784,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       @Override
       protected Object result() {
+         // If we've lost data but did not get any unsure responses we should return limited stream.
+         // If we've got unsure response but did not lose any data - no problem, there has been another
+         // response delivering the results.
+         // Only if those two combine we'll rather throw OTE and retry.
+         if (hasUnsureResponse && lostData) {
+            throw OutdatedTopologyException.INSTANCE;
+         }
          return transform == null || results == null ? null : transform.apply(results);
       }
    }
