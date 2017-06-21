@@ -87,7 +87,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    }
 
    public void testTwoMembers() {
-      InetSocketAddress server1Address = new InetSocketAddress("localhost", hotRodServer1.getPort());
+      InetSocketAddress server1Address = InetSocketAddress.createUnresolved(hotRodServer1.getHost(), hotRodServer1.getPort());
       expectTopologyChange(server1Address, true);
       assertEquals(2, tcpTransportFactory.getServers().size());
    }
@@ -102,7 +102,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       try {
-         expectTopologyChange(new InetSocketAddress("localhost", hotRodServer3.getPort()), true);
+         expectTopologyChange(InetSocketAddress.createUnresolved(hotRodServer3.getHost(), hotRodServer3.getPort()), true);
          assertEquals(3, tcpTransportFactory.getServers().size());
       } finally {
          log.info("Members are: " + manager(0).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
@@ -119,7 +119,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
       waitForServerToDie(2);
 
-      InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());      
+      InetSocketAddress server3Address = InetSocketAddress.createUnresolved(hotRodServer3.getHost(), hotRodServer3.getPort());
 
       try {
          expectTopologyChange(server3Address, false);
@@ -136,13 +136,13 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    private void expectTopologyChange(InetSocketAddress server1Address, boolean added) {
       for (int i = 0; i < 10; i++) {
-         remoteCache.put("k" + i, "v" + i);         
+         remoteCache.put("k" + i, "v" + i);
          if (added == tcpTransportFactory.getServers().contains(server1Address)) break;
       }
       Collection<SocketAddress> addresses = tcpTransportFactory.getServers();
       assertEquals(server1Address + " not found in " + addresses, added, addresses.contains(server1Address));
    }
-   
+
    protected void waitForServerToDie(int memberCount) {
       TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000, false);
    }

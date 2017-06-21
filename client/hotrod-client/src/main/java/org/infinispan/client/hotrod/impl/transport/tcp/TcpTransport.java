@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
@@ -53,10 +54,13 @@ public class TcpTransport extends AbstractTransport {
 
    private SaslClient saslClient;
 
-   public TcpTransport(SocketAddress serverAddress, TransportFactory transportFactory) {
+   public TcpTransport(SocketAddress originalServerAddress, TransportFactory transportFactory) {
       super(transportFactory);
-      this.serverAddress = serverAddress;
+      InetSocketAddress inetSocketAddress = (InetSocketAddress) originalServerAddress;
+      this.serverAddress = originalServerAddress;
       try {
+         if (inetSocketAddress.isUnresolved())
+            inetSocketAddress = new InetSocketAddress(inetSocketAddress.getHostString(), inetSocketAddress.getPort());
          if (transportFactory.getSSLContext() != null) {
             SSLContext sslContext = transportFactory.getSSLContext();
             socketChannel = null; // We don't use a SocketChannel in the SSL case
@@ -65,7 +69,7 @@ public class TcpTransport extends AbstractTransport {
             socketChannel = SocketChannel.open();
             socket = socketChannel.socket();
          }
-         socket.connect(serverAddress, transportFactory.getConnectTimeout());
+         socket.connect(inetSocketAddress, transportFactory.getConnectTimeout());
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
          socket.setKeepAlive(transportFactory.isTcpKeepAlive());
          socket.setSoTimeout(transportFactory.getSoTimeout());
@@ -341,7 +345,7 @@ public class TcpTransport extends AbstractTransport {
 
    @Override
    public SocketAddress getRemoteSocketAddress() {
-      return socket.getRemoteSocketAddress();
+      return socket.isClosed() ? null : serverAddress;
    }
 
    @Override
