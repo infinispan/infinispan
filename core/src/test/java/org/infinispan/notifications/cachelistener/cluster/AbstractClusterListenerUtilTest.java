@@ -1,6 +1,5 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import static org.infinispan.test.Mocks.invokeAndReturnMock;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.nullable;

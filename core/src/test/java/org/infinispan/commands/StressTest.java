@@ -98,6 +98,7 @@ public abstract class StressTest extends MultipleCacheManagersTest {
                   }
                   System.out.println(Thread.currentThread() + " finished " + iteration + " iterations!");
                } catch (Throwable e) {
+                  log.trace("Failed", e);
                   // Stop all the others as well
                   complete.set(true);
                   exceptions.add(e);

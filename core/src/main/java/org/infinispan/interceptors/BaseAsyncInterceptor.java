@@ -1,7 +1,6 @@
 package org.infinispan.interceptors;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;

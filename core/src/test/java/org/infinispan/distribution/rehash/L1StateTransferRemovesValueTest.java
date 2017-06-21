@@ -31,7 +31,6 @@ import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.mockito.AdditionalAnswers;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;

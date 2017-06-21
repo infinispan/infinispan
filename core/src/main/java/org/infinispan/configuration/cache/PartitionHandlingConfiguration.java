@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.conflict.MergePolicies;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
 

@@ -41,6 +41,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
@@ -93,6 +94,7 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -109,6 +111,7 @@ import org.jgroups.View;
 import org.jgroups.protocols.DELAY;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
+import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.AssertJUnit;
 
@@ -128,6 +131,43 @@ public class TestingUtil {
     */
    public static long shortTimeoutMillis() {
       return SHORT_TIMEOUT_MILLIS;
+   }
+
+   /**
+    * Simulates a node crash, discarding all the messages from/to this node and then stopping the caches.
+    */
+   public static void crashCacheManagers(EmbeddedCacheManager... cacheManagers) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         JGroupsTransport t = (JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class);
+         JChannel channel = t.getChannel();
+         try {
+            DISCARD discard = new DISCARD();
+            discard.setDiscardAll(true);
+            channel.getProtocolStack().insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
+         } catch (Exception e) {
+            log.warn("Problems inserting discard", e);
+            throw new RuntimeException(e);
+         }
+         View view = View.create(channel.getAddress(), 100, channel.getAddress());
+         ((GMS) channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
+      }
+      killCacheManagers(cacheManagers);
+   }
+
+   public static void installNewView(EmbeddedCacheManager... members) {
+      installNewView(Stream.of(members).map(EmbeddedCacheManager::getAddress), members);
+   }
+
+   public static void installNewView(Stream<Address> members, EmbeddedCacheManager... where) {
+      List<org.jgroups.Address> viewMembers = members.map(a -> ((JGroupsAddress) a).getJGroupsAddress()).collect(Collectors.toList());
+      int viewId = where[0].getTransport().getViewId() + 1;
+      View view = View.create(viewMembers.get(0), viewId, viewMembers.toArray(new org.jgroups.Address[viewMembers.size()]));
+
+      log.trace("Before installing new view:" + viewMembers);
+      for (EmbeddedCacheManager ecm : where) {
+         JChannel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
+         ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
+      }
    }
 
    public enum InfinispanStartTag {

@@ -5,7 +5,6 @@ import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -17,9 +16,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -28,12 +24,6 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.JChannel;
-import org.jgroups.View;
-import org.jgroups.protocols.DISCARD;
-import org.jgroups.protocols.TP;
-import org.jgroups.protocols.pbcast.GMS;
-import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
 
 /**
@@ -188,40 +178,10 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
    }
 
    private void installNewView(List<Address> members, Address missing, EmbeddedCacheManager... where) {
-      log.tracef("installNewView:members=%s, missing=%s", members, missing);
-      final List<org.jgroups.Address> viewMembers = new ArrayList<org.jgroups.Address>();
-      for (Address a : members)
-         if (!a.equals(missing))
-            viewMembers.add(((JGroupsAddress) a).getJGroupsAddress());
-      int viewId = where[0].getTransport().getViewId() + 1;
-      View view = View.create(viewMembers.get(0), viewId, viewMembers.toArray(new org.jgroups.Address[viewMembers.size()]));
-
-      log.trace("Before installing new view:" + viewMembers);
-      for (EmbeddedCacheManager ecm : where) {
-         JChannel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
-         ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
-      }
+      TestingUtil.installNewView(members.stream().filter(a -> !a.equals(missing)), where);
    }
 
-   /**
-    * Simulates a node crash, discarding all the messages from/to this node and then stopping the caches.
-    */
    protected void crashCacheManagers(EmbeddedCacheManager... cacheManagers) {
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         JGroupsTransport t = (JGroupsTransport) cm.getGlobalComponentRegistry().getComponent(Transport.class);
-         JChannel channel = t.getChannel();
-         try {
-            DISCARD discard = new DISCARD();
-            discard.setDiscardAll(true);
-            channel.getProtocolStack().insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
-         } catch (Exception e) {
-            log.warn("Problems inserting discard", e);
-            throw new RuntimeException(e);
-         }
-         View view = View.create(channel.getAddress(), 100, channel.getAddress());
-         ((GMS) channel.getProtocolStack().findProtocol(GMS.class)).installView(view);
-      }
-      TestingUtil.killCacheManagers(cacheManagers);
+      TestingUtil.crashCacheManagers(cacheManagers);
    }
-
 }
