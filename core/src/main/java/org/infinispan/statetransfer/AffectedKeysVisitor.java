@@ -4,6 +4,7 @@ import java.util.HashSet;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -77,6 +78,11 @@ public class AffectedKeysVisitor extends AbstractVisitor {
 
    @Override
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+      return command.getAffectedKeys();
+   }
+
+   @Override
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
       return command.getAffectedKeys();
    }
 

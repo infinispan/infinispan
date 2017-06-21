@@ -51,6 +51,7 @@ import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.function.SerializableBiFunction;
 import org.testng.annotations.Test;
 
 /**
@@ -821,5 +822,52 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       assertEquals(4, found.size());
       assertFalse(found.contains(null));
+   }
+
+   public void testMerge() throws Exception {
+      prepareTestData();
+      TransactionManager transactionManager = cache2.getAdvancedCache().getTransactionManager();
+      SearchManager searchManager = Search.getSearchManager(cache2);
+      QueryBuilder queryBuilder = searchManager
+            .buildQueryBuilderForClass(Person.class)
+            .get();
+      Query allQuery = queryBuilder.all().createQuery();
+      assertEquals(3, searchManager.getQuery(allQuery, Person.class).list().size());
+
+      String key = "newGoat";
+      person4 = new Person(key, "eats something", 42);
+
+      // merge a new key
+      if (transactionsEnabled()) transactionManager.begin();
+      cache2.merge(key, person4, (k1, v3) -> new Person(key, "eats something", 42));
+      if (transactionsEnabled()) transactionManager.commit();
+      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
+
+      List<Person> found = searchManager.<Person>getQuery(allQuery, Person.class).list();
+      assertEquals(4, found.size());
+      assertTrue(found.contains(person4));
+
+      // merge and replace existing key
+      if (transactionsEnabled()) transactionManager.begin();
+      cache2.merge(key, new Person(key, "hola", 42),
+            (v1, v2) -> new Person(v1.getName() + "_" + v2.getName(), v1.getBlurb() + "_" + v2.getBlurb(), v1.getAge() + v2.getAge()));
+      if (transactionsEnabled()) transactionManager.commit();
+      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
+
+      found = searchManager.<Person>getQuery(allQuery, Person.class).list();
+      assertEquals(4, found.size());
+      assertFalse(found.contains(person4));
+      assertTrue(found.contains(new Person("newGoat_newGoat", "eats something_hola", 84)));
+
+      // remove if merge result is null
+      if (transactionsEnabled()) transactionManager.begin();
+      cache2.merge(key, person4, (k, v) -> null);
+      if (transactionsEnabled()) transactionManager.commit();
+      StaticTestingErrorHandler.assertAllGood(cache1, cache2);
+
+      found = searchManager.<Person>getQuery(allQuery, Person.class).list();
+      assertEquals(3, found.size());
+      assertFalse(found.contains(person4));
+      assertFalse(found.contains(new Person("newGoat_newGoat", "eats something_hola", 84)));
    }
 }

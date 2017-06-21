@@ -518,6 +518,33 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    }
 
    /**
+    * An overloaded form of {@link #merge(Object, Object, BiFunction)}, which takes in an
+    * instance of {@link Metadata} which can be used to provide metadata
+    * information for the entry being stored, such as lifespan, version
+    * of value...etc. The {@link Metadata} is only stored if the call is
+    * successful.
+    *
+    * @param key, key with which the resulting value is to be associated
+    * @param value, the non-null value to be merged with the existing value
+    *        associated with the key or, if no existing value or a null value
+    *        is associated with the key, to be associated with the key
+    * @param remappingFunction, the function to recompute a value if present
+    * @param metadata, information to store alongside the new value
+    * @return the new value associated with the specified key, or null if no
+    *         value is associated with the key
+    *
+    * @since 9.2
+    */
+   V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata);
+
+   /**
+    * Overloaded {@link #merge(Object, Object, BiFunction, Metadata)} with {@link SerializableBiFunction}
+    */
+   default V merge(K key, V value, SerializableBiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return this.merge(key, value, (BiFunction<? super V, ? super V, ? extends V>) remappingFunction, metadata);
+   }
+
+   /**
     * Asynchronous version of {@link #put(Object, Object, Metadata)} which stores
     * metadata alongside the value.  This method does not block on remote calls,
     * even if your cache mode is synchronous.  Has no benefit over

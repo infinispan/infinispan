@@ -10,12 +10,14 @@ import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
@@ -28,18 +30,15 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    private Function<ReadWriteEntryView<K, V>, R> f;
 
    public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f,
-         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
+                              CommandInvocationId id, ValueMatcher valueMatcher, Params params,
+                              ComponentRegistry componentRegistry) {
       super(key, valueMatcher, id, params);
       this.f = f;
+      this.init(componentRegistry);
    }
 
    public ReadWriteKeyCommand() {
       // No-op, for marshalling
-   }
-
-   public ReadWriteKeyCommand(ReadWriteKeyCommand<K, V, R> other) {
-      super((K) other.getKey(), other.getValueMatcher(), other.commandInvocationId, other.getParams());
-      this.f = other.f;
    }
 
    @Override
@@ -84,7 +83,6 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
       // Could be that the key is not local, 'null' is how this is signalled
       if (e == null) return null;
-
       R ret = f.apply(EntryViews.readWrite(e));
       return snapshot(ret);
    }
@@ -104,6 +102,10 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       return new Mutations.ReadWrite<>(f);
    }
 
+   public Function<ReadWriteEntryView<K, V>, R> getFunction() {
+      return f;
+   }
+
    @Override
    public String toString() {
       return "ReadWriteKeyCommand" +
@@ -115,5 +117,16 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
             ", valueMatcher=" + valueMatcher +
             ", successful=" + successful +
             "}";
+   }
+
+   public void init(ComponentRegistry componentRegistry) {
+      if (f instanceof InjectableComponent) {
+         ((InjectableComponent) f).inject(componentRegistry);
+      }
+   }
+
+   @Override
+   public final boolean isReturnValueExpected() {
+      return true;
    }
 }

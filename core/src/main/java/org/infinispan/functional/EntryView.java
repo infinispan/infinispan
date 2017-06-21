@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.commons.util.Experimental;
+import org.infinispan.metadata.Metadata;
 
 /**
  * Entry views expose cached entry information to the user. Depending on the
@@ -97,6 +98,17 @@ public final class EntryView {
        * not consider 'void' to be an {@link Object}.
        */
       Void set(V value, MetaParam.Writable... metas);
+
+      /**
+       * Set this value along with metadata object.
+       *
+       * <p>This method returns {@link Void} instead of 'void' to avoid
+       * having to add overloaded methods in functional map that take
+       * {@link Consumer} instead of {@link Function}. This is an
+       * unfortunate side effect of the Java language itself which does
+       * not consider 'void' to be an {@link Object}.
+       */
+      Void set(V value, Metadata metadata);
 
       /**
        * Removes the value and any metadata parameters associated with it.

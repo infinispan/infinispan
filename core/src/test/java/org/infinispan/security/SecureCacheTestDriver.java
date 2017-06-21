@@ -757,4 +757,13 @@ public class SecureCacheTestDriver {
       cache.computeIfAbsent("b", k -> "no");
    }
 
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testMerge_Object_Object_SerializableBiFunction(SecureCache<String, String> cache) {
+      cache.merge("a", "b", (k, v) -> "no");
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testMerge_Object_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
+      cache.merge("a", "b", (k, v) -> "no", metadata);
+   }
 }

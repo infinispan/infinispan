@@ -357,6 +357,18 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.merge(key, value, remappingFunction);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      return delegate.merge(key, value, remappingFunction, metadata);
+   }
+
+   @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.compute(key, remappingFunction, metadata);

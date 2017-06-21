@@ -1,5 +1,7 @@
 package org.infinispan.functional.impl;
 
+import static org.infinispan.metadata.Metadatas.updateMetadata;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -7,16 +9,16 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
-import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.functional.EntryView.WriteEntryView;
-import org.infinispan.functional.MetaParam;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.EntryView.WriteEntryView;
+import org.infinispan.functional.MetaParam;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
@@ -187,11 +189,22 @@ public final class EntryViews {
 
       @Override
       public Void set(V value, MetaParam.Writable... metas) {
+         setValue(value);
+         updateMetaParams(entry, metas);
+         return null;
+      }
+
+      @Override
+      public Void set(V value, Metadata metadata) {
+         setValue(value);
+         updateMetadata(entry, metadata);
+         return null;
+      }
+
+      private void setValue(V value) {
          entry.setValue(value);
          entry.setChanged(true);
          entry.setRemoved(value == null);
-         updateMetaParams(entry, metas);
-         return null;
       }
 
       @Override
@@ -231,13 +244,23 @@ public final class EntryViews {
          return null;
       }
 
+      @Override
+      public Void set(V value, Metadata metadata) {
+         setEntry(value);
+         updateMetadata(entry, metadata);
+         return null;
+      }
+
       private void setOnly(V value, MetaParam.Writable[] metas) {
+         setEntry(value);
+         updateMetaParams(entry, metas);
+      }
+
+      private void setEntry(V value) {
          entry.setCreated(entry.getValue() == null && value != null);
          entry.setValue(value);
          entry.setChanged(true);
          entry.setRemoved(value == null);
-
-         updateMetaParams(entry, metas);
       }
 
       @Override
@@ -306,12 +329,23 @@ public final class EntryViews {
          return null;
       }
 
+      @Override
+      public Void set(V value, Metadata metadata) {
+         setValue(value);
+         updateMetadata(entry, metadata);
+         return null;
+      }
+
       private void setOnly(V value, MetaParam.Writable[] metas) {
+         setValue(value);
+         updateMetaParams(entry, metas);
+      }
+
+      private void setValue(V value) {
          entry.setValue(value);
          entry.setChanged(true);
          entry.setRemoved(value == null);
          entry.setCreated(prevValue == null && value != null);
-         updateMetaParams(entry, metas);
       }
 
       @Override
@@ -437,6 +471,12 @@ public final class EntryViews {
       }
 
       @Override
+      public Void set(V value, Metadata metadata) {
+         throw new IllegalStateException(
+               "A read-write entry view cannot be modified outside the scope of a lambda");
+      }
+
+      @Override
       public Void remove() {
          throw new IllegalStateException(
             "A read-write entry view cannot be modified outside the scope of a lambda");
@@ -465,8 +505,7 @@ public final class EntryViews {
       if (metas.length != 0) {
          metaParams.addMany(metas);
       }
-
-      entry.setMetadata(MetaParamsInternalMetadata.from(metaParams));
+      updateMetadata(entry, MetaParamsInternalMetadata.from(metaParams));
    }
 
    private static <K, V> MetaParams extractMetaParams(CacheEntry<K, V> entry) {

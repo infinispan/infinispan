@@ -74,6 +74,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -155,6 +156,11 @@ public class ExtendedStatisticInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
+      return visitWriteCommand(ctx, command, command.getKey());
+   }
+
+   @Override
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
       return visitWriteCommand(ctx, command, command.getKey());
    }
 

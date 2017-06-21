@@ -42,6 +42,7 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.function.SerializableBiFunction;
 
 /**
  * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link AdvancedCache}.
@@ -355,6 +356,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
       return cache.computeIfAbsent(key, mappingFunction, metadata);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return cache.merge(key, value, remappingFunction, metadata);
    }
 
    @Override

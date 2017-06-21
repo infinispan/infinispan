@@ -672,11 +672,8 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-      V returned = super.merge(keyToStorage(key), value, (oldV, newV) -> {
-         // oldV will be in the storage format, however we left newV alone
-         V valueFromStorage = valueFromStorage(oldV);
-         return remappingFunction.apply(valueFromStorage, newV);
-      });
+      Object returned = super.merge(keyToStorage(key), valueToStorage(value),
+            new BiFunctionMapper(remappingFunction, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass));
       return valueFromStorage(returned);
    }
 

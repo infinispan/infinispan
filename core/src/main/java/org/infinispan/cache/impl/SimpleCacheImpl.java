@@ -1323,18 +1323,22 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
-      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
-      return mergeInternal(key, value, remappingFunction, ref);
+      return mergeInternal(key, value, remappingFunction, new CacheEntryChange<>(), defaultMetadata);
    }
 
-   protected V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref) {
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
+      return mergeInternal(key, value, remappingFunction, new CacheEntryChange<>(), metadata);
+   }
+
+   protected V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref, Metadata metadata) {
       boolean hasListeners = this.hasListeners;
       getDataContainer().compute(key, (k, oldEntry, factory) -> {
          V oldValue = getValue(oldEntry);
          V newValue = oldValue == null ? value : remappingFunction.apply(oldValue, value);
          return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, ref, hasListeners);
       });
-      return notifyAndReturn(ref, hasListeners, defaultMetadata);
+      return notifyAndReturn(ref, hasListeners, metadata);
    }
 
    private V notifyAndReturn(CacheEntryChange<K, V> ref, boolean hasListeners, Metadata metadata) {

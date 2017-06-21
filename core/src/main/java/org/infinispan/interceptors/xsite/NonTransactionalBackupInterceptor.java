@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.xsite;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -57,6 +58,11 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+      return handleSingleKeyWriteCommand(ctx, command);
+   }
+
+   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
@@ -90,6 +96,9 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       } else if (command instanceof ComputeIfAbsentCommand) {
          ComputeIfAbsentCommand computeIfAbsentCommand = (ComputeIfAbsentCommand) command;
          return commandsFactory.buildComputeIfAbsentCommand(computeIfAbsentCommand.getKey(), computeIfAbsentCommand.getMappingFunction(), computeIfAbsentCommand.getMetadata(), computeIfAbsentCommand.getFlagsBitSet());
+      } else if (command instanceof ReadWriteKeyCommand) {
+         ReadWriteKeyCommand readWriteKeyCommand = (ReadWriteKeyCommand) command;
+         return commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(), readWriteKeyCommand.getFunction(), readWriteKeyCommand.getParams());
       }
       throw new IllegalArgumentException("Command " + command + " is not valid!");
    }
