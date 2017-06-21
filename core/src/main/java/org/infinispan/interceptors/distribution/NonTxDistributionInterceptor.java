@@ -250,7 +250,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                   allFuture.completeExceptionally(throwable);
                } else {
                   if (getSuccessfulResponseOrFail(responseMap, allFuture,
-                        () -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE)) == null) {
+                        rsp -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE)) == null) {
                      return;
                   }
                   allFuture.countDown();
@@ -386,7 +386,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                   allFuture.completeExceptionally(throwable);
                } else {
                   SuccessfulResponse response = getSuccessfulResponseOrFail(responses, allFuture,
-                        () -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE));
+                        rsp -> allFuture.completeExceptionally(OutdatedTopologyException.INSTANCE));
                   if (response == null) {
                      return;
                   }
