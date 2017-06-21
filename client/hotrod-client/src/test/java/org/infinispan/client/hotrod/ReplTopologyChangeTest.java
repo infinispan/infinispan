@@ -86,7 +86,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    }
 
    public void testTwoMembers() {
-      InetSocketAddress server1Address = new InetSocketAddress("localhost", hotRodServer1.getPort());
+      InetSocketAddress server1Address = InetSocketAddress.createUnresolved(hotRodServer1.getHost(), hotRodServer1.getPort());
       expectTopologyChange(server1Address, true);
       assertEquals(2, tcpTransportFactory.getServers().size());
    }
@@ -101,7 +101,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       try {
-         expectTopologyChange(new InetSocketAddress("localhost", hotRodServer3.getPort()), true);
+         expectTopologyChange(InetSocketAddress.createUnresolved(hotRodServer3.getHost(), hotRodServer3.getPort()), true);
          assertEquals(3, tcpTransportFactory.getServers().size());
       } finally {
          log.info("Members are: " + manager(0).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
@@ -118,7 +118,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
       waitForServerToDie(2);
 
-      InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());
+      InetSocketAddress server3Address = InetSocketAddress.createUnresolved(hotRodServer3.getHost(), hotRodServer3.getPort());
 
       try {
          expectTopologyChange(server3Address, false);

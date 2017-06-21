@@ -149,7 +149,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    }
 
    protected InetSocketAddress getAddress(HotRodServer hotRodServer) {
-      InetSocketAddress socketAddress = new InetSocketAddress(hotRodServer.getHost(), hotRodServer.getPort());
+      InetSocketAddress socketAddress = InetSocketAddress.createUnresolved(hotRodServer.getHost(), hotRodServer.getPort());
       addr2hrServer.put(socketAddress, hotRodServer);
       return socketAddress;
    }

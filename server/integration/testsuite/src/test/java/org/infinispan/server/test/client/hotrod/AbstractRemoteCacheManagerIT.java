@@ -215,17 +215,17 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         // perform first simulated operation
         tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = (InetSocketAddress) tt.getServerAddress();
+        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
 
         tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = (InetSocketAddress) tt.getServerAddress();
+        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
 
         tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = (InetSocketAddress) tt.getServerAddress();
+        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
         ttf.releaseTransport(tt);
         serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort());
 
@@ -279,13 +279,13 @@ public abstract class AbstractRemoteCacheManagerIT {
         TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
         // perform first simulated operation
         tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = (InetSocketAddress) tt.getServerAddress();
+        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
         ttf.releaseTransport(tt);
         assertEquals("load balancing first request: server address expected " + hostport0 + ", actual server address "
                 + sock_addr, sock_addr, hostport0);
 
         tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = (InetSocketAddress) tt.getServerAddress();
+        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
         ttf.releaseTransport(tt);
         assertEquals("load balancing second request: server address expected " + hostport0 + ", actual server address"
                 + sock_addr, sock_addr, hostport0);
@@ -319,7 +319,7 @@ public abstract class AbstractRemoteCacheManagerIT {
                     found = true;
             }
             if (!found)
-                fail("The remote cache manager was configured to have server with an address " + scfg.host() + ":" + scfg.port() + ", but it doesn't.");
+                fail("The remote cache manager was configured to have server with an address " + scfg.host() + ":" + scfg.port() + ", but it doesn't (" + servers + ")");
         }
 
         assertEquals(config.forceReturnValues(), Boolean.parseBoolean(getForceReturnValueProperty(rc)));
@@ -369,12 +369,8 @@ public abstract class AbstractRemoteCacheManagerIT {
         int listSize = servers.size();
         int i = 0;
         for (Iterator iter = servers.iterator(); iter.hasNext(); i++) {
-            InetSocketAddress addr = (InetSocketAddress) iter.next();
+            InetSocketAddress addr = resolve((InetSocketAddress) iter.next());
             // take care to remove prepended backslash
-            String serverAddress = addr.getAddress().toString();
-//            if (serverAddress.startsWith("/"))
-//                serverAddress = serverAddress.substring(1);
-//            serverList.append(serverAddress);
             if (addr.getAddress() instanceof Inet6Address) {
                 serverList.append('[').append(addr.getHostName()).append(']');
             } else {
@@ -564,5 +560,12 @@ public abstract class AbstractRemoteCacheManagerIT {
             throw new Exception("Could not access transportFactory field", e);
         }
         return fieldValue;
+    }
+
+    private InetSocketAddress resolve(InetSocketAddress address) {
+        if (address.isUnresolved())
+            return new InetSocketAddress(address.getHostString(), address.getPort());
+        else
+            return address;
     }
 }

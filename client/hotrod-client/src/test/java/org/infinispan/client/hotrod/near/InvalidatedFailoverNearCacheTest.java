@@ -42,10 +42,10 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       for (HotRodServer server : servers)
-         clientBuilder.addServer().host("127.0.0.1").port(server.getPort());
+         clientBuilder.addServer().host(server.getHost()).port(server.getPort());
       clientBuilder.balancingStrategy(StickyServerLoadBalancingStrategy.class);
       clientBuilder.nearCache().mode(getNearCacheMode()).maxEntries(-1);
-      return AssertsNearCache.create(this.<byte[], Object>cache(0), clientBuilder);
+      return AssertsNearCache.create(this.cache(0), clientBuilder);
    }
 
    protected NearCacheMode getNearCacheMode() {

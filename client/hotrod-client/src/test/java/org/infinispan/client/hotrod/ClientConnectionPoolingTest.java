@@ -100,8 +100,8 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       workerThread5 = new WorkerThread(remoteCache);
       workerThread6 = new WorkerThread(remoteCache);
 
-      hrServ1Addr = new InetSocketAddress("localhost", hotRodServer1.getPort());
-      hrServ2Addr = new InetSocketAddress("localhost", hotRodServer2.getPort());
+      hrServ1Addr = InetSocketAddress.createUnresolved("localhost", hotRodServer1.getPort());
+      hrServ2Addr = InetSocketAddress.createUnresolved("localhost", hotRodServer2.getPort());
    }
 
    @AfterMethod
