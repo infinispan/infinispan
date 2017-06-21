@@ -286,7 +286,7 @@ public class Codec10 implements Codec {
          int port = transport.readUnsignedShort();
          int hashCode = transport.read4ByteInt();
          if (trace) localLog.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
-         SocketAddress address = new InetSocketAddress(host, port);
+         SocketAddress address = InetSocketAddress.createUnresolved(host, port);
          Set<Integer> hashes = servers2Hash.get(address);
          if (hashes == null) {
             hashes = new HashSet<Integer>();

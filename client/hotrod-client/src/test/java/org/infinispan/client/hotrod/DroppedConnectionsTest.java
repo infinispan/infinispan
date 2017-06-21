@@ -42,7 +42,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
                .minIdle(1)
                .maxIdle(2)
                .maxActive(2)
-            .addServer().host("localhost").port(hotRodServer.getPort());
+            .addServer().host(hotRodServer.getHost()).port(hotRodServer.getPort());
 
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       rc = remoteCacheManager.getCache();
@@ -62,7 +62,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       rc.put("k","v"); //make sure a connection is created
 
       GenericKeyedObjectPool keyedObjectPool = transportFactory.getConnectionPool();
-      InetSocketAddress address = new InetSocketAddress("127.0.0.1", hotRodServer.getPort());
+      InetSocketAddress address = InetSocketAddress.createUnresolved("127.0.0.1", hotRodServer.getPort());
 
       assertEquals(0, keyedObjectPool.getNumActive(address));
       assertEquals(1, keyedObjectPool.getNumIdle(address));
