@@ -46,8 +46,7 @@ public class SampleHotrodServerLifecycleBean implements InitializingBean, Dispos
       cacheManager.defineConfiguration(remoteBackupCacheName, HotRodTestingUtil.hotRodCacheConfiguration().build());
       cacheManager.defineConfiguration(customCacheName, HotRodTestingUtil.hotRodCacheConfiguration().build());
       HotRodServerConfigurationBuilder hcb = new HotRodServerConfigurationBuilder();
-      hcb.port(15233);
-      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager, hcb);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager, 15233, hcb);
    }
 
    @Override
