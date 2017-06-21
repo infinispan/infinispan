@@ -1,10 +1,14 @@
 package org.infinispan.server.hotrod.configuration;
 
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.configuration.cache.SyncConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
+import org.infinispan.server.hotrod.logging.JavaLog;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * HotRodServerConfigurationBuilder.
@@ -14,6 +18,7 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
  */
 public class HotRodServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<HotRodServerConfiguration, HotRodServerConfigurationBuilder> implements
       Builder<HotRodServerConfiguration>, HotRodServerChildConfigurationBuilder {
+   private JavaLog log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), JavaLog.class);
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
    private String proxyHost;
    private int proxyPort = -1;
@@ -112,6 +117,10 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    @Override
    public void validate() {
       super.validate();
+      if (proxyHost == null && host == null) {
+         throw log.missingHostAddress();
+      }
+
       authentication.validate();
    }
 
