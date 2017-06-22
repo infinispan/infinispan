@@ -54,6 +54,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
          try {
             // Transport retrieval should be retried
             transport = getTransport(retryCount, failedServers);
+            log.debugf("Sending op [%s] using transport [%s]", this, transport);
             return executeOperation(transport);
          } catch (TransportException te) {
             SocketAddress address = te.getServerAddress();

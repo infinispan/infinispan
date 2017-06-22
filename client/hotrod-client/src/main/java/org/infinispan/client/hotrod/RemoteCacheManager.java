@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.AddressMapper;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheManagerAdminImpl;
@@ -69,6 +70,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    protected TransportFactory transportFactory;
    private ExecutorService asyncExecutorService;
    protected ClientListenerNotifier listenerNotifier;
+   protected AddressMapper addressMapper;
    private final Runnable start = this::start;
    private final Runnable stop = this::stop;
 
@@ -186,6 +188,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
 
    @Override
    public void start() {
+      addressMapper = Util.getInstance(configuration.addressMapper());
       transportFactory = Util.getInstance(configuration.transportFactory());
 
       if (marshaller == null) {
@@ -200,7 +203,7 @@ public class RemoteCacheManager implements RemoteCacheContainer {
       createExecutorService();
 
       listenerNotifier = ClientListenerNotifier.create(codec, marshaller, transportFactory, configuration.serialWhitelist());
-      transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier);
+      transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier, addressMapper);
 
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
@@ -328,6 +331,10 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    @Override
    public Marshaller getMarshaller() {
       return marshaller;
+   }
+
+   protected TransportFactory getTransportFactory() {
+      return transportFactory;
    }
 
    public static byte[] cacheNameBytes(String cacheName) {

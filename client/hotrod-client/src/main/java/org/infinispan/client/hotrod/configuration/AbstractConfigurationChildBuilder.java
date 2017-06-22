@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.configuration;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.impl.AddressMapper;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
@@ -180,4 +181,13 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
       return builder.build();
    }
 
+   @Override
+   public ConfigurationBuilder addressMapping(Class<? extends AddressMapper> addressMapper) {
+      return builder.addressMapping(addressMapper);
+   }
+
+   @Override
+   public ConfigurationBuilder addressMapping(String addressMapper) {
+      return builder.addressMapping(addressMapper);
+   }
 }

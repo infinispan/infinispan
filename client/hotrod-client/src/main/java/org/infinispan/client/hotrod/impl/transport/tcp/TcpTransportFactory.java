@@ -27,6 +27,7 @@ import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.configuration.SslConfiguration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.AddressMapper;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
@@ -46,6 +47,15 @@ import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
 /**
+ * TCP Transport.
+ *
+ * <p>
+ *    Internal/External address mapping happens only in this class. Whenever a list of servers (which is passed
+ *    by with topology) is sent from the server, we switch all addresses into external ones.
+ *    This also means that whenever we obtain addresses from topology info, they are already translated into external
+ *    ones.
+ * </p>
+ *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
@@ -57,15 +67,14 @@ public class TcpTransportFactory implements TransportFactory {
    public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
 
    /**
-    * We need synchronization as the thread that calls {@link TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec,
-    * org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger,
-    * org.infinispan.client.hotrod.event.ClientListenerNotifier)}
+    * We need synchronization as the thread that calls {@link TransportFactory#start(Codec, Configuration, AtomicInteger, ClientListenerNotifier, AddressMapper)}
     * might(and likely will) be different from the thread(s) that calls {@link TransportFactory#getTransport(Object,
     * java.util.Set, byte[])} or other methods
     */
    private final Object lock = new Object();
    // The connection pool implementation is assumed to be thread-safe, so we need to synchronize just the access to this field and not the method calls
    private GenericKeyedObjectPool<SocketAddress, TcpTransport> connectionPool;
+   private AddressMapper addressMapper;
    // Per cache request balancing strategy
    private Map<WrappedByteArray, FailoverRequestBalancingStrategy> balancers;
    private Configuration configuration;
@@ -94,8 +103,9 @@ public class TcpTransportFactory implements TransportFactory {
          new LinkedBlockingQueue<>();
 
    @Override
-   public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
+   public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier, AddressMapper addressMapper) {
       synchronized (lock) {
+         this.addressMapper = addressMapper;
          this.listenerNotifier = listenerNotifier;
          this.configuration = configuration;
          Collection<SocketAddress> servers = new ArrayList<>();
@@ -237,7 +247,12 @@ public class TcpTransportFactory implements TransportFactory {
                                   int numKeyOwners, short hashFunctionVersion, int hashSpace,
                                   byte[] cacheName, AtomicInteger topologyId) {
       synchronized (lock) {
-         topologyInfo.updateTopology(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);
+         Map<SocketAddress, Set<Integer>> externalServers2Hash = new HashMap<>(servers2Hash.size());
+         for (SocketAddress key : servers2Hash.keySet()) {
+            externalServers2Hash.put(addressMapper.toExternalAddress(key), servers2Hash.get(key));
+         }
+
+         topologyInfo.updateTopology(externalServers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);
       }
    }
 
@@ -245,6 +260,12 @@ public class TcpTransportFactory implements TransportFactory {
    public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion,
                                   byte[] cacheName, AtomicInteger topologyId) {
       synchronized (lock) {
+         for (int i = 0; i < segmentOwners.length; ++i) {
+            for (int j = 0; j < segmentOwners[i].length; ++j) {
+               segmentOwners[i][j] = addressMapper.toExternalAddress(segmentOwners[i][j]);
+            }
+         }
+
          topologyInfo.updateTopology(segmentOwners, numSegments, hashFunctionVersion, cacheName, topologyId);
       }
    }
@@ -356,14 +377,16 @@ public class TcpTransportFactory implements TransportFactory {
 
    @GuardedBy("lock")
    private Collection<SocketAddress> updateTopologyInfo(byte[] cacheName, Collection<SocketAddress> newServers, boolean quiet) {
+      Collection<SocketAddress> externalServers = newServers.stream().map(s -> addressMapper.toExternalAddress(s)).collect(Collectors.toList());
       Collection<SocketAddress> servers = topologyInfo.getServers();
-      Set<SocketAddress> addedServers = new HashSet<>(newServers);
+      Set<SocketAddress> addedServers = new HashSet<>(externalServers);
       addedServers.removeAll(servers);
       Set<SocketAddress> failedServers = new HashSet<>(servers);
-      failedServers.removeAll(newServers);
+      failedServers.removeAll(externalServers);
       if (trace) {
          log.tracef("Current list: %s", servers);
-         log.tracef("New list: %s", newServers);
+         log.tracef("Internal server list: %s", newServers);
+         log.tracef("External server list: %s", externalServers);
          log.tracef("Added servers: %s", addedServers);
          log.tracef("Removed servers: %s", failedServers);
       }
@@ -389,7 +412,7 @@ public class TcpTransportFactory implements TransportFactory {
          connectionPool.clear(server);
       }
 
-      servers = Collections.unmodifiableList(new ArrayList(newServers));
+      servers = Collections.unmodifiableList(new ArrayList(externalServers));
       topologyInfo.updateServers(cacheName, servers);
 
       if (!failedServers.isEmpty()) {

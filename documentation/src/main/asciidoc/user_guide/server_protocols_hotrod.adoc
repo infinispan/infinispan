@@ -917,6 +917,38 @@ In order to avoid creating a TCP connection on each request (which is a costly o
 
 The number of connections per server, total number of connections, how long should a connection be kept idle in the pool before being closed - all these (and more) can be configured. Please refer to the javadoc of link:{javadocroot}/org/infinispan/client/hotrod/RemoteCacheManager.html[RemoteCacheManager] for a list of all possible configuration elements.
 
+==== Using internal/external IP addresses
+
+In some cases (e.g. OpenStack or Kubernetes with services exposed using load balancers) servers use different IP addresses for clustering and different for communicating with the client.
+In order to take advantage `hash-distribution-aware` client in such configuration one needs to provide a mapping between those two types of addresses. Specially for this reason we created
+`AddressMapper` interface. One is responsible for implementing mapping between internal and external addresses:
+
+[source,java]
+----
+public class MyAddressMapper implements AddressMapper {
+
+   @Override
+   public SocketAddress toExternalAddress(SocketAddress internalAddress) {
+      //provided by the user
+   }
+
+   @Override
+   public SocketAddress toInternalAddress(SocketAddress externalAddress) {
+      //provided by the user
+   }
+}
+----
+
+The final part is to supply the mapping class into the Hot Rod Client configuration:
+
+[source,java]
+----
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.addServer()
+ // ... provide at least one server address
+ .addressMapping(MyAddressMapper.class);
+----
+
 ==== Marshalling data
 The Hot Rod client allows one to plug in a custom marshaller for transforming user objects into byte arrays and the other way around. This transformation is needed because of Hot Rod's binary nature - it doesn't know about objects.
 

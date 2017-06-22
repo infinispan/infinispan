@@ -58,13 +58,14 @@ public class ConfigurationProperties {
    public static final String AUTH_PASSWORD = "infinispan.client.hotrod.auth_password";
    public static final String AUTH_REALM = "infinispan.client.hotrod.auth_realm";
    public static final String AUTH_CLIENT_SUBJECT = "infinispan.client.hotrod.auth_client_subject";
+   public static final String ADDRESS_MAPPER = "infinispan.client.hotrod.address_mapper";
    public static final String SASL_PROPERTIES_PREFIX = "infinispan.client.hotrod.sasl_properties";
+
    public static final Pattern SASL_PROPERTIES_PREFIX_REGEX =
          Pattern.compile('^' + ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.');
    public static final String JAVA_SERIAL_WHITELIST = "infinispan.client.hotrod.java_serial_whitelist";
 
    // defaults
-
    public static final int DEFAULT_KEY_SIZE = 64;
    public static final int DEFAULT_VALUE_SIZE = 512;
    public static final int DEFAULT_HOTROD_PORT = 11222;
@@ -142,6 +143,10 @@ public class ConfigurationProperties {
 
    public String getProtocolVersion() {
       return props.getProperty(PROTOCOL_VERSION, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
+   }
+
+   public String addressMapper() {
+      return props.getProperty(ADDRESS_MAPPER, AddressMapper.class.getName());
    }
 
    public int getConnectTimeout() {

@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.impl.AddressMapper;
+import org.infinispan.client.hotrod.impl.AddressMapperImpl;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TypedProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
@@ -71,6 +73,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
    private final NearCacheConfigurationBuilder nearCache;
    private final List<String> whiteListRegExs = new ArrayList<>();
+   private Class<? extends AddressMapper> addressMapper = AddressMapperImpl.class;
 
    private final List<ClusterConfigurationBuilder> clusters = new ArrayList<ClusterConfigurationBuilder>();
 
@@ -137,6 +140,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder balancingStrategy(Class<? extends FailoverRequestBalancingStrategy> balancingStrategy) {
       this.balancingStrategyClass = balancingStrategy;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder addressMapping(Class<? extends AddressMapper> addressMapper) {
+      this.addressMapper = addressMapper;
+      return this;
+   }
+
+   @Override
+   public ConfigurationBuilder addressMapping(String addressMapper) {
+      this.addressMapper = Util.loadClass(addressMapper, this.classLoader());
       return this;
    }
 
@@ -318,6 +333,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.MARSHALLER)) {
          this.marshaller(typed.getProperty(ConfigurationProperties.MARSHALLER, null, true));
       }
+      if (typed.containsKey(ConfigurationProperties.ADDRESS_MAPPER)) {
+         this.addressMapping(typed.getProperty(ConfigurationProperties.ADDRESS_MAPPER, null, true));
+      }
       this.version(ProtocolVersion.parseVersion(typed.getProperty(ConfigurationProperties.PROTOCOL_VERSION, protocolVersion.toString(), true)));
       String serverList = typed.getProperty(ConfigurationProperties.SERVER_LIST, null, true);
       if (serverList != null) {
@@ -381,7 +399,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
             consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs);
+            valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, addressMapper);
    }
 
    @Override
@@ -401,6 +419,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.classLoader = new WeakReference<ClassLoader>(template.classLoader());
       this.asyncExecutorFactory.read(template.asyncExecutorFactory());
       this.balancingStrategyClass = template.balancingStrategyClass();
+      this.addressMapper = template.addressMapper();
       this.balancingStrategy = template.balancingStrategy();
       this.connectionPool.read(template.connectionPool());
       this.connectionTimeout = template.connectionTimeout();
