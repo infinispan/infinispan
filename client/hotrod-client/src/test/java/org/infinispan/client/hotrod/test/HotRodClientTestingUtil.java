@@ -88,7 +88,7 @@ public class HotRodClientTestingUtil {
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager) {
-      return startHotRodServer(cacheManager, new HotRodServerConfigurationBuilder());
+      return startHotRodServer(cacheManager, new HotRodServerConfigurationBuilder().workerThreads(3));
    }
 
    /**
