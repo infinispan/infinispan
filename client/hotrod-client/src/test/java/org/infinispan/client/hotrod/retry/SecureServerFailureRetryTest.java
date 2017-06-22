@@ -19,7 +19,9 @@ public class SecureServerFailureRetryTest extends ServerFailureRetryTest {
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
       sap.addUser("user", "realm", "password".toCharArray(), null);
-      serverBuilder.authentication()
+      serverBuilder
+         .workerThreads(3)
+         .authentication()
          .enable()
          .serverName("localhost")
          .addAllowedMech("CRAM-MD5")
