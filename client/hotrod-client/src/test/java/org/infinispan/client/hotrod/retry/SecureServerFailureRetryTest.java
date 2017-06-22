@@ -8,7 +8,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.security.simple.SimpleServerAuthenticationProvider;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.TestCallbackHandler;
 import org.testng.annotations.Test;
 
@@ -20,7 +19,9 @@ public class SecureServerFailureRetryTest extends ServerFailureRetryTest {
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       SimpleServerAuthenticationProvider sap = new SimpleServerAuthenticationProvider();
       sap.addUser("user", "realm", "password".toCharArray(), null);
-      serverBuilder.authentication()
+      serverBuilder
+         .workerThreads(3)
+         .authentication()
          .enable()
          .serverName("localhost")
          .addAllowedMech("CRAM-MD5")

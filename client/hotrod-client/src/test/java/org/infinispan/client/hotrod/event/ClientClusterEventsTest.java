@@ -1,8 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterCustomEventLogListener;
@@ -17,7 +15,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
 
@@ -42,8 +39,7 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
-      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
-      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
+      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
       server.addCacheEventFilterConverterFactory("filter-converter-factory", new FilterConverterFactory());
       servers.add(server);
