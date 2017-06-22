@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientCustomEventsTest")
@@ -18,8 +17,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
 
    @Override
    protected HotRodServer createHotRodServer() {
-      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
-      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager, builder);
+      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
       server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory());
       server.addCacheEventConverterFactory("raw-static-converter-factory", new RawStaticConverterFactory());
