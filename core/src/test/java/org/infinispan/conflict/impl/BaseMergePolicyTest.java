@@ -25,6 +25,7 @@ import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
+import org.testng.annotations.Test;
 
 public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
 
@@ -36,6 +37,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    abstract void duringSplit();
    abstract void afterMerge();
 
+   @Test(enabled = false)
    public void testPartitionMergePolicy() throws Throwable {
       final List<ViewChangedHandler> listeners = new ArrayList<>();
       for (int i = 0; i < caches().size(); i++) {
