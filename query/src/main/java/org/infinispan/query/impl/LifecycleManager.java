@@ -18,6 +18,7 @@ import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -246,7 +247,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
     */
    private void checkIndexableClasses(SearchIntegrator searchFactory, Set<Class<?>> indexedEntities) {
       for (Class<?> c : indexedEntities) {
-         if (searchFactory.getIndexBinding(c) == null) {
+         if (searchFactory.getIndexBinding(new PojoIndexedTypeIdentifier(c)) == null) {
             throw log.classNotIndexable(c.getName());
          }
       }
