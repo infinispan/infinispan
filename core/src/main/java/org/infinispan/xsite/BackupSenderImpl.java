@@ -4,10 +4,11 @@ import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -19,6 +20,13 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -37,13 +45,16 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.AggregateBackupResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.TimeService;
@@ -127,8 +138,8 @@ public class BackupSenderImpl implements BackupSender {
    }
 
    @Override
-   public BackupResponse backupPrepare(PrepareCommand command) throws Exception {
-      List<WriteCommand> modifications = filterModifications(command.getModifications());
+   public BackupResponse backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction) throws Exception {
+      List<WriteCommand> modifications = filterModifications(command.getModifications(), cacheTransaction.getLookedUpEntries());
       if (modifications.isEmpty()) {
          return EMPTY_RESPONSE;
       }
@@ -221,7 +232,7 @@ public class BackupSenderImpl implements BackupSender {
 
    private BackupResponse sendTo1PCBackups(CommitCommand command) throws Exception {
       final LocalTransaction localTx = txTable.getLocalTransaction(command.getGlobalTransaction());
-      List<WriteCommand> modifications = filterModifications(localTx.getModifications());
+      List<WriteCommand> modifications = filterModifications(localTx.getModifications(), localTx.getLookedUpEntries());
       if (modifications.isEmpty()) {
          return EMPTY_RESPONSE;
       }
@@ -287,60 +298,48 @@ public class BackupSenderImpl implements BackupSender {
       return offline != null && offline.isOffline();
    }
 
-   private List<WriteCommand> filterModifications(WriteCommand[] modifications) {
+   private List<WriteCommand> filterModifications(WriteCommand[] modifications, Map<Object, CacheEntry> lookedUpEntries) {
       if (modifications == null || modifications.length == 0) {
          return Collections.emptyList();
       }
-      return filterModifications(Arrays.asList(modifications));
+      return filterModifications(Arrays.asList(modifications), lookedUpEntries);
    }
 
-   private List<WriteCommand> filterModifications(Collection<WriteCommand> modifications) {
+   private List<WriteCommand> filterModifications(List<WriteCommand> modifications, Map<Object, CacheEntry> lookedUpEntries) {
       if (modifications == null || modifications.isEmpty()) {
          return Collections.emptyList();
       }
       List<WriteCommand> filtered = new ArrayList<>(modifications.size());
-      for (WriteCommand writeCommand : modifications) {
-         if (!writeCommand.isSuccessful()) {
+      Set<Object> filteredKeys = new HashSet<>(modifications.size());
+      // Note: the result of replication of transaction with flagged operations may be actually different.
+      // We use last-flag-bit-set wins strategy.
+      // All we can do is to assume that if the user plays with unsafe flags he won't modify the entry once
+      // in a replicable and another time in a non-replicable way
+      for (ListIterator<WriteCommand> it = modifications.listIterator(modifications.size()); it.hasPrevious(); ) {
+         WriteCommand writeCommand = it.previous();
+         if (!writeCommand.isSuccessful() || writeCommand.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
             continue;
          }
-         WriteCommand filteredCommand = writeCommand;
-         PutKeyValueCommand putCommand;
-         if (writeCommand instanceof PutKeyValueCommand && (putCommand = (PutKeyValueCommand) writeCommand).isPutIfAbsent()) {
-            filteredCommand = commandsFactory.buildPutKeyValueCommand(putCommand.getKey(),
-                                                                      putCommand.getValue(),
-                                                                      putCommand.getMetadata(),
-                                                                      putCommand.getFlagsBitSet());
-         } else if (writeCommand instanceof ReplaceCommand) {
-            ReplaceCommand replaceCommand = (ReplaceCommand) writeCommand;
-            filteredCommand = commandsFactory.buildPutKeyValueCommand(replaceCommand.getKey(),
-                                                                      replaceCommand.getNewValue(),
-                                                                      replaceCommand.getMetadata(),
-                                                                      replaceCommand.getFlagsBitSet());
-         } else if (writeCommand instanceof RemoveCommand && writeCommand.isConditional()) {
-            filteredCommand = commandsFactory.buildRemoveCommand(((RemoveCommand) writeCommand).getKey(), null,
-                                                                 writeCommand.getFlagsBitSet());
-         } else if (writeCommand instanceof ComputeCommand) {
-            ComputeCommand computeCommand = (ComputeCommand) writeCommand;
-            filteredCommand = commandsFactory.buildComputeCommand(computeCommand.getKey(),
-                  computeCommand.getRemappingBiFunction(),
-                  computeCommand.isComputeIfPresent(),
-                  computeCommand.getMetadata(),
-                  computeCommand.getFlagsBitSet());
-
-         } else if (writeCommand instanceof ComputeIfAbsentCommand) {
-            ComputeIfAbsentCommand computeIfAbsentCommand = (ComputeIfAbsentCommand) writeCommand;
-            filteredCommand = commandsFactory.buildComputeIfAbsentCommand(computeIfAbsentCommand.getKey(),
-                  computeIfAbsentCommand.getMappingFunction(),
-                  computeIfAbsentCommand.getMetadata(),
-                  computeIfAbsentCommand.getFlagsBitSet());
-
-         } else if (writeCommand instanceof ReadWriteKeyCommand) {
-            ReadWriteKeyCommand readWriteKeyCommand = (ReadWriteKeyCommand) writeCommand;
-            filteredCommand = commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(),
-                  readWriteKeyCommand.getFunction(),
-                  readWriteKeyCommand.getParams());
+         // Note: ClearCommand should be replicated out of transaction
+         for (Object key : writeCommand.getAffectedKeys()) {
+            if (filteredKeys.contains(key)) {
+               continue;
+            }
+            CacheEntry entry = lookedUpEntries.get(key);
+            if (entry == null) {
+               // Functional commands should always fetch the remote value to originator if xsite is enabled.
+               throw new IllegalStateException();
+            }
+            WriteCommand replicatedCommand;
+            if (entry.isRemoved()) {
+               replicatedCommand = commandsFactory.buildRemoveCommand(key, null, writeCommand.getFlagsBitSet());
+            } else {
+               replicatedCommand = commandsFactory.buildPutKeyValueCommand(key, entry.getValue(),
+                     entry.getMetadata(), writeCommand.getFlagsBitSet());
+            }
+            filtered.add(replicatedCommand);
+            filteredKeys.add(key);
          }
-         filtered.add(filteredCommand);
       }
       return filtered;
    }
@@ -401,6 +400,54 @@ public class BackupSenderImpl implements BackupSender {
       }
 
       @Override
+      public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+         failurePolicy.handleWriteOnlyKeyFailure(site, command.getKey());
+         return null;
+      }
+
+      @Override
+      public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+         failurePolicy.handleReadWriteKeyValueFailure(site, command.getKey());
+         return null;
+      }
+
+      @Override
+      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+         failurePolicy.handleReadWriteKeyFailure(site, command.getKey());
+         return null;
+      }
+
+      @Override
+      public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+         failurePolicy.handleWriteOnlyManyEntriesFailure(site, command.getEntries());
+         return null;
+      }
+
+      @Override
+      public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+         failurePolicy.handleWriteOnlyKeyValueFailure(site, command.getKey());
+         return null;
+      }
+
+      @Override
+      public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+         failurePolicy.handleWriteOnlyManyFailure(site, command.getAffectedKeys());
+         return null;
+      }
+
+      @Override
+      public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+         failurePolicy.handleReadWriteManyFailure(site, command.getAffectedKeys());
+         return null;
+      }
+
+      @Override
+      public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+         failurePolicy.handleReadWriteManyEntriesFailure(site, command.getEntries());
+         return null;
+      }
+
+      @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
          failurePolicy.handleClearFailure(site);
          return null;
@@ -426,12 +473,6 @@ public class BackupSenderImpl implements BackupSender {
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         failurePolicy.handleCommitFailure(site, tx);
-         return null;
-      }
-
-      @Override
-      public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
          failurePolicy.handleCommitFailure(site, tx);
          return null;
       }

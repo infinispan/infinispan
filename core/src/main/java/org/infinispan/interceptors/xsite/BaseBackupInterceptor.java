@@ -1,15 +1,17 @@
 package org.infinispan.interceptors.xsite;
 
+import javax.transaction.Transaction;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -27,7 +29,9 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
    protected BackupSender backupSender;
    protected TransactionTable txTable;
 
-   private static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
+   protected static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
+   protected static final boolean trace = log.isTraceEnabled();
+   private final InvocationSuccessAction handleClearReturn = this::handleClearReturn;
 
    @Inject
    void init(BackupSender sender, TransactionTable txTable) {
@@ -37,7 +41,14 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleMultipleKeysWriteCommand(ctx, command);
+      if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
+         return invokeNext(ctx, command);
+      }
+      return invokeNextThenAccept(ctx, command, handleClearReturn);
+   }
+
+   private void handleClearReturn(InvocationContext ctx, VisitableCommand rCommand, Object rv) throws Throwable {
+      backupSender.processResponses(backupSender.backupWrite((ClearCommand) rCommand), rCommand);
    }
 
    @Override
@@ -50,24 +61,15 @@ public class BaseBackupInterceptor extends DDAsyncInterceptor {
          return invokeNext(ctx, command);
       }
 
-      BackupResponse backupResponse = backupSender.backupPrepare(command);
+      BackupResponse backupResponse = backupSender.backupPrepare(command, ctx.getCacheTransaction());
       return processBackupResponse(ctx, command, backupResponse);
    }
 
    protected Object processBackupResponse(TxInvocationContext ctx, VisitableCommand command,
          BackupResponse backupResponse) {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         backupSender.processResponses(backupResponse, command, ctx.getTransaction());
-      });
-   }
-
-   protected Object handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command)
-         throws Throwable {
-      if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
-         return invokeNext(ctx, command);
-      }
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         backupSender.processResponses(backupSender.backupWrite(command), command);
+         Transaction transaction = ((TxInvocationContext) rCtx).getTransaction();
+         backupSender.processResponses(backupResponse, rCommand, transaction);
       });
    }
 

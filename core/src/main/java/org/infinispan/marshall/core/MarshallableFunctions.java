@@ -6,6 +6,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
@@ -83,6 +84,10 @@ public final class MarshallableFunctions {
 
    public static <V> BiConsumer<V, WriteEntryView<V>> setValueMetasConsumer(MetaParam.Writable... metas) {
       return new SetValueMetas<>(metas);
+   }
+
+   public static <V> BiConsumer<V, WriteEntryView<V>> setInternalCacheValueConsumer() {
+      return SetInternalCacheValue.getInstance();
    }
 
    public static <V> Consumer<WriteEntryView<V>> removeConsumer() {
@@ -484,6 +489,19 @@ public final class MarshallableFunctions {
       @Override
       public MetaParam.Writable[] metas() {
          return metas;
+      }
+   }
+
+   private static final class SetInternalCacheValue<V> implements BiConsumer<InternalCacheValue<V>, WriteEntryView<V>> {
+      private static final SetInternalCacheValue INSTANCE = new SetInternalCacheValue<>();
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiConsumer<V, WriteEntryView<V>> getInstance() {
+         return SetInternalCacheValue.INSTANCE;
+      }
+
+      @Override
+      public void accept(InternalCacheValue<V> icv, WriteEntryView<V> view) {
+         view.set(icv.getValue(), icv.getMetadata());
       }
    }
 
