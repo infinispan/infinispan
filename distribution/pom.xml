@@ -132,6 +132,104 @@
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>copy-licenses-xml</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                     <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                     <outputDirectory>${project.build.directory}/licenses</outputDirectory>
+                     <resources>
+                        <resource>
+                           <directory>${project.basedir}/src/main/resources/template</directory>
+                           <includes>
+                              <include>licenses.xml</include>
+                              <include>licenses.css</include>
+                           </includes>
+                           <filtering>false</filtering>
+                        </resource>
+                        <resource>
+                           <directory>${project.basedir}/src/main/resources/licenses</directory>
+                           <includes>
+                              <include>*</include>
+                           </includes>
+                           <filtering>false</filtering>
+                        </resource>
+                     </resources>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <!-- Collect licenses -->
+         <plugin>
+            <groupId>org.wildfly.maven.plugins</groupId>
+            <artifactId>licenses-plugin</artifactId>
+            <version>1.0.0</version>
+            <inherited>false</inherited>
+            <executions>
+               <execution>
+                  <id>update-licenses-xml</id>
+                  <goals>
+                     <goal>insert-versions</goal>
+                  </goals>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                     <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
+                     <licensesOutputFile>${project.build.directory}/licenses/licenses.xml</licensesOutputFile>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <!-- Generate license file -->
+         <!-- Create HTML (parameters: product, version) -->
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>xml-maven-plugin</artifactId>
+            <version>1.0.1</version>
+            <inherited>false</inherited>
+            <executions>
+               <execution>
+                  <id>generate-licenses-html</id>
+                  <goals>
+                     <goal>transform</goal>
+                  </goals>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                     <transformationSets>
+                        <transformationSet>
+                           <dir>${project.build.directory}/licenses</dir>
+                           <includes>
+                              <include>licenses.xml</include>
+                           </includes>
+                           <stylesheet>${project.basedir}/src/main/resources/template/licenses.xsl</stylesheet>
+                           <outputDir>${project.build.directory}/licenses</outputDir>
+                           <fileMappers>
+                              <fileMapper
+                                      implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                                 <targetExtension>.html</targetExtension>
+                              </fileMapper>
+                           </fileMappers>
+                           <parameters>
+                              <parameter>
+                                 <name>product</name>
+                                 <value>${project.name}</value>
+                              </parameter>
+                              <parameter>
+                                 <name>version</name>
+                                 <value>${project.version}</value>
+                              </parameter>
+                           </parameters>
+                        </transformationSet>
+                     </transformationSets>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
                <execution>
