@@ -19,7 +19,7 @@ import javax.persistence.Transient;
 @NaturalIdCache
 /**
  * Test case for NaturalId annotation - ANN-750
- * 
+ *
  * @author Emmanuel Bernard
  * @author Hardy Ferentschik
  */
@@ -58,4 +58,4 @@ public class NaturalIdOnManyToOne {
 	public void setCitizen(Citizen citizen) {
 		this.citizen = citizen;
 	}
-} 
+}

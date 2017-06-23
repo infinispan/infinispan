@@ -16,10 +16,10 @@ import static org.junit.Assert.assertEquals;
 /**
  * Tests for the "extra API" in EntityRegionAccessStrategy;.
  * <p>
- * By "extra API" we mean those methods that are superfluous to the 
+ * By "extra API" we mean those methods that are superfluous to the
  * function of the JBC integration, where the impl is a no-op or a static
  * false return value, UnsupportedOperationException, etc.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */

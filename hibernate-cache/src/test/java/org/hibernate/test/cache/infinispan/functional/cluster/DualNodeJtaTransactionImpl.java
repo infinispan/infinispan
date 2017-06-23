@@ -30,7 +30,7 @@ import org.hibernate.cache.infinispan.util.InfinispanMessageLogger;
  * SimpleJtaTransactionImpl variant that works with DualNodeTransactionManagerImpl.
  *
  * TODO: Merge with single node transaction manager
- * 
+ *
  * @author Brian Stansberry
  */
 public class DualNodeJtaTransactionImpl implements Transaction {

@@ -19,11 +19,10 @@ import org.hibernate.test.cache.infinispan.AbstractEntityCollectionRegionTest;
 import org.infinispan.AdvancedCache;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 /**
  * Tests of EntityRegionImpl.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */

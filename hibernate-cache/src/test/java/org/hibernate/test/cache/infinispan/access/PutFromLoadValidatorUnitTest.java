@@ -408,7 +408,7 @@ public class PutFromLoadValidatorUnitTest {
 			if (removeRegion) {
 				boolean success = putFromLoadValidator.beginInvalidatingRegion();
 				assertTrue(success);
-				putFromLoadValidator.endInvalidatingRegion();;
+				putFromLoadValidator.endInvalidatingRegion();
 			} else {
 				SharedSessionContractImplementor session = mock (SharedSessionContractImplementor.class);
 				boolean success = putFromLoadValidator.beginInvalidatingKey(session, KEY1);

@@ -40,7 +40,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 
 /**
  * Tests of TimestampsRegionImpl.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */

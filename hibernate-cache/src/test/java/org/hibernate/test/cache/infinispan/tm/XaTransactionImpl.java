@@ -30,7 +30,7 @@ import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 
 /**
  * XaResourceCapableTransactionImpl.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */
@@ -75,7 +75,7 @@ public class XaTransactionImpl implements Transaction {
                s.beforeCompletion();
             }
          }
-         
+
          if (!runXaResourcePrepare()) {
             status = Status.STATUS_ROLLING_BACK;
          } else {
@@ -94,7 +94,7 @@ public class XaTransactionImpl implements Transaction {
                throw new SystemException();
             }
          }
-         
+
          runXaResourceCommitTx();
 
          status = Status.STATUS_COMMITTED;
@@ -125,7 +125,7 @@ public class XaTransactionImpl implements Transaction {
             throw new SystemException();
          }
       }
-      
+
       if (synchronizations != null) {
          for (int i = 0; i < synchronizations.size(); i++) {
             Synchronization s = (Synchronization) synchronizations.get(i);
@@ -178,11 +178,11 @@ public class XaTransactionImpl implements Transaction {
    public boolean delistResource(XAResource xaResource, int i) throws IllegalStateException, SystemException {
       throw new SystemException("not supported");
    }
-   
+
    public Collection<XAResource> getEnlistedResources() {
       return enlistedResources;
    }
-   
+
    private boolean runXaResourcePrepare() throws SystemException {
       Collection<XAResource> resources = getEnlistedResources();
       for (XAResource res : resources) {
@@ -198,7 +198,7 @@ public class XaTransactionImpl implements Transaction {
       }
       return true;
    }
-   
+
    private void runXaResourceRollback() {
       Collection<XAResource> resources = getEnlistedResources();
       for (XAResource res : resources) {
@@ -222,7 +222,7 @@ public class XaTransactionImpl implements Transaction {
       }
       return true;
    }
-   
+
    private static class XaResourceCapableTransactionXid implements Xid {
       private static AtomicInteger txIdCounter = new AtomicInteger(0);
       private int id = txIdCounter.incrementAndGet();

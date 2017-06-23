@@ -17,7 +17,7 @@ import org.infinispan.AdvancedCache;
 
 /**
  * Base class for tests of Region implementations.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */

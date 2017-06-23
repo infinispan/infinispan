@@ -131,8 +131,8 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
    }
 
    @Override
-public String toString() {
-      StringBuffer sb = new StringBuffer(getClass().getName());
+   public String toString() {
+      StringBuilder sb = new StringBuilder(getClass().getName());
       sb.append("[nodeId=");
       sb.append(nodeId);
       sb.append("]");

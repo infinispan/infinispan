@@ -38,13 +38,13 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
-import org.jboss.util.collection.ConcurrentSet;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -454,7 +454,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 	@Listener
 	public static class MyListener {
 		private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( MyListener.class );
-		private Set<String> visited = new ConcurrentSet<String>();
+		private Set<String> visited = new ConcurrentHashSet<String>();
 		private final String name;
 
 		public MyListener(String name) {

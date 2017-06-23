@@ -17,7 +17,7 @@ import javax.transaction.TransactionManager;
 
 /**
  * XaResourceCapableTransactionManagerImpl.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */

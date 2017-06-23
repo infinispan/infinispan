@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * Comment
- * 
+ *
  * @author Brian Stansberry
  */
 public class AccountHolder implements Serializable {
@@ -70,7 +70,7 @@ public class AccountHolder implements Serializable {
 
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer(getClass().getName());
+		StringBuilder sb = new StringBuilder(getClass().getName());
 		sb.append("[lastName=");
 		sb.append(lastName);
 		sb.append(",ssn=");

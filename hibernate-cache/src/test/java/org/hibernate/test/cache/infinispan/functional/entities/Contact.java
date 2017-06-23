@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * Entity that has a many-to-one relationship to a Customer
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */
