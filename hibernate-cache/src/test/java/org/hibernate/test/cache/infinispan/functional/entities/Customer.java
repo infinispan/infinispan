@@ -10,7 +10,7 @@ import java.util.Set;
 
 /**
  * Company customer
- * 
+ *
  * @author Emmanuel Bernard
  * @author Kabir Khan
  */

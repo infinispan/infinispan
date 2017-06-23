@@ -27,7 +27,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * ClusterAwareRegionFactory.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */

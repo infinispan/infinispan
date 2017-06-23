@@ -34,7 +34,7 @@ import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
 
 /**
  * Utilities for cache testing.
- * 
+ *
  * @author <a href="brian.stansberry@jboss.com">Brian Stansberry</a>
  */
 public class CacheTestUtil {

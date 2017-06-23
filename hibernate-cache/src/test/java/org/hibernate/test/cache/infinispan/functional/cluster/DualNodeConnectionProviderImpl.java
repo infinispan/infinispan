@@ -20,7 +20,7 @@ import org.hibernate.testing.env.ConnectionProviderBuilder;
 /**
  * A {@link ConnectionProvider} implementation adding JTA-style transactionality around the returned
  * connections using the {@link DualNodeJtaTransactionManagerImpl}.
- * 
+ *
  * @author Brian Stansberry
  */
 public class DualNodeConnectionProviderImpl implements ConnectionProvider, Configurable {

@@ -43,5 +43,32 @@
          <artifactId>mockito-core</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-common-core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.naming</groupId>
+         <artifactId>jnp-client</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jboss.naming</groupId>
+         <artifactId>jnpserver</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-checkstyle-plugin</artifactId>
+            <configuration>
+               <configLocation>checkstyle-hibernate-cache.xml</configLocation>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>

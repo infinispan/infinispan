@@ -61,7 +61,7 @@ import static org.junit.Assert.fail;
 
 /**
  * InfinispanRegionFactoryTestCase.
- * 
+ *
  * @author Galder Zamarreño
  * @since 3.5
  */

@@ -1,0 +1,143 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+        "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<!-- Most of the modules in this file are disabled at the moment -->
+<!-- They will be turned on incrementally -->
+<!-- Tracking issue: https://issues.jboss.org/browse/ISPN-5683 -->
+
+<module name="Checker">
+
+    <!-- Allow tabs so that history can be more easily tracked back -->
+    <!--<module name="FileTabCharacter" />-->
+
+    <module name="TreeWalker">
+        <property name="cacheFile" value="${checkstyle.cache.file}" />
+
+        <!-- Checks for imports -->
+        <module name="AvoidStarImport" />
+        <module name="RedundantImport" />
+        <!-- Unfortunately unused import plugin is too buggy to be used https://github.com/checkstyle/checkstyle/issues/1004 -->
+        <!--<module name="UnusedImports" />-->
+
+        <!-- Checks for common coding problems -->
+        <!--<module name="EqualsHashCode" />-->
+        <module name="IllegalInstantiation" />
+
+        <!-- Miscellaneous other checks. -->
+        <!--<module name="ModifierOrder" />-->
+        <module name="GenericWhitespace" />
+        <module name="PackageAnnotation" />
+        <!--<module name="CovariantEquals" />-->
+        <!--<module name="ModifiedControlVariable" />-->
+        <!--<module name="OneStatementPerLine" />-->
+        <module name="EmptyStatement" />
+        <!--<module name="MissingDeprecated" />-->
+        <module name="DefaultComesLast" />
+        <!--<module name="TypecastParenPad" />-->
+        <!--<module name="InnerTypeLast" />-->
+        <!--<module name="HideUtilityClassConstructor" />-->
+        <!--<module name="MutableException" />-->
+        <!--<module name="CovariantEquals" />-->
+        <!--<module name="EqualsAvoidNull" />-->
+        <!--<module name="IllegalCatch">-->
+            <!--<property name="illegalClassNames" value="java.lang.Throwable, java.lang.RuntimeException" />-->
+        <!--</module>-->
+        <!--&lt;!&ndash; I wish we could enable this one &ndash;&gt;-->
+        <!--&lt;!&ndash; <module name="IllegalThrows"/>  &ndash;&gt;-->
+
+        <!--<module name="DeclarationOrder" />-->
+        <!--<module name="MissingOverride"/>-->
+
+        <!--<module name="MethodParamPad">-->
+            <!--<property name="option" value="nospace" />-->
+            <!--<property name="allowLineBreaks" value="false" />-->
+        <!--</module>-->
+
+        <!--&lt;!&ndash; Checks for blocks. You know, those {}'s &ndash;&gt;-->
+        <!--<module name="LeftCurly">-->
+            <!--<property name="option" value="eol" />-->
+        <!--</module>-->
+
+        <!--<module name="ParenPad">-->
+            <!--<property name="tokens" value="CTOR_CALL, METHOD_CALL, SUPER_CTOR_CALL" />-->
+            <!--<property name="option" value="nospace" />-->
+        <!--</module>-->
+
+        <!--<module name="RegexpSinglelineJava">-->
+            <!--<property name="format" value="System\.(out)|(err)\.print(ln)?\(" />-->
+            <!--&lt;!&ndash; The last sentence of the message is a keyword to trigger exclusion: see ExcludeTestPackages &ndash;&gt;-->
+            <!--<property name="message" value="Not allowed to print to System.out: if you're damn sure you want it, disable Checkstyle on this line. [not required for tests]" />-->
+            <!--<property name="ignoreComments" value="true" />-->
+        <!--</module>-->
+
+        <!-- Nobody should be using StringBuffer anymore -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value=" StringBuffer" />
+            <!-- The last sentence of the message is a keyword to trigger exclusion: see ExcludeTestPackages -->
+            <property name="message" value="Nobody should be using StringBuffer anymore" />
+        </module>
+        <!--<module name="IllegalInstantiation">-->
+            <!--<property name="classes" value="java.lang.Boolean"/>-->
+        <!--</module>-->
+
+        <!--&lt;!&ndash;  Avoid some import statements &ndash;&gt;-->
+        <!--<module name="IllegalImport">-->
+            <!--&lt;!&ndash; Should use TestNG &ndash;&gt;-->
+            <!--<property name="illegalPkgs" value="org.junit, junit"/>-->
+        <!--</module>-->
+        <!--<module name="org.infinispan.checkstyle.checks.regexp.IllegalImport">-->
+            <!--<property name="illegalClassnames" value="org.jgroups.util.Util.assertTrue, org.jgroups.util.Util.assertFalse, org.jgroups.util.Util.assertNotNull" />-->
+            <!--<property name="message" value="Stop using the Util class from JGroups for assertions which should use TestNG!" />-->
+        <!--</module>-->
+        <!--<module name="org.infinispan.checkstyle.checks.regexp.IllegalImport">-->
+            <!--<property name="illegalClassnames" value="org.hibernate.annotations.common.util.StringHelper" />-->
+            <!--<property name="message" value="Stop using the StringHelper from commons-annotations: use org.hibernate.search.util.StringHelper." />-->
+        <!--</module>-->
+        <!--<module name="org.infinispan.checkstyle.checks.regexp.IllegalImport">-->
+            <!--<property name="illegalClassnames" value="org.hibernate.annotations.common.AssertionFailure" />-->
+            <!--<property name="message" value="Stop using the AssertionFailure from commons-annotations." />-->
+        <!--</module>-->
+
+        <!-- The severity of following rules should be eventually set to error -->
+        <module name="org.infinispan.checkstyle.checks.interceptors.InterceptorDefinesAllReadsCheck">
+            <property name="severity" value="${checkstyle.interceptors.reads.severity}" default="warning"/>
+        </module>
+        <module name="org.infinispan.checkstyle.checks.interceptors.InterceptorDefinesAllReadWritesCheck">
+            <property name="severity" value="${checkstyle.interceptors.writes.severity}" default="warning"/>
+        </module>
+
+        <!--&lt;!&ndash; Required to get SuppressionCommentFilter to work &ndash;&gt;-->
+        <!--<module name="FileContentsHolder" />-->
+
+    </module>
+
+    <!-- We are not using NewLineAtEndOfFile because the new line chars change
+        on different operating systems and that rule allows only one type. This rule
+        is not actually checking for new lines, but it will work if we check that
+        there are not white spaces at the end of a line with another rule. -->
+    <module name="RegexpMultiline">
+        <property name="format" value="\S\z" />
+        <property name="message" value="Missing new line at the end of file" />
+    </module>
+
+    <module name="RegexpMultiline">
+        <property name="format" value="((\r\n){2,}|(\n){2,}|(\r){2,})\z" />
+        <property name="message" value="Only one new line is allowed at the end of a file" />
+    </module>
+
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$" />
+        <property name="message" value="White spaces at the end of line" />
+    </module>
+
+    <!--<module name="SuppressionCommentFilter" />-->
+
+    <!-- Allow for some code sanity rules to be violated by test code -->
+    <module name="org.infinispan.checkstyle.filters.ExcludeTestPackages" />
+    <module name="org.infinispan.checkstyle.filters.ExcludeGeneratedTestPackages" />
+
+    <!--&lt;!&ndash; Check that the copyright header is correct (empty) &ndash;&gt;-->
+    <!--<module name="org.infinispan.checkstyle.filters.HeadersNoCopyrightCheck" />-->
+
+</module>
