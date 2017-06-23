@@ -6,11 +6,13 @@
  */
 package org.hibernate.cache.infinispan.access;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.Ownership;
+import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -32,43 +34,41 @@ import java.util.concurrent.CompletionException;
  */
 public class LockingInterceptor extends NonTransactionalLockingInterceptor {
 	private static final Log log = LogFactory.getLog(LockingInterceptor.class);
-	private static final boolean trace = log.isTraceEnabled();
 
-	@Override
-	protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-		Object returnValue = null;
-		try {
-			// Clear any metadata; we'll set them as appropriate in TombstoneCallInterceptor
-			command.setMetadata(null);
+   protected final InvocationFinallyAction unlockAllReturnCheckCompletableFutureHandler = new InvocationFinallyAction() {
+      @Override
+      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable {
+         lockManager.unlockAll(rCtx);
+         if (rv instanceof CompletableFuture) {
+            try {
+               ((CompletableFuture) rv).join();
+            }
+            catch (CompletionException e) {
+               throw e.getCause();
+            }
+         }
+      }
+   };
 
-			lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
+   @Override
+   protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+      try {
+         if (log.isTraceEnabled()) {
+            Ownership ownership = LockUtil.getLockOwnership( command.getKey(), cdl );
+            log.tracef( "Am I owner for key=%s ? %s", command.getKey(), ownership);
+         }
 
-			returnValue = invokeNextInterceptor(ctx, command);
-			return returnValue;
-		}
-		catch (TimeoutException e) {
-			if (!ctx.isOriginLocal() && command.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT)) {
-				// FAIL_SILENTLY flag is not replicated to remote nodes and zero acquisition timeouts cause
-				// very noisy logs.
-				if (trace) {
-					log.tracef("Silently ignoring exception", e);
-				}
-				return null;
-			}
-			else {
-				throw e;
-			}
-		}
-		finally {
-			lockManager.unlockAll(ctx);
-			if (returnValue instanceof CompletableFuture) {
-				try {
-					((CompletableFuture) returnValue).join();
-				}
-				catch (CompletionException e) {
-					throw e.getCause();
-				}
-			}
-		}
-	}
+         if (ctx.getLockOwner() == null) {
+            ctx.setLockOwner( command.getCommandInvocationId() );
+         }
+
+         lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
+      }
+      catch (Throwable t) {
+         lockManager.unlockAll(ctx);
+         throw t;
+      }
+      return invokeNextAndFinally(ctx, command, unlockAllReturnCheckCompletableFutureHandler);
+   }
+
 }

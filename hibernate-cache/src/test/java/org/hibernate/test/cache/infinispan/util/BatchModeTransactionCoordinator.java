@@ -21,7 +21,7 @@ import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
 
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
-import org.infinispan.transaction.tm.DummyTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,7 +65,7 @@ public class BatchModeTransactionCoordinator implements TransactionCoordinator {
 		@Override
 		public TransactionStatus getStatus() {
 			try {
-				DummyTransaction transaction = tm.getTransaction();
+            EmbeddedTransaction transaction = tm.getTransaction();
 				return transaction == null ? TransactionStatus.NOT_ACTIVE : StatusTranslator.translate(transaction.getStatus());
 			} catch (SystemException e) {
 				throw new RuntimeException(e);

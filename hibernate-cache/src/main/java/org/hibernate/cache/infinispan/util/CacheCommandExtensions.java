@@ -6,8 +6,8 @@
  */
 package org.hibernate.cache.infinispan.util;
 
-import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandExtensions;
+import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 
 /**
@@ -21,7 +21,7 @@ public class CacheCommandExtensions implements ModuleCommandExtensions {
 	final CacheCommandInitializer cacheCommandInitializer = new CacheCommandInitializer();
 
 	@Override
-	public ExtendedModuleCommandFactory getModuleCommandFactory() {
+	public ModuleCommandFactory getModuleCommandFactory() {
 		return cacheCommandFactory;
 	}
 

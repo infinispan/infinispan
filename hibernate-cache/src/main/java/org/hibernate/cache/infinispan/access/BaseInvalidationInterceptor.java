@@ -12,7 +12,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -24,6 +24,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.util.ByteString;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -32,7 +33,7 @@ public abstract class BaseInvalidationInterceptor extends BaseRpcInterceptor imp
 	private final AtomicLong invalidations = new AtomicLong(0);
 	protected CommandsFactory commandsFactory;
 	protected StateTransferManager stateTransferManager;
-	protected String cacheName;
+	protected ByteString cacheName;
 	protected boolean statisticsEnabled;
 	protected RpcOptions syncRpcOptions;
 	protected RpcOptions asyncRpcOptions;
@@ -41,7 +42,7 @@ public abstract class BaseInvalidationInterceptor extends BaseRpcInterceptor imp
 	public void injectDependencies(CommandsFactory commandsFactory, StateTransferManager stateTransferManager, Cache cache) {
 		this.commandsFactory = commandsFactory;
 		this.stateTransferManager = stateTransferManager;
-		this.cacheName = cache.getName();
+		this.cacheName = ByteString.fromString(cache.getName());
 	}
 
 	@Start

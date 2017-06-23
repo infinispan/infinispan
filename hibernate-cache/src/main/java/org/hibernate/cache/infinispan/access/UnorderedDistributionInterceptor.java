@@ -7,6 +7,7 @@
 package org.hibernate.cache.infinispan.access;
 
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -54,7 +55,7 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
 		if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
 			// for state-transfer related writes
-			return invokeNextInterceptor(ctx, command);
+			return invokeNext(ctx, command);
 		}
 		int commandTopologyId = command.getTopologyId();
 		int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
@@ -67,24 +68,46 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 		List<Address> owners = null;
 		if (writeCH.isReplicated()) {
 			// local result is always ignored
-			invokeNextInterceptor(ctx, command);
+         List<Address> finalOwners = owners;
+         return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
+            WriteCommand writeCmd = (WriteCommand) rCommand;
+            if (rCtx.isOriginLocal() && writeCmd.isSuccessful()) {
+               // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
+               // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
+               // unlocking (and committing) the entry.
+               return rpcManager.invokeRemotelyAsync(
+                     finalOwners, writeCmd, isSynchronous( writeCmd ) ? syncRpcOptions : asyncRpcOptions);
+            }
+            return null;
+         } );
 		}
 		else {
 			owners = writeCH.locateOwners(command.getKey());
 			if (owners.contains(rpcManager.getAddress())) {
-				invokeNextInterceptor(ctx, command);
+            List<Address> finalOwners = owners;
+            return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
+               WriteCommand writeCmd = (WriteCommand) rCommand;
+               if (rCtx.isOriginLocal() && writeCmd.isSuccessful()) {
+                  // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
+                  // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
+                  // unlocking (and committing) the entry.
+                  return rpcManager.invokeRemotelyAsync(
+                        finalOwners, writeCmd, isSynchronous( writeCmd ) ? syncRpcOptions : asyncRpcOptions);
+               }
+               return null;
+            } );
 			}
 			else {
 				log.tracef("Not invoking %s on %s since it is not an owner", command, rpcManager.getAddress());
+            if (ctx.isOriginLocal() && command.isSuccessful()) {
+               // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
+               // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
+               // unlocking (and committing) the entry.
+               return rpcManager.invokeRemotelyAsync(owners, command, isSynchronous(command) ? syncRpcOptions : asyncRpcOptions);
+            }
+            return null;
 			}
 		}
 
-		if (ctx.isOriginLocal() && command.isSuccessful()) {
-			// This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
-			// holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
-			// unlocking (and committing) the entry.
-			return rpcManager.invokeRemotelyAsync(owners, command, isSynchronous(command) ? syncRpcOptions : asyncRpcOptions);
-		}
-		return null;
 	}
 }

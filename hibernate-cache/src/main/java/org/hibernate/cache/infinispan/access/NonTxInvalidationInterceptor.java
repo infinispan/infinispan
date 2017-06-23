@@ -8,6 +8,7 @@ package org.hibernate.cache.infinispan.access;
 
 import org.hibernate.cache.infinispan.util.CacheCommandInitializer;
 import org.hibernate.cache.infinispan.util.InfinispanMessageLogger;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -15,12 +16,16 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.InvalidationInterceptor;
+import org.infinispan.interceptors.InvocationFinallyFunction;
+import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collections;
 
@@ -40,6 +45,7 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 	private CacheCommandInitializer commandInitializer;
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInterceptor.class);
+   private static final Log ispnLog = LogFactory.getLog(NonTxInvalidationInterceptor.class);
 
 	public NonTxInvalidationInterceptor(PutFromLoadValidator putFromLoadValidator) {
 		this.putFromLoadValidator = putFromLoadValidator;
@@ -53,7 +59,7 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 	@Override
 	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
 		if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-			return invokeNextInterceptor(ctx, command);
+			return invokeNext(ctx, command);
 		}
 		else {
 			boolean isTransactional = putFromLoadValidator.registerRemoteInvalidation(command.getKey(), command.getKeyLockOwner());
@@ -63,12 +69,8 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			if (!putFromLoadValidator.beginInvalidatingWithPFER(command.getKeyLockOwner(), command.getKey(), command.getValue())) {
 				log.failedInvalidatePendingPut(command.getKey(), cacheName);
 			}
-			RemoveCommand removeCommand = commandsFactory.buildRemoveCommand(command.getKey(), null, command.getFlags());
-			Object retval = invokeNextInterceptor(ctx, removeCommand);
-			if (command.isSuccessful()) {
-				invalidateAcrossCluster(command, isTransactional, command.getKey());
-			}
-			return retval;
+         RemoveCommand removeCommand = commandsFactory.buildRemoveCommand(command.getKey(), null, command.getFlagsBitSet());
+         return invokeNextAndHandle( ctx, removeCommand, new InvalidateAndReturnFunction(isTransactional, command.getKeyLockOwner()) );
 		}
 	}
 
@@ -88,16 +90,12 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		else {
 			log.trace("This is an eviction, not invalidating anything");
 		}
-		Object retval = invokeNextInterceptor(ctx, command);
-		if (command.isSuccessful()) {
-			invalidateAcrossCluster(command, isTransactional, command.getKey());
-		}
-		return retval;
+      return invokeNextAndHandle( ctx, command, new InvalidateAndReturnFunction(isTransactional, command.getKeyLockOwner()) );
 	}
 
 	@Override
 	public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-		Object retval = invokeNextInterceptor(ctx, command);
+		Object retval = invokeNext(ctx, command);
 		if (!isLocalModeForced(command)) {
 			// just broadcast the clear command - this is simplest!
 			if (ctx.isOriginLocal()) {
@@ -112,17 +110,18 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 		throw new UnsupportedOperationException("Unexpected putAll");
 	}
 
-	private <T extends WriteCommand & RemoteLockCommand> void invalidateAcrossCluster(T command, boolean isTransactional, Object key) throws Throwable {
+	private <T extends WriteCommand & RemoteLockCommand> void invalidateAcrossCluster(
+			T command, boolean isTransactional, Object key, Object keyLockOwner) throws Throwable {
 		// increment invalidations counter if statistics maintained
 		incrementInvalidations();
 		InvalidateCommand invalidateCommand;
 		if (!isLocalModeForced(command)) {
 			if (isTransactional) {
 				invalidateCommand = commandInitializer.buildBeginInvalidationCommand(
-						Collections.emptySet(), new Object[] { key }, command.getKeyLockOwner());
+                  EnumUtil.EMPTY_BIT_SET, new Object[] { key }, keyLockOwner);
 			}
 			else {
-				invalidateCommand = commandsFactory.buildInvalidateCommand(Collections.emptySet(), new Object[] { key });
+            invalidateCommand = commandsFactory.buildInvalidateCommand(EnumUtil.EMPTY_BIT_SET, new Object[] {key });
 			}
 			if (log.isDebugEnabled()) {
 				log.debug("Cache [" + rpcManager.getAddress() + "] replicating " + invalidateCommand);
@@ -131,5 +130,32 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			rpcManager.invokeRemotely(getMembers(), invalidateCommand, isSynchronous(command) ? syncRpcOptions : asyncRpcOptions);
 		}
 	}
+
+   @Override
+   protected Log getLog() {
+      return ispnLog;
+   }
+
+   class InvalidateAndReturnFunction implements InvocationFinallyFunction {
+
+      final boolean isTransactional;
+      final Object keyLockOwner;
+
+      InvalidateAndReturnFunction(boolean isTransactional, Object keyLockOwner) {
+         this.isTransactional = isTransactional;
+         this.keyLockOwner = keyLockOwner;
+      }
+
+      @Override
+      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable)
+            throws Throwable {
+         RemoveCommand removeCmd = (RemoveCommand) rCommand;
+         if ( removeCmd.isSuccessful()) {
+            invalidateAcrossCluster(removeCmd, isTransactional, removeCmd.getKey(), keyLockOwner);
+         }
+         return rv;
+      }
+
+   }
 
 }

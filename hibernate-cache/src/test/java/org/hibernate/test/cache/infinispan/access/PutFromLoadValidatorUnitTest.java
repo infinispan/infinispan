@@ -76,6 +76,7 @@ public class PutFromLoadValidatorUnitTest {
 	private EmbeddedCacheManager cm;
 	private AdvancedCache<Object, Object> cache;
 	private List<Runnable> cleanup = new ArrayList<>();
+   private PutFromLoadValidator testee;
 
 	@BeforeClassOnce
 	public void setUp() throws Exception {
@@ -104,6 +105,8 @@ public class PutFromLoadValidatorUnitTest {
 		}
 		cache.clear();
 		cm.getCache(cache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE).clear();
+
+      testee.remotePendingPutsCache();
 	}
 
 	private static InfinispanRegionFactory regionFactory(EmbeddedCacheManager cm) {
@@ -125,7 +128,7 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	private void nakedPutTest(final boolean transactional) throws Exception {
-		PutFromLoadValidator testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		testee = new PutFromLoadValidator(cache, regionFactory(cm));
 		exec(transactional, new NakedPut(testee, true));
 	}
 
@@ -139,7 +142,7 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	private void registeredPutTest(final boolean transactional) throws Exception {
-		PutFromLoadValidator testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		testee = new PutFromLoadValidator(cache, regionFactory(cm));
 		exec(transactional, new RegularPut(testee));
 	}
 
@@ -162,7 +165,7 @@ public class PutFromLoadValidatorUnitTest {
 
 	private void nakedPutAfterRemovalTest(final boolean transactional,
 			final boolean removeRegion) throws Exception {
-		PutFromLoadValidator testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		testee = new PutFromLoadValidator(cache, regionFactory(cm));
 		Invalidation invalidation = new Invalidation(testee, removeRegion);
 		// the naked put can succeed because it has txTimestamp after invalidation
 		NakedPut nakedPut = new NakedPut(testee, true);
@@ -188,7 +191,7 @@ public class PutFromLoadValidatorUnitTest {
 
 	private void registeredPutAfterRemovalTest(final boolean transactional,
 			final boolean removeRegion) throws Exception {
-		PutFromLoadValidator testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		testee = new PutFromLoadValidator(cache, regionFactory(cm));
 		Invalidation invalidation = new Invalidation(testee, removeRegion);
 		RegularPut regularPut = new RegularPut(testee);
 		exec(transactional, invalidation, regularPut);
@@ -213,7 +216,7 @@ public class PutFromLoadValidatorUnitTest {
 	private void registeredPutWithInterveningRemovalTest(
 			final boolean transactional, final boolean removeRegion)
 			throws Exception {
-		PutFromLoadValidator testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		testee = new PutFromLoadValidator(cache, regionFactory(cm));
 		try {
 			long txTimestamp = TIME_SERVICE.wallClockTime();
 			if (transactional) {
@@ -258,7 +261,7 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	private void multipleRegistrationtest(final boolean transactional) throws Exception {
-		final PutFromLoadValidator testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		testee = new PutFromLoadValidator(cache, regionFactory(cm));
 
 		final CountDownLatch registeredLatch = new CountDownLatch(3);
 		final CountDownLatch finishedLatch = new CountDownLatch(3);
@@ -322,7 +325,7 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	private void invalidationBlocksForInProgressPutTest(final boolean keyOnly) throws Exception {
-		final PutFromLoadValidator testee = new PutFromLoadValidator(cache, regionFactory(cm));
+		testee = new PutFromLoadValidator(cache, regionFactory(cm));
 		final CountDownLatch removeLatch = new CountDownLatch(1);
 		final CountDownLatch pferLatch = new CountDownLatch(1);
 		final AtomicReference<Object> cache = new AtomicReference<>("INITIAL");
@@ -494,7 +497,7 @@ public class PutFromLoadValidatorUnitTest {
 		doReturn(ppCfg).when(regionFactory).getPendingPutsCacheConfiguration();
 		doAnswer(invocation -> TIME_SERVICE.wallClockTime()).when(regionFactory).nextTimestamp();
 
-		PutFromLoadValidator testee = new PutFromLoadValidator(cache, regionFactory, cm);
+		testee = new PutFromLoadValidator(cache, regionFactory, cm);
 
 		for (int i = 0; i < 100; ++i) {
 			try {

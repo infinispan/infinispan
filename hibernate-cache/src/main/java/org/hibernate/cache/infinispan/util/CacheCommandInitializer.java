@@ -15,6 +15,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.ByteString;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,7 +59,7 @@ public class CacheCommandInitializer implements ModuleCommandInitializer {
     * @param regionName name of region for {@link EvictAllCommand}
     * @return a new instance of {@link EvictAllCommand}
     */
-	public EvictAllCommand buildEvictAllCommand(String regionName) {
+	public EvictAllCommand buildEvictAllCommand(ByteString regionName) {
 		// No need to pass region factory because no information on that object
 		// is sent around the cluster. However, when the command factory builds
 		// and evict all command remotely, it does need to initialize it with
@@ -66,11 +67,11 @@ public class CacheCommandInitializer implements ModuleCommandInitializer {
 		return new EvictAllCommand( regionName );
 	}
 
-	public BeginInvalidationCommand buildBeginInvalidationCommand(Set<Flag> flags, Object[] keys, Object lockOwner) {
-		return new BeginInvalidationCommand(notifier, flags, CommandInvocationId.generateId(clusteringDependentLogic.getAddress()), keys, lockOwner);
+	public BeginInvalidationCommand buildBeginInvalidationCommand(long flagsBitSet, Object[] keys, Object lockOwner) {
+		return new BeginInvalidationCommand(notifier, flagsBitSet, CommandInvocationId.generateId(clusteringDependentLogic.getAddress()), keys, lockOwner);
 	}
 
-	public EndInvalidationCommand buildEndInvalidationCommand(String cacheName, Object[] keys, Object lockOwner) {
+	public EndInvalidationCommand buildEndInvalidationCommand(ByteString cacheName, Object[] keys, Object lockOwner) {
 		return new EndInvalidationCommand( cacheName, keys, lockOwner );
 	}
 
@@ -79,11 +80,11 @@ public class CacheCommandInitializer implements ModuleCommandInitializer {
 		switch (c.getCommandId()) {
 			case CacheCommandIds.END_INVALIDATION:
 				EndInvalidationCommand endInvalidationCommand = (EndInvalidationCommand) c;
-				endInvalidationCommand.setPutFromLoadValidator(putFromLoadValidators.get(endInvalidationCommand.getCacheName()));
+            endInvalidationCommand.setPutFromLoadValidator(putFromLoadValidators.get(endInvalidationCommand.getCacheName().toString()));
 				break;
 			case CacheCommandIds.BEGIN_INVALIDATION:
 				BeginInvalidationCommand beginInvalidationCommand = (BeginInvalidationCommand) c;
-				beginInvalidationCommand.init(notifier, configuration);
+				beginInvalidationCommand.init(notifier);
 				break;
 		}
 	}

@@ -19,6 +19,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -26,6 +27,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.util.ByteString;
 
 import java.util.List;
 
@@ -37,16 +39,16 @@ import java.util.List;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class NonTxPutFromLoadInterceptor extends BaseCustomInterceptor {
+public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
 	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NonTxPutFromLoadInterceptor.class);
-	private final String cacheName;
+	private final ByteString cacheName;
 	private final PutFromLoadValidator putFromLoadValidator;
 	private CacheCommandInitializer commandInitializer;
 	private RpcManager rpcManager;
 	private StateTransferManager stateTransferManager;
 	private RpcOptions asyncUnordered;
 
-	public NonTxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, String cacheName) {
+	public NonTxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
 		this.putFromLoadValidator = putFromLoadValidator;
 		this.cacheName = cacheName;
 	}
@@ -70,7 +72,7 @@ public class NonTxPutFromLoadInterceptor extends BaseCustomInterceptor {
 				putFromLoadValidator.beginInvalidatingKey(((BeginInvalidationCommand) command).getLockOwner(), key);
 			}
 		}
-		return invokeNextInterceptor(ctx, command);
+		return invokeNext(ctx, command);
 	}
 
 	public void endInvalidating(Object key, Object lockOwner, boolean successful) {

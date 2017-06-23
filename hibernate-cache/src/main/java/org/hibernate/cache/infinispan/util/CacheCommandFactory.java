@@ -15,8 +15,9 @@ import java.util.concurrent.ConcurrentMap;
 import org.hibernate.cache.infinispan.impl.BaseRegion;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.module.ExtendedModuleCommandFactory;
+import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.util.ByteString;
 
 /**
  * Command factory
@@ -24,7 +25,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class CacheCommandFactory implements ExtendedModuleCommandFactory {
+public class CacheCommandFactory implements ModuleCommandFactory {
 
    /**
     * Keeps track of regions to which second-level cache specific
@@ -61,11 +62,11 @@ public class CacheCommandFactory implements ExtendedModuleCommandFactory {
 	}
 
 	@Override
-	public CacheRpcCommand fromStream(byte commandId, Object[] args, String cacheName) {
+	public CacheRpcCommand fromStream(byte commandId, ByteString cacheName) {
 		CacheRpcCommand c;
 		switch ( commandId ) {
 			case CacheCommandIds.EVICT_ALL:
-				c = new EvictAllCommand( cacheName, allRegions.get( cacheName ) );
+				c = new EvictAllCommand( cacheName, allRegions.get( cacheName.toString() ) );
 				break;
 			case CacheCommandIds.END_INVALIDATION:
 				c = new EndInvalidationCommand(cacheName);
@@ -73,12 +74,11 @@ public class CacheCommandFactory implements ExtendedModuleCommandFactory {
 			default:
 				throw new IllegalArgumentException( "Not registered to handle command id " + commandId );
 		}
-		c.setParameters( commandId, args );
 		return c;
 	}
 
 	@Override
-	public ReplicableCommand fromStream(byte commandId, Object[] args) {
+	public ReplicableCommand fromStream(byte commandId) {
 		ReplicableCommand c;
 		switch ( commandId ) {
 			case CacheCommandIds.BEGIN_INVALIDATION:
@@ -87,7 +87,6 @@ public class CacheCommandFactory implements ExtendedModuleCommandFactory {
 			default:
 				throw new IllegalArgumentException( "Not registered to handle command id " + commandId );
 		}
-		c.setParameters( commandId, args );
 		return c;
 	}
 

@@ -25,6 +25,7 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
 		externalizerMap.put( Externalizers.FUTURE_UPDATE, new FutureUpdate.Externalizer() );
 		externalizerMap.put( Externalizers.VERSIONED_ENTRY, new VersionedEntry.Externalizer() );
 		externalizerMap.put( Externalizers.EXCLUDE_EMPTY_EXTRACT_VALUE, new VersionedEntry.ExcludeEmptyExtractValueExternalizer() );
+      externalizerMap.put( Externalizers.FILTER_NULL_VALUE_CONVERTER, new FilterNullValueConverter.Externalizer() );
 	}
 
 }

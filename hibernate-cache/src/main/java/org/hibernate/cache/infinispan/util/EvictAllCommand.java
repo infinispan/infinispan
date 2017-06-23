@@ -6,10 +6,14 @@
  */
 package org.hibernate.cache.infinispan.util;
 
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import org.hibernate.cache.infinispan.impl.BaseRegion;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * Evict all command
@@ -27,7 +31,7 @@ public class EvictAllCommand extends BaseRpcCommand {
     * @param regionName name of the region to evict
     * @param region to evict
     */
-	public EvictAllCommand(String regionName, BaseRegion region) {
+	public EvictAllCommand(ByteString regionName, BaseRegion region) {
 		// region name and cache names are the same...
 		super( regionName );
 		this.region = region;
@@ -38,7 +42,7 @@ public class EvictAllCommand extends BaseRpcCommand {
     *
     * @param regionName name of the region to evict
     */
-	public EvictAllCommand(String regionName) {
+	public EvictAllCommand(ByteString regionName) {
 		this( regionName, null );
 	}
 
@@ -58,12 +62,7 @@ public class EvictAllCommand extends BaseRpcCommand {
 	}
 
 	@Override
-	public Object[] getParameters() {
-		return new Object[0];
-	}
-
-	@Override
-	public void setParameters(int commandId, Object[] parameters) {
+   public void writeTo(ObjectOutput output) {
 		// No-op
 	}
 
@@ -71,5 +70,10 @@ public class EvictAllCommand extends BaseRpcCommand {
 	public boolean isReturnValueExpected() {
 		return false;
 	}
+
+	@Override
+   public void readFrom(ObjectInput input) {
+      // No-op
+   }
 
 }

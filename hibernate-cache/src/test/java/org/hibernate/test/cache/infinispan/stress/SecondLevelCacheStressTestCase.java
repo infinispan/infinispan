@@ -45,7 +45,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 
 import static org.infinispan.test.TestingUtil.withTx;
 import static org.junit.Assert.assertEquals;

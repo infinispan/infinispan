@@ -1,6 +1,6 @@
 package org.hibernate.test.cache.infinispan.util;
 
-import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.jgroups.Address;
 import org.jgroups.Event;
 import org.jgroups.protocols.FD_ALL;
