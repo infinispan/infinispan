@@ -7,6 +7,7 @@
 package org.hibernate.cache.infinispan.access;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -36,6 +37,9 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteString;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Intercepts transactions in Infinispan, calling {@link PutFromLoadValidator#beginInvalidatingKey(Object, Object)}
@@ -47,15 +51,16 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  */
 class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(TxPutFromLoadInterceptor.class);
+   private static final Log ispnLog = LogFactory.getLog(TxPutFromLoadInterceptor.class);
 	private PutFromLoadValidator putFromLoadValidator;
-	private final String cacheName;
+	private final ByteString cacheName;
 	private RpcManager rpcManager;
 	private CacheCommandInitializer cacheCommandInitializer;
 	private DataContainer dataContainer;
 	private StateTransferManager stateTransferManager;
 	private RpcOptions asyncUnordered;
 
-	public TxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, String cacheName) {
+	public TxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
 		this.putFromLoadValidator = putFromLoadValidator;
 		this.cacheName = cacheName;
 	}
@@ -89,13 +94,13 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 		if (!command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
 			beginInvalidating(ctx, command.getKey());
 		}
-		return invokeNextInterceptor(ctx, command);
+		return invokeNext(ctx, command);
 	}
 
 	@Override
 	public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
 		beginInvalidating(ctx, command.getKey());
-		return invokeNextInterceptor(ctx, command);
+		return invokeNext(ctx, command);
 	}
 
 	// We need to intercept PrepareCommand, not InvalidateCommand since the interception takes
@@ -118,7 +123,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 		}
 		else {
 			for (WriteCommand wc : command.getModifications()) {
-				Set<Object> keys = wc.getAffectedKeys();
+            Collection<?> keys = wc.getAffectedKeys();
 				if (log.isTraceEnabled()) {
 					log.tracef("Invalidating keys %s with lock owner %s", keys, ctx.getLockOwner());
 				}
@@ -127,7 +132,7 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 				}
 			}
 		}
-		return invokeNextInterceptor(ctx, command);
+		return invokeNext(ctx, command);
 	}
 
 	@Override
@@ -177,7 +182,12 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
 			}
 		}
 		finally {
-			return invokeNextInterceptor(ctx, command);
+			return invokeNext(ctx, command);
 		}
 	}
+
+	@Override
+   protected Log getLog() {
+      return ispnLog;
+   }
 }

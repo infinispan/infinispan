@@ -17,14 +17,16 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
+import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.filter.NullValueConverter;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.util.ByteString;
 
 /**
  * Helper for dealing with Infinispan cache instances.
@@ -226,7 +228,7 @@ public class Caches {
 					.getComponent( CacheCommandInitializer.class );
 			final boolean isSync = isSynchronousCache( cache );
 
-			final EvictAllCommand cmd = factory.buildEvictAllCommand( cache.getName() );
+			final EvictAllCommand cmd = factory.buildEvictAllCommand(ByteString.fromString(cache.getName()));
 			final RpcOptions options = rpcManager.getDefaultRpcOptions( isSync );
 			rpcManager.invokeRemotely( null, cmd, options );
 		}
@@ -301,34 +303,6 @@ public class Caches {
 		Map<K, V> toMap();
 	}
 
-	public static <K, V> CollectableCloseableIterable<K> keys(AdvancedCache<K, V> cache, KeyValueFilter<K, V> filter) {
-		// HHH-10023: we can't use keySet()
-		final CloseableIterable<CacheEntry<K, Void>> entryIterable = cache
-				.filterEntries( filter )
-				.converter( NullValueConverter.getInstance() );
-		return new CollectableCloseableIterableImpl<K, Void, K>(entryIterable, Selector.KEY);
-	}
-
-	public static <K, V> CollectableCloseableIterable<V> values(AdvancedCache<K, V> cache, KeyValueFilter<K, V> filter) {
-		if (cache.getCacheConfiguration().transaction().transactionMode().isTransactional()) {
-			// Dummy read to enlist the LocalTransaction as workaround for ISPN-5676
-			cache.containsKey(false);
-		}
-		// HHH-10023: we can't use values()
-		final CloseableIterable<CacheEntry<K, V>> entryIterable = cache.filterEntries(filter);
-		return new CollectableCloseableIterableImpl<K, V, V>(entryIterable, Selector.VALUE);
-	}
-
-	public static <K, V, T> CollectableCloseableIterable<T> values(AdvancedCache<K, V> cache, KeyValueFilter<K, V> filter, Converter<K, V, T> converter) {
-		if (cache.getCacheConfiguration().transaction().transactionMode().isTransactional()) {
-			// Dummy read to enlist the LocalTransaction as workaround for ISPN-5676
-			cache.containsKey(false);
-		}
-		// HHH-10023: we can't use values()
-		final CloseableIterable<CacheEntry<K, T>> entryIterable = cache.filterEntries(filter).converter(converter);
-		return new CollectableCloseableIterableImpl<K, T, T>(entryIterable, Selector.VALUE);
-	}
-
 	public static <K, V> MapCollectableCloseableIterable<K, V> entrySet(AdvancedCache<K, V> cache) {
 		return entrySet(cache, (KeyValueFilter<K, V>) AcceptAllKeyValueFilter.getInstance());
 	}
@@ -339,8 +313,9 @@ public class Caches {
 			cache.containsKey(false);
 		}
 		// HHH-10023: we can't use values()
-		final CloseableIterable<CacheEntry<K, V>> entryIterable = cache.filterEntries(filter);
-		return new MapCollectableCloseableIterableImpl<K, V>(entryIterable);
+      CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(
+         cache.cacheEntrySet().stream().filter(CacheFilters.predicate(filter)));
+      return new MapCollectableCloseableIterableImpl<K, V>(iterator);
 	}
 
 	public static <K, V, T> MapCollectableCloseableIterable<K, T> entrySet(AdvancedCache<K, V> cache, KeyValueFilter<K, V> filter, Converter<K, V, T> converter) {
@@ -349,8 +324,10 @@ public class Caches {
 			cache.containsKey(false);
 		}
 		// HHH-10023: we can't use values()
-		final CloseableIterable<CacheEntry<K, T>> entryIterable = cache.filterEntries(filter).converter(converter);
-		return new MapCollectableCloseableIterableImpl<K, T>(entryIterable);
+      CloseableIterator<CacheEntry<K, T>> it = Closeables.iterator(cache.cacheEntrySet().stream()
+         .filter(CacheFilters.predicate(filter))
+         .map(CacheFilters.function(converter)));
+      return new MapCollectableCloseableIterableImpl<K, T>(it);
 	}
 
 	/* Function<CacheEntry<K, V>, T> */
@@ -453,16 +430,15 @@ public class Caches {
 	}
 
 	private static class MapCollectableCloseableIterableImpl<K, V> implements MapCollectableCloseableIterable<K, V> {
-		private final CloseableIterable<CacheEntry<K, V>> entryIterable;
+      private final CloseableIterator<CacheEntry<K, V>> it;
 
-		public MapCollectableCloseableIterableImpl(CloseableIterable<CacheEntry<K, V>> entryIterable) {
-			this.entryIterable = entryIterable;
+		public MapCollectableCloseableIterableImpl(CloseableIterator<CacheEntry<K, V>> it) {
+			this.it = it;
 		}
 
 		@Override
 		public Map<K, V> toMap() {
 			Map<K, V> map = new HashMap<K, V>();
-			CloseableIterator<CacheEntry<K, V>> it = entryIterable.iterator();
 			try {
 				while (it.hasNext()) {
 					CacheEntry<K, V> entry = it.next();
@@ -480,7 +456,6 @@ public class Caches {
 
 		@Override
 		public String toString() {
-			CloseableIterator<CacheEntry<K, V>> it = entryIterable.iterator();
 			try {
 				if (!it.hasNext()) {
 					return "{}";
@@ -504,12 +479,12 @@ public class Caches {
 
 		@Override
 		public void close() {
-			entryIterable.close();
+         it.close();
 		}
 
 		@Override
 		public CloseableIterator<CacheEntry<K, V>> iterator() {
-			return entryIterable.iterator();
+			return it;
 		}
 	}
 }

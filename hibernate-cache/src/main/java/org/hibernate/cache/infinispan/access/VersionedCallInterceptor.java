@@ -7,19 +7,18 @@
 package org.hibernate.cache.infinispan.access;
 
 import org.hibernate.cache.infinispan.impl.BaseTransactionalDataRegion;
+import org.hibernate.cache.infinispan.util.FilterNullValueConverter;
 import org.hibernate.cache.infinispan.util.VersionedEntry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commons.util.CloseableIterable;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.filter.NullValueConverter;
-import org.infinispan.interceptors.CallInterceptor;
+import org.infinispan.filter.CacheFilters;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 
@@ -35,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class VersionedCallInterceptor extends CallInterceptor {
+public class VersionedCallInterceptor extends DDAsyncInterceptor {
 	private final Comparator<Object> versionComparator;
 	private final Metadata expiringMetadata;
 	private AdvancedCache cache;
@@ -99,7 +98,7 @@ public class VersionedCallInterceptor extends CallInterceptor {
 
 		if (newVersion == null) {
 			// eviction or post-commit removal: we'll store it with given timestamp
-			setValue(e, newValue, expiringMetadata);
+			setValue(e, newValue, expiringMetadata, command);
 			return null;
 		}
 		if (oldVersion == null) {
@@ -111,21 +110,21 @@ public class VersionedCallInterceptor extends CallInterceptor {
 				assert oldValue == null;
 			}
 			else {
-				setValue(e, actualNewValue, defaultMetadata);
+				setValue(e, actualNewValue, defaultMetadata, command);
 			}
 			return null;
 		}
 		int compareResult = versionComparator.compare(newVersion, oldVersion);
 		if (isRemoval && compareResult >= 0) {
-			setValue(e, actualNewValue, expiringMetadata);
+			setValue(e, actualNewValue, expiringMetadata, command);
 		}
 		else if (compareResult > 0) {
-			setValue(e, actualNewValue, defaultMetadata);
+			setValue(e, actualNewValue, defaultMetadata, command);
 		}
 		return null;
 	}
 
-	private Object setValue(MVCCEntry e, Object value, Metadata metadata) {
+	private Object setValue(MVCCEntry e, Object value, Metadata metadata, PutKeyValueCommand command) {
 		if (e.isRemoved()) {
 			e.setRemoved(false);
 			e.setCreated(true);
@@ -134,6 +133,7 @@ public class VersionedCallInterceptor extends CallInterceptor {
 		else {
 			e.setChanged(true);
 		}
+      command.setMetadata( metadata );
 		e.setMetadata(metadata);
 		return e.setValue(value);
 	}
@@ -147,18 +147,8 @@ public class VersionedCallInterceptor extends CallInterceptor {
 			decoratedCache = decoratedCache.withFlags(flags.toArray(new Flag[flags.size()]));
 		}
 		// In non-transactional caches we don't care about context
-		CloseableIterable<CacheEntry<Object, Void>> iterable = decoratedCache
-				.filterEntries(VersionedEntry.EXCLUDE_EMPTY_EXTRACT_VALUE).converter(NullValueConverter.getInstance());
-		try {
-			for (CacheEntry<Object, Void> entry : iterable) {
-				if (size++ == Integer.MAX_VALUE) {
-					return Integer.MAX_VALUE;
-				}
-			}
-		}
-		finally {
-			iterable.close();
-		}
-		return size;
+      return (int) CacheFilters.filterAndConvert(decoratedCache.entrySet().stream(),
+            new FilterNullValueConverter(VersionedEntry.EXCLUDE_EMPTY_EXTRACT_VALUE))
+            .count();
 	}
 }

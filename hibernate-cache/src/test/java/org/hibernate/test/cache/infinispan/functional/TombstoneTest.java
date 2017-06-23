@@ -321,7 +321,7 @@ public class TombstoneTest extends AbstractNonInvalidationTest {
 
    private Future<?> blockedPutFromLoad(CyclicBarrier putFromLoadBarrier) throws InterruptedException, BrokenBarrierException, TimeoutException {
       BlockingInterceptor blockingInterceptor = new BlockingInterceptor(putFromLoadBarrier, PutKeyValueCommand.class, false, true);
-      entityCache.addInterceptor(blockingInterceptor, 0);
+      entityCache.getAsyncInterceptorChain().addInterceptor(blockingInterceptor, 0);
       cleanup.add(() -> entityCache.removeInterceptor(BlockingInterceptor.class));
       // the putFromLoad should be blocked in the interceptor
       Future<?> putFromLoad = executor.submit(() -> withTxSessionApply(s -> {

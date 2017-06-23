@@ -312,10 +312,9 @@ public class InfinispanRegionFactoryTestCase  {
 		Properties p = createProperties();
       InputStream configStream = FileLookupFactory.newInstance().lookupFile(InfinispanRegionFactory.DEF_INFINISPAN_CONFIG_RESOURCE, getClass().getClassLoader());
       ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configStream);
-      DefaultCacheManager manager = new DefaultCacheManager(cbh, true);
-		ConfigurationBuilder builder = new ConfigurationBuilder();
+      ConfigurationBuilder builder = cbh.getNamedConfigurationBuilders().get( DEF_TIMESTAMPS_RESOURCE );
 		builder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
-		manager.defineConfiguration( DEF_TIMESTAMPS_RESOURCE, builder.build() );
+      DefaultCacheManager manager = new DefaultCacheManager(cbh, true);
 		try {
 			InfinispanRegionFactory factory = createRegionFactory( manager, p, null );
 			factory.start( CacheTestUtil.sfOptionsForStart(), p );
@@ -502,9 +501,6 @@ public class InfinispanRegionFactoryTestCase  {
 			assertTrue(cache.getCacheConfiguration().jmxStatistics().enabled());
 
 			final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
-			ConfigurationBuilder builder = new ConfigurationBuilder();
-			builder.clustering().stateTransfer().fetchInMemoryState(true);
-			manager.defineConfiguration("timestamps", builder.build());
 			TimestampsRegionImpl timestampsRegion = (TimestampsRegionImpl)
 					factory.buildTimestampsRegion(timestamps, p);
 			cache = timestampsRegion.getCache();
@@ -545,9 +541,6 @@ public class InfinispanRegionFactoryTestCase  {
 			assertFalse( cache.getCacheConfiguration().jmxStatistics().enabled() );
 
 			final String timestamps = "org.hibernate.cache.spi.UpdateTimestampsCache";
-			ConfigurationBuilder builder = new ConfigurationBuilder();
-			builder.clustering().stateTransfer().fetchInMemoryState(true);
-			factory.getCacheManager().defineConfiguration( "timestamps", builder.build() );
 			TimestampsRegionImpl timestampsRegion = (TimestampsRegionImpl)
 					factory.buildTimestampsRegion(timestamps, p);
 			cache = timestampsRegion.getCache();

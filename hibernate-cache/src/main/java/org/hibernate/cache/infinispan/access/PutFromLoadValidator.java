@@ -25,13 +25,17 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.interceptors.EntryWrappingInterceptor;
-import org.infinispan.interceptors.InvalidationInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.InvalidationInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.util.ByteString;
 
 /**
  * Encapsulates logic to allow a {@link InvalidationCacheAccessDelegate} to determine
@@ -95,7 +99,7 @@ public class PutFromLoadValidator {
 	 * Registry of expected, future, isPutValid calls. If a key+owner is registered in this map, it
 	 * is not a "naked put" and is allowed to proceed.
 	 */
-	private final ConcurrentMap<Object, PendingPutMap> pendingPuts;
+	private final Cache<Object, PendingPutMap> pendingPuts;
 
 	/**
 	 * Main cache where the entities/collections are stored. This is not modified from within this class.
@@ -147,7 +151,7 @@ public class PutFromLoadValidator {
 		ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
 		configurationBuilder.read(pendingPutsConfiguration);
 		configurationBuilder.dataContainer().keyEquivalence(cacheConfiguration.dataContainer().keyEquivalence());
-		String pendingPutsName = cache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE;
+      String pendingPutsName = getPendingPutsName( cache );
 		cacheManager.defineConfiguration(pendingPutsName, configurationBuilder.build());
 
 		if (pendingPutsConfiguration.expiration() != null && pendingPutsConfiguration.expiration().maxIdle() > 0) {
@@ -169,19 +173,26 @@ public class PutFromLoadValidator {
 
 		this.cache = cache;
 		this.pendingPuts = cacheManager.getCache(pendingPutsName);
+      // The session factory might have been closed but it uses a pre-existing cache manager, so start just in case
+      this.pendingPuts.start();
 	}
+
+	private String getPendingPutsName(AdvancedCache cache) {
+      return cache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE;
+   }
 
 	/**
 	 * Besides the call from constructor, this should be called only from tests when mocking the validator.
 	 */
 	public static void addToCache(AdvancedCache cache, PutFromLoadValidator validator) {
-		List<CommandInterceptor> interceptorChain = cache.getInterceptorChain();
-		log.debug("Interceptor chain was: " + interceptorChain);
-		int position = 0;
+      AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
+      List<AsyncInterceptor> interceptors = chain.getInterceptors();
+      log.debug("Interceptor chain was: " + interceptors);
+      int position = 0;
 		// add interceptor before uses exact match, not instanceof match
 		int invalidationPosition = 0;
 		int entryWrappingPosition = 0;
-		for (CommandInterceptor ci : interceptorChain) {
+      for (AsyncInterceptor ci : interceptors) {
 			if (ci instanceof InvalidationInterceptor) {
 				invalidationPosition = position;
 			}
@@ -195,24 +206,24 @@ public class PutFromLoadValidator {
 			cache.removeInterceptor(invalidationPosition);
 			TxInvalidationInterceptor txInvalidationInterceptor = new TxInvalidationInterceptor();
 			cache.getComponentRegistry().registerComponent(txInvalidationInterceptor, TxInvalidationInterceptor.class);
-			cache.addInterceptor(txInvalidationInterceptor, invalidationPosition);
+			chain.addInterceptor(txInvalidationInterceptor, invalidationPosition);
 
 			// Note that invalidation does *NOT* acquire locks; therefore, we have to start invalidating before
 			// wrapping the entry, since if putFromLoad was invoked between wrap and beginInvalidatingKey, the invalidation
 			// would not commit the entry removal (as during wrap the entry was not in cache)
-			TxPutFromLoadInterceptor txPutFromLoadInterceptor = new TxPutFromLoadInterceptor(validator, cache.getName());
-			cache.getComponentRegistry().registerComponent(txPutFromLoadInterceptor, TxPutFromLoadInterceptor.class);
-			cache.addInterceptor(txPutFromLoadInterceptor, entryWrappingPosition);
+         TxPutFromLoadInterceptor txPutFromLoadInterceptor = new TxPutFromLoadInterceptor(validator, ByteString.fromString(cache.getName()));
+         cache.getComponentRegistry().registerComponent(txPutFromLoadInterceptor, TxPutFromLoadInterceptor.class);
+         chain.addInterceptor(txPutFromLoadInterceptor, entryWrappingPosition);
 		}
 		else {
 			cache.removeInterceptor(invalidationPosition);
 			NonTxInvalidationInterceptor nonTxInvalidationInterceptor = new NonTxInvalidationInterceptor(validator);
 			cache.getComponentRegistry().registerComponent(nonTxInvalidationInterceptor, NonTxInvalidationInterceptor.class);
-			cache.addInterceptor(nonTxInvalidationInterceptor, invalidationPosition);
+			chain.addInterceptor(nonTxInvalidationInterceptor, invalidationPosition);
 
-			NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor = new NonTxPutFromLoadInterceptor(validator, cache.getName());
+			NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor = new NonTxPutFromLoadInterceptor(validator, ByteString.fromString(cache.getName()));
 			cache.getComponentRegistry().registerComponent(nonTxPutFromLoadInterceptor, NonTxPutFromLoadInterceptor.class);
-			cache.addInterceptor(nonTxPutFromLoadInterceptor, entryWrappingPosition);
+         chain.addInterceptor(nonTxPutFromLoadInterceptor, entryWrappingPosition);
 			validator.nonTxPutFromLoadInterceptor = nonTxPutFromLoadInterceptor;
 		}
 		log.debug("New interceptor chain is: " + cache.getInterceptorChain());
@@ -230,18 +241,19 @@ public class PutFromLoadValidator {
 	public static PutFromLoadValidator removeFromCache(AdvancedCache cache) {
 		cache.removeInterceptor(TxPutFromLoadInterceptor.class);
 		cache.removeInterceptor(NonTxPutFromLoadInterceptor.class);
-		for (Object i : cache.getInterceptorChain()) {
+      AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
+      for (Object i : chain.getInterceptors()) {
 			if (i instanceof NonTxInvalidationInterceptor) {
 				InvalidationInterceptor invalidationInterceptor = new InvalidationInterceptor();
 				cache.getComponentRegistry().registerComponent(invalidationInterceptor, InvalidationInterceptor.class);
-				cache.addInterceptorBefore(invalidationInterceptor, NonTxInvalidationInterceptor.class);
+            chain.addInterceptorBefore(invalidationInterceptor, NonTxInvalidationInterceptor.class);
 				cache.removeInterceptor(NonTxInvalidationInterceptor.class);
 				break;
 			}
 			else if (i instanceof TxInvalidationInterceptor) {
 				InvalidationInterceptor invalidationInterceptor = new InvalidationInterceptor();
 				cache.getComponentRegistry().registerComponent(invalidationInterceptor, InvalidationInterceptor.class);
-				cache.addInterceptorBefore(invalidationInterceptor, TxInvalidationInterceptor.class);
+            chain.addInterceptorBefore(invalidationInterceptor, TxInvalidationInterceptor.class);
 				cache.removeInterceptor(TxInvalidationInterceptor.class);
 				break;
 			}
@@ -257,6 +269,11 @@ public class PutFromLoadValidator {
 	public void resetCurrentSession() {
 		currentSession.remove();
 	}
+
+	public void destroy() {
+      pendingPuts.stop();
+      pendingPuts.getCacheManager().undefineConfiguration( pendingPuts.getName() );
+   }
 
 	/**
 	 * Marker for lock acquired in {@link #acquirePutFromLoadLock(SharedSessionContractImplementor, Object, long)}
@@ -653,6 +670,12 @@ public class PutFromLoadValidator {
 	private static String lockOwnerToString(Object lockOwner) {
 		return lockOwner instanceof SharedSessionContractImplementor ? "Session#" + lockOwner.hashCode() : lockOwner.toString();
 	}
+
+	public void remotePendingPutsCache() {
+      String pendingPutsName = getPendingPutsName( cache );
+      EmbeddedCacheManager cm = cache.getCacheManager();
+      cm.removeCache( pendingPutsName );
+   }
 
 	/**
 	 * Lazy-initialization map for PendingPut. Optimized for the expected usual case where only a

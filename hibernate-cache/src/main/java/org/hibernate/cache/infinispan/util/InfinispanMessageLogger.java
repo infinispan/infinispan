@@ -9,6 +9,7 @@ package org.hibernate.cache.infinispan.util;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cache.infinispan.JndiInfinispanRegionFactory;
+import org.infinispan.util.ByteString;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -91,7 +92,7 @@ public interface InfinispanMessageLogger extends BasicLogger {
 
 	@LogMessage(level = ERROR)
 	@Message(value = "Failed to end invalidating pending putFromLoad calls for key %s from region %s; the key won't be cached until invalidation expires.", id = 25016)
-	void failedEndInvalidating(Object key, String name);
+	void failedEndInvalidating(Object key, ByteString name);
 
 	@Message(value = "Unable to retrieve CacheManager from JNDI [%s]", id = 25017)
 	CacheException unableToRetrieveCmFromJndi(String jndiNamespace);
@@ -118,7 +119,7 @@ public interface InfinispanMessageLogger extends BasicLogger {
 	CacheException cannotGetCurrentTx(@Cause SystemException e);
 
 	@Message(value = "Failed to invalidate pending putFromLoad calls for key %s from region %s", id = 25024)
-	CacheException failedInvalidatePendingPut(Object key, String regionName);
+	CacheException failedInvalidatePendingPut(Object key, ByteString regionName);
 
 	@LogMessage(level = ERROR)
 	@Message(value = "Failed to invalidate pending putFromLoad calls for region %s", id = 25025)

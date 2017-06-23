@@ -27,8 +27,8 @@ public class BeginInvalidationCommand extends InvalidateCommand {
 	public BeginInvalidationCommand() {
 	}
 
-	public BeginInvalidationCommand(CacheNotifier notifier, Set<Flag> flags, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
-		super(notifier, flags, commandInvocationId, keys);
+	public BeginInvalidationCommand(CacheNotifier notifier, long flagsBitSet, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
+		super(notifier, flagsBitSet, commandInvocationId, keys);
 		this.lockOwner = lockOwner;
 	}
 
@@ -39,13 +39,13 @@ public class BeginInvalidationCommand extends InvalidateCommand {
 	@Override
 	public void writeTo(ObjectOutput output) throws IOException {
 		super.writeTo(output);
-		output.writeObject(lockOwner);
+      LockOwner.writeTo( output, lockOwner );
 	}
 
 	@Override
 	public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
 		super.readFrom(input);
-		lockOwner = input.readObject();
+		lockOwner = LockOwner.readFrom( input );
 	}
 
 	@Override
@@ -74,7 +74,7 @@ public class BeginInvalidationCommand extends InvalidateCommand {
 
 	@Override
 	public String toString() {
-		return "BeginInvalidateCommand{keys=" + Arrays.toString(keys) +
+		return "BeginInvalidationCommand{keys=" + Arrays.toString(keys) +
 				", sessionTransactionId=" + lockOwner + '}';
 	}
 }

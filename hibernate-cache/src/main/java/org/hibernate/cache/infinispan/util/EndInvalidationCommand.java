@@ -16,6 +16,7 @@ import org.hibernate.cache.infinispan.access.PutFromLoadValidator;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.ByteString;
 
 /**
  * Sent in commit phase (after DB commit) to remote nodes in order to stop invalidating
@@ -28,14 +29,14 @@ public class EndInvalidationCommand extends BaseRpcCommand {
 	private Object lockOwner;
 	private PutFromLoadValidator putFromLoadValidator;
 
-	public EndInvalidationCommand(String cacheName) {
+	public EndInvalidationCommand(ByteString cacheName) {
 		this(cacheName, null, null);
 	}
 
 	/**
 	 * @param cacheName name of the cache to evict
 	 */
-	public EndInvalidationCommand(String cacheName, Object[] keys, Object lockOwner) {
+	public EndInvalidationCommand(ByteString cacheName, Object[] keys, Object lockOwner) {
 		super(cacheName);
 		this.keys = keys;
 		this.lockOwner = lockOwner;
@@ -57,13 +58,13 @@ public class EndInvalidationCommand extends BaseRpcCommand {
 	@Override
 	public void writeTo(ObjectOutput output) throws IOException {
 		MarshallUtil.marshallArray(keys, output);
-		output.writeObject(lockOwner);
+      LockOwner.writeTo( output, lockOwner );
 	}
 
 	@Override
 	public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
 		keys = MarshallUtil.unmarshallArray(input, Object[]::new);
-		lockOwner = input.readObject();
+      lockOwner = LockOwner.readFrom( input );
 	}
 
 	@Override
