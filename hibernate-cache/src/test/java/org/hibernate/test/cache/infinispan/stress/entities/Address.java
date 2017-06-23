@@ -1,6 +1,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 /*
  * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other
@@ -620,6 +621,8 @@ public final class Address {
 }
 >>>>>>> HHH-9898 Test for correct behaviour of 2LC
 =======
+=======
+>>>>>>> ISPN-7963 Fix line endings
 /*
  * Hibernate, Relational Persistence for Idiomatic Java
  *
@@ -821,4 +824,7 @@ public final class Address {
    }
 
 }
+<<<<<<< HEAD
 >>>>>>> Run CorrectnessTestCase in nonstrict mode
+=======
+>>>>>>> ISPN-7963 Fix line endings

@@ -1,5 +1,6 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 /*
  * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other
@@ -343,6 +344,8 @@ public class Person {
 }
 >>>>>>> HHH-9803 - Checkstyle fix ups - headers
 =======
+=======
+>>>>>>> ISPN-7963 Fix line endings
 /*
  * Hibernate, Relational Persistence for Idiomatic Java
  *
@@ -508,4 +511,7 @@ public class Person {
    }
 
 }
+<<<<<<< HEAD
 >>>>>>> Run CorrectnessTestCase in nonstrict mode
+=======
+>>>>>>> ISPN-7963 Fix line endings
