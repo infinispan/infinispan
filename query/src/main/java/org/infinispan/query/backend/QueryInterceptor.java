@@ -31,7 +31,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.EncodingUtils;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
@@ -263,10 +262,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       for (Work work : works) {
          worker.performWork(work, transactionContext);
       }
-   }
-
-   public boolean hasIndex(final Class<?> c) {
-      return searchFactoryHandler.hasIndex(c);
    }
 
    private Object extractValue(Object storedValue) {
