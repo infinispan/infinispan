@@ -243,7 +243,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    /**
-    * Check that the classes declared by the user are really indexable.
+    * Check that the indexable classes declared by the user are really indexable.
     */
    private void checkIndexableClasses(SearchIntegrator searchFactory, Set<Class<?>> indexedEntities) {
       for (Class<?> c : indexedEntities) {
