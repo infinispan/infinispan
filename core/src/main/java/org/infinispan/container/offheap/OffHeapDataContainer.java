@@ -347,7 +347,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    @Override
    public int size() {
-      long time = timeService.time();
+      long time = timeService.wallClockTime();
       long count = entryStream().filter(e -> !e.isExpired(time)).count();
       if (count > Integer.MAX_VALUE) {
          return Integer.MAX_VALUE;
@@ -587,7 +587,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    @Override
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iterator() {
-      long time = timeService.time();
+      long time = timeService.wallClockTime();
       return entryStream().filter(e -> !e.isExpired(time)).iterator();
    }
 
