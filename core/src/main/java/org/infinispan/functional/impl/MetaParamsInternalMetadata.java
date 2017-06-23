@@ -107,50 +107,58 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
          '}';
    }
 
+   public MetaParam.Writable[] toWritableMetas() {
+      return params.toWritableMetas();
+   }
+
    public static class Builder implements Metadata.Builder {
       private final MetaParams params;
+
+      public Builder() {
+         this.params = MetaParams.empty();
+      }
 
       Builder(MetaParams params) {
          this.params = params;
       }
 
       @Override
-      public Metadata.Builder lifespan(long time, TimeUnit unit) {
+      public Builder lifespan(long time, TimeUnit unit) {
          params.add(new MetaLifespan(unit.toMillis(time)));
          return this;
       }
 
       @Override
-      public Metadata.Builder lifespan(long time) {
+      public Builder lifespan(long time) {
          params.add(new MetaLifespan(time));
          return this;
       }
 
       @Override
-      public Metadata.Builder maxIdle(long time, TimeUnit unit) {
+      public Builder maxIdle(long time, TimeUnit unit) {
          params.add(new MetaMaxIdle(unit.toMillis(time)));
          return this;
       }
 
       @Override
-      public Metadata.Builder maxIdle(long time) {
+      public Builder maxIdle(long time) {
          params.add(new MetaMaxIdle(time));
          return this;
       }
 
       @Override
-      public Metadata.Builder version(EntryVersion version) {
+      public Builder version(EntryVersion version) {
          params.add(new MetaEntryVersion(version));
          return this;
       }
 
       @Override
-      public Metadata build() {
+      public MetaParamsInternalMetadata build() {
          return new MetaParamsInternalMetadata(params);
       }
 
       @Override
-      public Metadata.Builder merge(Metadata metadata) {
+      public Builder merge(Metadata metadata) {
          if (metadata instanceof MetaParamsInternalMetadata) {
             params.merge(((MetaParamsInternalMetadata) metadata).params);
          } else {
