@@ -201,6 +201,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new MetadataTransientMortalCacheValue.Externalizer(), exts); // TODO: Untested in core
       addInternalExternalizer(new MetaParamExternalizers.LifespanExternalizer(), exts);
       addInternalExternalizer(new MetaParamExternalizers.EntryVersionParamExternalizer(), exts);
+      addInternalExternalizer(new MetaParamExternalizers.MaxIdleExternalizer(), exts);
       addInternalExternalizer(new MetaParamsInternalMetadata.Externalizer(), exts);
       addInternalExternalizer(new MIMECacheEntry.Externalizer(), exts); // new
       addInternalExternalizer(new MortalCacheEntry.Externalizer(), exts);

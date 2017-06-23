@@ -55,6 +55,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
       doXSiteStateTransferDuringTopologyChange(TopologyEvent.JOIN);
    }
 
+   @Test(groups = "unstable_xsite", description = "ISPN-6872")
    public void testXSiteSTDuringLeave() throws InterruptedException, ExecutionException, TimeoutException {
       doXSiteStateTransferDuringTopologyChange(TopologyEvent.LEAVE);
    }

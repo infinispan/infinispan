@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -286,6 +288,25 @@ final class MetaParams implements Iterable<MetaParam<?>> {
    @Override
    public Iterator<MetaParam<?>> iterator() {
       return new It();
+   }
+
+   @Override
+   public Spliterator<MetaParam<?>> spliterator() {
+      return Spliterators.spliterator(iterator(), length, Spliterator.DISTINCT | Spliterator.NONNULL);
+   }
+
+   public MetaParam.Writable[] toWritableMetas() {
+      int writable = 0;
+      for (MetaParam meta : metas) {
+         if (meta instanceof MetaParam.Writable) writable++;
+      }
+      MetaParam.Writable[] writables = new MetaParam.Writable[writable];
+      for (MetaParam meta : metas) {
+         if (meta instanceof MetaParam.Writable) {
+            writables[--writable] = (MetaParam.Writable) meta;
+         }
+      }
+      return writables;
    }
 
    public static MetaParams readFrom(ObjectInput input) throws IOException, ClassNotFoundException {

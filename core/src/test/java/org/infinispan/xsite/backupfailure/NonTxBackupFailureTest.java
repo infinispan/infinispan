@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -136,9 +137,17 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          failureInterceptor.disable();
       }
 
+      assertTrue(failureInterceptor.writeOnlyManyEntriesFailed);
       for (int i = 0; i < 100; i++) {
          final int keyIndex = i;
-         eventuallyEquals("v" + keyIndex, () -> cache("LON", keyIndex % 2).get("k" + keyIndex));
+         // When the policy is set to fail, the failure may fail local cluster operation and the value
+         // is not written. This happens when the failure is thrown on remote primary owner - we don't
+         // commit local entries until distribution interceptor returns and this now throws an exception.
+         // This used to work when we were replicating cross-site from origin only after everything was
+         // committed - the replication failure then did not affect local cluster state.
+         if (lonBackupFailurePolicy != BackupFailurePolicy.FAIL) {
+            eventuallyEquals("v" + keyIndex, () -> cache("LON", keyIndex % 2).get("k" + keyIndex));
+         }
          assertNull(backup("LON").get("k" + i));
       }
    }
