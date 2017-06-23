@@ -288,7 +288,7 @@ public class Airplane {
 ====== Specifying indexed Entities
 
 Infinispan can automatically recognize and manage indexes for different entity types in a cache. Future versions of Infinispan will remove this capability so it's recommended to
-declare upfront which types are going to be indexed. This can be done via xml:
+declare upfront which types are going to be indexed (list them by their fully qualified class name). This can be done via xml:
 
 [source,xml]
 ----
@@ -297,8 +297,8 @@ declare upfront which types are going to be indexed. This can be done via xml:
       <replicated-cache name="default">
          <indexing index="ALL">
             <indexed-entities>
-                <indexed-entity>org.infinispan.query.test.Car</indexed-entity>
-                <indexed-entity>org.infinispan.query.test.Truck</indexed-entity>
+                <indexed-entity>com.acme.query.test.Car</indexed-entity>
+                <indexed-entity>com.acme.query.test.Truck</indexed-entity>
             </indexed-entities>
          </indexing>
       </replicated-cache>
@@ -317,6 +317,17 @@ or programmatically:
        .addIndexedEntity(Truck.class)
 
 ----
+
+In server mode, the class names listed under the 'indexed-entities' element must use the 'extended' class name format
+which is composed of a JBoss Modules module identifier, a slot name, and the fully qualified class name, these three
+components being separated by the ':' character, (eg. "com.acme.my-module-with-entity-classes:my-slot:com.acme.query.test.Car").
+The entity classes must be located in the referenced module, which can be either a user supplied module deployed in the
+'modules' folder of your server or a plain jar deployed in the 'deployments' folder. The module in question will become
+an automatic dependency of your Cache, so its eventual redeployment will cause the cache to be restarted.
+
+NOTE: Only for server, if you fail to follow the requirement of using 'extended' class names and use a plain class name
+its resolution will fail due to missing class because the wrong ClassLoader is being used (the Infinispan's internal
+class path is being used).
 
 
 ===== Index mode [[query.index-mode]]

@@ -27,6 +27,7 @@ import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.ProtostreamCompatEncoder;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
@@ -149,7 +150,17 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
                // we're not using Protobuf, then use whatever marshaller is configured
                serCtx = null;
                ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
-               entityNameResolver = new ReflectionEntityNamesResolver(classLoader);
+               ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
+               QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
+               if (queryInterceptor != null) {
+                  // If indexing is enabled, then use the known set of classes for lookup and the global classloder as a fallback.
+                  entityNameResolver = name -> queryInterceptor.getKnownClasses().stream()
+                        .filter(c -> c.getName().equals(name))
+                        .findFirst()
+                        .orElse(reflectionEntityNamesResolver.resolve(name));
+               } else {
+                  entityNameResolver = reflectionEntityNamesResolver;
+               }
             }
 
             SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
