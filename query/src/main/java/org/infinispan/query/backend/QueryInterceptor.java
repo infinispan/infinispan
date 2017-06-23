@@ -264,6 +264,15 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       }
    }
 
+   /**
+    * The set of known classes. Some might be indexable, some are not.
+    *
+    * @return an immutable set
+    */
+   public Set<Class<?>> getKnownClasses() {
+      return queryKnownClasses.keys();
+   }
+
    private Object extractValue(Object storedValue) {
       return fromStorage(storedValue, valueEncoder, valueWrapper);
    }
