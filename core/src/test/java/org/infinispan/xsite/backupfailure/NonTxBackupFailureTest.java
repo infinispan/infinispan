@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -136,9 +137,17 @@ public class NonTxBackupFailureTest extends BaseBackupFailureTest {
          failureInterceptor.disable();
       }
 
+      assertTrue(failureInterceptor.writeOnlyManyEntriesFailed);
       for (int i = 0; i < 100; i++) {
          final int keyIndex = i;
-         eventuallyEquals("v" + keyIndex, () -> cache("LON", keyIndex % 2).get("k" + keyIndex));
+         // In the past, data was xsite-backed up from origin only after all entries were committed locally.
+         // Now that the xsite-backup runs always on primary owner, the failure on remote node propagates
+         // back to the origin and this causes the triangle's collector future to fail with exception.
+         // Entries that are not owned locally are not committed then (as the failure comes in distribution interceptor)
+         // which is below entry-wrapping, though those entries that could not be xsite-backed up are committed.
+         if (lonBackupFailurePolicy != BackupFailurePolicy.FAIL) {
+            eventuallyEquals("v" + keyIndex, () -> cache("LON", keyIndex % 2).get("k" + keyIndex));
+         }
          assertNull(backup("LON").get("k" + i));
       }
    }

@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-//unstable: it looks like not all cases are handled properly. Needs to be revisited! ISPN-6228
+//unstable: it looks like not all cases are handled properly. Needs to be revisited! ISPN-6228, ISPN-6872
 @Test(groups = {"xsite", "unstable"}, testName = "xsite.statetransfer.failures.SiteConsumerTopologyChangeTest")
 public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
 

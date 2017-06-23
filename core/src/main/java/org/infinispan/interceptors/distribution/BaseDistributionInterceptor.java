@@ -67,6 +67,8 @@ import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import net.jcip.annotations.GuardedBy;
+
 /**
  * Base class for distribution of entries across a cluster.
  *
@@ -358,44 +360,52 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          return invokeNext(ctx, command);
       }
+      GetAllSuccessHandler getAllSuccessHandler = new GetAllSuccessHandler(command);
+      CompletableFuture<Void> allFuture = remoteGetAll(ctx, command, command.getKeys(), getAllSuccessHandler);
+      return asyncValue(allFuture).thenApply(ctx, command, getAllSuccessHandler);
+   }
 
-      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, command.getKeys(), cacheTopology, null, null);
+   protected <C extends FlagAffectedCommand & TopologyAffectedCommand> CompletableFuture<Void> remoteGetAll(
+         InvocationContext ctx, C command, Collection<?> keys, RemoteGetAllHandler remoteGetAllHandler) {
+      Map<Address, List<Object>> requestedKeys = getKeysByOwner(ctx, keys, checkTopologyId(command), null, null);
       if (requestedKeys.isEmpty()) {
-         return invokeNext(ctx, command);
+         return CompletableFutures.completedNull();
       }
 
       GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
-      ClusteredGetAllFuture allFuture = new ClusteredGetAllFuture(requestedKeys.size(), command);
+      ClusteredGetAllFuture allFuture = new ClusteredGetAllFuture(requestedKeys.size());
 
       for (Map.Entry<Address, List<Object>> pair : requestedKeys.entrySet()) {
          ClusteredGetAllCommand clusteredGetAllCommand = cf.buildClusteredGetAllCommand(pair.getValue(), command.getFlagsBitSet(), gtx);
          clusteredGetAllCommand.setTopologyId(command.getTopologyId());
          rpcManager.invokeRemotelyAsync(Collections.singleton(pair.getKey()), clusteredGetAllCommand, syncIgnoreLeavers)
-               .whenComplete(new ClusteredGetAllHandler(pair.getKey(), allFuture, ctx, command, pair.getValue(), null));
+               .whenComplete(new ClusteredGetAllHandler(pair.getKey(), allFuture, ctx, command, pair.getValue(), null, remoteGetAllHandler));
       }
-      return asyncValue(allFuture).thenApply(ctx, command, allFuture);
+      return allFuture;
    }
 
    protected void handleRemotelyRetrievedKeys(InvocationContext ctx, List<?> remoteKeys) {
    }
 
-   private class ClusteredGetAllHandler implements BiConsumer<Map<Address, Response>, Throwable> {
+   private class ClusteredGetAllHandler<C extends FlagAffectedCommand & TopologyAffectedCommand> implements BiConsumer<Map<Address, Response>, Throwable> {
       private final Address target;
       private final ClusteredGetAllFuture allFuture;
       private final InvocationContext ctx;
-      private final GetAllCommand command;
+      private final C command;
       private final List<?> keys;
       private final Map<Object, Collection<Address>> contactedNodes;
+      private final RemoteGetAllHandler remoteGetAllHandler;
 
       private ClusteredGetAllHandler(Address target, ClusteredGetAllFuture allFuture, InvocationContext ctx,
-                                     GetAllCommand command, List<?> keys, Map<Object, Collection<Address>> contactedNodes) {
+                                     C command, List<?> keys, Map<Object, Collection<Address>> contactedNodes,
+                                     RemoteGetAllHandler remoteGetAllHandler) {
          this.target = target;
          this.allFuture = allFuture;
          this.keys = keys;
          this.ctx = ctx;
          this.command = command;
          this.contactedNodes = contactedNodes;
+         this.remoteGetAllHandler = remoteGetAllHandler;
       }
 
       @Override
@@ -414,6 +424,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return;
          }
          InternalCacheValue[] values = (InternalCacheValue[]) responseValue;
+         // Check if other handlers haven't finished with an exception, without blocking if the exception is currently
+         // being processed in the interceptor stack callbacks.
+         if (allFuture.isDone()) {
+            return;
+         }
          synchronized (allFuture) {
             // Check if other handlers haven't finished with an exception
             if (allFuture.isDone()) {
@@ -434,7 +449,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       private void handleMissingResponse(Response response) {
          if (response instanceof UnsureResponse) {
-            allFuture.hasUnsureResponse = true;
+            remoteGetAllHandler.onUnsureResponse();
          }
          GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
 
@@ -456,17 +471,15 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             // Note that keys here are only the subset of keys requested from the node which did not send a valid response
             keys.removeAll(pair.getValue());
             rpcManager.invokeRemotelyAsync(Collections.singleton(pair.getKey()), clusteredGetAllCommand, syncIgnoreLeavers)
-                  .whenComplete(new ClusteredGetAllHandler(pair.getKey(), allFuture, ctx, command, pair.getValue(), contactedNodes));
+                  .whenComplete(new ClusteredGetAllHandler(pair.getKey(), allFuture, ctx, command, pair.getValue(), contactedNodes, remoteGetAllHandler));
          }
          if (!keys.isEmpty()) {
-            // GetAllCommand requires all keys to be wrapped when it comes to execute perform() methods, therefore
-            // we need to remove those for which we have not received any entry
             synchronized (allFuture) {
-               Set<?> strippedKeys = new HashSet<>(allFuture.localCommand.getKeys());
-               strippedKeys.removeAll(keys);
-               // We can't just call command.setKeys() - interceptors might compare keys and actual result set
-               allFuture.localCommand = cf.buildGetAllCommand(strippedKeys, command.getFlagsBitSet(), command.isReturnEntries());
-               allFuture.lostData = true;
+               try {
+                  remoteGetAllHandler.onKeysLost(keys);
+               } catch (Throwable t) {
+                  allFuture.completeExceptionally(t);
+               }
             }
          }
          synchronized (allFuture) {
@@ -474,6 +487,47 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                allFuture.complete(null);
             }
          }
+      }
+   }
+
+   protected interface RemoteGetAllHandler {
+      void onUnsureResponse();
+      void onKeysLost(Collection<?> lostKeys);
+   }
+
+   private class GetAllSuccessHandler implements RemoteGetAllHandler, InvocationSuccessFunction {
+      private GetAllCommand localCommand;
+      private boolean lostData;
+      private boolean hasUnsureResponse;
+
+      public GetAllSuccessHandler(GetAllCommand localCommand) {
+         this.localCommand = localCommand;
+      }
+
+      @Override
+      public void onUnsureResponse() {
+         hasUnsureResponse = true;
+      }
+
+      @GuardedBy("allFuture") // This handler is executed within a synchronized (allFuture) { ... }
+      @Override
+      public void onKeysLost(Collection<?> lostKeys) {
+         // GetAllCommand requires all keys to be wrapped when it comes to execute perform() methods, therefore
+         // we need to remove those for which we have not received any entry
+         lostData = true;
+         Set<?> strippedKeys = new HashSet<>(localCommand.getKeys());
+         strippedKeys.removeAll(lostKeys);
+         // We can't just call command.setKeys() - interceptors might compare keys and actual result set
+         localCommand = cf.buildGetAllCommand(strippedKeys, localCommand.getFlagsBitSet(), localCommand.isReturnEntries());
+      }
+
+      @Override
+      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
+         assert rv == null; // value with which the allFuture has been completed
+         if (hasUnsureResponse && lostData) {
+            throw OutdatedTopologyException.INSTANCE;
+         }
+         return invokeNext(rCtx, localCommand);
       }
    }
 
