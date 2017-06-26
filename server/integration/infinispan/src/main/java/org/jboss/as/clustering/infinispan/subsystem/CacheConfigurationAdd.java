@@ -59,10 +59,10 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.SitesConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
@@ -77,6 +77,7 @@ import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
 import org.infinispan.persistence.rocksdb.configuration.CompressionType;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.server.commons.dmr.ModelNodes;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.transaction.LockingMode;
@@ -214,9 +215,9 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         String containerName = containerAddress.getLastElement().getValue();
 
         // get model attributes
-        ModelNode resolvedValue = null;
+        ModelNode resolvedValue;
         final String templateConfiguration = (resolvedValue = CacheConfigurationResource.CONFIGURATION.resolveModelAttribute(context, cacheModel)).isDefined() ? resolvedValue.asString() : null;
-        final ModuleIdentifier moduleId = (resolvedValue = CacheConfigurationResource.CACHE_MODULE.resolveModelAttribute(context, cacheModel)).isDefined() ? ModuleIdentifier.fromString(resolvedValue.asString()) : null;
+        final ModuleIdentifier moduleId = ModelNodes.asModuleIdentifier(CacheConfigurationResource.CACHE_MODULE.resolveModelAttribute(context, cacheModel));
 
         // create a list for dependencies which may need to be added during processing
         List<Dependency<?>> dependencies = new LinkedList<>();
@@ -237,7 +238,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         Collection<ServiceController<?>> controllers = new ArrayList<>(3);
 
         // install the cache configuration service (configures a cache)
-        controllers.add(this.installCacheConfigurationService(target, containerName, cacheName, defaultCache, moduleId,
+        controllers.add(installCacheConfigurationService(target, containerName, cacheName, defaultCache, moduleId,
                         templateConfiguration, builder, config, dependencies));
         log.debugf("Cache configuration service for %s installed for container %s", cacheName, containerName);
 
@@ -260,17 +261,16 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         log.debugf("cache configuration %s removed for container %s", configurationName, containerName);
     }
 
-    protected PathAddress getCacheConfigurationAddressFromOperation(ModelNode operation) {
-        return PathAddress.pathAddress(operation.get(OP_ADDR)) ;
+    private PathAddress getCacheConfigurationAddressFromOperation(ModelNode operation) {
+        return PathAddress.pathAddress(operation.get(OP_ADDR));
     }
 
-    protected PathAddress getCacheContainerAddressFromOperation(ModelNode operation) {
-        final PathAddress configurationAddress = getCacheConfigurationAddressFromOperation(operation) ;
-        final PathAddress containerAddress = configurationAddress.subAddress(0, configurationAddress.size() - 2) ;
-        return containerAddress ;
+    private PathAddress getCacheContainerAddressFromOperation(ModelNode operation) {
+        PathAddress configurationAddress = getCacheConfigurationAddressFromOperation(operation);
+        return configurationAddress.subAddress(0, configurationAddress.size() - 2);
     }
 
-    ServiceController<?> installCacheConfigurationService(ServiceTarget target, String containerName, String cacheName, String defaultCache, ModuleIdentifier moduleId,
+    private ServiceController<?> installCacheConfigurationService(ServiceTarget target, String containerName, String cacheName, String defaultCache, ModuleIdentifier moduleId,
             String templateConfiguration, ConfigurationBuilder builder, Configuration config, List<Dependency<?>> dependencies) {
 
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<>();
@@ -667,7 +667,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
    private StoreConfigurationBuilder<?, ?> buildCacheStore(OperationContext context, PersistenceConfigurationBuilder persistenceBuilder, String containerName, ModelNode store, String storeKey, List<Dependency<?>> dependencies) throws OperationFailedException {
 
-        ModelNode resolvedValue = null;
+        ModelNode resolvedValue;
         if (storeKey.equals(ModelKeys.FILE_STORE)) {
             final SingleFileStoreConfigurationBuilder builder = persistenceBuilder.addStore(SingleFileStoreConfigurationBuilder.class);
             if (store.hasDefined(ModelKeys.MAX_ENTRIES)) {
@@ -948,7 +948,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             // }
             String propertyName = property.getName();
             // get the value from ModelNode {"value" => "property-value"}
-            ModelNode propertyValue = null ;
+            ModelNode propertyValue;
             propertyValue = StorePropertyResource.VALUE.resolveModelAttribute(context,property.getValue());
             properties.setProperty(propertyName, propertyValue.asString());
          }
@@ -989,7 +989,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
     {
         if (!table.isDefined() || !table.hasDefined(columnKey)) return defaultValue;
         ModelNode column = table.get(columnKey);
-        ModelNode resolvedValue = null ;
+        ModelNode resolvedValue;
         return ((resolvedValue = columnAttribute.resolveModelAttribute(context, column)).isDefined()) ? resolvedValue.asString() : defaultValue;
     }
 
