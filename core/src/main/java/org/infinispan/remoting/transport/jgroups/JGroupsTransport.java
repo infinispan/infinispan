@@ -587,25 +587,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          log.tracef("dests=%s, command=%s, mode=%s, timeout=%s", recipients, rpcCommand, mode, timeout);
       Address self = getAddress();
       boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
-      List<Address> members = getMembers();
-      if (mode.isSynchronous() && recipients != null && !members.containsAll(recipients)) {
-         if (!ignoreLeavers) { // SYNCHRONOUS
-            Address suspect = recipients.stream().filter(a -> !members.contains(a)).findFirst().orElse(null);
-            CompletableFuture<Map<Address, Response>> future = new CompletableFuture<>();
-            future.completeExceptionally(new SuspectException(
-                  "One or more nodes have left the cluster while replicating command " + rpcCommand, suspect));
-            return future;
-         }
-      }
-
       List<org.jgroups.Address> jgAddressList = toJGroupsAddressListExcludingSelf(recipients, totalOrder);
       if (jgAddressList != null && jgAddressList.isEmpty()) {
          return CompletableFutures.completedEmptyMap();
       }
 
-      List<Address> localMembers = this.members;
-      int membersSize = localMembers.size();
-      boolean broadcast = membersSize > 2 && (jgAddressList == null || recipients.size() == membersSize);
+      boolean broadcast = jgAddressList == null;
       CompletableFuture<Responses> rspListFuture = null;
       SingleResponseFuture singleResponseFuture = null;
       org.jgroups.Address singleJGAddress = null;
@@ -618,27 +605,9 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                .invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
                      toJGroupsFilter(responseFilter), deliverOrder);
       } else {
-         boolean skipRpc;
-         boolean singleRecipient;
-         if (jgAddressList == null) {
-            skipRpc = membersSize < 2;
-            singleRecipient = !ignoreLeavers && membersSize == 2;
-            if (singleRecipient) {
-               if (localMembers.get(0).equals(self)) {
-                  singleJGAddress = toJGroupsAddress(localMembers.get(1));
-               } else {
-                  singleJGAddress = toJGroupsAddress(localMembers.get(0));
-               }
-            }
-         } else {
-            skipRpc = false;
-            singleRecipient = !ignoreLeavers && jgAddressList.size() == 1;
-            if (singleRecipient) {
-               singleJGAddress = jgAddressList.get(0);
-            }
-         }
-         if (skipRpc) {
-            return CompletableFutures.completedEmptyMap();
+         boolean singleRecipient = !ignoreLeavers && jgAddressList.size() == 1;
+         if (singleRecipient) {
+            singleJGAddress = jgAddressList.get(0);
          }
 
          if (singleRecipient) {
@@ -671,6 +640,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          return rspListFuture.thenApply(rsps -> {
             if (trace)
                log.tracef("Responses: %s", rsps);
+
+            if (broadcast && rsps.size() == 0) {
+               // JGroups returns an empty RspList if we're the only node in the cluster, no need to validate
+               return Collections.emptyMap();
+            }
+
             Map<Address, Response> responseMap =
                   new HashMap<>(CollectionFactory.computeCapacity(rsps.size()));
             boolean hasResponses = false;
