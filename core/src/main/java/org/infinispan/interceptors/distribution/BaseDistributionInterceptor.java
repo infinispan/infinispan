@@ -437,7 +437,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             allFuture.hasUnsureResponse = true;
          }
          GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext) ctx).getGlobalTransaction() : null;
-         LocalizedCacheTopology cacheTopology = checkTopologyId(command);
 
          Map<Object, Collection<Address>> contactedNodes = this.contactedNodes == null ? new HashMap<>() : this.contactedNodes;
          Map<Address, List<Object>> requestedKeys;
@@ -467,11 +466,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                strippedKeys.removeAll(keys);
                // We can't just call command.setKeys() - interceptors might compare keys and actual result set
                allFuture.localCommand = cf.buildGetAllCommand(strippedKeys, command.getFlagsBitSet(), command.isReturnEntries());
-            }
-         } else if (trace) {
-            log.tracef("No owner found for keys %s, contacted nodes are %s", keys, contactedNodes);
-            for (Object key : keys) {
-               log.tracef("%s -> %s", key, cacheTopology.getDistribution(key).readOwners());
+               allFuture.lostData = true;
             }
          }
          synchronized (allFuture) {
@@ -784,6 +779,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       @Override
       protected Object result() {
+         // If we've lost data but did not get any unsure responses we should return limited stream.
+         // If we've got unsure response but did not lose any data - no problem, there has been another
+         // response delivering the results.
+         // Only if those two combine we'll rather throw OTE and retry.
          if (hasUnsureResponse && lostData) {
             throw OutdatedTopologyException.INSTANCE;
          }

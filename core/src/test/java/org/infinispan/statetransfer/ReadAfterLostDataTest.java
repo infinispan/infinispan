@@ -15,8 +15,6 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
@@ -24,8 +22,6 @@ import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
@@ -217,11 +213,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
       for (Object key : keys) {
          writeMap.put(key, "other" + (i++));
       }
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      InvocationContext ctx = cr.getComponent(InvocationContextFactory.class).createInvocationContext(true, keys.size());
-      PutMapCommand putMapCommand = cr.getComponent(CommandsFactory.class).buildPutMapCommand(writeMap, null, 0);
-      ctx.setLockOwner(putMapCommand.getKeyLockOwner());
-      return (Map<?, ?>) cache.getAdvancedCache().getAsyncInterceptorChain().invoke(ctx, putMapCommand);
+      return cache.getAdvancedCache().getAndPutAll(writeMap);
    }
 
    private static Map<?, ?> remove(Cache<Object, Object> cache, Collection<?> keys) {

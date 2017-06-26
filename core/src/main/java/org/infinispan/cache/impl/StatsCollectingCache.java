@@ -149,6 +149,21 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
    }
 
    @Override
+   public Map<K, V> getAndPutAll(Map<? extends K, ? extends V> entries) {
+      boolean statisticsEnabled = statsCollector.getStatisticsEnabled();
+      long start = 0;
+      if (statisticsEnabled) {
+         start = timeService.time();
+      }
+      Map<K, V> map = super.getAndPutAll(entries);
+      if (statisticsEnabled) {
+         long end = timeService.time();
+         statsCollector.recordStores(entries.size(), end - start);
+      }
+      return map;
+   }
+
+   @Override
    public void evict(K key) {
       super.evict(key);
       statsCollector.recordEviction();

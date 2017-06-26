@@ -46,7 +46,7 @@ public class MultiSubCommandInvoker implements InvocationSuccessFunction {
    public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
       if (subCommands.hasNext()) {
          VisitableCommand newCommand = subCommands.next();
-         return interceptor.invokeNext(rCtx, newCommand);
+         return interceptor.invokeNextThenApply(rCtx, newCommand, this);
       } else {
          return finalStage;
       }
