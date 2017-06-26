@@ -298,6 +298,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map) {
+      return cache.getAndPutAll(map);
+   }
+
+   @Override
    public java.util.Map<K, V> getGroup(String groupName) {
       return cache.getGroup(groupName);
    }

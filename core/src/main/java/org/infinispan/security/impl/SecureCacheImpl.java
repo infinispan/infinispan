@@ -825,6 +825,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map) {
+      authzManager.checkPermission(subject, AuthorizationPermission.BULK_WRITE);
+      return delegate.getAndPutAll(map);
+   }
+
+   @Override
    public Map<K, V> getGroup(String groupName) {
       authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
       return delegate.getGroup(groupName);

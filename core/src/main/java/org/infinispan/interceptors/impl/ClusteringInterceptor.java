@@ -100,6 +100,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       public GetAllCommand localCommand;
       public int counter;
       public boolean hasUnsureResponse;
+      public boolean lostData;
 
       public ClusteredGetAllFuture(int counter, GetAllCommand localCommand) {
          this.counter = counter;
@@ -114,7 +115,11 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       @Override
       public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Object rv) throws Throwable {
          assert rv == null; // value with which the allFuture has been completed
-         if (hasUnsureResponse) {
+         // If we've lost data but did not get any unsure responses we should return map without some entries.
+         // If we've got unsure response but did not lose any data - no problem, there has been another
+         // response delivering the results.
+         // Only if those two combine we'll rather throw OTE and retry.
+         if (hasUnsureResponse && lostData) {
             throw OutdatedTopologyException.INSTANCE;
          }
          return invokeNext(rCtx, localCommand);

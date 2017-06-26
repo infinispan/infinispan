@@ -642,6 +642,11 @@ public class SecureCacheTestDriver {
       cache.getAll(Collections.emptySet());
    }
 
+   @TestCachePermission(AuthorizationPermission.BULK_WRITE)
+   public void testGetAndPutAll_Map(SecureCache<String, String> cache) {
+      cache.getAndPutAll(Collections.emptyMap());
+   }
+
    @TestCachePermission(AuthorizationPermission.BULK_READ)
    public void testGetAllCacheEntries_Set(SecureCache<String, String> cache) {
       cache.getAllCacheEntries(Collections.emptySet());

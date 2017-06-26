@@ -1,6 +1,7 @@
 package org.infinispan;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -593,6 +594,25 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @throws NullPointerException  if keys is null or if keys contains a null
     */
    Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys);
+
+   /**
+    * Executes an equivalent of {@link Map#putAll(Map)}, returning previous values
+    * of the modified entries.
+    * @param map mappings to be stored in this map
+    * @return A map of previous values for the given keys. If the previous mapping
+    *         does not exist it will not be in the returned map.
+    * @since 9.1
+    */
+   default Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map) {
+      Map<K, V> result = new HashMap<>(map.size());
+      for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
+         V prev = put(entry.getKey(), entry.getValue());
+         if (prev != null) {
+            result.put(entry.getKey(), prev);
+         }
+      }
+      return result;
+   }
 
    /**
     * It fetches all the keys which belong to the group.
