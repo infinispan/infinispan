@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,12 +31,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLEngine;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
+import javax.transaction.xa.Xid;
 
+import org.infinispan.commons.io.SignedNumeric;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.core.transport.NettyInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
+import org.infinispan.server.core.transport.VInt;
 import org.infinispan.server.hotrod.Constants;
 import org.infinispan.server.hotrod.HotRodOperation;
 import org.infinispan.server.hotrod.OperationStatus;
@@ -139,7 +143,7 @@ public class HotRodClient {
       return execute(0xA0, (byte) 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, clientIntelligence, topologyId);
    }
 
-   private boolean assertStatus(TestResponse resp, OperationStatus expected) {
+   private void assertStatus(TestResponse resp, OperationStatus expected) {
       OperationStatus status = resp.getStatus();
       boolean isSuccess = status == expected;
       if (resp instanceof TestErrorResponse) {
@@ -149,7 +153,6 @@ public class HotRodClient {
          assertTrue(String.format(
                "Status should have been '%s' but instead was: '%s'", expected, status), isSuccess);
       }
-      return isSuccess;
    }
 
    private byte[] k(Method m) {
@@ -384,19 +387,18 @@ public class HotRodClient {
    }
 
    public TestAuthResponse auth(SaslClient sc) throws SaslException {
-      SaslClient saslClient = sc;
-      byte[] saslResponse = saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : new byte[0];
+      byte[] saslResponse = sc.hasInitialResponse() ? sc.evaluateChallenge(new byte[0]) : new byte[0];
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
-      AuthOp op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, saslClient.getMechanismName(), saslResponse);
+      AuthOp op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, sc.getMechanismName(), saslResponse);
       writeOp(op);
       TestAuthResponse response = (TestAuthResponse) handler.getResponse(op.id);
-      while (!saslClient.isComplete() || !response.complete) {
-         saslResponse = saslClient.evaluateChallenge(response.challenge);
+      while (!sc.isComplete() || !response.complete) {
+         saslResponse = sc.evaluateChallenge(response.challenge);
          op = new AuthOp(0xA0, protocolVersion, (byte) 0x23, defaultCacheName, (byte) 1, 0, "", saslResponse);
          writeOp(op);
          response = (TestAuthResponse) handler.getResponse(op.id);
       }
-      saslClient.dispose();
+      sc.dispose();
       return response;
    }
 
@@ -438,6 +440,28 @@ public class HotRodClient {
 
    public TestResponse putStream(byte[] key, byte[] value, long version, int lifespan, int maxIdle) {
       PutStreamOp op = new PutStreamOp(0xA0, protocolVersion, defaultCacheName, key, value, lifespan, maxIdle, version, (byte)1, 0);
+      writeOp(op);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      return handler.getResponse(op.id);
+   }
+
+   public TestResponse prepareTx(Xid xid, boolean onePhaseCommit, Collection<TxWrite> modifications) {
+      PrepareOp op = new PrepareOp(0xA0, protocolVersion, defaultCacheName, protocolVersion, 0, xid,
+            onePhaseCommit, modifications);
+      writeOp(op);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      return handler.getResponse(op.id);
+   }
+
+   public TestResponse commitTx(Xid xid) {
+      CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, protocolVersion, xid, true);
+      writeOp(op);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      return handler.getResponse(op.id);
+   }
+
+   public TestResponse rollbackTx(Xid xid) {
+      CommitOrRollbackOp op = new CommitOrRollbackOp(protocolVersion, defaultCacheName, protocolVersion, xid, false);
       writeOp(op);
       ClientHandler handler = (ClientHandler) ch.pipeline().last();
       return handler.getResponse(op.id);
@@ -486,6 +510,23 @@ class Encoder extends MessageToByteEncoder<Object> {
       this.protocolVersion = protocolVersion;
    }
 
+   private void encodePrepareOp(PrepareOp op, ByteBuf buffer) {
+      writeHeader(op, buffer);
+      VInt.write(buffer, SignedNumeric.encode(op.xid.getFormatId()));
+      writeRangedBytes(op.xid.getGlobalTransactionId(), buffer);
+      writeRangedBytes(op.xid.getBranchQualifier(), buffer);
+      buffer.writeByte(op.onePhaseCommit ? 1 : 0);
+      writeUnsignedInt(op.modifications.size(), buffer);
+      op.modifications.forEach(txWrite -> txWrite.encodeTo(buffer));
+   }
+
+   private void encodeCommitOrRollbackOp(CommitOrRollbackOp op, ByteBuf byteBuf) {
+      writeHeader(op, byteBuf);
+      VInt.write(byteBuf, SignedNumeric.encode(op.xid.getFormatId()));
+      writeRangedBytes(op.xid.getGlobalTransactionId(), byteBuf);
+      writeRangedBytes(op.xid.getBranchQualifier(), byteBuf);
+   }
+
    @Override
    protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
       log.tracef("Encode %s so that it's sent to the server", msg);
@@ -508,6 +549,10 @@ class Encoder extends MessageToByteEncoder<Object> {
          RemoveClientListenerOp op = (RemoveClientListenerOp) msg;
          writeHeader(op, buffer);
          writeRangedBytes(op.listenerId, buffer);
+      } else if (msg instanceof PrepareOp) {
+         encodePrepareOp((PrepareOp) msg, buffer);
+      } else if (msg instanceof CommitOrRollbackOp) {
+         encodeCommitOrRollbackOp((CommitOrRollbackOp) msg, buffer);
       } else if (msg instanceof Op) {
          Op op = (Op) msg;
          writeHeader(op, buffer);
@@ -815,6 +860,12 @@ class Decoder extends ReplayingDecoder<Void> {
                resp = new TestErrorResponse(op.version, id, op.cacheName, op.clientIntel,
                      status, op.topologyId, topologyChangeResponse, readString(buf));
             break;
+         case PREPARE_TX:
+         case ROLLBACK_TX:
+         case COMMIT_TX:
+            resp = new TxResponse(client.protocolVersion, id, client.defaultCacheName, op.clientIntel, opCode, status,
+                  op.topologyId, topologyChangeResponse, status == OperationStatus.Success ? buf.readInt() : 0);
+            break;
          default:
             resp = null;
             break;
@@ -1105,6 +1156,37 @@ class GetStreamOp extends Op {
 class PutStreamOp extends Op {
       public PutStreamOp(int magic, byte version, String cacheName, byte[] key, byte[] value, int lifespan, int maxIdle, long dataVersion, byte clientIntel, int topologyId) {
       super(magic, version, (byte)0x39, cacheName, key, lifespan, maxIdle, value, 0, dataVersion, clientIntel, topologyId);
+   }
+}
+
+abstract class TxOp extends AbstractOp {
+
+   final Xid xid;
+
+   TxOp(int magic, byte version, byte code, String cacheName, byte clientIntel, int topologyId, Xid xid) {
+      super(magic, version, code, cacheName, clientIntel, topologyId);
+      this.xid = xid;
+   }
+}
+
+class PrepareOp extends TxOp {
+
+   final boolean onePhaseCommit;
+   final List<TxWrite> modifications;
+
+   PrepareOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId, Xid xid,
+         boolean onePhaseCommit, Collection<TxWrite> modifications) {
+      super(magic, version, (byte) 0x3B, cacheName, clientIntel, topologyId, xid);
+      this.onePhaseCommit = onePhaseCommit;
+      this.modifications = new ArrayList<>(modifications);
+   }
+}
+
+class CommitOrRollbackOp extends TxOp {
+
+   CommitOrRollbackOp(byte version, String cacheName, byte clientIntel, Xid xid,
+         boolean commit) {
+      super(0xA0, version, (byte) (commit ? 0x3D : 0x3F), cacheName, clientIntel, 0, xid);
    }
 }
 

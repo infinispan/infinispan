@@ -211,6 +211,15 @@ public class ContextHandler extends SimpleChannelInboundHandler<CacheDecodeConte
                buf.release();
             }
             break;
+         case ROLLBACK_TX:
+            writeResponse(msg, ctx.channel(), msg.rollbackTransaction());
+            break;
+         case PREPARE_TX:
+            writeResponse(msg, ctx.channel(), msg.prepareTransaction());
+            break;
+         case COMMIT_TX:
+            writeResponse(msg, ctx.channel(), msg.commitTransaction());
+            break;
          default:
             throw new IllegalArgumentException("Unsupported operation invoked: " + msg.header.op);
       }

@@ -2013,6 +2013,174 @@ Here are the current values for each flag: +
 |==============================================================================
 
 
+==== Hot Rod Protocol 2.7
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 9.2
+
+This Hot Rod protocol version adds support for transaction operations.
+It includes 3 new operations:
+
+* Prepare, with the transaction write set (i.e. modified keys), it tries to prepare and validate the transaction in the server.
+* Commit, commits a prepared transaction.
+* Rollback, rollbacks a prepared transaction.
+
+.Prepare Request
+
+Request (0x3B):
+
+[cols="3,^2,10",options="header"]
+|===
+|Field Name |Size |Value
+
+|Header
+|variable
+|Request header
+
+|Xid
+|XID
+|The transaction ID (XID)
+
+|OnePhaseCommit
+|byte
+|When it is set to `1`, the server will use one-phase-commit if available (XA only)
+
+|Number of keys
+|vInt
+|The number of keys
+
+3+^|For each key (keys must be distinct)
+
+| Key Length
+| vInt
+| Length of key.
+Note that the size of a vInt can be up to 5 bytes which in theory can produce bigger numbers than `Integer.MAX_VALUE`.
+However, Java cannot create a single array that’s bigger than `Integer.MAX_VALUE`, hence the protocol is limiting vInt array lengths to `Integer.MAX_VALUE`.
+
+|Key
+|byte array
+|Byte array containing the key
+
+|Control Byte
+|Byte
+|A bit set with the following meaning: +
++0x01+ = `NOT_READ` +
++0x02+ = `NON_EXISTING` +
++0x04+ = `REMOVE_OPERATION` +
+Note that `NOT_READ` and `NON_EXISTING` can't be set at the same time.
+
+|Version Read
+|long
+|The version read. Only sent when `NOT_READ` and `NON_EXISTING` aren't present.
+
+| TimeUnits
+| Byte
+| Time units of lifespan (first 4 bits) and maxIdle (last 4 bits).
+Special units `DEFAULT` and `INFINITE` can be used for default server expiration and no expiration respectively.
+Possible values: +
++0x00+ = `SECONDS` +
++0x01+ = `MILLISECONDS` +
++0x02+ = `NANOSECONDS` +
++0x03+ = `MICROSECONDS` +
++0x04+ = `MINUTES` +
++0x05+ = `HOURS` +
++0x06+ = `DAYS` +
++0x07+ = `DEFAULT` +
++0x08+ = `INFINITE` +
+Only sent when `REMOVE_OPERATION` isn't set.
+
+| Lifespan
+| vLong
+| Duration which the entry is allowed to life.
+Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` isn't set.
+
+| Max Idle
+| vLong
+| Duration that each entry can be idle before it's evicted from the cache.
+Only sent when time unit is not `DEFAULT` or `INFINITE` and `REMOVE_OPERATION` isn't set.
+
+|Value Length
+|vInt
+|Length of value.
+Only sent if `REMOVE_OPERATION` isn't set.
+
+|Value
+|byte-array
+|Value to be stored.
+Only sent if `REMOVE_OPERATION` isn't set.
+
+|===
+
+.Commit and Rollback Request
+
+Request. Commit (0x3D) and Rollback (0x3F):
+
+[cols="3,^2,10",options="header"]
+|===
+|Field Name |Size |Value
+
+|Header
+|variable
+|Request header
+
+|Xid
+|XID
+|The transaction ID (XID)
+
+|===
+
+.Response from prepare, commit and rollback request.
+
+Response. Prepare (0x3C), Commit (0x3E) and Rollback (0x40)
+
+[cols="3,^2,10",options="header"]
+|===
+|Field Name |Size |Value
+
+|Header
+|variable
+|Response header
+
+|XA return code
+|vInt
+|The XA code representing the prepare response. +
+Can be `XA_OK(0)`, `XA_RDONLY(3)` or any of the error codes (see `XaException`). +
+This field isn't present if the response state is different from `Successful`.
+
+|===
+
+
+.XID Format
+
+The XID in the requests has the following format:
+
+[cols="3,^2,10",options="header"]
+|===
+|Field Name |Size |Value
+
+|Format ID
+|long
+| The XID format.
+
+|Length of Global Transaction id
+|byte
+|The length of global transaction id byte array. It max value is `64`.
+
+|Global Transaction Id
+|byte array
+|The global transaction id.
+
+|Length of Branch Qualifier
+|byte
+|The length of branch qualifier byte array. It max value is `64`.
+
+|Branch Qualifier
+|byte array
+|The branch qualifier.
+
+|===
+
+
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
 wheel, and to place keys of entries on the same wheel to determine where

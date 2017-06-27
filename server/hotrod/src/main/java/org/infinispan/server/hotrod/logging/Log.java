@@ -90,4 +90,11 @@ public interface Log extends org.infinispan.server.core.logging.Log {
 
    @Message(value = "A host or proxyHost address has not been specified", id = 6019)
    CacheConfigurationException missingHostAddress();
+
+   @Message(value = "Cache '%s' is not transactional to execute a client transaction", id = 6020)
+   IllegalStateException expectedTransactionalCache(String cacheName);
+
+   @Message(value = "Cache '%s' must have REPEATABLE_READ isolation level", id = 6021)
+   IllegalStateException unexpectedIsolationLevel(String cacheName);
+
 }

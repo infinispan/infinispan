@@ -17,6 +17,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.impl.TransactionCoordinator;
+import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedXid;
@@ -49,7 +50,7 @@ public class TransactionXaAdapterTmIntegrationTest {
 
 
       txTable.initialize(null, configuration, null, null,
-                         txCoordinator, null, null, null, mockCache, null, null, null, null);
+                         txCoordinator, null, null, null, mockCache, null, null, null, null, TransactionOriginatorChecker.LOCAL);
       txTable.start();
       txTable.startXidMapping();
       TransactionFactory gtf = new TransactionFactory();

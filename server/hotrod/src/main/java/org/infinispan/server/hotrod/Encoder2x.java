@@ -433,6 +433,14 @@ class Encoder2x implements VersionedEncoder {
          case CACHE_ENTRY_REMOVED_EVENT:
          case CACHE_ENTRY_EXPIRED_EVENT:
             throw new UnsupportedOperationException(response.toString());
+         case COMMIT_TX:
+         case PREPARE_TX:
+         case ROLLBACK_TX:
+            TransactionResponse txRsp = (TransactionResponse) response;
+            if (txRsp.status == OperationStatus.Success) {
+               buf.writeInt(txRsp.xaReturnCode);
+            }
+            break;
          default:
             throw new UnsupportedOperationException(response.toString());
       }

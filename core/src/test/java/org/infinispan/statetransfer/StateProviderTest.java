@@ -49,6 +49,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
+import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -154,7 +155,7 @@ public class StateProviderTest {
       StateProviderImpl stateProvider = new StateProviderImpl();
       stateProvider.init(cache, mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
-            dataContainer, transactionTable, stateTransferLock, stateConsumer, ef, keyPartitioner);
+            dataContainer, transactionTable, stateTransferLock, stateConsumer, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
       Object key1 = new TestKey("key1", 0, ch1);
@@ -254,7 +255,7 @@ public class StateProviderTest {
       StateProviderImpl stateProvider = new StateProviderImpl();
       stateProvider.init(cache, mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
-            dataContainer, transactionTable, stateTransferLock, stateConsumer, ef, keyPartitioner);
+            dataContainer, transactionTable, stateTransferLock, stateConsumer, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
       Object key1 = new TestKey("key1", 0, ch1);
