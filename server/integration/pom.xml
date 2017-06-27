@@ -16,6 +16,7 @@
 
    <packaging>pom</packaging>
 
+   <!--
    <modules>
       <module>versions</module>
       <module>commons</module>
@@ -27,8 +28,10 @@
       <module>feature-pack</module>
       <module>build</module>
    </modules>
+   -->
 
    <profiles>
+     <!--
       <profile>
          <id>normal</id>
          <activation>
@@ -49,6 +52,7 @@
             <module>testsuite</module>
          </modules>
       </profile>
+      -->
       <profile>
          <id>distribution</id>
          <activation>
@@ -59,6 +63,100 @@
          </properties>
          <build>
             <plugins>
+               <!-- First gather license files to generate html -->
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-resources-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>copy-licenses-xml</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                           <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                          <outputDirectory>${project.build.directory}/docs/licenses</outputDirectory>
+                           <resources>
+                              <resource>
+                                 <!-- copy files from base distribution -->
+                                 <directory>${project.basedir}/../../distribution/src/main/resources/template</directory>
+                                 <includes>
+                                    <include>licenses.xsl</include>
+                                    <include>licenses.css</include>
+                                 </includes>
+                                 <filtering>false</filtering>
+                              </resource>
+                           </resources>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+               <!-- Add versions to the output licenses.xml -->
+               <plugin>
+                   <groupId>org.wildfly.maven.plugins</groupId>
+                   <artifactId>licenses-plugin</artifactId>
+                   <version>1.0.0</version>
+                   <inherited>false</inherited>
+                   <executions>
+                       <execution>
+                           <id>update-licenses-xml</id>
+                           <goals>
+                               <goal>insert-versions</goal>
+                           </goals>
+                           <phase>prepare-package</phase>
+                           <configuration>
+                              <licensesConfigFile>${project.basedir}/build/target/${project.name}-${project.version}/docs/licenses/licenses.xml</licensesConfigFile>
+                              <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
+                              <licensesOutputFile>${project.build.directory}/docs/licenses/licenses.xml</licensesOutputFile>
+                           </configuration>
+                       </execution>
+                   </executions>
+               </plugin>
+               <!-- Generate license file -->
+               <!-- Create HTML (parameters: product, version) -->
+               <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>xml-maven-plugin</artifactId>
+                  <version>1.0.1</version>
+                  <inherited>false</inherited>
+                  <executions>
+                     <execution>
+                        <id>generate-licenses-html</id>
+                        <goals>
+                           <goal>transform</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                           <transformationSets>
+                              <transformationSet>
+                                <dir>${project.build.directory}/docs/licenses</dir>
+                                 <includes>
+                                    <include>licenses.xml</include>
+                                 </includes>
+                                 <stylesheet>${project.build.directory}/docs/licenses/licenses.xsl</stylesheet>
+                                 <outputDir>${project.build.directory}/docs/licenses</outputDir>
+                                 <fileMappers>
+                                    <fileMapper
+                                            implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                                       <targetExtension>.html</targetExtension>
+                                    </fileMapper>
+                                 </fileMappers>
+                                 <parameters>
+                                    <parameter>
+                                       <name>product</name>
+                                       <value>${project.name}</value>
+                                    </parameter>
+                                    <parameter>
+                                       <name>version</name>
+                                       <value>${project.version}</value>
+                                    </parameter>
+                                 </parameters>
+                              </transformationSet>
+                           </transformationSets>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-assembly-plugin</artifactId>

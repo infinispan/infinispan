@@ -100,9 +100,9 @@
    <macrodef name="base-distribution-licenses">
       <attribute name="dir" />
       <sequential>
-         <mkdir dir="@{dir}/licenses" />
-         <copy todir="@{dir}/licenses">
-            <fileset dir="target/licenses" />
+         <mkdir dir="@{dir}/docs/licenses" />
+         <copy todir="@{dir}/docs/licenses">
+           <fileset dir="target/docs/licenses" />
          </copy>
       </sequential>
    </macrodef>
