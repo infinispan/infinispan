@@ -42,7 +42,9 @@ import org.infinispan.scattered.impl.ScatteredVersionManagerImpl;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.transaction.impl.ClusteredTransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionCoordinator;
+import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
@@ -73,7 +75,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
-                              OrderedUpdatesManager.class, ScatteredVersionManager.class})
+                              OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -159,6 +161,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return componentType.cast(new OrderedUpdatesManagerImpl());
          } else if (componentType.equals(ScatteredVersionManager.class)) {
             return componentType.cast(new ScatteredVersionManagerImpl());
+         } else if (componentType.equals(TransactionOriginatorChecker.class)) {
+            return configuration.clustering().cacheMode() == CacheMode.LOCAL ?
+                  componentType.cast(TransactionOriginatorChecker.LOCAL) :
+                  componentType.cast(new ClusteredTransactionOriginatorChecker());
          }
       }
 

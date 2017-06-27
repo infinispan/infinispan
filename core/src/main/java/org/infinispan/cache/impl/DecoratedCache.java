@@ -130,7 +130,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public AdvancedCache<K, V> lockAs(Object lockOwner) {
-      Objects.nonNull(lockOwner);
+      Objects.requireNonNull(lockOwner);
       if (lockOwner != this.lockOwner) {
          return new DecoratedCache<>(cacheImplementation, lockOwner, flags);
       }
@@ -486,7 +486,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean containsValue(Object value) {
-      Objects.nonNull(value);
+      Objects.requireNonNull(value);
       return values().stream().anyMatch(StreamMarshalling.equalityPredicate(value));
    }
 
@@ -666,7 +666,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       return cacheImplementation.getCacheEntry(key, flags, readContext(1));
    }
 
-   InvocationContext readContext(int size) {
+   protected InvocationContext readContext(int size) {
       InvocationContext ctx = cacheImplementation.invocationContextFactory.createInvocationContext(false, size);
       if (lockOwner != null) {
          ctx.setLockOwner(lockOwner);
@@ -674,7 +674,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       return ctx;
    }
 
-   InvocationContext writeContext(int size) {
+   protected InvocationContext writeContext(int size) {
       InvocationContext ctx = cacheImplementation.getInvocationContextWithImplicitTransaction(false, size);
       if (lockOwner != null) {
          ctx.setLockOwner(lockOwner);

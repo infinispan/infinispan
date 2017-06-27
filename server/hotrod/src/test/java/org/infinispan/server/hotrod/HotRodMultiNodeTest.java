@@ -8,10 +8,12 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodSer
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
@@ -41,7 +43,7 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       defineCaches(cacheName());
    }
 
-   protected void defineCaches(String cacheName) {
+   void defineCaches(String cacheName) {
       cacheManagers.forEach(cm -> cm.defineConfiguration(cacheName, createCacheConfig().build()));
    }
 
@@ -59,10 +61,18 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       hotRodClients = createClients(cacheName());
    }
 
-   protected List<HotRodClient> createClients(String cacheName) {
+   protected OptionalInt findHighestPort() {
+      return hotRodServers.stream().mapToInt(AbstractProtocolServer::getPort).max();
+   }
+
+   List<HotRodClient> createClients(String cacheName) {
       return hotRodServers.stream()
-                          .map(s -> new HotRodClient("127.0.0.1", s.getPort(), cacheName, 60, protocolVersion()))
+                          .map(s -> createClient(s, cacheName))
                           .collect(Collectors.toList());
+   }
+
+   protected HotRodClient createClient(HotRodServer server, String cacheName) {
+      return new HotRodClient("127.0.0.1", server.getPort(), cacheName, 60, protocolVersion());
    }
 
    protected HotRodServer startTestHotRodServer(EmbeddedCacheManager cacheManager, int port) {
@@ -70,10 +80,6 @@ public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    }
 
    protected HotRodServer startClusteredServer(int port) {
-      return startClusteredServer(port, false);
-   }
-
-   protected HotRodServer startClusteredServer(int port, boolean doCrash) {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration());
       cacheManagers.add(cm);
       cm.defineConfiguration(cacheName(), createCacheConfig().build());
