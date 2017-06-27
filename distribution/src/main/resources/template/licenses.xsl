@@ -20,7 +20,7 @@
                 <!-- Read matching templates -->
                 <table>
                     <tr>
-                        <th>Package Group</th>
+                        <th>Package</th>
                         <th>Package Artifact</th>
                         <th>Package Version</th>
                         <th>Remote Licenses</th>
@@ -29,7 +29,7 @@
                     <xsl:for-each select="licenseSummary/dependencies/dependency">
                         <xsl:sort select="concat(groupId, '.', artifactId)"/>
                         <tr>
-                            <td><xsl:value-of select="groupId"/></td>
+                            <td><xsl:value-of select="concat(groupId, packageName)"/></td>
                             <td><xsl:value-of select="artifactId"/></td>
                             <td><xsl:value-of select="version"/></td>
                             <td>
@@ -96,6 +96,12 @@
         <xsl:param name="filename"/>
 
         <xsl:choose>
+            <xsl:when test="contains($filename, 'bsd') and contains($filename, '2-clause')">
+                <xsl:text>bsd-2-clause.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'bsd') and contains($filename, '3-clause')">
+                <xsl:text>bsd-3-clause.txt</xsl:text>
+            </xsl:when>
             <xsl:when test="contains($filename, 'apache') and contains($filename, 'version 2.0')">
                 <xsl:text>apache license, version 2.0.txt</xsl:text>
             </xsl:when>
@@ -107,6 +113,15 @@
             </xsl:when>
             <xsl:when test="contains($filename, 'cddl') and contains($filename, 'gplv2')">
                 <xsl:text>cddl-gplv2-classpath.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="$filename = 'gnu library general public license, version 2 - lgpl-2.0.txt'">
+                <xsl:text>gnu library general public license, version 2.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="$filename = 'the dom4j license - license'">
+                <xsl:text>the dom4j license.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="$filename = 'creative commons attribution 2.5 - legalcode'">
+                <xsl:text>creative commons attribution 2.5.html</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'cddl+gpl_1_1')">
                 <xsl:text>cddl-1.1-gpl-1-1.txt</xsl:text>
@@ -138,9 +153,6 @@
             <xsl:when test="contains($filename, 'public domain')">
                 <xsl:text>cc0-1.0.txt</xsl:text>
             </xsl:when>
-            <!--xsl:when test="contains($filename, 'public domain')">
-                <xsl:text>xmlpull.txt</xsl:text>
-            </xsl:when -->
             <xsl:otherwise>
                 <xsl:value-of select="$filename"/>
             </xsl:otherwise>
