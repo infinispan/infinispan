@@ -35,9 +35,4 @@ public class TotalOrderRollbackCommand extends RollbackCommand {
    public byte getCommandId() {
       return COMMAND_ID;
    }
-
-   @Override
-   protected RemoteTransaction getRemoteTransaction() {
-      return txTable.getOrCreateRemoteTransaction(globalTx, null);
-   }
 }

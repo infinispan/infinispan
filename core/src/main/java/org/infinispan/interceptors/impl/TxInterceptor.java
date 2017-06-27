@@ -571,38 +571,22 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
                                           Object rv, Throwable throwable) throws Throwable {
       final GlobalTransaction globalTransaction = command.getGlobalTransaction();
 
-      // command.getOrigin() and ctx.getOrigin() are not reliable for LockControlCommands started by
-      // ClusteredGetCommands
-      final Address origin = globalTransaction.getAddress();
-
-      //It is possible to receive a prepare or lock control command from a node that crashed. If that's the case rollback
-      //the transaction forcefully in order to cleanup resources.
-      boolean originatorMissing = !rpcManager.getTransport().getMembers().contains(origin);
-
       // It is also possible that the LCC timed out on the originator's end and this node has processed
       // a TxCompletionNotification.  So we need to check the presence of the remote transaction to
       // see if we need to clean up any acquired locks on our end.
       boolean alreadyCompleted = txTable.isTransactionCompleted(globalTransaction) || !txTable.containRemoteTx(globalTransaction);
 
-      // We want to throw an exception if the originator left the cluster and the transaction is not finished
-      // and/or it was rolled back by TransactionTable.cleanupLeaverTransactions().
-      // We don't want to throw an exception if the originator left the cluster but the transaction already
-      // completed successfully. So far, this only seems possible when forcing the commit of an orphaned
-      // transaction (with recovery enabled).
-      boolean completedSuccessfully = alreadyCompleted && !ctx.getCacheTransaction().isMarkedForRollback();
-
       boolean canRollback = command instanceof PrepareCommand && !((PrepareCommand) command).isOnePhaseCommit() ||
-            command instanceof RollbackCommand || command instanceof LockControlCommand;
+            command instanceof LockControlCommand;
 
       if (trace) {
-         log.tracef("Verifying transaction: originatorMissing=%s, alreadyCompleted=%s",
-                    originatorMissing, alreadyCompleted);
+         log.tracef("Verifying transaction: alreadyCompleted=%s", alreadyCompleted);
       }
 
-      if (alreadyCompleted || (originatorMissing && (canRollback || partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(globalTransaction)))) {
+      if (alreadyCompleted) {
          if (trace) {
-            log.tracef("Rolling back remote transaction %s because either already completed (%s) or originator no longer in the cluster (%s).",
-                       globalTransaction, alreadyCompleted, originatorMissing);
+            log.tracef("Rolling back remote transaction %s because it was already completed",
+                       globalTransaction);
          }
          // The rollback command only marks the transaction as completed in invokeAsync()
          txTable.markTransactionCompleted(globalTransaction, false);
@@ -611,12 +595,6 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
             RemoteTransaction remoteTx = ((TxInvocationContext<RemoteTransaction>) rCtx).getCacheTransaction();
             remoteTx.markForRollback(true);
             txTable.removeRemoteTransaction(globalTransaction);
-
-            if (throwable1 == null) {
-               if (originatorMissing && !completedSuccessfully) {
-                  throw log.orphanTransactionRolledBack(globalTransaction);
-               }
-            }
          });
       }
 

@@ -92,7 +92,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
       markGtxAsRemote();
-      RemoteTransaction transaction = getRemoteTransaction();
+      RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
       if (transaction == null) {
          if (trace) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
          return CompletableFuture.completedFuture(invalidRemoteTxReturnValue());
@@ -106,10 +106,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    protected void visitRemoteTransaction(RemoteTransaction tx) {
       // to be overridden
-   }
-
-   protected RemoteTransaction getRemoteTransaction() {
-      return txTable.getRemoteTransaction(globalTx);
    }
 
    @Override

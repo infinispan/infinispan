@@ -360,29 +360,55 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    private RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications, int topologyId) {
-      RemoteTransaction remoteTransaction = remoteTransactions.get(globalTx);
-      if (remoteTransaction != null)
-         return remoteTransaction;
+      RemoteTransaction existingTransaction = remoteTransactions.get(globalTx);
+      if (existingTransaction != null)
+         return existingTransaction;
 
       if (!running) {
          // Assume that we wouldn't get this far if the cache was already stopped
          throw log.cacheIsStopping(cacheName);
       }
 
-      remoteTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
+      int viewId = rpcManager.getTransport().getViewId();
+      if (!rpcManager.getTransport().getMembers().contains(globalTx.getAddress())) {
+         throw new IllegalStateException(
+               "Cannot create remote transaction " + globalTx + ", the originator is not in the cluster view");
+      }
+
+      RemoteTransaction newTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
             : txFactory.newRemoteTransaction(modifications, globalTx, topologyId);
-      RemoteTransaction existing = remoteTransactions.putIfAbsent(globalTx, remoteTransaction);
-      if (existing != null) {
-         if (trace) log.tracef("Remote transaction already registered: %s", existing);
-         return existing;
-      } else {
-         if (trace) log.tracef("Created and registered remote transaction %s", remoteTransaction);
-         if (remoteTransaction.getTopologyId() < minTxTopologyId) {
-            if (trace) log.tracef("Changing minimum topology ID from %d to %d", minTxTopologyId, remoteTransaction.getTopologyId());
-            minTxTopologyId = remoteTransaction.getTopologyId();
+      RemoteTransaction remoteTransaction = remoteTransactions.compute(globalTx, (gtx, existing) -> {
+         if (existing != null) {
+            if (trace)
+               log.tracef("Remote transaction already registered: %s", existing);
+            return existing;
+         } else {
+            if (isTransactionCompleted(gtx)) {
+               throw new IllegalStateException("Cannot create remote transaction " + gtx + ", already completed");
+            }
+            if (trace)
+               log.tracef("Created and registered remote transaction %s", newTransaction);
+            if (topologyId < minTxTopologyId) {
+               if (trace)
+                  log.tracef("Changing minimum topology ID from %d to %d", minTxTopologyId, topologyId);
+               minTxTopologyId = topologyId;
+            }
+            return newTransaction;
+         }
+      });
+
+      if (rpcManager.getTransport().getViewId() != viewId &&
+            !rpcManager.getTransport().getMembers().contains(globalTx.getAddress())) {
+         // Either cleanupLeaverTransactions didn't run for this view yet, or it missed the transaction we just created.
+         // Kill the transaction here if necessary, but return normally, as if the cleanup task did it.
+         if (partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(globalTx)) {
+            log.debugf("Rolling back transaction %s because originator %s left the cluster", globalTx, globalTx.getAddress());
+            killTransaction(globalTx);
          }
          return remoteTransaction;
       }
+
+      return remoteTransaction;
    }
 
    /**

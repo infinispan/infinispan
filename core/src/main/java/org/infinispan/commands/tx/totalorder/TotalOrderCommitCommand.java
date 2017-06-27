@@ -34,9 +34,4 @@ public class TotalOrderCommitCommand extends CommitCommand {
    public byte getCommandId() {
       return COMMAND_ID;
    }
-
-   @Override
-   protected RemoteTransaction getRemoteTransaction() {
-      return txTable.getOrCreateRemoteTransaction(globalTx, null);
-   }
 }
