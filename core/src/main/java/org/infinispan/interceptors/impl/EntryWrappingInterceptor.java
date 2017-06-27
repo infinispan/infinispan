@@ -228,7 +228,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          GetAllCommand getAllCommand = (GetAllCommand) rCommand;
          if (useRepeatableRead) {
             for (Object key : getAllCommand.getKeys()) {
-               rCtx.lookupEntry(key).setSkipLookup(true);
+               CacheEntry cacheEntry = rCtx.lookupEntry(key);
+               if (trace && cacheEntry == null) log.tracef(t, "Missing entry for " + key);
+               cacheEntry.setSkipLookup(true);
             }
          }
 
@@ -273,7 +275,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          // If we are committing a ClearCommand now then no keys should be written by state transfer from
          // now on until current rebalance ends.
          if (stateConsumer != null) {
-            stateConsumer.stopApplyingState();
+            stateConsumer.stopApplyingState(((ClearCommand) rCommand).getTopologyId());
          }
          if (xSiteStateConsumer != null) {
             xSiteStateConsumer.endStateTransfer(null);
@@ -341,20 +343,15 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    private void removeFromContextOnRetry(InvocationContext ctx, Collection<?> keys) {
       if (useRepeatableRead) {
+         if (trace) {
+            log.tracef("This is a retry - resetting previous values for %s", keys);
+         }
          for (Object key : keys) {
             MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(key);
-            if (trace) {
-               log.tracef("This is a retry - resetting previous value in entry ", entry);
-            }
             entry.resetCurrentValue();
          }
       } else {
-         for (Object key : keys) {
-            if (trace) {
-               log.tracef("This is a retry - removing looked up entry " + ctx.lookupEntry(key));
-            }
-            ctx.removeLookedUpEntry(key);
-         }
+         ctx.removeLookedUpEntries(keys);
       }
    }
 
@@ -418,9 +415,13 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(command.getGroupName(), groupManager),
                new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
          dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
-            synchronized (ctx) {
-               //the process can be made in multiple threads, so we need to synchronize in the context.
-               entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry, true, false);
+            // Don't wrap tombstones into context; we want to be able to eventually read these values from
+            // cache store and the filter in CacheLoaderInterceptor ignores keys already in context
+            if (internalCacheEntry.getValue() != null) {
+               synchronized (ctx) {
+                  //the process can be made in multiple threads, so we need to synchronize in the context.
+                  entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry, true, false);
+               }
             }
          });
       }
@@ -642,7 +643,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   private Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
+   protected Object setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(InvocationContext ctx, WriteCommand command) {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
          if (!rCtx.isInTxScope()) {
@@ -684,7 +685,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   private Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
+   protected Object setSkipRemoteGetsAndInvokeNextForDataCommand(InvocationContext ctx,
                                                                DataWriteCommand command) {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;

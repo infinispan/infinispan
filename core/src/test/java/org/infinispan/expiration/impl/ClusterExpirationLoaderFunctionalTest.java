@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  * @since 8.0
  */
 @Test(groups = "functional", testName = "expiration.impl.ClusterExpirationLoaderFunctionalTest")
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC})
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC})
 public class ClusterExpirationLoaderFunctionalTest extends ClusterExpirationFunctionalTest {
    @Override
    protected void createCluster(ConfigurationBuilder builder, int count) {

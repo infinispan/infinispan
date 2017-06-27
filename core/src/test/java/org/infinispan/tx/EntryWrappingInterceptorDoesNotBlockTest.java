@@ -85,7 +85,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      chFactory = new ControlledConsistentHashFactory(new int[] { 0, 1 } , new int[] { 0, 2 });
+      chFactory = new ControlledConsistentHashFactory.Default(new int[] { 0, 1 } , new int[] { 0, 2 });
       cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().consistentHashFactory(chFactory).numSegments(2);
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);

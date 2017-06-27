@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "statetransfer.LeaveDuringStateTransferTest", description = "One instance of ISPN-5021")
 public class LeaveDuringStateTransferTest extends MultipleCacheManagersTest {
 
-   private ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory(0, 1);
+   private ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory.Default(0, 1);
 
    @Override
    protected void createCacheManagers() throws Throwable {

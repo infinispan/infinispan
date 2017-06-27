@@ -11,6 +11,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -143,8 +144,15 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       if (testRetVals) assert value.equals(retval);
       for (Cache<Object, String> c : caches) {
          CacheLoader store = TestingUtil.getFirstLoader(c);
-         assert !store.contains(key);
-         assertNumberOfInvocations(store, "delete", 1);
+         MarshalledEntry me = store.load(key);
+         // handle tombstone writes
+         assert me == null || me.getValue() == null;
+         if (me == null) {
+            assertNumberOfInvocations(store, "delete", 1);
+            assertNumberOfInvocations(store, "write", 1);
+         } else {
+            assertNumberOfInvocations(store, "write", 2);
+         }
       }
    }
 
@@ -200,7 +208,7 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
 
    public void testGetOnlyQueriesCacheOnOwners() throws PersistenceException {
       // Make a key that own'ers is c1 and c2
-      final MagicKey k = new MagicKey("key1", c1, c2);
+      final MagicKey k = getMagicKey();
       final String v1 = "real-data";
       final String v2 = "stale-data";
 

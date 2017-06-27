@@ -2,6 +2,7 @@ package org.infinispan.distribution;
 
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 import java.util.concurrent.ExecutionException;
 
@@ -24,7 +25,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, Str
    }
 
    public void testSkipLookupOnGet() {
-      MagicKey k1 = new MagicKey(c1, c2);
+      MagicKey k1 = getMagicKey();
       c1.put(k1, "value");
 
       assertIsInContainerImmortal(c1, k1);
@@ -32,14 +33,14 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, Str
       assertIsNotInL1(c3, k1);
       assertIsNotInL1(c4, k1);
 
-      assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1) == null;
+      assertNull(c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1));
 
       assertOwnershipAndNonOwnership(k1, false);
    }
 
    @Test(enabled = false, description = "does it make sense to have skip_remote_lookup with conditional commands?")
    public void testCorrectFunctionalityOnConditionalWrite() {
-      MagicKey k1 = new MagicKey(c1, c2);
+      MagicKey k1 = getMagicKey();
       c1.put(k1, "value");
 
       assertIsInContainerImmortal(c1, k1);
@@ -47,7 +48,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, Str
       assertIsNotInL1(c3, k1);
       assertIsNotInL1(c4, k1);
 
-      assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).putIfAbsent(k1, "new_val") == null;
+      assertNull(c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).putIfAbsent(k1, "new_val"));
 
       assertIsInContainerImmortal(c1, k1);
       assertIsInContainerImmortal(c2, k1);
@@ -56,7 +57,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, Str
    }
 
    public void testCorrectFunctionalityOnUnconditionalWrite() {
-      MagicKey k1 = new MagicKey(c1, c2);
+      MagicKey k1 = getMagicKey();
       c1.put(k1, "value");
 
       assertIsInContainerImmortal(c1, k1);
@@ -64,14 +65,14 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, Str
       assertIsNotInL1(c3, k1);
       assertIsNotInL1(c4, k1);
 
-      assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).put(k1, "new_val") == null;
-      assert c3.get(k1).equals("new_val");
+      assertNull(c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).put(k1, "new_val"));
+      assertEquals(c3.get(k1), "new_val");
       assertOnAllCachesAndOwnership(k1, "new_val");
    }
 
    @Test
    public void testSkipLookupOnRemove() {
-      MagicKey k1 = new MagicKey(c1, c2);
+      MagicKey k1 = getMagicKey();
       final String value = "SomethingToSayHere";
 
       assert null == c1.put(k1, value);
@@ -93,7 +94,7 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest<Object, Str
 
    @Test
    public void testSkipLookupOnAsyncRemove() throws InterruptedException, ExecutionException {
-      MagicKey k1 = new MagicKey(c1, c2);
+      MagicKey k1 = getMagicKey();
       final String value = "SomethingToSayHere-async";
 
       assert null == c1.put(k1, value);

@@ -60,6 +60,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -357,12 +358,12 @@ public interface CommandsFactory {
    /**
     * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.
     */
-   StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int viewId, Set<Integer> segments);
+   StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, Set<Integer> segments);
 
    /**
     * Builds a StateResponseCommand used for pushing cache entries to another node in response to a StateRequestCommand.
     */
-   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks, boolean applyState);
+   StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.
@@ -528,4 +529,6 @@ public interface CommandsFactory {
    BackupWriteRpcCommand buildBackupWriteRpcCommand(DataWriteCommand command);
 
    BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command);
+
+   InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, int[] topologyIds, long[] versions, boolean removed);
 }

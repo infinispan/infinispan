@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
+import static org.infinispan.configuration.cache.ClusteringConfiguration.INVALIDATION_BATCH_SIZE;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -67,6 +68,13 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       return remoteTimeout(unit.toMillis(l));
    }
 
+   /**
+    * For scattered cache, the threshold after which batched invalidations are sent
+    */
+   public ClusteringConfigurationBuilder invalidationBatchSize(int size) {
+      attributes.attribute(INVALIDATION_BATCH_SIZE).set(size);
+      return this;
+   }
 
    /**
     * Configure hash sub element
@@ -112,6 +120,19 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       for (Builder<?> validatable : Arrays.asList(hashConfigurationBuilder, l1ConfigurationBuilder,
                           syncConfigurationBuilder, stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
          validatable.validate();
+      }
+      if (cacheMode().isScattered()) {
+         if (hash().numOwners() != 1 && hash().isNumOwnersSet()) {
+            throw log.scatteredCacheNeedsSingleOwner();
+         }
+         hash().numOwners(1);
+         org.infinispan.transaction.TransactionMode transactionMode = transaction().transactionMode();
+         if (transactionMode != null && transactionMode.isTransactional()) {
+            throw log.scatteredCacheIsNonTransactional();
+         }
+      }
+      if (!cacheMode().isScattered() && attributes.attribute(INVALIDATION_BATCH_SIZE).isModified()) {
+         throw log.invalidationBatchSizeAppliesOnNonScattered();
       }
    }
 

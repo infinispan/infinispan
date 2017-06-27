@@ -16,9 +16,10 @@ Infinispan offers four modes of operation, which determine how and where the dat
 *  _Local_ , where entries are stored on the local node only, regardless of whether a cluster has formed. In this mode Infinispan is typically operating as a local cache 
 *  _Invalidation_ , where all entries are stored into a cache store (such as a database) only, and invalidated from all nodes. When a node needs the entry it will load it from a cache store. In this mode Infinispan is operating as a distributed cache, backed by a canonical data store such as a database 
 *  _Replication_ , where all entries are replicated to all nodes. In this mode Infinispan is typically operating as a data grid or a temporary data store, but doesn't offer an increased heap space 
-*  _Distribution_ , where entries are distributed to a subset of the nodes only. In this mode Infinispan is typically  operating as a data grid providing an increased heap space 
+*  _Distribution_ , where entries are distributed to a subset of the nodes only. In this mode Infinispan is typically  operating as a data grid providing an increased heap space
+*  _Scattered_, which is similar to Distribution mode but is more suitable for write-intensive applications.
 
-Invalidation, Replication and Distribution can all use synchronous or asynchronous communication.
+Invalidation, Replication and Distribution can all use synchronous or asynchronous communication, Scattered mode is only synchronous.
 
 === Interacting with Infinispan
 Infinispan offers two access patterns, both of which are available in any runtime:

@@ -755,7 +755,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    @SuppressWarnings("unchecked")
-   public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory {
+   public static class SingleKeyConsistentHashFactory extends BaseControlledConsistentHashFactory.Default {
 
       public SingleKeyConsistentHashFactory() {
          super(1);

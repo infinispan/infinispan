@@ -53,7 +53,7 @@ public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      ControlledConsistentHashFactory chf = new ControlledConsistentHashFactory(
+      ControlledConsistentHashFactory.Default chf = new ControlledConsistentHashFactory.Default(
             new int[] { 0, 1 }, new int[] { 0, 2 }, new int[] { 2, 3 },
             new int[] { 1, 4 }, new int[] { 3, 4 }); // these are not important
       cb.clustering().hash().numOwners(2).numSegments(5).consistentHashFactory(chf);

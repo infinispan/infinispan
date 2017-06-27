@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PreferConsistencyStrategy;
+import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.topology.ClusterCacheStatus;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
@@ -32,8 +33,8 @@ public class PreferConsistencyStrategyTest {
       ClusterTopologyManager topologyManager = new ClusterTopologyManagerImpl();
       EmbeddedCacheManager cacheManager = mock(EmbeddedCacheManager.class);
 
-      preferConsistencyStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager);
-      status = new ClusterCacheStatus(cacheManager, "does-not-matter", preferConsistencyStrategy, topologyManager,
+      preferConsistencyStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager, null);
+      status = new ClusterCacheStatus(cacheManager, "does-not-matter", preferConsistencyStrategy, RebalanceType.FOUR_PHASE, topologyManager,
             null, Optional.empty(), persistentUUIDManager, false);
    }
 

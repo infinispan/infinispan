@@ -6,11 +6,13 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TransportFlags;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    Cache<Object, Object> c1, c2;
@@ -20,7 +22,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       caches = createClusteredCaches(2, "test",
-            getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC),
+            getDefaultClusteredCacheConfig(cacheMode),
                   new TransportFlags().withFD(true).withMerge(true));
 
       c1 = caches.get(0);

@@ -356,6 +356,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public void notifyCacheEntryCreated(K key, V value, Metadata metadata, boolean pre,
                                        InvocationContext ctx, FlagAffectedCommand command) {
       if (!cacheEntryCreatedListeners.isEmpty() && clusteringDependentLogic.commitType(command, ctx, key, false).isLocal()) {
+         if (command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) return;
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
          boolean sendEvents = !ctx.isInTxScope();
@@ -381,6 +382,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public void notifyCacheEntryModified(K key, V value, Metadata metadata, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
                                         FlagAffectedCommand command) {
       if (!cacheEntryModifiedListeners.isEmpty() && clusteringDependentLogic.commitType(command, ctx, key, false).isLocal()) {
+         if (command != null && command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) return;
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
          boolean sendEvents = !ctx.isInTxScope();
@@ -815,7 +817,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             builder
                   .setIncludeCurrentState(l.includeCurrentState())
                   .setClustered(l.clustered())
-                  .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
+                  .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() || cacheMode.isScattered() : l.primaryOnly())
                   .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
                   .setFilter(filter)
                   .setConverter(converter)
@@ -834,7 +836,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          builder
                .setIncludeCurrentState(l.includeCurrentState())
                .setClustered(l.clustered())
-               .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
+               .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() || cacheMode.isScattered() : l.primaryOnly())
                .setObservation(l.clustered() ? Listener.Observation.POST : l.observation())
                .setFilter(filter)
                .setConverter(converter)
@@ -857,7 +859,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             throw log.clusterListenerRegisteredWithOnlyPreEvents(listener.getClass());
          } else if (cacheMode.isInvalidation()) {
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
-         } else if (cacheMode.isDistributed()) {
+         } else if (cacheMode.isDistributed() || cacheMode.isScattered()) {
             clusterListenerIDs.put(listener, generatedId);
             EmbeddedCacheManager manager = cache.getCacheManager();
             Address ourAddress = manager.getAddress();

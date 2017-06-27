@@ -8,6 +8,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Future;
@@ -18,7 +19,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.interceptors.impl.RetryingEntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -47,6 +50,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
+         new StateTransferOverwritingValueTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 
@@ -144,7 +148,9 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
             op.getCommandClass(), true, false);
-      cache1.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, EntryWrappingInterceptor.class);
+
+      Class<? extends DDAsyncInterceptor> ewi = cacheMode.isScattered() ? RetryingEntryWrappingInterceptor.class : EntryWrappingInterceptor.class;
+      assertTrue(cache1.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, ewi));
 
       // Wait for cache0 to collect the state to send to cache1 (including our previous value).
       blockingRpcManager0.waitForCommandToBlock();

@@ -2,13 +2,14 @@ package org.infinispan.stream.impl;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -18,6 +19,10 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -25,6 +30,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.RangeSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,15 +44,22 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    protected final AtomicInteger requestId = new AtomicInteger();
    protected RpcManager rpc;
    protected CommandsFactory factory;
+   protected DistributionManager dm;
+   protected StateTransferLock stateTransferLock;
+   protected Configuration configuration;
 
    protected Address localAddress;
 
    protected final static Log log = LogFactory.getLog(ClusterStreamManagerImpl.class);
 
    @Inject
-   public void inject(RpcManager rpc, CommandsFactory factory) {
+   public void inject(RpcManager rpc, CommandsFactory factory, DistributionManager dm,
+                      StateTransferLock stateTransferLock, Configuration configuration) {
       this.rpc = rpc;
       this.factory = factory;
+      this.dm = dm;
+      this.stateTransferLock = stateTransferLock;
+      this.configuration = configuration;
    }
 
    @Start
@@ -55,29 +68,29 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    }
 
    @Override
-   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
-      return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
+   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
+                                           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+                                           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
+      return commonRemoteStreamOperation(parallelDistribution, parallelStream, segments, keysToInclude,
               keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL,
               earlyTerminatePredicate);
    }
 
    @Override
    public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
-           Predicate<? super R> earlyTerminatePredicate) {
-      return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
+                                                      Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+                                                      boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
+                                                      Predicate<? super R> earlyTerminatePredicate) {
+      return commonRemoteStreamOperation(parallelDistribution, parallelStream, segments, keysToInclude,
               keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL_REHASH,
               earlyTerminatePredicate);
    }
 
    private <R> Object commonRemoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, SegmentAwareOperation operation, ResultsCallback<R> callback,
-           StreamRequestCommand.Type type, Predicate<? super R> earlyTerminatePredicate) {
-      Map<Address, Set<Integer>> targets = determineTargets(ch, segments);
+                                                  Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+                                                  boolean includeLoader, SegmentAwareOperation operation, ResultsCallback<R> callback,
+                                                  StreamRequestCommand.Type type, Predicate<? super R> earlyTerminatePredicate) {
+      Map<Address, Set<Integer>> targets = determineTargets(segments);
       String id;
       if (!targets.isEmpty()) {
          id = localAddress.toString() + requestId.getAndIncrement();
@@ -105,19 +118,19 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    }
 
    @Override
-   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
-           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
-      return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
+   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
+                                           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+                                           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
+      return commonRemoteStreamOperation(parallelDistribution, parallelStream, segments, keysToInclude,
               keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL_KEY, null);
    }
 
    @Override
    public <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation,
-           ResultsCallback<Map<K, R2>> callback) {
-      Map<Address, Set<Integer>> targets = determineTargets(ch, segments);
+                                                       Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+                                                       boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation,
+                                                       ResultsCallback<Map<K, R2>> callback) {
+      Map<Address, Set<Integer>> targets = determineTargets(segments);
       String id;
       if (!targets.isEmpty()) {
          id = localAddress.toString() + "-" + requestId.getAndIncrement();
@@ -252,24 +265,37 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       }).collect(Collectors.toSet());
    }
 
-   private Map<Address, Set<Integer>> determineTargets(ConsistentHash ch, Set<Integer> segments) {
+   private Map<Address, Set<Integer>> determineTargets(Set<Integer> segments) {
+      LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+      ConsistentHash ch = cacheTopology.getReadConsistentHash();
       if (segments == null) {
          segments = new RangeSet(ch.getNumSegments());
       }
       // This has to be a concurrent hash map in case if a node completes operation while we are still iterating
       // over the map and submitting to others
       Map<Address, Set<Integer>> targets = new ConcurrentHashMap<>();
-      for (Integer segment : segments) {
+      for (Iterator<Integer> iterator = segments.iterator(); iterator.hasNext(); ) {
+         Integer segment = iterator.next();
          Address owner = ch.locatePrimaryOwnerForSegment(segment);
-         if (owner.equals(localAddress)) {
-            continue;
+         if (owner == null) {
+            try {
+               // TODO: this is not the final solution as this makes invocation of some commands blocking
+               stateTransferLock.waitForTopology(cacheTopology.getTopologyId() + 1,
+                     configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
+               // start from the beginning
+               cacheTopology = dm.getCacheTopology();
+               ch = cacheTopology.getReadConsistentHash();
+               iterator = segments.iterator();
+               targets.clear();
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               throw new CacheException("Stream operation was interrupted", e);
+            } catch (TimeoutException e) {
+               throw new CacheException("Timed out waiting for a topology with owners for segment " + segment);
+            }
+         } else if (!owner.equals(localAddress)) {
+            targets.computeIfAbsent(owner, t -> new SmallIntSet()).add(segment);
          }
-         Set<Integer> targetSegments = targets.get(owner);
-         if (targetSegments == null) {
-            targetSegments = new HashSet<>();
-            targets.put(owner, targetSegments);
-         }
-         targetSegments.add(segment);
       }
       return targets;
    }

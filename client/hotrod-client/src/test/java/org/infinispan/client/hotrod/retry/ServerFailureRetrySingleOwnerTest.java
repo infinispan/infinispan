@@ -38,7 +38,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numOwners(1).numSegments(1)
-            .consistentHashFactory(new ControlledConsistentHashFactory(0))
+            .consistentHashFactory(new ControlledConsistentHashFactory.Default(0))
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL).useSynchronization(true)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return builder;

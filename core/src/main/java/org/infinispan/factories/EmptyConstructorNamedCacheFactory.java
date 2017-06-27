@@ -33,8 +33,12 @@ import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
+import org.infinispan.persistence.manager.OrderedUpdatesManager;
+import org.infinispan.persistence.manager.OrderedUpdatesManagerImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.scattered.ScatteredVersionManager;
+import org.infinispan.scattered.impl.ScatteredVersionManagerImpl;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
@@ -68,7 +72,8 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
-                              FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class})
+                              FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
+                              OrderedUpdatesManager.class, ScatteredVersionManager.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -83,8 +88,12 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return componentType.cast(new ClusteringDependentLogic.InvalidationLogic());
          } else if (cacheMode.isReplicated()) {
             return componentType.cast(new ClusteringDependentLogic.ReplicationLogic());
-         } else {
+         } else if (cacheMode.isDistributed()){
             return componentType.cast(new ClusteringDependentLogic.DistributionLogic());
+         } else if (cacheMode.isScattered()) {
+            return componentType.cast(new ClusteringDependentLogic.ScatteredLogic());
+         } else {
+            throw new UnsupportedOperationException();
          }
       } else {
          boolean isTransactional = configuration.transaction().transactionMode().isTransactional();
@@ -146,6 +155,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return componentType.cast(new CommandAckCollector());
          } else if (componentType.equals(TriangleOrderManager.class)) {
             return componentType.cast(new TriangleOrderManager(configuration.clustering().hash().numSegments()));
+         } else if (componentType.equals(OrderedUpdatesManager.class)) {
+            return componentType.cast(new OrderedUpdatesManagerImpl());
+         } else if (componentType.equals(ScatteredVersionManager.class)) {
+            return componentType.cast(new ScatteredVersionManagerImpl());
          }
       }
 
