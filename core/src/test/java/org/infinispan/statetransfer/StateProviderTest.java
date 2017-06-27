@@ -218,11 +218,12 @@ public class StateProviderTest {
       //todo [anistor] it seems that address 6 is not used for un-owned segments
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
 
-      when(commandsFactory.buildStateResponseCommand(any(Address.class), anyInt(), any(Collection.class), anyBoolean()))
+      when(commandsFactory.buildStateResponseCommand(any(Address.class), anyInt(), any(Collection.class), anyBoolean(), anyBoolean()))
             .thenAnswer(invocation -> new StateResponseCommand(ByteString.fromString("testCache"),
                                                                (Address) invocation.getArguments()[0],
-                                                               ((Integer) invocation.getArguments()[1]),
-                                                               (Collection<StateChunk>) invocation.getArguments()[2]));
+                                                               (Integer) invocation.getArguments()[1],
+                                                               (Collection<StateChunk>) invocation.getArguments()[2],
+                                                               true, false));
 
       // create dependencies
       when(rpcManager.getAddress()).thenReturn(A);

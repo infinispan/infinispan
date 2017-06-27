@@ -11,14 +11,10 @@ import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEv
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.concurrent.StateSequencer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.DelayedAvailabilityUpdateTest")
 public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
-   private static final Log log = LogFactory.getLog(DelayedAvailabilityUpdateTest.class);
-
    public void testDelayedAvailabilityUpdate0() throws Exception {
       testDelayedAvailabilityUpdate(new PartitionDescriptor(0, 1), new PartitionDescriptor(2, 3));
    }
@@ -43,8 +39,7 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
       testDelayedAvailabilityUpdate(new PartitionDescriptor(2, 3), new PartitionDescriptor(0, 1));
    }
 
-
-   private void testDelayedAvailabilityUpdate(PartitionDescriptor p0, PartitionDescriptor p1) throws Exception {
+   protected void testDelayedAvailabilityUpdate(PartitionDescriptor p0, PartitionDescriptor p1) throws Exception {
       Object k0Existing = new MagicKey("k0Existing", cache(p0.node(0)), cache(p0.node(1)));
       Object k1Existing = new MagicKey("k1Existing", cache(p0.node(1)), cache(p1.node(0)));
       Object k2Existing = new MagicKey("k2Existing", cache(p1.node(0)), cache(p1.node(1)));

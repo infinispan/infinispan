@@ -69,6 +69,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -299,14 +300,13 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int viewId, Set<Integer> segments) {
-      return actual.buildStateRequestCommand(subtype, sender, viewId, segments);
+   public StateRequestCommand buildStateRequestCommand(StateRequestCommand.Type subtype, Address sender, int topologyId, Set<Integer> segments) {
+      return actual.buildStateRequestCommand(subtype, sender, topologyId, segments);
    }
 
    @Override
-   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks, boolean applyState) {
-      return actual.buildStateResponseCommand(sender, viewId, stateChunks, applyState);
-
+   public StateResponseCommand buildStateResponseCommand(Address sender, int viewId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer) {
+      return actual.buildStateResponseCommand(sender, viewId, stateChunks, applyState, pushTransfer);
    }
 
    @Override
@@ -485,4 +485,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    public BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command) {
       return actual.buildBackupPutMapRpcCommand(command);
    }
+
+   @Override
+   public InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
+      return actual.buildInvalidateVersionsCommand(keys, topologyIds, versions, removed);
+   }
+
 }

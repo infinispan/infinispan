@@ -139,6 +139,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand {
          .append("ClusteredGetCommand{key=")
          .append(key)
          .append(", flags=").append(printFlags())
+         .append(", topologyId=").append(topologyId)
          .append("}")
          .toString();
    }

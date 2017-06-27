@@ -22,10 +22,12 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
+import org.infinispan.interceptors.impl.RetryingEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -61,6 +63,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
          new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
          new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
          new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false)
       };
    }
 
@@ -91,8 +94,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // add an interceptor on second node that will block REMOVE commands right after EntryWrappingInterceptor until we are ready
       final CountDownLatch removeStartedLatch = new CountDownLatch(1);
       final CountDownLatch removeProceedLatch = new CountDownLatch(1);
-      boolean isVersioningEnabled = Configurations.isTxVersioned(cache(0).getCacheConfiguration());
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(isVersioningEnabled ? VersionedEntryWrappingInterceptor.class : EntryWrappingInterceptor.class).interceptor(new CommandInterceptor() {
+      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi()).interceptor(new CommandInterceptor() {
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             if (cmd instanceof RemoveCommand) {
@@ -164,14 +166,25 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertNull(cache(1).get("myKey"));
    }
 
+   public Class<? extends DDAsyncInterceptor> ewi() {
+      Class<? extends DDAsyncInterceptor> after;
+      if (cacheMode.isScattered()) {
+         after = RetryingEntryWrappingInterceptor.class;
+      } else if (Configurations.isTxVersioned(cache(0).getCacheConfiguration())) {
+         after = VersionedEntryWrappingInterceptor.class;
+      } else {
+         after = EntryWrappingInterceptor.class;
+      }
+      return after;
+   }
+
    public void testPut() throws Exception {
       cache(0).put("myKey", "myValue");
 
       // add an interceptor on second node that will block PUT commands right after EntryWrappingInterceptor until we are ready
       final CountDownLatch putStartedLatch = new CountDownLatch(1);
       final CountDownLatch putProceedLatch = new CountDownLatch(1);
-      boolean isVersioningEnabled = Configurations.isTxVersioned(cache(0).getCacheConfiguration());
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(isVersioningEnabled ? VersionedEntryWrappingInterceptor.class : EntryWrappingInterceptor.class).interceptor(new CommandInterceptor() {
+      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi()).interceptor(new CommandInterceptor() {
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             if (cmd instanceof PutKeyValueCommand &&
@@ -250,8 +263,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // add an interceptor on second node that will block REPLACE commands right after EntryWrappingInterceptor until we are ready
       final CountDownLatch replaceStartedLatch = new CountDownLatch(1);
       final CountDownLatch replaceProceedLatch = new CountDownLatch(1);
-      boolean isVersioningEnabled = Configurations.isTxVersioned(cache(0).getCacheConfiguration());
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(isVersioningEnabled ? VersionedEntryWrappingInterceptor.class : EntryWrappingInterceptor.class).interceptor(new CommandInterceptor() {
+      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi()).interceptor(new CommandInterceptor() {
          @Override
          protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
             if (cmd instanceof ReplaceCommand) {
@@ -368,8 +380,10 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       addClusterEnabledCacheManager(cacheConfigBuilder);
       log.info("Added a new node");
 
+      // Note: We have to access DC instead of cache with LOCAL_MODE flag, as scattered mode cache would
+      // already become an owner and would wait for the state transfer
       // state transfer is blocked, no keys should be present on node B yet
-      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
+      assertEquals(0, cache(1).getAdvancedCache().getDataContainer().size());
 
       // wait for state transfer on node B to progress to the point where data segments are about to be applied
       if (!applyStateStartedLatch.await(15, TimeUnit.SECONDS)) {
@@ -377,7 +391,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
 
       // state transfer is blocked, no keys should be present on node B yet
-      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
+      assertEquals(0, cache(1).getAdvancedCache().getDataContainer().size());
 
       // initiate a GET
       Future<Object> getFuture = fork(() -> cache(1).get("myKey"));

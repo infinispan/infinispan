@@ -24,7 +24,7 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 /**
- * Base class for replication and distribution interceptors.
+ * Base class for distribution interceptors.
  *
  * @author anistor@redhat.com
  * @since 9.0

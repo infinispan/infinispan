@@ -54,7 +54,7 @@ import org.testng.annotations.Test;
 public class TxReplay2Test extends MultipleCacheManagersTest {
    private static final String VALUE = "value";
 
-   ControlledConsistentHashFactory consistentHashFactory = new ControlledConsistentHashFactory(0, 1, 2);
+   ControlledConsistentHashFactory consistentHashFactory = new ControlledConsistentHashFactory.Default(0, 1, 2);
 
    public void testReplay() throws Exception {
       final StateSequencer sequencer = new StateSequencer();

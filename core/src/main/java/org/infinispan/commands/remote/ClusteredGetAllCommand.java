@@ -84,6 +84,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       GetAllCommand command = commandsFactory.buildGetAllCommand(keys, getFlagsBitSet(), true);
+      command.setTopologyId(topologyId);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       CompletableFuture<Object> future = invoker.invokeAsync(invocationContext, command);
       return future.thenApply(rv -> {
@@ -150,6 +151,7 @@ public class ClusteredGetAllCommand<K, V> extends BaseClusteredReadCommand {
       final StringBuilder sb = new StringBuilder("ClusteredGetAllCommand{");
       sb.append("keys=").append(keys);
       sb.append(", flags=").append(printFlags());
+      sb.append(", topologyId=").append(topologyId);
       sb.append('}');
       return sb.toString();
    }

@@ -60,6 +60,14 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
       return this;
    }
 
+   boolean isNumOwnersSet() {
+      return attributes.attribute(NUM_OWNERS).isModified();
+   }
+
+   int numOwners() {
+      return attributes.attribute(NUM_OWNERS).get();
+   }
+
    /**
     * @deprecated No longer used since 5.2, replaced by {@link #numSegments(int)} (which works like a
     *    {@code numVirtualNodes} value for the entire cluster).

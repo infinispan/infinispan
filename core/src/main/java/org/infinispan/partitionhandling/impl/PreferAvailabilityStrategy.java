@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -52,12 +51,13 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    private static final Log log = LogFactory.getLog(PreferAvailabilityStrategy.class);
    private final EventLogManager eventLogManager;
    private final PersistentUUIDManager persistentUUIDManager;
+   private final LostDataCheck lostDataCheck;
    private final boolean resolveConflictsOnMerge;
 
-   public PreferAvailabilityStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager,
-                                     boolean resolveConflictsOnMerge) {
+   public PreferAvailabilityStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager, LostDataCheck lostDataCheck, boolean resolveConflictsOnMerge) {
       this.eventLogManager = eventLogManager;
       this.persistentUUIDManager = persistentUUIDManager;
+      this.lostDataCheck = lostDataCheck;
       this.resolveConflictsOnMerge = resolveConflictsOnMerge;
    }
 
@@ -76,7 +76,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          context.updateCurrentTopology(newMembers);
          return;
       }
-      if (context.getStableTopology() != null && isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
+      if (context.getStableTopology() != null && lostDataCheck.test(context.getStableTopology().getCurrentCH(), newMembers)) {
          eventLogManager.getEventLogger().context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfGracefulLeaver(leaver));
       }
 
@@ -106,7 +106,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       List<Address> stableMembers = stableTopology.getMembers();
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
-      if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
+      if (lostDataCheck.test(stableTopology.getCurrentCH(), newMembers)) {
          eventLogManager.getEventLogger().context(context.getCacheName()).fatal(EventLogCategory.CLUSTER, MESSAGES.lostDataBecauseOfAbruptLeavers(lostMembers));
       } else if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
          eventLogManager.getEventLogger().context(context.getCacheName()).warn(EventLogCategory.CLUSTER, MESSAGES.minorityPartition(newMembers, lostMembers, stableMembers));
@@ -224,13 +224,4 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    public void onManualAvailabilityChange(AvailabilityStrategyContext context, AvailabilityMode newAvailabilityMode) {
       // The cache should always be AVAILABLE
    }
-
-   private boolean isDataLost(ConsistentHash currentCH, List<Address> newMembers) {
-      for (int i = 0; i < currentCH.getNumSegments(); i++) {
-         if (!InfinispanCollections.containsAny(newMembers, currentCH.locateOwnersForSegment(i)))
-            return true;
-      }
-      return false;
-   }
-
 }

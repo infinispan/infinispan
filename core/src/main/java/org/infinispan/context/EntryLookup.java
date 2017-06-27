@@ -1,5 +1,6 @@
 package org.infinispan.context;
 
+import java.util.Collection;
 import java.util.Map;
 
 import org.infinispan.container.entries.CacheEntry;
@@ -38,4 +39,9 @@ public interface EntryLookup {
 
    void removeLookedUpEntry(Object key);
 
+   default void removeLookedUpEntries(Collection<?> keys) {
+      for (Object key : keys) {
+         removeLookedUpEntry(key);
+      }
+   }
 }

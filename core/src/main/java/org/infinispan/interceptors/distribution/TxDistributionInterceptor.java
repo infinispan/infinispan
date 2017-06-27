@@ -581,6 +581,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isInTxScope()) {
          return null;
       }
+      log.tracef("Looking up mutations for %s", keys);
       TxInvocationContext txCtx = (TxInvocationContext) ctx;
       List<List<Mutation>> mutations = new ArrayList<>(keys.size());
       for (int i = keys.size(); i > 0; --i) mutations.add(Collections.emptyList());

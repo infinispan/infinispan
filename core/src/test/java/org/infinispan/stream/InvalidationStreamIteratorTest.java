@@ -24,7 +24,7 @@ public class InvalidationStreamIteratorTest extends BaseStreamIteratorTest {
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
-      if (tx) {
+      if (transactional) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
 

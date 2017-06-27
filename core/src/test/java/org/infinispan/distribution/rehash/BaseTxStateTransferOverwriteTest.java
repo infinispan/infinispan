@@ -3,6 +3,7 @@ package org.infinispan.distribution.rehash;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
@@ -500,7 +501,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
          checkPoint.awaitStrict("pre_state_apply_release_for_" + cache, 10, TimeUnit.SECONDS);
 
          return forwardedAnswer.answer(invocation);
-      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyCollection());
+      }).when(mockConsumer).applyState(any(Address.class), anyInt(), anyBoolean(), anyCollection());
       TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
 }

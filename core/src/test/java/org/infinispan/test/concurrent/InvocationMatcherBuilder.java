@@ -17,6 +17,8 @@ public class InvocationMatcherBuilder {
    private Matcher instanceMatcher;
    private List<Matcher> argumentMatchers;
    private int matchCount = -1;
+   private String inOrAfterState, afterState;
+   private StateSequencer stateSequencer;
 
    public InvocationMatcherBuilder(String methodName) {
       this.methodName = methodName;
@@ -25,7 +27,14 @@ public class InvocationMatcherBuilder {
    public InvocationMatcher build() {
       Matcher[] matchersArray = argumentMatchers != null ?
             argumentMatchers.toArray(new Matcher[argumentMatchers.size()]) : null;
-      return new DefaultInvocationMatcher(methodName, instanceMatcher, matchCount, matchersArray);
+      InvocationMatcher matcher = new DefaultInvocationMatcher(methodName, instanceMatcher, matchCount, matchersArray);
+      if (inOrAfterState != null) {
+         matcher = new StateInvocationMatcher(matcher, stateSequencer, StateInvocationMatcher.Relation.IN_OR_AFTER, inOrAfterState);
+      }
+      if (afterState != null) {
+         matcher = new StateInvocationMatcher(matcher, stateSequencer, StateInvocationMatcher.Relation.AFTER, afterState);
+      }
+      return matcher;
    }
 
    public InvocationMatcherBuilder withParam(int index, Object expected) {
@@ -51,6 +60,20 @@ public class InvocationMatcherBuilder {
 
    public InvocationMatcherBuilder withThis(Matcher<Object> matcher) {
       instanceMatcher = matcher;
+      return this;
+   }
+
+   public InvocationMatcherBuilder inOrAfterState(StateSequencer stateSequencer, String stateName) {
+      assert stateSequencer != null && (this.stateSequencer == null || this.stateSequencer == stateSequencer);
+      this.stateSequencer = stateSequencer;
+      this.inOrAfterState = stateName;
+      return this;
+   }
+
+   public InvocationMatcherBuilder afterState(StateSequencer stateSequencer, String stateName) {
+      assert stateSequencer != null && (this.stateSequencer == null || this.stateSequencer == stateSequencer);
+      this.stateSequencer = stateSequencer;
+      this.afterState = stateName;
       return this;
    }
 }

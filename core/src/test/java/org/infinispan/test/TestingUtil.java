@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.security.Principal;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -60,6 +62,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -75,7 +78,9 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
+import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.GlobalMarshaller;
@@ -107,7 +112,9 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.JChannel;
+import org.jgroups.MergeView;
 import org.jgroups.View;
+import org.jgroups.ViewId;
 import org.jgroups.protocols.DELAY;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
@@ -158,15 +165,33 @@ public class TestingUtil {
       installNewView(Stream.of(members).map(EmbeddedCacheManager::getAddress), members);
    }
 
+   public static void installNewView(Function<EmbeddedCacheManager, JChannel> channelRetriever, EmbeddedCacheManager... members) {
+      installNewView(Stream.of(members).map(EmbeddedCacheManager::getAddress), channelRetriever, members);
+   }
+
    public static void installNewView(Stream<Address> members, EmbeddedCacheManager... where) {
+      installNewView(members, ecm -> ((JGroupsTransport) ecm.getTransport()).getChannel(), where);
+   }
+
+   public static void installNewView(Stream<Address> members, Function<EmbeddedCacheManager, JChannel> channelRetriever, EmbeddedCacheManager... where) {
       List<org.jgroups.Address> viewMembers = members.map(a -> ((JGroupsAddress) a).getJGroupsAddress()).collect(Collectors.toList());
-      int viewId = where[0].getTransport().getViewId() + 1;
-      View view = View.create(viewMembers.get(0), viewId, viewMembers.toArray(new org.jgroups.Address[viewMembers.size()]));
+
+      List<View> previousViews = new ArrayList<>(where.length);
+      for (EmbeddedCacheManager ecm : where) {
+         previousViews.add(((GMS) channelRetriever.apply(ecm).getProtocolStack().findProtocol(GMS.class)).view());
+      }
+
+      long viewId = previousViews.stream().mapToLong(view -> view.getViewId().getId()).max().orElse(0) + 1;
+      View newView;
+      if (previousViews.stream().allMatch(view -> view.getMembers().containsAll(viewMembers))) {
+         newView = View.create(viewMembers.get(0), viewId, viewMembers.toArray(new org.jgroups.Address[viewMembers.size()]));
+      } else {
+         newView = new MergeView(new ViewId(viewMembers.get(0), viewId), viewMembers, previousViews);
+      }
 
       log.trace("Before installing new view:" + viewMembers);
       for (EmbeddedCacheManager ecm : where) {
-         JChannel c = ((JGroupsTransport) ecm.getTransport()).getChannel();
-         ((GMS) c.getProtocolStack().findProtocol(GMS.class)).installView(view);
+         ((GMS) channelRetriever.apply(ecm).getProtocolStack().findProtocol(GMS.class)).installView(newView);
       }
    }
 
@@ -233,10 +258,39 @@ public class TestingUtil {
       try {
          field = baseType.getDeclaredField(fieldName);
          field.setAccessible(true);
+         stripFinalModifier(field);
          field.set(owner, newValue);
       }
       catch (Exception e) {
          throw new RuntimeException(e);//just to simplify exception handling
+      }
+   }
+
+   public static <T> void replaceField(Object owner, String fieldName, Function<T, T> func) {
+      replaceField(owner.getClass(), owner, fieldName, func);
+   }
+
+   public static <T> void replaceField(Class baseType, Object owner, String fieldName, Function<T, T> func) {
+      Field field;
+      try {
+         field = baseType.getDeclaredField(fieldName);
+         field.setAccessible(true);
+         stripFinalModifier(field);
+         Object prevValue = field.get(owner);
+         Object newValue = func.apply((T) prevValue);
+         field.set(owner, newValue);
+      }
+      catch (Exception e) {
+         throw new RuntimeException(e);//just to simplify exception handling
+      }
+   }
+
+   private static void stripFinalModifier(Field field) throws NoSuchFieldException, IllegalAccessException {
+      int modifiers = field.getModifiers();
+      if (Modifier.isFinal(modifiers)) {
+         Field modField = Field.class.getDeclaredField("modifiers");
+         modField.setAccessible(true);
+         modField.setInt(field, modifiers & ~Modifier.FINAL);
       }
    }
 
@@ -280,8 +334,9 @@ public class TestingUtil {
          }
          StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
+         CacheTopology cacheTopology;
          while (true) {
-            CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+            cacheTopology = stateTransferManager.getCacheTopology();
             boolean rebalanceInProgress;
             boolean chContainsAllMembers;
             boolean currentChIsBalanced;
@@ -330,7 +385,7 @@ public class TestingUtil {
 
             LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
          }
-         log.trace("Node " + cacheAddress + " finished state transfer.");
+         log.trace("Node " + cacheAddress + " finished state transfer, has topology " + cacheTopology);
       }
    }
 
@@ -914,6 +969,26 @@ public class TestingUtil {
    public static GlobalMarshaller extractGlobalMarshaller(EmbeddedCacheManager cm) {
       GlobalComponentRegistry gcr = extractField(cm, "globalComponentRegistry");
       return (GlobalMarshaller) gcr.getComponent(StreamingMarshaller.class);
+   }
+
+   /**
+    * Add a hook to cache startup sequence that will allow to replace existing component with a mock.
+    * @param cacheContainer
+    * @param consumer
+    */
+   public static void addCacheStartingHook(CacheContainer cacheContainer, BiConsumer<String, ComponentRegistry> consumer) {
+      GlobalComponentRegistry gcr = extractGlobalComponentRegistry(cacheContainer);
+      extractField(gcr, "moduleLifecycles");
+      TestingUtil.<Collection<ModuleLifecycle>>replaceField(gcr, "moduleLifecycles", moduleLifecycles -> {
+         Collection<ModuleLifecycle> copy = new ArrayList<>(moduleLifecycles);
+         copy.add(new AbstractModuleLifecycle() {
+            @Override
+            public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
+               consumer.accept(cacheName, cr);
+            }
+         });
+         return copy;
+      });
    }
 
    /**

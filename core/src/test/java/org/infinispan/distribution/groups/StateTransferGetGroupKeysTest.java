@@ -1,8 +1,10 @@
 package org.infinispan.distribution.groups;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -16,6 +18,7 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -45,6 +48,8 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
          new StateTransferGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER),
          new StateTransferGetGroupKeysTest(TestCacheFactory.BACKUP_OWNER),
          new StateTransferGetGroupKeysTest(TestCacheFactory.NON_OWNER),
+         new StateTransferGetGroupKeysTest(TestCacheFactory.PRIMARY_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
+         new StateTransferGetGroupKeysTest(TestCacheFactory.NON_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
       };
    }
 
@@ -124,37 +129,51 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       BlockCommandInterceptor interceptor = chain.findInterceptorWithClass(BlockCommandInterceptor.class);
       if (interceptor == null) {
          interceptor = new BlockCommandInterceptor();
-         chain.addInterceptorAfter(interceptor, EntryWrappingInterceptor.class);
+         EntryWrappingInterceptor ewi = chain.findInterceptorExtending(EntryWrappingInterceptor.class);
+         assertNotNull(ewi);
+         chain.addInterceptorAfter(interceptor, ewi.getClass());
       }
       interceptor.reset();
       return interceptor;
    }
 
-   private static ConfigurationBuilder createConfigurationBuilder() {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+   private ConfigurationBuilder createConfigurationBuilder() {
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, false);
       builder.clustering().stateTransfer().fetchInMemoryState(true);
       builder.clustering().hash().groups().enabled(true);
-      builder.clustering().hash().numOwners(2);
       builder.clustering().hash().numSegments(1);
-      builder.clustering().hash().consistentHashFactory(new CustomConsistentHashFactory());
+      if (cacheMode.isScattered()) {
+         builder.clustering().hash().consistentHashFactory(new CustomConsistentHashFactory(new BaseControlledConsistentHashFactory.ScatteredTrait(), cacheMode));
+      } else {
+         builder.clustering().hash().consistentHashFactory(new CustomConsistentHashFactory(new BaseControlledConsistentHashFactory.DefaultTrait(), cacheMode));
+      }
       return builder;
    }
 
 
-   private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory {
-      private CustomConsistentHashFactory() {
-         super(1);
+   private static class CustomConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
+      private final CacheMode cacheMode;
+
+      private CustomConsistentHashFactory(Trait<CH> trait, CacheMode cacheMode) {
+         super(trait, 1);
+         this.cacheMode = cacheMode;
       }
 
       @Override
       protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
-         assertEquals(2, numberOfOwners);
-         if (members.size() == 1)
-            return Arrays.asList(members.get(0));
-         else if (members.size() == 2)
-            return Arrays.asList(members.get(0), members.get(1));
-         else
-            return Arrays.asList(members.get(members.size() - 1), members.get(0));
+         if (cacheMode.isDistributed()) {
+            assertEquals(2, numberOfOwners);
+            if (members.size() == 1)
+               return Arrays.asList(members.get(0));
+            else if (members.size() == 2)
+               return Arrays.asList(members.get(0), members.get(1));
+            else
+               return Arrays.asList(members.get(members.size() - 1), members.get(0));
+         } else if (cacheMode.isScattered()) {
+            return Collections.singletonList(members.get(0));
+         } else {
+            throw new IllegalStateException();
+         }
       }
    }
 
