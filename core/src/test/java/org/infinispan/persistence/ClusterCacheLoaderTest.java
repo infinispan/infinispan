@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "persistence.ClusterCacheLoaderTest")
-@InCacheMode({ CacheMode.INVALIDATION_SYNC, CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
+@InCacheMode({ CacheMode.INVALIDATION_SYNC, CacheMode.DIST_SYNC, CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC })
 public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
 
    @Override

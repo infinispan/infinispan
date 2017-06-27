@@ -8,6 +8,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.ClusterTopologyManager;
@@ -18,7 +21,7 @@ import org.infinispan.topology.ClusterTopologyManager;
 * @author Dan Berindei
 * @since 7.0
 */
-public class ControlledConsistentHashFactory extends BaseControlledConsistentHashFactory {
+public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
    private volatile List<int[]> ownerIndexes;
 
    private volatile List<Address> membersToUse;
@@ -26,16 +29,16 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
    /**
     * Create a consistent hash factory with a single segment.
     */
-   public ControlledConsistentHashFactory(int primaryOwnerIndex, int... backupOwnerIndexes) {
-      super(1);
+   public ControlledConsistentHashFactory(Trait<CH> trait, int primaryOwnerIndex, int... backupOwnerIndexes) {
+      super(trait, 1);
       setOwnerIndexes(primaryOwnerIndex, backupOwnerIndexes);
    }
 
    /**
     * Create a consistent hash factory with multiple segments.
     */
-   public ControlledConsistentHashFactory(int[] firstSegmentOwners, int[]... otherSegmentOwners) {
-      super(1 + (otherSegmentOwners != null ? otherSegmentOwners.length : 0));
+   public ControlledConsistentHashFactory(Trait<CH> trait, int[] firstSegmentOwners, int[]... otherSegmentOwners) {
+      super(trait, 1 + (otherSegmentOwners != null ? otherSegmentOwners.length : 0));
       setOwnerIndexes(firstSegmentOwners, otherSegmentOwners);
    }
 
@@ -109,5 +112,44 @@ public class ControlledConsistentHashFactory extends BaseControlledConsistentHas
     */
    public void setMembersToUse(List<Address> membersToUse) {
       this.membersToUse = membersToUse;
+   }
+
+   public static class Default extends ControlledConsistentHashFactory<DefaultConsistentHash> {
+      public Default(int primaryOwnerIndex, int... backupOwnerIndexes) {
+         super(new DefaultTrait(), primaryOwnerIndex, backupOwnerIndexes);
+      }
+
+      public Default(int[] firstSegmentOwners, int[]... otherSegmentOwners) {
+         super(new DefaultTrait(), firstSegmentOwners, otherSegmentOwners);
+      }
+   }
+
+   /**
+    * Ignores backup-owner part of the calls
+    */
+   public static class Scattered extends ControlledConsistentHashFactory<ScatteredConsistentHash> {
+      public Scattered(int primaryOwnerIndex) {
+         super(new ScatteredTrait(), primaryOwnerIndex);
+      }
+
+      public Scattered(int[] segmentOwners) {
+         super(new ScatteredTrait(), new int[] { segmentOwners[0] },
+            Arrays.stream(segmentOwners, 1, segmentOwners.length).mapToObj(o -> new int[] { o }).toArray(int[][]::new));
+      }
+
+      @Override
+      public void setOwnerIndexes(int primaryOwnerIndex, int... backupOwnerIndexes) {
+         super.setOwnerIndexes(primaryOwnerIndex);
+      }
+
+      @Override
+      public void setOwnerIndexes(int[] segment1Owners, int[]... otherSegmentOwners) {
+         super.setOwnerIndexes(segment1Owners);
+      }
+
+      @Override
+      public void setOwnerIndexesForSegment(int segmentIndex, int primaryOwnerIndex, int... backupOwnerIndexes) {
+         super.setOwnerIndexesForSegment(segmentIndex, primaryOwnerIndex);
+      }
    }
 }

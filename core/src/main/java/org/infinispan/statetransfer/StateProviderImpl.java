@@ -49,25 +49,24 @@ import org.infinispan.util.logging.LogFactory;
 @Listener
 public class StateProviderImpl implements StateProvider {
 
-   private static final Log log = LogFactory.getLog(StateProviderImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   protected static final Log log = LogFactory.getLog(StateProviderImpl.class);
+   protected static final boolean trace = log.isTraceEnabled();
 
-   private String cacheName;
+   protected String cacheName;
    private Configuration configuration;
-   private RpcManager rpcManager;
-   private CommandsFactory commandsFactory;
+   protected RpcManager rpcManager;
+   protected CommandsFactory commandsFactory;
    private ClusterCacheNotifier clusterCacheNotifier;
    private TransactionTable transactionTable;     // optional
-   private DataContainer dataContainer;
-   private PersistenceManager persistenceManager; // optional
-   private ExecutorService executorService;
-   private StateTransferLock stateTransferLock;
-   private InternalEntryFactory entryFactory;
-   private long timeout;
-   private int chunkSize;
-   private KeyPartitioner keyPartitioner;
-
-   private StateConsumer stateConsumer;
+   protected DataContainer dataContainer;
+   protected PersistenceManager persistenceManager; // optional
+   protected ExecutorService executorService;
+   protected StateTransferLock stateTransferLock;
+   protected InternalEntryFactory entryFactory;
+   protected long timeout;
+   protected int chunkSize;
+   protected KeyPartitioner keyPartitioner;
+   protected StateConsumer stateConsumer;
 
    /**
     * A map that keeps track of current outbound state transfers by destination address. There could be multiple transfers
@@ -291,13 +290,14 @@ public class StateProviderImpl implements StateProvider {
 
       // the destination node must already have an InboundTransferTask waiting for these segments
       OutboundTransferTask outboundTransfer = new OutboundTransferTask(destination, segments, chunkSize, requestTopologyId,
-            keyPartitioner, this, dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout,
-            cacheName, applyState);
+            keyPartitioner, this::onTaskCompletion, chunks -> {},
+            OutboundTransferTask::defaultMapEntryFromDataContainer, OutboundTransferTask::defaultMapEntryFromStore,
+            dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName, applyState, false);
       addTransfer(outboundTransfer);
       outboundTransfer.execute(executorService);
    }
 
-   private void addTransfer(OutboundTransferTask transferTask) {
+   protected void addTransfer(OutboundTransferTask transferTask) {
       if (trace) {
          log.tracef("Adding outbound transfer to %s for segments %s", transferTask.getDestination(),
                     transferTask.getSegments());
@@ -342,7 +342,7 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   void onTaskCompletion(OutboundTransferTask transferTask) {
+   protected void onTaskCompletion(OutboundTransferTask transferTask) {
       if (trace) {
          log.tracef("Removing %s outbound transfer of segments to %s for cache %s, segments %s",
                     transferTask.isCancelled() ? "cancelled" : "completed", transferTask.getDestination(),

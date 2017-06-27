@@ -16,7 +16,6 @@ import org.infinispan.query.indexmanager.AbstractUpdateCommand;
 import org.infinispan.query.indexmanager.LuceneWorkConverter;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.LogFactory;
 
@@ -64,7 +63,7 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
          }
       }
 
-      return CompletableFuture.completedFuture(SuccessfulResponse.create(Boolean.TRUE));
+      return CompletableFuture.completedFuture(Boolean.TRUE);
    }
 
    private List<IndexManager> getIndexManagerForModifications(LuceneWork luceneWork) {

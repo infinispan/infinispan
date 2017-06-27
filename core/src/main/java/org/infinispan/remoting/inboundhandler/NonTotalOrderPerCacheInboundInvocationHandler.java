@@ -40,6 +40,7 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
    private LockManager lockManager;
    private ClusteringDependentLogic clusteringDependentLogic;
    private long lockTimeout;
+   private boolean isLocking;
 
    public NonTotalOrderPerCacheInboundInvocationHandler() {
       checkTopologyAction = new CheckTopologyAction(this);
@@ -51,6 +52,7 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
       this.lockManager = lockManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
       lockTimeout = configuration.locking().lockAcquisitionTimeout();
+      isLocking = !configuration.clustering().cacheMode().isScattered();
    }
 
    @Override
@@ -98,7 +100,7 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
    }
 
    private ReadyAction createReadyAction(int topologyId, RemoteLockCommand command) {
-      if (command.hasSkipLocking()) {
+      if (command.hasSkipLocking() || !isLocking) {
          return null;
       }
       Collection<?> keys = command.getKeysToLock();

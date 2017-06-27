@@ -22,6 +22,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -39,6 +40,7 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(groups = "functional", testName = "api.ConditionalOperationsConcurrentTest")
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC, CacheMode.SCATTERED_SYNC})
 public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTest {
 
    private final Log log = LogFactory.getLog(getClass());
@@ -48,6 +50,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    }
 
    public ConditionalOperationsConcurrentTest(int nodes, int operations, int threads) {
+      this.cacheMode = CacheMode.DIST_SYNC;
       this.nodes = nodes;
       this.operations = operations;
       this.threads = threads;
@@ -67,7 +70,6 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    private volatile String failureMessage = "";
 
    protected boolean transactional = false;
-   private final CacheMode mode = CacheMode.DIST_SYNC;
    protected LockingMode lockingMode = LockingMode.OPTIMISTIC;
    protected boolean writeSkewCheck = false;
 
@@ -82,7 +84,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(mode, transactional);
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, transactional);
       dcc.transaction().lockingMode(lockingMode);
       if (writeSkewCheck) {
          dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);

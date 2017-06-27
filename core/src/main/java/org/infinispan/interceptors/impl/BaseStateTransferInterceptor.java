@@ -143,6 +143,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       if (command.getTopologyId() == -1) {
          CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
          if (cacheTopology != null) {
+            if (trace) getLog().tracef("Setting command topology to %d", cacheTopology.getTopologyId());
             command.setTopologyId(cacheTopology.getTopologyId());
          }
       }
@@ -204,9 +205,10 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       while (ce instanceof RemoteException) {
          ce = ce.getCause();
       }
+      TopologyAffectedCommand cmd = (TopologyAffectedCommand) rCommand;
       final CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       int currentTopologyId = cacheTopology == null ? -1 : cacheTopology.getTopologyId();
-      TopologyAffectedCommand cmd = (TopologyAffectedCommand) rCommand;
+      int requestedTopologyId = currentTopologyId;
       if (ce instanceof SuspectException) {
          if (trace)
             getLog().tracef("Retrying command because of suspected node, current topology is %d: %s",
@@ -220,12 +222,31 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          }
       } else if (ce instanceof OutdatedTopologyException) {
          if (trace)
-            getLog().tracef("Retrying command because of topology change, current topology is %d: %s",
-                  currentTopologyId, cmd);
+            getLog().tracef("Retrying command because of topology change, current topology is %d, command topology %d: %s",
+                  currentTopologyId, cmd.getTopologyId(), cmd);
+         // In scattered cache, when we have contacted the primary owner in current topology and this does respond
+         // with UnsureResponse we don't know about any other read owners; we need to wait for the next topology
+         if (cacheConfiguration.clustering().cacheMode().isScattered()) {
+            OutdatedTopologyException ote = (OutdatedTopologyException) ce;
+            if (ote.requestedTopologyId >= 0) {
+               requestedTopologyId = Math.max(currentTopologyId, ote.requestedTopologyId);
+            } else {
+               requestedTopologyId = nextTopology(cmd, currentTopologyId);
+            }
+         }
       } else if (ce instanceof AllOwnersLostException) {
          if (trace)
             getLog().tracef("All owners for command %s have been lost.", cmd);
-         return rCommand.acceptVisitor(rCtx, LostDataVisitor.INSTANCE);
+         // In scattered cache it might be common to lose the single owner, we need to retry. We fill find out that
+         // we can return null only after the next topology is installed. If partition handling is enabled we decide
+         // only based on the availability status.
+         // In other cache modes, during partition the exception is already handled in PartitionHandlingInterceptor,
+         // and if the handling is not enabled, we can't but return null.
+         if (cacheConfiguration.clustering().cacheMode().isScattered()) {
+            requestedTopologyId = nextTopology(cmd, currentTopologyId);
+         } else {
+            return rCommand.acceptVisitor(rCtx, LostDataVisitor.INSTANCE);
+         }
       } else {
          throw t;
       }
@@ -236,9 +257,24 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       // 4. B receives the read, but it already can't read: responds with UnsureResponse
       // 5. A receives two unsure responses and throws OTE
       // However, now we are sure that we can immediately retry the request, because C must have updated its topology
-      cmd.setTopologyId(currentTopologyId);
+      cmd.setTopologyId(requestedTopologyId);
       ((FlagAffectedCommand) cmd).addFlags(FlagBitSets.COMMAND_RETRY);
-      return invokeNextAndHandle(rCtx, rCommand, handleReadCommandReturn);
+      if (requestedTopologyId == currentTopologyId) {
+         return invokeNextAndHandle(rCtx, rCommand, handleReadCommandReturn);
+      } else {
+         return makeStage(asyncInvokeNext(rCtx, rCommand, stateTransferLock.transactionDataFuture(requestedTopologyId)))
+               .andHandle(rCtx, rCommand, handleReadCommandReturn);
+      }
+   }
+
+   private int nextTopology(TopologyAffectedCommand cmd, int currentTopologyId) {
+      if (cmd.getTopologyId() == currentTopologyId) {
+         return currentTopologyId + 1;
+      } else if (cmd.getTopologyId() > currentTopologyId) {
+         return cmd.getTopologyId();
+      } else {
+         return currentTopologyId;
+      }
    }
 
    protected int getNewTopologyId(Throwable ce, int currentTopologyId, TopologyAffectedCommand command) {

@@ -42,7 +42,6 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-//todo [anistor] command forwarding breaks the rule that we have only one originator for a command. this opens now the possibility to have two threads processing incoming remote commands for the same TX
 /**
  * This interceptor has two tasks:
  * <ol>
@@ -227,7 +226,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
       int retryTopologyId = -1;
       int currentTopology = currentTopologyId();
-      if (t instanceof OutdatedTopologyException) {
+      if (t instanceof OutdatedTopologyException || t instanceof AllOwnersLostException) {
          // This can only happen on the originator
          retryTopologyId = Math.max(currentTopology, txCommand.getTopologyId() + 1);
       } else if (t != null) {

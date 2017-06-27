@@ -21,6 +21,7 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -32,11 +33,11 @@ import org.testng.annotations.Test;
  * @since 8.0
  */
 @Test(groups = "functional", testName = "stream.DistributedStreamIteratorWithStoreAsBinaryTest")
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCacheManagersTest {
    protected final static String CACHE_NAME = "DistributedStreamIteratorWithStoreAsBinaryTest";
    protected ConfigurationBuilder builderUsed;
    protected final boolean tx = false;
-   protected final CacheMode cacheMode = CacheMode.DIST_SYNC;
 
    @Override
    protected void createCacheManagers() throws Throwable {

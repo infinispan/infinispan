@@ -32,20 +32,22 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
    protected final int threads;
    protected final int nodes;
    protected final int operations;
+   protected final CacheMode cacheMode;
 
-   public ConcurrentOperationsTest(int threads, int nodes, int operations) {
+   protected ConcurrentOperationsTest(CacheMode cacheMode, int threads, int nodes, int operations) {
+      this.cacheMode = cacheMode;
       this.threads = threads;
       this.nodes = nodes;
       this.operations = operations;
    }
 
    public ConcurrentOperationsTest() {
-      this(2, 2, 4);
+      this(CacheMode.DIST_SYNC, 2, 2, 4);
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, false);
       dcc.clustering().l1().disable();
       createClusteredCaches(nodes, dcc);
    }
@@ -120,25 +122,10 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
                   print("Checking correctness");
 
                   List<Address> owners = advancedCache(0).getDistributionManager().locate("k");
-                  assert owners.size() == 2;
-
-                  InternalCacheEntry entry0 = advancedCache(owners.get(0)).getDataContainer().get("k");
-                  InternalCacheEntry entry1 = advancedCache(owners.get(1)).getDataContainer().get("k");
-                  Object mainOwnerValue = entry0 == null ? null : entry0.getValue();
-                  Object otherOwnerValue = entry1 == null ? null : entry1.getValue();
-                  log.tracef("Main owner value is %s, other Owner Value is %s", mainOwnerValue, otherOwnerValue);
-                  boolean equals = mainOwnerValue == null? otherOwnerValue == null : mainOwnerValue.equals(otherOwnerValue);
-                  if (!equals) {
-                     print("Consistency error. On main owner(" + owners.get(0) + ") we had " +
-                                 mainOwnerValue + " and on backup owner(" + owners.get(1) + ") we had " + otherOwnerValue);
-                     log.trace("Consistency error. On main owner(" + owners.get(0) + ") we had " +
-                                     mainOwnerValue + " and on backup owner(" + owners.get(1) + ") we had " + otherOwnerValue);
+                  if (!checkOwners(owners)) {
                      correctness.set(false);
-                     return;
                   }
 
-                  print("otherOwnerValue = " + otherOwnerValue);
-                  print("mainOwnerValue = " + mainOwnerValue);
                   for (int q = 0; q < nodes; q++) {
                      print(q, cache(0).get("k"));
                   }
@@ -171,6 +158,32 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
       for (Future<Boolean> f: result) {
          assertTrue(f.get());
       }
+   }
+
+   protected boolean checkOwners(List<Address> owners) {
+      assert owners.size() == 2;
+
+      InternalCacheEntry entry0 = advancedCache(owners.get(0)).getDataContainer().get("k");
+      InternalCacheEntry entry1 = advancedCache(owners.get(1)).getDataContainer().get("k");
+      return checkOwnerEntries(entry0, entry1, owners.get(0), owners.get(1));
+   }
+
+   protected boolean checkOwnerEntries(InternalCacheEntry entry0, InternalCacheEntry entry1, Address mainOwner, Address backupOwner) {
+      Object mainOwnerValue = entry0 == null ? null : entry0.getValue();
+      Object otherOwnerValue = entry1 == null ? null : entry1.getValue();
+      log.tracef("Main owner value is %s, other Owner Value is %s", mainOwnerValue, otherOwnerValue);
+      boolean equals = mainOwnerValue == null? otherOwnerValue == null : mainOwnerValue.equals(otherOwnerValue);
+      if (!equals) {
+         print("Consistency error. On main owner(" + mainOwner + ") we had " +
+            mainOwnerValue + " and on backup owner(" + backupOwner + ") we had " + otherOwnerValue);
+         log.trace("Consistency error. On main owner(" + mainOwner + ") we had " +
+            mainOwnerValue + " and on backup owner(" + backupOwner + ") we had " + otherOwnerValue);
+         return false;
+      }
+
+      print("otherOwnerValue = " + otherOwnerValue);
+      print("mainOwnerValue = " + mainOwnerValue);
+      return true;
    }
 
    private AdvancedCache advancedCache(Address address) {

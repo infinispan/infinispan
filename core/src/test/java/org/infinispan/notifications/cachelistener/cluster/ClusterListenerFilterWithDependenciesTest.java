@@ -13,6 +13,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 
@@ -21,6 +22,7 @@ import org.testng.annotations.Test;
  * @since 7.2
  */
 @Test(groups = "functional", testName = "notifications.cachelistener.cluster.ClusterListenerFilterWithDependenciesTest")
+@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheManagersTest {
 
    private final int NUM_NODES = 2;
@@ -29,7 +31,7 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(cacheMode, false);
       createClusteredCaches(NUM_NODES, cfgBuilder);
    }
 

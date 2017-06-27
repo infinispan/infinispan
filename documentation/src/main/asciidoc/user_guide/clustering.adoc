@@ -42,26 +42,29 @@ value from at least one of the owner nodes.
 
 Which cache you should use depends on the qualities/guarantees you need for your data. The following table summarizes the most important ones:
 
-[cols="20,^15,^15,^15,^15,^15",options="header"]
+[cols="20,^15,^15,^15,^15,^15,^15",options="header"]
 |============================================================
-|                  | Simple      | Local       | Invalidation | Replicated | Distributed
-| Clustered        | [red]*No*    | [red]*No*    | [green]*Yes*   | [green]*Yes* | [green]*Yes*
+|                  | Simple      | Local       | Invalidation | Replicated | Distributed | Scattered
+| Clustered        | [red]*No*    | [red]*No*    | [green]*Yes*   | [green]*Yes* | [green]*Yes* | [green]*Yes*
 | Read performance | [green]*Highest* +
 (local) | [green]*High* +
 (local) | [green]*High* +
 (local) | [green]*High* +
 (local) | [yellow]*Medium* +
-(owners)
+(owners) | [yellow]*Medium* +
+(primary)
 | Write performance| [green]*Highest* +
 (local) | [green]*High* +
 (local) | [red]*Low* +
 (all nodes, no data)| [red]*Lowest* +
 (all nodes)| [yellow]*Medium* +
-(owner nodes)
+(owner nodes) | [yellow]*Higher* +
+(single RPC)
 | Capacity         | [red]*Single node*| [red]*Single node*| [red]*Single node*| [red]*Smallest node*| [green]*Cluster* +
-stem:[(sum_(i=1)^"nodes""node_capacity")/"owners"]
-| Availability     | [red]*Single node*| [red]*Single node*| [red]*Single node*| [green]*All nodes*| [yellow]*Owner nodes*
-| Features         | [red]*No TX, persistence, indexing*| [green]*All* | [green]*All* | [green]*All* | [green]*All* |
+stem:[(sum_(i=1)^"nodes""node_capacity")/"owners"] | [green]*Cluster* +
+stem:[(sum_(i=1)^"nodes""node_capacity")/"2"]
+| Availability     | [red]*Single node*| [red]*Single node*| [red]*Single node*| [green]*All nodes*| [yellow]*Owner nodes* | [yellow]*Owner nodes*
+| Features         | [red]*No TX, persistence, indexing*| [green]*All* | [green]*All* | [green]*All* | [green]*All* | [yellow]*No TX*
 |============================================================
 
 
@@ -657,6 +660,53 @@ be slow when a cache contains lots of small groups.
 
 NOTE: This interface is available since Infinispan 7.0.0.
 
+
+=== Scattered Mode
+
+Scattered mode is very similar to Distribution Mode as it allows linear scaling of the cluster.
+It allows single node failure by maintaining two copies of the data (as Distribution Mode with numOwners=2).
+Unlike Distributed, the location of data is not fixed; while we use the same Consistent Hash algorithm
+to locate the primary owner, the backup copy is stored on the node that wrote the data last time.
+When the write originates on the primary owner, backup copy is stored on any other node (the exact location
+of this copy is not important).
+
+This has the advantage of single RPC for any write (Distribution Mode requires one or two RPCs), but reads
+have to always target the primary owner. That results in faster writes but possibly slower reads, and therefore this
+mode is more suitable for write-intensive applications.
+
+Storing multiple backup copies also results in slightly higher memory consumption. In order to remove out-of-date
+backup copies, invalidation messages are broadcast in the cluster, which generates some overhead. This makes
+scattered mode less performant in very big clusters (this behaviour might be optimized in the future).
+
+When a node crashes, the primary copy may be lost. Therefore, the cluster has to reconcile the backups
+and find out the last written backup copy. This process results in more network traffic during state transfer.
+
+Since the writer of data is also a backup, even if we specify machine/rack/site ids on the transport level the cluster
+cannot be resilient to more than one failure on the same machine/rack/site.
+
+Currently it is not possible to use scattered mode in transactional cache. Asynchronous replication
+is not supported either; use asynchronous Cache API instead. Functional commands are not implemented neither
+but these are expected to be added soon.
+
+The cache is configured in a similar way as the other cache modes, here is an example of declarative configuration:
+
+[source,xml]
+----
+   <scattered-cache name="scatteredCache" />
+----
+
+And this is how you can configure it programmatically:
+[source,java]
+----
+Configuration c = new ConfigurationBuilder()
+   .clustering().cacheMode(CacheMode.SCATTERED_SYNC)
+   .build();
+----
+
+Scattered mode is not exposed in the server configuration as the server is usually accessed through the Hot Rod
+protocol. The protocol automatically selects primary owner for the writes and therefore the write (in distributed
+mode with two owner) requires single RPC inside the cluster, too. Therefore, scattered cache would not bring
+the performance benefit.
 
 ===  Asynchronous Options
 

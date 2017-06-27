@@ -20,8 +20,12 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "stream.DistributedStreamIteratorExceptionTest")
 public class DistributedStreamIteratorExceptionTest extends BaseSetupStreamIteratorTest {
+   protected DistributedStreamIteratorExceptionTest(CacheMode cacheMode) {
+      super(false, cacheMode);
+   }
+
    public DistributedStreamIteratorExceptionTest() {
-      super(false, CacheMode.DIST_SYNC);
+      this(CacheMode.DIST_SYNC);
    }
 
    public void ensureDataContainerRemoteExceptionPropagated() {

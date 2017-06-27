@@ -313,4 +313,15 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
          blockingInterceptor = chain.findInterceptorExtending(BlockingInterceptor.class);
       }
    }
+
+   protected MagicKey getMagicKey() {
+      switch (numOwners) {
+         case 1:
+            return new MagicKey(c1);
+         case 2:
+            return new MagicKey(c1, c2);
+         default:
+            throw new IllegalArgumentException();
+      }
+   }
 }

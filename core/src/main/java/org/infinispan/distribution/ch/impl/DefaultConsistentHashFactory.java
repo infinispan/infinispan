@@ -30,10 +30,9 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class DefaultConsistentHashFactory implements ConsistentHashFactory<DefaultConsistentHash> {
+public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<DefaultConsistentHash> {
 
    private static final Log log = LogFactory.getLog(DefaultConsistentHashFactory.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    @Override
    public DefaultConsistentHash create(Hash hashFunction, int numOwners, int numSegments,
@@ -58,20 +57,6 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       if (!DefaultConsistentHash.class.getName().equals(consistentHashClass))
          throw log.persistentConsistentHashMismatch(this.getClass().getName(), consistentHashClass);
       return new DefaultConsistentHash(state);
-   }
-
-   private void checkCapacityFactors(List<Address> members, Map<Address, Float> capacityFactors) {
-      if (capacityFactors != null) {
-         float totalCapacity = 0;
-         for (Address node : members) {
-            Float capacityFactor = capacityFactors.get(node);
-            if (capacityFactor == null || capacityFactor < 0)
-               throw new IllegalArgumentException("Invalid capacity factor for node " + node);
-            totalCapacity += capacityFactor;
-         }
-         if (totalCapacity == 0)
-            throw new IllegalArgumentException("There must be at least one node with a non-zero capacity factor");
-      }
    }
 
    /**
@@ -264,22 +249,6 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
    /**
     * @return The worst backup owner, or {@code null} if the remaining nodes own 0 segments.
     */
-   private Address findWorstPrimaryOwner(Builder builder, List<Address> nodes) {
-      Address worst = null;
-      float maxSegmentsPerCapacity = -1;
-      for (Address owner : nodes) {
-         float capacityFactor = builder.getCapacityFactor(owner);
-         if (builder.getPrimaryOwned(owner) - 1 >= capacityFactor * maxSegmentsPerCapacity) {
-            worst = owner;
-            maxSegmentsPerCapacity = capacityFactor != 0 ? (builder.getPrimaryOwned(owner) - 1) / capacityFactor : 0;
-         }
-      }
-      return worst;
-   }
-
-   /**
-    * @return The worst backup owner, or {@code null} if the remaining nodes own 0 segments.
-    */
    private Address findWorstBackupOwner(Builder builder, List<Address> nodes) {
       Address worst = null;
       float maxSegmentsPerCapacity = -1;
@@ -366,72 +335,37 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       return best;
    }
 
-   /**
-    * @return The candidate with the worst primary-owned segments/capacity ratio that is also not in the excludes list.
-    */
-   protected Address findNewPrimaryOwner(Builder builder, Collection<Address> candidates,
-                                         Address primaryOwner) {
-      float initialCapacityFactor = primaryOwner != null ? builder.getCapacityFactor(primaryOwner) : 0;
-
-      // We want the owned/capacity ratio of the actual primary owner after removing the current segment to be bigger
-      // than the owned/capacity ratio of the new primary owner after adding the current segment, so that a future pass
-      // won't try to switch them back.
-      Address best = null;
-      float bestSegmentsPerCapacity = initialCapacityFactor != 0 ? (builder.getPrimaryOwned(primaryOwner) - 1) /
-            initialCapacityFactor : Float.MAX_VALUE;
-      for (Address candidate : candidates) {
-         int primaryOwned = builder.getPrimaryOwned(candidate);
-         float capacityFactor = builder.getCapacityFactor(candidate);
-         if ((primaryOwned + 1) <= capacityFactor * bestSegmentsPerCapacity) {
-            best = candidate;
-            bestSegmentsPerCapacity = (primaryOwned + 1) / capacityFactor;
-         }
-      }
-      return best;
-   }
-
-
-   protected static class Builder {
-      private final Hash hashFunction;
+   protected static class Builder extends AbstractConsistentHashFactory.Builder {
       private final int initialNumOwners;
       private final int actualNumOwners;
       private final List<Address>[] segmentOwners;
-      private final OwnershipStatistics stats;
-      private final List<Address> members;
-      private final Map<Address, Float> capacityFactors;
       // For debugging
       private int modCount = 0;
 
       public Builder(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
                      Map<Address, Float> capacityFactors) {
-         this.hashFunction = hashFunction;
+         super(hashFunction, new OwnershipStatistics(members), members, capacityFactors);
          this.initialNumOwners = numOwners;
          this.actualNumOwners = computeActualNumOwners(numOwners, members, capacityFactors);
-         this.members = members;
-         this.capacityFactors = capacityFactors;
          this.segmentOwners = new List[numSegments];
          for (int segment = 0; segment < numSegments; segment++) {
             segmentOwners[segment] = new ArrayList<Address>(actualNumOwners);
          }
-         this.stats = new OwnershipStatistics(members);
       }
 
       public Builder(DefaultConsistentHash baseCH, List<Address> actualMembers,
                      Map<Address, Float> actualCapacityFactors) {
+         super(baseCH.getHashFunction(), new OwnershipStatistics(baseCH, actualMembers), actualMembers, actualCapacityFactors);
          int numSegments = baseCH.getNumSegments();
          Set<Address> actualMembersSet = new HashSet<Address>(actualMembers);
          List[] owners = new List[numSegments];
          for (int segment = 0; segment < numSegments; segment++) {
-            owners[segment] = new ArrayList<Address>(baseCH.locateOwnersForSegment(segment));
+            owners[segment] = new ArrayList<>(baseCH.locateOwnersForSegment(segment));
             owners[segment].retainAll(actualMembersSet);
          }
-         this.hashFunction = baseCH.getHashFunction();
          this.initialNumOwners = baseCH.getNumOwners();
          this.actualNumOwners = computeActualNumOwners(initialNumOwners, actualMembers, actualCapacityFactors);
-         this.members = actualMembers;
-         this.capacityFactors = actualCapacityFactors;
          this.segmentOwners = owners;
-         this.stats = new OwnershipStatistics(baseCH, actualMembers);
       }
 
       public Builder(DefaultConsistentHash baseCH) {
@@ -439,18 +373,15 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       }
 
       public Builder(Builder other) {
+         super(other);
          int numSegments = other.getNumSegments();
          List[] owners = new List[numSegments];
          for (int segment = 0; segment < numSegments; segment++) {
             owners[segment] = new ArrayList<Address>(other.segmentOwners[segment]);
          }
-         this.hashFunction = other.hashFunction;
          this.initialNumOwners = other.initialNumOwners;
          this.actualNumOwners = other.actualNumOwners;
-         this.members = other.members;
-         this.capacityFactors = other.capacityFactors;
          this.segmentOwners = owners;
-         this.stats = new OwnershipStatistics(other.stats);
       }
 
       public int getActualNumOwners() {
@@ -459,14 +390,6 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
 
       public int getNumSegments() {
          return segmentOwners.length;
-      }
-
-      public List<Address> getMembers() {
-         return members;
-      }
-
-      public int getNumNodes() {
-         return getMembers().size();
       }
 
       public List<Address> getOwners(int segment) {
@@ -556,31 +479,12 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
                segmentOwners);
       }
 
-      private int getPrimaryOwned(Address node) {
+      public int getPrimaryOwned(Address node) {
          return stats.getPrimaryOwned(node);
       }
 
       public int getOwned(Address node) {
          return stats.getOwned(node);
-      }
-
-      public Map<Address, Float> getCapacityFactors() {
-         return capacityFactors;
-      }
-
-      public float getCapacityFactor(Address node) {
-         return capacityFactors != null ? capacityFactors.get(node) : 1;
-      }
-
-      public float getTotalCapacity() {
-         if (capacityFactors == null)
-            return getNumNodes();
-
-         float totalCapacity = 0;
-         for (Address node : members) {
-            totalCapacity += capacityFactors.get(node);
-         }
-         return totalCapacity;
       }
 
       public float getPrimaryOwnedPerCapacity(Address node) {

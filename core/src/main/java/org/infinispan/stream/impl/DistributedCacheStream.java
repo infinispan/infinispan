@@ -595,8 +595,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
             log.tracef("Thread %s submitted iterator request for stream", thread);
 
             if (!stayLocal) {
-               Object id = csm.remoteStreamOperation(iteratorParallelDistribute, parallel, ch, segmentsToFilter,
-                       keysToFilter, Collections.emptyMap(), includeLoader, op, remoteResults);
+               Object id = csm.remoteStreamOperation(iteratorParallelDistribute, parallel, segmentsToFilter,
+                       keysToFilter, Collections.<Object, Set<R>>emptyMap(), includeLoader, op, remoteResults);
                // Make sure to run this after we submit to the manager so it can process the other nodes
                // asynchronously with the local operation
                Collection<R> localValue = op.performOperation(remoteResults);
@@ -677,8 +677,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                        intermediateOperations, supplierForSegments(ch, segmentsToProcess, excludedKeys, !stayLocal),
                        distributedBatchSize);
                if (!stayLocal) {
-                  Object id = csm.remoteStreamOperationRehashAware(iteratorParallelDistribute, parallel, ch,
-                          segmentsToProcess, keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray),
+                  Object id = csm.remoteStreamOperationRehashAware(iteratorParallelDistribute, parallel,
+                        segmentsToProcess, keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray),
                           includeLoader, op, results);
                   if (id != null) {
                      supplier.pending = id;

@@ -131,6 +131,8 @@ public class CacheTopology {
             assert pendingCH == null;
             assert unionCH == null;
             return currentCH;
+         case TRANSITORY:
+            return pendingCH;
          case CONFLICT_RESOLUTION:
          case READ_OLD_WRITE_ALL:
             assert pendingCH != null;
@@ -142,21 +144,32 @@ public class CacheTopology {
          case READ_NEW_WRITE_ALL:
             assert unionCH != null;
             return pendingCH;
+         default:
+            throw new IllegalStateException();
       }
-      return currentCH;
    }
 
    /**
     * When there is a rebalance in progress, write operations should go to the union of the "current" and "future" owners.
     */
    public ConsistentHash getWriteConsistentHash() {
-      if (pendingCH != null) {
-         if (unionCH == null)
-            throw new IllegalStateException("Need a union CH when a pending CH is set");
-         return unionCH;
+      switch (phase) {
+         case NO_REBALANCE:
+            assert pendingCH == null;
+            assert unionCH == null;
+            return currentCH;
+         case TRANSITORY:
+            return pendingCH;
+         case CONFLICT_RESOLUTION:
+         case READ_OLD_WRITE_ALL:
+         case READ_ALL_WRITE_ALL:
+         case READ_NEW_WRITE_ALL:
+            assert pendingCH != null;
+            assert unionCH != null;
+            return unionCH;
+         default:
+            throw new IllegalStateException();
       }
-
-      return currentCH;
    }
 
    @Override
@@ -264,33 +277,43 @@ public class CacheTopology {
       /**
        * Only currentCH should be set, this works as both readCH and writeCH
        */
-      NO_REBALANCE,
+      NO_REBALANCE(false),
+      /**
+       * Used by caches that don't use 4-phase topology change. PendingCH is used for both read and write.
+       */
+      TRANSITORY(true),
       /**
        * Interim state between NO_REBALANCE -> READ_OLD_WRITE_ALL
        * readCh is set locally using previous Topology (of said node) readCH, whilst writeCH contains all members after merge
        */
-      CONFLICT_RESOLUTION,
+      CONFLICT_RESOLUTION(false),
       /**
        * Used during state transfer: readCH == currentCH, writeCH = unionCH
        */
-      READ_OLD_WRITE_ALL,
+      READ_OLD_WRITE_ALL(true),
       /**
        * Used after state transfer completes: readCH == writeCH = unionCH
        */
-      READ_ALL_WRITE_ALL,
+      READ_ALL_WRITE_ALL(false),
       /**
        * Intermediate state that prevents ISPN-5021: readCH == pendingCH, writeCH = unionCH
        */
-      READ_NEW_WRITE_ALL;
+      READ_NEW_WRITE_ALL(false);
 
       private static final Phase[] values = Phase.values();
+      private final boolean rebalance;
+
+
+      Phase(boolean rebalance) {
+         this.rebalance = rebalance;
+      }
+
+      public boolean isRebalance() {
+         return rebalance;
+      }
 
       public static Phase valueOf(int ordinal) {
          return values[ordinal];
-      }
-
-      public Phase advance() {
-         return values[(ordinal() + 1) % values.length];
       }
    }
 }

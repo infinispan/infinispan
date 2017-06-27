@@ -66,7 +66,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
-      consistentHashFactory = new ControlledConsistentHashFactory(0, 1);
+      consistentHashFactory = new ControlledConsistentHashFactory.Default(0, 1);
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.DIST_SYNC);
       c.clustering().hash().consistentHashFactory(consistentHashFactory).numSegments(1);

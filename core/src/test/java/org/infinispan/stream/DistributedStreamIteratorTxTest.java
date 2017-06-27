@@ -17,6 +17,7 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
@@ -36,7 +37,7 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "smoke"}, testName = "stream.DistributedStreamIteratorTxTest")
 public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTest {
    public DistributedStreamIteratorTxTest() {
-      super(true);
+      super(true, CacheMode.DIST_SYNC);
    }
 
    public void testFilterWithExistingTransaction() throws NotSupportedException,

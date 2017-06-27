@@ -21,6 +21,7 @@ public class GlobalComponentSequencerAction<T> {
    protected final Class<T> componentClass;
    protected final InvocationMatcher matcher;
    protected ProxyInvocationHandler ourHandler;
+   protected T originalComponent;
 
    GlobalComponentSequencerAction(StateSequencer stateSequencer, EmbeddedCacheManager cacheManager, Class<T> componentClass, InvocationMatcher matcher) {
       this.matcher = matcher;
@@ -34,7 +35,7 @@ public class GlobalComponentSequencerAction<T> {
     * <p/>
     * Each invocation accepted by {@code matcher} will enter/exit the next state from the list, and does nothing after the list is exhausted.
     */
-   public GlobalComponentSequencerAction before(String state1, String... additionalStates) {
+   public GlobalComponentSequencerAction<T> before(String state1, String... additionalStates) {
       replaceComponent();
       ourHandler.beforeStates(StateSequencerUtil.concat(state1, additionalStates));
       return this;
@@ -42,11 +43,11 @@ public class GlobalComponentSequencerAction<T> {
 
    protected void replaceComponent() {
       if (ourHandler == null) {
-         T component = cacheManager.getGlobalComponentRegistry().getComponent(componentClass);
-         if (component == null) {
+         originalComponent = cacheManager.getGlobalComponentRegistry().getComponent(componentClass);
+         if (originalComponent == null) {
             throw new IllegalStateException("Attempting to wrap a non-existing global component: " + componentClass);
          }
-         ourHandler = new ProxyInvocationHandler(component, stateSequencer, matcher);
+         ourHandler = new ProxyInvocationHandler(originalComponent, stateSequencer, matcher);
          T componentProxy = createComponentProxy(componentClass, ourHandler);
          TestingUtil.replaceComponent(cacheManager, componentClass, componentProxy, true);
       }
@@ -66,6 +67,10 @@ public class GlobalComponentSequencerAction<T> {
       replaceComponent();
       ourHandler.afterStates(StateSequencerUtil.concat(state1, additionalStates));
       return this;
+   }
+
+   public T getOriginalComponent() {
+      return originalComponent;
    }
 
    public static class ProxyInvocationHandler implements InvocationHandler {

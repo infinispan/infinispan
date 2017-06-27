@@ -14,6 +14,7 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -100,9 +101,9 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
    }
 
    @SerializeWith(MyBaseControlledConsistentHashFactory.Ext.class)
-   private static class MyBaseControlledConsistentHashFactory extends BaseControlledConsistentHashFactory {
+   private static class MyBaseControlledConsistentHashFactory extends BaseControlledConsistentHashFactory<DefaultConsistentHash> {
       public MyBaseControlledConsistentHashFactory() {
-         super(1);
+         super(new DefaultTrait(), 1);
       }
 
       @Override

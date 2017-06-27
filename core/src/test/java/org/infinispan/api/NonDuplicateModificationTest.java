@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -31,6 +32,7 @@ import org.testng.annotations.Test;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "api.NonDuplicateModificationTest")
+@InCacheMode({ CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC })
 public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
 
    /**
@@ -56,7 +58,7 @@ public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, false);
       builder.clustering().hash()
             .numSegments(60);
       createClusteredCaches(2, builder);
