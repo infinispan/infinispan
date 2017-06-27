@@ -54,6 +54,11 @@ public enum HotRodOperation {
    GET_STREAM(0x37, 0x38, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.KEY_CUSTOM),
    PUT_STREAM(0x39, 0x3A, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_INDEXING, OpReqs.CAN_SKIP_CACHE_LOAD), DecoderRequirements.VALUE_CUSTOM),
 
+   // Transaction boundaries operations
+   PREPARE_TX(0x3B, 0x3C, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COMMIT_TX(0x3D, 0x3E, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   ROLLBACK_TX(0x3F, 0x40, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+
    // Responses
    ERROR(0x50),
    CACHE_ENTRY_CREATED_EVENT(0x60),

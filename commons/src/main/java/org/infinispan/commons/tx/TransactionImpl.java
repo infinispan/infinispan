@@ -49,7 +49,7 @@ public class TransactionImpl implements Transaction {
 
    private static final Log log = LogFactory.getLog(TransactionImpl.class);
    private static final String FORCE_ROLLBACK_MESSAGE = "Force rollback invoked. (debug mode)";
-   private static boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
    private final List<Synchronization> syncs;
    private final List<Map.Entry<XAResource, Integer>> resources;
    private final Object xidLock = new Object();
@@ -345,7 +345,7 @@ public class TransactionImpl implements Transaction {
    public String toString() {
       return "EmbeddedTransaction{" +
             "xid=" + xid +
-            ", status=" + statusToString() +
+            ", status=" + Util.transactionStatusToString(status) +
             '}';
    }
 
@@ -376,33 +376,6 @@ public class TransactionImpl implements Transaction {
    @Override
    public final boolean equals(Object obj) {
       return this == obj;
-   }
-
-   private String statusToString() {
-      switch (status) {
-         case Status.STATUS_ACTIVE:
-            return "ACTIVE";
-         case Status.STATUS_MARKED_ROLLBACK:
-            return "MARKED_ROLLBACK";
-         case Status.STATUS_PREPARED:
-            return "PREPARED";
-         case Status.STATUS_COMMITTED:
-            return "COMMITTED";
-         case Status.STATUS_ROLLEDBACK:
-            return "ROLLED_BACK";
-         case Status.STATUS_UNKNOWN:
-            return "UNKNOWN";
-         case Status.STATUS_NO_TRANSACTION:
-            return "NO_TRANSACTION";
-         case Status.STATUS_PREPARING:
-            return "PREPARING";
-         case Status.STATUS_COMMITTING:
-            return "COMMITTING";
-         case Status.STATUS_ROLLING_BACK:
-            return "ROLLING_BACK";
-         default:
-            return "unknown status (" + status + ")";
-      }
    }
 
    private void throwRollbackExceptionIfAny(boolean forceRollback) throws RollbackException {

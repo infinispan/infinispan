@@ -101,12 +101,10 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private final AtomicLong commits = new AtomicLong(0);
    private final AtomicLong rollbacks = new AtomicLong(0);
 
-   private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
    private Cache<K, V> cache;
    private RecoveryManager recoveryManager;
    private TransactionTable txTable;
-   private PartitionHandlingManager partitionHandlingManager;
 
    private boolean isTotalOrder;
    private boolean useOnePhaseForAutoCommitTx;
@@ -114,16 +112,13 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private boolean statisticsEnabled;
 
    @Inject
-   public void init(TransactionTable txTable, Configuration configuration, RpcManager rpcManager,
-                    RecoveryManager recoveryManager, CommandsFactory commandsFactory, Cache<K, V> cache,
-                    PartitionHandlingManager partitionHandlingManager) {
+   public void init(TransactionTable txTable, Configuration configuration, RecoveryManager recoveryManager,
+         CommandsFactory commandsFactory, Cache<K, V> cache) {
       this.cacheConfiguration = configuration;
       this.txTable = txTable;
-      this.rpcManager = rpcManager;
       this.recoveryManager = recoveryManager;
       this.commandsFactory = commandsFactory;
       this.cache = cache;
-      this.partitionHandlingManager = partitionHandlingManager;
 
       statisticsEnabled = cacheConfiguration.jmxStatistics().enabled();
       isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();

@@ -42,6 +42,7 @@ Being this a single byte, ranges can't be too large.
 |===============
 |Infinispan Query:|100 - 119
 |Hibernate Search:|120 - 139
+|Hot Rod Server:  |140 - 141
 |===============
 
 === Extending the configuration builders and parsers

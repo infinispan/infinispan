@@ -1,11 +1,21 @@
 package org.infinispan.server.hotrod;
 
+import static java.lang.String.format;
+
 import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
+import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
@@ -21,6 +31,15 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.hotrod.tx.CommitTransactionDecodeContext;
+import org.infinispan.server.hotrod.tx.PrepareTransactionDecodeContext;
+import org.infinispan.server.hotrod.tx.RollbackTransactionDecodeContext;
+import org.infinispan.server.hotrod.tx.SecondPhaseTransactionDecodeContext;
+import org.infinispan.server.hotrod.tx.TxState;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -57,6 +76,160 @@ public final class CacheDecodeContext {
       return params;
    }
 
+   /**
+    * Handles a rollback request from a client.
+    */
+   TransactionResponse rollbackTransaction() {
+      checkConfigurationAndTransactionManager();
+      return finishTransaction(new RollbackTransactionDecodeContext(cache, (XidImpl) operationDecodeContext));
+   }
+
+   /**
+    * Handles a prepare request from a client
+    */
+   Response prepareTransaction() {
+      checkConfigurationAndTransactionManager();
+
+      PrepareTransactionContext context = (PrepareTransactionContext) operationDecodeContext;
+      if (context.isEmpty()) {
+         //the client can optimize and avoid contacting the server when no data is written.
+         if (isTrace) {
+            log.tracef("Transaction %s is read only.", context.getXid());
+         }
+         return createTransactionResponse(header, XAResource.XA_RDONLY);
+      }
+      PrepareTransactionDecodeContext txContext = new PrepareTransactionDecodeContext(cache, context.getXid());
+
+      Response response = checkExistingTxForPrepare(txContext);
+      if (response != null) {
+         if (isTrace) {
+            log.tracef("Transaction %s conflicts with another node. Response is %s", context.getXid(), response);
+         }
+         return response;
+      }
+
+      if (!txContext.startTransaction()) {
+         if (isTrace) {
+            log.tracef("Unable to start transaction %s", context.getXid());
+         }
+         return decoder.createNotExecutedResponse(header, null);
+      }
+
+      //forces the write-lock. used by pessimistic transaction. it ensures the key is not written after is it read and validated
+      //optimistic transaction will use the write-skew check.
+      AdvancedCache<byte[], byte[]> readCache = cache.withFlags(Flag.FORCE_WRITE_LOCK);
+
+      try {
+         for (TransactionWrite write : context.writes()) {
+            if (isValid(write, readCache)) {
+               if (write.isRemove()) {
+                  cache.remove(write.key);
+               } else {
+                  cache.put(write.key, write.value, buildMetadata(write.lifespan, write.maxIdle));
+               }
+            } else {
+               txContext.setRollbackOnly();
+               break;
+            }
+         }
+         int xaCode = txContext.prepare(context.isOnePhaseCommit());
+         return createTransactionResponse(header, xaCode);
+      } catch (Exception e) {
+         return createTransactionResponse(header, txContext.rollback());
+      } finally {
+         EmbeddedTransactionManager.dissociateTransaction();
+      }
+   }
+
+   /**
+    * Handles a commit request from a client
+    */
+   TransactionResponse commitTransaction() {
+      checkConfigurationAndTransactionManager();
+      return finishTransaction(new CommitTransactionDecodeContext(cache, (XidImpl) operationDecodeContext));
+   }
+
+   /**
+    * Commits or Rollbacks the transaction (second phase of two-phase-commit)
+    */
+   private TransactionResponse finishTransaction(SecondPhaseTransactionDecodeContext txContext) {
+      try {
+         txContext.perform();
+      } catch (HeuristicMixedException e) {
+         return createTransactionResponse(header, XAException.XA_HEURMIX);
+      } catch (HeuristicRollbackException e) {
+         return createTransactionResponse(header, XAException.XA_HEURRB);
+      } catch (RollbackException e) {
+         return createTransactionResponse(header, XAException.XA_RBROLLBACK);
+      }
+      return createTransactionResponse(header, XAResource.XA_OK);
+   }
+
+   /**
+    * Checks if the configuration (and the transaction manager) is able to handle client transactions.
+    */
+   private void checkConfigurationAndTransactionManager() {
+      Configuration configuration = cache.getCacheConfiguration();
+      if (!configuration.transaction().transactionMode().isTransactional()) {
+         throw log.expectedTransactionalCache(cache.getName());
+      }
+      if (configuration.locking().isolationLevel() != IsolationLevel.REPEATABLE_READ) {
+         throw log.unexpectedIsolationLevel(cache.getName());
+      }
+
+      //TODO because of ISPN-7672, optimistic and total order transactions needs versions. however, versioning is currently broken
+      if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC ||
+            configuration.transaction().transactionProtocol() == TransactionProtocol.TOTAL_ORDER) {
+         //no Log. see TODO.
+         throw new IllegalStateException(
+               format("Cache '%s' cannot use Optimistic neither Total Order transactions.", cache.getName()));
+      }
+      TransactionManager tm = cache.getTransactionManager();
+      if (!(tm instanceof EmbeddedTransactionManager)) {
+         throw log.unexpectedTransactionManager(cache.getName());
+      }
+   }
+
+   /**
+    * Checks if the transaction was already prepared in another node
+    * <p>
+    * The client can send multiple requests to the server (in case of timeout or similar). This request is ignored when
+    * (1) the originator is still alive; (2) the transaction is prepared or committed/rolled-back
+    * <p>
+    * If the transaction isn't prepared and the originator left the cluster, the previous transaction is rolled-back and
+    * a new one is started.
+    */
+   private Response checkExistingTxForPrepare(PrepareTransactionDecodeContext context) {
+      TxState txState = context.getTxState();
+      if (txState == null) {
+         return null;
+      }
+      switch (txState.status()) {
+         case Status.STATUS_ACTIVE:
+            break;
+         case Status.STATUS_PREPARED:
+            return createTransactionResponse(header, XAResource.XA_OK);
+         case Status.STATUS_ROLLEDBACK:
+            return createTransactionResponse(header, XAException.XA_RBROLLBACK);
+         case Status.STATUS_COMMITTED:
+            //weird case. the tx is committed but we received a prepare request?
+            return createTransactionResponse(header, XAResource.XA_OK);
+         default:
+            throw new IllegalStateException();
+      }
+      if (context.isAlive(txState.getOriginator())) {
+         //transaction started on another node but the node is still in the topology. 2 possible scenarios:
+         // #1, the topology isn't updated
+         // #2, the client timed-out waiting for the reply
+         //in any case, we send a ignore reply and the client is free to retry (or rollback)
+         return decoder.createNotExecutedResponse(header, null);
+      } else {
+         //node left the cluster while transaction was running or preparing. we are going to abort the other transaction and start a new one.
+         context.rollbackRemoteTransaction();
+      }
+      return null;
+   }
+
    ErrorResponse createExceptionResponse(Throwable e) {
       if (e instanceof InvalidMagicIdException) {
          log.exceptionReported(e);
@@ -71,7 +244,7 @@ public final class CacheDecodeContext {
          return new ErrorResponse(uve.version, uve.messageId, "", (short) 1, OperationStatus.UnknownVersion, 0, e.toString());
       } else if (e instanceof RequestParsingException) {
          log.exceptionReported(e);
-         String msg = e.getCause() == null ? e.toString() : String.format("%s: %s", e.getMessage(), e.getCause().toString());
+         String msg = e.getCause() == null ? e.toString() : format("%s: %s", e.getMessage(), e.getCause().toString());
          RequestParsingException rpe = (RequestParsingException) e;
          return new ErrorResponse(rpe.version, rpe.messageId, "", (short) 1, OperationStatus.ParseError, 0, msg);
       } else if (e instanceof IllegalStateException) {
@@ -97,7 +270,7 @@ public final class CacheDecodeContext {
       if (prev != null)
          return successResp(prev);
       else
-         return notExecutedResp(prev);
+         return notExecutedResp(null);
    }
 
    void obtainCache(EmbeddedCacheManager cacheManager) throws RequestParsingException {
@@ -110,7 +283,7 @@ public final class CacheDecodeContext {
          InternalCacheRegistry icr = cacheManager.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
          if (icr.isPrivateCache(cacheName)) {
             throw new RequestParsingException(
-                  String.format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
+                  format("Remote requests are not allowed to private caches. Do no send remote requests to cache '%s'", cacheName),
                   header.version, header.messageId);
          } else if (icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
             // We want to make sure the cache access is checked everytime, so don't store it as a "known" cache. More
@@ -118,7 +291,7 @@ public final class CacheDecodeContext {
             cache = server.getCacheInstance(cacheName, cacheManager, true, false);
          } else if (!cacheName.isEmpty() && !cacheManager.getCacheNames().contains(cacheName)) {
             throw new CacheNotFoundException(
-                  String.format("Cache with name '%s' not found amongst the configured caches", cacheName),
+                  format("Cache with name '%s' not found amongst the configured caches", cacheName),
                   header.version, header.messageId);
          } else {
             cache = server.getCacheInstance(cacheName, cacheManager, true, true);
@@ -133,13 +306,17 @@ public final class CacheDecodeContext {
    }
 
    Metadata buildMetadata() {
+      return buildMetadata(params.lifespan, params.maxIdle);
+   }
+
+   private Metadata buildMetadata(ExpirationParam lifespan, ExpirationParam maxIdle) {
       EmbeddedMetadata.Builder metadata = new EmbeddedMetadata.Builder();
-      metadata.version(generateVersion(server.getCacheRegistry(header.cacheName), cache));
-      if (params.lifespan.duration != ServerConstants.EXPIRATION_DEFAULT) {
-         metadata.lifespan(toMillis(params.lifespan, header));
+      metadata.version(generateVersion(server.getCacheRegistry(header.cacheName)));
+      if (lifespan.duration != ServerConstants.EXPIRATION_DEFAULT) {
+         metadata.lifespan(toMillis(lifespan, header));
       }
-      if (params.maxIdle.duration != ServerConstants.EXPIRATION_DEFAULT) {
-         metadata.maxIdle(toMillis(params.maxIdle, header));
+      if (maxIdle.duration != ServerConstants.EXPIRATION_DEFAULT) {
+         metadata.maxIdle(toMillis(maxIdle, header));
       }
       return metadata.build();
    }
@@ -161,7 +338,7 @@ public final class CacheDecodeContext {
                   header.op, OperationStatus.Success, header.topologyId, v, version,
                   ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
          } else {
-            int offset = ((Integer) operationDecodeContext).intValue();
+            int offset = (Integer) operationDecodeContext;
             return new GetStreamResponse(header.version, header.messageId, header.cacheName, header.clientIntel,
                   header.op, OperationStatus.Success, header.topologyId, v, offset, version,
                   ce.getCreated(), lifespan, ce.getLastUsed(), maxIdle);
@@ -222,7 +399,7 @@ public final class CacheDecodeContext {
          prev = cache.putIfAbsent(key, (byte[]) operationDecodeContext, buildMetadata());
       }
       if (prev == null)
-         return successResp(prev);
+         return successResp(null);
       else
          return notExecutedResp(prev);
    }
@@ -233,7 +410,7 @@ public final class CacheDecodeContext {
       return successResp(prev);
    }
 
-   EntryVersion generateVersion(ComponentRegistry registry, Cache<byte[], byte[]> cache) {
+   EntryVersion generateVersion(ComponentRegistry registry) {
       VersionGenerator cacheVersionGenerator = registry.getVersionGenerator();
       if (cacheVersionGenerator == null) {
          // It could be null, for example when not running in compatibility mode.
@@ -298,6 +475,36 @@ public final class CacheDecodeContext {
 
    ComponentRegistry getCacheRegistry(String cacheName) {
       return server.getCacheRegistry(cacheName);
+   }
+
+   /**
+    * Validates if the value read is still valid and the write operation can proceed.
+    */
+   private boolean isValid(TransactionWrite write, AdvancedCache<byte[], byte[]> readCache) {
+      if (write.skipRead()) {
+         if (isTrace) {
+            log.tracef("Operation %s wasn't read.", write);
+         }
+         return true;
+      }
+      CacheEntry<byte[], byte[]> entry = readCache.getCacheEntry(write.key);
+      if (write.wasNonExisting()) {
+         if (isTrace) {
+            log.tracef("Key didn't exist for operation %s. Entry is %s", write, entry);
+         }
+         return entry == null || entry.getValue() == null;
+      }
+      if (isTrace) {
+         log.tracef("Checking version for operation %s. Entry is %s", write, entry);
+      }
+      return entry != null && write.versionRead == extractVersion(entry.getMetadata().version());
+   }
+
+   /**
+    * Creates a transaction response with the specific xa-code.
+    */
+   private TransactionResponse createTransactionResponse(HotRodHeader header, int xaReturnCode) {
+      return new TransactionResponse(header.version, header.messageId, header.cacheName, header.clientIntel, header.op, OperationStatus.Success, header.topologyId, xaReturnCode);
    }
 
    static class ExpirationParam {
