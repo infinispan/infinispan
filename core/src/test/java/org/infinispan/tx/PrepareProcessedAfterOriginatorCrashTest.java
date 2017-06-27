@@ -4,18 +4,17 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -23,7 +22,7 @@ import org.testng.annotations.Test;
  * <pre>
  *  - tx1 originated on N1 writes a single key that maps to N2
  *  - tx1 prepares and before committing crashes
- *  - the prepare is blocked on N2 before reaching the TxInterceptor where the tx is created
+ *  - the prepare is blocked on N2 before the tx is created
  *  - TransactionTable.cleanupStaleTransactions kicks in on N2 but doesn't clean up the transaction
  *  as it hasn't been prepared yet
  *  - the prepare is now executed on N2
@@ -45,12 +44,31 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
    }
 
    public void testBelatedTransactionDoesntLeak() throws Throwable {
-      final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1), VersionedPrepareCommand.class);
-      ccf.gate.close();
+      CountDownLatch prepareReceived = new CountDownLatch(1);
+      CountDownLatch prepareBlocked = new CountDownLatch(1);
+      CountDownLatch prepareExecuted = new CountDownLatch(1);
 
       Cache receiver = cache(1);
-      BlockingPrepareInterceptor interceptor = new BlockingPrepareInterceptor();
-      advancedCache(1).addInterceptor(interceptor, 1);
+      PerCacheInboundInvocationHandler originalInvocationHandler = TestingUtil.extractComponent(receiver, PerCacheInboundInvocationHandler.class);
+      PerCacheInboundInvocationHandler blockingInvocationHandler = (command, reply, order) -> {
+         if (!(command instanceof PrepareCommand)) {
+            originalInvocationHandler.handle(command, reply, order);
+            return;
+         }
+         try {
+            prepareReceived.countDown();
+            prepareBlocked.await(10, TimeUnit.SECONDS);
+         } catch (InterruptedException e) {
+            throw new IllegalLifecycleStateException(e);
+         }
+         log.trace("Processing belated prepare");
+         originalInvocationHandler.handle(command, returnValue -> {
+            prepareExecuted.countDown();
+            reply.reply(returnValue);
+         }, order);
+      };
+      TestingUtil.replaceComponent(receiver, PerCacheInboundInvocationHandler.class, blockingInvocationHandler, true);
+      TestingUtil.extractComponentRegistry(receiver).cacheComponents();
 
       final Object key = getKeyForCache(1);
       fork(() -> {
@@ -61,36 +79,21 @@ public class PrepareProcessedAfterOriginatorCrashTest extends MultipleCacheManag
          }
       });
 
-      eventuallyEquals(1, ccf.blockTypeCommandsReceived::get);
+      prepareReceived.await(10, TimeUnit.SECONDS);
 
       killMember(0);
 
       //give TransactionTable.cleanupStaleTransactions some time to run
       Thread.sleep(5000);
 
-      ccf.gate.open();
+      prepareBlocked.countDown();
 
-      interceptor.prepareExecuted.await();
+      prepareExecuted.await(10, TimeUnit.SECONDS);
       log.trace("Finished waiting for belated prepare to complete");
 
       final TransactionTable transactionTable = TestingUtil.getTransactionTable(receiver);
       assertEquals(0, transactionTable.getRemoteTxCount());
       assertEquals(0, transactionTable.getLocalTxCount());
       assertFalse(receiver.getAdvancedCache().getLockManager().isLocked(key));
-   }
-
-   private static class BlockingPrepareInterceptor extends CommandInterceptor {
-
-      final CountDownLatch prepareExecuted = new CountDownLatch(1);
-
-      @Override
-      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-         try {
-            getLog().trace("Processing belated prepare");
-            return super.visitPrepareCommand(ctx, command);
-         } finally {
-            prepareExecuted.countDown();
-         }
-      }
    }
 }

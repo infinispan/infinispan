@@ -118,7 +118,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       }
 
       // 1. first create a remote transaction (or get the existing one)
-      RemoteTransaction remoteTransaction = getRemoteTransaction();
+      RemoteTransaction remoteTransaction = txTable.getOrCreateRemoteTransaction(globalTx, modifications);
       //set the list of modifications anyway, as the transaction might have already been created by a previous
       //LockControlCommand with null modifications.
       if (hasModifications()) {
@@ -184,11 +184,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    @Override
    public boolean hasSkipLocking() {
       return false;
-   }
-
-   @Override
-   protected RemoteTransaction getRemoteTransaction() {
-      return txTable.getOrCreateRemoteTransaction(globalTx, modifications);
    }
 
    @Override

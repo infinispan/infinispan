@@ -723,13 +723,19 @@ public class StateConsumerImpl implements StateConsumer {
             if (tx == null) {
                tx = transactionTable.getRemoteTransaction(gtx);
                if (tx == null) {
-                  tx = transactionTable.getOrCreateRemoteTransaction(gtx, transactionInfo.getModifications());
-                  // Force this node to replay the given transaction data by making it think it is 1 behind
-                  ((RemoteTransaction) tx).setLookedUpEntriesTopology(topologyId - 1);
+                  try {
+                     tx = transactionTable.getOrCreateRemoteTransaction(gtx, transactionInfo.getModifications());
+                     // Force this node to replay the given transaction data by making it think it is 1 behind
+                     ((RemoteTransaction) tx).setLookedUpEntriesTopology(topologyId - 1);
+                  } catch (Throwable t) {
+                     if (trace)
+                        log.tracef(t, "Failed to create remote transaction %s", gtx);
+                  }
                }
             }
-            // TODO Shouldn't this be done for transactions originated locally as well?
-            transactionInfo.getLockedKeys().forEach(tx::addBackupLockForKey);
+            if (tx != null) {
+               transactionInfo.getLockedKeys().forEach(tx::addBackupLockForKey);
+            }
          }
       }
    }

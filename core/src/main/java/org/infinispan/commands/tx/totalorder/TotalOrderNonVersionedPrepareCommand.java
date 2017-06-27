@@ -57,7 +57,7 @@ public class TotalOrderNonVersionedPrepareCommand extends PrepareCommand impleme
 
    @Override
    public TotalOrderRemoteTransactionState getOrCreateState() {
-      return getRemoteTransaction().getTransactionState();
+      return txTable.getOrCreateRemoteTransaction(globalTx, modifications).getTransactionState();
    }
 
 }
