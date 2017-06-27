@@ -21,6 +21,18 @@
    <baseDirectory>${product.name}-${product.version}</baseDirectory>
 
    <fileSets>
+      <!--
+        TODO: this is here temporarily until we merge license xml files
+        This just copies the licences.xml that is generated from build
+        directory and has the console licenses.xml manually copied into it
+      -->
+      <fileSet>
+         <directory>src/main</directory>
+         <outputDirectory />
+         <includes>
+           <include>docs/**</include>
+         </includes>
+      </fileSet>
       <fileSet>
          <directory>build/target/${product.name}-${product.version}</directory>
          <outputDirectory />

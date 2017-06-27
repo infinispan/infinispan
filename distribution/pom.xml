@@ -141,12 +141,12 @@
                      <goal>copy-resources</goal>
                   </goals>
                   <configuration>
-                     <outputDirectory>${project.build.directory}/licenses</outputDirectory>
+                    <outputDirectory>${project.build.directory}/docs/licenses</outputDirectory>
                      <resources>
                         <resource>
                            <directory>${project.basedir}/src/main/resources/template</directory>
                            <includes>
-                              <include>licenses.xml</include>
+                              <include>licenses.xsl</include>
                               <include>licenses.css</include>
                            </includes>
                            <filtering>false</filtering>
@@ -178,7 +178,7 @@
                   <phase>prepare-package</phase>
                   <configuration>
                      <sortByGroupIdAndArtifactId>true</sortByGroupIdAndArtifactId>
-                     <licensesOutputFile>${project.build.directory}/licenses/licenses.xml</licensesOutputFile>
+                     <licensesOutputFile>${project.build.directory}/docs/licenses/licenses.xml</licensesOutputFile>
                   </configuration>
                </execution>
             </executions>
@@ -200,12 +200,12 @@
                   <configuration>
                      <transformationSets>
                         <transformationSet>
-                           <dir>${project.build.directory}/licenses</dir>
+                          <dir>${project.build.directory}/docs/licenses</dir>
                            <includes>
                               <include>licenses.xml</include>
                            </includes>
                            <stylesheet>${project.basedir}/src/main/resources/template/licenses.xsl</stylesheet>
-                           <outputDir>${project.build.directory}/licenses</outputDir>
+                           <outputDir>${project.build.directory}/docs/licenses</outputDir>
                            <fileMappers>
                               <fileMapper
                                       implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
