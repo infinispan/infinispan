@@ -64,6 +64,11 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-objectfilter</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
       </dependency>
 
