@@ -36,8 +36,10 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -69,6 +71,7 @@ public class StateProviderImpl implements StateProvider {
    protected int chunkSize;
    protected KeyPartitioner keyPartitioner;
    protected StateConsumer stateConsumer;
+   private TransactionOriginatorChecker transactionOriginatorChecker;
 
    /**
     * A map that keeps track of current outbound state transfers by destination address. There could be multiple transfers
@@ -91,7 +94,8 @@ public class StateProviderImpl implements StateProvider {
                     TransactionTable transactionTable,
                     StateTransferLock stateTransferLock,
                     StateConsumer stateConsumer, InternalEntryFactory entryFactory,
-                    KeyPartitioner keyPartitioner) {
+                    KeyPartitioner keyPartitioner,
+                    TransactionOriginatorChecker transactionOriginatorChecker) {
       this.cacheName = cache.getName();
       this.executorService = executorService;
       this.configuration = configuration;
@@ -104,6 +108,7 @@ public class StateProviderImpl implements StateProvider {
       this.stateTransferLock = stateTransferLock;
       this.stateConsumer = stateConsumer;
       this.entryFactory = entryFactory;
+      this.transactionOriginatorChecker = transactionOriginatorChecker;
 
       timeout = configuration.clustering().stateTransfer().timeout();
 
@@ -228,13 +233,15 @@ public class StateProviderImpl implements StateProvider {
                                               Collection<? extends CacheTransaction> transactions,
                                               Set<Integer> segments, CacheTopology cacheTopology) {
       int topologyId = cacheTopology.getTopologyId();
-      List<Address> members = cacheTopology.getMembers();
+      Set<Address> members = new HashSet<>(cacheTopology.getMembers());
 
       // no need to filter out state transfer generated transactions because there should not be any such transactions running for any of the requested segments
       for (CacheTransaction tx : transactions) {
+         final GlobalTransaction gtx = tx.getGlobalTransaction();
          // Skip transactions whose originators left. The topology id check is needed for joiners.
          // Also skip transactions that originates after state transfer starts.
-         if (tx.getTopologyId() == topologyId || !members.contains(tx.getGlobalTransaction().getAddress())) {
+         if (tx.getTopologyId() == topologyId ||
+               (transactionOriginatorChecker.isOriginatorMissing(gtx, members))) {
             if (trace) log.tracef("Skipping transaction %s as it was started in the current topology or by a leaver", tx);
             continue;
          }
@@ -275,9 +282,9 @@ public class StateProviderImpl implements StateProvider {
             LocalTransaction localTx = (LocalTransaction) tx;
             localTx.locksAcquired(Collections.singleton(destination));
             if (trace) log.tracef("Adding affected node %s to transferred transaction %s (keys %s)", destination,
-                  tx.getGlobalTransaction(), filteredLockedKeys);
+                  gtx, filteredLockedKeys);
          }
-         transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(),
+         transactionsToTransfer.add(new TransactionInfo(gtx, tx.getTopologyId(),
                modifications, filteredLockedKeys));
       }
    }

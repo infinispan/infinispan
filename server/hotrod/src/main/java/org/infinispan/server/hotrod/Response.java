@@ -582,3 +582,14 @@ class HashDistAware20Response extends AbstractTopologyResponse {
       this.hashFunction = hashFunction;
    }
 }
+
+class TransactionResponse extends Response {
+
+   final int xaReturnCode;
+
+   TransactionResponse(byte version, long messageId, String cacheName, short clientIntel,
+         HotRodOperation operation, OperationStatus status, int topologyId, int xaReturnCode) {
+      super(version, messageId, cacheName, clientIntel, operation, status, topologyId);
+      this.xaReturnCode = xaReturnCode;
+   }
+}
