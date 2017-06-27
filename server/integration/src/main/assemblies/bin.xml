@@ -22,6 +22,20 @@
 
    <fileSets>
       <fileSet>
+         <directory>licenses/src/main/</directory>
+         <outputDirectory />
+         <excludes>
+           <exclude>licenses-console.xml</exclude>
+         </excludes>
+      </fileSet>
+      <fileSet>
+         <directory>licenses/target</directory>
+         <outputDirectory />
+         <includes>
+            <include>**/**</include>
+         </includes>
+      </fileSet>
+      <fileSet>
          <directory>build/target/${product.name}-${product.version}</directory>
          <outputDirectory />
          <includes>
