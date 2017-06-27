@@ -28,5 +28,12 @@
             <include>**/**</include>
          </includes>
       </fileSet>
+      <fileSet>
+         <directory>licenses/target</directory>
+         <outputDirectory />
+         <includes>
+            <include>**/**</include>
+         </includes>
+      </fileSet>
    </fileSets>
 </assembly>

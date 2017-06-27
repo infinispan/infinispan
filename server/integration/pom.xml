@@ -25,6 +25,7 @@
       <module>endpoint</module>
       <module>cli</module>
       <module>feature-pack</module>
+      <module>licenses</module>
       <module>build</module>
    </modules>
 
