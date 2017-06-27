@@ -27,7 +27,7 @@
         directory and has the console licenses.xml manually copied into it
       -->
       <fileSet>
-         <directory>src/main</directory>
+         <directory>target</directory>
          <outputDirectory />
          <includes>
            <include>docs/**</include>
