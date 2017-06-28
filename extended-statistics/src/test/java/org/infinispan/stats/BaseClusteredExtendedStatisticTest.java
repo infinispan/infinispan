@@ -316,7 +316,8 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
 
       assertCacheValue(key1, VALUE_2 + key1 + VALUE_1);
 
-      computeIfPresent(1, key2, computeFunction);
+      // failed operation is not added to the transaction
+      cache(1).computeIfPresent(key2, computeFunction);
       assertEmpty(key2);
 
       assertNoTransactions();
@@ -335,7 +336,8 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
       assertCacheValue(key1, VALUE_1);
 
       SerializableFunction computeFunction = v -> VALUE_3 + v;
-      computeIfAbsent(0, key1, computeFunction);
+      // failed operation is not added to the transaction
+      cache(0).computeIfAbsent(key1, computeFunction);
 
       assertCacheValue(key1, VALUE_1);
 
