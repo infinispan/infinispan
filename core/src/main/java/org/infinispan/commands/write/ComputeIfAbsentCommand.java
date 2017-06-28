@@ -119,8 +119,8 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
             }
             e.setChanged(true);
          }
+         successful = true;
       }
-      successful = true;
       return value;
    }
 

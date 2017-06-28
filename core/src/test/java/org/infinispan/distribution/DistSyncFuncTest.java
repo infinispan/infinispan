@@ -358,7 +358,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       // do nothing if absent
       retval = getFirstNonOwner("notThere").computeIfPresent("notThere", (k, v) -> "add_" + k);
-      asyncWait("notThere", ComputeCommand.class);
+      asyncWaitOnPrimary("notThere", ComputeCommand.class);
       if (testRetVals) assertNull(retval);
       assertRemovedOnAllCaches("notThere");
    }
@@ -368,7 +368,8 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       initAndTest();
       Object retval = getFirstNonOwner("k1").computeIfAbsent("k1", (k) -> "computed_" + k);
       if (testRetVals) assertEquals("value", retval);
-      asyncWait("k1", ComputeIfAbsentCommand.class);
+      // Since the command fails on primary it won't be replicated to the other nodes
+      asyncWaitOnPrimary("k1", ComputeIfAbsentCommand.class);
       assertOnAllCachesAndOwnership("k1", "value");
 
       // Compute key and add result value if absent

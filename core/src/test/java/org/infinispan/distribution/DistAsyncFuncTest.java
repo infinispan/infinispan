@@ -65,4 +65,20 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
       // This sucks but for async transactions we still need this!!
       TestingUtil.sleepThread(1000);
    }
+
+   @Override
+   protected void asyncWaitOnPrimary(Object key, Class<? extends VisitableCommand> command) {
+      assert key != null;
+      if (key == null) {
+         // test all caches.
+         for (ReplListener rl : r) rl.expect(command);
+         for (ReplListener rl : r) rl.waitForRpc();
+      } else {
+         Cache<?, ?> primary = getFirstOwner(key);
+         listenerLookup.get(primary).expect(command);
+         listenerLookup.get(primary).waitForRpc();
+      }
+      // This sucks but for async transactions we still need this!!
+      TestingUtil.sleepThread(1000);
+   }
 }

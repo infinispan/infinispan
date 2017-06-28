@@ -81,7 +81,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public boolean isConditional() {
-      return computeIfPresent;
+      return isComputeIfPresent();
    }
 
    @Override
@@ -112,7 +112,6 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
 
 
       if(computeIfPresent && oldValue == null) {
-         successful = true;
          return oldValue;
       }
 
@@ -122,12 +121,10 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
          throw new UserRaisedFunctionalException(ex);
       }
 
+      successful = true;
       if (oldValue == null && newValue == null) {
-         successful = true;
          return null;
       }
-
-      Object computeResult = newValue;
 
       if (oldValue != null) {
          // The key already has a value
@@ -158,8 +155,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
             e.setValid(true);
          }
       }
-      successful = true;
-      return computeResult;
+      return newValue;
    }
 
    @Override

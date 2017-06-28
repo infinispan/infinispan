@@ -300,6 +300,16 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       // no op.
    }
 
+   /**
+    * Blocks and waits for a replication event on primary owners in async caches
+    *
+    * @param key     key that causes the replication. Must be non-null.
+    * @param command command to listen for
+    */
+   protected void asyncWaitOnPrimary(Object key, Class<? extends VisitableCommand> command) {
+      // no op.
+   }
+
    protected TransactionManager getTransactionManager(Cache<?, ?> cache) {
       return TestingUtil.getTransactionManager(cache);
    }
