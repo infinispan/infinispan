@@ -744,8 +744,9 @@ public class JGroupsTransport implements Transport {
          log.problemClosingChannel(toLog, clusterName);
       }
 
-      IllegalLifecycleStateException stoppingException = log.cacheManagerIsStopping();
-      requests.forEach(request -> request.cancel(stoppingException));
+      if (requests != null) {
+         requests.forEach(request -> request.cancel(log.cacheManagerIsStopping()));
+      }
 
       channel = null;
       address = null;

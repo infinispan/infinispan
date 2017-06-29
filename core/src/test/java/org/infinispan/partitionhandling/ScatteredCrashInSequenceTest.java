@@ -21,6 +21,7 @@ import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
@@ -203,7 +204,8 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       // stop methods on proxified instance.
       if (oldTransportCoord != null) oldTransportCoord.stop();
       oldTransportCoord = null;
-      if (oldTransportA1 != null) oldTransportA1.stop();
+      // in testSplit2 the oldTransportA1 could be just another proxy layer to oldTransportCoord
+      if (oldTransportA1 != null && !Proxy.isProxyClass(oldTransportA1.getClass())) oldTransportA1.stop();
       oldTransportA1 = null;
       super.clearContent();
    }
