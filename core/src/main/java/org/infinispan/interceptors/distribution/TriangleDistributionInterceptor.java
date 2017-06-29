@@ -39,7 +39,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TriangleOrderManager;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -147,10 +146,9 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
    private Object handleRemotePutMapCommand(InvocationContext ctx, PutMapCommand command) {
       LocalizedCacheTopology cacheTopology = checkTopologyId(command);
-      final ConsistentHash ch = cacheTopology.getWriteConsistentHash();
       final VisitableCommand.LoadType loadType = command.loadType();
 
-      if (command.isForwarded() || ch.getNumOwners() == 1) {
+      if (command.isForwarded()) {
          //backup & remote || no backups
          return asyncInvokeNext(ctx, command,
                checkRemoteGetIfNeeded(ctx, command, command.getMap().keySet(), cacheTopology, loadType == OWNER));

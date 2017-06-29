@@ -44,11 +44,11 @@ import org.infinispan.remoting.transport.Address;
  * @since 4.0
  */
 public interface ConsistentHash {
-
    /**
-    * @return The configured number of owners for each key. Note that {code @getOwners(key)} may return
-    *         a different number of owners.
+    * @return The configured number of owners. Note that the actual number of owners of each key may be different.
+    * @deprecated Since 9.1, it should not be used to obtain the number of owners of a particular key.
     */
+   @Deprecated
    int getNumOwners();
 
    /**

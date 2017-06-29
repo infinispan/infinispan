@@ -32,7 +32,7 @@ public class LocalizedCacheTopology extends CacheTopology {
    private final boolean allLocal;
    private final boolean isSegmented;
    private final int numSegments;
-   private final int numOwners;
+   private final int maxOwners;
    private final DistributionInfo[] distributionInfos;
    private final boolean isScattered;
 
@@ -59,10 +59,9 @@ public class LocalizedCacheTopology extends CacheTopology {
       boolean isReplicated = cacheMode.isReplicated();
       this.isSegmented = isDistributed || isReplicated || isScattered;
       this.numSegments = readCH.getNumSegments();
-      this.numOwners = readCH.getNumOwners();
-
       if (isDistributed || isScattered) {
          this.distributionInfos = new DistributionInfo[numSegments];
+         int maxOwners = 1;
          for (int segmentId = 0; segmentId < numSegments; segmentId++) {
             Address primary = readCH.locatePrimaryOwnerForSegment(segmentId);
             List<Address> readOwners = readCH.locateOwnersForSegment(segmentId);
@@ -70,7 +69,9 @@ public class LocalizedCacheTopology extends CacheTopology {
             Collection<Address> writeBackups = isScattered ? Collections.emptyList() : writeOwners.subList(1, writeOwners.size());
             this.distributionInfos[segmentId] =
                   new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
+            maxOwners = Math.max(maxOwners, writeOwners.size());
          }
+         this.maxOwners = maxOwners;
          this.allLocal = false;
       } else if (isReplicated) {
          // Writes must be broadcast to the entire cluster
@@ -88,6 +89,7 @@ public class LocalizedCacheTopology extends CacheTopology {
             this.distributionInfos[segmentId] =
                   new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);
          }
+         this.maxOwners = cacheTopology.getMembers().size();
          this.allLocal = readOwnersMap.containsKey(localAddress);
       } else { // Invalidation/Local
          assert cacheMode.isInvalidation() || cacheMode == CacheMode.LOCAL;
@@ -97,6 +99,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          this.distributionInfos = new DistributionInfo[]{
                new DistributionInfo(0, localAddress, owners, owners, writeBackups, localAddress)
          };
+         this.maxOwners = 1;
          this.allLocal = true;
       }
    }
@@ -168,7 +171,7 @@ public class LocalizedCacheTopology extends CacheTopology {
          } else {
             SmallIntSet segments = new SmallIntSet(numSegments);
             // Expecting some overlap between keys
-            Set<Address> owners = new HashSet<>(2 * numOwners);
+            Set<Address> owners = new HashSet<>(2 * maxOwners);
             for (Object key : keys) {
                int segment = keyPartitioner.getSegment(key);
                if (segments.add(segment)) {
