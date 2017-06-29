@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-persistence-parent</artifactId>
-      <version>9.1.0-SNAPSHOT</version>
+      <version>9.1.0.CR1</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-remote</artifactId>
@@ -105,7 +105,7 @@
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>keytool-maven-plugin</artifactId>
             <executions>
-               <!-- CA -->
+               
                <execution>
                   <id>ca</id>
                   <goals>
@@ -131,7 +131,7 @@
                      <file>${project.build.testOutputDirectory}/ca.cer</file>
                   </configuration>
                </execution>
-               <!-- CA Truststores -->
+               
                <execution>
                   <id>server-truststore-import</id>
                   <goals>
@@ -156,7 +156,7 @@
                      <keystore>${project.build.testOutputDirectory}/truststore_client.jks</keystore>
                   </configuration>
                </execution>
-               <!-- Client -->
+               
                <execution>
                   <id>client</id>
                   <goals>
@@ -219,7 +219,7 @@
                      <keystore>${client.keystore}</keystore>
                   </configuration>
                </execution>
-               <!-- Server -->
+               
                <execution>
                   <id>server</id>
                   <goals>
@@ -360,7 +360,7 @@
             </executions>
          </plugin>
 
-         <!-- Delete the keystores before the keytool plugin runs -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
@@ -374,7 +374,7 @@
                   <configuration>
                      <tasks>
                         <delete quiet="true">
-                           <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer"/>
+                           <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer" />
                         </delete>
                      </tasks>
                   </configuration>

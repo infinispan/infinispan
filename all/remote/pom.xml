@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-all-parent</artifactId>
-      <version>9.1.0-SNAPSHOT</version>
+      <version>9.1.0.CR1</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -63,7 +63,7 @@
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
-      <!-- Needed by JCache Remote -->
+      
       <dependency>
          <groupId>org.wildfly.core</groupId>
          <artifactId>wildfly-controller-client</artifactId>
@@ -186,14 +186,14 @@
                            <pattern>com.google</pattern>
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
-                        <!-- XNIO is required by the remote JCache integration -->
-                        <!-- However we can not move it until https://issues.apache.org/jira/browse/MSHADE-182 is -->
-                        <!-- resolved and we also need to migrate to shade 3.0 -->
-                        <!-- Tracking JIRA: https://issues.jboss.org/browse/ISPN-6283 -->
-                        <!--<relocation>-->
-                           <!--<pattern>org.xnio</pattern>-->
-                           <!--<shadedPattern>infinispan.org.xnio</shadedPattern>-->
-                        <!--</relocation>-->
+                        
+                        
+                        
+                        
+                        
+                           
+                           
+                        
                         <relocation>
                            <pattern>org.jboss.threads</pattern>
                            <shadedPattern>infinispan.org.jboss.threads</shadedPattern>
@@ -218,12 +218,12 @@
                            <pattern>com.squareup</pattern>
                            <shadedPattern>infinispan.com.squareup</shadedPattern>
                         </relocation>
-                        <!-- Unfortunately because of https://issues.apache.org/jira/browse/MSHADE-182 -->
-                        <!-- we can not relocate marshalling module. Even when trying manual fixes it still fails -->
-                        <!--<relocation>-->
-                           <!--<pattern>org.jboss.marshalling</pattern>-->
-                           <!--<shadedPattern>infinispan.org.jboss.marshalling</shadedPattern>-->
-                        <!--</relocation>-->
+                        
+                        
+                        
+                           
+                           
+                        
                      </relocations>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
@@ -323,7 +323,7 @@
                      <skipAttach>${skipCreateSourcesJar}</skipAttach>
                      <artifacts>
                         <artifact>
-                           <!-- maven-shade-plugin 2.4.3 doesn't use finalName for the sources jar, 3.0.0 does -->
+                           
                            <file>target/${project.build.finalName}-shaded-sources.jar</file>
                            <type>jar</type>
                            <classifier>sources</classifier>

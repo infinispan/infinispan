@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.infinispan.server</groupId>
         <artifactId>infinispan-server-versions</artifactId>
-        <version>9.1.0-SNAPSHOT</version>
+        <version>9.1.0.CR1</version>
         <relativePath>../versions/pom.xml</relativePath>
     </parent>
 
@@ -380,7 +380,7 @@
             org.infinispan.server.test.category.UnstableClientClustered,org.infinispan.server.test.category.UnstableQueries
         </groups.unstable>
 
-        <!-- KeyStore properties -->
+        
         <ca.dname>CN=CA,OU=Infinispan,O=JBoss,L=Red Hat</ca.dname>
         <ca.alias>infinispan-ca</ca.alias>
         <ca.keystore>${project.build.testOutputDirectory}/ca.jks</ca.keystore>
@@ -423,7 +423,7 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>keytool-maven-plugin</artifactId>
                 <version>1.5</version>
-                <!-- Vaults -->
+                
                 <executions>
                     <execution>
                         <id>ispn-vault</id>
@@ -439,7 +439,7 @@
                             <keysize>128</keysize>
                         </configuration>
                     </execution>
-                    <!-- CA -->
+                    
                     <execution>
                         <id>ca</id>
                         <goals>
@@ -453,7 +453,7 @@
                             <ext>bc:c</ext>
                         </configuration>
                     </execution>
-                    <!-- Server -->
+                    
                     <execution>
                         <id>server</id>
                         <goals>
@@ -528,7 +528,7 @@
                             <keystore>${project.build.testOutputDirectory}/keystore_server_no_ca.jks</keystore>
                         </configuration>
                     </execution>
-                    <!-- Client -->
+                    
                     <execution>
                         <id>client-import-ca</id>
                         <goals>
@@ -591,7 +591,7 @@
                             <keystore>${client.keystore}</keystore>
                         </configuration>
                     </execution>
-                    <!-- A client certificate which is NOT signed by the CA -->
+                    
                     <execution>
                         <id>client2</id>
                         <goals>
@@ -604,7 +604,7 @@
                             <keystore>${client.keystore}</keystore>
                         </configuration>
                     </execution>
-                    <!-- Cluster key for JGroups encryption -->
+                    
                     <execution>
                         <id>cluster</id>
                         <goals>
@@ -692,7 +692,7 @@
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
-                    <!-- Delete the keystores before the keytool plugin runs -->
+                    
                     <execution>
                         <id>clean-key-stores</id>
                         <phase>process-test-sources</phase>
@@ -702,7 +702,7 @@
                         <configuration>
                             <tasks>
                                 <delete quiet="true">
-                                    <fileset dir="${project.build.testOutputDirectory}" includes="vault/*.keystore,*.jks,*.csr,*.cer"/>
+                                    <fileset dir="${project.build.testOutputDirectory}" includes="vault/*.keystore,*.jks,*.csr,*.cer" />
                                 </delete>
                             </tasks>
                         </configuration>
