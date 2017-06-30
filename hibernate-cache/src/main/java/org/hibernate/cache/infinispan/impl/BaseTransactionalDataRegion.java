@@ -229,6 +229,7 @@ public abstract class BaseTransactionalDataRegion
          throw new IllegalStateException("Misconfigured cache, interceptor chain is " + chain);
       }
 
+      cache.removeInterceptor(NonTxDistributionInterceptor.class);
       cache.removeInterceptor(TriangleDistributionInterceptor.class);
 	}
 
