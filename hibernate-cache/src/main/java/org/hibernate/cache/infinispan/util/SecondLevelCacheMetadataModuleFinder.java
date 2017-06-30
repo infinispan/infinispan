@@ -14,6 +14,6 @@ import org.infinispan.factories.components.ModuleMetadataFileFinder;
 public class SecondLevelCacheMetadataModuleFinder implements ModuleMetadataFileFinder {
 	@Override
 	public String getMetadataFilename() {
-		return "hibernate-infinispan-component-metadata.dat";
+		return "infinispan-hibernate-cache-component-metadata.dat";
 	}
 }

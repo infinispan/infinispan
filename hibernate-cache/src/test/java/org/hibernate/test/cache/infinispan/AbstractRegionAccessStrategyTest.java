@@ -474,6 +474,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		CountDownLatch remotePutFromLoadLatch = expectRemotePutFromLoad(localRegion.getCache(), remoteRegion.getCache());
 
 		SharedSessionContractImplementor s3 = mockedSession();
+//      log.infof("Call putFromLoad strategy get for key=%s", KEY);
 		localAccessStrategy.putFromLoad(s3, KEY, VALUE1, s3.getTimestamp(), 1);
 		SharedSessionContractImplementor s5 = mockedSession();
 		remoteAccessStrategy.putFromLoad(s5, KEY, VALUE1, s5.getTimestamp(), 1);
@@ -486,6 +487,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
 		SharedSessionContractImplementor s4 = mockedSession();
 		SharedSessionContractImplementor s6 = mockedSession();
+//      log.infof("Call local strategy get for key=%s", KEY);
 		assertEquals(VALUE1, localAccessStrategy.get(s4, KEY, s4.getTimestamp()));
 		assertEquals(VALUE1, remoteAccessStrategy.get(s6, KEY, s6.getTimestamp()));
 
@@ -547,8 +549,10 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
 		// Test whether the get above messes up the optimistic version
 		SharedSessionContractImplementor s9 = mockedSession();
+      log.infof("Call remote strategy putFromLoad for key=%s and value=%s", KEY, VALUE1);
 		assertTrue(remoteAccessStrategy.putFromLoad(s9, KEY, VALUE1, s9.getTimestamp(), 1));
 		SharedSessionContractImplementor s10 = mockedSession();
+      log.infof("Call remote strategy get for key=%s", KEY);
 		assertEquals(VALUE1, remoteAccessStrategy.get(s10, KEY, s10.getTimestamp()));
 		assertEquals(1, remoteRegion.getCache().size());
 
