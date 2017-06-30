@@ -105,6 +105,10 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       // and ScatteringInterceptor would check according to the new CH.
       for (int segment = 0; segment < newWriteCh.getNumSegments(); ++segment) {
          if (!newWriteCh.isSegmentLocalToNode(rpcManager.getAddress(), segment)) {
+            // Failed key transfer could move segment to OWNED state concurrently with installing a new topology.
+            // Therefore we cancel the transfers before installing the topology, preventing any unexpected segment
+            // state updates. Cancelling moves the segments to NOT_OWNED state.
+            cancelTransfers(Collections.singleton(segment));
             svm.unregisterSegment(segment);
          }
       }
@@ -161,7 +165,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                log.debug("Failed confirming revoked segments", throwable);
             }
             for (int segment : addedSegments) {
-               svm.notifyKeyTransferFinished(segment, false);
+               svm.notifyKeyTransferFinished(segment, false, false);
             }
             notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
          }
@@ -193,7 +197,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       if (!isTransferringKeys) {
          log.trace("No keys in transfer, finishing segments " + segments);
          for (int segment : segments) {
-            svm.notifyKeyTransferFinished(segment, false);
+            svm.notifyKeyTransferFinished(segment, false, false);
          }
          notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
       }
@@ -221,8 +225,10 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                transfers.remove(inboundTransfer);
                if (transfers.isEmpty()) {
                   transfersBySegment.remove(segment);
-                  log.trace("All transfer tasks have completed.");
-                  svm.notifyKeyTransferFinished(segment, inboundTransfer.isCompletedSuccessfully());
+                  if (trace) {
+                     log.tracef("All transfer tasks for segment %d have completed.", segment);
+                  }
+                  svm.notifyKeyTransferFinished(segment, inboundTransfer.isCompletedSuccessfully(), inboundTransfer.isCancelled());
                   switch (completedSegments.size()) {
                      case 0:
                         completedSegments = Collections.singleton(segment);

@@ -967,7 +967,7 @@ public class StateConsumerImpl implements StateConsumer {
     *
     * @param removedSegments segments to be cancelled
     */
-   private void cancelTransfers(Set<Integer> removedSegments) {
+   protected void cancelTransfers(Set<Integer> removedSegments) {
       synchronized (transferMapsLock) {
          List<Integer> segmentsToCancel = new ArrayList<>(removedSegments);
          while (!segmentsToCancel.isEmpty()) {

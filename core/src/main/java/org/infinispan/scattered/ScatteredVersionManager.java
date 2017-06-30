@@ -74,8 +74,11 @@ public interface ScatteredVersionManager<K> {
     * @param segment
     * @param expectValues True when the transfer failed and the segment will be moved
     *                     to the {@link SegmentState#OWNED} state without waiting for values.
+    * @param cancelled True is the transfer was cancelled due to a new topology - in that case
+    *                  the segment will end up in {@link SegmentState#NOT_OWNED}. This takes
+    *                  precedence over <code>expectValues</code>.
     */
-   void notifyKeyTransferFinished(int segment, boolean expectValues);
+   void notifyKeyTransferFinished(int segment, boolean expectValues, boolean cancelled);
 
    /**
     * All entries have been received and we can put segments owned according to consistent hash
