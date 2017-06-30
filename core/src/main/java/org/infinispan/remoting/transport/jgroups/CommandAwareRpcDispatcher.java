@@ -306,11 +306,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          opts = new RequestOptions(mode, timeout, true, filter);
       }
 
-      GroupRequest<Response> request = cast(dests, msg, opts, false);
+      RspListFuture retval = new RspListFuture();
+      GroupRequest<Response> request = this.cast(dests, msg, opts, false, retval);
       if (mode == ResponseMode.GET_NONE)
          return null;
 
-      RspListFuture retval = new RspListFuture(request);
       if (request == null) {
          // cast() returns null when there no other nodes in the cluster
          if (broadcast) {
@@ -327,6 +327,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          }
       }
       if (timeout > 0 && !retval.isDone()) {
+         retval.setRequest(request);
          ScheduledFuture<?> timeoutFuture = timeoutExecutor.schedule(retval, timeout, TimeUnit.MILLISECONDS);
          retval.setTimeoutFuture(timeoutFuture);
       }

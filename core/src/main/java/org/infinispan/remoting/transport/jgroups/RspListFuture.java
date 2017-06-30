@@ -15,22 +15,34 @@ import java.util.concurrent.Future;
  */
 class RspListFuture extends CompletableFuture<RspList<Response>> implements FutureListener<RspList<Response>>,
       Callable<Void> {
-   private final GroupRequest<Response> request;
+   private volatile GroupRequest<Response> request;
    private volatile Future<?> timeoutFuture = null;
 
-   RspListFuture(GroupRequest<Response> request) {
+   RspListFuture() {
+   }
+
+   /**
+    * Add a reference to the request.
+    *
+    * Must be called before scheduling the timeout task.
+    */
+   public void setRequest(GroupRequest<Response> request) {
       this.request = request;
-      if (request != null) {
-         request.setListener(this);
-      }
    }
 
    @Override
    public void futureDone(Future<RspList<Response>> future) {
-      RspList<Response> responses = request.getResults();
-      complete(responses);
-      if (timeoutFuture != null) {
-         timeoutFuture.cancel(false);
+      // The request field may not be set at this time
+      // The future may be a
+      RspList<Response> rspList;
+      try {
+         rspList = future.get();
+         complete(rspList);
+         if (timeoutFuture != null) {
+            timeoutFuture.cancel(false);
+         }
+      } catch (Throwable t) {
+         completeExceptionally(t);
       }
    }
 
