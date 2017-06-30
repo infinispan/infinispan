@@ -253,7 +253,10 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
 
    @Override
    public synchronized void unregisterSegment(int segment) {
-      segmentStates.set(segment, SegmentState.NOT_OWNED);
+      SegmentState previous = segmentStates.getAndSet(segment, SegmentState.NOT_OWNED);
+      if (trace) {
+         log.tracef("Unregistered segment %d (previous=%s)", segment, previous);
+      }
       CompletableFuture<Void> blockedFuture = blockedFutures.get(segment);
       if (blockedFuture != null) {
          blockedFuture.completeExceptionally(new CacheException("The segment is no longer owned."));
@@ -267,15 +270,23 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    }
 
    @Override
-   public void notifyKeyTransferFinished(int segment, boolean expectValues) {
-      SegmentState update = expectValues ? SegmentState.VALUE_TRANSFER : SegmentState.OWNED;
-      SegmentState previous;
-      do {
-         previous = segmentStates.get(segment);
-         // It is possible that the segment is not in KEY_TRANSFER state, but can be in BLOCKED states as well
-         // when the CONFIRM_REVOKED_SEGMENTS failed.
-         log.tracef("Finishing transfer for segment %d = %s -> %s", segment, previous, update);
-      } while (!segmentStates.compareAndSet(segment, previous, update));
+   public void notifyKeyTransferFinished(int segment, boolean expectValues, boolean cancelled) {
+      SegmentState update;
+      if (cancelled) {
+         // The transfer is cancelled when a newer topology is being installed.
+         update = SegmentState.NOT_OWNED;
+         assert !expectValues;
+      } else if (expectValues) {
+         update = SegmentState.VALUE_TRANSFER;
+      } else {
+         update = SegmentState.OWNED;
+      }
+      // It is possible that the segment is not in KEY_TRANSFER state, but can be in BLOCKED states as well
+      // when the CONFIRM_REVOKED_SEGMENTS failed.
+      SegmentState previous = segmentStates.getAndSet(segment, update);
+      if (trace) {
+         log.tracef("Finished transfer for segment %d = %s -> %s", segment, previous, update);
+      }
       CompletableFuture<Void> blockedFuture = blockedFutures.get(segment);
       if (blockedFuture != null) {
          blockedFuture.completeExceptionally(new CacheException("Segment state transition did not complete correctly."));
