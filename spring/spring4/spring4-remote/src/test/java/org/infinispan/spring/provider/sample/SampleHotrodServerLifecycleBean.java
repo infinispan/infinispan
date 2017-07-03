@@ -17,6 +17,7 @@ import org.springframework.beans.factory.InitializingBean;
  */
 public class SampleHotrodServerLifecycleBean implements InitializingBean, DisposableBean {
 
+   private final int PORT = 15233;
    private EmbeddedCacheManager cacheManager;
 
    private HotRodServer hotrodServer;
@@ -46,8 +47,8 @@ public class SampleHotrodServerLifecycleBean implements InitializingBean, Dispos
       cacheManager.defineConfiguration(remoteBackupCacheName, HotRodTestingUtil.hotRodCacheConfiguration().build());
       cacheManager.defineConfiguration(customCacheName, HotRodTestingUtil.hotRodCacheConfiguration().build());
       HotRodServerConfigurationBuilder hcb = new HotRodServerConfigurationBuilder();
-      hcb.port(15233);
-      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager, hcb);
+      hcb.port(PORT);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager, PORT, hcb);
    }
 
    @Override
