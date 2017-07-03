@@ -1,11 +1,14 @@
 package org.infinispan.persistence.jdbc.table.management;
 
+import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -81,14 +84,31 @@ class OracleTableManager extends AbstractTableManager {
    }
 
    @Override
+   public String getInsertRowSql() {
+      if (insertRowSql == null) {
+         insertRowSql = String.format("INSERT INTO %s (%s,%s,%s) VALUES (?,?,?)", getTableName(),
+               config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
+      }
+      return insertRowSql;
+   }
+
+   @Override
    public String getUpsertRowSql() {
       if (upsertRowSql == null) {
          upsertRowSql = String.format("MERGE INTO %1$s t " +
-                     "USING (SELECT ? %2$s, ? %3$s, ? %4$s from dual) tmp ON (t.%4$s = tmp.%4$s) " +
-                     "WHEN MATCHED THEN UPDATE SET t.%2$s = tmp.%2$s, t.%3$s = tmp.%3$s " +
-                     "WHEN NOT MATCHED THEN INSERT VALUES (tmp.%4$s, tmp.%2$s, tmp.%3$s)",
-               this.getTableName(), config.dataColumnName(), config.timestampColumnName(), config.idColumnName());
+                     "USING (SELECT ? %2$s, ? %3$s, ? %4$s from dual) tmp ON (t.%2$s = tmp.%2$s) " +
+                     "WHEN MATCHED THEN UPDATE SET t.%3$s = tmp.%3$s, t.%4$s = tmp.%4$s " +
+                     "WHEN NOT MATCHED THEN INSERT (%2$s, %3$s, %4$s) VALUES (tmp.%2$s, tmp.%3$s, tmp.%4$s)",
+               this.getTableName(), config.idColumnName(), config.timestampColumnName(), config.dataColumnName());
       }
       return upsertRowSql;
+   }
+
+   @Override
+   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+      ps.setString(1, key);
+      ps.setLong(2, timestamp);
+      // We must use BLOB here to avoid ORA-01461 caused by implicit casts on dual
+      ps.setBlob(3, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
    }
 }
