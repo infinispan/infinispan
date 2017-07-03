@@ -281,7 +281,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          // If the bytes don't exist then we need to reread
          if (bytes != null) {
             if (CacheDecodeContext.isTrace) {
-               log.tracef("Body key: %s", Util.toHexString(bytes));
+               log.tracef("Body key: %s", Util.printArray(bytes));
             }
             decodeCtx.key = bytes;
          } else {
@@ -339,7 +339,7 @@ public class HotRodDecoder extends ByteToMessageDecoder {
          in.readBytes(bytes);
          decodeCtx.operationDecodeContext = bytes;
          if (CacheDecodeContext.isTrace) {
-            log.tracef("Body value: %s", Util.toHexString(bytes));
+            log.tracef("Body value: %s", Util.printArray(bytes));
          }
       }
       switch (op.getDecoderRequirements()) {
