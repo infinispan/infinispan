@@ -95,7 +95,7 @@ Since OpenShift uses Kubernetes underneath both of them can use the same discove
 
 The most important thing is to bind JGroups to `eth0` interface, which is link:https://docs.docker.com/engine/userguide/networking/dockernetworks/[used by Docker containers for network communication].
 
-KUBE_PING protocol is configured by environmental variables (which should be available inside a container). The most important thing is to set `OPENSHIFT_KUBE_PING_NAMESPACE` to proper namespace. It might be either hardcoded or populated via link:https://github.com/kubernetes/kubernetes/tree/release-1.0/docs/user-guide/downward-api[Kubernetes' Downward API].
+KUBE_PING protocol is configured by environmental variables (which should be available inside a container). The most important thing is to set `KUBERNETES_NAMESPACE` to proper namespace. It might be either hardcoded or populated via link:https://github.com/kubernetes/kubernetes/tree/release-1.0/docs/user-guide/downward-api[Kubernetes' Downward API].
 
 Since KUBE_PING uses Kubernetes API for obtaining available Pods, OpenShift requires adding additional privileges. Assuming that `oc project -q` returns current namespace and `default` is the service account name, one needs to run:
 
@@ -144,8 +144,6 @@ An example Deployment Configuration (Kubernetes uses very similar concept called
           ports:
           - containerPort: 8181
             protocol: TCP
-          - containerPort: 8888
-            protocol: TCP
           - containerPort: 9990
             protocol: TCP
           - containerPort: 11211
@@ -159,7 +157,7 @@ An example Deployment Configuration (Kubernetes uses very similar concept called
           - containerPort: 8080
             protocol: TCP
           env:
-          - name: OPENSHIFT_KUBE_PING_NAMESPACE
+          - name: KUBERNETES_NAMESPACE
             valueFrom: {fieldRef: {apiVersion: v1, fieldPath: metadata.namespace}}
           terminationMessagePath: /dev/termination-log
           terminationGracePeriodSeconds: 90
@@ -203,7 +201,6 @@ A typical example is migrating from one version to another.
 For both Kubernetes and OpenShift, the Rolling Upgrade procedure is almost the same. It is based on a standard <<_Rolling_chapter,Rolling Upgrade procedure>> with small changes.
 
 .Key differences when upgrading using OpenShift/Kubernetes are:
-* When forming a new cluster, make sure you use labels. Labels can be used by link:$$https://github.com/jgroups-extras/jgroups-kubernetes$$[Kubernetes PING Protocol] (see `OPENSHIFT_KUBE_PING_LABELS` environment variable) and they allow controlling which nodes are assigned to which clusters.
 * Depending on configuration, it is a good practice to use link:$$https://docs.openshift.org/latest/architecture/core_concepts/routes.html$$[OpenShift Routes] or link:$$http://kubernetes.io/docs/user-guide/ingress$$[Kubernetes Ingress API] to expose services to the clients. During the upgrade the Route (or Ingress) used by the clients can be altered to point to the new cluster.
 * Invoking CLI commands can be done by using Kubernetes (`kubectl exec`) or OpenShift clients (`oc exec`). Here is an example: `oc exec <POD_NAME> -- '/opt/jboss/infinispan-server/bin/ispn-cli.sh' '-c' '--controller=$(hostname -i):9990' '/subsystem=datagrid-infinispan/cache-container=clustered/distributed-cache=default:disconnect-source(migrator-name=hotrod)'`
 
