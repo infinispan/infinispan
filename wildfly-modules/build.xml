@@ -144,7 +144,7 @@
         <module-def name="org.infinispan.jcache" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-jcache" />
         </module-def>
-        
+
         <module-def name="org.infinispan.jcache.commons" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-jcache-commons" />
         </module-def>
@@ -178,9 +178,7 @@
         </module-def>
 
         <module-def name="org.jgroups.kubernetes" slot="${infinispan.slot}">
-            <maven-resource group="org.jgroups.kubernetes" artifact="kubernetes" />
-            <maven-resource group="org.jgroups.kubernetes" artifact="common" />
-            <maven-resource group="org.jgroups.kubernetes" artifact="dns" />
+            <maven-resource group="org.jgroups.kubernetes" artifact="jgroups-kubernetes" />
             <maven-resource group="net.oauth.core" artifact="oauth" />
         </module-def>
 

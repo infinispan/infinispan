@@ -14,8 +14,6 @@
 
     <dependencies>
         <module name="javax.api"/>
-        <module name="io.undertow.core"/>
-        <module name="org.jboss.dmr"/>
         <module name="org.jgroups"/>
     </dependencies>
 </module>

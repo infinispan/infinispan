@@ -6,16 +6,12 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jgroups.kubernetes:kubernetes}"/>
-        <artifact name="${org.jgroups.kubernetes:common}"/>
-        <artifact name="${org.jgroups.kubernetes:dns}"/>
+        <artifact name="${org.jgroups.kubernetes:jgroups-kubernetes}"/>
         <artifact name="${net.oauth.core:oauth}"/>
     </resources>
 
     <dependencies>
         <module name="javax.api"/>
-        <module name="io.undertow.core"/>
-        <module name="org.jboss.dmr"/>
         <module name="org.jgroups"/>
     </dependencies>
 </module>
