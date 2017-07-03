@@ -358,11 +358,10 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
 
    @Override
    public CompletableFuture<Void> valuesFuture(int topologyId) {
-      // TODO: ISPN-7894 I am not 100% confident about this
       // it is possible that someone will ask with topologyId that does not belong to a rebalance,
       // while the valuesTopology is updated only on rebalance. Therefore, without the extra boolean
       // we would get stuck here.
-      if (transferringValues && topologyId < valuesTopology) {
+      if (transferringValues && topologyId > valuesTopology) {
          synchronized (valuesLock) {
             if (transferringValues && topologyId > valuesTopology) {
                return valuesFuture.thenCompose(nil -> valuesFuture(topologyId));

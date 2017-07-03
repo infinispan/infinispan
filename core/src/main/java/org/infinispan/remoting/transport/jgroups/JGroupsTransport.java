@@ -1246,6 +1246,11 @@ public class JGroupsTransport implements Transport {
       if (trace)
          log.tracef("%s sending response for request %d to %s: %s", getAddress(), requestId, target, response);
       ByteBuffer bytes;
+      JChannel channel = this.channel;
+      if (channel == null) {
+         // Avoid NPEs during stop()
+         return;
+      }
       try {
          bytes = marshaller.objectToBuffer(response);
       } catch (Throwable t) {
