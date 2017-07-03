@@ -1,12 +1,15 @@
 package org.infinispan.persistence.jdbc.table.management;
 
+import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
 
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.infinispan.persistence.jdbc.connectionfactory.ConnectionFactory;
@@ -356,5 +359,12 @@ public abstract class AbstractTableManager implements TableManager {
    @Override
    public String encodeString(String string) {
       return string;
+   }
+
+   @Override
+   public void prepareUpdateStatement(PreparedStatement ps, String key, long timestamp, ByteBuffer byteBuffer) throws SQLException {
+      ps.setBinaryStream(1, new ByteArrayInputStream(byteBuffer.getBuf(), byteBuffer.getOffset(), byteBuffer.getLength()), byteBuffer.getLength());
+      ps.setLong(2, timestamp);
+      ps.setString(3, key);
    }
 }
