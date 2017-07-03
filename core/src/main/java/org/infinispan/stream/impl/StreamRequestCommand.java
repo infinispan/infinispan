@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
@@ -146,5 +147,20 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
    @Override
    public boolean canBlock() {
       return true;
+   }
+
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("StreamRequestCommand{");
+      sb.append("type=").append(type);
+      sb.append(", includeLoader=").append(includeLoader);
+      sb.append(", terminalOperation=").append(terminalOperation);
+      sb.append(", topologyId=").append(topologyId);
+      sb.append(", id=").append(id);
+      sb.append(", segments=").append(segments);
+      sb.append(", keys=").append(Util.toStr(keys));
+      sb.append(", excludedKeys=").append(Util.toStr(excludedKeys));
+      sb.append('}');
+      return sb.toString();
    }
 }

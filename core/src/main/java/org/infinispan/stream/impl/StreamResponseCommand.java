@@ -81,4 +81,14 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
    public boolean canBlock() {
       return true;
    }
+
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("StreamResponseCommand{");
+      sb.append("id=").append(id);
+      sb.append(", complete=").append(complete);
+      sb.append(", response=").append(response);
+      sb.append('}');
+      return sb.toString();
+   }
 }

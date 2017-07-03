@@ -53,6 +53,7 @@ import org.infinispan.commons.marshall.Marshaller;
 public final class Util {
 
    private static final boolean IS_ARRAYS_DEBUG = Boolean.getBoolean("infinispan.arrays.debug");
+   private static final int COLLECTIONS_LIMIT = Integer.getInteger("infinispan.collections.limit", 8);
    private static final boolean IS_OSGI_CONTEXT;
 
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
@@ -508,11 +509,16 @@ public final class Util {
 
       StringBuilder sb = new StringBuilder();
       sb.append('[');
-      for (;;) {
+      for (int counter = 0;;) {
          E e = i.next();
          sb.append(e == collection ? "(this Collection)" : toStr(e));
          if (! i.hasNext())
             return sb.append(']').toString();
+         if (++counter >= COLLECTIONS_LIMIT) {
+            return sb.append("...<")
+                  .append(collection.size() - COLLECTIONS_LIMIT)
+                  .append(" other elements>]").toString();
+         }
          sb.append(", ");
       }
    }

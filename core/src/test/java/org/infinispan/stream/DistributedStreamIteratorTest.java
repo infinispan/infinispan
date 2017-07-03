@@ -203,17 +203,20 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       for (Map.Entry<Integer, Set<Map.Entry<Object, String>>> entry : expected.entrySet()) {
          Integer segment = entry.getKey();
-         for (Map.Entry<Object, String> exp : entry.getValue()) {
-            if (!answer.get(segment).contains(exp)) {
-               log.errorf("Segment %d, missing %s", segment, exp);
+         Set<Map.Entry<Object, String>> answerForSegment = answer.get(segment);
+         if (answerForSegment != null) {
+            for (Map.Entry<Object, String> exp : entry.getValue()) {
+               if (!answerForSegment.contains(exp)) {
+                  log.errorf("Segment %d, missing %s", segment, exp);
+               }
+            }
+            for (Map.Entry<Object, String> ans : answerForSegment) {
+               if (!entry.getValue().contains(ans)) {
+                  log.errorf("Segment %d, extra %s", segment, ans);
+               }
             }
          }
-         for (Map.Entry<Object, String> ans : answer.get(segment)) {
-            if (!entry.getValue().contains(ans)) {
-               log.errorf("Segment %d, extra %s", segment, ans);
-            }
-         }
-         assertEquals("Segment " + segment + " had a mismatch", answer.get(segment), entry.getValue());
+         assertEquals("Segment " + segment + " had a mismatch", entry.getValue(), answerForSegment);
       }
    }
 
