@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.backend.ExtendedSearchWorkCreatorTest")
 public class ExtendedSearchWorkCreatorTest extends SingleCacheManagerTest {
 
-   private static class ExtraValuesSearchWorkCreator extends DefaultSearchWorkCreator<Object> implements ExtendedSearchWorkCreator<Object> {
+   private static class ExtraValuesSearchWorkCreator extends DefaultSearchWorkCreator implements ExtendedSearchWorkCreator {
 
       @Override
       public Collection<Work> createPerEntityWorks(Object value, Serializable id, WorkType workType) {
