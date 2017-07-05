@@ -6,10 +6,6 @@
  */
 package org.hibernate.test.cache.infinispan.tm;
 
-import org.hibernate.TransactionException;
-import org.hibernate.engine.transaction.internal.jta.JtaStatusHelper;
-import org.hibernate.service.jta.platform.spi.JtaPlatform;
-
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;

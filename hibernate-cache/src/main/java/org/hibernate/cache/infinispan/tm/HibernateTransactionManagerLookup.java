@@ -12,9 +12,6 @@ import javax.transaction.TransactionManager;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 
-import javax.transaction.TransactionManager;
-import java.util.Properties;
-
 /**
  * Hibernate transaction manager lookup class for Infinispan, so that
  * Hibernate's transaction manager can be hooked onto Infinispan.
