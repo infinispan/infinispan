@@ -980,6 +980,10 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
       if (readOnly != null && readOnly.isDefined()) {
          storeConfigurationBuilder.ignoreModifications(readOnly.asBoolean());
       }
+      ModelNode maxBatchSize = store.get(ModelKeys.MAX_BATCH_SIZE);
+      if (maxBatchSize != null && maxBatchSize.isDefined()) {
+          storeConfigurationBuilder.maxBatchSize(maxBatchSize.asInt());
+      }
       final boolean async = store.hasDefined(ModelKeys.WRITE_BEHIND) && store.get(ModelKeys.WRITE_BEHIND, ModelKeys.WRITE_BEHIND_NAME).isDefined();
       if (async) {
          ModelNode writeBehind = store.get(ModelKeys.WRITE_BEHIND, ModelKeys.WRITE_BEHIND_NAME);

@@ -59,6 +59,9 @@ We suggest to perform this replacement, as the `ram` value will no longer be rec
 This change was made as the team believes the `local-heap` name better expresses the storage model, especially as this storage method will not allow real-time replication of the index across multiple nodes.
 This index storage option is mostly useful for single node integration testing of the query functionality.
 
+=== Store Batch Size Changes
+TableManipulation::batchSize and JpaStoreConfiguration::batchSize have been deprecated and replaced by the higher level AbstractStoreConfiguration::maxBatchSize.
+
 == Upgrading from 8.x to 9.0
 
 === Default transaction mode changed

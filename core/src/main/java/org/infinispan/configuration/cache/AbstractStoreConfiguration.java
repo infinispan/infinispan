@@ -14,11 +14,12 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    public static final AttributeDefinition<Boolean> PRELOAD = AttributeDefinition.builder("preload", false).immutable().build();
    public static final AttributeDefinition<Boolean> SHARED = AttributeDefinition.builder("shared", false).immutable().build();
    public static final AttributeDefinition<Boolean> TRANSACTIONAL = AttributeDefinition.builder("transactional", false).immutable().build();
+   public static final AttributeDefinition<Integer> MAX_BATCH_SIZE = AttributeDefinition.builder("maxBatchSize", 100).immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
          .initializer(() -> new TypedProperties()).autoPersist(false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP, IGNORE_MODIFICATIONS, PRELOAD, SHARED, TRANSACTIONAL, PROPERTIES);
+      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP, IGNORE_MODIFICATIONS, PRELOAD, SHARED, TRANSACTIONAL, MAX_BATCH_SIZE, PROPERTIES);
    }
 
    private final Attribute<Boolean> fetchPersistentState;
@@ -27,6 +28,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    private final Attribute<Boolean> preload;
    private final Attribute<Boolean> shared;
    private final Attribute<Boolean> transactional;
+   private final Attribute<Integer> maxBatchSize;
    private final Attribute<TypedProperties> properties;
 
    protected final AttributeSet attributes;
@@ -56,6 +58,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       this.preload = attributes.attribute(PRELOAD);
       this.shared = attributes.attribute(SHARED);
       this.transactional = attributes.attribute(TRANSACTIONAL);
+      this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
       this.properties = attributes.attribute(PROPERTIES);
    }
 
@@ -70,6 +73,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
       this.preload = attributes.attribute(PRELOAD);
       this.shared = attributes.attribute(SHARED);
       this.transactional = attributes.attribute(TRANSACTIONAL);
+      this.maxBatchSize = attributes.attribute(MAX_BATCH_SIZE);
       this.properties = attributes.attribute(PROPERTIES);
    }
 
@@ -109,6 +113,11 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    @Override
    public boolean transactional() {
       return transactional.get();
+   }
+
+   @Override
+   public int maxBatchSize() {
+      return maxBatchSize.get();
    }
 
    /**

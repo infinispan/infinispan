@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jpa.configuration;
 
-import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.BATCH_SIZE;
 import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.ENTITY_CLASS;
 import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.PERSISTENCE_UNIT_NAME;
 import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.STORE_METADATA;
@@ -29,8 +28,10 @@ public class JpaStoreConfigurationBuilder
       return self();
    }
 
+   @Deprecated
    public JpaStoreConfigurationBuilder batchSize(long batchSize) {
-      attributes.attribute(BATCH_SIZE).set(batchSize);
+      int size = batchSize > Integer.MAX_VALUE ? Integer.MAX_VALUE : (batchSize < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) batchSize);
+      maxBatchSize(size);
       return self();
    }
 

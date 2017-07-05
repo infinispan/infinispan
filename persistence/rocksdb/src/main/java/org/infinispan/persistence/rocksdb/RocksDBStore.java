@@ -371,19 +371,21 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
     @Override
     public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
         try {
-            WriteBatch writeBatch = new WriteBatch();
-            for (MarshalledEntry entry : marshalledEntries)
-                writeBatch.put(marshall(entry.getKey()), marshall(entry));
+            int batchSize = 0;
+            WriteBatch batch = new WriteBatch();
+            for (MarshalledEntry entry : marshalledEntries) {
+                batch.put(marshall(entry.getKey()), marshall(entry));
+                batchSize++;
 
-            semaphore.acquire();
-            try {
-                if (stopped) {
-                    throw new PersistenceException("RocksDB is stopped");
+                if (batchSize == configuration.maxBatchSize()) {
+                    batchSize = 0;
+                    writeBatch(batch);
+                    batch = new WriteBatch();
                 }
-                db.write(dataWriteOptions(), writeBatch);
-            } finally {
-                semaphore.release();
             }
+
+            if (batchSize != 0)
+                writeBatch(batch);
 
             // Add metadata only after batch has been written
             for (MarshalledEntry entry : marshalledEntries) {
@@ -393,6 +395,18 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
             }
         } catch (Exception e) {
             throw new PersistenceException(e);
+        }
+    }
+
+    private void writeBatch(WriteBatch batch) throws InterruptedException, RocksDBException {
+        semaphore.acquire();
+        try {
+            if (stopped)
+                throw new PersistenceException("RocksDB is stopped");
+
+            db.write(dataWriteOptions(), batch);
+        } finally {
+            semaphore.release();
         }
     }
 

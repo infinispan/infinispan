@@ -1,8 +1,9 @@
 package org.jboss.as.clustering.infinispan.cs.configuration;
 
-import java.util.Properties;
-
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -17,30 +18,29 @@ import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 @BuiltBy(DeployedStoreConfigurationBuilder.class)
 public class DeployedStoreConfiguration extends AbstractStoreConfiguration {
 
-   private PersistenceConfigurationBuilder persistenceConfigurationBuilder;
-   private String customStoreClassName;
+   static final AttributeDefinition<String> CUSTOM_STORE_CLASS_NAME =
+         AttributeDefinition.builder("customStoreClassName" , null, String.class).immutable().build();
 
-   public DeployedStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
-                                     AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload,
-                                     boolean shared, Properties properties, PersistenceConfigurationBuilder persistenceConfigurationBuilder, String customStoreClassName) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
+
+   private PersistenceConfigurationBuilder persistenceConfigurationBuilder;
+   private final Attribute<String> customStoreClassName;
+
+   public static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(DeployedStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), CUSTOM_STORE_CLASS_NAME);
+   }
+
+   DeployedStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore,
+                                     PersistenceConfigurationBuilder persistenceConfigurationBuilder) {
+      super(attributes, async, singletonStore);
       this.persistenceConfigurationBuilder = persistenceConfigurationBuilder;
-      this.customStoreClassName = customStoreClassName;
+      this.customStoreClassName = attributes.attribute(CUSTOM_STORE_CLASS_NAME);
    }
 
    public PersistenceConfigurationBuilder getPersistenceConfigurationBuilder() {
       return persistenceConfigurationBuilder;
    }
 
-   public void setPersistenceConfigurationBuilder(PersistenceConfigurationBuilder persistenceConfigurationBuilder) {
-      this.persistenceConfigurationBuilder = persistenceConfigurationBuilder;
-   }
-
    public String getCustomStoreClassName() {
-      return customStoreClassName;
-   }
-
-   public void setCustomStoreClassName(String customStoreClassName) {
-      this.customStoreClassName = customStoreClassName;
+      return customStoreClassName.get();
    }
 }

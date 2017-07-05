@@ -23,23 +23,20 @@ import org.infinispan.persistence.jpa.JpaStore;
 public class JpaStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<String> PERSISTENCE_UNIT_NAME = AttributeDefinition.builder("persistenceUnitName", null, String.class).immutable().xmlName("persistence-unit").build();
    static final AttributeDefinition<Class> ENTITY_CLASS = AttributeDefinition.builder("entityClass", null, Class.class).immutable().build();
-   static final AttributeDefinition<Long> BATCH_SIZE = AttributeDefinition.builder("batchSize", 100l).immutable().build();
    static final AttributeDefinition<Boolean> STORE_METADATA = AttributeDefinition.builder("storeMetadata", true).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(JpaStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), PERSISTENCE_UNIT_NAME, ENTITY_CLASS, BATCH_SIZE, STORE_METADATA);
+      return new AttributeSet(JpaStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), PERSISTENCE_UNIT_NAME, ENTITY_CLASS, STORE_METADATA);
    }
 
    private final Attribute<String> persistenceUnitName;
    private final Attribute<Class> entityClass;
-   private final Attribute<Long> batchSize;
    private final Attribute<Boolean> storeMetadata;
 
    protected JpaStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
       super(attributes, async, singletonStore);
       persistenceUnitName = attributes.attribute(PERSISTENCE_UNIT_NAME);
       entityClass = attributes.attribute(ENTITY_CLASS);
-      batchSize = attributes.attribute(BATCH_SIZE);
       storeMetadata = attributes.attribute(STORE_METADATA);
    }
 
@@ -52,7 +49,7 @@ public class JpaStoreConfiguration extends AbstractStoreConfiguration {
    }
 
    public long batchSize() {
-      return batchSize.get();
+      return attributes.attribute(MAX_BATCH_SIZE).get();
    }
 
    public boolean storeMetadata() {

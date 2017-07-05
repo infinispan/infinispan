@@ -82,6 +82,11 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
    S transactional(boolean b);
 
    /**
+    * The maximum size of a batch to be inserted/deleted from the store. If the value is less than one, then no upper limit is placed on the number of operations in a batch.
+    */
+   S maxBatchSize(int maxBatchSize);
+
+   /**
     * <p>
     * Defines a single property. Can be used multiple times to define all needed properties, but the
     * full set is overridden by {@link #withProperties(java.util.Properties)}.

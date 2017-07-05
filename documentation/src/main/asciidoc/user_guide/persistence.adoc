@@ -62,6 +62,8 @@ Explanation of the configuration options:
 
 * `read-only` (false by default) prevents new data to be persisted to the store.
 
+* `max-batch-size` (#{AbstractStore-maxBatchSize} by default) The maximum size of a batch to be inserted/deleted from the store. If the value is less than one, then no upper limit is placed on the number of operations in a batch.
+
 * `write-behind` (disabled by default) element has to do with a persisting data asynchronously to the actual store. It is discussed in detail <<_write_behind_asynchronous, here>>.
 
 * `singleton` (disabled by default) attribute enables modifications to be stored by only one node in the cluster, the coordinator. Essentially, whenever any data comes in to some node it is always replicated(or distributed) so as to keep the caches in-memory states in sync; the coordinator, though, has the sole responsibility of pushing that state to disk. This functionality must be configured by setting the enabled attribute to true in all nodes. Only the coordinator of the cluster will persist data, but all nodes must have this configured to prevent others from persisting as well. You cannot configure a store as shared and singleton.

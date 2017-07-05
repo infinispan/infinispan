@@ -2334,6 +2334,10 @@ public class Parser implements ConfigurationParser {
             storeBuilder.transactional(Boolean.parseBoolean(value));
             break;
          }
+         case MAX_BATCH_SIZE: {
+            storeBuilder.maxBatchSize(Integer.parseInt(value));
+            break;
+         }
          default: {
             throw ParseUtils.unexpectedAttribute(reader, index);
          }

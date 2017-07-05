@@ -23,6 +23,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
@@ -76,7 +77,8 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
                     .setXmlName(Attribute.BATCH_SIZE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(TableManipulationConfiguration.BATCH_SIZE.getDefaultValue()))
+                    .setDeprecated(Namespace.INFINISPAN_SERVER_9_1.getVersion())
+                    .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()))
                     .build();
     static final SimpleAttributeDefinition FETCH_SIZE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.FETCH_SIZE, ModelType.INT, true)
@@ -141,18 +143,6 @@ public class BaseJDBCStoreConfigurationResource extends BaseStoreConfigurationRe
             Builder.of("timestamp-column", COLUMN_NAME, COLUMN_TYPE).
             setAllowNull(true).
             setSuffix("column").
-            build();
-
-    static final ObjectTypeAttributeDefinition ENTRY_TABLE = ObjectTypeAttributeDefinition.
-            Builder.of("entry-table", PREFIX, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT, ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN).
-            setAllowNull(true).
-            setSuffix("table").
-            build();
-
-    static final ObjectTypeAttributeDefinition BUCKET_TABLE = ObjectTypeAttributeDefinition.
-            Builder.of("bucket-table", PREFIX, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT, ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN).
-            setAllowNull(true).
-            setSuffix("table").
             build();
 
     static final ObjectTypeAttributeDefinition STRING_KEYED_TABLE = ObjectTypeAttributeDefinition.

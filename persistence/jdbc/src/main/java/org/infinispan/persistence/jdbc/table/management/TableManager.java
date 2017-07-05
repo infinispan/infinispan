@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.infinispan.commons.io.ByteBuffer;
+import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.persistence.spi.PersistenceException;
 
 /**
@@ -30,6 +31,10 @@ public interface TableManager {
 
    int getFetchSize();
 
+   /**
+    * @deprecated Please use {@link AbstractStoreConfiguration#maxBatchSize()} instead.
+    */
+   @Deprecated
    int getBatchSize();
 
    boolean isUpsertSupported();

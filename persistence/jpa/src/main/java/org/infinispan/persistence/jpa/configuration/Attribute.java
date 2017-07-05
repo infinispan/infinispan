@@ -14,13 +14,14 @@ public enum Attribute {
 
    PERSISTENCE_UNIT_NAME("persistence-unit"),
    ENTITY_CLASS_NAME("entity-class"),
+   @Deprecated
    BATCH_SIZE("batch-size"),
    STORE_METADATA("store-metadata")
    ;
 
    private final String name;
 
-   private Attribute(final String name) {
+   Attribute(final String name) {
       this.name = name;
    }
 

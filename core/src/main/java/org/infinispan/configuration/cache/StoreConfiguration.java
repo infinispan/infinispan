@@ -58,5 +58,7 @@ public interface StoreConfiguration {
 
    boolean transactional();
 
+   int maxBatchSize();
+
    Properties properties();
 }

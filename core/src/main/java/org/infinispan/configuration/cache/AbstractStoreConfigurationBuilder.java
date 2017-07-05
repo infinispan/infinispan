@@ -1,5 +1,6 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.MAX_BATCH_SIZE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_PERSISTENT_STATE;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.IGNORE_MODIFICATIONS;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PRELOAD;
@@ -177,6 +178,12 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    @Override
    public S transactional(boolean b) {
       attributes.attribute(TRANSACTIONAL).set(b);
+      return self();
+   }
+
+   @Override
+   public S maxBatchSize(int maxBatchSize) {
+      attributes.attribute(MAX_BATCH_SIZE).set(maxBatchSize);
       return self();
    }
 

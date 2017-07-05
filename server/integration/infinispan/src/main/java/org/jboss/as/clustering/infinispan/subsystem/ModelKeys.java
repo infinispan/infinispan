@@ -53,7 +53,6 @@ public class ModelKeys {
     static final String BATCHING = "batching";
     static final String BINARY_NAME = "BINARY";
     static final String BLOCK_SIZE = "block-size";
-    static final String BUCKET_TABLE = "bucket-table";
     static final String BUFFER_SIZE = "buffer-size";
     static final String CACHE = "cache";
     static final String CACHE_AVAILABILITY = "cache-availability";
@@ -97,7 +96,6 @@ public class ModelKeys {
     static final String ENCRYPTION = "encryption";
     static final String ENCRYPTION_NAME = "ENCRYPTION";
     static final String ENABLED = "enabled";
-    static final String ENTRY_TABLE = "entry-table";
     static final String EVICTION = "eviction";
     static final String EVICTION_NAME = "EVICTION";
     @Deprecated
@@ -155,6 +153,7 @@ public class ModelKeys {
     static final String MACHINE = "machine";
     static final String MAPPER = "mapper";
     static final String MARSHALLER = "marshaller";
+    static final String MAX_BATCH_SIZE = "max-batch-size";
     static final String MAX_CONNECTIONS_PER_HOST = "max-connections-per-host";
     static final String MAX_ENTRIES = "max-entries";
     static final String MAX_IDLE = "max-idle";

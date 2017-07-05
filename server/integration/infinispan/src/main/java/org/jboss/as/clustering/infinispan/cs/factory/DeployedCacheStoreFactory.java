@@ -57,6 +57,7 @@ public class DeployedCacheStoreFactory implements CacheStoreFactory {
             replacedStoreBuilder.ignoreModifications(deployedConfiguration.ignoreModifications());
             replacedStoreBuilder.preload(deployedConfiguration.preload());
             replacedStoreBuilder.purgeOnStartup(deployedConfiguration.purgeOnStartup());
+            replacedStoreBuilder.maxBatchSize(deployedConfiguration.maxBatchSize());
             replacedStoreBuilder.shared(deployedConfiguration.shared());
             replacedStoreBuilder.withProperties(deployedConfiguration.properties());
 
