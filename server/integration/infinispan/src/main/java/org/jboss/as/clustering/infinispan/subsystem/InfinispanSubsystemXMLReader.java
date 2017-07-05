@@ -2042,6 +2042,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
 
     private String parseStoreAttribute(String name, XMLExtendedStreamReader reader, int index, Attribute attribute, String value, ModelNode store) throws XMLStreamException {
         switch (attribute) {
+            case MAX_BATCH_SIZE: {
+                BaseStoreConfigurationResource.MAX_BATCH_SIZE.parseAndSetParameter(value, store, reader);
+                break;
+            }
             case NAME: {
                 name = value;
                 BaseStoreConfigurationResource.NAME.parseAndSetParameter(value, store, reader);

@@ -267,12 +267,22 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
       try {
          connection = connectionFactory.getConnection();
          try (PreparedStatement upsertBatch = connection.prepareStatement(tableManager.getUpsertRowSql())) {
+            int batchSize = 0;
             for (MarshalledEntry entry : marshalledEntries) {
                String keyStr = key2Str(entry.getKey());
                prepareUpdateStatement(entry, keyStr, upsertBatch);
                upsertBatch.addBatch();
+               batchSize++;
+
+               if (batchSize == configuration.maxBatchSize()) {
+                  batchSize = 0;
+                  upsertBatch.executeBatch();
+                  upsertBatch.clearBatch();
+               }
             }
-            upsertBatch.executeBatch();
+
+            if (batchSize != 0)
+               upsertBatch.executeBatch();
          }
       } catch (SQLException | InterruptedException e) {
          throw log.sqlFailureWritingBatch(e);
@@ -287,12 +297,22 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
       try {
          connection = connectionFactory.getConnection();
          try (PreparedStatement deleteBatch = connection.prepareStatement(tableManager.getDeleteRowSql())) {
+            int batchSize = 0;
             for (Object key : keys) {
                String keyStr = key2Str(key);
                deleteBatch.setString(1, keyStr);
                deleteBatch.addBatch();
+               batchSize++;
+
+               if (batchSize == configuration.maxBatchSize()) {
+                  batchSize = 0;
+                  deleteBatch.executeBatch();
+                  deleteBatch.clearBatch();
+               }
             }
-            deleteBatch.executeBatch();
+
+            if (batchSize != 0)
+               deleteBatch.executeBatch();
          }
       } catch (SQLException e) {
          throw log.sqlFailureDeletingBatch(keys, e);

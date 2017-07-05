@@ -62,7 +62,7 @@ import org.infinispan.util.logging.LogFactory;
 @ConfiguredBy(JpaStoreConfiguration.class)
 public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    private static final Log log = LogFactory.getLog(JpaStore.class);
-   private static boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
    private JpaStoreConfiguration configuration;
    private EntityManagerFactory emf;
@@ -199,7 +199,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       EntityManager emStream = emf.createEntityManager();
       try {
          ScrollableResults results = null;
-         ArrayList<Object> batch = new ArrayList<Object>((int) configuration.batchSize());
+         ArrayList<Object> batch = configuration.maxBatchSize() > 0 ? new ArrayList<>(configuration.maxBatchSize()) : new ArrayList<>();
          EntityTransaction txStream = emStream.getTransaction();
          txStream.begin();
          try {
@@ -215,7 +215,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             while (results.next()) {
                Object o = results.get(0);
                batch.add(o);
-               if (batch.size() == configuration.batchSize()) {
+               if (batch.size() == configuration.maxBatchSize()) {
                   session.clear();
                   removeBatch(batch);
                }
@@ -716,11 +716,11 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             }
 
             metadataKeys = criteria.scroll(ScrollMode.FORWARD_ONLY);
-            ArrayList<MetadataEntityKey> batch = new ArrayList<MetadataEntityKey>((int) configuration.batchSize());
+            ArrayList<MetadataEntityKey> batch = configuration.maxBatchSize() > 0 ? new ArrayList<>(configuration.maxBatchSize()) : new ArrayList<>();
             while (metadataKeys.next()) {
                MetadataEntityKey mKey = (MetadataEntityKey) metadataKeys.get(0);
                batch.add(mKey);
-               if (batch.size() == configuration.batchSize()) {
+               if (batch.size() == configuration.maxBatchSize()) {
                   purgeBatch(batch, listener, eacs, currentTime);
                   batch.clear();
                }

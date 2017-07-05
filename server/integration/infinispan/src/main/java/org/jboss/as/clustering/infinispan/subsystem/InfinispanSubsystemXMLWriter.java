@@ -689,6 +689,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         this.writeOptional(writer, Attribute.PURGE, store, ModelKeys.PURGE);
         this.writeOptional(writer, Attribute.READ_ONLY, store, ModelKeys.READ_ONLY);
         this.writeOptional(writer, Attribute.SINGLETON, store, ModelKeys.SINGLETON);
+        this.writeOptional(writer, Attribute.MAX_BATCH_SIZE, store, ModelKeys.MAX_BATCH_SIZE);
     }
 
     private void writeStoreWriteBehind(XMLExtendedStreamWriter writer, ModelNode store) throws XMLStreamException {

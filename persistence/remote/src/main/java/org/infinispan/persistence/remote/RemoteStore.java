@@ -1,9 +1,9 @@
 package org.infinispan.persistence.remote;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
@@ -220,9 +220,17 @@ public class RemoteStore<K, V> implements AdvancedLoadWriteStore<K, V>, FlagAffe
 
    @Override
    public void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> marshalledEntries) {
-      remoteCache.putAll(
-            StreamSupport.stream(marshalledEntries.spliterator(), false)
-                  .collect(Collectors.toMap(this::getKey, this::getValue)));
+      Map<Object, Object> batch = new HashMap<>();
+      for (MarshalledEntry entry : marshalledEntries) {
+         batch.put(getKey(entry), getValue(entry));
+         if (batch.size() == configuration.maxBatchSize()) {
+            remoteCache.putAll(batch);
+            batch.clear();
+         }
+      }
+
+      if (!batch.isEmpty())
+         remoteCache.putAll(batch);
    }
 
    @Override

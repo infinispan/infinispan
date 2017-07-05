@@ -56,6 +56,11 @@ public abstract class AbstractStoreConfigurationChildBuilder<S> extends Abstract
    }
 
    @Override
+   public S maxBatchSize(int maxBatchSize) {
+      return (S)builder.maxBatchSize(maxBatchSize);
+   }
+
+   @Override
    public S addProperty(String key, String value) {
       return (S)builder.addProperty(key, value);
    }

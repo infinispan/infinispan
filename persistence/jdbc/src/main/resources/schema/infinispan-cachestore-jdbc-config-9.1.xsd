@@ -99,7 +99,7 @@
     </xs:attribute>
     <xs:attribute name="batch-size" type="xs:int" default="${TableManipulation.batchSize}">
       <xs:annotation>
-        <xs:documentation>The statement batch size used when modifying this table.</xs:documentation>
+        <xs:documentation>Deprecated, use the max-batch-size store property instead. The statement batch size used when modifying this table.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="create-on-start" type="xs:boolean" default="${TableManipulation.createOnStart}">

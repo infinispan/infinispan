@@ -49,6 +49,13 @@ public class BaseStoreConfigurationResource extends BaseLoaderConfigurationResou
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.FETCH_PERSISTENT_STATE.getDefaultValue()))
                     .build();
+    static final SimpleAttributeDefinition MAX_BATCH_SIZE =
+          new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_BATCH_SIZE, ModelType.INT, true)
+                .setXmlName(Attribute.MAX_BATCH_SIZE.getLocalName())
+                .setAllowExpression(true)
+                .setDefaultValue(new ModelNode().set(AbstractStoreConfiguration.MAX_BATCH_SIZE.getDefaultValue()))
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                .build();
     static final SimpleAttributeDefinition PASSIVATION =
             new SimpleAttributeDefinitionBuilder(ModelKeys.PASSIVATION, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.PASSIVATION.getLocalName())
@@ -79,9 +86,9 @@ public class BaseStoreConfigurationResource extends BaseLoaderConfigurationResou
                     .setDeprecated(Namespace.INFINISPAN_SERVER_9_0.getVersion())
                     .build();
 
-    static final AttributeDefinition[] BASE_STORE_ATTRIBUTES = {PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, SINGLETON};
+    static final AttributeDefinition[] BASE_STORE_ATTRIBUTES = {PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, SINGLETON, MAX_BATCH_SIZE};
     /* Note this has loader attributes as well */
-    static final AttributeDefinition[] BASE_STORE_PARAMETERS = {SHARED, PRELOAD, PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, SINGLETON, PROPERTIES};
+    static final AttributeDefinition[] BASE_STORE_PARAMETERS = {SHARED, PRELOAD, PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, SINGLETON, MAX_BATCH_SIZE, PROPERTIES};
 
     public BaseStoreConfigurationResource(PathElement path, String resourceKey, CacheConfigurationResource parent, AttributeDefinition[] attributes) {
         super(path, resourceKey, parent, Util.arrayConcat(BASE_STORE_ATTRIBUTES, attributes));

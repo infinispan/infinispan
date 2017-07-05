@@ -59,7 +59,6 @@ public abstract class AbstractJdbcStoreConfigurationSerializer extends AbstractS
       AttributeSet attributes = configuration.attributes();
       writer.writeStartElement(element);
       attributes.write(writer, TableManipulationConfiguration.TABLE_NAME_PREFIX, Attribute.PREFIX);
-      attributes.write(writer, TableManipulationConfiguration.BATCH_SIZE, Attribute.BATCH_SIZE);
       attributes.write(writer, TableManipulationConfiguration.FETCH_SIZE, Attribute.FETCH_SIZE);
       attributes.write(writer, TableManipulationConfiguration.CREATE_ON_START, Attribute.CREATE_ON_START);
       attributes.write(writer, TableManipulationConfiguration.DROP_ON_EXIT, Attribute.DROP_ON_EXIT);

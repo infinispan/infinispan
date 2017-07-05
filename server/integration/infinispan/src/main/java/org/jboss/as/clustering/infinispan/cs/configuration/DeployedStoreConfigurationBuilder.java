@@ -13,24 +13,21 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 public class DeployedStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<DeployedStoreConfiguration, DeployedStoreConfigurationBuilder> {
 
    private PersistenceConfigurationBuilder persistenceConfigurationBuilder;
-   private String customStoreClassName;
 
    public DeployedStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, DeployedStoreConfiguration.attributeDefinitionSet());
       this.persistenceConfigurationBuilder = builder;
    }
 
    @Override
    public DeployedStoreConfiguration create() {
-      return new DeployedStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications,
-              async.create(), singletonStore.create(), preload, shared, properties, persistenceConfigurationBuilder, customStoreClassName);
+      return new DeployedStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(), persistenceConfigurationBuilder);
    }
 
    @Override
    public Builder<?> read(DeployedStoreConfiguration template) {
       super.read(template);
       this.persistenceConfigurationBuilder = template.getPersistenceConfigurationBuilder();
-      this.customStoreClassName = template.getCustomStoreClassName();
       return this;
    }
 
@@ -40,7 +37,7 @@ public class DeployedStoreConfigurationBuilder extends AbstractStoreConfiguratio
    }
 
    public DeployedStoreConfigurationBuilder customStoreClassName(String customStoreClassName) {
-      this.customStoreClassName = customStoreClassName;
+      attributes.attribute(DeployedStoreConfiguration.CUSTOM_STORE_CLASS_NAME).set(customStoreClassName);
       return this;
    }
 

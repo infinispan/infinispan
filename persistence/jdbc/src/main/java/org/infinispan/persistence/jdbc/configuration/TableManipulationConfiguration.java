@@ -14,14 +14,13 @@ public class TableManipulationConfiguration {
    public static final AttributeDefinition<String> DATA_COLUMN_TYPE = AttributeDefinition.builder("dataColumnType", null, String.class).immutable().build();
    public static final AttributeDefinition<String> TIMESTAMP_COLUMN_NAME = AttributeDefinition.builder("timestampColumnName", null, String.class).immutable().build();
    public static final AttributeDefinition<String> TIMESTAMP_COLUMN_TYPE = AttributeDefinition.builder("timestampColumnType", null, String.class).immutable().build();
-   public static final AttributeDefinition<Integer> BATCH_SIZE = AttributeDefinition.builder("batchSize", TableManager.DEFAULT_BATCH_SIZE).immutable().build();
    public static final AttributeDefinition<Integer> FETCH_SIZE = AttributeDefinition.builder("fetchSize", TableManager.DEFAULT_FETCH_SIZE).immutable().build();
    public static final AttributeDefinition<Boolean> CREATE_ON_START = AttributeDefinition.builder("createOnStart", true).immutable().build();
    public static final AttributeDefinition<Boolean> DROP_ON_EXIT = AttributeDefinition.builder("dropOnExit", false).immutable().build();
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TableManipulationConfiguration.class, ID_COLUMN_NAME, ID_COLUMN_TYPE, TABLE_NAME_PREFIX, CACHE_NAME, DATA_COLUMN_NAME, DATA_COLUMN_TYPE,
-                              TIMESTAMP_COLUMN_NAME, TIMESTAMP_COLUMN_TYPE, BATCH_SIZE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
+                              TIMESTAMP_COLUMN_NAME, TIMESTAMP_COLUMN_TYPE, FETCH_SIZE, CREATE_ON_START, DROP_ON_EXIT);
    }
 
    private final Attribute<String> idColumnName;
@@ -32,13 +31,14 @@ public class TableManipulationConfiguration {
    private final Attribute<String> dataColumnType;
    private final Attribute<String> timestampColumnName;
    private final Attribute<String> timestampColumnType;
-   private final Attribute<Integer> batchSize;
    private final Attribute<Integer> fetchSize;
    private final Attribute<Boolean> createOnStart;
    private final Attribute<Boolean> dropOnExit;
    private final AttributeSet attributes;
+   private final int batchSize;
 
-   TableManipulationConfiguration(AttributeSet attributes) {
+   TableManipulationConfiguration(AttributeSet attributes, int batchSize) {
+      this.batchSize = batchSize;
       this.attributes = attributes.checkProtection();
       idColumnName = attributes.attribute(ID_COLUMN_NAME);
       idColumnType = attributes.attribute(ID_COLUMN_TYPE);
@@ -48,7 +48,6 @@ public class TableManipulationConfiguration {
       dataColumnType = attributes.attribute(DATA_COLUMN_TYPE);
       timestampColumnName = attributes.attribute(TIMESTAMP_COLUMN_NAME);
       timestampColumnType = attributes.attribute(TIMESTAMP_COLUMN_TYPE);
-      batchSize = attributes.attribute(BATCH_SIZE);
       fetchSize = attributes.attribute(FETCH_SIZE);
       createOnStart = attributes.attribute(CREATE_ON_START);
       dropOnExit = attributes.attribute(DROP_ON_EXIT);
@@ -99,10 +98,12 @@ public class TableManipulationConfiguration {
    }
 
    /**
+    * @deprecated please use {@link org.infinispan.configuration.cache.AbstractStoreConfiguration#maxBatchSize()} instead.
     * @return the size of batches to process.  Guaranteed to be a power of two.
     */
+   @Deprecated
    public int batchSize() {
-      return batchSize.get();
+      return batchSize;
    }
 
    AttributeSet attributes() {

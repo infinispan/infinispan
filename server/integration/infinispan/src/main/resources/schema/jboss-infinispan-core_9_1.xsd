@@ -927,6 +927,11 @@
                 <xs:documentation>If true, the cache store will only be used to load entries. Any modifications made to the caches will not be applied to the store.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="max-batch-size" type="xs:int" default="${Server.BaseStore.max-batch-size}">
+            <xs:annotation>
+                <xs:documentation>The maximum size of a batch to be inserted/deleted from the store. If the value is less than one, then no upper limit is placed on the number of operations in a batch.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="write-behind">

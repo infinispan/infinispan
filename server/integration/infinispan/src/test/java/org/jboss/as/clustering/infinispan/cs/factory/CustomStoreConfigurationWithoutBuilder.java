@@ -49,6 +49,11 @@ public class CustomStoreConfigurationWithoutBuilder implements StoreConfiguratio
    }
 
    @Override
+   public int maxBatchSize() {
+      return -1;
+   }
+
+   @Override
    public Properties properties() {
       return null;
    }

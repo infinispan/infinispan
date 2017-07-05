@@ -174,6 +174,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.READ_ONLY, "store");
         sharedAttributeResolver.put(ModelKeys.SHARED, "store");
         sharedAttributeResolver.put(ModelKeys.SINGLETON, "store");
+        sharedAttributeResolver.put(ModelKeys.MAX_BATCH_SIZE, "store");
         sharedAttributeResolver.put(ModelKeys.PROPERTY, "store");
         sharedAttributeResolver.put(ModelKeys.PROPERTIES, "store");
 
@@ -187,8 +188,6 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.ID_COLUMN + ".column", "jdbc-store");
         sharedAttributeResolver.put(ModelKeys.DATA_COLUMN + ".column", "jdbc-store");
         sharedAttributeResolver.put(ModelKeys.TIMESTAMP_COLUMN + ".column", "jdbc-store");
-        sharedAttributeResolver.put(ModelKeys.ENTRY_TABLE + "table", "jdbc-store");
-        sharedAttributeResolver.put(ModelKeys.BUCKET_TABLE + "table", "jdbc-store");
 
         // shared cache metrics
         sharedAttributeResolver.put(MetricKeys.AVERAGE_READ_TIME, "cache");

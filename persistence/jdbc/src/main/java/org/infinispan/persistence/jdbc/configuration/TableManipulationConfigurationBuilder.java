@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.BATCH_SIZE;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.CREATE_ON_START;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.DATA_COLUMN_NAME;
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.DATA_COLUMN_TYPE;
@@ -30,6 +29,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
                                                                                                                                                                           AbstractJdbcStoreConfigurationChildBuilder<B> implements Builder<TableManipulationConfiguration>, Self<S> {
    private static final Log log = LogFactory.getLog(TableManipulationConfigurationBuilder.class, Log.class);
    private final AttributeSet attributes;
+   private int batchSize; // TODO remove batchSize in 10.0
 
    TableManipulationConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, B> builder) {
       super(builder);
@@ -37,11 +37,12 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    }
 
    /**
-    * Repetitive DB operations this are batched according to this parameter. This is an optional parameter, and if it
-    * is not specified it will be defaulted to {@link TableManager#DEFAULT_BATCH_SIZE}.
+    * @deprecated Please use {@link org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder#maxBatchSize(int)} instead.
     */
+   @Deprecated
    public S batchSize(int batchSize) {
-      attributes.attribute(BATCH_SIZE).set(batchSize);
+      this.batchSize = batchSize;
+      maxBatchSize(batchSize);
       return self();
    }
 
@@ -155,7 +156,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
 
    @Override
    public TableManipulationConfiguration create() {
-      return new TableManipulationConfiguration(attributes.protect());
+      return new TableManipulationConfiguration(attributes.protect(), batchSize);
    }
 
    @Override

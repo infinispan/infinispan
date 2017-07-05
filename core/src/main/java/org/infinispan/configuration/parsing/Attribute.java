@@ -72,6 +72,7 @@ public enum Attribute {
     MACHINE_ID("machine"),
     MAPPER("mapper"),
     MARSHALLER_CLASS("marshaller"),
+    MAX_BATCH_SIZE("max-batch-size"),
     MAX_ENTRIES("max-entries"),
     MAX_IDLE("max-idle"),
     MAX_RETRIES("max-retries"),
