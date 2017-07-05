@@ -5,6 +5,6 @@ package org.infinispan.query.backend;
  *
  * @author Ales Justin
  */
-public interface ExtendedSearchWorkCreator<T> extends SearchWorkCreator<T> {
+public interface ExtendedSearchWorkCreator extends SearchWorkCreator {
    boolean shouldRemove(SearchWorkCreatorContext context);
 }

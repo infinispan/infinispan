@@ -17,7 +17,9 @@ import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -74,7 +76,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    private QueryKnownClasses queryKnownClasses;
 
-   private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<>();
+   private SearchWorkCreator searchWorkCreator = new DefaultSearchWorkCreator();
 
    private SearchFactoryHandler searchFactoryHandler;
 
@@ -222,7 +224,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       Boolean isIndexable = queryKnownClasses.get(entityType);
       if (isIndexable != null && isIndexable.booleanValue()) {
          if (searchFactoryHandler.hasIndex(entityType)) {
-            performSearchWorks(searchWorkCreator.createPerEntityTypeWorks((Class<Object>) entityType, WorkType.PURGE_ALL), transactionContext);
+            IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(entityType);
+            performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(type, WorkType.PURGE_ALL), transactionContext);
          }
       }
    }
@@ -232,7 +235,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       for (Class c : queryKnownClasses.keys()) {
          if (searchFactoryHandler.hasIndex(c)) {
             //noinspection unchecked
-            performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(c, WorkType.PURGE_ALL), transactionContext);
+            IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(c);
+            performSearchWorks(searchWorkCreator.createPerEntityTypeWorks(type, WorkType.PURGE_ALL), transactionContext);
          }
       }
    }
@@ -306,11 +310,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     *
     * @param searchWorkCreator custom {@link org.infinispan.query.backend.SearchWorkCreator}
     */
-   public void setSearchWorkCreator(SearchWorkCreator<Object> searchWorkCreator) {
+   public void setSearchWorkCreator(SearchWorkCreator searchWorkCreator) {
       this.searchWorkCreator = searchWorkCreator;
    }
 
-   public SearchWorkCreator<Object> getSearchWorkCreator() {
+   public SearchWorkCreator getSearchWorkCreator() {
       return searchWorkCreator;
    }
 

@@ -24,7 +24,7 @@ public class CustomSearchWorkCreatorTest extends SingleCacheManagerTest {
    @Test
    @SuppressWarnings("unchecked")
    public void testCustomWorkCreator() throws Exception {
-      DefaultSearchWorkCreator<Object> customSearchWorkCreator = spy(new DefaultSearchWorkCreator<>());
+      DefaultSearchWorkCreator customSearchWorkCreator = spy(new DefaultSearchWorkCreator());
       QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       queryInterceptor.setSearchWorkCreator(customSearchWorkCreator);
       KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
