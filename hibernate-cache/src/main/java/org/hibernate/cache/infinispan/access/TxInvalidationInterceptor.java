@@ -17,6 +17,7 @@ import org.hibernate.cache.infinispan.util.InfinispanMessageLogger;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -31,6 +32,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -54,7 +56,10 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( TxInvalidationInterceptor.class );
    private static final Log ispnLog = LogFactory.getLog(TxInvalidationInterceptor.class);
 
-	@Override
+   private final InvocationFinallyFunction broadcastClearIfNotLocal = this::broadcastClearIfNotLocal;
+   private final InvocationFinallyFunction broadcastInvalidateForPrepare = this::broadcastInvalidateForPrepare;
+
+   @Override
 	public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
 		if ( !isPutForExternalRead( command ) ) {
 			return handleInvalidate( ctx, command, command.getKey() );
@@ -74,46 +79,50 @@ public class TxInvalidationInterceptor extends BaseInvalidationInterceptor {
 
 	@Override
 	public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
-         FlagAffectedCommand flagCmd = (FlagAffectedCommand) rCommand;
-         if ( !isLocalModeForced( flagCmd ) ) {
-            // just broadcast the clear command - this is simplest!
-            if ( rCtx.isOriginLocal() ) {
-               rpcManager.invokeRemotely( getMembers(), rCommand, isSynchronous(flagCmd) ? syncRpcOptions : asyncRpcOptions );
-            }
-         }
-         return rv;
-      } );
+      return invokeNextAndHandle( ctx, command, broadcastClearIfNotLocal);
 	}
 
-	@Override
+   private Object broadcastClearIfNotLocal(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+      FlagAffectedCommand flagCmd = (FlagAffectedCommand) rCommand;
+      if ( !isLocalModeForced( flagCmd ) ) {
+         // just broadcast the clear command - this is simplest!
+         if ( rCtx.isOriginLocal() ) {
+            rpcManager.invokeRemotely( getMembers(), rCommand, isSynchronous(flagCmd) ? syncRpcOptions : asyncRpcOptions );
+         }
+      }
+      return rv;
+   }
+
+   @Override
 	public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
 		return handleInvalidate( ctx, command, command.getMap().keySet().toArray() );
 	}
 
 	@Override
 	public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
-         log.tracef( "Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty" );
-         // fetch the modifications before the transaction is committed (and thus removed from the txTable)
-         TxInvocationContext txCtx = (TxInvocationContext) rCtx;
-         if ( shouldInvokeRemoteTxCommand( txCtx ) ) {
-            if ( txCtx.getTransaction() == null ) {
-               throw new IllegalStateException( "We must have an associated transaction" );
-            }
-
-            PrepareCommand prepareCmd = (PrepareCommand) rCommand;
-            List<WriteCommand> mods = Arrays.asList( prepareCmd.getModifications() );
-            broadcastInvalidateForPrepare( mods, txCtx );
-         }
-         else {
-            log.tracef( "Nothing to invalidate - no modifications in the transaction." );
-         }
-         return rv;
-      } );
+      return invokeNextAndHandle( ctx, command, broadcastInvalidateForPrepare);
 	}
 
-	@Override
+   private Object broadcastInvalidateForPrepare(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) throws Throwable {
+      log.tracef( "Entering InvalidationInterceptor's prepare phase.  Ctx flags are empty" );
+      // fetch the modifications before the transaction is committed (and thus removed from the txTable)
+      TxInvocationContext txCtx = (TxInvocationContext) rCtx;
+      if ( shouldInvokeRemoteTxCommand( txCtx ) ) {
+         if ( txCtx.getTransaction() == null ) {
+            throw new IllegalStateException( "We must have an associated transaction" );
+         }
+
+         PrepareCommand prepareCmd = (PrepareCommand) rCommand;
+         List<WriteCommand> mods = Arrays.asList( prepareCmd.getModifications() );
+         broadcastInvalidateForPrepare( mods, txCtx );
+      }
+      else {
+         log.tracef( "Nothing to invalidate - no modifications in the transaction." );
+      }
+      return rv;
+   }
+
+   @Override
 	public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
 		Object retVal = invokeNext( ctx, command );
 		if ( ctx.isOriginLocal() ) {

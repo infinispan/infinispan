@@ -69,33 +69,15 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 		if (writeCH.isReplicated()) {
 			// local result is always ignored
          List<Address> finalOwners = owners;
-         return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
-            WriteCommand writeCmd = (WriteCommand) rCommand;
-            if (rCtx.isOriginLocal() && writeCmd.isSuccessful()) {
-               // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
-               // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
-               // unlocking (and committing) the entry.
-               return rpcManager.invokeRemotelyAsync(
-                     finalOwners, writeCmd, isSynchronous( writeCmd ) ? syncRpcOptions : asyncRpcOptions);
-            }
-            return null;
-         } );
+         return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) ->
+               invokeRemotelyAsync(finalOwners, rCtx, (WriteCommand) rCommand));
 		}
 		else {
 			owners = writeCH.locateOwners(command.getKey());
 			if (owners.contains(rpcManager.getAddress())) {
             List<Address> finalOwners = owners;
-            return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) -> {
-               WriteCommand writeCmd = (WriteCommand) rCommand;
-               if (rCtx.isOriginLocal() && writeCmd.isSuccessful()) {
-                  // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
-                  // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
-                  // unlocking (and committing) the entry.
-                  return rpcManager.invokeRemotelyAsync(
-                        finalOwners, writeCmd, isSynchronous( writeCmd ) ? syncRpcOptions : asyncRpcOptions);
-               }
-               return null;
-            } );
+            return invokeNextAndHandle( ctx, command, (rCtx, rCommand, rv, throwable) ->
+                  invokeRemotelyAsync(finalOwners, rCtx, (WriteCommand) rCommand));
 			}
 			else {
 				log.tracef("Not invoking %s on %s since it is not an owner", command, rpcManager.getAddress());
@@ -110,4 +92,16 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 		}
 
 	}
+
+   public Object invokeRemotelyAsync(List<Address> finalOwners, InvocationContext rCtx, WriteCommand rCommand) {
+      WriteCommand writeCmd = rCommand;
+      if (rCtx.isOriginLocal() && writeCmd.isSuccessful()) {
+         // This is called with the entry locked. In order to avoid deadlocks we must not wait for RPC while
+         // holding the lock, therefore we'll return a future and wait for it in LockingInterceptor after
+         // unlocking (and committing) the entry.
+         return rpcManager.invokeRemotelyAsync(
+               finalOwners, writeCmd, isSynchronous( writeCmd ) ? syncRpcOptions : asyncRpcOptions);
+      }
+      return null;
+   }
 }

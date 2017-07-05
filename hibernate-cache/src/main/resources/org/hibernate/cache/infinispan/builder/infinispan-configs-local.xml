@@ -17,7 +17,6 @@
 
       <!-- Default configuration is appropriate for entity/collection caching. -->
       <local-cache-configuration name="entity" simple-cache="true" statistics="false" statistics-available="false">
-         <locking isolation="READ_COMMITTED"/>
          <transaction mode="NONE" />
          <eviction size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
@@ -25,14 +24,13 @@
 
       <!-- A config appropriate for query caching. Does not replicate queries. -->
       <local-cache-configuration name="local-query" simple-cache="true" statistics="false" statistics-available="false">
-         <locking isolation="READ_COMMITTED"/>
-         <transaction mode="NONE" />
+         <transaction mode="NONE"/>
          <eviction size="10000" strategy="LRU"/>
          <expiration max-idle="100000" interval="5000"/>
       </local-cache-configuration>
 
       <local-cache-configuration name="timestamps" simple-cache="true" statistics="false" statistics-available="false">
-         <locking concurrency-level="1000" acquire-timeout="15000" isolation="READ_COMMITTED"/>
+         <locking concurrency-level="1000" acquire-timeout="15000"/>
          <!-- Explicitly non transactional -->
          <transaction mode="NONE"/>
          <!--  Don't ever evict modification timestamps -->
@@ -43,7 +41,6 @@
       <!-- When providing custom configuration, always make this cache local and non-transactional.
            To avoid possible leaks, use expiration (max idle time). Optimize for speed.-->
       <local-cache-configuration name="pending-puts" simple-cache="true" statistics="false" statistics-available="false">
-         <locking isolation="READ_COMMITTED"/>
          <transaction mode="NONE"/>
          <expiration max-idle="60000" />
       </local-cache-configuration>

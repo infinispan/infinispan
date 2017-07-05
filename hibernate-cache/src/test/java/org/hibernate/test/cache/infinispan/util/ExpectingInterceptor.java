@@ -23,6 +23,8 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
    private final static Log log = LogFactory.getLog(ExpectingInterceptor.class);
    private final List<Condition> conditions = new LinkedList<>();
 
+   private InvocationFinallyAction assertCondition = this::assertCondition;
+
    public static ExpectingInterceptor get(AdvancedCache cache) {
       ExpectingInterceptor self = cache.getAsyncInterceptorChain().findInterceptorWithClass(ExpectingInterceptor.class);
       if (self != null) {
@@ -58,36 +60,34 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
 
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      return invokeNextAndFinally( ctx, command, new InvocationFinallyAction() {
-         @Override
-         public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable)
-               throws Throwable {
-            boolean succeeded = throwable == null;
-            log.tracef("After command(successful=%s) %s", succeeded, rCommand);
-            List<Runnable> toExecute = new ArrayList<>();
-            synchronized (ExpectingInterceptor.this) {
-               for (Iterator<Condition> iterator = conditions.iterator(); iterator.hasNext(); ) {
-                  Condition condition = iterator.next();
-                  log.tracef("Testing condition %s", condition);
-                  if ((condition.success == null || condition.success == succeeded) && condition.predicate.test(rCtx, rCommand)) {
-                     assert condition.action != null;
-                     log.trace("Condition succeeded");
-                     toExecute.add(condition.action);
-                     if (condition.removeCheck == null || condition.removeCheck.getAsBoolean()) {
-                        iterator.remove();
-                     }
-                  } else {
-                     log.trace("Condition test failed");
-                  }
+      return invokeNextAndFinally(ctx, command, assertCondition);
+   }
+
+   private void assertCondition(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable {
+      boolean succeeded = throwable == null;
+      log.tracef("After command(successful=%s) %s", succeeded, rCommand);
+      List<Runnable> toExecute = new ArrayList<>();
+      synchronized (ExpectingInterceptor.this) {
+         for (Iterator<Condition> iterator = conditions.iterator(); iterator.hasNext(); ) {
+            Condition condition = iterator.next();
+            log.tracef("Testing condition %s", condition);
+            if ((condition.success == null || condition.success == succeeded) && condition.predicate.test(rCtx, rCommand)) {
+               assert condition.action != null;
+               log.trace("Condition succeeded");
+               toExecute.add(condition.action);
+               if (condition.removeCheck == null || condition.removeCheck.getAsBoolean()) {
+                  iterator.remove();
                }
-            }
-            // execute without holding the lock
-            for (Runnable runnable : toExecute) {
-               log.tracef("Executing %s", runnable);
-               runnable.run();
+            } else {
+               log.trace("Condition test failed");
             }
          }
-      } );
+      }
+      // execute without holding the lock
+      for (Runnable runnable : toExecute) {
+         log.tracef("Executing %s", runnable);
+         runnable.run();
+      }
    }
 
    public class Condition {

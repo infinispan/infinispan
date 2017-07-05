@@ -671,7 +671,7 @@ public class PutFromLoadValidator {
 		return lockOwner instanceof SharedSessionContractImplementor ? "Session#" + lockOwner.hashCode() : lockOwner.toString();
 	}
 
-	public void remotePendingPutsCache() {
+	public void removePendingPutsCache() {
       String pendingPutsName = getPendingPutsName( cache );
       EmbeddedCacheManager cm = cache.getCacheManager();
       cm.removeCache( pendingPutsName );

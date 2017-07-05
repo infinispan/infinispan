@@ -106,7 +106,7 @@ public class PutFromLoadValidatorUnitTest {
 		cache.clear();
 		cm.getCache(cache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE).clear();
 
-      testee.remotePendingPutsCache();
+      testee.removePendingPutsCache();
 	}
 
 	private static InfinispanRegionFactory regionFactory(EmbeddedCacheManager cm) {
