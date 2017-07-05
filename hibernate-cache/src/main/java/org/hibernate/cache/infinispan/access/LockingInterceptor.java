@@ -12,7 +12,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-import org.infinispan.util.concurrent.locks.LockUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -54,7 +53,7 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
    protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       try {
          if (log.isTraceEnabled()) {
-            Ownership ownership = LockUtil.getLockOwnership( command.getKey(), cdl );
+            Ownership ownership = cdl.getCacheTopology().getDistribution(command.getKey()).writeOwnership();
             log.tracef( "Am I owner for key=%s ? %s", command.getKey(), ownership);
          }
 
