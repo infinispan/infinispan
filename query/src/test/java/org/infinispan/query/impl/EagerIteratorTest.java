@@ -98,11 +98,6 @@ public class EagerIteratorTest {
       }
 
       @Override
-      public Class<?> getClazz() {
-         return null;
-      }
-
-      @Override
       public Serializable getId() {
          return key;
       }

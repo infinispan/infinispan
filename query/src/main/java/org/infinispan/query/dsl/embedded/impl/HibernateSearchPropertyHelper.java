@@ -339,7 +339,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
          return null;
       }
       DocumentBuilderIndexedEntity docBuilder = entityIndexBinding.getDocumentBuilder();
-      TypeMetadata rootTypeMetadata = docBuilder.getMetadata();
+      TypeMetadata rootTypeMetadata = docBuilder.getTypeMetadata();
       TypeMetadata typeMetadata = rootTypeMetadata;
       List<EmbeddedTypeMetadata> embeddedTypeMetadataList = new ArrayList<>(propertyPath.length - 1);
       for (int i = 0; i < propertyPath.length; i++) {

@@ -34,6 +34,7 @@ import org.hibernate.search.query.dsl.RangeMatchingContext;
 import org.hibernate.search.query.dsl.RangeTerminationExcludable;
 import org.hibernate.search.query.dsl.impl.FieldBridgeCustomization;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.syntax.AggregationExpr;
 import org.infinispan.objectfilter.impl.syntax.AndExpr;
@@ -126,7 +127,7 @@ public final class LuceneQueryMaker<TypeMetadata> implements Visitor<Query, Quer
       fieldBridgeAndAnalyzerProvider.overrideAnalyzers(parsingResult, entityContext);
       queryBuilder = entityContext.get();
       entityType = parsingResult.getTargetEntityMetadata();
-      AnalyzerReference analyzerReference = ((ExtendedSearchIntegrator) searchFactory).getAnalyzerReference(targetedType);
+      AnalyzerReference analyzerReference = ((ExtendedSearchIntegrator) searchFactory).getAnalyzerReference(new PojoIndexedTypeIdentifier(targetedType));
       if (analyzerReference.is(LuceneAnalyzerReference.class)) {
          entityAnalyzer = analyzerReference.unwrap(LuceneAnalyzerReference.class).getAnalyzer();
       }
