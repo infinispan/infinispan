@@ -1,0 +1,62 @@
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ License: GNU Lesser General Public License (LGPL), version 2.1 or later.
+  ~ See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
+  -->
+<config xmlns="urn:org:jgroups"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-4.0.xsd">
+   <TCP bind_port="7800"
+        enable_diagnostics="false"
+        thread_naming_pattern="pl"
+        send_buf_size="640k"
+        sock_conn_timeout="300"
+        bundler_type="no-bundler"
+
+         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
+         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
+         thread_pool.keep_alive_time="60000"
+   />
+
+   <org.infinispan.test.fwk.TEST_PING ergonomics="false" testName=""/>
+
+   <MERGE3 max_interval="10000"
+           min_interval="3000"/>
+   <FD_SOCK/>
+   <!--
+       Note that this is an atypically short timeout and a small number of retries
+       configured this way to speed up unit testing, since we know all nodes run in the same JVM
+       and hence failure detections will be very quick.
+          -->
+   <FD timeout="3000" max_tries="3"/>
+   <pbcast.NAKACK2 use_mcast_xmit="false"
+                   xmit_interval="1000"
+                   xmit_table_num_rows="50"
+                   xmit_table_msgs_per_row="1024"
+                   xmit_table_max_compaction_time="30000"
+                   resend_last_seqno="true"
+   />
+   <UNICAST3 xmit_interval="500"
+             xmit_table_num_rows="50"
+             xmit_table_msgs_per_row="1024"
+             xmit_table_max_compaction_time="30000"
+             conn_expiry_timeout="0"
+   />
+   <pbcast.STABLE stability_delay="500"
+                  desired_avg_gossip="5000"
+                  max_bytes="1M"
+   />
+   <pbcast.GMS print_local_addr="false"
+               join_timeout="15000"
+               view_bundling="true"
+   />
+
+    <!-- At this place we can react on DISCONNECTs immediatelly -->
+    <org.infinispan.test.hibernate.cache.util.TestDisconnectHandler />
+
+   <MFC max_credits="2M"
+        min_threshold="0.40"
+    />
+   <FRAG2 frag_size="60000" />
+</config>
