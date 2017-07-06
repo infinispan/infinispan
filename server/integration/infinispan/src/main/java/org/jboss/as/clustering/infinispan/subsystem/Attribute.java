@@ -157,6 +157,7 @@ public enum Attribute {
     SINGLETON(ModelKeys.SINGLETON),
     SITE(ModelKeys.SITE),
     SIZE(ModelKeys.SIZE),
+    SLOT(ModelKeys.SLOT),
     SOCKET_TIMEOUT(ModelKeys.SOCKET_TIMEOUT),
     SNI_HOSTNAME(ModelKeys.SNI_HOSTNAME),
     STACK(ModelKeys.STACK),

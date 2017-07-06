@@ -96,6 +96,11 @@
                     <xs:documentation>Defines a thread pool used for asynchronous transport communication.</xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="modules" type="tns:cache-container-modules" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>A list of zero or more module dependencies to make available to the global ClassLoader of the cache container.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
             <xs:choice maxOccurs="unbounded">
                 <xs:element name="local-cache-configuration" type="tns:local-cache">
                     <xs:annotation>
@@ -2026,5 +2031,47 @@
                 <xs:documentation>Timeout in milliseconds to remove idle thread from the pool.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="cache-container-modules">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="module">
+                <xs:annotation>
+                    <xs:documentation>
+                        A module dependency specification.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="name" use="required">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The dependency module name (required),
+                                which consists of one or more dot (.)-separated segments. Each segment must begin and end
+                                with an alphanumeric or underscore (_), and may otherwise contain alphanumerics, underscores, and hyphens (-).
+                            </xs:documentation>
+                        </xs:annotation>
+                        <xs:simpleType>
+                            <xs:restriction base="xs:string">
+                                <xs:pattern value="[a-zA-Z0-9_]([-a-zA-Z0-9_]*[a-zA-Z0-9_])?(\.[a-zA-Z0-9_]([-a-zA-Z0-9_]*[a-zA-Z0-9_])?)*"/>
+                            </xs:restriction>
+                        </xs:simpleType>
+                    </xs:attribute>
+                    <xs:attribute name="slot" use="optional" default="main">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The dependency module version slot (optional).
+                                A slot may consist of one or more alphanumerics, hyphens (-), underscores (_),
+                                plus signs (+), asterisks (*), or dots (.).
+                            </xs:documentation>
+                        </xs:annotation>
+                        <xs:simpleType>
+                            <xs:restriction base="xs:string">
+                                <xs:pattern value="[-a-zA-Z0-9_+*.]+"/>
+                            </xs:restriction>
+                        </xs:simpleType>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
+        </xs:choice>
     </xs:complexType>
 </xs:schema>
