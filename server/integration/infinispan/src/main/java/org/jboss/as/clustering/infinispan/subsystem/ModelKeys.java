@@ -172,6 +172,8 @@ public class ModelKeys {
     static final String MODE = "mode";
     static final String MODIFICATION_QUEUE_SIZE = "modification-queue-size";
     static final String MODULE = "module";
+    static final String MODULES = "modules";
+    static final String MODULES_NAME = "MODULES";
     static final String NAME = "name";
     static final String NOTIFICATIONS = "notifications";
     static final String OBJECT_NAME = "OBJECT";
@@ -231,6 +233,7 @@ public class ModelKeys {
     static final String SINGLETON = "singleton";
     static final String SITE = "site";
     static final String SIZE = "size";
+    static final String SLOT = "slot";
     static final String SNI_HOSTNAME = "sni-hostname";
     static final String SOCKET_TIMEOUT = "socket-timeout";
     static final String STACK = "stack";

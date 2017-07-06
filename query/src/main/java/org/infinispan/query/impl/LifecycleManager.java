@@ -5,7 +5,8 @@ import static org.infinispan.query.impl.IndexPropertyInspector.getLockingCacheNa
 import static org.infinispan.query.impl.IndexPropertyInspector.getMetadataCacheName;
 import static org.infinispan.query.impl.IndexPropertyInspector.hasInfinispanDirectory;
 
-import java.util.Iterator;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -13,9 +14,9 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.hibernate.search.cfg.Environment;
-import org.hibernate.search.cfg.SearchMapping;
+import org.hibernate.search.analyzer.definition.LuceneAnalysisDefinitionProvider;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
@@ -23,6 +24,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -310,22 +312,13 @@ public class LifecycleManager implements ModuleLifecycle {
       }
       //defend against multiple initialization:
       if (searchFactory == null) {
-         GlobalComponentRegistry globalComponentRegistry = cr.getGlobalComponentRegistry();
-         EmbeddedCacheManager uninitializedCacheManager = globalComponentRegistry.getComponent(EmbeddedCacheManager.class);
-         Properties indexingProperties = addProgrammaticMappings(indexingConfiguration.properties(), cr);
-         Class<?>[] indexedEntities = indexingConfiguration.indexedEntities().toArray(new Class<?>[indexingConfiguration.indexedEntities().size()]);
-         if (indexedEntities.length > 0 && hasInfinispanDirectory(indexingProperties)) {
-            String metadataCacheName = getMetadataCacheName(indexingProperties);
-            String lockingCacheName = getLockingCacheName(indexingProperties);
-            String dataCacheName = getDataCacheName(indexingProperties);
-            if (cacheName.equals(dataCacheName) || cacheName.equals(metadataCacheName) || cacheName.equals(lockingCacheName)) {
-               // Infinispan Directory causes runtime circular dependencies so we need to postpone creation of indexes until all components are initialised
-               indexedEntities = new Class[0];
-            }
-         }
-         allowDynamicSortingByDefault(indexingProperties);
+         ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
+         Collection<ProgrammaticSearchMappingProvider> programmaticSearchMappingProviders = ServiceFinder.load(ProgrammaticSearchMappingProvider.class, aggregatedClassLoader);
+         Collection<LuceneAnalysisDefinitionProvider> analyzerDefProviders = ServiceFinder.load(LuceneAnalysisDefinitionProvider.class, aggregatedClassLoader);
          // Set up the search factory for Hibernate Search first.
-         SearchConfiguration config = new SearchableCacheConfiguration(indexedEntities, indexingProperties, uninitializedCacheManager, cr);
+         SearchConfiguration config = new SearchableCacheConfiguration(indexingConfiguration.indexedEntities(),
+               indexingConfiguration.properties(), programmaticSearchMappingProviders, analyzerDefProviders, cr, aggregatedClassLoader);
+
          searchFactory = new SearchIntegratorBuilder().configuration(config).buildSearchIntegrator();
          cr.registerComponent(searchFactory, SearchIntegrator.class);
       }
@@ -333,39 +326,47 @@ public class LifecycleManager implements ModuleLifecycle {
    }
 
    /**
-    * Dynamic index uninverting is deprecated: using it will cause warnings to be logged,
-    * to encourage people to use the annotation org.hibernate.search.annotations.SortableField.
-    * The default in Hibernate Search is to throw an exception rather than logging a warning;
-    * we opt to be more lenient by default in the Infinispan use case, matching the behaviour
-    * of previous versions of Hibernate Search.
+    * Create a class loader that delegates loading to an ordered set of class loaders.
     *
-    * @param indexingProperties
+    * @param globalClassLoader the cache manager's global ClassLoader
+    * @return the aggreated ClassLoader
     */
-   private void allowDynamicSortingByDefault(Properties indexingProperties) {
-      indexingProperties.putIfAbsent(Environment.INDEX_UNINVERTING_ALLOWED, Boolean.TRUE.toString());
-   }
+   private ClassLoader makeAggregatedClassLoader(ClassLoader globalClassLoader) {
+      Set<ClassLoader> classLoaders = new LinkedHashSet<>();  // use an ordered set to deduplicate possible duplicates!
 
-   private Properties addProgrammaticMappings(Properties indexingProperties, ComponentRegistry cr) {
-      Iterator<ProgrammaticSearchMappingProvider> providers = ServiceFinder.load(ProgrammaticSearchMappingProvider.class).iterator();
-      if (providers.hasNext()) {
-         SearchMapping mapping = (SearchMapping) indexingProperties.get(Environment.MODEL_MAPPING);
-         if (mapping == null) {
-            mapping = new SearchMapping();
-            Properties amendedProperties = new Properties();
-            amendedProperties.putAll(indexingProperties);
-            amendedProperties.put(Environment.MODEL_MAPPING, mapping);
-            indexingProperties = amendedProperties;
-         }
-         Cache cache = cr.getComponent(Cache.class);
-         while (providers.hasNext()) {
-            ProgrammaticSearchMappingProvider provider = providers.next();
-            if (log.isDebugEnabled()) {
-               log.debugf("Loading programmatic search mappings for cache %s from provider : %s", cache.getName(), provider.getClass().getName());
-            }
-            provider.defineMappings(cache, mapping);
-         }
+      // add the cache manager's CL
+      if (globalClassLoader != null) {
+         classLoaders.add(globalClassLoader);
       }
-      return indexingProperties;
+
+      // add Infinispan core's CL
+      classLoaders.add(ClassLoaderService.class.getClassLoader());
+
+      // add this module's CL
+      classLoaders.add(getClass().getClassLoader());
+
+      // add the TCCL
+      try {
+         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+         if (tccl != null) {
+            classLoaders.add(tccl);
+         }
+      } catch (Exception e) {
+         // ignored
+      }
+
+      // add the system CL
+      try {
+         ClassLoader syscl = ClassLoader.getSystemClassLoader();
+         if (syscl != null) {
+            classLoaders.add(syscl);
+         }
+
+      } catch (Exception e) {
+         // ignored
+      }
+
+      return new AggregatedClassLoader(classLoaders);
    }
 
    @Override

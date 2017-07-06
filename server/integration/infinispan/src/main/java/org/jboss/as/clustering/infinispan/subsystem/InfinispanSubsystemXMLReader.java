@@ -245,6 +245,14 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                    }
                    break;
                 }
+                case MODULES: {
+                   if (namespace.since(Namespace.INFINISPAN_SERVER_9_2)) {
+                      parseModules(reader, containerAddress, operations);
+                   } else {
+                      throw ParseUtils.unexpectedElement(reader);
+                   }
+                   break;
+                }
                 case LOCAL_CACHE: {
                     parseLocalCache(reader, containerAddress, operations, false);
                     break;
@@ -395,6 +403,47 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         }
 
         ParseUtils.requireNoContent(reader);
+    }
+
+    private void parseModules(XMLExtendedStreamReader reader, PathAddress containerAddress, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress modulesAddress = containerAddress.append(ModelKeys.MODULES, ModelKeys.MODULES_NAME);
+        ModelNode modules = Util.createAddOperation(modulesAddress);
+
+        ParseUtils.requireNoAttributes(reader);
+
+        Map<PathAddress, ModelNode> additionalConfigurationOperations = new LinkedHashMap<>();
+        while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+            Element element = Element.forName(reader.getLocalName());
+            switch (element) {
+                case MODULE: {
+                    parseModule(reader, modulesAddress, additionalConfigurationOperations);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedElement(reader);
+                }
+            }
+        }
+
+        operations.put(modulesAddress, modules);
+        operations.putAll(additionalConfigurationOperations);
+    }
+
+    private void parseModule(XMLExtendedStreamReader reader, PathAddress modulesAddress, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName());
+
+        String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+        String slot = reader.getAttributeValue(null, Attribute.SLOT.getLocalName());
+
+        PathAddress moduleAddress = modulesAddress.append(ModelKeys.MODULE, name);
+        ModelNode moduleNode = Util.createAddOperation(moduleAddress);
+        CacheContainerModuleResource.NAME.parseAndSetParameter(name, moduleNode, reader);
+        if (slot != null) {
+            CacheContainerModuleResource.SLOT.parseAndSetParameter(slot, moduleNode, reader);
+        }
+
+        ParseUtils.requireNoContent(reader);
+        operations.put(moduleAddress, moduleNode);
     }
 
     private void parseTransport(XMLExtendedStreamReader reader, PathAddress containerAddress, Map<PathAddress, ModelNode> operations) throws XMLStreamException {

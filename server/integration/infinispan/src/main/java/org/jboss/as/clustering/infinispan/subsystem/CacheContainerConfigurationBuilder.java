@@ -21,12 +21,15 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 import javax.management.MBeanServer;
 
+import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -58,6 +61,7 @@ import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.PathManagerService;
 import org.jboss.as.jmx.MBeanServerService;
 import org.jboss.as.server.Services;
+import org.jboss.as.server.moduleservice.ServiceModuleLoader;
 import org.jboss.marshalling.ModularClassResolver;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
@@ -80,6 +84,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private final String name;
     private boolean statisticsEnabled;
     private ModuleIdentifier module;
+    private List<ModuleIdentifier> modules;
     private AuthorizationConfigurationBuilder authorization = null;
     private ValueDependency<TransportConfiguration> transport = null;
     private GlobalStateLocationConfigurationBuilder globalStateLocation = null;
@@ -116,6 +121,18 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .addDependency(ScheduledThreadPoolResource.EXPIRATION.getServiceName(this.name), ThreadPoolConfiguration.class, this.expirationThreadPool)
                 .addDependency(ScheduledThreadPoolResource.REPLICATION_QUEUE.getServiceName(this.name), ThreadPoolConfiguration.class, this.replicationQueueThreadPool)
         ;
+        if (module != null) {
+            if (!module.getName().equals("org.infinispan.extension")) {
+                // todo [anistor] only works for dynamic modules (see https://issues.jboss.org/browse/ISPN-8441)
+                builder.addDependency(ServiceModuleLoader.moduleServiceName(module));
+            }
+        }
+        if (modules != null) {
+            for (ModuleIdentifier moduleIdentifier : modules) {
+                // todo [anistor] only works for dynamic modules (see https://issues.jboss.org/browse/ISPN-8441)
+                builder.addDependency(ServiceModuleLoader.moduleServiceName(moduleIdentifier));
+            }
+        }
         if (this.transport != null) {
             this.transport.register(builder);
         }
@@ -133,7 +150,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         builder.serialization().classResolver(ModularClassResolver.getInstance(moduleLoader));
         ClassLoader loader;
         try {
-            loader = (this.module != null) ? moduleLoader.loadModule(this.module).getClassLoader() : CacheContainerConfiguration.class.getClassLoader();
+            loader = makeGlobalClassLoader(moduleLoader, module, modules);
             builder.classLoader(loader);
             int id = Ids.MAX_ID;
             for (SimpleExternalizer<?> externalizer: ServiceLoader.load(SimpleExternalizer.class, loader)) {
@@ -229,8 +246,45 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         return builder.build();
     }
 
+    /**
+     * Creates an aggregated ClassLoader using the loaders of the cache container module and the optional modules listed
+     * under the 'modules' element.
+     *
+     * @param moduleLoader         the ModuleLoader
+     * @param cacheContainerModule the (optional) module identifier from the 'module' attribute of the cache-container
+     * @param additionalModules    the (optional) list of module identifiers from the 'modules' element
+     * @return an aggregated ClassLoader if any of the optional 'module' or 'modules' were present, or the ClassLoader of
+     * this package otherwise
+     * @throws ModuleLoadException if any of the modules failed to load
+     */
+    private ClassLoader makeGlobalClassLoader(ModuleLoader moduleLoader, ModuleIdentifier cacheContainerModule, List<ModuleIdentifier> additionalModules) throws ModuleLoadException {
+        Set<ClassLoader> classLoaders = new LinkedHashSet<>();  // use an ordered set to deduplicate possible duplicates!
+        if (cacheContainerModule != null) {
+            classLoaders.add(moduleLoader.loadModule(cacheContainerModule).getClassLoader());
+        }
+        if (additionalModules != null) {
+            for (ModuleIdentifier additionalModule : additionalModules) {
+                classLoaders.add(moduleLoader.loadModule(additionalModule).getClassLoader());
+            }
+        }
+        switch (classLoaders.size()) {
+            case 0:
+                // default CL
+                return CacheContainerConfiguration.class.getClassLoader();
+            case 1:
+                return classLoaders.iterator().next();
+            default:
+                return new AggregatedClassLoader(classLoaders);
+        }
+    }
+
     public CacheContainerConfigurationBuilder setModule(ModuleIdentifier module) {
         this.module = module;
+        return this;
+    }
+
+    public CacheContainerConfigurationBuilder setModules(List<ModuleIdentifier> modules) {
+        this.modules = modules;
         return this;
     }
 

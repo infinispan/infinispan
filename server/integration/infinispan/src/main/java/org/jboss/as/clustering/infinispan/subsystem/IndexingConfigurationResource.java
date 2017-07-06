@@ -70,7 +70,7 @@ public class IndexingConfigurationResource extends CacheConfigurationChildResour
           .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
           .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = {INDEXING, INDEXING_AUTO_CONFIG, INDEXED_ENTITIES, INDEXING_PROPERTIES};
+    private static final AttributeDefinition[] ATTRIBUTES = {INDEXING, INDEXING_AUTO_CONFIG, INDEXED_ENTITIES, INDEXING_PROPERTIES};
 
     public IndexingConfigurationResource(CacheConfigurationResource parent) {
         super(PATH, ModelKeys.INDEXING, parent, ATTRIBUTES);

@@ -85,6 +85,20 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeEndElement();
                 }
 
+                if (container.hasDefined(ModelKeys.MODULES)) {
+                    writer.writeStartElement(Element.MODULES.getLocalName());
+                    ModelNode modules = container.get(ModelKeys.MODULES, ModelKeys.MODULES_NAME);
+                    for (ModelNode moduleNode : modules.asList()) {
+                        writer.writeStartElement(Element.MODULE.getLocalName());
+                        CacheContainerModuleResource.NAME.marshallAsAttribute(moduleNode.get(ModelKeys.NAME), writer);
+                        if (moduleNode.hasDefined(ModelKeys.SLOT)) {
+                            CacheContainerModuleResource.SLOT.marshallAsAttribute(moduleNode.get(ModelKeys.SLOT), false, writer);
+                        }
+                        writer.writeEndElement();
+                    }
+                    writer.writeEndElement();
+                }
+
                 if (container.hasDefined(ModelKeys.SECURITY)) {
                     writer.writeStartElement(Element.SECURITY.getLocalName());
                     ModelNode security = container.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME);
