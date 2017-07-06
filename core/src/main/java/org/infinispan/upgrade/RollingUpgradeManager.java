@@ -31,7 +31,7 @@ import org.infinispan.util.logging.LogFactory;
 @SurvivesRestarts
 public class RollingUpgradeManager {
    private static final Log log = LogFactory.getLog(RollingUpgradeManager.class);
-   private final Set<SourceMigrator> sourceMigrators = new HashSet<SourceMigrator>(2);
+   private final Set<SourceMigrator> sourceMigrators = new HashSet<>(2);
    private Cache<Object, Object> cache;
    private TimeService timeService;
 
