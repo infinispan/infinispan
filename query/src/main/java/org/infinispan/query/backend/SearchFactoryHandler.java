@@ -116,7 +116,7 @@ final class SearchFactoryHandler {
     * @return true if an index exists, false otherwise
     */
    boolean hasIndex(final Class<?> c) {
-      return searchFactory.getIndexBinding(c) != null;
+      return searchFactory.getIndexBindings().get(c) != null;
    }
 
    private void handleClusterRegistryRegistration(final Class<?> clazz) {

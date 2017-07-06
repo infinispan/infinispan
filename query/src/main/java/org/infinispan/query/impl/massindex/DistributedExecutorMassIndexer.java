@@ -81,7 +81,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       for (Object key : keys) {
          if (cache.containsKey(key)) {
             Class<?> indexedType = cache.get(key).getClass();
-            EntityIndexBinding indexBinding = searchIntegrator.getIndexBinding(indexedType);
+            EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
             MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
             IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
             switch (indexingStrategy) {
@@ -130,7 +130,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       Deque<Class<?>> toFlush = new LinkedList<>();
 
       for (Class<?> indexedType : searchIntegrator.getIndexedTypes()) {
-         EntityIndexBinding indexBinding = searchIntegrator.getIndexBinding(indexedType);
+         EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
          MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
          boolean workerClean = true, workerFlush = true;
          if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {

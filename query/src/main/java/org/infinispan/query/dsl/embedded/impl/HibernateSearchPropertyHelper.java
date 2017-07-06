@@ -63,7 +63,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    @Override
    public List<?> mapPropertyNamePathToFieldIdPath(Class<?> entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
+      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
@@ -91,7 +91,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
     */
    @Override
    public Object convertToPropertyType(Class<?> entityType, String[] propertyPath, String value) {
-      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
+      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding != null) {
          DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(indexBinding, propertyPath);
          if (fieldMetadata != null) {
@@ -145,7 +145,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    @Override
    public Class<?> getPrimitivePropertyType(Class<?> entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
+      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
@@ -171,7 +171,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    @Override
    public boolean isRepeatedProperty(Class<?> entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
+      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
@@ -194,7 +194,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    }
 
    private EntityIndexBinding getEntityIndexBinding(Class<?> entityType) {
-      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
+      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding == null) {
          throw log.getNoIndexedEntityException(entityType.getCanonicalName());
       }
@@ -248,7 +248,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    @Override
    public boolean hasProperty(Class<?> entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
+      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
@@ -268,7 +268,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
     */
    @Override
    public boolean hasEmbeddedProperty(Class<?> entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = searchFactory.getIndexBinding(entityType);
+      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {
@@ -289,7 +289,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
    @Override
    public IndexedFieldProvider<Class<?>> getIndexedFieldProvider() {
       return type -> {
-         EntityIndexBinding entityIndexBinding = searchFactory.getIndexBinding(type);
+         EntityIndexBinding entityIndexBinding = searchFactory.getIndexBindings().get(type);
          if (entityIndexBinding == null) {
             return IndexedFieldProvider.NO_INDEXING;
          }
