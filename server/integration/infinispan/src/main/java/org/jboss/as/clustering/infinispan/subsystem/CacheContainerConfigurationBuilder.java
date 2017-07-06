@@ -21,12 +21,14 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
 
 import javax.management.MBeanServer;
 
+import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -58,6 +60,7 @@ import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.PathManagerService;
 import org.jboss.as.jmx.MBeanServerService;
 import org.jboss.as.server.Services;
+import org.jboss.as.server.moduleservice.ServiceModuleLoader;
 import org.jboss.marshalling.ModularClassResolver;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
@@ -80,6 +83,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private final String name;
     private boolean statisticsEnabled;
     private ModuleIdentifier module;
+    private List<ModuleIdentifier> modules;
     private AuthorizationConfigurationBuilder authorization = null;
     private ValueDependency<TransportConfiguration> transport = null;
     private GlobalStateLocationConfigurationBuilder globalStateLocation = null;
@@ -116,6 +120,18 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .addDependency(ScheduledThreadPoolResource.EXPIRATION.getServiceName(this.name), ThreadPoolConfiguration.class, this.expirationThreadPool)
                 .addDependency(ScheduledThreadPoolResource.REPLICATION_QUEUE.getServiceName(this.name), ThreadPoolConfiguration.class, this.replicationQueueThreadPool)
         ;
+        if (module != null) {
+            if (!module.getName().equals("org.infinispan.extension")) {
+                // todo [anistor] only works for dynamic modules
+                builder.addDependency(ServiceModuleLoader.moduleServiceName(module));
+            }
+        }
+        if (modules != null) {
+            for (ModuleIdentifier moduleIdentifier : modules) {
+                // todo [anistor] only works for dynamic modules
+                builder.addDependency(ServiceModuleLoader.moduleServiceName(moduleIdentifier));
+            }
+        }
         if (this.transport != null) {
             this.transport.register(builder);
         }
@@ -133,7 +149,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         builder.serialization().classResolver(ModularClassResolver.getInstance(moduleLoader));
         ClassLoader loader;
         try {
-            loader = (this.module != null) ? moduleLoader.loadModule(this.module).getClassLoader() : CacheContainerConfiguration.class.getClassLoader();
+            loader = makeAggregatedClassLoader(moduleLoader, module, modules);
             builder.classLoader(loader);
             int id = Ids.MAX_ID;
             for (SimpleExternalizer<?> externalizer: ServiceLoader.load(SimpleExternalizer.class, loader)) {
@@ -229,8 +245,31 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         return builder.build();
     }
 
+    private ClassLoader makeAggregatedClassLoader(ModuleLoader moduleLoader, ModuleIdentifier cacheContainerModule, List<ModuleIdentifier> additionalModules) throws ModuleLoadException {
+        if (additionalModules != null) {
+            List<ClassLoader> classLoaders = new ArrayList<>();
+            if (cacheContainerModule != null) {
+                classLoaders.add(moduleLoader.loadModule(cacheContainerModule).getClassLoader());
+            }
+            for (ModuleIdentifier additionalModule : additionalModules) {
+                classLoaders.add(moduleLoader.loadModule(additionalModule).getClassLoader());
+            }
+            return new AggregatedClassLoader(classLoaders.toArray(new ClassLoader[classLoaders.size()]));
+        } else if (cacheContainerModule != null) {
+            return moduleLoader.loadModule(cacheContainerModule).getClassLoader();
+        }
+
+        // default CL
+        return CacheContainerConfiguration.class.getClassLoader();
+    }
+
     public CacheContainerConfigurationBuilder setModule(ModuleIdentifier module) {
         this.module = module;
+        return this;
+    }
+
+    public CacheContainerConfigurationBuilder setModules(List<ModuleIdentifier> modules) {
+        this.modules = modules;
         return this;
     }
 
