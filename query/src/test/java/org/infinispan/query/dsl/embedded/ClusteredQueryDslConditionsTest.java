@@ -86,16 +86,16 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
    private void checkIndexPresence(Cache cache) {
       SearchIntegrator searchFactory = Search.getSearchManager(cache).unwrap(SearchIntegrator.class);
 
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
+      assertTrue(searchFactory.getIndexBindings().containsKey(getModelFactory().getUserImplClass()));
       assertNotNull(searchFactory.getIndexManager(getModelFactory().getUserImplClass().getName()));
 
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getAccountImplClass()));
+      assertTrue(searchFactory.getIndexBindings().containsKey(getModelFactory().getAccountImplClass()));
       assertNotNull(searchFactory.getIndexManager(getModelFactory().getAccountImplClass().getName()));
 
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getTransactionImplClass()));
+      assertTrue(searchFactory.getIndexBindings().containsKey(getModelFactory().getTransactionImplClass()));
       assertNotNull(searchFactory.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
 
-      assertFalse(searchFactory.getIndexedTypes().contains(getModelFactory().getAddressImplClass()));
+      assertFalse(searchFactory.getIndexBindings().containsKey(getModelFactory().getAddressImplClass()));
       assertNull(searchFactory.getIndexManager(getModelFactory().getAddressImplClass().getName()));
    }
 }

@@ -11,6 +11,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.EncodingUtils;
@@ -35,7 +37,7 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
  */
 public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
-   protected final Class<?> entity;
+   protected final IndexedTypeIdentifier indexedType;
    private final boolean flush;
    private final boolean clean;
    private final boolean primaryOwner;
@@ -47,8 +49,8 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    private Encoder valueEncoder;
    private Wrapper valueWrapper;
 
-   public IndexWorker(Class<?> entity, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
-      this.entity = entity;
+   public IndexWorker(IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
+      this.indexedType = indexedType;
       this.flush = flush;
       this.clean = clean;
       this.primaryOwner = primaryOwner;
@@ -71,12 +73,12 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    protected void preIndex() {
-      if (clean) indexUpdater.purge(entity);
+      if (clean) indexUpdater.purge(indexedType);
    }
 
    protected void postIndex() {
       indexUpdater.waitForAsyncCompletion();
-      if (flush) indexUpdater.flush(entity);
+      if (flush) indexUpdater.flush(indexedType);
    }
 
    private KeyValueFilter getFilter() {
@@ -100,7 +102,8 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
             while (iterator.hasNext()) {
                CacheEntry<Object, Object> next = iterator.next();
                Object value = extractValue(next.getValue());
-               if (value != null && value.getClass().equals(entity))
+               //TODO do not use Class equality but refactor to type equality:
+               if (value != null && value.getClass().equals(indexedType.getPojoType()))
                   indexUpdater.updateIndex(next.getKey(), value);
             }
          }
@@ -115,7 +118,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
             }
          }
          for (Class<?> clazz : classSet)
-            indexUpdater.flush(clazz);
+            indexUpdater.flush(PojoIndexedTypeIdentifier.convertFromLegacy(clazz));
       }
       return null;
    }
@@ -129,7 +132,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
       @Override
       public void writeObject(ObjectOutput output, IndexWorker worker) throws IOException {
-         output.writeObject(worker.entity);
+         output.writeObject(PojoIndexedTypeIdentifier.convertToLegacy(worker.indexedType));
          output.writeBoolean(worker.flush);
          output.writeBoolean(worker.clean);
          output.writeBoolean(worker.primaryOwner);
@@ -138,7 +141,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
       @Override
       public IndexWorker readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new IndexWorker((Class<?>) input.readObject(), input.readBoolean(), input.readBoolean(), input.readBoolean(), (Set<Object>) input.readObject());
+         return new IndexWorker(PojoIndexedTypeIdentifier.convertFromLegacy((Class) input.readObject()), input.readBoolean(), input.readBoolean(), input.readBoolean(), (Set<Object>) input.readObject());
       }
 
       @Override

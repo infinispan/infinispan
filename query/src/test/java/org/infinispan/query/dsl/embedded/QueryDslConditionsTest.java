@@ -232,16 +232,16 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testIndexPresence() {
       SearchIntegrator searchIntegrator = Search.getSearchManager((Cache) getCacheForQuery()).unwrap(SearchIntegrator.class);
 
-      assertTrue(searchIntegrator.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
+      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getUserImplClass()));
       assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getUserImplClass().getName()));
 
-      assertTrue(searchIntegrator.getIndexedTypes().contains(getModelFactory().getAccountImplClass()));
+      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getAccountImplClass()));
       assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getAccountImplClass().getName()));
 
-      assertTrue(searchIntegrator.getIndexedTypes().contains(getModelFactory().getTransactionImplClass()));
+      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getTransactionImplClass()));
       assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
 
-      assertFalse(searchIntegrator.getIndexedTypes().contains(getModelFactory().getAddressImplClass()));
+      assertFalse(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getAddressImplClass()));
       assertNull(searchIntegrator.getIndexManager(getModelFactory().getAddressImplClass().getName()));
    }
 

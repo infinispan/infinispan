@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -259,7 +260,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    private void flushIndex() {
-      new IndexUpdater(cache1).flush(Transaction.class);
+      new IndexUpdater(cache1).flush(new PojoIndexedTypeIdentifier(Transaction.class));
    }
 
    class StopTimer {
