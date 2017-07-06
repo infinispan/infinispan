@@ -100,7 +100,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
 
       SearchManager queryFactory = Search.getSearchManager(indexedCache);
       SearchIntegrator searchImpl = queryFactory.unwrap(SearchIntegrator.class);
-      IndexManager[] indexManagers = searchImpl.getIndexBinding(Person.class).getIndexManagers();
+      IndexManager[] indexManagers = searchImpl.getIndexBindings().get(Person.class).getIndexManagers();
       assert indexManagers != null && indexManagers.length == 1;
       DirectoryBasedIndexManager directory = (DirectoryBasedIndexManager)indexManagers[0];
       DirectoryProvider directoryProvider = directory.getDirectoryProvider();
