@@ -31,7 +31,8 @@ public interface ProtocolServerConfigurationChildBuilder<T extends ProtocolServe
    S host(String host);
 
    /**
-    * Specifies the port on which this server will listen
+    * Specifies the port on which this server will listen. Specifying 0 will cause the server to allocate a freely
+    * available ephemeral port
     */
    S port(int port);
 

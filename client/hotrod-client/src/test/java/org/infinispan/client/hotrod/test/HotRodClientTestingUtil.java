@@ -48,7 +48,7 @@ public class HotRodClientTestingUtil {
    private static final int DEFAULT_PORT = 15232;
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(cacheManager, findFreePort(), builder);
+      return startHotRodServer(cacheManager, 0, builder);
    }
 
    private static boolean isBindException(Throwable e) {

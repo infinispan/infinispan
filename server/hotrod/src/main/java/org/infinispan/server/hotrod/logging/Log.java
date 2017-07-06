@@ -90,4 +90,7 @@ public interface Log extends org.infinispan.server.core.logging.Log {
 
    @Message(value = "A host or proxyHost address has not been specified", id = 6019)
    CacheConfigurationException missingHostAddress();
+
+   @Message(value = "Cannot use an ephemeral port for the server without starting the transport", id = 6020)
+   CacheConfigurationException cannotUseEphemeralPortWithoutStartingTransport();
 }
