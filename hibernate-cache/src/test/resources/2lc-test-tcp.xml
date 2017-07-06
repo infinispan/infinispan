@@ -53,7 +53,7 @@
    />
 
     <!-- At this place we can react on DISCONNECTs immediatelly -->
-    <org.hibernate.test.cache.infinispan.util.TestDisconnectHandler />
+    <org.infinispan.test.hibernate.cache.util.TestDisconnectHandler />
 
    <MFC max_credits="2M"
         min_threshold="0.40"
