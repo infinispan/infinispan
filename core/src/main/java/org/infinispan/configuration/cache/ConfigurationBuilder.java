@@ -35,7 +35,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final TransactionConfigurationBuilder transaction;
    private final VersioningConfigurationBuilder versioning;
    private final UnsafeConfigurationBuilder unsafe;
-   private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
+   private final List<Builder<?>> modules = new ArrayList<>();
    private final SitesConfigurationBuilder sites;
    private final CompatibilityModeConfigurationBuilder compatibility;
    private final MemoryConfigurationBuilder memory;
@@ -130,11 +130,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return jmxStatistics;
    }
 
-   @Deprecated
-   @Override
    /**
     * Deprecated since 9.0, please use {@link ConfigurationBuilder#memory()} instead.
     */
+   @Deprecated
+   @Override
    public StoreAsBinaryConfigurationBuilder storeAsBinary() {
       return storeAsBinary;
    }
@@ -282,7 +282,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       if (validate) {
          validate();
       }
-      List<Object> modulesConfig = new LinkedList<Object>();
+      List<Object> modulesConfig = new LinkedList<>();
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
       return new Configuration(template, attributes.protect(), clustering.create(), customInterceptors.create(),

@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.InvalidPropertiesFormatException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,7 @@ public class Immutables {
     * @return a copied/converted immutable list
     */
    public static <T> List<T> immutableListConvert(Collection<? extends T> source) {
-      return new ImmutableListCopy<T>(source);
+      return new ImmutableListCopy<>(source);
    }
 
    /**
@@ -65,7 +64,7 @@ public class Immutables {
       if (list == null) return null;
       if (list.isEmpty()) return Collections.emptyList();
       if (list.size() == 1) return Collections.singletonList(list.get(0));
-      return new ImmutableListCopy<T>(list);
+      return new ImmutableListCopy<>(list);
    }
 
    /**
@@ -87,7 +86,7 @@ public class Immutables {
     * @return a list containing the array
     */
    public static <T> List<T> immutableListWrap(T... array) {
-      return new ImmutableListCopy<T>(array);
+      return new ImmutableListCopy<>(array);
    }
 
    /**
@@ -98,7 +97,7 @@ public class Immutables {
     * @return a new immutable merged copy of list1 and list2
     */
    public static <T> List<T> immutableListMerge(List<? extends T> list1, List<? extends T> list2) {
-      return new ImmutableListCopy<T>(list1, list2);
+      return new ImmutableListCopy<>(list1, list2);
    }
 
    public static <T> ImmutableListCopy<T> immutableListAdd(List<T> list, int position, T element) {
@@ -110,7 +109,7 @@ public class Immutables {
       for (int i = position; i < list.size(); i++) {
          copy[i + 1] = list.get(i);
       }
-      return new ImmutableListCopy<>((T[]) copy);
+      return new ImmutableListCopy<>(copy);
    }
 
    public static <T> ImmutableListCopy<T> immutableListReplace(List<T> list, int position, T element) {
@@ -153,7 +152,7 @@ public class Immutables {
     * @return an immutable set wrapper that delegates to the original set
     */
    public static <T> Set<T> immutableSetWrap(Set<? extends T> set) {
-      return new ImmutableSetWrapper<T>(set);
+      return new ImmutableSetWrapper<>(set);
    }
 
    /**
@@ -171,9 +170,9 @@ public class Immutables {
          // Set uses Collection copy-ctor
          copy = attemptCopyConstructor(set, Collection.class);
       if (copy == null)
-         copy = new HashSet<T>(set);
+         copy = new HashSet<>(set);
 
-      return new ImmutableSetWrapper<T>(copy);
+      return new ImmutableSetWrapper<>(copy);
    }
 
 
@@ -184,7 +183,7 @@ public class Immutables {
     * @return an immutable map wrapper that delegates to the original map
     */
    public static <K, V> Map<K, V> immutableMapWrap(Map<? extends K, ? extends V> map) {
-      return new ImmutableMapWrapper<K, V>(map);
+      return new ImmutableMapWrapper<>(map);
    }
 
    /**
@@ -206,9 +205,9 @@ public class Immutables {
       if (copy == null)
          copy = attemptCopyConstructor(map, Map.class);
       if (copy == null)
-         copy = new HashMap<K, V>(map);
+         copy = new HashMap<>(map);
 
-      return new ImmutableMapWrapper<K, V>(copy);
+      return new ImmutableMapWrapper<>(copy);
    }
 
    /**
@@ -226,9 +225,9 @@ public class Immutables {
       if (copy == null)
          copy = attemptCopyConstructor(collection, Collection.class);
       if (copy == null)
-         copy = new ArrayList<T>(collection);
+         copy = new ArrayList<>(collection);
 
-      return new ImmutableCollectionWrapper<T>(copy);
+      return new ImmutableCollectionWrapper<>(copy);
    }
 
    /**
@@ -238,7 +237,7 @@ public class Immutables {
     * @return an immutable collection wrapper that delegates to the original collection
     */
    public static <T> Collection<T> immutableCollectionWrap(Collection<? extends T> collection) {
-      return new ImmutableCollectionWrapper<T>(collection);
+      return new ImmutableCollectionWrapper<>(collection);
    }
 
    @SuppressWarnings("unchecked")
@@ -259,7 +258,7 @@ public class Immutables {
     * @return an immutable {@link Map.Entry}} wrapper that delegates to the original mapping.
     */
    public static <K, V> Map.Entry<K, V> immutableEntry(Map.Entry<K, V> entry) {
-      return new ImmutableEntry<K, V>(entry);
+      return new ImmutableEntry<>(entry);
    }
 
    /**
@@ -270,7 +269,7 @@ public class Immutables {
     * @return an immutable {@link Map.Entry}} wrapper that delegates to the original mapping.
     */
    public static <K, V> Map.Entry<K, V> immutableEntry(K key, V value) {
-      return new ImmutableEntry<K, V>(key, value);
+      return new ImmutableEntry<>(key, value);
    }
 
    public interface  Immutable {
@@ -357,7 +356,7 @@ public class Immutables {
 
       @Override
       public Iterator<E> iterator() {
-         return new ImmutableIteratorWrapper<E>(collection.iterator());
+         return new ImmutableIteratorWrapper<>(collection.iterator());
       }
 
       @Override
@@ -514,7 +513,7 @@ public class Immutables {
          return new ImmutableIteratorWrapper<Entry<K, V>>(collection.iterator()) {
             @Override
             public Entry<K, V> next() {
-               return new ImmutableEntry<K, V>(super.next());
+               return new ImmutableEntry<>(super.next());
             }
          };
       }
@@ -540,7 +539,7 @@ public class Immutables {
       @Override
       @SuppressWarnings("unchecked")
       public Set<Class<? extends Set>> getTypeClasses() {
-         return Util.<Class<? extends Set>>asSet(ImmutableSetWrapper.class);
+         return Util.asSet(ImmutableSetWrapper.class);
       }
    }
 
@@ -570,7 +569,7 @@ public class Immutables {
 
       @Override
       public Set<Entry<K, V>> entrySet() {
-         return new ImmutableEntrySetWrapper<K, V>(map.entrySet());
+         return new ImmutableEntrySetWrapper<>(map.entrySet());
       }
 
       @Override
@@ -595,7 +594,7 @@ public class Immutables {
 
       @Override
       public Set<K> keySet() {
-         return new ImmutableSetWrapper<K>(map.keySet());
+         return new ImmutableSetWrapper<>(map.keySet());
       }
 
       @Override
@@ -620,7 +619,7 @@ public class Immutables {
 
       @Override
       public Collection<V> values() {
-         return new ImmutableCollectionWrapper<V>(map.values());
+         return new ImmutableCollectionWrapper<>(map.values());
       }
 
       @Override
@@ -648,7 +647,7 @@ public class Immutables {
       @Override
       @SuppressWarnings("unchecked")
       public Set<Class<? extends Map>> getTypeClasses() {
-         return Util.<Class<? extends Map>>asSet(ImmutableMapWrapper.class);
+         return Util.asSet(ImmutableMapWrapper.class);
       }
    }
 
@@ -668,12 +667,12 @@ public class Immutables {
 
       @Override
       public Set<java.util.Map.Entry<Object, Object>> entrySet() {
-         return new ImmutableEntrySetWrapper<Object, Object>(super.entrySet());
+         return new ImmutableEntrySetWrapper<>(super.entrySet());
       }
 
       @Override
       public Set<Object> keySet() {
-         return new ImmutableSetWrapper<Object>(super.keySet());
+         return new ImmutableSetWrapper<>(super.keySet());
       }
 
       @Override
@@ -687,7 +686,7 @@ public class Immutables {
       }
 
       @Override
-      public synchronized void loadFromXML(InputStream in) throws IOException, InvalidPropertiesFormatException {
+      public synchronized void loadFromXML(InputStream in) throws IOException {
          throw new UnsupportedOperationException();
       }
 
@@ -713,12 +712,12 @@ public class Immutables {
 
       @Override
       public Set<String> stringPropertyNames() {
-         return new ImmutableSetWrapper<String>(super.stringPropertyNames());
+         return new ImmutableSetWrapper<>(super.stringPropertyNames());
       }
 
       @Override
       public Collection<Object> values() {
-         return new ImmutableCollectionWrapper<Object>(super.values());
+         return new ImmutableCollectionWrapper<>(super.values());
       }
 
    }

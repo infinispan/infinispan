@@ -28,7 +28,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final ThreadPoolConfigurationBuilder asyncThreadPool;
    private final ShutdownConfigurationBuilder shutdown;
    private final GlobalStateConfigurationBuilder globalState;
-   private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
+   private final List<Builder<?>> modules = new ArrayList<>();
    private final SiteConfigurationBuilder site;
    private Optional<String> defaultCacheName;
 
@@ -37,7 +37,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       ClassLoader defaultCL = null;
       if (!Util.isOSGiContext()) defaultCL = Thread.currentThread().getContextClassLoader();
       if (defaultCL == null) defaultCL = GlobalConfigurationBuilder.class.getClassLoader();
-      this.cl = new WeakReference<ClassLoader>(defaultCL);
+      this.cl = new WeakReference<>(defaultCL);
       this.transport = new TransportConfigurationBuilder(this);
       this.globalJmxStatistics = new GlobalJmxStatisticsConfigurationBuilder(this);
       this.serialization = new SerializationConfigurationBuilder(this);
@@ -84,7 +84,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    public GlobalConfigurationBuilder classLoader(ClassLoader cl) {
-      this.cl = new WeakReference<ClassLoader>(cl);
+      this.cl = new WeakReference<>(cl);
       return this;
    }
 
@@ -229,7 +229,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    @Override
    public GlobalConfiguration build() {
       validate();
-      List<Object> modulesConfig = new LinkedList<Object>();
+      List<Object> modulesConfig = new LinkedList<>();
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
       return new GlobalConfiguration(
@@ -252,7 +252,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    public GlobalConfigurationBuilder read(GlobalConfiguration template) {
-      this.cl = new WeakReference<ClassLoader>(template.classLoader());
+      this.cl = new WeakReference<>(template.classLoader());
       this.defaultCacheName = template.defaultCacheName();
 
       for (Object c : template.modules().values()) {
