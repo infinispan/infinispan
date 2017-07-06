@@ -6,8 +6,8 @@ import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.DefaultInstanceInitializer;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.IndexedTypeSets;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.KeyTransformationHandler;
@@ -39,14 +39,14 @@ public class IndexUpdater {
       this.defaultBatchBackend = new ExtendedBatchBackend(searchIntegrator, monitor);
    }
 
-   public void flush(Class<?> entityType) {
-      LOG.flushingIndex(entityType.getName());
-      defaultBatchBackend.flush(IndexedTypeSets.fromClass(entityType));
+   public void flush(IndexedTypeIdentifier entity) {
+      LOG.flushingIndex(entity.getName());
+      defaultBatchBackend.flush(entity.asTypeSet());
    }
 
-   public void purge(Class<?> entityType) {
-      LOG.purgingIndex(entityType.getName());
-      defaultBatchBackend.purge(IndexedTypeSets.fromClass(entityType));
+   public void purge(IndexedTypeIdentifier entity) {
+      LOG.purgingIndex(entity.getName());
+      defaultBatchBackend.purge(entity.asTypeSet());
    }
 
    public void waitForAsyncCompletion() {
