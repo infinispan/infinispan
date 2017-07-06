@@ -62,6 +62,17 @@ This index storage option is mostly useful for single node integration testing o
 === Store Batch Size Changes
 TableManipulation::batchSize and JpaStoreConfiguration::batchSize have been deprecated and replaced by the higher level AbstractStoreConfiguration::maxBatchSize.
 
+=== Partition Handling changes
+In Infinispan 9.1 partition handling has been improved to allow for automatic
+link:../user_guide/user_guide.html#conflict-manager[conflict resolution on partition merges]. Consequently,
+PartitionHandlingConfiguration::enabled has been deprecated in favour of PartitionHandlingConfiguration::whenSplit.
+Configuring whenSplit to the DENY_READ_WRITES strategy is equivalent to setting enabled to true, whilst specifying
+ALLOW_READ_WRITES is equivalent to disabling partition handling (default).
+
+Furthermore, during a partition merge with ALLOW_READ_WRITES, the default EntryMergePolicy is
+MergePolicies.PREFERRED_ALWAYS which provides a deterministic way of tie-breaking CacheEntry conflicts.
+If you require the old behaviour, simply set the merge-policy to null.
+
 == Upgrading from 8.x to 9.0
 
 === Default transaction mode changed

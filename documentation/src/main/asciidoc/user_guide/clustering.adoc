@@ -809,23 +809,36 @@ ways to alleviate the possibility for the split brain to happen, such as redunda
 succession and Infinispan does not have the time to properly rebalance its state between
 crashes, the result is partial data loss.
 
-The partition handling functionality discussed in this section allows the user to
-be informed when data has been lost, temporarily or permanently, and wait for the cluster to heal.
-The goal is to avoid situations in which wrong data is returned to the user as a result of either split
-brain or multiple nodes crashing in rapid sequence.
-In terms of Brewer's
-link:http://en.wikipedia.org/wiki/CAP_theorem[CAP theorem]
-, enabling partition handling in Infinispan preserves data consistency
-but sacrifices availability in the presence of partitions.
+The partition handling functionality discussed in this section allows the user to configure what operations can be
+performed on a cache in the event of a split brain occurring. Infinispan provides multiple partition handling strategies,
+which in terms of of Brewer's link:http://en.wikipedia.org/wiki/CAP_theorem[CAP theorem] determine whether availability or
+consistency is sacrificed in the presence of partition(s). Below is a list of the provided strategies:
 
-Enabling partition handling is critical for applications that have high consistency
-requirements: when the data read from the system must be accurate.
-On the other hand, if Infinispan is used as a best-effort cache, partitions are
-perfectly tolerable.
+|===
+| Strategy | Description | CAP
 
-The following sections describe the way Infinispan handles <<split-brain,split brain>> and
-<<successive-node-failures,successive failures>> when partition handling is enabled, followed by a section on
-<<partition-handling-configuration,configuring the partition handling functionality>>.
+| DENY_READ_WRITES
+| If the partition does not have all owners for a given segment, both reads and writes are denied for all keys in that segment.
+| Consistency
+
+| ALLOW_READS
+| Allows reads for a given key if it exists in this partition, but only allows writes if this partition contains all owners of a segment.
+| Availability
+
+| ALLOW_READ_WRITES
+| Allow entries on each partition to diverge, with conflicts resolved during merge.
+| Availability
+|===
+
+The requirements of your application should determine which strategy is appropriate. For example, DENY_READ_WRITES is more
+appropriate for applications that have high consistency requirements; i.e. when the data read from the system must be accurate.
+Whereas if Infinispan is used as a best-effort cache, partitions maybe perfectly tolerable and the ALLOW_READ_WRITES might
+be more appropriate as it favours availability over consistency.
+
+The following sections describe how Infinispan handles <<split-brain,split brain>> and
+<<successive-node-failures,successive failures>> for each of the partition handling strategies. This is followed by a section
+describing how Infinispan allows for automatic conflict resolution upon partition merges via <<merge-policies, merge policies>>.
+Finally, we provide a section describing <<partition-handling-configuration, how to configure partition handling strategies and merge policies>>.
 
 [[split-brain]]
 ==== Split brain
@@ -837,12 +850,18 @@ two or more partitions, since the partitions are unaware of each other.
 Instead, we assume the cluster has split when one or more nodes
 disappear from the JGroups cluster without sending an explicit leave message.
 
-With partition handling disabled, each such partition would continue to
-function as an independent cluster. Each partition may only see a part of
-the data, and each partition could write conflicting updates in the cache.
+===== Split Strategies
 
-With partition handling enabled, if we detect a split, each partition does
-not start a rebalance immediately, but first it checks whether it should
+In this section, we detail how each partition handling strategy behaves in the event of split brain occurring.
+
+====== ALLOW_READ_WRITES
+Each partition continues to function as an independent cluster, with all partitions remaining in AVAILABLE mode.
+This means that each partition may only see a part of the data, and each partition could write conflicting updates in
+the cache. During a partition merge these conflicts are automatically resolved by utilising the <<conflict-manager, ConflictManager>>
+and the configured <<merge-policies, EntryMergePolicy>>.
+
+====== DENY_READ_WRITES
+When a split is detected each partition does not start a rebalance immediately, but first it checks whether it should
 enter *DEGRADED* mode instead:
 
 - If at least one segment has lost all its owners (meaning at least
@@ -902,6 +921,10 @@ entries on `D` will be wiped (since they could be stale).
 `D` will be fully available, but it will not hold any data until the cache
 is rebalanced.
 
+====== ALLOW_READS
+Partitions are handled in the same manner as DENY_READ_WRITES, except that when a partition is in DEGRADED mode read
+operations on a partially owned key WILL not throw an AvailabilityException.
+
 ===== Current limitations
 Two partitions could start up isolated, and as long as they don't merge they
 can read and write inconsistent data. In the future, we will allow custom
@@ -922,7 +945,7 @@ cluster can remain available and will try to make new replicas of the data
 on the crashed node. However, other nodes might crash during the rebalance process.
 If more than `numOwners` nodes crash in a short interval of time, there is a
 chance that some cache entries have disappeared from the cluster altogether.
-In this case, with partition handling functionality enabled, Infinispan
+In this case, with the DENY_READ_WRITES or ALLOW_READS strategy enabled, Infinispan
 assumes (incorrectly) that there is a split brain and enters DEGRADED mode
 as described in the split-brain section.
 
@@ -943,27 +966,115 @@ If the application can handle losing some of the data in the cache, the
 administrator can force the availability mode back to AVAILABLE
 <<partition-handling-monitoring,via JMX>>.
 
+[[conflict-manager]]
+==== Conflict Manager
+The conflict manager is a tool that allows users to retrieve all stored replica values for a given key. In addition to
+allowing users to process a stream of cache entries whose stored replicas have conflicting values. Furthermore, by
+utilising implementations of the <<merge-policies, EntryMergePolicy>> interface it is possible for said conflicts to
+be resolved automatically.
+
+[[merge-policies]]
+===== Merge Policies
+In the event of conflicts arising between one or more replicas of a given CacheEntry, it is necessary for a conflict
+resolution algorithm to be defined, therefore we provide the
+link:{javadocroot}/org/infinispan/conflict/EntryMergePolicy.html[EntryMergePolicy] interface. This interface consists
+of a single method, "merge", whose output is utilised as the "resolved" CacheEntry for a given key. A non-null return
+value is put to all replicas of the CacheEntry in question, whereas a null return value results in all replicas
+being removed from the cache.
+
+The merge method takes two parameters: the "preferredEntry" and "otherEntries". In the context of a partition merge,
+the preferredEntry is the CacheEntry associated with the partition whose coordinator is conducting the merge (or if
+multiple entries exist in this partition, it's the primary replica). However, in all other contexts, the preferredEntry
+is simply the primary replica. The second parameter, "otherEntries" is simply a list of all other entries associated
+with the key for which a conflict was detected.
+
+NOTE: EntryMergePolicy::merge is only called when a conflict has been detected, it is not called if all CacheEntrys are
+the same.
+
+Currently Infinispan provides the following implementations of EntryMergePolicy:
+|===
+| Policy | Description
+
+| MergePolicies.PREFERRED_ALWAYS
+| Always utilise the "preferredEntry".
+
+| MergePolicies.PREFERRED_NON_NULL
+| Utilise the "preferredEntry" if it is non-null, otherwise utilise the first entry from "otherEntries".
+
+| MergePolicies.REMOVE_ALL
+| Always remove a key from the cache when a conflict is detected.
+|===
+
+==== Usage
+During a partition merge the ConflictManager automatically attempts to resolve conflicts utilising the configured
+EntryMergePolicy, however it is also possible to manually search for/resolve conflicts as required by your application.
+
+The code below shows how to retrieve an EmbeddedCacheManager's ConflictManager, how to retrieve all versions of a given
+key and how to check for conflicts across a given cache.
+
+[source,java]
+----
+EmbeddedCacheManager manager = new DefaultCacheManager("example-config.xml");
+Cache<Integer, String> cache = manager.getCache("testCache");
+ConflictManager<Integer, String> crm = ConflictManagerFactory.get(cache.getAdvancedCache());
+
+// Get All Versions of Key
+Map<Address, InternalCacheValue<String>> versions = crm.getAllVersions(1);
+
+// Process conflicts stream and perform some operation on the cache
+Stream<Map<Address, InternalCacheEntry<Integer, String>>> stream = crm.getConflicts();
+stream.forEach(map -> {
+   CacheEntry<Object, Object> entry = map.values().iterator().next();
+   Object conflictKey = entry.getKey();
+   cache.remove(conflictKey);
+});
+
+// Detect and then resolve conflicts using the configured EntryMergePolicy
+crm.resolveConflicts();
+
+// Detect and then resolve conflicts using the passed EntryMergePolicy instance
+crm.resolveConflicts((preferredEntry, otherEntries) -> preferredEntry);
+----
+
+NOTE: Although the ConflictManager::getConflicts stream is processed per entry, the underlying spliterator is in
+fact lazily-loading cache entries on a per segment basis.
+
 [[partition-handling-configuration]]
 ==== Configuring partition handling
-
-At this stage the partition handling is disabled by default. We will revisit
-this decision in the future, based on user feedback.
-In order to enable partition handling within the XML configuration:
+Unless the cache is distributed or replicated, partition handling configuration is ignored. The default partition
+handling strategy is ALLOW_READ_WRITES and the default EntryMergePolicy is MergePolicies::PREFERRED_ALWAYS.
 
 [source,xml]
 ----
 <distributed-cache name="the-default-cache">
-   <partition-handling enabled="true"/>
+   <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_NON_NULL"/>
 </distributed-cache>
 ----
-
-Unless the cache is distributed or replicated, the configuration is ignored.
 
 The same can be achieved programmatically:
 [source,java]
 ----
 ConfigurationBuilder dcc = new ConfigurationBuilder();
-dcc.clustering().partitionHandling().enabled(true);
+dcc.clustering().partitionHandling()
+                    .whenSplit(PartitionHandling.ALLOW_READ_WRITES)
+                    .mergePolicy(MergePolicies.PREFERRED_ALWAYS);
+----
+
+It's also possible to provide custom implementations of the EntryMergePolicy:
+
+[source,xml]
+----
+<distributed-cache name="the-default-cache">
+   <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="org.example.CustomMergePolicy"/>
+</distributed-cache>
+----
+
+[source,java]
+----
+ConfigurationBuilder dcc = new ConfigurationBuilder();
+dcc.clustering().partitionHandling()
+                    .whenSplit(PartitionHandling.ALLOW_READ_WRITES)
+                    .mergePolicy(new CustomMergePolicy());
 ----
 
 [[partition-handling-monitoring]]
@@ -990,29 +1101,4 @@ boolean available = ac.getAvailability() == AvailabilityMode.AVAILABLE;
 if (!available) {
    ac.setAvailability(AvailabilityMode.AVAILABLE);
 }
-----
-
-
-[[conflict-manager]]
-==== Conflict Manager
-The conflict manager is a tool that allows users to retrieve all stored replica values for a given key. In addition to allowing users
-to process a stream of cache entries whose stored replicas have conflicting values. Note that the stream of conflicts is
-processed per entry, however it is lazily loaded on a per segment basis.  Conflicts are exposed via a stream, opposed to a
-collection, in order to reduce the chances of an OutOfMemoryError occurring.
-
-The code below shows how to retrieve an EmbeddedCacheManager's ConflictManager, how to retrieve all versions of a given
-key and how to check for conflicts across a given cache.
-
-[source,java]
-----
-EmbeddedCacheManager manager = new DefaultCacheManager("example-config.xml");
-Cache<Integer, String> cache = manager.getCache("testCache");
-ConflictManager<Integer, String> crm = ConflictManagerFactory.get(cache.getAdvancedCache());
-
-// Get All Versions of Key
-Map<Address, InternalCacheValue<String>> versions = crm.getAllVersions(1);
-
-// Process conflicts stream
-Stream<Map<Address, InternalCacheEntry<Integer, String>>> stream = crm.getConflicts();
-stream.forEach(System.out::println);
 ----
