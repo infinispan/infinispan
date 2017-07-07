@@ -86,11 +86,11 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       checkPoint.triggerForever("post_send_response_released");
       waitUntilSendingResponse(cache1, checkPoint);
 
-      final BlockingQueue<Map.Entry<Object, String>> returnQueue = new ArrayBlockingQueue<>(10);
+      final BlockingQueue<String> returnQueue = new ArrayBlockingQueue<>(10);
       Future<Void> future = fork(() -> {
-         Iterator<Map.Entry<Object, String>> iter = cache0.entrySet().stream().iterator();
+         Iterator<String> iter = cache0.entrySet().stream().map(Map.Entry::getValue).iterator();
          while (iter.hasNext()) {
-            Map.Entry<Object, String> entry = iter.next();
+            String entry = iter.next();
             returnQueue.add(entry);
          }
          return null;
@@ -107,7 +107,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       future.get(10, TimeUnit.SECONDS);
 
       for (Map.Entry<Object, String> entry : values.entrySet()) {
-         assertTrue("Entry wasn't found:" + entry, returnQueue.contains(entry));
+         assertTrue("Entry wasn't found:" + entry, returnQueue.contains(entry.getValue()));
       }
    }
 

@@ -77,12 +77,13 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
       });
    }
 
-   protected static <K, V> Supplier<CacheStream<CacheEntry<K, V>>> supplier(Cache<K, V> cache, CacheStream<CacheEntry<K, V>> stream) {
+   protected static <K, V> Supplier<CacheStream<CacheEntry<K, V>>> supplier(Cache<K, V> cache,
+         Supplier<CacheStream<CacheEntry<K, V>>> streamSupplier) {
       if (cache.getCacheConfiguration().clustering().cacheMode().isScattered()) {
          // ignore tombstones
-         return () -> stream.filter(entry -> entry.getValue() != null);
+         return () -> streamSupplier.get().filter(entry -> entry.getValue() != null);
       } else {
-         return () -> stream;
+         return streamSupplier;
       }
    }
 
@@ -141,7 +142,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          ComponentRegistry registry = advancedCache.getComponentRegistry();
          CacheStream<CacheEntry<K, V>> cacheStream = new DistributedCacheStream<CacheEntry<K, V>>(
                  cache.getCacheManager().getAddress(), false, advancedCache.getDistributionManager(),
-                 supplier(cache, entrySet.stream()), registry.getComponent(ClusterStreamManager.class),
+                 supplier(cache, entrySet::stream), registry.getComponent(ClusterStreamManager.class),
                  !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
                  registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry) {
@@ -173,7 +174,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
          CacheStream<CacheEntry<K, V>> cacheStream = new DistributedCacheStream<>(cache.getCacheManager().getAddress(),
-                 true, advancedCache.getDistributionManager(), supplier(cache, entrySet.parallelStream()),
+                 true, advancedCache.getDistributionManager(), supplier(cache, entrySet::parallelStream),
                  registry.getComponent(ClusterStreamManager.class), !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
                  registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry);
@@ -281,7 +282,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
          return new DistributedCacheStream<K>(cache.getCacheManager().getAddress(), false,
-                 advancedCache.getDistributionManager(), supplier(cache, entrySet.stream()),
+                 advancedCache.getDistributionManager(), supplier(cache, entrySet::stream),
                  registry.getComponent(ClusterStreamManager.class), !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
                  registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry,
@@ -314,7 +315,7 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
          return new DistributedCacheStream<>(cache.getCacheManager().getAddress(), true,
-                 advancedCache.getDistributionManager(), supplier(cache, entrySet.parallelStream()),
+                 advancedCache.getDistributionManager(), supplier(cache, entrySet::parallelStream),
                  registry.getComponent(ClusterStreamManager.class), !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
                  registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry,
