@@ -1,22 +1,31 @@
 package org.infinispan.functional.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.cache.impl.CacheEncoders;
+import org.infinispan.cache.impl.EncoderCache;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
 
 /**
  * Abstract functional map, providing implementations for some of the shared methods.
@@ -34,6 +43,9 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
    private final BatchContainer batchContainer;
    private final TransactionManager transactionManager;
 
+   protected final EncodingClasses encodingClasses;
+   protected final CacheEncoders cacheEncoders;
+
    protected AbstractFunctionalMap(Params params, FunctionalMapImpl<K, V> fmap) {
       this.fmap = fmap;
       Configuration config = fmap.cache.getCacheConfiguration();
@@ -42,6 +54,18 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       transactionManager = transactional ? fmap.cache.getTransactionManager() : null;
       batchContainer = transactional && config.invocationBatching().enabled() ? fmap.cache.getBatchContainer() : null;
       this.params = params;
+      if (fmap.isEncoded()) {
+         EncoderCache encoderCache = (EncoderCache) fmap.cache;
+         Encoder keyEncoder = encoderCache.getKeyEncoder();
+         Wrapper keyWrapper = encoderCache.getKeyWrapper();
+         Encoder valueEncoder = encoderCache.getValueEncoder();
+         Wrapper valueWrapper = encoderCache.getValueWrapper();
+         this.cacheEncoders = CacheEncoders.create(keyEncoder, keyWrapper, valueEncoder, valueWrapper);
+         this.encodingClasses = encoderCache.getEncodingClasses();
+      } else {
+         this.encodingClasses = null;
+         this.cacheEncoders = CacheEncoders.EMPTY;
+      }
    }
 
    @Override
@@ -149,5 +173,18 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       } else {
          return cf;
       }
+   }
+
+   protected Set encodeKeys(Set<? extends K> keys){
+      return keys.stream().map(k -> cacheEncoders.keyToStorage(k)).collect(Collectors.toSet());
+   }
+
+   protected Map encodeEntries(Map<? extends K, ? extends V> entries) {
+      Map encodedEntries = new HashMap<>();
+      entries.entrySet().forEach(e -> {
+         Object keyEncoded = cacheEncoders.keyToStorage(e.getKey());
+         encodedEntries.put(keyEncoded, e.getValue());
+      });
+      return encodedEntries;
    }
 }

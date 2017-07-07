@@ -10,19 +10,19 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.infinispan.cache.impl.EncodingClasses;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.EncoderRegistry;
 
-public class FunctionMapper implements Function {
+public class FunctionMapper implements Function, InjectableComponent {
 
-   private final Class<? extends Encoder> keyEncoderClass;
-   private final Class<? extends Encoder> valueEncoderClass;
-   private final Class<? extends Wrapper> keyWrapperClass;
-   private final Class<? extends Wrapper> valueWrapperClass;
+   private final EncodingClasses encodingClasses;
 
    private Encoder keyEncoder;
    private Encoder valueEncoder;
@@ -31,31 +31,30 @@ public class FunctionMapper implements Function {
 
    private final Function function;
 
-   @Inject
-   public void injectDependencies(EncoderRegistry encoderRegistry) {
-      this.keyEncoder = encoderRegistry.getEncoder(keyEncoderClass);
-      this.valueEncoder = encoderRegistry.getEncoder(valueEncoderClass);
-      this.keyWrapper = encoderRegistry.getWrapper(keyWrapperClass);
-      this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
+   public FunctionMapper(Function mappingFunction,
+                         EncodingClasses encodingClasses) {
+      this.function = mappingFunction;
+      this.encodingClasses = encodingClasses;
    }
 
-   public FunctionMapper(Function mappingFunction,
-                         Class<? extends Encoder> keyEncoderClass,
-                         Class<? extends Encoder> valueEncoderClass,
-                         Class<? extends Wrapper> keyWrapperClass,
-                         Class<? extends Wrapper> valueWrapperClass) {
-      this.function = mappingFunction;
-      this.keyEncoderClass = keyEncoderClass;
-      this.valueEncoderClass = valueEncoderClass;
-      this.keyWrapperClass = keyWrapperClass;
-      this.valueWrapperClass = valueWrapperClass;
+   @Inject
+   public void injectDependencies(EncoderRegistry encoderRegistry) {
+      this.keyEncoder = encoderRegistry.getEncoder(encodingClasses.getKeyEncoderClass());
+      this.valueEncoder = encoderRegistry.getEncoder(encodingClasses.getValueEncoderClass());
+      this.keyWrapper = encoderRegistry.getWrapper(encodingClasses.getKeyWrapperClass());
+      this.valueWrapper = encoderRegistry.getWrapper(encodingClasses.getValueWrapperClass());
    }
 
    @Override
    public Object apply(Object k) {
       Object key = fromStorage(k, keyEncoder, keyWrapper);
       Object result = function.apply(key);
-      return result != null ? toStorage(result, valueEncoder, valueWrapper) : null;
+      return result == null ? result : toStorage(result, valueEncoder, valueWrapper);
+   }
+
+   @Override
+   public void inject(ComponentRegistry registry) {
+      registry.wireDependencies(this);
    }
 
    public static class Externalizer implements AdvancedExternalizer<FunctionMapper> {
@@ -73,19 +72,13 @@ public class FunctionMapper implements Function {
       @Override
       public void writeObject(ObjectOutput output, FunctionMapper object) throws IOException {
          output.writeObject(object.function);
-         output.writeObject(object.keyEncoderClass);
-         output.writeObject(object.valueEncoderClass);
-         output.writeObject(object.keyWrapperClass);
-         output.writeObject(object.valueWrapperClass);
+         EncodingClasses.writeTo(output, object.encodingClasses);
       }
 
       @Override
       public FunctionMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new FunctionMapper((Function) input.readObject(),
-               (Class<? extends Encoder>) input.readObject(),
-               (Class<? extends Encoder>) input.readObject(),
-               (Class<? extends Wrapper>) input.readObject(),
-               (Class<? extends Wrapper>) input.readObject());
+               EncodingClasses.readFrom(input));
       }
    }
 }

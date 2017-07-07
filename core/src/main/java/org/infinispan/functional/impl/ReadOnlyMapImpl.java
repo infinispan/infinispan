@@ -10,14 +10,14 @@ import java.util.stream.StreamSupport;
 
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
-import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
-import org.infinispan.functional.Param;
-import org.infinispan.functional.Traversable;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
+import org.infinispan.functional.Param;
+import org.infinispan.functional.Traversable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -35,7 +35,7 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
    }
 
    public static <K, V> ReadOnlyMap<K, V> create(FunctionalMapImpl<K, V> functionalMap) {
-      return new ReadOnlyMapImpl<>(Params.from(functionalMap.params.params), functionalMap);
+      return create(Params.from(functionalMap.params.params), functionalMap);
    }
 
    private static <K, V> ReadOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
@@ -45,7 +45,8 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
    @Override
    public <R> CompletableFuture<R> eval(K key, Function<ReadEntryView<K, V>, R> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
-      ReadOnlyKeyCommand cmd = fmap.commandsFactory.buildReadOnlyKeyCommand(key, f, params);
+      Object keyEncoded = cacheEncoders.keyToStorage(key);
+      ReadOnlyKeyCommand cmd = fmap.commandsFactory.buildReadOnlyKeyCommand(keyEncoded, (Function) f, params, encodingClasses);
       InvocationContext ctx = fmap.invCtxFactory.createInvocationContext(false, 1);
       return (CompletableFuture<R>) fmap.chain.invokeAsync(ctx, cmd);
    }
@@ -53,7 +54,8 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
    @Override
    public <R> Traversable<R> evalMany(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
       log.tracef("Invoked evalMany(m=%s, %s)", keys, params);
-      ReadOnlyManyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadOnlyManyCommand(keys, f, params);
+      Set encodedKeys = encodeKeys(keys);
+      ReadOnlyManyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadOnlyManyCommand(encodedKeys, f, params, encodingClasses);
       InvocationContext ctx = fmap.invCtxFactory.createInvocationContext(false, keys.size());
       return Traversables.of((Stream<R>) fmap.chain.invokeAsync(ctx, cmd).join());
    }

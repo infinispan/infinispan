@@ -4,6 +4,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.EncoderCache;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -104,7 +105,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       AdvancedCache<K, V> cache = new CacheImpl<>(cacheName, encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class);
 
-      cache = new EncoderCache<>(cache, encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class);
+      cache = new EncoderCache<>(cache, new EncodingClasses(encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class));
 
       bootstrap(cacheName, cache, configuration, globalComponentRegistry, marshaller);
       if (marshaller != null) {
@@ -127,7 +128,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       }
       this.configuration = configuration;
 
-      cache = new EncoderCache<>(cache, encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class);
+      cache = new EncoderCache<>(cache, new EncodingClasses(encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class));
 
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
          @Override

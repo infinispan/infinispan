@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
+import org.infinispan.cache.impl.CacheEncoders;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Experimental;
@@ -34,39 +35,47 @@ public final class EntryViews {
       // Cannot be instantiated, it's just a holder class
    }
 
+   public static <K, V> ReadEntryView<K, V> readOnly(CacheEntry<K, V> entry, CacheEncoders cacheEncoders) {
+      return new EntryBackedReadOnlyView<>(entry, cacheEncoders);
+   }
+
    public static <K, V> ReadEntryView<K, V> readOnly(CacheEntry<K, V> entry) {
-      return new EntryBackedReadOnlyView<>(entry);
+      return new EntryBackedReadOnlyView<>(entry, CacheEncoders.EMPTY);
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(K key, V value, Metadata metadata) {
       return new ReadOnlySnapshotView<>(key, value, metadata);
    }
 
-   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry) {
-      return new EntryBackedWriteOnlyView<>(entry);
+   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry, CacheEncoders cacheEncoders) {
+      return new EntryBackedWriteOnlyView<>(entry, cacheEncoders);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry) {
-      return new EntryBackedReadWriteView<>(entry);
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, CacheEncoders cacheEncoders) {
+      return new EntryBackedReadWriteView<>(entry, cacheEncoders);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, V prevValue, Metadata prevMetadata) {
-      return new EntryAndPreviousReadWriteView<>(entry, prevValue, prevMetadata);
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, V prevValue, Metadata prevMetadata, CacheEncoders cacheEncoders) {
+      return new EntryAndPreviousReadWriteView<>(entry, prevValue, prevMetadata, cacheEncoders);
    }
 
    public static <K, V> ReadEntryView<K, V> noValue(K key) {
-      return new NoValueReadOnlyView<>(key);
+      return new NoValueReadOnlyView<>(key, CacheEncoders.EMPTY);
+   }
+
+   public static <K, V> ReadEntryView<K, V> noValue(K key, CacheEncoders cacheEncoders) {
+      return new NoValueReadOnlyView<>(key, cacheEncoders);
    }
 
    /**
     * For convenience, a lambda might decide to return the entry view it
     * received as parameter, because that makes easy to return both value and
     * meta parameters back to the client.
-    *
+    * <p>
     * If the lambda function decides to return an view, launder it into an
     * immutable view to avoid the user trying apply any modifications to the
     * entry view from outside the lambda function.
-    *
+    * <p>
     * If the view is read-only, capture its data into a snapshot from the
     * cached entry and avoid changing underneath.
     */
@@ -74,13 +83,16 @@ public final class EntryViews {
    public static <R> R snapshot(R ret) {
       if (ret instanceof EntryBackedReadWriteView) {
          EntryBackedReadWriteView view = (EntryBackedReadWriteView) ret;
-         return (R) new ReadWriteSnapshotView(view.key(), view.entry.getValue(), view.entry.getMetadata());
+         return (R) new ReadWriteSnapshotView(view.key(), view.find().orElse(null), view.entry.getMetadata());
       } else if (ret instanceof EntryAndPreviousReadWriteView) {
          EntryAndPreviousReadWriteView view = (EntryAndPreviousReadWriteView) ret;
-         return (R) new ReadWriteSnapshotView(view.key(), view.entry.getValue(), view.entry.getMetadata());
+         return (R) new ReadWriteSnapshotView(view.key(), view.getCurrentValue(), view.entry.getMetadata());
       } else if (ret instanceof EntryBackedReadOnlyView) {
          EntryBackedReadOnlyView view = (EntryBackedReadOnlyView) ret;
-         return (R) new ReadOnlySnapshotView(view.key(), view.entry.getValue(), view.entry.getMetadata());
+         return (R) new ReadOnlySnapshotView(view.key(), view.find().orElse(null), view.entry.getMetadata());
+      } else if (ret instanceof NoValueReadOnlyView) {
+         NoValueReadOnlyView view = (NoValueReadOnlyView) ret;
+         return (R) new ReadOnlySnapshotView(view.key(), null, null);
       }
 
       return ret;
@@ -88,19 +100,21 @@ public final class EntryViews {
 
    private static final class EntryBackedReadOnlyView<K, V> implements ReadEntryView<K, V> {
       final CacheEntry<K, V> entry;
+      private final CacheEncoders cacheEncoders;
 
-      private EntryBackedReadOnlyView(CacheEntry<K, V> entry) {
+      private EntryBackedReadOnlyView(CacheEntry<K, V> entry, CacheEncoders cacheEncoders) {
          this.entry = entry;
+         this.cacheEncoders = cacheEncoders;
       }
 
       @Override
       public K key() {
-         return entry.getKey();
+         return (K) cacheEncoders.keyFromStorage(entry.getKey());
       }
 
       @Override
       public Optional<V> find() {
-         return entry == null ? Optional.empty() : Optional.ofNullable(entry.getValue());
+         return entry == null ? Optional.empty() : Optional.ofNullable((V) cacheEncoders.valueFromStorage(entry.getValue()));
       }
 
       @Override
@@ -108,7 +122,7 @@ public final class EntryViews {
          if (entry == null || entry.getValue() == null)
             throw new NoSuchElementException("No value present");
 
-         return entry.getValue();
+         return (V) cacheEncoders.valueFromStorage(entry.getValue());
       }
 
       @Override
@@ -173,18 +187,20 @@ public final class EntryViews {
       @Override
       public String toString() {
          return "ReadOnlySnapshotView{" +
-            "key=" + key +
-            ", value=" + value +
-            ", metadata=" + metadata +
-            '}';
+               "key=" + key +
+               ", value=" + value +
+               ", metadata=" + metadata +
+               '}';
       }
    }
 
    private static final class EntryBackedWriteOnlyView<K, V> implements WriteEntryView<V> {
-      final CacheEntry<K, V> entry;
+      final CacheEntry entry;
+      private final CacheEncoders cacheEncoders;
 
-      private EntryBackedWriteOnlyView(CacheEntry<K, V> entry) {
+      private EntryBackedWriteOnlyView(CacheEntry<K, V> entry, CacheEncoders cacheEncoders) {
          this.entry = entry;
+         this.cacheEncoders = cacheEncoders;
       }
 
       @Override
@@ -202,7 +218,8 @@ public final class EntryViews {
       }
 
       private void setValue(V value) {
-         entry.setValue(value);
+         Object encodedValue = cacheEncoders.valueToStorage(value);
+         entry.setValue(encodedValue);
          entry.setChanged(true);
          entry.setRemoved(value == null);
       }
@@ -222,20 +239,35 @@ public final class EntryViews {
    }
 
    private static final class EntryBackedReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
-      final CacheEntry<K, V> entry;
+      final CacheEntry entry;
+      private final CacheEncoders cacheEncoders;
+      private K decodedKey;
+      private V decodedValue;
 
-      private EntryBackedReadWriteView(CacheEntry<K, V> entry) {
+      private EntryBackedReadWriteView(CacheEntry<K, V> entry, CacheEncoders cacheEncoders) {
          this.entry = entry;
+         this.cacheEncoders = cacheEncoders;
       }
 
       @Override
       public K key() {
-         return entry.getKey();
+         if (entry == null) {
+            return null;
+         }
+
+         if (decodedKey == null) {
+            decodedKey = (K) cacheEncoders.keyFromStorage(entry.getKey());
+         }
+         return decodedKey;
       }
 
       @Override
       public Optional<V> find() {
-         return entry == null ? Optional.empty() : Optional.ofNullable(entry.getValue());
+         if (entry == null) {
+            return Optional.empty();
+         }
+         decodedValue = decodedValue == null ? (V) cacheEncoders.valueFromStorage(entry.getValue()) : decodedValue;
+         return Optional.ofNullable(decodedValue);
       }
 
       @Override
@@ -257,14 +289,17 @@ public final class EntryViews {
       }
 
       private void setEntry(V value) {
-         entry.setCreated(entry.getValue() == null && value != null);
-         entry.setValue(value);
+         decodedValue = value;
+         Object valueEncoded = cacheEncoders.valueToStorage(value);
+         entry.setCreated(entry.getValue() == null && valueEncoded != null);
+         entry.setValue(valueEncoded);
          entry.setChanged(true);
-         entry.setRemoved(value == null);
+         entry.setRemoved(valueEncoded == null);
       }
 
       @Override
       public Void remove() {
+         decodedValue = null;
          if (!entry.isNull()) {
             entry.setRemoved(true);
             entry.setChanged(true);
@@ -292,8 +327,8 @@ public final class EntryViews {
       public V get() throws NoSuchElementException {
          if (entry == null || entry.getValue() == null)
             throw new NoSuchElementException("No value present");
-
-         return entry.getValue();
+         decodedValue = decodedValue == null ? (V) cacheEncoders.valueFromStorage(entry.getValue()) : decodedValue;
+         return decodedValue;
       }
 
       @Override
@@ -303,24 +338,45 @@ public final class EntryViews {
    }
 
    private static final class EntryAndPreviousReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
-      final CacheEntry<K, V> entry;
+      final CacheEntry entry;
       final V prevValue;
       final Metadata prevMetadata;
+      private final CacheEncoders cacheEncoders;
+      private K decodedKey;
+      private V decodedPrevValue;
+      private V decodedValue;
 
-      private EntryAndPreviousReadWriteView(CacheEntry<K, V> entry, V prevValue, Metadata prevMetadata) {
+      private EntryAndPreviousReadWriteView(CacheEntry<K, V> entry,
+                                            V prevValue,
+                                            Metadata prevMetadata,
+                                            CacheEncoders cacheEncoders) {
          this.entry = entry;
          this.prevValue = prevValue;
          this.prevMetadata = prevMetadata;
+         this.cacheEncoders = cacheEncoders;
       }
 
       @Override
       public K key() {
-         return entry.getKey();
+         if (decodedKey == null) {
+            decodedKey = (K) cacheEncoders.keyFromStorage(entry.getKey());
+         }
+         return decodedKey;
       }
 
       @Override
       public Optional<V> find() {
-         return Optional.ofNullable(prevValue);
+         if (decodedPrevValue == null) {
+            decodedPrevValue = (V) cacheEncoders.valueFromStorage(prevValue);
+         }
+         return Optional.ofNullable(decodedPrevValue);
+      }
+
+      public V getCurrentValue() {
+         if (decodedValue == null) {
+            decodedValue = (V) cacheEncoders.valueFromStorage(entry.getValue());
+         }
+         return decodedValue;
       }
 
       @Override
@@ -342,14 +398,17 @@ public final class EntryViews {
       }
 
       private void setValue(V value) {
-         entry.setValue(value);
+         decodedValue = value;
+         Object valueEncoded = cacheEncoders.valueToStorage(value);
+         entry.setValue(valueEncoded);
          entry.setChanged(true);
-         entry.setRemoved(value == null);
-         entry.setCreated(prevValue == null && value != null);
+         entry.setRemoved(valueEncoded == null);
+         entry.setCreated(prevValue == null && valueEncoded != null);
       }
 
       @Override
       public Void remove() {
+         decodedValue = null;
          if (!entry.isNull()) {
             entry.setRemoved(true);
             entry.setCreated(false);
@@ -376,34 +435,39 @@ public final class EntryViews {
       @Override
       public V get() throws NoSuchElementException {
          if (prevValue == null) throw new NoSuchElementException();
-         return prevValue;
+         if (decodedPrevValue == null) {
+            decodedPrevValue = (V) cacheEncoders.valueFromStorage(prevValue);
+         }
+         return decodedPrevValue;
       }
 
       @Override
       public String toString() {
          return "EntryAndPreviousReadWriteView{" +
-            "entry=" + entry +
-            ", prevValue=" + prevValue +
-            ", prevMetadata=" + prevMetadata +
-            '}';
+               "entry=" + entry +
+               ", prevValue=" + prevValue +
+               ", prevMetadata=" + prevMetadata +
+               '}';
       }
    }
 
    private static final class NoValueReadOnlyView<K, V> implements ReadEntryView<K, V> {
       final K key;
+      private final CacheEncoders cacheEncoders;
 
-      public NoValueReadOnlyView(K key) {
+      public NoValueReadOnlyView(K key, CacheEncoders cacheEncoders) {
          this.key = key;
+         this.cacheEncoders = cacheEncoders;
       }
 
       @Override
       public K key() {
-         return key;
+         return (K) cacheEncoders.keyFromStorage(key);
       }
 
       @Override
       public V get() throws NoSuchElementException {
-         throw new NoSuchElementException("No value for key " + key);
+         throw new NoSuchElementException("No value for key " + key());
       }
 
       @Override
@@ -418,7 +482,7 @@ public final class EntryViews {
 
       @Override
       public String toString() {
-         return "NoValueReadOnlyView{" + "key=" + key + '}';
+         return "NoValueReadOnlyView{" + "key=" + key() + '}';
       }
    }
 
@@ -467,7 +531,7 @@ public final class EntryViews {
       @Override
       public Void set(V value, MetaParam.Writable... metas) {
          throw new IllegalStateException(
-            "A read-write entry view cannot be modified outside the scope of a lambda");
+               "A read-write entry view cannot be modified outside the scope of a lambda");
       }
 
       @Override
@@ -479,16 +543,16 @@ public final class EntryViews {
       @Override
       public Void remove() {
          throw new IllegalStateException(
-            "A read-write entry view cannot be modified outside the scope of a lambda");
+               "A read-write entry view cannot be modified outside the scope of a lambda");
       }
 
       @Override
       public String toString() {
          return "ReadWriteSnapshotView{" +
-            "key=" + key +
-            ", value=" + value +
-            ", metadata=" + metadata +
-            '}';
+               "key=" + key +
+               ", value=" + value +
+               ", metadata=" + metadata +
+               '}';
       }
    }
 
@@ -505,6 +569,7 @@ public final class EntryViews {
       if (metas.length != 0) {
          metaParams.addMany(metas);
       }
+
       updateMetadata(entry, MetaParamsInternalMetadata.from(metaParams));
    }
 
@@ -568,20 +633,20 @@ public final class EntryViews {
 
       @Override
       public NoValueReadOnlyView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new NoValueReadOnlyView(input.readObject());
+         return new NoValueReadOnlyView(input.readObject(), CacheEncoders.EMPTY);
       }
    }
 
    // Externalizer class defined outside of externalized class to avoid having
    // to making externalized class public, since that would leak internal impl.
-   public static final class ReadWriteSnapshotViewExternalizer
-            extends AbstractExternalizer<ReadWriteSnapshotView> {
+   public static final class ReadWriteSnapshotViewExternalizer extends AbstractExternalizer<ReadWriteSnapshotView> {
       @Override
       public Integer getId() {
          return Ids.READ_WRITE_SNAPSHOT_VIEW;
       }
 
-      @Override @SuppressWarnings("unchecked")
+      @Override
+      @SuppressWarnings("unchecked")
       public Set<Class<? extends ReadWriteSnapshotView>> getTypeClasses() {
          return Util.asSet(ReadWriteSnapshotView.class);
       }
@@ -593,7 +658,8 @@ public final class EntryViews {
          output.writeObject(obj.metadata);
       }
 
-      @Override @SuppressWarnings("unchecked")
+      @Override
+      @SuppressWarnings("unchecked")
       public ReadWriteSnapshotView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
          Object value = input.readObject();

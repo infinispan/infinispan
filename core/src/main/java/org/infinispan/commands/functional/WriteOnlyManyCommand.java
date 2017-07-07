@@ -7,14 +7,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Consumer;
 
+import org.infinispan.cache.impl.CacheEncoders;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.functional.EntryView.WriteEntryView;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.core.EncoderRegistry;
 
 public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
@@ -23,16 +29,29 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    private Collection<? extends K> keys;
    private Consumer<WriteEntryView<V>> f;
 
-   public WriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId, params);
+   public WriteOnlyManyCommand(Collection<? extends K> keys,
+                               Consumer<WriteEntryView<V>> f,
+                               Params params,
+                               CommandInvocationId commandInvocationId,
+                               EncodingClasses encodingClasses,
+                               ComponentRegistry componentRegistry) {
+      super(commandInvocationId, params, encodingClasses);
       this.keys = keys;
       this.f = f;
+      init(componentRegistry);
    }
 
    public WriteOnlyManyCommand(WriteOnlyManyCommand<K, V> command) {
       super(command);
       this.keys = command.keys;
       this.f = command.f;
+      this.encodingClasses = command.encodingClasses;
+      this.cacheEncoders = command.cacheEncoders;
+   }
+
+   @Inject
+   public void injectDependencies(EncoderRegistry encoderRegistry) {
+      cacheEncoders = CacheEncoders.grabEncodersFromRegistry(encoderRegistry, encodingClasses);
    }
 
    public WriteOnlyManyCommand() {
@@ -61,6 +80,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       Params.writeObject(output, params);
       output.writeInt(topologyId);
       output.writeLong(flags);
+      EncodingClasses.writeTo(output, encodingClasses);
    }
 
    @Override
@@ -72,6 +92,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       params = Params.readObject(input);
       topologyId = input.readInt();
       flags = input.readLong();
+      encodingClasses = EncodingClasses.readFrom(input);
    }
 
    @Override
@@ -86,7 +107,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
          if (cacheEntry == null) {
             throw new IllegalStateException();
          }
-         f.accept(EntryViews.writeOnly(cacheEntry));
+         f.accept(EntryViews.writeOnly(cacheEntry, cacheEncoders));
       }
       return null;
    }
@@ -130,5 +151,14 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    @Override
    public Mutation<K, V, ?> toMutation(K key) {
       return new Mutations.Write<>(f);
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry) {
+      if (encodingClasses != null) {
+         componentRegistry.wireDependencies(this);
+      }
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 }

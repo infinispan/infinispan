@@ -8,17 +8,23 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.function.BiFunction;
 
+import org.infinispan.cache.impl.CacheEncoders;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -34,18 +40,20 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    private Metadata prevMetadata;
 
    public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
-         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
-      super(key, valueMatcher, id, params);
+                                   CommandInvocationId id,
+                                   ValueMatcher valueMatcher,
+                                   Params params,
+                                   EncodingClasses encodingClasses,
+                                   ComponentRegistry componentRegistry) {
+      super(key, valueMatcher, id, params, encodingClasses);
       this.value = value;
       this.f = f;
+      init(componentRegistry);
    }
 
-   public ReadWriteKeyValueCommand(ReadWriteKeyValueCommand<K, V, R> other) {
-      super((K) other.getKey(), other.getValueMatcher(), other.commandInvocationId, other.getParams());
-      this.value = other.value;
-      this.f = other.f;
-      this.prevValue = other.prevValue;
-      this.prevMetadata = other.prevMetadata;
+   @Inject
+   public void injectDependencies(EncoderRegistry encoderRegistry) {
+      cacheEncoders = CacheEncoders.grabEncodersFromRegistry(encoderRegistry, encodingClasses);
    }
 
    public ReadWriteKeyValueCommand() {
@@ -68,6 +76,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeObject(prevValue);
       output.writeObject(prevMetadata);
+      EncodingClasses.writeTo(output, encodingClasses);
    }
 
    @Override
@@ -81,6 +90,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       commandInvocationId = CommandInvocationId.readFrom(input);
       prevValue = (V) input.readObject();
       prevMetadata = (Metadata) input.readObject();
+      encodingClasses = EncodingClasses.readFrom(input);
    }
 
    @Override
@@ -117,7 +127,7 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       // using value matcher - if other commands are retried these can apply the function multiple times.
       // Here we don't want to modify the value in context when trying what would be the outcome of the operation.
       CacheEntry<K, V> copy = e.clone();
-      R ret = f.apply(value, EntryViews.readWrite(copy, prevValue, prevMetadata));
+      R ret = f.apply(value, EntryViews.readWrite(copy, prevValue, prevMetadata, cacheEncoders));
       if (valueMatcher.matches(oldPrevValue, prevValue, copy.getValue())) {
          log.tracef("Execute read-write function on previous value %s and previous metadata %s", prevValue, prevMetadata);
          e.setValue(copy.getValue());
@@ -125,10 +135,8 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
          // These are the only flags that should be changed with EntryViews.readWrite
          e.setChanged(copy.isChanged());
          e.setRemoved(copy.isRemoved());
-         return snapshot(ret);
       }
-
-      return f.apply(value, EntryViews.readWrite(e, e.getValue(), e.getMetadata()));
+      return snapshot(ret);
    }
 
    @Override
@@ -144,20 +152,31 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    @Override
    public String toString() {
       return new StringBuilder(getClass().getSimpleName())
-         .append(" {key=")
-         .append(toStr(key))
-         .append(", value=").append(toStr(value))
-         .append(", prevValue=").append(toStr(prevValue))
-         .append(", prevMetadata=").append(toStr(prevMetadata))
-         .append(", flags=").append(printFlags())
-         .append(", valueMatcher=").append(valueMatcher)
-         .append(", successful=").append(successful)
-         .append("}")
-         .toString();
+            .append(" {key=")
+            .append(toStr(key))
+            .append(", value=").append(toStr(value))
+            .append(", prevValue=").append(toStr(prevValue))
+            .append(", prevMetadata=").append(toStr(prevMetadata))
+            .append(", flags=").append(printFlags())
+            .append(", valueMatcher=").append(valueMatcher)
+            .append(", successful=").append(successful)
+            .append(", encodingClasses=").append(encodingClasses)
+            .append("}")
+            .toString();
    }
 
    @Override
    public Mutation toMutation(K key) {
-      return new Mutations.ReadWriteWithValue<>(value, f);
+      V valueFromStorage = (V) cacheEncoders.valueFromStorage(value);
+      return new Mutations.ReadWriteWithValue<>(valueFromStorage, f);
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry) {
+      if (encodingClasses != null) {
+         componentRegistry.wireDependencies(this);
+      }
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 }

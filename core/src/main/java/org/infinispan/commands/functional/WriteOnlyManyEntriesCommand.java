@@ -7,13 +7,19 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import org.infinispan.cache.impl.CacheEncoders;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.functional.EntryView.WriteEntryView;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.core.EncoderRegistry;
 
 public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
@@ -22,19 +28,32 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    private Map<? extends K, ? extends V> entries;
    private BiConsumer<V, WriteEntryView<V>> f;
 
-   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId, params);
+   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries,
+                                      BiConsumer<V, WriteEntryView<V>> f,
+                                      Params params,
+                                      CommandInvocationId commandInvocationId,
+                                      EncodingClasses encodingClasses,
+                                      ComponentRegistry componentRegistry) {
+      super(commandInvocationId, params, encodingClasses);
       this.entries = entries;
       this.f = f;
+      init(componentRegistry);
    }
 
    public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V> command) {
       super(command);
       this.entries = command.entries;
       this.f = command.f;
+      this.encodingClasses = command.encodingClasses;
+      this.cacheEncoders = command.cacheEncoders;
    }
 
    public WriteOnlyManyEntriesCommand() {
+   }
+
+   @Inject
+   public void injectDependencies(EncoderRegistry encoderRegistry) {
+      cacheEncoders = CacheEncoders.grabEncodersFromRegistry(encoderRegistry, encodingClasses);
    }
 
    public Map<? extends K, ? extends V> getEntries() {
@@ -64,6 +83,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       Params.writeObject(output, params);
       output.writeInt(topologyId);
       output.writeLong(flags);
+      EncodingClasses.writeTo(output, encodingClasses);
    }
 
    @Override
@@ -75,18 +95,18 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       params = Params.readObject(input);
       topologyId = input.readInt();
       flags = input.readLong();
+      encodingClasses = EncodingClasses.readFrom(input);
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       for (Map.Entry<? extends K, ? extends V> entry : entries.entrySet()) {
          CacheEntry<K, V> cacheEntry = ctx.lookupEntry(entry.getKey());
-
          // Could be that the key is not local, 'null' is how this is signalled
          if (cacheEntry == null) {
             throw new IllegalStateException();
          }
-         f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry));
+         f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry, cacheEncoders));
       }
       return null;
    }
@@ -134,6 +154,16 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    @Override
    public Mutation<K, V, ?> toMutation(K key) {
-      return new Mutations.WriteWithValue<>(entries.get(key), f);
+      V valueFromStorage = (V) cacheEncoders.valueFromStorage(entries.get(key));
+      return new Mutations.WriteWithValue<>(valueFromStorage, f);
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry) {
+      if (encodingClasses != null) {
+         componentRegistry.wireDependencies(this);
+      }
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 }

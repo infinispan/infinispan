@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -19,10 +20,7 @@ import org.infinispan.marshall.core.EncoderRegistry;
 
 public class BiFunctionMapper implements BiFunction {
 
-   private final Class<? extends Encoder> keyEncoderClass;
-   private final Class<? extends Encoder> valueEncoderClass;
-   private final Class<? extends Wrapper> keyWrapperClass;
-   private final Class<? extends Wrapper> valueWrapperClass;
+   private EncodingClasses encodingClasses;
 
    private Encoder keyEncoder;
    private Encoder valueEncoder;
@@ -32,22 +30,16 @@ public class BiFunctionMapper implements BiFunction {
 
    @Inject
    public void injectDependencies(EncoderRegistry encoderRegistry) {
-      this.keyEncoder = encoderRegistry.getEncoder(keyEncoderClass);
-      this.valueEncoder = encoderRegistry.getEncoder(valueEncoderClass);
-      this.keyWrapper = encoderRegistry.getWrapper(keyWrapperClass);
-      this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
+      this.keyEncoder = encoderRegistry.getEncoder(encodingClasses.getKeyEncoderClass());
+      this.valueEncoder = encoderRegistry.getEncoder(encodingClasses.getValueEncoderClass());
+      this.keyWrapper = encoderRegistry.getWrapper(encodingClasses.getKeyWrapperClass());
+      this.valueWrapper = encoderRegistry.getWrapper(encodingClasses.getValueWrapperClass());
    }
 
    public BiFunctionMapper(BiFunction remappingFunction,
-                           Class<? extends Encoder> keyEncoderClass,
-                           Class<? extends Encoder> valueEncoderClass,
-                           Class<? extends Wrapper> keyWrapperClass,
-                           Class<? extends Wrapper> valueWrapperClass) {
+                           EncodingClasses encodingClasses) {
       this.biFunction = remappingFunction;
-      this.keyEncoderClass = keyEncoderClass;
-      this.valueEncoderClass = valueEncoderClass;
-      this.keyWrapperClass = keyWrapperClass;
-      this.valueWrapperClass = valueWrapperClass;
+      this.encodingClasses = encodingClasses;
    }
 
    @Override
@@ -55,7 +47,7 @@ public class BiFunctionMapper implements BiFunction {
       Object key = fromStorage(k, keyEncoder, keyWrapper);
       Object value = fromStorage(v, valueEncoder, valueWrapper);
       Object result = biFunction.apply(key, value);
-      return result != null ? toStorage(result, valueEncoder, valueWrapper) : null;
+      return result == null ? result : toStorage(result, valueEncoder, valueWrapper);
    }
 
    public static class Externalizer implements AdvancedExternalizer<BiFunctionMapper> {
@@ -73,19 +65,13 @@ public class BiFunctionMapper implements BiFunction {
       @Override
       public void writeObject(ObjectOutput output, BiFunctionMapper object) throws IOException {
          output.writeObject(object.biFunction);
-         output.writeObject(object.keyEncoderClass);
-         output.writeObject(object.valueEncoderClass);
-         output.writeObject(object.keyWrapperClass);
-         output.writeObject(object.valueWrapperClass);
+         EncodingClasses.writeTo(output, object.encodingClasses);
       }
 
       @Override
       public BiFunctionMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new BiFunctionMapper((BiFunction) input.readObject(),
-               (Class<? extends Encoder>) input.readObject(),
-               (Class<? extends Encoder>) input.readObject(),
-               (Class<? extends Wrapper>) input.readObject(),
-               (Class<? extends Wrapper>) input.readObject());
+               EncodingClasses.readFrom(input));
       }
    }
 }

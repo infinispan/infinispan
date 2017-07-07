@@ -24,4 +24,9 @@ public class ByteArrayWrapper implements Wrapper {
       return obj;
    }
 
+   @Override
+   public boolean isWrapped(Object obj) {
+      return obj instanceof WrappedByteArray;
+   }
+
 }

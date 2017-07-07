@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.container.InternalEntryFactory;
@@ -23,32 +22,18 @@ import org.infinispan.util.function.RemovableFunction;
 public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K, V>, CacheEntry<K, V>> {
    private transient InternalEntryFactory entryFactory;
 
-   private final Class<? extends Encoder> keyEncoderClass;
-   private final Class<? extends Encoder> valueEncoderClass;
-   private final Class<? extends Wrapper> keyWrapperClass;
-   private final Class<? extends Wrapper> valueWrapperClass;
-   private transient Encoder keyEncoder;
-   private transient Encoder valueEncoder;
-   private transient Wrapper keyWrapper;
-   private transient Wrapper valueWrapper;
+   private final EncodingClasses encodingClasses;
 
-   public EncoderEntryMapper(Class<? extends Encoder> keyEncoderClass,
-                             Class<? extends Encoder> valueEncoderClass,
-                             Class<? extends Wrapper> keyWrapperClass,
-                             Class<? extends Wrapper> valueWrapperClass) {
-      this.keyEncoderClass = keyEncoderClass;
-      this.valueEncoderClass = valueEncoderClass;
-      this.keyWrapperClass = keyWrapperClass;
-      this.valueWrapperClass = valueWrapperClass;
+   private transient CacheEncoders encoders = CacheEncoders.EMPTY;
+
+   public EncoderEntryMapper(EncodingClasses encodingClasses) {
+      this.encodingClasses = encodingClasses;
    }
 
    @Inject
    public void injectDependencies(EncoderRegistry encoderRegistry, InternalEntryFactory factory) {
       this.entryFactory = factory;
-      this.keyEncoder = encoderRegistry.getEncoder(keyEncoderClass);
-      this.valueEncoder = encoderRegistry.getEncoder(valueEncoderClass);
-      this.keyWrapper = encoderRegistry.getWrapper(keyWrapperClass);
-      this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
+      encoders = CacheEncoders.grabEncodersFromRegistry(encoderRegistry, encodingClasses);
    }
 
    private Object decode(Object o, Encoder encoder) {
@@ -59,15 +44,15 @@ public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K,
    @Override
    @SuppressWarnings("unchecked")
    public CacheEntry<K, V> apply(CacheEntry<K, V> e) {
-      boolean keyFilterable = keyEncoder.isStorageFormatFilterable();
-      boolean valueFilterable = valueEncoder.isStorageFormatFilterable();
+      boolean keyFilterable = encoders.getKeyEncoder().isStorageFormatFilterable();
+      boolean valueFilterable = encoders.getValueEncoder().isStorageFormatFilterable();
       K key = e.getKey();
-      Object unwrapped = keyWrapper.unwrap(key);
-      Object newKey = keyFilterable ? unwrapped : decode(unwrapped, keyEncoder);
+      Object unwrapped = encoders.getKeyWrapper().unwrap(key);
+      Object newKey = keyFilterable ? unwrapped : decode(unwrapped, encoders.getKeyEncoder());
       V value = e.getValue();
 
-      Object unwrappedValue = valueWrapper.unwrap(value);
-      Object newValue = valueFilterable ? unwrappedValue : decode(unwrappedValue, valueEncoder);
+      Object unwrappedValue = encoders.getValueWrapper().unwrap(value);
+      Object newValue = valueFilterable ? unwrappedValue : decode(unwrappedValue, encoders.getValueEncoder());
       if (key != newKey || value != newValue) {
          return (CacheEntry<K, V>) entryFactory.create(newKey, newValue, e.getMetadata().version(), e.getCreated(),
                e.getLifespan(), e.getLastUsed(), e.getMaxIdle());
@@ -89,18 +74,13 @@ public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K,
 
       @Override
       public void writeObject(ObjectOutput output, EncoderEntryMapper object) throws IOException {
-         output.writeObject(object.keyEncoderClass);
-         output.writeObject(object.valueEncoderClass);
-         output.writeObject(object.keyWrapperClass);
-         output.writeObject(object.valueWrapperClass);
+         EncodingClasses.writeTo(output, object.encodingClasses);
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public EncoderEntryMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new EncoderEntryMapper((Class<? extends Encoder>) input.readObject(),
-               (Class<? extends Encoder>) input.readObject(), (Class<? extends Wrapper>) input.readObject(),
-               (Class<? extends Wrapper>) input.readObject());
+         return new EncoderEntryMapper(EncodingClasses.readFrom(input));
       }
    }
 }

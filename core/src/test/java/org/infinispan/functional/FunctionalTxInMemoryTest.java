@@ -15,8 +15,8 @@ import javax.transaction.Status;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
+import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -165,7 +165,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       tm.commit();
    }
 
-   private static SerializableFunction<EntryView.ReadWriteEntryView<Object, String>, String> append(String str) {
+   public static SerializableFunction<EntryView.ReadWriteEntryView<Object, String>, String> append(String str) {
       return ev -> {
          Optional<String> prev = ev.find();
          if (prev.isPresent()) {

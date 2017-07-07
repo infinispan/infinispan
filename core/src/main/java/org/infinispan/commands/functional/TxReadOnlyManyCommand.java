@@ -11,9 +11,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.infinispan.functional.EntryView;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
@@ -26,9 +28,10 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    public TxReadOnlyManyCommand() {
    }
 
-   public TxReadOnlyManyCommand(Collection<? extends K> keys, List<List<Mutation<K, V, ?>>> mutations) {
-      super(keys, null, Params.create());
+   public TxReadOnlyManyCommand(Collection<? extends K> keys, List<List<Mutation<K, V, ?>>> mutations, EncodingClasses encodingClasses, ComponentRegistry componentRegistry) {
+      super(keys, null, Params.create(), encodingClasses, componentRegistry);
       this.mutations = mutations;
+      initTxCommand(componentRegistry);
    }
 
    public TxReadOnlyManyCommand(ReadOnlyManyCommand c, List<List<Mutation<K, V, ?>>> mutations) {
@@ -36,6 +39,11 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
       this.mutations = mutations;
    }
 
+   private void initTxCommand(ComponentRegistry componentRegistry){
+      if(getEncodingClasses() != null){
+         componentRegistry.wireDependencies(this);
+      }
+   }
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
@@ -102,9 +110,9 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
          EntryView.ReadEntryView<K, V> ro;
          Object ret = null;
          if (mutations.isEmpty()) {
-            ro = entry.isNull() ? EntryViews.noValue(k) : EntryViews.readOnly(entry);
+            ro = entry.isNull() ? EntryViews.noValue(k, cacheEncoders) : EntryViews.readOnly(entry, cacheEncoders);
          } else {
-            EntryView.ReadWriteEntryView rw = EntryViews.readWrite(entry);
+            EntryView.ReadWriteEntryView rw = EntryViews.readWrite(entry, cacheEncoders);
             for (Mutation<K, V, ?> mutation : mutations) {
                ret = mutation.apply(rw);
                entry.updatePreviousValue();

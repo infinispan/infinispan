@@ -11,12 +11,12 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commons.util.Experimental;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.functional.Listeners.WriteListeners;
 import org.infinispan.functional.Param;
-import org.infinispan.commons.util.Experimental;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,7 +34,7 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    public static <K, V> WriteOnlyMap<K, V> create(FunctionalMapImpl<K, V> functionalMap) {
-      return new WriteOnlyMapImpl<>(Params.from(functionalMap.params.params), functionalMap);
+      return create(Params.from(functionalMap.params.params), functionalMap);
    }
 
    private static <K, V> WriteOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
@@ -44,7 +44,8 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
-      WriteOnlyKeyCommand cmd = fmap.commandsFactory.buildWriteOnlyKeyCommand(key, f, params);
+      Object keyEncoded = cacheEncoders.keyToStorage(key);
+      WriteOnlyKeyCommand cmd = fmap.commandsFactory.buildWriteOnlyKeyCommand(keyEncoded, f, params, encodingClasses);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -55,7 +56,8 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public CompletableFuture<Void> eval(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
-      WriteOnlyKeyValueCommand cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(key, value, f, params);
+      Object keyEncoded = cacheEncoders.keyToStorage(key);
+      WriteOnlyKeyValueCommand cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(keyEncoded, value, (BiConsumer) f, params, encodingClasses);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -66,7 +68,8 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public CompletableFuture<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
       log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
-      WriteOnlyManyEntriesCommand cmd = fmap.commandsFactory.buildWriteOnlyManyEntriesCommand(entries, f, params);
+      Map encodedEntries = encodeEntries(entries);
+      WriteOnlyManyEntriesCommand cmd = fmap.commandsFactory.buildWriteOnlyManyEntriesCommand(encodedEntries, f, params, encodingClasses);
       InvocationContext ctx = getInvocationContext(true, entries.size());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -77,7 +80,8 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
-      WriteOnlyManyCommand cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(keys, f, params);
+      Set encodedKeys = encodeKeys(keys);
+      WriteOnlyManyCommand cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(encodedKeys, f, params, encodingClasses);
       InvocationContext ctx = getInvocationContext(true, keys.size());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -91,8 +95,9 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       // TODO: during commmand execution the set is iterated multiple times, and can execute remote operations
       // therefore we should rather have separate command (or different semantics for keys == null)
       Set<K> keys = new HashSet<>(fmap.cache.keySet());
-      WriteOnlyManyCommand cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(keys, f, params);
-      InvocationContext ctx = getInvocationContext(true, keys.size());
+      Set<K> encodedKeys = encodeKeys(keys);
+      WriteOnlyManyCommand cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(encodedKeys, f, params, encodingClasses);
+      InvocationContext ctx = getInvocationContext(true, encodedKeys.size());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
       }

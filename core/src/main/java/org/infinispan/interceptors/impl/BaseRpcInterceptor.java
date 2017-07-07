@@ -13,6 +13,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -52,6 +53,7 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected final boolean trace = getLog().isTraceEnabled();
 
    protected RpcManager rpcManager;
+   protected ComponentRegistry componentRegistry;
 
    protected boolean defaultSynchronous;
    protected volatile RpcOptions singleTargetStaggeredOptions;
@@ -63,8 +65,9 @@ public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected abstract Log getLog();
 
    @Inject
-   public void inject(RpcManager rpcManager) {
+   public void inject(RpcManager rpcManager, ComponentRegistry componentRegistry) {
       this.rpcManager = rpcManager;
+      this.componentRegistry = componentRegistry;
    }
 
    @Start

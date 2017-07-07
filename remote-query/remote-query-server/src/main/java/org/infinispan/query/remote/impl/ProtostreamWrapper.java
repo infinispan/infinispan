@@ -30,4 +30,8 @@ public class ProtostreamWrapper implements Wrapper {
       return target;
    }
 
+   @Override
+   public boolean isWrapped(Object obj) {
+      return obj instanceof ProtobufValueWrapper;
+   }
 }

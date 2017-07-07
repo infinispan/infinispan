@@ -13,4 +13,5 @@ public interface Wrapper {
 
    Object unwrap(Object obj);
 
+   boolean isWrapped(Object obj);
 }
