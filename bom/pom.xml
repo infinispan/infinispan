@@ -331,6 +331,11 @@
             <artifactId>infinispan-jcache-remote</artifactId>
             <version>${project.version}</version>
          </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-hibernate-cache</artifactId>
+            <version>${project.version}</version>
+         </dependency>
 
 
          <dependency>
