@@ -23,11 +23,11 @@ public abstract class StressTest extends MultipleCacheManagersTest {
    final BlockingQueue<Throwable> exceptions = new LinkedBlockingDeque<>();
    protected ConfigurationBuilder builderUsed;
 
-   protected Future<Void> forkRestartingThread() {
+   protected Future<Void> forkRestartingThread(int cacheCount) {
       return fork(() -> {
          TestResourceTracker.testThreadStarted(StressTest.this);
          try {
-            Cache<?, ?> cacheToKill = cache(PutMapCommandStressTest.CACHE_COUNT - 1);
+            Cache<?, ?> cacheToKill = cache(cacheCount - 1);
             while (!complete.get()) {
                Thread.sleep(1000);
                if (cacheManagers.remove(cacheToKill.getCacheManager())) {

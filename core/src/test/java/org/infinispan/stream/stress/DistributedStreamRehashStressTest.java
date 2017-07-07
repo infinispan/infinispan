@@ -46,7 +46,6 @@ public class DistributedStreamRehashStressTest extends StressTest {
    protected final static int CACHE_COUNT = 5;
    protected final static int THREAD_MULTIPLIER = 5;
    protected final static long CACHE_ENTRY_COUNT = 250000;
-   protected ConfigurationBuilder builderUsed;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -188,9 +187,9 @@ public class DistributedStreamRehashStressTest extends StressTest {
       System.out.println("Done with inserts!");
 
 
-      List<Future<Void>> futures = forkWorkerThreads(CACHE_NAME, THREAD_MULTIPLIER, CACHE_COUNT, null,
+      List<Future<Void>> futures = forkWorkerThreads(CACHE_NAME, THREAD_MULTIPLIER, CACHE_COUNT, new Object[THREAD_MULTIPLIER * CACHE_COUNT],
          (cache, args, iteration) -> operation.perform(cache, masterValues, iteration));
-      futures.add(forkRestartingThread());
+      futures.add(forkRestartingThread(CACHE_COUNT));
       waitAndFinish(futures, 1, TimeUnit.MINUTES);
    }
 

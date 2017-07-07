@@ -88,7 +88,7 @@ public class GetAllCommandStressTest extends StressTest {
       List<Future<Void>> futures = forkWorkerThreads(CACHE_NAME, THREAD_MULTIPLIER, CACHE_COUNT, keys, this::workerLogic);
 
       // Then spawn a thread that just constantly kills the last cache and recreates over and over again
-      futures.add(forkRestartingThread());
+      futures.add(forkRestartingThread(CACHE_COUNT));
 
       waitAndFinish(futures, 1, TimeUnit.MINUTES);
    }
