@@ -78,6 +78,8 @@
       <version.commonslang3>3.4</version.commonslang3>
       <checkstyle.config.location>${session.executionRootDirectory}/checkstyle/src/main/resources/checkstyle.xml</checkstyle.config.location>
       <version.jboss.aesh>0.66.13</version.jboss.aesh>
+      <!-- Jolokia and Prometheus support -->
+      <version.agent-bond>1.0.2</version.agent-bond>
    </properties>
 
    <dependencyManagement>
@@ -118,13 +120,13 @@
             <artifactId>wildfly-security</artifactId>
             <version>${version.org.wildfly}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-transactions</artifactId>
             <version>${version.org.wildfly}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-dist</artifactId>
@@ -237,7 +239,7 @@
             <artifactId>infinispan-server-commons</artifactId>
             <version>${project.version}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-commons</artifactId>
@@ -294,7 +296,7 @@
             <artifactId>infinispan-server-endpoints</artifactId>
             <version>${project.version}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-feature-pack</artifactId>
@@ -319,7 +321,7 @@
             <artifactId>jboss-logmanager-log4j</artifactId>
             <version>${version.org.jboss.logmanager.jboss-logmanager-log4j}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.jboss.modules</groupId>
             <artifactId>jboss-modules</artifactId>
@@ -431,7 +433,7 @@
             <artifactId>infinispan-cli-interpreter</artifactId>
             <version>${version.org.infinispan}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-management-console</artifactId>
@@ -612,7 +614,7 @@
             <scope>test</scope>
             <version>${version.h2.database}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-security-integrationtests</artifactId>
@@ -696,6 +698,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${version.commonslang3}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>agent-bond-agent</artifactId>
+            <version>${version.agent-bond}</version>
          </dependency>
 
       </dependencies>
