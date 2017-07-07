@@ -116,7 +116,7 @@ public class PutMapCommandStressTest extends StressTest {
 
       // TODO: need to figure out code to properly test having a node dying constantly
       // Then spawn a thread that just constantly kills the last cache and recreates over and over again
-      futures.add(forkRestartingThread());
+      futures.add(forkRestartingThread(CACHE_COUNT));
       waitAndFinish(futures, 1, TimeUnit.MINUTES);
    }
 }
