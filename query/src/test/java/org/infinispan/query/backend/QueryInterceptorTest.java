@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
@@ -158,7 +159,7 @@ public class QueryInterceptorTest {
       return new DefaultCacheManager(
               new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build(),
               new ConfigurationBuilder()
-                      .eviction().strategy(EvictionStrategy.LRU).size(maxEntries)
+                      .memory().evictionType(EvictionType.COUNT).size(maxEntries)
                       .persistence().passivation(true)
                       .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
                       .indexing().index(Index.ALL)

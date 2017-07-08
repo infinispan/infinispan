@@ -1,6 +1,7 @@
 package org.infinispan.query.blackbox;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.testng.annotations.Test;
 
 /**
@@ -12,6 +13,6 @@ import org.testng.annotations.Test;
 public class StoreAsBinaryClusteredQueryCacheTest extends ClusteredQueryTest {
 
    protected void enhanceConfig(ConfigurationBuilder cacheCfg) {
-      cacheCfg.storeAsBinary().enabled(true);
+      cacheCfg.memory().storageType(StorageType.BINARY);
    }
 }

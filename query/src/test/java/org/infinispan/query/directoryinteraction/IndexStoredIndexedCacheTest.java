@@ -47,8 +47,6 @@ public class IndexStoredIndexedCacheTest extends MultipleCacheManagersTest {
          .lockAcquisitionTimeout(10000)
       .invocationBatching()
          .disable()
-      .deadlockDetection()
-         .disable()
       .jmxStatistics()
          .disable()
       .indexing()
