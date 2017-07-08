@@ -140,7 +140,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    private enum Provider {
-      RAM("ram"),
+      RAM("local-heap"),
       FILESYSTEM("filesystem"),
       INFINISPAN("infinispan");
       private final String cfg;

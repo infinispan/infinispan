@@ -54,7 +54,7 @@ public class IndexStoredIndexedCacheTest extends MultipleCacheManagersTest {
       .indexing()
          .index(Index.ALL)
             .addIndexedEntity(Person.class)
-            .addProperty("hibernate.search.default.directory_provider", "ram")
+            .addProperty("hibernate.search.default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(2, "lucene", configurationBuilder);
    }

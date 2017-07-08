@@ -34,7 +34,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       Configuration memoryCfg = namedConfigurations.get("memory-searchable").build();
       assertTrue(memoryCfg.indexing().index().isEnabled());
       assertEquals(2, memoryCfg.indexing().properties().size());
-      assertEquals(memoryCfg.indexing().properties().getProperty("default.directory_provider"), "ram");
+      assertEquals(memoryCfg.indexing().properties().getProperty("default.directory_provider"), "local-heap");
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().index().isEnabled());
@@ -73,7 +73,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       assertTrue(memoryCfg.indexing().index().isEnabled());
       assertFalse(memoryCfg.indexing().index().isLocalOnly());
       assertEquals(memoryCfg.indexing().properties().size(), 2);
-      assertEquals(memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "ram");
+      assertEquals(memoryCfg.indexing().properties().getProperty("hibernate.search.default.directory_provider"), "local-heap");
 
       Configuration diskCfg = namedConfigurations.get("disk-searchable").build();
       assertTrue(diskCfg.indexing().index().isEnabled());

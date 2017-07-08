@@ -16,7 +16,7 @@
       <local-cache name="simple" />
       <local-cache name="memory-searchable">
          <indexing index="ALL">
-            <property name="default.directory_provider">ram</property>
+            <property name="default.directory_provider">local-heap</property>
             <property name="lucene_version">LUCENE_48</property>
          </indexing>
       </local-cache>

@@ -41,7 +41,7 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
       cfg.indexing().index(Index.ALL)
             .addIndexedEntity(Bond.class)
             .addIndexedEntity(Debenture.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);

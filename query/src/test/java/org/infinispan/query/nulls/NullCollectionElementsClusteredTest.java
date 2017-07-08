@@ -193,7 +193,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
             .indexing()
             .index(Index.LOCAL)
             .addIndexedEntity(Foo.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(2, cfg);
 

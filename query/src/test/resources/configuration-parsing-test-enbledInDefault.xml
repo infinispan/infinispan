@@ -19,7 +19,7 @@
       </local-cache>
       <local-cache name="memory-searchable" configuration="base">
          <indexing index="ALL">
-            <property name="hibernate.search.default.directory_provider">ram</property>
+            <property name="hibernate.search.default.directory_provider">local-heap</property>
             <property name="lucene_version">LUCENE_48</property>
          </indexing>
       </local-cache>

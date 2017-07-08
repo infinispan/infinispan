@@ -49,7 +49,7 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
             .indexing()
             .index(Index.ALL)
             .addIndexedEntity(VeryLongIndexNamedClass.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       return cacheCfg;
