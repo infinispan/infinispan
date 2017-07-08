@@ -38,7 +38,7 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
             .index(Index.ALL)
             .addIndexedEntity(Transaction.class)
             .addIndexedEntity(Block.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

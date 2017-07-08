@@ -40,7 +40,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
    protected void configureCache(ConfigurationBuilder builder) {
       builder.indexing().index(Index.ALL)
             .addIndexedEntity(Person.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
    }
 

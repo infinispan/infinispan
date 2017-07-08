@@ -32,7 +32,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
             .indexing()
                .index(Index.ALL)
                .addIndexedEntity(Person.class)
-               .addProperty("default.directory_provider", "ram")
+               .addProperty("default.directory_provider", "local-heap")
                .addProperty("lucene_version", "LUCENE_CURRENT");
          cc = TestCacheManagerFactory.createCacheManager(cfg);
          Cache<?, ?> cache = cc.getCache();

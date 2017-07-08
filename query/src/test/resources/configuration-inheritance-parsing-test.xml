@@ -10,7 +10,7 @@
             <indexed-entities>
                <indexed-entity>org.infinispan.query.indexedembedded.Book</indexed-entity>
             </indexed-entities>
-            <property name="default.directory_provider">ram</property>
+            <property name="default.directory_provider">local-heap</property>
          </indexing>
       </local-cache-configuration>
       <local-cache name="default" configuration="template" />

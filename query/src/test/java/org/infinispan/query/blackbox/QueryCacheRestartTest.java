@@ -46,7 +46,7 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().index(localOnly ? Index.LOCAL : Index.ALL)
             .addIndexedEntity(Book.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       final NoOpInterceptor noOpInterceptor = new NoOpInterceptor();
       builder.customInterceptors().addInterceptor().interceptor(noOpInterceptor).position(Position.FIRST);

@@ -79,7 +79,7 @@ public class TestQueryHelperFactory {
 
       if (isRamDirectoryProvider) {
          builder.indexing()
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
       } else {

@@ -66,7 +66,7 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().index(Index.ALL)
             .addIndexedEntity(Person.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(1, cfg);
    }

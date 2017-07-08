@@ -40,7 +40,7 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing().index(Index.ALL)
             .addIndexedEntity(UserHS.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       return TestCacheManagerFactory.createCacheManager(cfg);

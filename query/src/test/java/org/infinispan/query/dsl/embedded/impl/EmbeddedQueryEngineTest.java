@@ -70,7 +70,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
             .addIndexedEntity(TransactionHS.class)
             .addIndexedEntity(TheEntity.class)
             .addIndexedEntity(Book.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(1, cfg);
    }
