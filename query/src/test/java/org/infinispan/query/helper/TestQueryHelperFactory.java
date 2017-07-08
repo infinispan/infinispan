@@ -75,7 +75,7 @@ public class TestQueryHelperFactory {
 
       ConfigurationBuilder builder = AbstractCacheTest.getDefaultClusteredCacheConfig(cacheMode, transactional);
 
-      builder.indexing().index(indexLocalOnly ? Index.LOCAL : Index.ALL);
+      builder.indexing().index(indexLocalOnly ? Index.PRIMARY_OWNER : Index.ALL);
 
       if (isRamDirectoryProvider) {
          builder.indexing()

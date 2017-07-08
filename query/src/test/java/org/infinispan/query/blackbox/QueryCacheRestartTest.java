@@ -44,7 +44,7 @@ public class QueryCacheRestartTest extends AbstractInfinispanTest {
 
    private void queryCacheRestart(boolean localOnly) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.indexing().index(localOnly ? Index.LOCAL : Index.ALL)
+      builder.indexing().index(localOnly ? Index.PRIMARY_OWNER : Index.ALL)
             .addIndexedEntity(Book.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

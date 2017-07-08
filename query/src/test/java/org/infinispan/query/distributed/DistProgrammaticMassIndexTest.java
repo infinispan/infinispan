@@ -36,7 +36,7 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
 
          ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
          cacheCfg.indexing()
-               .index(Index.LOCAL)
+               .index(Index.PRIMARY_OWNER)
                .addIndexedEntity(Car.class)
                .addProperty("default.indexmanager", InfinispanIndexManager.class.getName())
                .addProperty("error_handler", StaticTestingErrorHandler.class.getName())
