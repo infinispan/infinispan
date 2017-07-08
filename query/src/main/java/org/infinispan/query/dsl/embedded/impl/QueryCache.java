@@ -112,8 +112,7 @@ public class QueryCache {
             .clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .expiration().maxIdle(ENTRY_LIFESPAN, TimeUnit.SECONDS)
-            .eviction().type(EvictionType.COUNT).size(MAX_ENTRIES)
-            .strategy(EvictionStrategy.LIRS);
+            .memory().evictionType(EvictionType.COUNT).size(MAX_ENTRIES);
       return cfgBuilder;
    }
 

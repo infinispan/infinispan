@@ -1,6 +1,7 @@
 package org.infinispan.query.blackbox;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.testng.annotations.Test;
 
 /**
@@ -13,6 +14,6 @@ import org.testng.annotations.Test;
 public class StoreAsBinaryQueryTest extends LocalCacheTest {
    @Override
    protected void enhanceConfig(ConfigurationBuilder c) {
-      c.storeAsBinary().enabled(true);
+      c.memory().storageType(StorageType.BINARY);
    }
 }
