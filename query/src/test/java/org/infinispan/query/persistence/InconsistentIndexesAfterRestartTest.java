@@ -89,7 +89,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
              .fetchPersistentState(true)
              .purgeOnStartup(false)
           .indexing()
-             .index(Index.LOCAL)
+             .index(Index.PRIMARY_OWNER)
              .addIndexedEntity(SEntity.class)
              .addProperty("default.directory_provider", "filesystem")
              .addProperty("lucene_version", "LUCENE_CURRENT")

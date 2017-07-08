@@ -60,7 +60,7 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
       IndexingConfigurationBuilder indexingConfigurationBuilder = cfg.clustering()
             .stateTransfer().fetchInMemoryState(true)
             .indexing()
-            .index(Index.LOCAL)
+            .index(Index.PRIMARY_OWNER)
             .addIndexedEntity(getModelFactory().getUserImplClass())
             .addIndexedEntity(getModelFactory().getAccountImplClass())
             .addIndexedEntity(getModelFactory().getTransactionImplClass());

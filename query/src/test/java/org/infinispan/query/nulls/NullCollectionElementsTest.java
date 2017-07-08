@@ -45,7 +45,7 @@ public class NullCollectionElementsTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
          .indexing()
-            .index(Index.LOCAL)
+            .index(Index.PRIMARY_OWNER)
              .addIndexedEntity(Foo.class)
              .addProperty("default.directory_provider", "local-heap")
              .addProperty("lucene_version", "LUCENE_CURRENT");
