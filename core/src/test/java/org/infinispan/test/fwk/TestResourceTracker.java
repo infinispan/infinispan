@@ -44,7 +44,7 @@ public class TestResourceTracker {
       addResource(testName, cleaner);
    }
 
-   protected static void cleanUpResources(String testName) {
+   public static void cleanUpResources(String testName) {
       TestResources resources = testResources.remove(testName);
       if (resources != null) {
          for (Cleaner<?> cleaner : resources.getCleaners()) {
