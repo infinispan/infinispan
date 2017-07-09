@@ -31,7 +31,14 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
    }
 
    private static final String DIRECTORY_PROVIDER_KEY = "directory_provider";
+
+   /**
+    * Legacy name "ram" was replaced by "local-heap"
+    */
+   @Deprecated
    private static final String RAM_DIRECTORY_PROVIDER = "ram";
+   private static final String LOCAL_HEAP_DIRECTORY_PROVIDER = "local-heap";
+   private static final String LOCAL_HEAP_DIRECTORY_PROVIDER_FQN = "org.hibernate.search.store.impl.RAMDirectoryProvider";
 
    private final Attribute<Index> index;
    private final Attribute<Boolean> autoConfig;
@@ -116,7 +123,10 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       for (Object objKey : properties.keySet()) {
          String key = (String) objKey;
          if (key.endsWith(DIRECTORY_PROVIDER_KEY)) {
-            if (properties.get(key).equals(RAM_DIRECTORY_PROVIDER)) {
+            String directoryImplementationName = String.valueOf(properties.get(key)).trim();
+            if (LOCAL_HEAP_DIRECTORY_PROVIDER.equalsIgnoreCase(directoryImplementationName)
+                  || RAM_DIRECTORY_PROVIDER.equalsIgnoreCase(directoryImplementationName)
+                  || LOCAL_HEAP_DIRECTORY_PROVIDER_FQN.equals(directoryImplementationName)) {
                hasRamDirectoryProvider = true;
             } else {
                return true;
