@@ -226,13 +226,13 @@ cacheCfg.indexing().index(Index.ALL)
 
 ====== Index names
 
-Each property inside the `index` element is prefixed with the index name, for the index named `org.infinispan.sample.Car` the `directory_provider` is `ram`:
+Each property inside the `index` element is prefixed with the index name, for the index named `org.infinispan.sample.Car` the `directory_provider` is `local-heap`:
 
 [source,xml]
 ----
     ...
     <indexing index="ALL">
-        <property name="org.infinispan.sample.Car.directory_provider">ram</property>
+        <property name="org.infinispan.sample.Car.directory_provider">local-heap</property>
     </indexing>
     ...
 </infinispan>
@@ -243,7 +243,7 @@ Each property inside the `index` element is prefixed with the index name, for th
 ----
 cacheCfg.indexing()
    .index(Index.ALL)
-      .addProperty("org.infinispan.sample.Car.directory_provider", "ram")
+      .addProperty("org.infinispan.sample.Car.directory_provider", "local-heap")
 
 ----
 
@@ -251,8 +251,8 @@ Infinispan creates an index for each entity existent in a cache, and it allows t
 For a class annotated with `@Indexed`, the index name is the fully qualified class name, unless overridden with the
 `name` argument in the annotation.
 
-In the snippet below, the default storage for all entities is `infinispan`, but `Boat` instances will be stored on `ram` in an index named
-`boatIndex`. `Airplane` entities will also be stored in `ram`. Any other entity's index will be configured with the property prefixed by `default`.
+In the snippet below, the default storage for all entities is `infinispan`, but `Boat` instances will be stored on `local-heap` in an index named
+`boatIndex`. `Airplane` entities will also be stored in `local-heap`. Any other entity's index will be configured with the property prefixed by `default`.
 
 [source,java]
 ----
@@ -274,7 +274,7 @@ public class Airplane {
     ...
     <indexing index="ALL">
         <property name="default.directory_provider">infinispan</property>
-        <property name="boatIndex.directory_provider">ram</property>
+        <property name="boatIndex.directory_provider">local-heap</property>
         <property name="org.infinispan.sample.Airplane.directory_provider">
             ram
         </property>
@@ -530,7 +530,7 @@ is needed. Configuration:
 ----
 <replicated-cache name="myCache">
    <indexing index="ALL">
-      <property name="default.directory_provider">ram</property>
+      <property name="default.directory_provider">local-heap</property>
    </indexing>
 </replicated-cache>
 ----
@@ -569,7 +569,7 @@ In order to use Infinispan storage with a non-shared index, it's necessary to us
 
 Similar to the `directory-based` index manager but takes advantage of the Near-Real-Time features of Lucene. It has better write performance than
 the `directory-based` because it flushes the index to the underlying store less often. The drawback is that unflushed index changes can be lost in case
-of a non-clean shutdown. Can be used in conjunction with `ram`, `filesystem` and local infinispan storage. Configuration for each different storage
+of a non-clean shutdown. Can be used in conjunction with `local-heap`, `filesystem` and local infinispan storage. Configuration for each different storage
 type is the same as the <<query.directory-based>> index manager.
 
 Example with ram:
@@ -579,7 +579,7 @@ Example with ram:
 <replicated-cache name="default">
     <indexing index="ALL">
         <property name="default.indexmanager">near-real-time</property>
-        <property name="default.directory_provider">ram</property>
+        <property name="default.directory_provider">local-heap</property>
     </indexing>
 </replicated-cache>
 ----
