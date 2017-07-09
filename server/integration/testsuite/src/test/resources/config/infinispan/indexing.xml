@@ -15,20 +15,20 @@
 
                 <distributed-cache name="disttestcache">
                     <indexing index="ALL">
-                        <property name="default.directory_provider">ram</property>
+                        <property name="default.directory_provider">local-heap</property>
                     </indexing>
                 </distributed-cache>
 
                 <local-cache name="localtestcache">
                     <indexing index="ALL">
-                        <property name="default.directory_provider">ram</property>
+                        <property name="default.directory_provider">local-heap</property>
                         <property name="lucene_version">LUCENE_CURRENT</property>
                     </indexing>
                 </local-cache>
 
                 <local-cache name="localtestcache_manual">
                     <indexing index="ALL">
-                        <property name="default.directory_provider">ram</property>
+                        <property name="default.directory_provider">local-heap</property>
                         <property name="lucene_version">LUCENE_CURRENT</property>
                         <property name="hibernate.search.indexing_strategy">manual</property>
                         <property name="hibernate.search.jmx_enabled">true</property>

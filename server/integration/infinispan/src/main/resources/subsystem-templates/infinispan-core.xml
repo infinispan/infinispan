@@ -309,7 +309,7 @@
             <!-- Indexes are local to each node, stored in memory -->
             <replicated-cache name="InMemoryNonSharedIndex">
                <indexing index="ALL">
-                  <property name="default.directory_provider">ram</property>
+                  <property name="default.directory_provider">local-heap</property>
                </indexing>
             </replicated-cache>
             <!-- Indexes are local to each node, stored on infinispan itself on configured caches -->

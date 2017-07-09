@@ -42,7 +42,7 @@ public class QueryAuthorizationTest extends SingleCacheManagerTest {
          .indexing()
             .index(Index.LOCAL)
             .addIndexedEntity(TestEntity.class)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT")
          .security()
             .authorization().enable().role("admin").role("query").role("noquery");

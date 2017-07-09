@@ -15,7 +15,7 @@
 
                 <distributed-cache name="test_cache_indexed">
                     <indexing index="ALL">
-                        <property name="default.directory_provider">ram</property>
+                        <property name="default.directory_provider">local-heap</property>
                     </indexing>
                     <security>
                         <authorization roles="admin reader writer supervisor" enabled="true"/>
