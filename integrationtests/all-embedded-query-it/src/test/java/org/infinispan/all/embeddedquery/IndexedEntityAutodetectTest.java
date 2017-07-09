@@ -28,7 +28,7 @@ public class IndexedEntityAutodetectTest extends LocalCacheTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .indexing()
             .index(Index.ALL)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.all.embeddedquery.testdomain.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 

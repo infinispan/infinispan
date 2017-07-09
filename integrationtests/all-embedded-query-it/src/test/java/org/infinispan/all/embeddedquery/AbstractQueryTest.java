@@ -50,7 +50,7 @@ public abstract class AbstractQueryTest {
           .addIndexedEntity(NumericType.class)
           .addIndexedEntity(Person.class)
           .addIndexedEntity(Car.class)
-          .addProperty("default.directory_provider", "ram")
+          .addProperty("default.directory_provider", "local-heap")
           .addProperty("error_handler", "org.infinispan.all.embeddedquery.testdomain.StaticTestingErrorHandler")
           .addProperty("lucene_version", "LUCENE_CURRENT");
 

@@ -114,7 +114,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().index(Index.ALL)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
 
       return TestCacheManagerFactory.createCacheManager(builder);

@@ -69,7 +69,7 @@ public class IndexedOperationsTestCase extends OperationTestCaseBase {
       PathAddress indexingAddress = PathAddress.pathAddress(configAddOp.get(ClientConstants.OP_ADDR)).append(ModelKeys.INDEXING, ModelKeys.INDEXING_NAME);
       ModelNode indexingAdd = Util.createAddOperation(indexingAddress);
       indexingAdd.get(ModelKeys.INDEXING).set("LOCAL");
-      indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("default.directory_provider").set("ram");
+      indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("default.directory_provider").set("local-heap");
       indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("hibernate.search.jmx_enabled").set("true");
       indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("lucene_version").set("LUCENE_CURRENT");
       indexingAdd.get(ModelKeys.INDEXING_PROPERTIES).get("hibernate.search.indexing_strategy").set("manual");

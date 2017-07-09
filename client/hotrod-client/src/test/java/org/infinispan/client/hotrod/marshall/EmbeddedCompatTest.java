@@ -122,7 +122,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = hotRodCacheConfiguration();
       builder.compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller());
       builder.indexing().index(Index.ALL)
-            .addProperty("default.directory_provider", "ram")
+            .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return builder;
    }

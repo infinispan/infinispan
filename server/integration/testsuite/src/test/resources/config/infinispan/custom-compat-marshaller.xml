@@ -6,7 +6,7 @@
                         <indexed-entities>
                             <indexed-entity>deployment.custom-test-entity.jar:main:org.infinispan.server.test.query.TestEntity</indexed-entity>
                         </indexed-entities>
-                        <property name="default.directory_provider">ram</property>
+                        <property name="default.directory_provider">local-heap</property>
                     </indexing>
                 </local-cache>
                 <local-cache name="memcachedCache"/>
