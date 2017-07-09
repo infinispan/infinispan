@@ -39,6 +39,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TestSelector;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
@@ -141,6 +142,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       } else {
          TestingUtil.clearContent(cacheManagers);
          TestingUtil.killCacheManagers(cacheManagers);
+         TestResourceTracker.cleanUpResources(getTestName());
          cacheManagers.clear();
       }
    }
