@@ -17,7 +17,7 @@ public class AffinityIndexManagerNonIndexedValuesTest extends NonIndexedValuesTe
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(isTransactional());
       c.indexing()
-              .index(Index.LOCAL)
+              .index(Index.PRIMARY_OWNER)
               .addIndexedEntity(TestEntity.class)
               .addIndexedEntity(AnotherTestEntity.class)
               .addProperty("default.indexmanager", AffinityIndexManager.class.getName())

@@ -23,7 +23,7 @@ public class ClusteredQueryMultipleCachesTest extends ClusteredQueryTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(getCacheMode(), false);
-      cacheCfg.indexing().index(Index.LOCAL)
+      cacheCfg.indexing().index(Index.PRIMARY_OWNER)
             .addIndexedEntity(Person.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

@@ -24,7 +24,7 @@ public class ClusteredCacheWithInfinispanDirectoryTest extends ClusteredCacheTes
 
          ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
          cacheCfg.indexing()
-               .index(Index.LOCAL)
+               .index(Index.PRIMARY_OWNER)
                .addIndexedEntity(Person.class)
                .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
                .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")

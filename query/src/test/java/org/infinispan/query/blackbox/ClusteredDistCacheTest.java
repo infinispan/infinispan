@@ -21,7 +21,7 @@ public class ClusteredDistCacheTest extends ClusteredCacheTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg.indexing().autoConfig(true)
-            .index(Index.LOCAL)
+            .index(Index.PRIMARY_OWNER)
             .addIndexedEntity(Person.class)
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
 

@@ -191,7 +191,7 @@ public class NullCollectionElementsClusteredTest extends MultipleCacheManagersTe
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       cfg
             .indexing()
-            .index(Index.LOCAL)
+            .index(Index.PRIMARY_OWNER)
             .addIndexedEntity(Foo.class)
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");

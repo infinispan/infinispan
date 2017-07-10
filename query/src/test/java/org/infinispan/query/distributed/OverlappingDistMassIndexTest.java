@@ -30,7 +30,7 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       cacheCfg
             .indexing()
-            .index(Index.LOCAL)
+            .index(Index.PRIMARY_OWNER)
             .addIndexedEntity(Transaction.class)
             .addIndexedEntity(Block.class)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
