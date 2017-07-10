@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScri
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -13,7 +12,7 @@ import java.util.function.BiConsumer;
 import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.commons.marshall.StringMarshaller;
+import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.AssertJUnit;
@@ -47,7 +46,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
    private RemoteCacheManager createExecClient() {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             super.createHotRodClientConfigurationBuilder(servers.get(0).getPort());
-      clientBuilder.marshaller(new StringMarshaller(Charset.forName("UTF-8")));
+      clientBuilder.marshaller(new UTF8StringMarshaller());
       return new InternalRemoteCacheManager(clientBuilder.build());
    }
 

@@ -8,12 +8,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.commons.marshall.StringMarshaller;
+import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
@@ -37,7 +36,7 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
    @BeforeClass
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<String, String>(
-            CACHE_NAME, new StringMarshaller(Charset.forName("UTF-8")), CacheMode.LOCAL).setup();
+            CACHE_NAME, new UTF8StringMarshaller(), CacheMode.LOCAL).setup();
    }
 
    @AfterClass
