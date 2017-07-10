@@ -13,6 +13,7 @@ rem         standalone.bat --debug 9797
 rem By default debug mode is disable.
 set DEBUG_MODE=false
 set DEBUG_PORT=8787
+set USE_JMX_COLLECTORS=fals
 rem Set to all parameters by default
 set "SERVER_OPTS=%*"
 
@@ -43,6 +44,8 @@ if "%~1" == "" (
    goto MAIN
 ) else if "%~1" == "--debug" (
    goto READ-DEBUG-PORT
+) else if "%~1" == "--jmx" (
+   goto READ-JMX-CONFIG
 ) else if "%~1" == "-secmgr" (
    set SECMGR=true
 )
@@ -56,6 +59,18 @@ if not %DEBUG_ARG% == "" (
    if x%DEBUG_ARG:-=%==x%DEBUG_ARG% (
       shift
       set DEBUG_PORT=%DEBUG_ARG%
+   )
+   shift
+   goto READ-ARGS
+)
+
+:READ-JMX-CONFIG
+set "USE_JMX_CONNECTORS=true"
+set JMX_ARG="%2"
+if not %JMX_ARG% == "" (
+   if x%JMX_ARG:-=%==x%JMX_ARG% (
+      shift
+      set JMX_CONF=%JMX_ARG%
    )
    shift
    goto READ-ARGS
@@ -96,7 +111,6 @@ if exist "%STANDALONE_CONF%" (
    echo Config file not found "%STANDALONE_CONF%"
 )
 
-
 rem Set debug settings if not already set
 if "%DEBUG_MODE%" == "true" (
    echo "%JAVA_OPTS%" | findstr /I "\-agentlib:jdwp" > nul
@@ -106,6 +120,18 @@ if "%DEBUG_MODE%" == "true" (
      echo Debug already enabled in JAVA_OPTS, ignoring --debug argument
   )
 )
+
+setlocal EnableDelayedExpansion
+if "x%JMX_CONF%" == "x" (
+   set JMX_CONF="%DIRNAME%agent.conf"
+)
+if "%USE_JMX_CONNECTORS%" == "true" (
+   set SERVER_OPTS=!SERVER_OPTS:%JMX_CONF:"=%=!
+   set SERVER_OPTS=!SERVER_OPTS:--jmx=!
+   echo Calling "%DIRNAME%jolokia.bat %JMX_CONF%"
+   call %DIRNAME%jolokia.bat %JMX_CONF%
+)
+setlocal DisableDelayedExpansion
 
 set DIRNAME=
 
