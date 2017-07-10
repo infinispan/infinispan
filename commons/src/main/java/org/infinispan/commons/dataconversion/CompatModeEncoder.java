@@ -19,6 +19,7 @@ public class CompatModeEncoder implements Encoder {
       this.marshaller = marshaller == null ? new GenericJBossMarshaller() : marshaller;
    }
 
+   @Override
    public Object toStorage(Object content) {
       if (content instanceof byte[]) {
          try {
@@ -30,10 +31,11 @@ public class CompatModeEncoder implements Encoder {
       return content;
    }
 
+   @Override
    public Object fromStorage(Object content) {
       try {
          return marshall(content);
-      } catch (InterruptedException | IOException e) {
+      } catch (Exception e) {
          throw new CacheException(e);
       }
    }
@@ -47,7 +49,9 @@ public class CompatModeEncoder implements Encoder {
       return marshaller.objectFromByteBuffer(source);
    }
 
-   protected byte[] marshall(Object source) throws IOException, InterruptedException {
-      return marshaller.objectToByteBuffer(source);
+   protected Object marshall(Object source) throws Exception {
+      if (marshaller.isMarshallable(source))
+         return marshaller.objectToByteBuffer(source);
+      return source;
    }
 }

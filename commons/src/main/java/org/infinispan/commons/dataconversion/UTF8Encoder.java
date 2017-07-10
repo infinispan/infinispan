@@ -13,11 +13,13 @@ public class UTF8Encoder implements Encoder {
 
    public static final UTF8Encoder INSTANCE = new UTF8Encoder();
 
+   @Override
    public Object toStorage(Object content) {
       if (content instanceof String) return String.class.cast(content).getBytes(CHARSET_UTF8);
       throw new EncodingException("Cannot encode " + content);
    }
 
+   @Override
    public Object fromStorage(Object stored) {
       return new String((byte[]) stored, CHARSET_UTF8);
    }
