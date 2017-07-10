@@ -1,6 +1,7 @@
 package org.infinispan.query.backend;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -205,7 +206,7 @@ public final class QueryKnownClasses {
       if (knownClassesCache == null) {
          synchronized (this) {
             if (knownClassesCache == null) {
-               internalCacheRegistry.registerInternalCache(QUERY_KNOWN_CLASSES_CACHE_NAME, getInternalCacheConfig());
+               internalCacheRegistry.registerInternalCache(QUERY_KNOWN_CLASSES_CACHE_NAME, getInternalCacheConfig(), EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
                Cache<KeyValuePair<String, Class<?>>, Boolean> knownClassesCache = SecurityActions.getCache(cacheManager, QUERY_KNOWN_CLASSES_CACHE_NAME);
                this.knownClassesCache = knownClassesCache.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES);
                transactionHelper = new TransactionHelper(this.knownClassesCache.getTransactionManager());
