@@ -223,10 +223,13 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       Object entryValue = e.getValue();
       Object o;
 
-      if (e.isCreated()) {
-         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
-      } else {
-         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
+      // Non tx and tx both have this set if it was state transfer
+      if (!hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
+         if (e.isCreated()) {
+            notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, this);
+         } else {
+            notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
+         }
       }
 
       o = e.setValue(value);

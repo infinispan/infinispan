@@ -6,6 +6,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.metadata.Metadata;
@@ -14,6 +15,10 @@ public class NotifyHelper {
    public static void entryCommitted(CacheNotifier notifier, FunctionalNotifier functionalNotifier,
                                      boolean created, boolean removed, boolean expired, CacheEntry entry,
                                      InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      // We only notify if there is no state transfer flag
+      if (FlagBitSets.extractStateTransferFlag(ctx, command) != null) {
+         return;
+      }
       boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
       if (removed) {
          if (command instanceof RemoveCommand) {
@@ -57,8 +62,8 @@ public class NotifyHelper {
             // command is read-write.
             if (!isWriteOnly)
                functionalNotifier.notifyOnModify(
-                  EntryViews.readOnly(entry.getKey(), previousValue, previousMetadata),
-                  EntryViews.readOnly(entry));
+                     EntryViews.readOnly(entry.getKey(), previousValue, previousMetadata),
+                     EntryViews.readOnly(entry));
 
             functionalNotifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
          }
