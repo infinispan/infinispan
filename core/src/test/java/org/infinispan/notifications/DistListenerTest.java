@@ -1,15 +1,22 @@
 package org.infinispan.notifications;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Used to verify which nodes are going to receive events in case it's configured
@@ -93,14 +100,46 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       assertCreated(false);
    }
 
+   public void testRehashNoEvent() {
+      listener = new TestListener();
+      caches().forEach(c -> {
+         c.addListener(listener);
+         c.getCacheManager().addListener(listener);
+      });
+      // Insert some values
+      IntStream.range(0, 10).boxed().forEach(i -> cache(0).put(i, i));
+      assertCreated(true);
+      assertModified(false);
+      assertViewChanged(false);
+
+      // Now add a new node and shutdown
+      Cache<?, ?> shutdownCache = createClusteredCaches(1, getDefaultClusteredCacheConfig(
+            CacheMode.DIST_SYNC, true)).get(0);
+      EmbeddedCacheManager manager = shutdownCache.getCacheManager();
+      cacheManagers.remove(manager);
+      manager.stop();
+      TestingUtil.blockUntilViewsReceived(5000, false, caches());
+      TestingUtil.waitForNoRebalance(caches());
+
+      // We shouldn't have any events still...
+      assertCreated(false);
+      assertModified(false);
+      assertViewChanged(true);
+   }
+
    private void assertCreated(boolean b) {
-      assert listener.created == b;
+      assertEquals(b, listener.created);
       listener.created = false;
    }
 
    private void assertModified(boolean b) {
-      assert listener.modified == b;
+      assertEquals(b, listener.modified);
       listener.modified = false;
+   }
+
+   private void assertViewChanged(boolean b) {
+      assertEquals(b, listener.viewChanged);
+      listener.viewChanged = false;
    }
 
    private <K, V> Cache<K, V> getCacheForAddress(Address a) {
@@ -115,6 +154,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
 
       boolean created = false;
       boolean modified = false;
+      boolean viewChanged = false;
 
       @CacheEntryCreated
       @SuppressWarnings("unused")
@@ -126,6 +166,12 @@ public class DistListenerTest extends MultipleCacheManagersTest {
       @SuppressWarnings("unused")
       public void modify(CacheEntryEvent e) {
          modified = true;
+      }
+
+      @ViewChanged
+      @SuppressWarnings("unused")
+      public void viewChanged(ViewChangedEvent e) {
+         viewChanged = true;
       }
    }
 

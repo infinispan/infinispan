@@ -547,24 +547,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command);
    }
 
-   private Flag extractStateTransferFlag(InvocationContext ctx, FlagAffectedCommand command) {
-      if (command == null) {
-         //commit command
-         return ctx instanceof TxInvocationContext ?
-               ((TxInvocationContext) ctx).getCacheTransaction().getStateTransferFlag() :
-               null;
-      } else {
-         if (command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-            return Flag.PUT_FOR_STATE_TRANSFER;
-         } else if (command.hasAnyFlag(FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
-            return Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
-         }
-      }
-      return null;
-   }
-
    protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command) {
-      final Flag stateTransferFlag = extractStateTransferFlag(ctx, command);
+      final Flag stateTransferFlag = FlagBitSets.extractStateTransferFlag(ctx, command);
 
       if (ctx instanceof SingleKeyNonTxInvocationContext) {
          SingleKeyNonTxInvocationContext singleKeyCtx = (SingleKeyNonTxInvocationContext) ctx;

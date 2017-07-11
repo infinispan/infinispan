@@ -1,7 +1,9 @@
 package org.infinispan.context.impl;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 
 /**
  * Pre-computed bitsets containing each flag.
@@ -45,5 +47,21 @@ public class FlagBitSets {
     */
    public static long copyWithoutRemotableFlags(long flagsBitSet) {
       return EnumUtil.diffBitSets(flagsBitSet, FAIL_SILENTLY);
+   }
+
+   public static Flag extractStateTransferFlag(InvocationContext ctx, FlagAffectedCommand command) {
+      if (command == null) {
+         //commit command
+         return ctx instanceof TxInvocationContext ?
+               ((TxInvocationContext) ctx).getCacheTransaction().getStateTransferFlag() :
+               null;
+      } else {
+         if (command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+            return Flag.PUT_FOR_STATE_TRANSFER;
+         } else if (command.hasAnyFlag(FlagBitSets.PUT_FOR_X_SITE_STATE_TRANSFER)) {
+            return Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
+         }
+      }
+      return null;
    }
 }
