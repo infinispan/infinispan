@@ -1,7 +1,14 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.admin.AdminFlag;
 import org.infinispan.server.core.admin.AdminServerTask;
 
 /**
@@ -16,6 +23,13 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * @since 9.1
  */
 public class CacheCreateTask extends AdminServerTask<Void> {
+   private static Set<String> PARAMETERS;
+
+   static {
+      PARAMETERS = new HashSet<>();
+      PARAMETERS.add("name");
+      PARAMETERS.add("template");
+   }
 
    @Override
    public String getTaskContextName() {
@@ -28,12 +42,17 @@ public class CacheCreateTask extends AdminServerTask<Void> {
    }
 
    @Override
-   public Void call() throws Exception {
-      if (isPersistent())
+   public Set<String> getParameters() {
+      return PARAMETERS;
+   }
+
+   @Override
+   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<AdminFlag> flags) {
+      if (isPersistent(flags))
          throw new UnsupportedOperationException();
 
-      String name = requireParameter("name");
-      String template = getParameter("template");
+      String name = requireParameter(parameters,"name");
+      String template = getParameter(parameters, "template");
       cacheManager.executor().submitConsumer(localManager -> {
          ConfigurationBuilder builder = new ConfigurationBuilder();
          if (template != null) {

@@ -20,13 +20,13 @@ import org.infinispan.tasks.spi.TaskEngine;
  * @since 9.1
  */
 public abstract class AdminOperationsHandler implements TaskEngine {
-   final Map<String, Class<? extends AdminServerTask>> tasks;
+   final Map<String, AdminServerTask> tasks;
 
    protected AdminOperationsHandler(Class<? extends AdminServerTask>... taskClasses) {
       this.tasks = new HashMap<>(taskClasses.length);
       for(Class<? extends AdminServerTask> taskClass : taskClasses) {
          AdminServerTask<?> task = Util.getInstance(taskClass);
-         this.tasks.put(task.getName(), taskClass);
+         this.tasks.put(task.getName(), task);
       }
    }
 
@@ -42,12 +42,10 @@ public abstract class AdminOperationsHandler implements TaskEngine {
 
    @Override
    public <T> CompletableFuture<T> runTask(String taskName, TaskContext context, Executor executor) {
-      Class<? extends AdminServerTask> taskClass = tasks.get(taskName);
-      AdminServerTask<T> task = Util.getInstance(taskClass);
-      task.setTaskContext(context);
+      AdminServerTask<T> task = tasks.get(taskName);
       return CompletableFuture.supplyAsync(() -> {
          try {
-            return task.call();
+            return task.execute(context);
          } catch (Exception e) {
             throw new CacheException(e);
          }

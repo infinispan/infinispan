@@ -1,5 +1,12 @@
 package org.infinispan.server.core.admin.embeddedserver;
 
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.admin.AdminFlag;
 import org.infinispan.server.core.admin.AdminServerTask;
 
 /**
@@ -14,6 +21,12 @@ import org.infinispan.server.core.admin.AdminServerTask;
  * @since 9.1
  */
 public class CacheRemoveTask extends AdminServerTask<Void> {
+   private static Set<String> PARAMETERS;
+
+   static {
+      PARAMETERS = new HashSet<>();
+      PARAMETERS.add("name");
+   }
 
    @Override
    public String getTaskContextName() {
@@ -26,11 +39,16 @@ public class CacheRemoveTask extends AdminServerTask<Void> {
    }
 
    @Override
-   public Void call() throws Exception {
-      if (isPersistent())
+   public Set<String> getParameters() {
+      return PARAMETERS;
+   }
+
+   @Override
+   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<AdminFlag> adminFlags) {
+      if (isPersistent(adminFlags))
          throw new UnsupportedOperationException();
 
-      String name = requireParameter("name");
+      String name = requireParameter(parameters,"name");
       cacheManager.removeCache(name);
       return null;
    }

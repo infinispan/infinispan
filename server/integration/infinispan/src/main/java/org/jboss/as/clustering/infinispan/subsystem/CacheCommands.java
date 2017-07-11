@@ -90,7 +90,7 @@ public abstract class CacheCommands implements OperationStepHandler {
             try {
                 operationResult = invokeCommand(cache, operation, context);
             } catch (Exception e) {
-                throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
+                throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()), e);
             }
             if (operationResult != null) {
                 context.getResult().set(operationResult);

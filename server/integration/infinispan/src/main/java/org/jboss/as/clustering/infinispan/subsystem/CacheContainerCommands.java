@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -67,7 +68,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
            try {
               operationResult = invokeCommand(getEmbeddedCacheManager(context, operation), context, operation);
            } catch (Exception e) {
-              throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));
+              throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()), e);
            }
            if (operationResult != null) {
               context.getResult().set(operationResult);
@@ -194,7 +195,7 @@ public abstract class CacheContainerCommands implements OperationStepHandler {
         protected ModelNode invokeCommand(EmbeddedCacheManager cacheManager, OperationContext context, ModelNode operation) throws Exception {
             TaskManager taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
             List<Task> tasks = taskManager.getTasks();
-            Collections.sort(tasks, (task1, task2) -> { return task1.getName().compareTo(task2.getName()); });
+            Collections.sort(tasks, Comparator.comparing(Task::getName));
             final ModelNode result = new ModelNode().setEmptyList();
             for (Task task : tasks) {
                 ModelNode node = result.addEmptyObject();

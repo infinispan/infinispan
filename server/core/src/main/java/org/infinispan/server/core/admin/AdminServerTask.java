@@ -2,13 +2,12 @@ package org.infinispan.server.core.admin;
 
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.logging.Log;
-import org.infinispan.tasks.ServerTask;
+import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.util.logging.LogFactory;
 
@@ -21,11 +20,8 @@ import io.netty.util.CharsetUtil;
  * @since 9.0
  */
 
-public abstract class AdminServerTask<T> implements ServerTask<T> {
-   protected EmbeddedCacheManager cacheManager;
+public abstract class AdminServerTask<T> implements Task {
    protected final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private Map<String, String> parameters;
-   private EnumSet<AdminFlag> flags;
 
    @Override
    public final String getName() {
@@ -33,19 +29,26 @@ public abstract class AdminServerTask<T> implements ServerTask<T> {
    }
 
    @Override
-   public final void setTaskContext(TaskContext taskContext) {
-      this.cacheManager = taskContext.getCacheManager();
-      Map<String, byte[]> rawParams = (Map<String, byte[]>) taskContext.getParameters().get();
-      parameters = rawParams.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> new String(entry.getValue(), CharsetUtil.UTF_8)));
-      String sFlags = this.parameters.remove("flags");
-      flags = AdminFlag.fromString(sFlags);
+   public String getType() {
+      return AdminServerTask.class.getSimpleName();
    }
 
-   public boolean isPersistent() {
+   public final T execute(TaskContext taskContext) {
+      Map<String, byte[]> rawParams = (Map<String, byte[]>) taskContext.getParameters().get();
+      Map<String, String> parameters = rawParams.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> new String(entry.getValue(), CharsetUtil.UTF_8)));
+      String sFlags = parameters.remove("flags");
+      return execute(
+            taskContext.getCacheManager(),
+            parameters,
+            AdminFlag.fromString(sFlags)
+      );
+   }
+
+   public boolean isPersistent(EnumSet<AdminFlag> flags) {
       return flags.contains(AdminFlag.PERSISTENT);
    }
 
-   protected String requireParameter(String parameter) {
+   protected String requireParameter(Map<String, String> parameters, String parameter) {
       String v = parameters.get(parameter);
       if (v == null) {
          throw log.missingRequiredAdminTaskParameter(getName(), parameter);
@@ -54,9 +57,11 @@ public abstract class AdminServerTask<T> implements ServerTask<T> {
       }
    }
 
-   protected String getParameter(String parameter) {
+   protected String getParameter(Map<String, String> parameters, String parameter) {
       return parameters.get(parameter);
    }
+
+   protected abstract T execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<AdminFlag> adminFlags);
 
    public abstract String getTaskContextName();
 
