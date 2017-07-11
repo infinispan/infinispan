@@ -59,4 +59,11 @@ public interface CacheWriter<K, V> extends Lifecycle {
    default void deleteBatch(Iterable<Object> keys) {
       keys.forEach(this::delete);
    }
+
+   /**
+    * @return true if the writer can be connected to, otherwise false
+    */
+   default boolean isAvailable() {
+      return true;
+   }
 }

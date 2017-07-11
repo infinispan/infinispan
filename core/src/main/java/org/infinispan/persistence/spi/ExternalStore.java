@@ -10,4 +10,8 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public interface ExternalStore<K, V> extends CacheLoader<K, V>, CacheWriter<K, V> {
+   @Override
+   default boolean isAvailable() {
+      return CacheWriter.super.isAvailable();
+   }
 }

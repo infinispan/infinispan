@@ -2316,6 +2316,15 @@ public class Parser implements ConfigurationParser {
             case PASSIVATION:
                builder.persistence().passivation(Boolean.parseBoolean(value));
                break;
+            case AVAILABILITY_INTERVAL:
+               builder.persistence().availabilityInterval(Integer.parseInt(value));
+               break;
+            case CONNECTION_ATTEMPTS:
+               builder.persistence().connectionAttempts(Integer.parseInt(value));
+               break;
+            case CONNECTION_INTERVAL:
+               builder.persistence().connectionInterval(Integer.parseInt(value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

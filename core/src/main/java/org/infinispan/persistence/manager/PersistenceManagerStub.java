@@ -125,4 +125,9 @@ public class PersistenceManagerStub implements PersistenceManager {
    @Override
    public void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags) {
    }
+
+   @Override
+   public boolean isAvailable() {
+      return true;
+   }
 }

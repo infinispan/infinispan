@@ -28,6 +28,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.TimeService;
@@ -61,6 +62,8 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    private DummyInMemoryStoreConfiguration configuration;
    private InitializationContext ctx;
    private volatile boolean running;
+   private volatile boolean available;
+   private AtomicInteger startAttempts = new AtomicInteger();
 
    @Override
    public void init(InitializationContext ctx) {
@@ -187,6 +190,9 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       if (store != null)
          return;
 
+      if (configuration.startFailures() > startAttempts.incrementAndGet())
+         throw new PersistenceException();
+
       store = new ConcurrentHashMap<>();
       stats = newStatsMap();
 
@@ -208,6 +214,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
       // record at the end!
       record("start");
       running = true;
+      available = true;
    }
 
    private ConcurrentMap<String, AtomicInteger> newStatsMap() {
@@ -225,6 +232,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    public void stop() {
       record("stop");
       running = false;
+      available = false;
 
       if (configuration.purgeOnStartup()) {
          if (storeName != null) {
@@ -232,6 +240,15 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
          }
       }
       store = null;
+   }
+
+   @Override
+   public boolean isAvailable() {
+      return available;
+   }
+
+   public void setAvailable(boolean available) {
+      this.available = available;
    }
 
    public String getStoreName() {
@@ -355,8 +372,10 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
    }
 
    private void assertRunning() {
-      if (!running) {
+      if (!running)
          throw new IllegalLifecycleStateException();
-      }
+
+      if (!available)
+         throw new PersistenceException();
    }
 }

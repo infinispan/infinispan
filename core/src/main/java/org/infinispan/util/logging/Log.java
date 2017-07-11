@@ -1801,4 +1801,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Deserialization of class '%s' is not allowed", id = 526)
    CacheException errorDeserializing(Class<?> rawClass);
+
+   @Message(value = "Maximum startup attempts exceeded for store %s", id = 527)
+   PersistenceException storeStartupAttemptsExceeded(String storeName, @Cause Throwable t);
 }

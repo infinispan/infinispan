@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
+import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -68,7 +69,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
-      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml"}, {"8.2.xml"}, {"9.0.xml"}, {"9.1.xml"}, {"9.2.xml"} };
+      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml"}, {"8.2.xml"}, {"9.0.xml"}, {"9.1.xml"}, {"9.2.xml"}, {"9.3.xml"} };
    }
 
    @Test(dataProvider="configurationFiles")
@@ -82,6 +83,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             switch (version) {
+               case 93:
+                  configurationCheck93(cm);
                case 92:
                   configurationCheck92(cm);
                   break;
@@ -110,6 +113,15 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             }
          }
       });
+   }
+
+   private static void configurationCheck93(EmbeddedCacheManager cm) {
+      configurationCheck92(cm);
+      Configuration local = cm.getCacheConfiguration("local");
+      PersistenceConfiguration persistenceConfiguration = local.persistence();
+      assertEquals(5, persistenceConfiguration.connectionAttempts());
+      assertEquals(100, persistenceConfiguration.connectionInterval());
+      assertEquals(2000, persistenceConfiguration.availabilityInterval());
    }
 
    private static void configurationCheck92(EmbeddedCacheManager cm) {

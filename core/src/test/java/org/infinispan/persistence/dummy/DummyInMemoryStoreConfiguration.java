@@ -13,8 +13,9 @@ import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 public class DummyInMemoryStoreConfiguration extends AbstractStoreConfiguration {
    static final AttributeDefinition<Boolean> SLOW = AttributeDefinition.builder("slow", false).immutable().build();
    static final AttributeDefinition<String> STORE_NAME = AttributeDefinition.builder("storeName", null, String.class).immutable().build();
+   static final AttributeDefinition<Integer> START_FAILURES = AttributeDefinition.builder("startFailures", 0).immutable().build();
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(DummyInMemoryStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), SLOW, STORE_NAME);
+      return new AttributeSet(DummyInMemoryStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), SLOW, STORE_NAME, START_FAILURES);
    }
 
    public DummyInMemoryStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
@@ -27,5 +28,9 @@ public class DummyInMemoryStoreConfiguration extends AbstractStoreConfiguration 
 
    public String storeName() {
       return attributes.attribute(STORE_NAME).get();
+   }
+
+   public int startFailures() {
+      return attributes.attribute(START_FAILURES).get();
    }
 }

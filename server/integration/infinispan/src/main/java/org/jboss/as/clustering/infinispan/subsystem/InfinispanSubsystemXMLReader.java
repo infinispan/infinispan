@@ -322,7 +322,7 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
                 case PERSISTENCE_THREAD_POOL: {
                     if (namespace.since(Namespace.INFINISPAN_SERVER_8_0)) {
-                        this.parseThreadPool(ThreadPoolResource.PERSISTENCE, reader, containerAddress, operations);
+                        this.parseScheduledThreadPool(ScheduledThreadPoolResource.PERSISTENCE, reader, containerAddress, operations);
                         break;
                     }
                 }
@@ -2919,6 +2919,14 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
        for (int i = 0; i < reader.getAttributeCount(); i++) {
            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
            switch (attribute) {
+               case MIN_THREADS:
+               case QUEUE_LENGTH: {
+                   if (ScheduledThreadPoolResource.PERSISTENCE != pool || namespace.since(Namespace.INFINISPAN_SERVER_9_3)) {
+                       throw ParseUtils.unexpectedAttribute(reader, i);
+                   }
+                   ROOT_LOGGER.deprecatedExecutorAttribute(attribute.getLocalName());
+                   break;
+               }
                case MAX_THREADS: {
                    readAttribute(reader, i, operation, pool.getMaxThreads());
                    break;

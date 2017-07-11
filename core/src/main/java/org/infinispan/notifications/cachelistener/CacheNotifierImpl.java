@@ -12,6 +12,7 @@ import static org.infinispan.notifications.cachelistener.event.Event.Type.CACHE_
 import static org.infinispan.notifications.cachelistener.event.Event.Type.CACHE_ENTRY_VISITED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.DATA_REHASHED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.PARTITION_STATUS_CHANGED;
+import static org.infinispan.notifications.cachelistener.event.Event.Type.PERSISTENCE_AVAILABILITY_CHANGED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TOPOLOGY_CHANGED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSACTION_COMPLETED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSACTION_REGISTERED;
@@ -83,6 +84,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
+import org.infinispan.notifications.cachelistener.annotation.PersistenceAvailabilityChanged;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.annotation.TransactionCompleted;
 import org.infinispan.notifications.cachelistener.annotation.TransactionRegistered;
@@ -105,6 +107,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
+import org.infinispan.notifications.cachelistener.event.PersistenceAvailabilityChangedEvent;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
@@ -165,6 +168,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       allowedListeners.put(DataRehashed.class, DataRehashedEvent.class);
       allowedListeners.put(TopologyChanged.class, TopologyChangedEvent.class);
       allowedListeners.put(PartitionStatusChanged.class, PartitionStatusChangedEvent.class);
+      allowedListeners.put(PersistenceAvailabilityChanged.class, PersistenceAvailabilityChangedEvent.class);
 
       clusterAllowedListeners.put(CacheEntryCreated.class, CacheEntryCreatedEvent.class);
       clusterAllowedListeners.put(CacheEntryModified.class, CacheEntryModifiedEvent.class);
@@ -187,6 +191,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    final List<CacheEntryListenerInvocation<K, V>> dataRehashedListeners = new CopyOnWriteArrayList<>();
    final List<CacheEntryListenerInvocation<K, V>> topologyChangedListeners = new CopyOnWriteArrayList<>();
    final List<CacheEntryListenerInvocation<K, V>> partitionChangedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> persistenceChangedListeners = new CopyOnWriteArrayList<>();
 
    @Inject private Cache<K, V> cache;
    @Inject private ClusteringDependentLogic clusteringDependentLogic;
@@ -233,6 +238,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       listenersMap.put(DataRehashed.class, dataRehashedListeners);
       listenersMap.put(TopologyChanged.class, topologyChangedListeners);
       listenersMap.put(PartitionStatusChanged.class, partitionChangedListeners);
+      listenersMap.put(PersistenceAvailabilityChanged.class, persistenceChangedListeners);
    }
 
    @Override
@@ -667,6 +673,15 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          e.setPre(pre);
          e.setAvailabilityMode(mode);
          for (CacheEntryListenerInvocation<K, V> listener : partitionChangedListeners) listener.invoke(e);
+      }
+   }
+
+   @Override
+   public void notifyPersistenceAvailabilityChanged(boolean available) {
+      if (!persistenceChangedListeners.isEmpty()) {
+         EventImpl<K, V> e = EventImpl.createEvent(cache, PERSISTENCE_AVAILABILITY_CHANGED);
+         e.setAvailable(available);
+         for (CacheEntryListenerInvocation<K, V> listener : persistenceChangedListeners) listener.invoke(e);
       }
    }
 

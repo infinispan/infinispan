@@ -66,6 +66,7 @@ import org.jboss.msc.service.ServiceName;
 public enum ScheduledThreadPoolResource implements ResourceDefinition, ScheduledThreadPoolDefinition {
 
     EXPIRATION("expiration", 1, 60000), // called eviction prior to Infinispan 8
+    PERSISTENCE("persistence", 4, 60000),
     REPLICATION_QUEUE("replication-queue", 1, 60000),
     ;
 

@@ -1,5 +1,8 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.PersistenceConfiguration.AVAILABILITY_INTERVAL;
+import static org.infinispan.configuration.cache.PersistenceConfiguration.CONNECTION_ATTEMPTS;
+import static org.infinispan.configuration.cache.PersistenceConfiguration.CONNECTION_INTERVAL;
 import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIVATION;
 
 import java.lang.reflect.Constructor;
@@ -32,6 +35,35 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    public PersistenceConfigurationBuilder passivation(boolean b) {
       attributes.attribute(PASSIVATION).set(b);
+      return this;
+   }
+
+   /**
+    * @param interval The time (in milliseconds) between each availability check that determines whether the PersistenceManager
+    *           is available, i.e. how regularly are stores/loaders polled via their `org.infinispan.persistence.spi.CacheWriter#isAvailable`
+    *           or `org.infinispan.persistence.spi.CacheLoader#isAvailable` implementation. If a single store/loader is unavailable,
+    *           then an exception is thrown during cache operations.
+    */
+   public PersistenceConfigurationBuilder availabilityInterval(int interval) {
+      attributes.attribute(AVAILABILITY_INTERVAL).set(interval);
+      return this;
+   }
+
+   /**
+    * @param attempts The maximum number of unsuccessful attempts to start each of the configured CacheWriter/CacheLoader
+    *                 before an exception is thrown and the cache fails to start.
+    */
+   public PersistenceConfigurationBuilder connectionAttempts(int attempts) {
+      attributes.attribute(CONNECTION_ATTEMPTS).set(attempts);
+      return this;
+   }
+
+   /**
+    * @param interval The time (in milliseconds) to wait between subsequent connection attempts on startup. A negative or zero
+    *                 interval results in no wait period being observed.
+    */
+   public PersistenceConfigurationBuilder connectionInterval(int interval) {
+      attributes.attribute(CONNECTION_INTERVAL).set(interval);
       return this;
    }
 

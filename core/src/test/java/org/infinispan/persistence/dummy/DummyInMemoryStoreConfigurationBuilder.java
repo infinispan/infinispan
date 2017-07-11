@@ -1,6 +1,7 @@
 package org.infinispan.persistence.dummy;
 
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.SLOW;
+import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.START_FAILURES;
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.STORE_NAME;
 
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -33,6 +34,11 @@ public class DummyInMemoryStoreConfigurationBuilder extends
     */
    public DummyInMemoryStoreConfigurationBuilder storeName(String storeName) {
       attributes.attribute(STORE_NAME).set(storeName);
+      return this;
+   }
+
+   public DummyInMemoryStoreConfigurationBuilder startFailures(int failures) {
+      attributes.attribute(START_FAILURES).set(failures);
       return this;
    }
 
