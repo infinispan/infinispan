@@ -18,6 +18,7 @@ import org.infinispan.commons.marshall.exts.EquivalenceExternalizer;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.compat.BiFunctionMapper;
+import org.infinispan.compat.EntryConsumerMapper;
 import org.infinispan.compat.FunctionMapper;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -135,6 +136,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new AtomicKeySetImpl.FunctionExternalizer(), exts);
       addInternalExternalizer(new AtomicMapProxyImpl.Externalizer(), exts);
       addInternalExternalizer(new AvailabilityMode.Externalizer(), exts);
+      addInternalExternalizer(new EntryConsumerMapper.Externalizer(), exts);
       addInternalExternalizer(new BiFunctionMapper.Externalizer(), exts);
       addInternalExternalizer(new ByteBufferImpl.Externalizer(), exts);
       addInternalExternalizer(new CacheEventConverterAsConverter.Externalizer(), exts);

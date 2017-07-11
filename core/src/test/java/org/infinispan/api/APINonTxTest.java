@@ -29,10 +29,10 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.LockedStream;
-import org.infinispan.functional.FunctionalMap;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -579,9 +579,8 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.put("C", "D");
 
       List<String> values = new ArrayList<>();
-      BiConsumer<? super Object, ? super Object> collectKeyValues = (k, v) -> values.add("hello_" + k.toString() + v.toString());
 
-      cache.forEach(collectKeyValues);
+      cache.forEach((k, v) -> values.add("hello_" + k.toString() + v.toString()));
 
       assertEquals(2, values.size());
       assertEquals("hello_AB", values.get(0));

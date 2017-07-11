@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -354,6 +355,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
       return delegate.compute(key, remappingFunction);
+   }
+
+   @Override
+   public void forEach(BiConsumer<? super K, ? super V> action) {
+      authzManager.checkPermission(subject, AuthorizationPermission.WRITE);
+      delegate.forEach(action);
    }
 
    @Override

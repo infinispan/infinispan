@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -443,4 +444,18 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
                      SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       return compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction);
    }
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * When this method is used on a clustered cache, either replicated or distributed, the biconsumer will be serialized
+    * to owning nodes to perform the operation in the most performant way. However this means the biconsumer must
+    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * <p>
+    * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
+    * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
+    * This limitation could disappear in following releases if technically possible.
+    */
+   @Override
+   void forEach(BiConsumer<? super K, ? super V> action);
 }

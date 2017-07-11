@@ -34,6 +34,7 @@ import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.CloseableSpliteratorMapper;
 import org.infinispan.compat.BiFunctionMapper;
+import org.infinispan.compat.EntryConsumerMapper;
 import org.infinispan.compat.FunctionMapper;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -682,18 +683,13 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    @Override
    public void forEach(BiConsumer<? super K, ? super V> action) {
-      super.forEach((k, v) -> {
-         K newK = keyFromStorage(k);
-         V newV = valueFromStorage(v);
-         action.accept(newK, newV);
-      });
+      entrySet().stream().forEach(new EntryConsumerMapper(action, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass));
    }
 
    @Override
    public CacheSet<K> keySet() {
       return new EncodedKeySet(this, super.keySet());
    }
-
 
    private class EncoderIterator<A, B> implements CloseableIterator<CacheEntry<A, B>> {
       private final CloseableIterator<CacheEntry<A, B>> iterator;
