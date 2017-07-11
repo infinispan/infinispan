@@ -30,6 +30,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -196,7 +197,8 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          DistributionManager dm = advancedCache.getDistributionManager();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
          ClusterStreamManager<K> realManager = registry.getComponent(ClusterStreamManager.class);
-         TxClusterStreamManager<K> txManager = new TxClusterStreamManager<>(realManager, ctx, dm.getWriteConsistentHash());
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+         TxClusterStreamManager<K> txManager = new TxClusterStreamManager<>(realManager, ctx, cacheTopology::getSegment);
 
          CacheStream<CacheEntry<K, V>> cacheStream = new TxDistributedCacheStream<>(cache.getCacheManager().getAddress(),
                  false, dm, entrySet::stream, txManager, !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
@@ -211,7 +213,8 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          DistributionManager dm = advancedCache.getDistributionManager();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
          ClusterStreamManager<K> realManager = registry.getComponent(ClusterStreamManager.class);
-         TxClusterStreamManager<K> txManager = new TxClusterStreamManager<>(realManager, ctx, dm.getWriteConsistentHash());
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+         TxClusterStreamManager<K> txManager = new TxClusterStreamManager<>(realManager, ctx, cacheTopology::getSegment);
 
          CacheStream<CacheEntry<K, V>> cacheStream = new TxDistributedCacheStream<>(cache.getCacheManager().getAddress(),
                  true, dm, entrySet::parallelStream, txManager, !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
@@ -337,7 +340,8 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          DistributionManager dm = advancedCache.getDistributionManager();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
          ClusterStreamManager<K> realManager = registry.getComponent(ClusterStreamManager.class);
-         TxClusterStreamManager<K> txManager = new TxClusterStreamManager<>(realManager, ctx, dm.getWriteConsistentHash());
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+         TxClusterStreamManager<K> txManager = new TxClusterStreamManager<>(realManager, ctx, cacheTopology::getSegment);
 
          return new TxDistributedCacheStream<>(cache.getCacheManager().getAddress(), false,
                  dm, entrySet::stream, txManager, !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),
@@ -352,7 +356,8 @@ public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
          DistributionManager dm = advancedCache.getDistributionManager();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
          ClusterStreamManager<K> realManager = registry.getComponent(ClusterStreamManager.class);
-         TxClusterStreamManager<K> txManager = new TxClusterStreamManager<>(realManager, ctx, dm.getWriteConsistentHash());
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+         TxClusterStreamManager<K> txManager = new TxClusterStreamManager<>(realManager, ctx, cacheTopology::getSegment);
 
          return new TxDistributedCacheStream<>(cache.getCacheManager().getAddress(), true,
                  dm, entrySet::parallelStream, txManager, !command.hasAnyFlag(FlagBitSets.SKIP_CACHE_LOAD),

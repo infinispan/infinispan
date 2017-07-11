@@ -14,6 +14,7 @@ import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,9 +58,10 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
          }
          BitSet bitSet = new BitSet(hash.getNumSegments());
          segmentsToFilter.forEach(bitSet::set);
+         KeyPartitioner partitioner = cache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
          stream = stream.filter(k -> {
             K key = k.getKey();
-            int segment = hash.getSegment(key);
+            int segment = partitioner.getSegment(key);
             boolean isPresent = bitSet.get(segment);
             if (trace)
                log.tracef("Is key %s present in segment %d? %b", key, segment, isPresent);

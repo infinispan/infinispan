@@ -59,6 +59,7 @@ import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutionCompletionService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
@@ -1337,7 +1338,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                QueueingSegmentListener handler = segmentHandler.get(identifier);
                if (handler == null) {
                   if (config.clustering().cacheMode().isDistributed()) {
-                     handler = new DistributedQueueingSegmentListener(entryFactory, distributionManager);
+                     LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
+                     handler = new DistributedQueueingSegmentListener(entryFactory,
+                           cacheTopology.getCurrentCH().getNumSegments(), cacheTopology::getSegment);
                   } else {
                      handler = new QueueingAllSegmentListener(entryFactory);
                   }
