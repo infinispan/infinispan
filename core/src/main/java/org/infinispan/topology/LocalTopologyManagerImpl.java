@@ -678,7 +678,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       cacheState.setProperty(GlobalStateManagerImpl.VERSION_MAJOR, Version.getMajor());
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       cacheStatus.getCurrentTopology().getCurrentCH().remapAddresses(persistentUUIDManager.addressToPersistentUUID()).toScopedState(cacheState);
-      globalStateManager.writeScopedState(cacheState);
+      if (globalStateManager != null) {
+         globalStateManager.writeScopedState(cacheState);
+      }
    }
 
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
