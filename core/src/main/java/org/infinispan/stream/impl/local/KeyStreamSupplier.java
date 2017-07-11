@@ -13,6 +13,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -58,7 +59,8 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
          }
          BitSet bitSet = new BitSet(hash.getNumSegments());
          segmentsToFilter.forEach(bitSet::set);
-         stream = stream.filter(k -> bitSet.get(hash.getSegment(k)));
+         KeyPartitioner partitioner = cache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
+         stream = stream.filter(k -> bitSet.get(partitioner.getSegment(k)));
       }
       return stream;
    }
