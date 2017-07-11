@@ -159,7 +159,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testIndexPresence() {
       SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(cache).unwrap(SearchIntegrator.class);
 
-      assertTrue(searchIntegrator.getIndexedTypes().contains(ProtobufValueWrapper.class));
+      assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.class));
       assertNotNull(searchIntegrator.getIndexManager(ProtobufValueWrapper.class.getName()));
    }
 
