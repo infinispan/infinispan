@@ -13,17 +13,26 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  */
 public class PersistenceConfiguration implements Matchable<PersistenceConfiguration> {
    public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder("passivation", false).immutable().build();
+   public static final AttributeDefinition<Integer> AVAILABILITY_INTERVAL = AttributeDefinition.builder("availabilityInterval", 1000).immutable().build();
+   public static final AttributeDefinition<Integer> CONNECTION_ATTEMPTS = AttributeDefinition.builder("connectionAttempts", 10).immutable().build();
+   public static final AttributeDefinition<Integer> CONNECTION_INTERVAL = AttributeDefinition.builder("connectionInterval", 50).immutable().build();
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(PersistenceConfiguration.class, PASSIVATION);
+      return new AttributeSet(PersistenceConfiguration.class, PASSIVATION, AVAILABILITY_INTERVAL, CONNECTION_ATTEMPTS, CONNECTION_INTERVAL);
    }
 
    private final Attribute<Boolean> passivation;
+   private final Attribute<Integer> availabilityInterval;
+   private final Attribute<Integer> connectionAttempts;
+   private final Attribute<Integer> connectionInterval;
    private final AttributeSet attributes;
    private final List<StoreConfiguration> stores;
 
    PersistenceConfiguration(AttributeSet attributes, List<StoreConfiguration> stores) {
       this.attributes = attributes.checkProtection();
-      passivation = attributes.attribute(PASSIVATION);
+      this.passivation = attributes.attribute(PASSIVATION);
+      this.availabilityInterval = attributes.attribute(AVAILABILITY_INTERVAL);
+      this.connectionAttempts = attributes.attribute(CONNECTION_ATTEMPTS);
+      this.connectionInterval = attributes.attribute(CONNECTION_INTERVAL);
       this.stores = stores;
    }
 
@@ -38,6 +47,18 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
     */
    public boolean passivation() {
       return passivation.get();
+   }
+
+   public int availabilityInterval() {
+      return availabilityInterval.get();
+   }
+
+   public int connectionAttempts() {
+      return connectionAttempts.get();
+   }
+
+   public int connectionInterval() {
+      return connectionInterval.get();
    }
 
    public List<StoreConfiguration> stores() {

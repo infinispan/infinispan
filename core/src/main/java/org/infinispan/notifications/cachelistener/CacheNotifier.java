@@ -112,4 +112,5 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
 
    void notifyPartitionStatusChanged(AvailabilityMode mode, boolean pre);
 
+   void notifyPersistenceAvailabilityChanged(boolean available);
 }

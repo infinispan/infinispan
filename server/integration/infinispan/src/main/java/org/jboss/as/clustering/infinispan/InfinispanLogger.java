@@ -198,4 +198,8 @@ public interface InfinispanLogger extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 21, value = "Managed configuration storage is currently unsupported in domain mode. Please use Overlay storage.")
     void managedConfigurationUnavailableInDomainMode();
+
+   @LogMessage(level = WARN)
+   @Message(id = 22, value = "The '%s' attribute has been deprecated and is now ignored.")
+   void deprecatedExecutorAttribute(String executorAttribute);
 }

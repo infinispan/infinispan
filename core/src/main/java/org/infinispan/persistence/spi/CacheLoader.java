@@ -39,4 +39,11 @@ public interface CacheLoader<K, V> extends Lifecycle {
     * @throws PersistenceException in case of an error, e.g. communicating with the external storage
     */
    boolean contains(Object key);
+
+   /**
+    * @return true if the writer can be connected to, otherwise false
+    */
+   default boolean isAvailable() {
+      return true;
+   }
 }

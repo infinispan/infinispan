@@ -166,6 +166,9 @@ public class JdbcStringBasedStore<K,V> implements AdvancedLoadWriteStore<K,V>, T
    }
 
    void initializeConnectionFactory(ConnectionFactory connectionFactory) throws PersistenceException {
+      if (connectionFactory != null)
+         return;
+
       this.connectionFactory = connectionFactory;
       tableManager = getTableManager();
       tableManager.setCacheName(cacheName);

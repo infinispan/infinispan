@@ -19,7 +19,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,6 +58,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.InitializationContextImpl;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
@@ -72,6 +74,7 @@ import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.FlagAffectedStore;
 import org.infinispan.persistence.spi.LocalOnlyCacheLoader;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.spi.StoreUnavailableException;
 import org.infinispan.persistence.spi.TransactionalCacheWriter;
 import org.infinispan.persistence.support.AdvancedSingletonCacheWriter;
 import org.infinispan.persistence.support.BatchModification;
@@ -97,11 +100,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject private TransactionManager transactionManager;
    @Inject private TimeService timeService;
    @Inject @ComponentName(PERSISTENCE_EXECUTOR)
-   private ExecutorService persistenceExecutor;
+   private ScheduledExecutorService persistenceExecutor;
    @Inject private ByteBufferFactory byteBufferFactory;
    @Inject private MarshalledEntryFactory marshalledEntryFactory;
    @Inject private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    @Inject private ExpirationManager<Object, Object> expirationManager;
+   @Inject private CacheNotifier cacheNotifier;
 
    @GuardedBy("storesMutex")
    private final List<CacheLoader> loaders = new ArrayList<>();
@@ -111,7 +115,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private final List<TransactionalCacheWriter> txWriters = new ArrayList<>();
    private final Semaphore publisherSemaphore = new Semaphore(Integer.MAX_VALUE);
    private final ReadWriteLock storesMutex = new ReentrantReadWriteLock();
-   private final Map<Object, StoreConfiguration> configMap = new HashMap<>();
+   @GuardedBy("storesMutex")
+   private final Map<Object, StoreStatus> storeStatuses = new HashMap<>();
    private AdvancedPurgeListener<Object, Object> advancedListener;
 
    /**
@@ -120,6 +125,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private volatile boolean enabled;
    private volatile boolean clearOnStop;
    private boolean preloaded;
+   private Future availabilityFuture;
+   private volatile StoreUnavailableException unavailableException;
 
    @Override
    @Start()
@@ -135,49 +142,50 @@ public class PersistenceManagerImpl implements PersistenceManager {
          if (transactionManager != null) {
             xaTx = transactionManager.suspend();
          }
-         storesMutex.readLock().lock();
+         storesMutex.writeLock().lock();
          try {
+            Set<Lifecycle> undelegated = new HashSet<>();
+            nonTxWriters.forEach(w -> startWriter(w, undelegated));
+            txWriters.forEach(w -> startWriter(w, undelegated));
+            loaders.forEach(l -> startLoader(l, undelegated));
 
-            Set<Lifecycle> undelegated = new HashSet<>();//black magic to make sure the store start only gets invoked once
+            // Ensure that after writers and loaders have started, they are classified as available by their isAvailable impl
+            pollStoreAvailability();
 
-            Consumer<CacheWriter> startWriter = writer -> {
-               writer.start();
-               if (writer instanceof DelegatingCacheWriter) {
-                  CacheWriter actual = undelegate(writer);
-                  actual.start();
-                  undelegated.add(actual);
-               } else {
-                  undelegated.add(writer);
-               }
-
-               if (configMap.get(writer).purgeOnStartup()) {
-                  if (!(writer instanceof AdvancedCacheWriter))
-                     throw new PersistenceException("'purgeOnStartup' can only be set on stores implementing " +
-                                                          "" + AdvancedCacheWriter.class.getName());
-                  ((AdvancedCacheWriter) writer).clear();
-               }
-            };
-            nonTxWriters.forEach(startWriter);
-            txWriters.forEach(startWriter);
-
-            for (CacheLoader l : loaders) {
-               if (!undelegated.contains(l))
-                  l.start();
-               if (l instanceof DelegatingCacheLoader) {
-                  CacheLoader actual = undelegate(l);
-                  if (!undelegated.contains(actual)) {
-                     actual.start();
-                  }
-               }
-            }
+            // Now schedule the availability check
+            long interval = configuration.persistence().availabilityInterval();
+            availabilityFuture = persistenceExecutor.scheduleAtFixedRate(this::pollStoreAvailability, interval, interval, TimeUnit.MILLISECONDS);
          } finally {
             if (xaTx != null) {
                transactionManager.resume(xaTx);
             }
-            storesMutex.readLock().unlock();
+            storesMutex.writeLock().unlock();
          }
       } catch (Exception e) {
          throw new CacheException("Unable to start cache loaders", e);
+      }
+   }
+
+   private void pollStoreAvailability() {
+      storesMutex.writeLock().lock();
+      try {
+         boolean availabilityChanged = false;
+         boolean failureDetected = false;
+         for (StoreStatus status : storeStatuses.values()) {
+            if (status.availabilityChanged())
+               availabilityChanged = true;
+            if (availabilityChanged && !status.availability && !failureDetected) {
+               failureDetected = true;
+               unavailableException = new StoreUnavailableException(String.format("Store %s is unavailable", status.store));
+               cacheNotifier.notifyPersistenceAvailabilityChanged(false);
+            }
+         }
+         if (!failureDetected && availabilityChanged) {
+            unavailableException = null;
+            cacheNotifier.notifyPersistenceAvailabilityChanged(true);
+         }
+      } finally {
+         storesMutex.writeLock().unlock();
       }
    }
 
@@ -203,6 +211,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                undelegated.add(writer);
             }
          };
+         if (availabilityFuture != null)
+            availabilityFuture.cancel(true);
          nonTxWriters.forEach(stopWriters);
          nonTxWriters.clear();
          txWriters.forEach(stopWriters);
@@ -232,6 +242,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return enabled;
    }
 
+   private void checkStoreAvailability() {
+      if (!enabled) return;
+
+      if (unavailableException != null) {
+         throw unavailableException;
+      }
+   }
+
+   @Override
+   public boolean isAvailable() {
+      if (!enabled)
+         return false;
+      return unavailableException == null;
+   }
+
    @Override
    public boolean isPreloaded() {
       return preloaded;
@@ -247,7 +272,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader l : loaders) {
-            if (configMap.get(l).preload()) {
+            if (getStoreConfig(l).preload()) {
                if (!(l instanceof AdvancedCacheLoader)) {
                   throw new PersistenceException("Cannot preload from cache loader '" + l.getClass().getName()
                         + "' as it doesn't implement '" + AdvancedCacheLoader.class.getName() + "'");
@@ -293,12 +318,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
             removeCacheWriter(storeType, nonTxWriters);
             removeCacheWriter(storeType, txWriters);
             noMoreStores = loaders.isEmpty() && nonTxWriters.isEmpty() && txWriters.isEmpty();
+
+            if (!noMoreStores) {
+               // Immediately poll store availability as the disabled store may have been the cause of the unavailability
+               pollStoreAvailability();
+            }
          } finally {
             publisherSemaphore.release(Integer.MAX_VALUE);
             storesMutex.writeLock().unlock();
          }
 
          if (noMoreStores) {
+            availabilityFuture.cancel(true);
             AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
             AsyncInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
             if (loaderInterceptor == null) {
@@ -397,9 +428,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          storesMutex.readLock().lock();
          try {
+            checkStoreAvailability();
             Consumer<CacheWriter> purgeWriter = writer -> {
                // ISPN-6711 Shared stores should only be purged by the coordinator
-               if (configMap.get(writer).shared() && !cache.getCacheManager().isCoordinator())
+               if (getStoreConfig(writer).shared() && !cache.getCacheManager().isCoordinator())
                   return;
 
                if (writer instanceof AdvancedCacheExpirationWriter) {
@@ -418,7 +450,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
          if (trace) {
             log.tracef("Purging cache store completed in %s",
-                       Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
+                  Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
          }
       } catch (Exception e) {
          log.exceptionPurgingDataContainer(e);
@@ -429,10 +461,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void clearAllStores(AccessMode mode) {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          // Apply to txWriters as well as clear does not happen in a Tx context
          Consumer<CacheWriter> clearWriter = writer -> {
             if (writer instanceof AdvancedCacheWriter) {
-               if (mode.canPerform(configMap.get(writer))) {
+               if (mode.canPerform(getStoreConfig(writer))) {
                   ((AdvancedCacheWriter) writer).clear();
                }
             }
@@ -448,9 +481,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public boolean deleteFromAllStores(Object key, AccessMode mode) {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          boolean removed = false;
          for (CacheWriter w : nonTxWriters) {
-            if (mode.canPerform(configMap.get(w))) {
+            if (mode.canPerform(getStoreConfig(w))) {
                removed |= w.delete(key);
             }
          }
@@ -464,7 +498,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       storesMutex.readLock().lock();
       try {
          for (CacheLoader loader : loaders) {
-            if (mode.canPerform(configMap.get(loader)) && loader instanceof AdvancedCacheLoader) {
+            if (mode.canPerform(getStoreConfig(loader)) && loader instanceof AdvancedCacheLoader) {
                return ((AdvancedCacheLoader<K, V>) loader);
             }
          }
@@ -509,6 +543,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public MarshalledEntry loadFromAllStores(Object key, boolean localInvocation) {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          for (CacheLoader l : loaders) {
             if (!localInvocation && isLocalOnlyLoader(l))
                continue;
@@ -541,10 +576,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void writeToAllNonTxStores(MarshalledEntry marshalledEntry, AccessMode accessMode, long flags) {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          //noinspection unchecked
          nonTxWriters.stream()
                .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
-               .filter(writer -> accessMode.canPerform(configMap.get(writer)))
+               .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
                .forEach(writer -> writer.write(marshalledEntry));
       } finally {
          storesMutex.readLock().unlock();
@@ -555,10 +591,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void writeBatchToAllNonTxStores(Iterable<MarshalledEntry> entries, AccessMode accessMode, long flags) {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          //noinspection unchecked
          nonTxWriters.stream()
                .filter(writer -> !(writer instanceof FlagAffectedStore) || FlagAffectedStore.class.cast(writer).shouldWrite(flags))
-               .filter(writer -> accessMode.canPerform(configMap.get(writer)))
+               .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
                .forEach(writer -> writer.writeBatch(entries));
       } finally {
          storesMutex.readLock().unlock();
@@ -569,8 +606,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags) {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          nonTxWriters.stream()
-               .filter(writer -> accessMode.canPerform(configMap.get(writer)))
+               .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
                .forEach(writer -> writer.deleteBatch(keys));
       } finally {
          storesMutex.readLock().unlock();
@@ -582,8 +620,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
                                   AccessMode accessMode) throws PersistenceException {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          for (CacheWriter writer : txWriters) {
-            if (accessMode.canPerform(configMap.get(writer)) || configuration.clustering().cacheMode().equals(CacheMode.LOCAL)) {
+            if (accessMode.canPerform(getStoreConfig(writer)) || configuration.clustering().cacheMode().equals(CacheMode.LOCAL)) {
                TransactionalCacheWriter txWriter = (TransactionalCacheWriter) undelegate(writer);
                txWriter.prepareWithModifications(transaction, batchModification);
             }
@@ -607,8 +646,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public AdvancedCacheLoader getStateTransferProvider() {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          for (CacheLoader l : loaders) {
-            StoreConfiguration storeConfiguration = configMap.get(l);
+            StoreConfiguration storeConfiguration = getStoreConfig(l);
             if (storeConfiguration.fetchPersistentState() && !storeConfiguration.shared())
                return (AdvancedCacheLoader) l;
          }
@@ -622,6 +662,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public int size() {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          for (CacheLoader l : loaders) {
             if (l instanceof AdvancedCacheLoader)
                return ((AdvancedCacheLoader) l).size();
@@ -735,11 +776,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
             } else {
                nonTxWriters.add(writer);
             }
+            storeStatuses.put(writer, new StoreStatus(writer, cfg));
          } finally {
             storesMutex.writeLock().unlock();
          }
-
-         configMap.put(writer, cfg);
       }
    }
 
@@ -750,10 +790,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
          storesMutex.writeLock().lock();
          try {
             loaders.add(loader);
+            storeStatuses.put(loader, new StoreStatus(loader, cfg));
          } finally {
             storesMutex.writeLock().unlock();
          }
-         configMap.put(loader, cfg);
       }
    }
 
@@ -786,7 +826,64 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private CacheWriter undelegate(CacheWriter w) {
       return (w instanceof DelegatingCacheWriter) ? ((DelegatingCacheWriter)w).undelegate() : w;
+   }
 
+   private void startWriter(CacheWriter writer, Set<Lifecycle> undelegated) {
+      startStore(writer.getClass().getName(), () -> {
+         writer.start();
+         if (writer instanceof DelegatingCacheWriter) {
+            CacheWriter actual = undelegate(writer);
+            actual.start();
+            undelegated.add(actual);
+         } else {
+            undelegated.add(writer);
+         }
+
+         if (getStoreConfig(writer).purgeOnStartup()) {
+            if (!(writer instanceof AdvancedCacheWriter))
+               throw new PersistenceException("'purgeOnStartup' can only be set on stores implementing " +
+                     "" + AdvancedCacheWriter.class.getName());
+            ((AdvancedCacheWriter) writer).clear();
+         }
+      });
+   }
+
+   private void startLoader(CacheLoader loader, Set<Lifecycle> undelegated) {
+      CacheLoader delegate = undelegate(loader);
+      boolean startInstance = !undelegated.contains(loader);
+      boolean startDelegate = loader instanceof DelegatingCacheLoader && !undelegated.contains(delegate);
+      startStore(loader.getClass().getName(), () -> {
+         if (startInstance)
+            loader.start();
+
+         if (startDelegate)
+            delegate.start();
+      });
+   }
+
+   private void startStore(String storeName, Runnable runnable) {
+      int connectionAttempts = configuration.persistence().connectionAttempts();
+      int connectionInterval = configuration.persistence().connectionInterval();
+      for (int i = 0; i < connectionAttempts; i++) {
+         try {
+            runnable.run();
+            return;
+         } catch (Exception e) {
+            if (i + 1 < connectionAttempts) {
+               log.debugf("Exception encountered for store %s on startup attempt %d, retrying ...", storeName, i);
+               if (connectionInterval > 0) {
+                  try {
+                     Thread.sleep(connectionInterval);
+                  } catch (InterruptedException ignore) {
+                     log.debugf("Thread interrupted for store %s on startup attempt %d, cancelling ...", storeName, i);
+                     return;
+                  }
+               }
+            } else {
+               throw log.storeStartupAttemptsExceeded(storeName, e);
+            }
+         }
+      }
    }
 
    private AdvancedCache<Object, Object> getCacheForStateInsertion() {
@@ -798,7 +895,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       storesMutex.readLock().lock();
       try {
          for (CacheWriter w : nonTxWriters) {
-            if (configMap.get(w).shared()) {
+            if (getStoreConfig(w).shared()) {
                hasShared = true;
                break;
             }
@@ -901,6 +998,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       for (Iterator<CacheLoader> it = collection.iterator(); it.hasNext(); ) {
          CacheLoader loader = it.next();
          doRemove(it, storeType, loader, undelegate(loader));
+         storeStatuses.remove(loader);
       }
    }
 
@@ -908,6 +1006,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       for (Iterator<? extends CacheWriter> it = collection.iterator(); it.hasNext(); ) {
          CacheWriter writer = it.next();
          doRemove(it, storeType, writer, undelegate(writer));
+         storeStatuses.remove(writer);
       }
    }
 
@@ -924,11 +1023,47 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private void performOnAllTxStores(AccessMode accessMode, Consumer<TransactionalCacheWriter> action) {
       storesMutex.readLock().lock();
       try {
+         checkStoreAvailability();
          txWriters.stream()
-               .filter(writer -> accessMode.canPerform(configMap.get(writer)))
+               .filter(writer -> accessMode.canPerform(getStoreConfig(writer)))
                .forEach(action);
       } finally {
          storesMutex.readLock().unlock();
+      }
+   }
+
+   private StoreConfiguration getStoreConfig(Object store) {
+      storesMutex.readLock().lock();
+      try {
+         StoreStatus status = storeStatuses.get(store);
+         return status == null ? null : status.config;
+      } finally {
+         storesMutex.readLock().unlock();
+      }
+   }
+
+   class StoreStatus {
+      final Object store;
+      final StoreConfiguration config;
+      volatile boolean availability = true;
+
+      StoreStatus(Object store, StoreConfiguration config) {
+         this.store = store;
+         this.config = config;
+      }
+
+      boolean availabilityChanged() {
+         boolean oldAvailability = availability;
+         try {
+            if (store instanceof CacheWriter)
+               availability = ((CacheWriter) store).isAvailable();
+            else
+               availability = ((CacheLoader) store).isAvailable();
+         } catch (Throwable t) {
+            log.debugf("Error encountered when calling isAvailable on %s: %s", store, t);
+            availability = false;
+         }
+         return oldAvailability != availability;
       }
    }
 }

@@ -216,4 +216,10 @@ public interface PersistenceManager extends Lifecycle {
     * @param flags Flags used during command invocation
     */
    void deleteBatchFromAllNonTxStores(Iterable<Object> keys, AccessMode accessMode, long flags);
+
+
+   /**
+    * @return true if all configured stores are available and ready for read/write operations.
+    */
+   boolean isAvailable();
 }

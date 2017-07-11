@@ -72,7 +72,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                   persistenceExecutor = createExecutorService(
                         globalConfiguration.persistenceThreadPool(),
                         PERSISTENCE_EXECUTOR,
-                        ExecutorServiceType.DEFAULT);
+                        ExecutorServiceType.SCHEDULED);
                }
             }
             return (T) persistenceExecutor;

@@ -174,7 +174,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writeThreadPoolElements(Element.ASYNC_OPERATIONS_THREAD_POOL, ThreadPoolResource.ASYNC_OPERATIONS, writer, container);
                     writeScheduledThreadPoolElements(Element.EXPIRATION_THREAD_POOL, ScheduledThreadPoolResource.EXPIRATION, writer, container);
                     writeThreadPoolElements(Element.LISTENER_THREAD_POOL, ThreadPoolResource.LISTENER, writer, container);
-                    writeThreadPoolElements(Element.PERSISTENCE_THREAD_POOL, ThreadPoolResource.PERSISTENCE, writer, container);
+                    writeScheduledThreadPoolElements(Element.PERSISTENCE_THREAD_POOL, ScheduledThreadPoolResource.PERSISTENCE, writer, container);
                     writeThreadPoolElements(Element.REMOTE_COMMAND_THREAD_POOL, ThreadPoolResource.REMOTE_COMMAND, writer, container);
                     writeScheduledThreadPoolElements(Element.REPLICATION_QUEUE_THREAD_POOL, ScheduledThreadPoolResource.REPLICATION_QUEUE, writer, container);
                     writeThreadPoolElements(Element.STATE_TRANSFER_THREAD_POOL, ThreadPoolResource.STATE_TRANSFER, writer, container);

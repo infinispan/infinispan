@@ -576,6 +576,9 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       if (attributes.isModified() || persistence.stores().size() > 0) {
          writer.writeStartElement(Element.PERSISTENCE);
          attributes.write(writer, PersistenceConfiguration.PASSIVATION, Attribute.PASSIVATION);
+         attributes.write(writer, PersistenceConfiguration.AVAILABILITY_INTERVAL, Attribute.AVAILABILITY_INTERVAL);
+         attributes.write(writer, PersistenceConfiguration.CONNECTION_ATTEMPTS, Attribute.CONNECTION_ATTEMPTS);
+         attributes.write(writer, PersistenceConfiguration.CONNECTION_INTERVAL, Attribute.CONNECTION_INTERVAL);
          for (StoreConfiguration store : persistence.stores()) {
             writeStore(writer, store);
          }

@@ -188,6 +188,8 @@ import java.lang.annotation.Target;
  * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated
  * @see org.infinispan.notifications.cachelistener.annotation.DataRehashed
  * @see org.infinispan.notifications.cachelistener.annotation.TopologyChanged
+ * @see org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged
+ * @see org.infinispan.notifications.cachelistener.annotation.PersistenceAvailabilityChanged
  * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
