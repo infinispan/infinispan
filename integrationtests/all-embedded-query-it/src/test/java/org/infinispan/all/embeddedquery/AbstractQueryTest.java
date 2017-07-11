@@ -10,7 +10,9 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.QueryBuilder;
+import org.hibernate.search.spi.IndexedTypeSet;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.IndexedTypeSets;
 import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Car;
 import org.infinispan.all.embeddedquery.testdomain.NumericType;
@@ -70,8 +72,8 @@ public abstract class AbstractQueryTest {
       ComponentRegistry cr = ((Cache) cache).getAdvancedCache().getComponentRegistry();
       SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
       assertNotNull(searchIntegrator);
-      HashSet<Class<?>> expectedTypes = new HashSet<>(Arrays.asList(types));
-      HashSet<Class<?>> indexedTypes = new HashSet<>(searchIntegrator.getIndexedTypes());
-      assertEquals(expectedTypes,  indexedTypes);
+      IndexedTypeSet expectedTypes = IndexedTypeSets.fromClasses(types);
+      IndexedTypeSet indexedTypes = searchIntegrator.getIndexBindings().keySet();
+      assertEquals(expectedTypes, indexedTypes);
    }
 }
