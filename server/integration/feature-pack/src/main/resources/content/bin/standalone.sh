@@ -8,8 +8,6 @@
 DEBUG_MODE=false
 DEBUG_PORT="8787"
 SERVER_OPTS=""
-USE_JMX_COLLECTORS=""
-JMX_CONF=""
 while [ "$#" -gt 0 ]
 do
     case "$1" in
@@ -17,13 +15,6 @@ do
           DEBUG_MODE=true
           if [ -n "$2" ] && [ "$2" = `echo "$2" | sed 's/-//'` ]; then
               DEBUG_PORT=$2
-              shift
-          fi
-          ;;
-      --jmx)
-          USE_JMX_COLLECTORS=true
-          if [ -n "$2" ] && [ "$2" = `echo "$2" | sed 's/-//'` ]; then
-              JMX_CONF=$2
               shift
           fi
           ;;
@@ -114,10 +105,6 @@ if [ "x$RUN_CONF" = "x" ]; then
 fi
 if [ -r "$RUN_CONF" ]; then
     . "$RUN_CONF"
-fi
-
-if [ "x$JMX_CONF" = "x" ]; then
-    JMX_CONF="$DIRNAME/agent.conf"
 fi
 
 # Set debug settings if not already set
@@ -331,11 +318,6 @@ MODULE_OPTS=""
 if [ "$SECMGR" = "true" ]; then
     MODULE_OPTS="$MODULE_OPTS -secmgr";
 fi
-
-if [ "x$USE_JMX_COLLECTORS" != "x" ]; then
-    . $DIRNAME/jolokia.sh $JMX_CONF
-fi
-
 
 # Display our environment
 echo "========================================================================="
