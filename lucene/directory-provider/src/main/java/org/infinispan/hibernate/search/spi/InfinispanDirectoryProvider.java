@@ -1,6 +1,5 @@
 package org.infinispan.hibernate.search.spi;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -80,23 +79,20 @@ public class InfinispanDirectoryProvider implements org.hibernate.search.store.D
 
       //Only override the default Infinispan LockDirectory if an explicit option is set:
       if (configurationExplicitlySetsLockFactory(properties)) {
-         File verifiedIndexDir = null;
+         Path verifiedIndexDir = null;
          if (isNativeLockingStrategy(properties)) {
-            Path dir = DirectoryHelper.getVerifiedIndexPath(
+            verifiedIndexDir = DirectoryHelper.getVerifiedIndexPath(
                   directoryProviderName,
                   properties,
                   true
             );
-            if ( dir != null ) {
-               verifiedIndexDir = dir.toFile();
-            }
          }
          indexWriterLockFactory = getLockFactory(verifiedIndexDir, properties);
       }
       this.isAsync = !BackendFactory.isConfiguredAsSync(properties);
    }
 
-   private LockFactory getLockFactory(File indexDir, Properties properties) {
+   private LockFactory getLockFactory(Path indexDir, Properties properties) {
       try {
          return serviceManager.requestService(LockFactoryCreator.class).createLockFactory(indexDir, properties);
       } finally {

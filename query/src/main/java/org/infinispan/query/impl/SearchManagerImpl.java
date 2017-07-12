@@ -7,7 +7,9 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
@@ -119,7 +121,8 @@ public class SearchManagerImpl implements SearchManagerImplementor {
 
    @Override
    public Analyzer getAnalyzer(Class<?> clazz) {
-      return searchFactory.getAnalyzer(clazz);
+      IndexedTypeIdentifier type = new PojoIndexedTypeIdentifier(clazz);
+      return searchFactory.getAnalyzer(type);
    }
 
    @Override

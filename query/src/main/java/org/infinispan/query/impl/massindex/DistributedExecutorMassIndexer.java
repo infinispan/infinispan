@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.hibernate.search.engine.spi.EntityIndexBinding;
+import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.distexec.DefaultExecutorService;
@@ -81,7 +82,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       for (Object key : keys) {
          if (cache.containsKey(key)) {
             Class<?> indexedType = cache.get(key).getClass();
-            EntityIndexBinding indexBinding = searchIntegrator.getIndexBinding(indexedType);
+            EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
             MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
             IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
             switch (indexingStrategy) {
@@ -127,10 +128,10 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
 
    private CompletableFuture<Void> executeInternal(boolean asyncFlush) {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
-      Deque<Class<?>> toFlush = new LinkedList<>();
+      Deque<IndexedTypeIdentifier> toFlush = new LinkedList<>();
 
-      for (Class<?> indexedType : searchIntegrator.getIndexedTypes()) {
-         EntityIndexBinding indexBinding = searchIntegrator.getIndexBinding(indexedType);
+      for (IndexedTypeIdentifier indexedType : searchIntegrator.getIndexBindings().keySet()) {
+         EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
          MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
          boolean workerClean = true, workerFlush = true;
          if (strategy.getCleanStrategy() == CleanExecutionMode.ONCE_BEFORE) {
@@ -157,7 +158,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       CompletableFuture<Void> compositeFuture = CompletableFuture.allOf(futures.toArray(
             new CompletableFuture[futures.size()]));
       BiConsumer<Void, Throwable> consumer = (v, t) -> {
-         for (Class<?> type : toFlush) {
+         for (IndexedTypeIdentifier type : toFlush) {
             indexUpdater.flush(type);
          }
       };

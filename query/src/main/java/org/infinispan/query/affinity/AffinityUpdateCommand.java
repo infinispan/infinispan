@@ -1,7 +1,6 @@
 package org.infinispan.query.affinity;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -50,7 +49,7 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
       List<LuceneWork> workToApply = LuceneWorkConverter.transformKeysToString(luceneWorks, handler);
 
       for (LuceneWork luceneWork : workToApply) {
-         List<IndexManager> indexManagers = getIndexManagerForModifications(luceneWork);
+         Iterable<IndexManager> indexManagers = getIndexManagerForModifications(luceneWork);
          try {
             for (IndexManager im : indexManagers) {
                if (log.isDebugEnabled())
@@ -66,17 +65,19 @@ public class AffinityUpdateCommand extends AbstractUpdateCommand {
       return CompletableFuture.completedFuture(Boolean.TRUE);
    }
 
-   private List<IndexManager> getIndexManagerForModifications(LuceneWork luceneWork) {
+   private Iterable<IndexManager> getIndexManagerForModifications(LuceneWork luceneWork) {
       IndexedTypeIdentifier type = luceneWork.getEntityType();
       Serializable id = luceneWork.getId();
       if (id != null) {
          String idInString = luceneWork.getIdInString();
          Document document = luceneWork.getDocument();
-         return Arrays.asList(searchFactory.getIndexBinding(type).getSelectionStrategy()
-               .getIndexManagerForAddition(type.getPojoType(), id, idInString, document));
+         return Collections.singleton(searchFactory.getIndexBinding(type)
+               .getIndexManagerSelector()
+               .forNew(type, id, idInString, document));
       } else {
-         return Arrays.asList(searchFactory.getIndexBinding(type)
-               .getSelectionStrategy().getIndexManagersForDeletion(type.getPojoType(), null, null));
+         return searchFactory.getIndexBinding(type)
+               .getIndexManagerSelector()
+               .forExisting(type, null, null);
       }
    }
 
