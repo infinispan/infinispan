@@ -10,6 +10,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.junit.Before;
 import org.junit.Test;
 
+// TODO [anistor] remove this test in infinispan 10.0
 /**
  * Tests that undeclared indexed entities are autodetected.
  *

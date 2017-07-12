@@ -152,6 +152,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, IndexingConfiguration indexingConfiguration) {
       if (indexingConfiguration.indexedEntities().isEmpty()) {
+         // todo [anistor] remove dependency on QueryKnownClasses in Infinispan 10.0
          // indexed classes are autodetected and propagated across cluster via this cache
          cacheManager.addCacheDependency(cacheStarting, QueryKnownClasses.QUERY_KNOWN_CLASSES_CACHE_NAME);
       }

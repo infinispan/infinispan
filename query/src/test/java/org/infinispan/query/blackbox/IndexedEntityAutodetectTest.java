@@ -4,10 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.IndexedTypeMap;
@@ -26,6 +22,8 @@ import org.testng.annotations.Test;
 
 /**
  * Tests that undeclared indexed entities are autodetected.
+ *
+ * TODO [anistor] remove this test in Infinispan 10.0
  *
  * @author anistor@redhat.com
  * @since 8.2
