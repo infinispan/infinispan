@@ -1,5 +1,5 @@
 /**
- * RESTful {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}
+ * RESTful {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}.
  *
  * @public
  */

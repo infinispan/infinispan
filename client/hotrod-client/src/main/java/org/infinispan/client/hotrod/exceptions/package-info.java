@@ -1,5 +1,5 @@
 /**
- * HotRod Client Exceptions
+ * Hot Rod client exceptions.
  *
  * @public
  */

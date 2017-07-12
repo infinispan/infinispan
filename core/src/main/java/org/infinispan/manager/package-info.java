@@ -1,5 +1,5 @@
 /**
- * Cache manager package
+ * Cache manager API.
  *
  * @public
  */

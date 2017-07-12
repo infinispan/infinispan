@@ -1,5 +1,5 @@
 /**
- * The Persistence SPI
+ * The Persistence SPI.
  *
  * @public
  */

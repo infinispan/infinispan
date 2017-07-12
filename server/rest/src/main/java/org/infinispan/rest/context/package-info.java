@@ -1,6 +1,6 @@
 /**
  * REST Context checker classes.
  *
- * @public
+ * @private
  */
 package org.infinispan.rest.context;

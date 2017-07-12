@@ -1,5 +1,5 @@
 /**
- * This package contains stores, which are used for overflow or persistence.
+ * Persistence API.
  *
  * @public
  */

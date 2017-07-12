@@ -1,5 +1,5 @@
 /**
- * Distribute Executor APIs
+ * Distributed Executor APIs (deprecated)
  *
  * @public
  */
