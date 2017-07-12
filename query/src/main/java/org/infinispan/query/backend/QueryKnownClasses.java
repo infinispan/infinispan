@@ -26,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import net.jcip.annotations.ThreadSafe;
 
-// TODO [anistor] This class should be removed if we manage to remove autodetection of entity types.
+// TODO [anistor] This class must be removed in 10.0 after we remove autodetection.
 
 /**
  * Stores all entity classes known to query module in a replicated cache. The entry value is a boolean which indicates
@@ -41,8 +41,10 @@ import net.jcip.annotations.ThreadSafe;
  *
  * @author Sanne Grinovero (C) 2013 Red Hat Inc.
  * @author anistor@redhat.com
+ * @deprecated To be removed in Infinispan 10.0
  */
 @ThreadSafe
+@Deprecated
 public final class QueryKnownClasses {
 
    private static final Log log = LogFactory.getLog(QueryKnownClasses.class);
@@ -86,6 +88,8 @@ public final class QueryKnownClasses {
 
    /**
     * Constructor used only in autodetect mode.
+    *
+    * @deprecated will be removed in Infinispan 10.0
     */
    @Deprecated
    QueryKnownClasses(String cacheName, EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
