@@ -1,5 +1,5 @@
 /**
- * Configuration for {@link org.infinispan.persistence.jdbc.stringbased.JdbcStringBasedStore}, {@link org.infinispan.persistence.jdbc.binary.JdbcBinaryStore} and {@link org.infinispan.persistence.jdbc.mixed.JdbcMixedStore}
+ * Configuration for the JDBC CacheStore.
  *
  * @public
  */

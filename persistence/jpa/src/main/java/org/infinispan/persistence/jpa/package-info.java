@@ -1,5 +1,5 @@
 /**
- * JPA-based {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}
+ * JPA-based {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}.
  *
  * @public
  */

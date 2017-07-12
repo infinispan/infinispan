@@ -1,5 +1,5 @@
 /**
- * Configuration for {@link org.infinispan.persistence.jpa.JpaStore}
+ * Configuration for {@link org.infinispan.persistence.jpa.JpaStore}.
  *
  * @public
  */

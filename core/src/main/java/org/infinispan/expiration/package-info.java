@@ -1,5 +1,5 @@
 /**
- * Classes related to entry expiration.
+ * Cache expiration.
  *
  * @public
  */

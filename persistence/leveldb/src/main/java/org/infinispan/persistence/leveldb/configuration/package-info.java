@@ -1,5 +1,5 @@
 /**
- * Configuration for {@link org.infinispan.persistence.leveldb.LevelDBStore}
+ * Configuration for {@link org.infinispan.persistence.leveldb.LevelDBStore}.
  *
  * @public
  */

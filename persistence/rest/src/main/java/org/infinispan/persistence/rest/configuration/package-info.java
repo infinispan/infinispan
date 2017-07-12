@@ -1,5 +1,5 @@
 /**
- * Configuration for {@link org.infinispan.persistence.rest.RestStore}
+ * Configuration for {@link org.infinispan.persistence.rest.RestStore}.
  *
  * @public
  */

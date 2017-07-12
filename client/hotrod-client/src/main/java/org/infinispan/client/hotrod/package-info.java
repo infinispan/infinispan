@@ -1,5 +1,5 @@
 /**
- * HotRod Client API
+ * Hot Rod client API.
  *
  * @public
  */

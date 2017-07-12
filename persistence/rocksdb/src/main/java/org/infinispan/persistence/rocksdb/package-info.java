@@ -1,6 +1,6 @@
 /**
- * LevelDB-based {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}
+ * RocksDB-based {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}.
  *
  * @public
  */
-package org.infinispan.persistence.leveldb;
+package org.infinispan.persistence.rocksdb;

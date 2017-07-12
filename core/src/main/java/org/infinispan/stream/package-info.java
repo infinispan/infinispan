@@ -1,6 +1,5 @@
 /**
- * This package contains various helper classes when using the {@link org.infinispan.CacheStream} or its various
- * classes.
+ * Cache stream processing.
  *
  * @public
  */

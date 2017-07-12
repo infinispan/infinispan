@@ -1,5 +1,5 @@
 /**
- * Continuous querying API for Infinispan.
+ * Continuous querying API.
  *
  * @author anistor@redhat.com
  * @since 8.2

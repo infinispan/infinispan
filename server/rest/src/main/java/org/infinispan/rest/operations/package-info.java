@@ -1,6 +1,6 @@
 /**
  * REST Server Operations classes.
  *
- * @public
+ * @private
  */
 package org.infinispan.rest.operations;

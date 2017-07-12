@@ -1,6 +1,6 @@
 /**
  * Cache manager wrapper for REST interface.
  *
- * @public
+ * @private
  */
 package org.infinispan.rest.cachemanager;

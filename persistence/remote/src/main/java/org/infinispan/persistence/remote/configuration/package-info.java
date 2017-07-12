@@ -1,5 +1,5 @@
 /**
- * Configuration for {@link org.infinispan.persistence.remote.RemoteStore}
+ * Configuration for {@link org.infinispan.persistence.remote.RemoteStore}.
  *
  * @public
  */

@@ -1,5 +1,5 @@
 /**
- * Query API
+ * Query API.
  *
  * @public
  */

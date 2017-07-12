@@ -1,5 +1,5 @@
 /**
- * This package contains the TreeCache.  For usage, see the TreeCache and
+ * TreeCache API.  For usage, see the TreeCache and
  * TreeCacheFactory classes and their javadocs.
  * <p />
  * This package is intended as a compatibility layer between JBoss Cache and Infinispan, and also

@@ -1,5 +1,5 @@
 /**
- * A DSL for querying an Infinispan Cache.
+ * Query DSL API.
  *
  * @author anistor@redhat.com
  * @since 6.0

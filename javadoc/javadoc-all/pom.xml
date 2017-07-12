@@ -79,12 +79,22 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-persistence-soft-index</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-remote</artifactId>
       </dependency>
 
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-rest</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-rocksdb</artifactId>
       </dependency>
 
       <dependency>
@@ -181,19 +191,19 @@
                         </group>
                         <group>
                            <title>Query API</title>
-                           <packages>org.infinispan.query*</packages>
+                           <packages>org.infinispan.query*:org.infinispan.objectfilter*</packages>
                         </group>
                         <group>
-                           <title>Distributed Executors and Map/Reduce API</title>
+                           <title>Distributed Executors (deprecated)</title>
                            <packages>org.infinispan.distexec*</packages>
                         </group>
                         <group>
                            <title>Hot Rod Client API</title>
-                           <packages>org.infinispan.client.hotrod*</packages>
+                           <packages>org.infinispan.client.hotrod*:org.infinispan.query.remote.client*</packages>
                         </group>
                         <group>
                            <title>Server Connectors API</title>
-                           <packages>org.infinispan.server*</packages>
+                           <packages>org.infinispan.server*:org.infinispan.rest*</packages>
                         </group>
                         <group>
                            <title>Tree API</title>
@@ -207,14 +217,14 @@
                      </dependencySourceIncludes>
                      <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
                      <links>
-                        <link>http://docs.oracle.com/javase/7/docs/api/</link>
-                        <link>http://docs.oracle.com/javaee/5/api/</link>
+                        <link>http://docs.oracle.com/javase/8/docs/api/</link>
+                        <link>http://docs.oracle.com/javaee/7/api/</link>
                         <link>http://docs.jboss.org/jbossmarshalling/1.3/</link>
                         <link>http://docs.jboss.org/jbosslogging/latest/</link>
                         <link>http://www.osgi.org/javadoc/r4v43/core/</link>
                         <link>http://jgroups.org/javadoc/</link>
-                        <link>http://lucene.apache.org/core/4_0_0/core/</link>
-                        <link>http://docs.jboss.org/hibernate/search/4.5/api/</link>
+                        <link>http://lucene.apache.org/core/5_5_4/core/</link>
+                        <link>http://docs.jboss.org/hibernate/search/5.8/api/</link>
                      </links>
                      <quiet>true</quiet>
                      <stylesheetfile>${basedir}/src/main/javadoc/stylesheet.css</stylesheetfile>
@@ -257,7 +267,7 @@
                         <additionalDependency>
                            <groupId>org.hibernate</groupId>
                            <artifactId>hibernate-core</artifactId>
-                           <version>4.3.8.Final</version>
+                           <version>${version.hibernate.core}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>com.mchange</groupId>

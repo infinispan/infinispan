@@ -1,5 +1,5 @@
 /**
- * The Security API
+ * Security API.
  *
  * @public
  */
