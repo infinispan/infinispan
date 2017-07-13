@@ -25,7 +25,7 @@ public class CacheHealthImpl implements CacheHealth {
         if (!isComponentHealthy() || cache.getAvailability() == AvailabilityMode.DEGRADED_MODE) {
             return HealthStatus.UNHEALTHY;
         }
-        DistributionManager distributionManager = cache.getDistributionManager();
+        DistributionManager distributionManager = SecurityActions.getDistributionManager(cache);
         if (distributionManager != null && distributionManager.isRehashInProgress()) {
             return HealthStatus.REBALANCING;
         }
