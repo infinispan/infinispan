@@ -23,6 +23,7 @@ import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.functions.MergeFunction;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -37,6 +38,7 @@ import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -82,6 +84,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private SearchFactoryHandler searchFactoryHandler;
 
    private DataContainer dataContainer;
+   private final Encoder keyEncoder;
+   private final Wrapper keyWrapper;
    private final Encoder valueEncoder;
    private final Wrapper valueWrapper;
    protected TransactionManager transactionManager;
@@ -106,6 +110,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.cache = cache;
       this.valueEncoder = cache.getAdvancedCache().getValueEncoder();
       this.valueWrapper = cache.getAdvancedCache().getValueWrapper();
+      this.keyEncoder = cache.getAdvancedCache().getKeyEncoder();
+      this.keyWrapper = cache.getAdvancedCache().getKeyWrapper();
    }
 
    @Inject
@@ -285,6 +291,10 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return queryKnownClasses.keys();
    }
 
+   private Object extractKey(Object storedValue) {
+      return fromStorage(storedValue, keyEncoder, keyWrapper);
+   }
+
    private Object extractValue(Object storedValue) {
       return fromStorage(storedValue, valueEncoder, valueWrapper);
    }
@@ -388,7 +398,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                } else if (writeCommand instanceof ClearCommand) {
                   processClearCommand((ClearCommand) writeCommand, txInvocationContext, transactionContext);
                } else if (writeCommand instanceof ReadWriteKeyCommand) {
-                  processReadWriteKeyCommand((ReadWriteKeyCommand) writeCommand, txInvocationContext, stateBeforePrepare[i], transactionContext);
+                  ReadWriteKeyCommand readWriteKeyCommand = (ReadWriteKeyCommand) writeCommand;
+                  Object resultValue = ctx.lookupEntry(readWriteKeyCommand.getKey()).getValue();
+                  processReadWriteKeyCommand((ReadWriteKeyCommand) writeCommand, txInvocationContext, stateBeforePrepare[i], resultValue, transactionContext);
                }
             }
          }
@@ -415,7 +427,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processReplaceCommand(final ReplaceCommand command, final InvocationContext ctx, final Object valueReplaced, TransactionContext transactionContext) {
       if (valueReplaced != null && command.isSuccessful()) {
-         Object key = extractValue(command.getKey());
+         Object key = extractKey(command.getKey());
          if (shouldModifyIndexes(command, ctx, key)) {
             final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
             Object p2 = extractValue(command.getNewValue());
@@ -498,33 +510,24 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    /**
     * Indexing management of a ReadWriteKeyCommand
     *
-    * @param command the ReadWriteKeyCommand
-    * @param ctx the InvocationContext
-    * @param prevValue the previous value on this key
-    * @param transactionContext Optional for lazy initialization, or reuse an existing context.
-    */
-   private void processReadWriteKeyCommand(final ReadWriteKeyCommand command, final InvocationContext ctx, final Object prevValue, TransactionContext transactionContext) {
-      if (command.isSuccessful()) {
-         processFunctionalCommand(command, ctx, prevValue, ctx.lookupEntry(command.getKey()).getValue(), transactionContext);
-      }
-   }
-   /**
-    * Indexing management of a ReadWriteKeyCommand
-    *
     * @param command the ComputeIfAbsentCommand
     * @param ctx the InvocationContext
     * @param prevValue the value before the call
-    * @param resultValue the result of the command call
+    * @param commandResult the result of the command call
     * @param transactionContext Optional for lazy initialization, or reuse an existing context.
     */
-   private void processReadWriteKeyCommand(final ReadWriteKeyCommand command, final InvocationContext ctx, final Object prevValue, final Object resultValue, TransactionContext transactionContext) {
+   private void processReadWriteKeyCommand(final ReadWriteKeyCommand command, final InvocationContext ctx, final Object prevValue, final Object commandResult, TransactionContext transactionContext) {
       if (command.isSuccessful()) {
-         processFunctionalCommand(command, ctx, prevValue, resultValue, transactionContext);
+         if(command.getFunction() instanceof MergeFunction) {
+            processFunctionalCommand(command, ctx, prevValue, commandResult, transactionContext);
+         } else {
+            throw new UnsupportedOperationException("ReadWriteKeyCommand is not supported for query");
+         }
       }
    }
 
    private void processFunctionalCommand(AbstractDataWriteCommand command, InvocationContext ctx, Object prevValue, Object computedValue, TransactionContext transactionContext) {
-      Object key = extractValue(command.getKey());
+      Object key = extractKey(command.getKey());
       if (shouldModifyIndexes(command, ctx, key)) {
          final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
          Object p2 = extractValue(computedValue);
@@ -542,6 +545,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          }
       }
    }
+
    /**
     * Indexing management of a RemoveCommand
     *
@@ -552,7 +556,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processRemoveCommand(final RemoveCommand command, final InvocationContext ctx, final Object valueRemoved, TransactionContext transactionContext) {
       if (command.isSuccessful() && !command.isNonExistent()) {
-         Object key = extractValue(command.getKey());
+         Object key = extractKey(command.getKey());
          if (shouldModifyIndexes(command, ctx, key)) {
             final Object value = extractValue(command.isConditional() ? command.getValue() : valueRemoved);
             if (updateKnownTypesIfNeeded(value)) {
@@ -607,7 +611,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
       //whatever the new type, we might still need to cleanup for the previous value (and schedule removal first!)
       Object value = extractValue(command.getValue());
-      Object key = command.getKey();
+      Object key = extractKey(command.getKey());
       if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue) && shouldRemove(value, previousValue)) {
          if (shouldModifyIndexes(command, ctx, key)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
