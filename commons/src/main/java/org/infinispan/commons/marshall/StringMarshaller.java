@@ -6,7 +6,7 @@ import java.nio.charset.Charset;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 
-public final class StringMarshaller extends AbstractMarshaller {
+public class StringMarshaller extends AbstractMarshaller {
 
    final Charset charset;
 
