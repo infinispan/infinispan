@@ -19,6 +19,7 @@ public class BinaryEncoder implements Encoder {
       this.marshaller = marshaller;
    }
 
+   @Override
    public Object toStorage(Object content) {
       try {
          return skipEncoding(content) ? content : marshall(content);
@@ -27,6 +28,7 @@ public class BinaryEncoder implements Encoder {
       }
    }
 
+   @Override
    public Object fromStorage(Object stored) {
       try {
          if (isTypeExcluded(stored.getClass())) {

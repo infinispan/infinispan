@@ -19,6 +19,7 @@ public class MarshallerEncoder implements Encoder {
       this.marshaller = marshaller;
    }
 
+   @Override
    public Object toStorage(Object content) {
       try {
          return marshall(content);
@@ -27,6 +28,7 @@ public class MarshallerEncoder implements Encoder {
       }
    }
 
+   @Override
    public Object fromStorage(Object stored) {
       try {
          return stored instanceof byte[] ? marshaller.objectFromByteBuffer((byte[]) stored) : stored;
