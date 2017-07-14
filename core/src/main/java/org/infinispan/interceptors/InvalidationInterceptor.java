@@ -23,6 +23,7 @@
 package org.infinispan.interceptors;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +34,7 @@ import javax.transaction.Transaction;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -159,7 +161,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
          Set<Object> affectedKeys = ctx.getAffectedKeys();
          try {
             log.tracef("On commit, send invalidate for keys: %s", affectedKeys);
-            invalidateAcrossCluster(defaultSynchronous, affectedKeys.toArray());
+            invalidateAcrossCluster(defaultSynchronous, affectedKeys.toArray(), ctx);
             return retval;
          } catch (Throwable t) {
             if (t instanceof RuntimeException)
@@ -189,7 +191,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       if (command.isSuccessful() && !ctx.isInTxScope()) {
          if (keys != null && keys.length != 0) {
             if (!isLocalModeForced(command))
-            invalidateAcrossCluster(isSynchronous(command), keys);
+            invalidateAcrossCluster(isSynchronous(command), keys, ctx);
          }
       }
       return retval;
@@ -208,7 +210,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
             log.debug("Modification list contains a local mode flagged operation.  Not invalidating.");
          } else {
             try {
-               invalidateAcrossCluster(defaultSynchronous, filterVisitor.result.toArray());
+               invalidateAcrossCluster(defaultSynchronous, filterVisitor.result.toArray(), ctx);
             } catch (Throwable t) {
                log.warn("Unable to broadcast evicts as a part of the prepare phase.  Rolling back.", t);
                if (t instanceof RuntimeException)
@@ -272,13 +274,26 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    }
 
 
-   protected void invalidateAcrossCluster(boolean synchronous, Object[] keys) throws Throwable {
+   protected void invalidateAcrossCluster(boolean synchronous, Object[] keys, InvocationContext ctx) throws Throwable {
       // increment invalidations counter if statistics maintained
       incrementInvalidations();
-      final InvalidateCommand command = commandsFactory.buildInvalidateCommand(
+      final InvalidateCommand invalidateCommand = commandsFactory.buildInvalidateCommand(
             InfinispanCollections.<Flag>emptySet(), keys);
       if (log.isDebugEnabled())
-         log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating " + command);
+         log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating " + invalidateCommand);
+
+      ReplicableCommand command = invalidateCommand;
+      if (ctx.isInTxScope()) {
+         TxInvocationContext txCtx = (TxInvocationContext) ctx;
+
+         // A Prepare command containing the invalidation command in its 'modifications' list is sent to the remote nodes
+         // so that the invalidation is executed in the same transaction and locks can be acquired and released properly.
+         // This is 1PC on purpose, as an optimisation, even if the current TX is 2PC.
+         // If the cache uses 2PC it's possible that the remotes will commit the invalidation and the originator rolls back,
+         // but this does not impact consistency and the speed benefit is worth it.
+         command = commandsFactory.buildPrepareCommand(txCtx.getGlobalTransaction(), Collections.<WriteCommand>singletonList(invalidateCommand), true);
+      }
+
       // voila, invalidated!
       rpcManager.broadcastRpcCommand(command, synchronous);
    }
