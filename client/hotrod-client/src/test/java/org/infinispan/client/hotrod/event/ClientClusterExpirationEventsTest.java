@@ -85,22 +85,34 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
       for (HotRodServer server : servers)
          server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory(key1));
 
-      final StaticFilteredEventLogListener<Integer> l = new StaticFilteredEventLogListener<>(client(0).getCache());
-      withClientListener(l, remote -> {
-         l.expectNoEvents();
-         remote.put(key0, "one", 10, TimeUnit.MINUTES);
-         l.expectNoEvents();
-         remote.put(key1, "two", 10, TimeUnit.MINUTES);
-         l.expectOnlyCreatedEvent(key1);
+      // We listen to all events, otherwise events that are filtered out could leak between tests
+      final EventLogListener<Integer> allEvents = new EventLogListener<>(client(0).getCache());
+      withClientListener(allEvents, r1 -> {
+         final StaticFilteredEventLogListener<Integer> l = new StaticFilteredEventLogListener<>(r1);
+         withClientListener(l, remote -> {
+            allEvents.expectNoEvents();
+            l.expectNoEvents();
 
-         // Now expire both
-         ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
-         ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+            remote.put(key0, "one", 10, TimeUnit.MINUTES);
+            allEvents.expectOnlyCreatedEvent(key0);
+            l.expectNoEvents();
 
-         assertNull(remote.get(key0));
-         l.expectNoEvents();
-         assertNull(remote.get(key1));
-         l.expectOnlyExpiredEvent(key1);
+            remote.put(key1, "two", 10, TimeUnit.MINUTES);
+            allEvents.expectOnlyCreatedEvent(key1);
+            l.expectOnlyCreatedEvent(key1);
+
+            // Now expire both
+            ts0.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+            ts1.advance(TimeUnit.MINUTES.toMillis(10) + 1);
+
+            assertNull(remote.get(key0));
+            allEvents.expectOnlyExpiredEvent(key0);
+            l.expectNoEvents();
+
+            assertNull(remote.get(key1));
+            allEvents.expectOnlyExpiredEvent(key1);
+            l.expectOnlyExpiredEvent(key1);
+         });
       });
    }
 
