@@ -25,7 +25,6 @@ import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
-import org.testng.annotations.Test;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -42,27 +41,14 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    abstract void duringSplit();
    abstract void afterMerge();
 
-   @Test(enabled = false)
    public void testPartitionMergePolicy() throws Throwable {
-      final List<ViewChangedHandler> listeners = new ArrayList<>();
-      for (int i = 0; i < caches().size(); i++) {
-         ViewChangedHandler listener = new ViewChangedHandler();
-         cache(i).getCacheManager().addListener(listener);
-         listeners.add(listener);
-      }
-
       if (trace) log.tracef("beforeSplit()");
       beforeSplit();
 
       if (trace) log.tracef("splitCluster");
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
-
-      eventually(() -> listeners.stream().allMatch(ViewChangedHandler::isNotified));
-      eventuallyEquals(2, () -> advancedCache(0).getRpcManager().getTransport().getMembers().size());
-      eventually(() -> clusterAndChFormed(0, 2));
-      eventually(() -> clusterAndChFormed(1, 2));
-      eventually(() -> clusterAndChFormed(2, 2));
-      eventually(() -> clusterAndChFormed(3, 2));
+      TestingUtil.waitForNoRebalance(cache(0), cache(1));
+      TestingUtil.waitForNoRebalance(cache(2), cache(3));
 
       if (trace) log.tracef("duringSplit()");
       duringSplit();
@@ -157,7 +143,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       Map<Address, InternalCacheValue> versionMap = cm.getAllVersions(key);
       assertNotNull(versionMap);
       assertEquals("Versions: " + versionMap, numberOfVersions, versionMap.size());
-      String message = String.format("VersionMap: %s", versionMap);
+      String message = String.format("Key=%s. VersionMap: %s", key, versionMap);
       for (InternalCacheValue icv : versionMap.values()) {
          if (expectedValue != null) {
             assertNotNull(message, icv);

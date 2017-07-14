@@ -129,15 +129,11 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
             } else {
                cache(0).remove(conflictKey);
             }
-            assertCacheGetVal(mergeAction, 0, 1, 2, 3);
-            conflictLatch.countDown();
-            assertCacheGetVal(mergeAction, 0, 1, 2, 3);
-         } else {
-            conflictLatch.countDown();
          }
-
+         conflictLatch.countDown();
          stateTransferLatch.countDown();
          TestingUtil.waitForNoRebalance(caches());
+         assertCacheGetVal(mergeAction, 0, 1, 2, 3);
       } catch (Throwable t) {
          conflictLatch.countDown();
          stateTransferLatch.countDown();

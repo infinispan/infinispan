@@ -10,10 +10,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -41,7 +41,9 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -53,7 +55,6 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
    private static final int NUMBER_OF_CACHE_ENTRIES = 100;
    private static final int INCONSISTENT_VALUE_INCREMENT = 10;
    private static final int NULL_VALUE_FREQUENCY = 20;
-   private static final int STATE_TRANSFER_DELAY = 4000;
 
    public ConflictManagerTest() {
       this.cacheMode = CacheMode.DIST_SYNC;
@@ -74,28 +75,31 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       createCluster();
       getCache(2).put(key, value);
       splitCluster();
-
-      delayStateTransferCompletion();
       RehashListener listener = new RehashListener();
-      getCache(2).addListener(listener);
+      getCache(0).addListener(listener);
+      CountDownLatch latch = new CountDownLatch(1);
+      delayStateTransferCompletion(latch);
 
-      Future<Map<Address, InternalCacheValue<Object>>> versionFuture = fork(() -> {
-         while (!listener.isRehashInProgress.get())
-            TestingUtil.sleepThread(100);
+      // Trigger the merge and wait for state transfer to begin
+      Future<?> mergeFuture = fork(() -> partition(0).merge(partition(1)));
+      assertTrue(listener.latch.await(10, TimeUnit.SECONDS));
 
-         return getAllVersions(0, key);
-      });
-      fork(() -> partition(0).merge(partition(1)));
+      Future<Map<Address, InternalCacheValue<Object>>> versionFuture = fork(() -> getAllVersions(0, key));
+      // Check that getAllVersions doesn't return while state transfer is in progress
+      Exceptions.expectException(TimeoutException.class, () -> versionFuture.get(100, TimeUnit.MILLISECONDS));
 
-      Map<Address, InternalCacheValue<Object>> versionMap = versionFuture.get(STATE_TRANSFER_DELAY * 8, TimeUnit.MILLISECONDS);
+      // Allow and wait for state transfer to finish
+      latch.countDown();
+      mergeFuture.get(30, TimeUnit.SECONDS);
+
+      // Check the results
+      Map<Address, InternalCacheValue<Object>> versionMap = versionFuture.get(60, TimeUnit.SECONDS);
       assertTrue(versionMap != null);
       assertTrue(!versionMap.isEmpty());
       assertEquals(String.format("Returned versionMap %s", versionMap),2, versionMap.size());
       versionMap.values().forEach(icv -> assertEquals(value, icv.getValue()));
    }
 
-   @Test(expectedExceptions = CacheException.class,
-         expectedExceptionsMessageRegExp = ".* encountered when attempting '.*.' on cache '.*.'")
    public void testGetAllVersionsTimeout() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.clustering().remoteTimeout(5000).stateTransfer().fetchInMemoryState(true);
@@ -103,32 +107,20 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       defineConfigurationOnAllManagers(cacheName, builder);
       waitForClusterToForm(cacheName);
       dropClusteredGetCommands();
-      getAllVersions(0, "Test");
+      Exceptions.expectException(CacheException.class, ".* encountered when attempting '.*.' on cache '.*.'", () -> getAllVersions(0, "Test"));
    }
 
-   @Test(expectedExceptions = IllegalStateException.class,
-         expectedExceptionsMessageRegExp = ".* Unable to retrieve conflicts as StateTransfer is currently in progress for cache .*")
    public void testGetConflictsDuringStateTransfer() throws Throwable {
       createCluster();
       splitCluster();
-      delayStateTransferCompletion();
       RehashListener listener = new RehashListener();
-      getCache(2).addListener(listener);
-
-      Future<Void> conflictsFuture = fork(() -> {
-         while (!listener.isRehashInProgress.get())
-            TestingUtil.sleepThread(100);
-
-         getConflicts(0);
-         return null;
-      });
-      Future<?> mergeFuture = fork(() -> partition(0).merge(partition(1)));
-      try {
-         conflictsFuture.get(60, TimeUnit.SECONDS); // Same timeout as used by TestingUtil::waitForNoRebalance
-         mergeFuture.get(); // No timeout as partition::merge eventually throws a TimeoutException
-      } catch (ExecutionException e) {
-         throw e.getCause();
-      }
+      getCache(0).addListener(listener);
+      CountDownLatch latch = new CountDownLatch(1);
+      delayStateTransferCompletion(latch);
+      fork(() -> partition(0).merge(partition(1), false));
+      listener.latch.await();
+      Exceptions.expectException(IllegalStateException.class, ".* Unable to retrieve conflicts as StateTransfer is currently in progress for cache .*", () -> getConflicts(0));
+      latch.countDown();
    }
 
    public void testAllVersionsOfKeyReturned() {
@@ -203,9 +195,8 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       assertTrue(cache.isEmpty());
    }
 
-   @Test(expectedExceptions = CacheException.class)
-   private void testNoEntryMergePolicyConfigured() {
-      ConflictManagerFactory.get(getCache(0)).resolveConflicts();
+   public void testNoEntryMergePolicyConfigured() {
+      Exceptions.expectException(CacheException.class, () -> ConflictManagerFactory.get(getCache(0)).resolveConflicts());
    }
 
    private void introduceCacheConflicts() {
@@ -259,6 +250,8 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
    private void splitCluster() {
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
       TestingUtil.blockUntilViewsChanged(10000, 2, getCache(0), getCache(1), getCache(2), getCache(3));
+      TestingUtil.waitForNoRebalance(getCache(0), getCache(1));
+      TestingUtil.waitForNoRebalance(getCache(2), getCache(3));
    }
 
    private AdvancedCache<Object, Object> getCache(int index) {
@@ -277,21 +270,30 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), DropClusteredGetCommandHandler::new));
    }
 
-   private void delayStateTransferCompletion() {
-      IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), DelayStateRequestCommandHandler::new));
+   private void delayStateTransferCompletion(CountDownLatch latch) {
+      IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new DelayStateResponseCommandHandler(latch, delegate)));
    }
 
-   private class DelayStateRequestCommandHandler implements PerCacheInboundInvocationHandler {
+   private class DelayStateResponseCommandHandler implements PerCacheInboundInvocationHandler {
+      final CountDownLatch latch;
       final PerCacheInboundInvocationHandler delegate;
 
-      DelayStateRequestCommandHandler(PerCacheInboundInvocationHandler delegate) {
+      DelayStateResponseCommandHandler(CountDownLatch latch, PerCacheInboundInvocationHandler delegate) {
+         this.latch = latch;
          this.delegate = delegate;
       }
 
       @Override
       public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
          if (command instanceof StateResponseCommand) {
-            TestingUtil.sleepThread(STATE_TRANSFER_DELAY);
+            StateResponseCommand stc = (StateResponseCommand) command;
+            boolean isLastChunk = stc.getStateChunks().stream().anyMatch(StateChunk::isLastChunk);
+            if (isLastChunk) {
+               try {
+                  latch.await(60, TimeUnit.MILLISECONDS);
+               } catch (InterruptedException ignore) {
+               }
+            }
          }
          delegate.handle(command, reply, order);
       }
@@ -314,12 +316,13 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
 
    @Listener
    private class RehashListener {
-      final AtomicBoolean isRehashInProgress = new AtomicBoolean();
+      final CountDownLatch latch = new CountDownLatch(1);
 
       @DataRehashed
       @SuppressWarnings("unused")
       public void onDataRehashed(DataRehashedEvent event) {
-         isRehashInProgress.compareAndSet(false, true);
+         if (event.isPre())
+            latch.countDown();
       }
    }
 }
