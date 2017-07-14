@@ -27,7 +27,7 @@ link:{jdkdocroot}/java/util/Collection.html#parallelStream--[parallelStream] met
 This section highlights various options that are present irrespective of what type of underlying cache
 you are using.
 
-===== Key filtering
+==== Key filtering
 
 It is possible to filter the stream so that it only operates upon a given subset of keys.  This can be done
 by invoking the
@@ -43,7 +43,7 @@ if you need the entries as is and need them all in memory in the local node.  Ho
 need to do processing on these elements a stream is recommended since you will get both
 distributed and threaded parallelism for free.
 
-===== Segment based filtering
+==== Segment based filtering
 
 NOTE: This is an advanced feature and should only be used with deep knowledge of Infinispan segment and hashing techniques.
 These segments based filtering can be useful if you need to segment data into separate invocations.
@@ -64,7 +64,7 @@ regular collection. Infinispan handles all of the translations if necessary behi
 of the more interesting options (ie. storeAsBinary, compatibility mode, and a cache loader).  Only data local to
 the node where the stream operation is performed will be used, for example invalidation only uses local entries.
 
-===== Example
+==== Example
 
 The code below takes a cache and returns a map with all the cache entries whose values contain the string "JBoss"
 [source,java]
@@ -82,7 +82,7 @@ This allows processing the intermediate values on the nodes owning the data, and
 the final results back to the originating nodes, improving performance.
 
 
-===== Rehash Aware
+==== Rehash Aware
 
 Internally the data is segmented and each node only performs the operations upon the data it owns as a primary owner.
 This allows for data to be processed evenly, assuming segments are granular enough to provide for equal amounts of
@@ -104,7 +104,7 @@ to keep track of processed keys.
 
 WARNING: Please rethink disabling rehash awareness unless you really know what you are doing.
 
-===== Serialization
+==== Serialization
 
 Since the operations are sent across to other nodes they must be serializable by Infinispan marshalling.  This allows the
 operations to be sent to the other nodes.
@@ -236,7 +236,7 @@ payload size even further.
    }
 ----
 
-===== Parallel Computation
+==== Parallel Computation
 
 Distributed streams by default try to parallelize as much as possible.  It is possible for the end user to control this and
 actually they always have to control one of the options.  There are 2 ways these streams are parallelized.
@@ -267,7 +267,7 @@ link:{javadocroot}/org/infinispan/CacheStream.html#sequentialDistribution--[sequ
 or link:{javadocroot}/org/infinispan/CacheStream.html#parallelDistribution--[parallelDistribution]
 methods on the `CacheStream`.
 
-===== Task timeout
+==== Task timeout
 
 It is possible to set a timeout value for the operation requests. This timeout is used only for remote requests timing out and
 it is on a per request basis. The former means the local execution will not timeout and the latter means if you have a failover
@@ -284,7 +284,7 @@ For more information about this, please check the java doc in
 link:{javadocroot}/org/infinispan/CacheStream.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
 javadoc.
 
-===== Injection
+==== Injection
 
 The link:{jdkdocroot}/java/util/stream/Stream.html[Stream]
 has a terminal operation called
@@ -294,7 +294,7 @@ the `Cache` that is backing this Stream.  If your `Consumer` implements the
 link:{javadocroot}/org/infinispan/stream/CacheAware.html[CacheAware]
 interface the `injectCache` method be invoked before the accept method from the `Consumer` interface.
 
-===== Distributed Stream execution
+==== Distributed Stream execution
 
 Distributed streams execution works in a fashion very similiar to map reduce.  Except in this case we are sending zero to many intermediate operations
 (map, filter etc.) and a single terminal operation to the various nodes.  The operation basically comes down to the following:
@@ -366,7 +366,7 @@ link:{jdkdocroot}/java/util/stream/Stream.html#reduce-U-java.util.function.BiFun
 the result as much as the accumulator can do.  Then it will accumulate the local and remote results together locally, before combining if you have provided that.  Note this means
 a value coming from the combiner doesn't have to be Serializable.
 
-===== Key based rehash aware operators
+==== Key based rehash aware operators
 
 The link:{javadocroot}/org/infinispan/CacheStream.html#iterator--[iterator],
 link:{javadocroot}/org/infinispan/CacheStream.html#spliterator--[spliterator]
@@ -404,7 +404,7 @@ terminal operations will not perform any of the operations remotely
 and will instead perform everything on the local node. This is for performance as doing a
 remote iteration process is very costly.
 
-===== Intermediate operation exceptions
+==== Intermediate operation exceptions
 
 There are some intermediate operations that have special exceptions, these are
 link:{jdkdocroot}/java/util/stream/Stream.html#skip-long-[skip],
@@ -431,7 +431,7 @@ Then finally all of those results have a distinct operation performed upon them.
 
 The rest of the intermediate operations are fully distributed as one would expect.
 
-===== Examples
+==== Examples
 
 *Word Count*
 
