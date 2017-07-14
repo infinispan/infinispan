@@ -109,7 +109,11 @@ public class Exceptions {
 
    public static void expectExecutionException(Class<? extends Throwable> exceptionClass, String messageRegex,
          Future<?> future) {
-      Throwable t = extractException(() -> future.get(10, TimeUnit.SECONDS));
+      expectExecutionException(exceptionClass, messageRegex, future, 10, TimeUnit.SECONDS);
+   }
+
+   public static void expectExecutionException(Class<? extends Throwable> exceptionClass, String messageRegex, Future<?> future, long timeout, TimeUnit unit) {
+      Throwable t = extractException(() -> future.get(timeout, unit));
       assertException(ExecutionException.class, t);
       assertException(exceptionClass, messageRegex, t.getCause());
    }

@@ -120,6 +120,10 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
       return COMMAND_ID;
    }
 
+   public Collection<StateChunk> getStateChunks() {
+      return stateChunks;
+   }
+
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(getOrigin());
