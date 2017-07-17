@@ -39,10 +39,8 @@ public interface CacheWriter<K, V> extends Lifecycle {
    /**
     * Persist all provided entries to the store in a single batch update. If this is not supported by the
     * underlying store, then entries are written to the store individually via {@link #write(MarshalledEntry)}.
-    * As the execution order of MarshalledEntries is not guaranteed, you should ensure that only a single entry exists
-    * in the Collection for a given key.
     *
-    * @param entries a Collection of MarshalledEntry to be written to the store.
+    * @param entries an Iterable of MarshalledEntry to be written to the store.
     * @throws NullPointerException if entries is null.
     */
    default void writeBatch(Iterable<MarshalledEntry<? extends K, ? extends V>> entries) {
@@ -52,10 +50,8 @@ public interface CacheWriter<K, V> extends Lifecycle {
    /**
     * Remove all provided keys from the store in a single batch operation. If this is not supported by the
     * underlying store, then keys are removed from the store individually via {@link #delete(Object)}.
-    * As the execution order of MarshalledEntries is not guaranteed, you should ensure that only a single entry exists
-    * in the Collection for a given key.
     *
-    * @param keys a Collection of MarshalledEntry to be removed from the store.
+    * @param keys an Iterable of entry Keys to be removed from the store.
     * @throws NullPointerException if keys is null.
     */
    default void deleteBatch(Iterable<Object> keys) {
