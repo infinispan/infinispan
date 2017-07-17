@@ -185,7 +185,7 @@
                 </configuration>
             </plugin>
 
-            
+            <!-- Delete the keystores before the keytool plugin runs -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -199,7 +199,7 @@
                         <configuration>
                             <tasks>
                                 <delete quiet="true">
-                                    <fileset dir="${project.build.testOutputDirectory}" includes="*.jks" />
+                                    <fileset dir="${project.build.testOutputDirectory}" includes="*.jks"/>
                                 </delete>
                             </tasks>
                         </configuration>

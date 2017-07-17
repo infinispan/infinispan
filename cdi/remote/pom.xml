@@ -72,7 +72,7 @@
             <scope>test</scope>
         </dependency>
 
-        
+        <!-- Arquillian -->
         <dependency>
             <groupId>org.jboss.arquillian.testng</groupId>
             <artifactId>arquillian-testng-container</artifactId>
@@ -100,7 +100,7 @@
             <scope>test</scope>
         </dependency>
 
-        
+        <!-- /Arquillian -->
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>

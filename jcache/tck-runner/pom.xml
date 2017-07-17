@@ -182,7 +182,9 @@
                   <configuration>
                      <skip>${skipTests}</skip>
                      <jbossHome>${server.dir}</jbossHome>
-                     
+                     <!--java-opts>
+                        <java-opt>-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=y</java-opt>
+                     </java-opts-->
                   </configuration>
                </execution>
                <execution>
@@ -378,7 +380,7 @@
                <plugin>
                   <groupId>org.wildfly.plugins</groupId>
                   <artifactId>wildfly-maven-plugin</artifactId>
-                  
+                  <!-- we only configure the jigsaw-specific VM options here -->
                   <configuration>
                      <javaOpts>
                         <javaOpt>-Dsun.reflect.debugModuleAccessChecks=true</javaOpt>

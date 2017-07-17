@@ -34,7 +34,7 @@
          <artifactId>infinispan-remote</artifactId>
          <scope>test</scope>
       </dependency>
-      
+      <!-- Make sure this suite is triggered after full server build -->
       <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-build</artifactId>

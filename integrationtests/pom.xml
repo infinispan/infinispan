@@ -16,7 +16,7 @@
 
     <properties>
         <forkJvmArgs>-Xmx2G</forkJvmArgs>
-        <jigsawForkJvmArgs />
+        <jigsawForkJvmArgs></jigsawForkJvmArgs>
     </properties>
 
     <profiles>
@@ -44,7 +44,14 @@
                 <jdk>[9,)</jdk>
             </activation>
             <properties>
-                
+                <!--
+                  java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
+                    core externalizers for JDK types
+                  java.nio, jdk.internal.ref, sun.nio.ch: Netty, server/hotrod
+                  com.sun.security.sasl: CRAM-MD5 mechanism, server/hotrod
+                  java.text, java.awt.font: XStream, server/rest
+                  java.security: Wildfly, server/integration/*
+                -->
                 <jigsawForkJvmArgs>
                     -Dsun.reflect.debugModuleAccessChecks=true
                     --add-opens=java.base/java.lang=ALL-UNNAMED

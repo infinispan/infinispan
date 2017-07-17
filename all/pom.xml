@@ -68,7 +68,7 @@
                         <goals>
                            <goal>jar</goal>
                         </goals>
-                        
+                        <!-- Required because of https://issues.apache.org/jira/browse/MSHADE-247 -->
                         <phase>prepare-package</phase>
                         <configuration>
                            <skipSource>${skipCreateSourcesJar}</skipSource>

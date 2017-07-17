@@ -29,9 +29,9 @@
    </properties>
 
    <dependencies>
-      
+      <!-- Javadoc plugin does not support transitive dependencies, so we need to copy-paste everything -->
 
-      
+      <!-- javadoc-embedded dependencies -->
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-commons</artifactId>
@@ -147,14 +147,14 @@
          <artifactId>infinispan-extended-statistics</artifactId>
          <version>${project.version}</version>
       </dependency>
-      
+      <!-- /javadoc-embedded dependencies -->
 
-      
+      <!-- javadoc-remote dependencies -->
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
       </dependency>
-      
+      <!-- /javadoc-remote dependencies -->
    </dependencies>
 
    <build>
