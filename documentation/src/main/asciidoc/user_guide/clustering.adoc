@@ -811,7 +811,7 @@ crashes, the result is partial data loss.
 
 The partition handling functionality discussed in this section allows the user to configure what operations can be
 performed on a cache in the event of a split brain occurring. Infinispan provides multiple partition handling strategies,
-which in terms of of Brewer's link:http://en.wikipedia.org/wiki/CAP_theorem[CAP theorem] determine whether availability or
+which in terms of Brewer's link:http://en.wikipedia.org/wiki/CAP_theorem[CAP theorem] determine whether availability or
 consistency is sacrificed in the presence of partition(s). Below is a list of the provided strategies:
 
 |===
