@@ -5,10 +5,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.infinispan.util.KeyValuePair;
 
@@ -48,7 +47,7 @@ public class TextProtocolUtil {
    public static final BigInteger MAX_UNSIGNED_LONG = new BigInteger("18446744073709551615");
    public static final BigInteger MIN_UNSIGNED = new BigInteger("0");
 
-   public static final Charset CHARSET = Charset.forName("UTF-8");
+   public static final Charset CHARSET = StandardCharsets.UTF_8;
 
    /**
     * In the particular case of Memcached, the end of operation/command
@@ -57,22 +56,20 @@ public class TextProtocolUtil {
     * found instead of end of operation character, then it'd return the element and false.
     */
    static boolean readElement(ByteBuf buffer, OutputStream byteBuffer) throws IOException {
-      byte next = buffer.readByte();
-      if (next == SP) { // Space
-         return false;
-      }
-      else if (next == CR) { // CR
-         next = buffer.readByte();
-         if (next == LF) { // LF
-            return true;
+      for (;;) {
+         byte next = buffer.readByte();
+         if (next == SP) { // Space
+            return false;
+         } else if (next == CR) { // CR
+            next = buffer.readByte();
+            if (next == LF) { // LF
+               return true;
+            } else {
+               byteBuffer.write(next);
+            }
          } else {
             byteBuffer.write(next);
-            return readElement(buffer, byteBuffer);
          }
-      }
-      else {
-         byteBuffer.write(next);
-         return readElement(buffer, byteBuffer);
       }
    }
 
@@ -83,22 +80,20 @@ public class TextProtocolUtil {
    }
 
    static KeyValuePair<String, Boolean> readElement(ByteBuf buffer, StringBuilder sb) {
-      byte next = buffer.readByte();
-      if (next == SP) { // Space
-         return new KeyValuePair<>(sb.toString().trim(), false);
-      }
-      else if (next == CR) { // CR
-         next = buffer.readByte();
-         if (next == LF) { // LF
-            return new KeyValuePair<>(sb.toString().trim(), true);
+      for(;;) {
+         byte next = buffer.readByte();
+         if (next == SP) { // Space
+            return new KeyValuePair<>(sb.toString().trim(), false);
+         } else if (next == CR) { // CR
+            next = buffer.readByte();
+            if (next == LF) { // LF
+               return new KeyValuePair<>(sb.toString().trim(), true);
+            } else {
+               sb.append(next);
+            }
          } else {
             sb.append(next);
-            return readElement(buffer, sb);
          }
-      }
-      else {
-         sb.append(next);
-         return readElement(buffer, sb);
       }
    }
 
@@ -114,37 +109,34 @@ public class TextProtocolUtil {
    }
 
    private static String readDiscardedLine(ByteBuf buffer, StringBuilder sb) {
-      byte next = buffer.readByte();
-      if (next == CR) { // CR
-         next = buffer.readByte();
-         if (next == LF) { // LF
+      for(;;) {
+         byte next = buffer.readByte();
+         if (next == CR) { // CR
+            next = buffer.readByte();
+            if (next == LF) { // LF
+               return sb.toString().trim();
+            } else {
+               sb.append((char) next);
+            }
+         } else if (next == LF) { //LF
             return sb.toString().trim();
          } else {
             sb.append((char) next);
-            return readDiscardedLine(buffer, sb);
+
          }
-      } else if (next == LF) { //LF
-         return sb.toString().trim();
-      } else {
-         sb.append((char) next);
-         return readDiscardedLine(buffer, sb);
       }
    }
 
    static void skipLine(ByteBuf buffer) {
-      if (readableBytes(buffer) > 0) {
+      for (;;) {
          byte next = buffer.readByte();
          if (next == CR) { // CR
             next = buffer.readByte();
             if (next == LF) { // LF
                return;
-            } else {
-               skipLine(buffer);
             }
          } else if (next == LF) { //LF
             return;
-         } else {
-            skipLine(buffer);
          }
       }
    }
@@ -157,37 +149,27 @@ public class TextProtocolUtil {
    }
 
    static List<String> readSplitLine(ByteBuf buffer) {
-      if (readableBytes(buffer) > 0)
-         return readSplitLine(buffer, Stream.builder(), buffer.readerIndex(), 0).collect(Collectors.toList());
-      else
-         return Collections.emptyList();
-   }
-
-   private static Stream<String> readSplitLine(ByteBuf buffer, Stream.Builder<String> builder, int start, int length) {
-      byte next = buffer.readByte();
-      if (next == CR) { // CR
-         next = buffer.readByte();
-         if (next == LF) { // LF
-            byte[] bytes = new byte[length];
-            buffer.getBytes(start, bytes);
-            builder.add(new String(bytes, CHARSET));
-            return builder.build();
+      List<String> r = new ArrayList<>(3);
+      StringBuilder sb = new StringBuilder();
+      for(;;) {
+         byte next = buffer.readByte();
+         if (next == CR) { // CR
+            next = buffer.readByte();
+            if (next == LF) { // LF
+               r.add(sb.toString());
+               return r;
+            } else {
+               sb.append((char) next);
+            }
+         } else if (next == LF) { // LF
+            r.add(sb.toString());
+            return r;
+         } else if (next == SP) {
+            r.add(sb.toString());
+            sb = new StringBuilder();
          } else {
-            return readSplitLine(buffer, builder, start, length + 1);
+            sb.append((char) next);
          }
-      } else if (next == LF) { // LF
-         byte[] bytes = new byte[length];
-         buffer.getBytes(start, bytes);
-         builder.add(new String(bytes, CHARSET));
-         return builder.build();
-      } else if (next == SP) {
-         byte[] bytes = new byte[length];
-         buffer.getBytes(start, bytes);
-         builder.add(new String(bytes, CHARSET));
-         return readSplitLine(buffer, builder, start + length + 1, 0);
-      } else {
-         return readSplitLine(buffer, builder, start, length + 1);
       }
    }
-
 }
