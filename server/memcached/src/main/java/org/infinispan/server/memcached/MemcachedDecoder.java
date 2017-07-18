@@ -100,7 +100,6 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    private final static boolean isTrace = log.isTraceEnabled();
 
    private static final int SecondsInAMonth = 60 * 60 * 24 * 30;
-   private static final TimeUnit DefaultTimeUnit = TimeUnit.MILLISECONDS;
 
    long defaultLifespanTime;
    long defaultMaxIdleTime;
@@ -353,7 +352,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
             if (errorResponse instanceof byte[]) {
                ch.writeAndFlush(wrappedBuffer((byte[]) errorResponse), ch.voidPromise());
             } else if (errorResponse instanceof CharSequence) {
-               ch.writeAndFlush(Unpooled.copiedBuffer((CharSequence) errorResponse, CharsetUtil.UTF_8), ch.voidPromise());
+               ch.writeAndFlush(Unpooled.copiedBuffer((CharSequence) errorResponse, TextProtocolUtil.CHARSET), ch.voidPromise());
             } else {
               ch.writeAndFlush(errorResponse, ch.voidPromise());
             }
@@ -785,6 +784,7 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
       // into a request that has no params
       params = null;
       rawValue = null; // Clear reference to value
+      key = null;
    }
 
 
@@ -1049,7 +1049,6 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
                String line = readDiscardedLine(buffer); // Read rest of line to clear the operation
                log.debugf("Unexpected operation '%s', rest of line contains: %s", commandName, line);
             }
-
             throw new UnknownOperationException("Unknown operation: " + commandName);
       }
    }

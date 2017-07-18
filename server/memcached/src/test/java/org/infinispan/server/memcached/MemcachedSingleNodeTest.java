@@ -8,6 +8,7 @@ import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +69,9 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
 
    protected List<String> sendMulti(String req, int expectedResponses, boolean wait) throws IOException {
       try (Socket socket = new Socket(server.getHost(), server.getPort())) {
-         socket.getOutputStream().write(req.getBytes());
+         OutputStream outputStream = socket.getOutputStream();
+         outputStream.write(req.getBytes());
+         outputStream.flush();
          if (wait) {
             Stream.Builder<String> builder = Stream.builder();
             for (int i = 0; i < expectedResponses; ++i) {

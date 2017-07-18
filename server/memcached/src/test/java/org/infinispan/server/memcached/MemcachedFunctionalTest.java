@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.SocketAddress;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -516,7 +519,7 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
    public void testFlagsIsUnsigned(Method m) throws IOException {
       String k = m.getName();
       assertClientError(send("set boo1 -1 0 0\r\n"));
-      assertStored(send("set " + k + " 4294967295 0 0\r\n"));
+      assertStored(send("set " + k + " 4294967295 0 0\r\n\r\n"));
       assertClientError(send("set boo2 4294967296 0 0\r\n"));
       assertClientError(send("set boo2 18446744073709551615 0 0\r\n"));
    }
@@ -592,17 +595,16 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
          client.get(k(m));
    }
 
-//   public void testRegex {
-//      val notFoundRegex = new Regex("""\bNOT_FOUND\b""");
-//      assertEquals(notFoundRegex.findAllIn("NOT_FOUND\r\nNOT_FOUND\r\n").length, 2);
-//   }
-//
-//   private def assertExpectedResponse(resp: String, expectedResp: String, numberOfTimes: Int) {
-//      val expectedRespRegex = new Regex("""\b""" + expectedResp + """\b""");
-//      assertEquals(expectedRespRegex.findAllIn(resp).length, numberOfTimes,
-//         "Expected " + expectedResp + " to be found " + numberOfTimes
-//               + " times, but instead received response: " + resp);
-//   }
+   public void testBufferOverflowCausesUnknownException() throws Exception {
+      List<String> keys = Files.readAllLines(
+            Paths.get(getClass().getClassLoader().getResource("keys.txt").toURI()),
+            Charset.defaultCharset()
+      );
+
+      for (String key : keys) {
+         assertTrue(client.set(key, 0, "ISPN005003: UnknownOperationException").get());
+      }
+   }
 
    private void addAndGet(Method m) throws InterruptedException, ExecutionException, TimeoutException {
       OperationFuture<Boolean> f = client.add(k(m), 0, v(m));
