@@ -4,6 +4,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.util.Experimental;
 
@@ -118,6 +119,88 @@ public final class EntryView {
     * @since 8.0
     */
    @Experimental
-   public interface ReadWriteEntryView<K, V> extends ReadEntryView<K, V>, WriteEntryView<V> {}
+   public interface ReadWriteEntryView<K, V> extends ReadEntryView<K, V>, WriteEntryView<V> {
+      /**
+       * Sets this value to the result of <code>updateFunction</code> applied
+       * to the current value, or <code>null</code> if absent.
+       * If <code>updateFunction</code> returns <code>null</code>, the mapping
+       * is removed.
+       *
+       * @param updateFunction
+       * @return <code>null</code>
+       * @since 9.1
+       */
+      default Void update(Function<? super V, ? extends V> updateFunction) {
+         return set(updateFunction.apply(find().orElse(null)));
+      }
+
+      /**
+       * Sets this value to the result of <code>computeFunction</code>
+       * applied to the current value, or <code>null</code> if absent.
+       * If <code>computeFunction</code> returns <code>null</code>, the mapping
+       * is removed.
+       *
+       * @param computeFunction
+       * @return Value returned by the <code>computeFunction</code>
+       * @since 9.1
+       */
+      default V compute(Function<? super V, ? extends V> computeFunction) {
+         V newValue = computeFunction.apply(find().orElse(null));
+         set(newValue);
+         return newValue;
+      }
+
+      /**
+       * Set this value to value provided by the <code>supplier</code> if there
+       * is no current mapping.
+       *
+       * @param supplier
+       * @return <code>null</code>
+       * @since 9.1
+       */
+      default Void setIfAbsent(Supplier<? extends V> supplier) {
+         if (!find().isPresent()) {
+            set(supplier.get());
+         }
+         return null;
+      }
+
+      /**
+       * Sets this value to the result of <code>updateFunction</code> applied
+       * to the current value. If there is no mapping the function is not
+       * executed and the value is not set.
+       * If <code>updateFunction</code> returns <code>null</code>, the mapping
+       * is removed.
+       *
+       * @param updateFunction
+       * @return <code>null</code>
+       * @since 9.1
+       */
+      default Void updateIfPresent(Function<? super V, ? extends V> updateFunction) {
+         find().ifPresent(value -> set(updateFunction.apply(value)));
+         return null;
+      }
+
+      /**
+       * Sets this value to the result of <code>computeFunction</code> applied
+       * to the current value. If there is no mapping the function is not
+       * executed and the value is not set.
+       * If <code>computeFunction</code> returns <code>null</code>, the mapping
+       * is removed.
+       *
+       * @param computeFunction
+       * @return Value returned by the <code>computeFunction</code> or
+       *         <code>null</code> if there's no current mapping.
+       * @since 9.1
+       */
+      default V computeIfPresent(Function<? super V, ? extends V> computeFunction) {
+         if (find().isPresent()) {
+            V newValue = computeFunction.apply(get());
+            set(newValue);
+            return newValue;
+         }
+         return null;
+      }
+   }
 
 }
