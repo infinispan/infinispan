@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.EncodingUtils;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;

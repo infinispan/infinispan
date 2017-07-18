@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.distribution;
 
-import static java.lang.String.format;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

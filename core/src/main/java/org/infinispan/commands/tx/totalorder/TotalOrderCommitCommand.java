@@ -1,7 +1,6 @@
 package org.infinispan.commands.tx.totalorder;
 
 import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
