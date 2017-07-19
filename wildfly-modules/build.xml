@@ -78,6 +78,14 @@
             <maven-resource group="com.github.ben-manes.caffeine" artifact="caffeine" />
         </module-def>
 
+        <module-def name="io.reactivex.rxjava2" slot="${infinispan.slot}">
+            <maven-resource group="io.reactivex.rxjava2" artifact="rxjava" />
+        </module-def>
+
+        <module-def name="org.reactivestreams" slot="${infinispan.slot}">
+            <maven-resource group="org.reactivestreams" artifact="reactive-streams" />
+        </module-def>
+
         <module-def name="com.thoughtworks.xstream" slot="${infinispan.slot}">
             <maven-resource group="com.thoughtworks.xstream" artifact="xstream" />
         </module-def>
