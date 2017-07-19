@@ -767,7 +767,7 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals("org.infinispan.persistence.jdbc.configuration.DummyKey2StringMapper", jdbcStringBasedStoreConfiguration.key2StringMapper());
       assertTrue(jdbcStringBasedStoreConfiguration.table().dropOnExit());
       assertTrue(jdbcStringBasedStoreConfiguration.table().createOnStart());
-      assertEquals(50, jdbcStringBasedStoreConfiguration.table().batchSize());
+      assertEquals(50, jdbcStringBasedStoreConfiguration.maxBatchSize());
       assertEquals(70, jdbcStringBasedStoreConfiguration.table().fetchSize());
       assertEquals("ISPN_STRING_TABLE", jdbcStringBasedStoreConfiguration.table().tableNamePrefix());
       assertEquals("ID_COLUMN", jdbcStringBasedStoreConfiguration.table().idColumnName());
