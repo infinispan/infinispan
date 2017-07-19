@@ -80,6 +80,8 @@
       <version.netty>4.1.9.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.rocksdb>5.1.2</version.rocksdb>
+      <version.reactivestreams>1.0.0</version.reactivestreams>
+      <version.rxjava>2.1.1</version.rxjava>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.xstream>1.4.9</version.xstream>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
@@ -473,6 +475,16 @@
             <version>${version.javax.cache}</version>
          </dependency>
 
+         <dependency>
+            <groupId>io.reactivex.rxjava2</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>${version.rxjava}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams</artifactId>
+            <version>${version.reactivestreams}</version>
+         </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>

@@ -173,7 +173,6 @@
         <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
         <version.org.picketbox>4.0.20.Final</version.org.picketbox>
         <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
-        <version.rxjava>2.1.1</version.rxjava>
         <version.shrinkwrapResolver>2.2.4</version.shrinkwrapResolver>
         <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
         <version.snappy>1.0.5</version.snappy>
@@ -495,11 +494,6 @@
                 <groupId>org.hibernate</groupId>
                 <artifactId>hibernate-core</artifactId>
                 <version>${version.hibernate.core}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.reactivex.rxjava2</groupId>
-                <artifactId>rxjava</artifactId>
-                <version>${version.rxjava}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.shrinkwrap.resolver</groupId>
