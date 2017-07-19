@@ -107,7 +107,7 @@
                <plugin>
                   <groupId>org.wildfly.maven.plugins</groupId>
                   <artifactId>licenses-plugin</artifactId>
-                  <version>1.0.0</version>
+                  <version>${version.org.wildfly.maven-plugins}</version>
                   <inherited>false</inherited>
                   <executions>
                      <execution>

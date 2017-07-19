@@ -218,7 +218,7 @@
       <version>3.4</version>
       <licenses>
         <license>
-          <name>The BSD License</name>
+          <name>BSD 3-Clause "New" or "Revised" License</name>
           <url>http://www.antlr.org/license.html</url>
           <distribution>repo</distribution>
         </license>
@@ -863,7 +863,7 @@
       <version>3.4</version>
       <licenses>
         <license>
-          <name>The BSD license</name>
+          <name>BSD 3-Clause "New" or "Revised" License</name>
           <url>http://www.antlr3.org/license.html</url>
         </license>
       </licenses>
@@ -874,7 +874,7 @@
       <version>3.2.1</version>
       <licenses>
         <license>
-          <name>The BSD license</name>
+          <name>BSD 3-Clause "New" or "Revised" License</name>
           <url>http://www.antlr3.org/license.html</url>
           <distribution>repo</distribution>
         </license>

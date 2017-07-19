@@ -23,8 +23,8 @@
                         <th>Package</th>
                         <th>Package Artifact</th>
                         <th>Package Version</th>
-                        <th>Remote Licenses</th>
-                        <th>Local Licenses</th>
+                        <th>Remote licenses</th>
+                        <th>Local licenses</th>
                     </tr>
                     <xsl:for-each select="licenseSummary/dependencies/dependency">
                         <xsl:sort select="concat(groupId, '.', artifactId)"/>
@@ -96,65 +96,89 @@
         <xsl:param name="filename"/>
 
         <xsl:choose>
-            <xsl:when test="contains($filename, 'bsd') and contains($filename, '2-clause')">
-                <xsl:text>bsd-2-clause.txt</xsl:text>
-            </xsl:when>
-            <xsl:when test="contains($filename, 'bsd') and contains($filename, '3-clause')">
-                <xsl:text>bsd-3-clause.txt</xsl:text>
+            <xsl:when test="contains($filename, 'apache') and contains($filename, 'version 1.1')">
+                <xsl:text>Apache-Software-License-version-1.1.txt</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'apache') and contains($filename, 'version 2.0')">
-                <xsl:text>apache license, version 2.0.txt</xsl:text>
+                <xsl:text>Apache-Software-License-version-2.0.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'apache') and contains($filename, 'license-2.0')">
-                <xsl:text>apache license, version 2.0.txt</xsl:text>
+            <xsl:when test="contains($filename, 'bouncy')">
+                <xsl:text>Bouncy-Castle-License.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'jsr-000107')">
-                <xsl:text>apache license, version 2.0.txt</xsl:text>
+            <xsl:when test="contains($filename, 'bsd') and contains($filename, '2-clause')">
+                <xsl:text>BSD-2-Clause-License.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'cddl') and contains($filename, 'gplv2')">
-                <xsl:text>cddl-gplv2-classpath.txt</xsl:text>
+            <xsl:when test="contains($filename, 'bsd') and contains($filename, '3-clause')">
+                <xsl:text>BSD-3-Clause-"New"-or-"Revised"-License.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="$filename = 'gnu library general public license, version 2 - lgpl-2.0.txt'">
-                <xsl:text>gnu library general public license, version 2.txt</xsl:text>
+            <xsl:when test="contains($filename, 'cddl 1.1') and contains($filename, 'gpl 2') and contains($filename, 'classpath')">
+                <xsl:text>CDDL-1.1-and-GPL-2-with-Classpath-Exception.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="$filename = 'the dom4j license - license'">
-                <xsl:text>the dom4j license.txt</xsl:text>
+            <xsl:when test="contains($filename, 'common development') and contains($filename, 'license 1.0')">
+                <xsl:text>Common-Development-and-Distribution-License-1.0.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="$filename = 'creative commons attribution 2.5 - legalcode'">
-                <xsl:text>creative commons attribution 2.5.html</xsl:text>
+            <xsl:when test="contains($filename, 'common development') and contains($filename, 'license 1.0')">
+                <xsl:text>Common-Development-and-Distribution-License-1.1.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'cddl+gpl_1_1')">
-                <xsl:text>cddl-1.1-gpl-1-1.txt</xsl:text>
+            <xsl:when test="contains($filename, 'common public') and contains($filename, 'license 1.0')">
+                <xsl:text>Common-Public-License-1.0.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'cddl.txt')">
-                <xsl:text>cddl.txt</xsl:text>
+            <xsl:when test="contains($filename, 'creative commons') and contains($filename, 'license 2.5')">
+                <xsl:text>Creative-Commons-Attribution-License-2.5.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'lgpl-2.1')">
-                <xsl:text>lgpl-2.1.txt</xsl:text>
+            <xsl:when test="contains($filename, 'dual license') and contains($filename, 'cddl v1.1') and contains($filename, 'gpl v2')">
+                <xsl:text>Dual-license-consisting-of-the-CDDL-v1.1-and-GPL-v2.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'gpl-2.0-ce')">
-                <xsl:text>gpl-2.0-ce.txt</xsl:text>
+            <xsl:when test="contains($filename, 'eclipse distribution') and contains($filename, 'version 1.0')">
+                <xsl:text>Eclipse-Distribution-License,-Version-1.0.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'epl-v10')">
-                <xsl:text>epl-1.0.txt</xsl:text>
+            <xsl:when test="contains($filename, 'eclipse public') and contains($filename, '1.0')">
+                <xsl:text>Eclipse-Public-License-1.0.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'gnu general public license') and contains($filename, 'classpath exception') and contains($filename, '2')">
+                <xsl:text>GNU-General-Public-License,-Version-2-with-Classpath-Exception.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'gnu general public license') and contains($filename, 'version 3')">
+                <xsl:text>GNU-General-Public-License,-Version-3.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'gnu general public license') and contains($filename, 'v3.0')">
+                <xsl:text>GNU-General-Public-License,-Version-3.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'gnu lesser general public license') and contains($filename, 'version 2')">
+                <xsl:text>GNU-Lesser-General-Public-License,-Version-2.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'gnu lesser general public license') and contains($filename, '2.1')">
+                <xsl:text>GNU-Lesser-General-Public-License,-Version-2.1.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'gnu lesser general public license') and contains($filename, 'version 3')">
+                <xsl:text>GNU-Lesser-General-Public-License,-Version-3.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'h2 license')">
+                <xsl:text>H2-License.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'indianna university extreme')">
+                <xsl:text>Indiana-University-Extreme-Lab-Software-License-vesion-1.1.1.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'isc license')">
+                <xsl:text>ISC-License.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'jdom')">
+                <xsl:text>JDOM-License.txt</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'mit license')">
-                <xsl:text>mit.txt</xsl:text>
+                <xsl:text>MIT-License.txt</xsl:text>
             </xsl:when>
-            <xsl:when test="contains($filename, 'new bsd license')">
-                <xsl:text>bsd-license.txt</xsl:text>
-            </xsl:when>
-            <xsl:when test="contains($filename, 'bsd style - license')">
-                <xsl:text>xstream-bsd.txt</xsl:text>
-            </xsl:when>
-            <xsl:when test="contains($filename, 'bsd license - license')">
-                <xsl:text>antlr-bsd.txt</xsl:text>
+            <xsl:when test="contains($filename, 'mozilla') and contains($filename, '1.1')">
+                <xsl:text>Mozilla-Public-License-1.1.txt</xsl:text>
             </xsl:when>
             <xsl:when test="contains($filename, 'public domain')">
-                <xsl:text>cc0-1.0.txt</xsl:text>
+                <xsl:text>Public-Domain.txt</xsl:text>
+            </xsl:when>
+            <xsl:when test="contains($filename, 'sil') and contains($filename, 'font')">
+                <xsl:text>SIL-OFL-1.1.txt</xsl:text>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:value-of select="$filename"/>
+                <xsl:value-of select="N/A"/>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
