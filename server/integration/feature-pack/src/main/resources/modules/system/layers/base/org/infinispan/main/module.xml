@@ -8,6 +8,8 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
+        <module name="io.reactivex.rxjava2.rxjava"/>
+        <module name="org.reactivestreams.reactive-streams"/>
         <module name="org.jboss.logging"/>
         <module name="org.infinispan.commons" export="true"/>
         <module name="org.infinispan.query" optional="true" services="import"/>
