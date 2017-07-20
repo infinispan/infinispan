@@ -10,7 +10,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.remoting.transport.BackupResponse;
-import org.infinispan.transaction.impl.AbstractCacheTransaction;
 
 /**
  * Component responsible with sending backup data to remote sites. The send operation is executed async, it's up to the
@@ -25,7 +24,7 @@ public interface BackupSender {
    /**
     * Prepares a transaction on the remote site.
     */
-   BackupResponse backupPrepare(PrepareCommand command, AbstractCacheTransaction cacheTransaction) throws Exception;
+   BackupResponse backupPrepare(PrepareCommand command) throws Exception;
 
    /**
     * Processes the responses of a backup command. It might throw an exception in the case the replication to the

@@ -870,7 +870,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          if (remoteKeys.isEmpty()) {
             return invokeNext(ctx, command);
          }
-         ClusteredGetAllFuture sync = new ClusteredGetAllFuture(remoteKeys.size());
+         ClusteredGetAllFuture sync = new ClusteredGetAllFuture(remoteKeys.size(), command);
          for (Map.Entry<Address, List<Object>> remote : remoteKeys.entrySet()) {
             List<Object> keys = remote.getValue();
             ClusteredGetAllCommand clusteredGetAllCommand = cf.buildClusteredGetAllCommand(keys, command.getFlagsBitSet(), null);

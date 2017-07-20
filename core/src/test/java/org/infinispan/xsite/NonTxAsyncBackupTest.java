@@ -8,7 +8,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -67,7 +66,12 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
       assertEquals("v", cache("LON", 1).get("k"));
       assertNull(backup("LON").get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals("v", () -> backup("LON").get("k"));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return "v".equals(backup("LON").get("k"));
+         }
+      });
    }
 
    public void testRemove() throws Exception {
@@ -79,7 +83,12 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
       assertNull(cache("LON", 1).get("k"));
       assertEquals("v", backup("LON").get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals(null, () -> backup("LON").get("k"));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return backup("LON").get("k") == null;
+         }
+      });
    }
 
    public void testClear() throws Exception {
@@ -91,7 +100,12 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
       assertNull(cache("LON", 1).get("k"));
       assertEquals("v", backup("LON").get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals(null, () -> backup("LON").get("k"));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return backup("LON").get("k") == null;
+         }
+      });
    }
 
    public void testReplace() throws Exception {
@@ -103,7 +117,12 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
       assertEquals("v2", cache("LON", 1).get("k"));
       assertEquals("v", backup("LON").get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals("v2", () -> backup("LON").get("k"));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return "v2".equals(backup("LON").get("k"));
+         }
+      });
    }
 
    public void testPutAll() throws Exception {
@@ -113,14 +132,24 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
       assertEquals("v", cache("LON", 1).get("k"));
       assertNull(backup("LON").get("k"));
       blockingInterceptor.waitingLatch.countDown();
-      eventuallyEquals("v", () -> backup("LON").get("k"));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return "v".equals(backup("LON").get("k"));
+         }
+      });
    }
 
    private void doPutWithDisabledBlockingInterceptor() {
       blockingInterceptor.isActive = false;
       cache("LON", 0).put("k", "v");
 
-      eventuallyEquals("v", () -> backup("LON").get("k"));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return "v".equals(backup("LON").get("k"));
+         }
+      });
       blockingInterceptor.isActive = true;
    }
 
@@ -169,11 +198,6 @@ public class NonTxAsyncBackupTest extends AbstractTwoSitesTest {
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         return handle(ctx, command);
-      }
-
-      @Override
-      public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
          return handle(ctx, command);
       }
 

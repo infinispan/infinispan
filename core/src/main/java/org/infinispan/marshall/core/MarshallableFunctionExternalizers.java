@@ -39,7 +39,6 @@ public class MarshallableFunctionExternalizers {
    private static final int RETURN_READ_ONLY_FIND_OR_NULL = 15 | VALUE_MATCH_ALWAYS;
    private static final int RETURN_READ_ONLY_FIND_IS_PRESENT = 16 | VALUE_MATCH_ALWAYS;
    private static final int IDENTITY = 17 | VALUE_MATCH_ALWAYS;
-   private static final int SET_INTERNAL_CACHE_VALUE_CONSUMER = 18 | VALUE_MATCH_ALWAYS;
 
    public static final class ConstantLambdaExternalizer implements LambdaExternalizer<Object> {
       private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(16);
@@ -62,7 +61,6 @@ public class MarshallableFunctionExternalizers {
          numbers.put(MarshallableFunctions.returnReadOnlyFindOrNull().getClass(), RETURN_READ_ONLY_FIND_OR_NULL);
          numbers.put(MarshallableFunctions.returnReadOnlyFindIsPresent().getClass(), RETURN_READ_ONLY_FIND_IS_PRESENT);
          numbers.put(MarshallableFunctions.identity().getClass(), IDENTITY);
-         numbers.put(MarshallableFunctions.setInternalCacheValueConsumer().getClass(), SET_INTERNAL_CACHE_VALUE_CONSUMER);
       }
 
       @Override
@@ -95,8 +93,7 @@ public class MarshallableFunctionExternalizers {
             MarshallableFunctions.returnReadWriteView().getClass(),
             MarshallableFunctions.returnReadOnlyFindOrNull().getClass(),
             MarshallableFunctions.returnReadOnlyFindIsPresent().getClass(),
-            MarshallableFunctions.identity().getClass(),
-            MarshallableFunctions.setInternalCacheValueConsumer().getClass()
+            MarshallableFunctions.identity().getClass()
          );
       }
 
@@ -130,7 +127,6 @@ public class MarshallableFunctionExternalizers {
             case RETURN_READ_ONLY_FIND_OR_NULL: return MarshallableFunctions.returnReadOnlyFindOrNull();
             case RETURN_READ_ONLY_FIND_IS_PRESENT: return MarshallableFunctions.returnReadOnlyFindIsPresent();
             case IDENTITY: return MarshallableFunctions.identity();
-            case SET_INTERNAL_CACHE_VALUE_CONSUMER: return MarshallableFunctions.setInternalCacheValueConsumer();
             default:
                throw new IllegalStateException("Unknown lambda ID: " + id);
          }
