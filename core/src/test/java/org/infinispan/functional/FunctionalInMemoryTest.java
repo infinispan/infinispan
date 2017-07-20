@@ -189,6 +189,28 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       testReadOnMissingValue(0, ReadOnlyMapImpl.create(fmapL1), method);
    }
 
+   public void testDefaultMethods() {
+      Object key = getKey(false);
+      assertEquals(null, rw.eval(key, view -> view.setIfAbsent(() -> "a")).join());
+      assertEquals("a", cache(0, DIST).get(key));
+      assertEquals(null, rw.eval(key, view -> view.setIfAbsent(() -> "x")).join());
+      assertEquals("a", cache(0, DIST).get(key));
+      assertEquals(null, rw.eval(key, view -> view.update(s -> s + "b")).join());
+      assertEquals("ab", cache(0, DIST).get(key));
+      assertEquals("abc", rw.eval(key, view -> view.compute(s -> s + "c")).join());
+      assertEquals("abc", cache(0, DIST).get(key));
+      assertEquals(null, rw.eval(key, view -> view.updateIfPresent(s -> s + "d")).join());
+      assertEquals("abcd", cache(0, DIST).get(key));
+      assertEquals("abcde", rw.eval(key, view -> view.computeIfPresent(s -> s + "e")).join());
+      assertEquals("abcde", cache(0, DIST).get(key));
+      assertEquals(null, rw.eval(key, view -> view.set(null)).join());
+      assertEquals(null, cache(0, DIST).get(key));
+      assertEquals(null, rw.eval(key, view -> view.updateIfPresent(s -> s + "x")).join());
+      assertEquals(null, cache(0, DIST).get(key));
+      assertEquals(null, rw.eval(key, view -> view.computeIfPresent(s -> s + "x")).join());
+      assertEquals(null, cache(0, DIST).get(key));
+   }
+
    private <K> void testReadOnMissingValue(K key, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) {
       assertEquals(ro.eval(key, view -> view.find().isPresent()).join(), Boolean.FALSE);
       expectExceptionNonStrict(CompletionException.class, CacheException.class, NoSuchElementException.class, () ->
