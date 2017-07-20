@@ -3,6 +3,9 @@ package org.infinispan.commons.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+import java.util.function.Function;
+
+import org.infinispan.commons.api.BasicCache;
 
 /**
  * An Iterator implementation that allows for a Iterator that doesn't allow remove operations to

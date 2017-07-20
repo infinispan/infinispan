@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.AdvancedCache;
