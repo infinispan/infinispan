@@ -30,13 +30,14 @@ public enum Namespace {
     INFINISPAN_ENDPOINT_7_2("infinispan:server:endpoint", 7, 2),
     INFINISPAN_ENDPOINT_8_0("infinispan:server:endpoint", 8, 0),
     INFINISPAN_ENDPOINT_9_0("infinispan:server:endpoint", 9, 0),
+    INFINISPAN_ENDPOINT_9_2("infinispan:server:endpoint", 9, 2),
     ;
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
     /**
      * The current namespace version.
      */
-    public static final Namespace CURRENT = INFINISPAN_ENDPOINT_9_0;
+    public static final Namespace CURRENT = INFINISPAN_ENDPOINT_9_2;
 
     private final int major;
     private final int minor;

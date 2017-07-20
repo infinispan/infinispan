@@ -309,7 +309,7 @@
         <server3.old.dist>${basedir}/target/server/node3_old</server3.old.dist>
 
         <old.server.schema.version>8.0</old.server.schema.version>
-        <new.server.schema.version>9.0</new.server.schema.version>
+        <new.server.schema.version>9.2</new.server.schema.version>
 
         <start.jboss.as.manually>false</start.jboss.as.manually>
 

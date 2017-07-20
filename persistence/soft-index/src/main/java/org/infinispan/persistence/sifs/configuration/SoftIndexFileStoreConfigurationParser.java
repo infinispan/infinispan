@@ -23,6 +23,8 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices
 @Namespaces({
       @Namespace(root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
+      @Namespace(uri = "urn:infinispan:config:store:soft-index:9.2",
+            root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
       @Namespace(uri = "urn:infinispan:config:store:soft-index:9.0",
                  root = SoftIndexFileStoreConfigurationParser.ROOT_ELEMENT),
       @Namespace(uri = "urn:infinispan:config:store:soft-index:8.0",

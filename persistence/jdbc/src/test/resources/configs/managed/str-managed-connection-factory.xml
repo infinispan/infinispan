@@ -4,7 +4,7 @@
    <cache-container default-cache="first">
       <local-cache-configuration name="default">
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.0" fetch-state="false" read-only="false" purge="false">
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2" fetch-state="false" read-only="false" purge="false">
                <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
                <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
                   <id-column name="ID_COLUMN" type="VARCHAR(255)" />

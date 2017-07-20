@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:9.1">
+        <subsystem xmlns="urn:infinispan:server:core:9.2">
             <cache-container name="local" default-cache="default">
                 <local-cache name="default">
                     <compatibility enabled="true" marshaller="deployment.custom-compat-marshaller.jar:main:org.infinispan.server.test.query.RemoteQueryCompatModeIT$CustomCompatModeMarshaller"/>

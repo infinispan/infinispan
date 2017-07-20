@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:9.1 http://www.infinispan.org/schemas/infinispan-config-9.1.xsd"
-   xmlns="urn:infinispan:config:9.1">
+   xsi:schemaLocation="urn:infinispan:config:9.2 http://www.infinispan.org/schemas/infinispan-config-9.2.xsd"
+   xmlns="urn:infinispan:config:9.2">
 
    <cache-container default-cache="testCache">
 
       <local-cache name="testCache">
          <persistence>
-            <soft-index-file-store xmlns="urn:infinispan:config:store:soft-index:9.0" compaction-threshold="0.5" open-files-limit="1000">
+            <soft-index-file-store xmlns="urn:infinispan:config:store:soft-index:9.2" compaction-threshold="0.5" open-files-limit="1000">
                <index path="/tmp/sifs/testCache/index" segments="3" max-node-size="4096" max-queue-length="1000" min-node-size="4096"/>
                <data path="/tmp/sifs/testCache/data" max-file-size="1678" sync-writes="true"/>
             </soft-index-file-store>

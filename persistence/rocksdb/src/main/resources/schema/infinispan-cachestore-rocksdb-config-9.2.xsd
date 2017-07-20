@@ -1,35 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema attributeFormDefault="unqualified"
-   elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:store:leveldb:9.1"
-   xmlns:tns="urn:infinispan:config:store:leveldb:9.1" xmlns:config="urn:infinispan:config:9.1"
+   elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:store:rocksdb:9.2"
+   xmlns:tns="urn:infinispan:config:store:rocksdb:9.2" xmlns:config="urn:infinispan:config:9.2"
    xmlns:xs="http://www.w3.org/2001/XMLSchema">
-   <xs:import namespace="urn:infinispan:config:9.1"
-              schemaLocation="http://www.infinispan.org/schemas/infinispan-config-9.1.xsd" />
+   <xs:import namespace="urn:infinispan:config:9.2"
+              schemaLocation="http://www.infinispan.org/schemas/infinispan-config-9.2.xsd" />
 
-  <xs:element name="leveldb-store" type="tns:leveldb-store"/>
+  <xs:element name="rocksdb-store" type="tns:rocksdb-store"/>
 
-  <xs:complexType name="leveldb-store">
+  <xs:complexType name="rocksdb-store">
     <xs:complexContent>
       <xs:extension base="config:store">
         <xs:sequence>
-          <xs:element name="expiration" type="tns:leveldb-expiration" minOccurs="0">
+          <xs:element name="expiration" type="tns:rocksdb-expiration" minOccurs="0">
             <xs:annotation>
               <xs:documentation>
-                Defines the expiration settings for the LevelDB cache store.
+                Defines the expiration settings for the rocksdb cache store.
               </xs:documentation>
             </xs:annotation>
           </xs:element>
-          <xs:element name="implementation" type="tns:leveldb-implementation" minOccurs="0">
+          <xs:element name="compression" type="tns:rocksdb-compression" minOccurs="0">
             <xs:annotation>
               <xs:documentation>
-                Defines the LevelDB store implementation to use.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:element>
-          <xs:element name="compression" type="tns:leveldb-compression" minOccurs="0">
-            <xs:annotation>
-              <xs:documentation>
-                Defines the data compression to use in the LevelDB store.
+                Defines the data compression to use in the rocksdb store.
               </xs:documentation>
             </xs:annotation>
           </xs:element>
@@ -66,7 +59,7 @@
     </xs:complexContent>
   </xs:complexType>
 
-  <xs:complexType name="leveldb-expiration">
+  <xs:complexType name="rocksdb-expiration">
     <xs:attribute name="path" type="xs:string">
       <xs:annotation>
         <xs:documentation>The base directory in which to store expired cache state.</xs:documentation>
@@ -79,15 +72,15 @@
     </xs:attribute>
   </xs:complexType>
 
-  <xs:complexType name="leveldb-compression">
-    <xs:attribute name="type" type="tns:leveldb-compression-mode" default="${RocksDBStore.compressionType}">
+  <xs:complexType name="rocksdb-compression">
+    <xs:attribute name="type" type="tns:rocksdb-compression-mode" default="${RocksDBStore.compressionType}">
       <xs:annotation>
-        <xs:documentation>The type of compression to be used by LevelDB store.</xs:documentation>
+        <xs:documentation>The type of compression to be used by rocksdb store.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
 
-  <xs:simpleType name="leveldb-compression-mode">
+  <xs:simpleType name="rocksdb-compression-mode">
     <xs:restriction base="xs:token">
       <xs:enumeration value="NONE">
         <xs:annotation>
@@ -99,32 +92,24 @@
           <xs:documentation>Snappy compression.</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
-    </xs:restriction>
-  </xs:simpleType>
-
-  <xs:complexType name="leveldb-implementation">
-    <xs:attribute name="type" type="tns:leveldb-implementation-type" default="${LevelDBStore.implementationType}">
-      <xs:annotation>
-        <xs:documentation>The LevelDB store implementation to use.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
-  </xs:complexType>
-
-  <xs:simpleType name="leveldb-implementation-type">
-    <xs:restriction base="xs:token">
-      <xs:enumeration value="AUTO">
+      <xs:enumeration value="ZLIB">
         <xs:annotation>
-          <xs:documentation>LevelDB implementation selection left to the library.</xs:documentation>
+          <xs:documentation>ZLib compression.</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
-      <xs:enumeration value="JAVA">
+      <xs:enumeration value="BZLIB2">
         <xs:annotation>
-          <xs:documentation>Selects LevelDB Java implementation.</xs:documentation>
+          <xs:documentation>BZLib2 compression.</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
-      <xs:enumeration value="JNI">
+      <xs:enumeration value="LZ4">
         <xs:annotation>
-          <xs:documentation>Selects LevelDB JNI implementation.</xs:documentation>
+          <xs:documentation>LZ4 compression.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="LZ4HC">
+        <xs:annotation>
+          <xs:documentation>LZ4HC compression.</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>

@@ -1,7 +1,7 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="urn:infinispan:config:9.1"
-        xsi:schemaLocation="urn:infinispan:config:9.1 http://www.infinispan.org/schemas/infinispan-config-9.1.xsd">
+        xmlns="urn:infinispan:config:9.2"
+        xsi:schemaLocation="urn:infinispan:config:9.2 http://www.infinispan.org/schemas/infinispan-config-9.2.xsd">
 
     <cache-container default-cache="default">
         <local-cache name="default">

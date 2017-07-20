@@ -50,7 +50,7 @@ For detailed description of all the parameters used refer to the link:http://doc
 [source,xml]
 ----
 <persistence>
-   <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.0" shared="true" fetch-state="false" read-only="false" purge="false">
+   <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2" shared="true" fetch-state="false" read-only="false" purge="false">
       <connection-pool connection-url="jdbc:h2:mem:infinispan_string_based;DB_CLOSE_DELAY=-1" username="sa" driver="org.h2.Driver"/>
       <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
          <id-column name="ID_COLUMN" type="VARCHAR(255)" />
@@ -90,7 +90,7 @@ Finally, below is an example of a JDBC cache store with a managed connection fac
 [source,xml]
 ----
 
-<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.0" shared="true" fetch-state="false" read-only="false" purge="false">
+<string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2" shared="true" fetch-state="false" read-only="false" purge="false">
    <data-source jndi-url="java:/StringStoreWithManagedConnectionTest/DS" />
    <string-keyed-table drop-on-exit="true" create-on-start="true" prefix="ISPN_STRING_TABLE">
       <id-column name="ID_COLUMN" type="VARCHAR(255)" />

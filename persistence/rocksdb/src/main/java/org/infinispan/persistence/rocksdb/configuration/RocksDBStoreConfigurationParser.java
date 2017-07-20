@@ -24,6 +24,7 @@ import javax.xml.stream.XMLStreamException;
 @MetaInfServices
 @Namespaces({
    @Namespace(root = "rocksdb-store"),
+   @Namespace(uri = "urn:infinispan:config:store:rocksdb:9.2", root = "rocksdb-store"),
    @Namespace(uri = "urn:infinispan:config:store:rocksdb:9.1", root = "rocksdb-store"),
    @Namespace(uri = "urn:infinispan:config:store:rocksdb:9.0", root = "rocksdb-store")
 })

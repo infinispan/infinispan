@@ -33,7 +33,7 @@ public class EndpointSubsystemOperationsTestCase extends AbstractSubsystemTest {
    }
 
    protected String getSubsystemXml() throws IOException {
-      return readResource("endpoint-9.0.xml");
+      return readResource("endpoint-9.2.xml");
    }
 
    @Before

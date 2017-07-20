@@ -30,6 +30,7 @@ enum JGroupsSchema {
     INFINISPAN_SERVER_JGROUPS_7_0("infinispan:server:jgroups", 7, 0),
     INFINISPAN_SERVER_JGROUPS_8_0("infinispan:server:jgroups", 8, 0),
     INFINISPAN_SERVER_JGROUPS_9_0("infinispan:server:jgroups", 9, 0),
+    INFINISPAN_SERVER_JGROUPS_9_2("infinispan:server:jgroups", 9, 2),
     ;
     public static final JGroupsSchema CURRENT = INFINISPAN_SERVER_JGROUPS_9_0;
 

@@ -30,6 +30,7 @@ import org.kohsuke.MetaInfServices;
    @Namespace(root = "string-keyed-jdbc-store"),
    @Namespace(root = "binary-keyed-jdbc-store"),
    @Namespace(root = "mixed-keyed-jdbc-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jdbc:9.2", root = "string-keyed-jdbc-store"),
    @Namespace(uri = "urn:infinispan:config:store:jdbc:9.1", root = "string-keyed-jdbc-store"),
    @Namespace(uri = "urn:infinispan:config:store:jdbc:9.0", root = "string-keyed-jdbc-store"),
    @Namespace(uri = "urn:infinispan:config:store:jdbc:9.0", root = "binary-keyed-jdbc-store"),

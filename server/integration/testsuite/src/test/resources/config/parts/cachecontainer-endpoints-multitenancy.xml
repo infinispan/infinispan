@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:endpoint:9.0">
+        <subsystem xmlns="urn:infinispan:server:endpoint:9.2">
             <hotrod-connector name="multi-tenant-hotrod-1" cache-container="multi-tenancy-1" />
             <hotrod-connector name="multi-tenant-hotrod-2" cache-container="multi-tenancy-2" />
             <rest-connector name="multi-tenant-rest-1" cache-container="multi-tenancy-1" />

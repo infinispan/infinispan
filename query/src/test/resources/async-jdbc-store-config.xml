@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:9.1 http://www.infinispan.org/schemas/infinispan-config-9.1.xsd
-                          urn:infinispan:config:store:jdbc:9.0 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-9.0.xsd"
-      xmlns="urn:infinispan:config:9.1">
+      xsi:schemaLocation="urn:infinispan:config:9.2 http://www.infinispan.org/schemas/infinispan-config-9.2.xsd
+                          urn:infinispan:config:store:jdbc:9.2 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-9.2.xsd"
+      xmlns="urn:infinispan:config:9.2">
 
    <cache-container default-cache="JDBCBased_LocalIndex">
       <transport cluster="MyCluster"/>
@@ -26,7 +26,7 @@
       <replicated-cache name="LuceneIndexesMetadata_custom1">
          <transaction mode="NON_XA" />
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.0"
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2"
                                   key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
                                   fetch-state="false"
                                   read-only="false"
@@ -48,7 +48,7 @@
       <replicated-cache name="LuceneIndexesData_custom1">
          <transaction mode="NON_XA" />
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.0"
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2"
                                      key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
                                      fetch-state="false"
                                      read-only="false"
@@ -69,7 +69,7 @@
       <replicated-cache name="LuceneIndexesLocking_custom1">
          <transaction mode="NON_XA" />
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.0"
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:9.2"
                                      key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
                                      fetch-state="false"
                                      read-only="false"

@@ -37,17 +37,12 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
         final int managementPortServer2 = 10090;
         MBeanServerConnectionProvider provider2;
 
-        // Source node
-        int managementPortServer3 = 10199;
-        MBeanServerConnectionProvider provider3;
-
         try {
 
             if (!Boolean.parseBoolean(System.getProperty("start.jboss.as.manually"))) {
                 // start it by Arquillian
                 controller.start("hotrod-rolling-upgrade-3-old-dist");
                 controller.start("hotrod-rolling-upgrade-4-old-dist");
-                managementPortServer3 = 10190;
             }
 
             // we use PROTOCOL_VERSION_25 here because servers using older version are out of testing scope
@@ -100,13 +95,6 @@ public class HotRodRollingUpgradesDistIT extends AbstractHotRodRollingUpgradesIT
 
             provider2 = new MBeanServerConnectionProvider(s2.server.getHotrodEndpoint().getInetAddress().getHostName(),
                   managementPortServer2);
-
-            provider3 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer3);
-
-            final ObjectName rollMan3 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
-                    + "manager=\"clustered\"," + "component=RollingUpgradeManager");
-
-            invokeOperation(provider3, rollMan3.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
             final ObjectName rollManTarget = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered-new\"," + "component=RollingUpgradeManager");

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<infinispan xmlns="urn:infinispan:config:9.1">
+<infinispan xmlns="urn:infinispan:config:9.2">
     <cache-container default-cache="foo">
         <local-cache name="foo" statistics="true">
         </local-cache>

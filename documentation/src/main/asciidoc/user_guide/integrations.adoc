@@ -698,8 +698,8 @@ Note, it's important that the module attribue is defined so that correct infinis
 
 [source,xml,subs=attributes+]
 ----
-<subsystem xmlns="urn:infinispan:server:core:9.0">
- <cache-container module="org.infinispan.extension:ispn-9.1" name="infinispan_container" default-cache="default">
+<subsystem xmlns="urn:infinispan:server:core:9.2">
+ <cache-container module="org.infinispan.extension:ispn-9.2" name="infinispan_container" default-cache="default">
    <transport/>
    <global-state/>
    <distributed-cache name="default"/>
@@ -716,7 +716,7 @@ Note, it's important that the module attribue is defined so that correct infinis
 
 [source,xml,subs=attributes+]
 ----
-<subsystem xmlns="urn:infinispan:server:endpoint:9.0">
+<subsystem xmlns="urn:infinispan:server:endpoint:9.2">
   <hotrod-connector socket-binding="hotrod" cache-container="infinispan_container">
     <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000"/>
   </hotrod-connector>
@@ -731,7 +731,7 @@ Note, it's important that the module attribue is defined so that correct infinis
 
 [source,xml,subs=attributes+]
 ----
-<subsystem xmlns="urn:infinispan:server:jgroups:9.0">
+<subsystem xmlns="urn:infinispan:server:jgroups:9.2">
  <channels default="cluster">
    <channel name="cluster" stack="udp"/>
  </channels>

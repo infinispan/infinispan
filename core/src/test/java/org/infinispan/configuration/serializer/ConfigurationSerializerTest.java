@@ -16,7 +16,8 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
             {"configs/unified/8.1.xml"},
             {"configs/unified/8.2.xml"},
             {"configs/unified/9.0.xml"},
-            {"configs/unified/9.1.xml"}
+            {"configs/unified/9.1.xml"},
+            {"configs/unified/9.2.xml"}
       };
    }
 }

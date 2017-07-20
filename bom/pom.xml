@@ -53,7 +53,7 @@
 
    <properties>
       <infinispan.codename>Bastille</infinispan.codename>
-      <infinispan.core.schema.version>9.1</infinispan.core.schema.version>
+      <infinispan.core.schema.version>9.2</infinispan.core.schema.version>
 
       <version.java>1.8</version.java>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

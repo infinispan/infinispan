@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:9.1 http://www.infinispan.org/schemas/infinispan-config-9.1.xsd
-   urn:infinispan:config:store:jdbc:9.0 http://www.infinispan.org/schemas/infinispan-cachestore-jdbc-config-9.0.xsd"
-   xmlns="urn:infinispan:config:9.1"
-   xmlns:jdbc="urn:infinispan:config:store:jdbc:9.0">
+   xsi:schemaLocation="urn:infinispan:config:9.2 http://www.infinispan.org/schemas/infinispan-config-9.2.xsd
+   urn:infinispan:config:store:jdbc:9.2 http://www.infinispan.org/schemas/infinispan-cachestore-jdbc-config-9.2.xsd"
+   xmlns="urn:infinispan:config:9.2"
+   xmlns:jdbc="urn:infinispan:config:store:jdbc:9.2">
 
   <cache-container default-cache="default">
     <local-cache name="default">
