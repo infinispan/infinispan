@@ -81,9 +81,9 @@
         <buildDirectory>target</buildDirectory>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
+        <defaultTestGroup>functional,unit,xsite,arquillian</defaultTestGroup>
 
-        <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
+        <defaultExcludedTestGroup>unstable,stress</defaultExcludedTestGroup>
         <forkJvmArgs>-Xmx2G</forkJvmArgs>
         <jigsawForkJvmArgs></jigsawForkJvmArgs>
         <testNGListeners>
@@ -1724,7 +1724,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
+                <defaultTestGroup>functional,unit,xsite,arquillian</defaultTestGroup>
                 <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
             </properties>
         </profile>
@@ -1740,15 +1740,6 @@
             <properties>
                 <defaultTestGroup>smoke</defaultTestGroup>
                 <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-            </properties>
-        </profile>
-        <profile>
-            <id>test-xsite</id>
-            <properties>
-                <defaultTestGroup>xsite</defaultTestGroup>
-                <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
-                <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
-                <infinispan.module-suffix>-${project.artifactId}-xsite</infinispan.module-suffix>
             </properties>
         </profile>
         <profile>

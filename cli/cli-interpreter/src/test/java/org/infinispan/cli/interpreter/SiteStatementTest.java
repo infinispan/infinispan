@@ -6,6 +6,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -109,10 +110,14 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
    }
 
    public void testContainerOperations() throws Exception {
-      site(LON).cacheManagers().forEach(cacheManager -> cacheManager.defineConfiguration("another-cache", lonConfigurationBuilder().build()));
-      site(LON).cacheManagers().forEach(cacheManager -> cacheManager.defineConfiguration("another-cache-2", getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build()));
-      site(LON).waitForClusterToForm("another-cache");
-      site(LON).waitForClusterToForm("another-cache-2");
+      Arrays.asList(LON, NYC).forEach(s -> {
+         site(s).cacheManagers().forEach(
+               cacheManager -> cacheManager.defineConfiguration("another-cache", lonConfigurationBuilder().build()));
+         site(s).cacheManagers().forEach(cacheManager -> cacheManager
+               .defineConfiguration("another-cache-2", getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build()));
+         site(s).waitForClusterToForm("another-cache");
+         site(s).waitForClusterToForm("another-cache-2");
+      });
 
       Interpreter lonInterpreter = interpreter(LON, 0);
       String lonCache = cache(LON, 0).getName();

@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 //unstable: it looks like not all cases are handled properly. Needs to be revisited! ISPN-6228
-@Test(groups = "unstable_xsite", testName = "xsite.statetransfer.failures.SiteProviderTopologyChangeTest")
+@Test(groups = {"xsite", "unstable"}, testName = "xsite.statetransfer.failures.SiteProviderTopologyChangeTest")
 public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
 
    public SiteProviderTopologyChangeTest() {
@@ -82,7 +82,7 @@ public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
       doXSiteStateTransferDuringTopologyChange(TopologyEvent.LEAVE);
    }
 
-   @Test(groups = "unstable_xsite", description = "See ISPN-6749")
+   @Test(groups = {"xsite", "unstable"}, description = "See ISPN-6749")
    public void testXSiteSTDuringSiteMasterLeave() throws Exception {
       doXSiteStateTransferDuringTopologyChange(TopologyEvent.SITE_MASTER_LEAVE);
    }

@@ -35,12 +35,12 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    List<TestSite> sites = new ArrayList<TestSite>();
    private Map<String, Integer> siteName2index = new HashMap<String, Integer>();
 
-   @BeforeMethod(alwaysRun = true) // run even for tests in the unstable_xsite group
+   @BeforeMethod(alwaysRun = true) // run even for tests in the unstable group
    public void createBeforeMethod() throws Throwable {
       if (cleanupAfterMethod()) createSites();
    }
 
-   @BeforeClass(alwaysRun = true) // run even for tests in the unstable_xsite group
+   @BeforeClass(alwaysRun = true) // run even for tests in the unstable group
    public void createBeforeClass() throws Throwable {
       if (cleanupAfterTest()) createSites();
    }
