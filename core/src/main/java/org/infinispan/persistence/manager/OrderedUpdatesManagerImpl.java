@@ -16,6 +16,8 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletableFutures;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {
    private DataContainer<Object, Object> dataContainer;
