@@ -53,6 +53,6 @@
    <FRAG3 frag_size="8000"  />
    <RSVP timeout="60000" resend_interval="500" ack_on_delivery="false" />
 
-   <relay.RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml"
+   <org.infinispan.test.fwk.TEST_RELAY2 site="__site_name__" config="configs/xsite/relay-config.xml"
                  relay_multicasts="true" />
 </config>

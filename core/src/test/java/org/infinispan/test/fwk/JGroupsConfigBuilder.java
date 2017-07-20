@@ -6,7 +6,7 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_SOCK;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.MERGE3;
-import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.RELAY2;
+import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_RELAY2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TCP_NIO2;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.TEST_PING;
@@ -96,7 +96,7 @@ public class JGroupsConfigBuilder {
       if (!flags.isRelayRequired()) {
          removeRelay2(jgroupsCfg);
       } else {
-         ProtocolConfiguration protocol = jgroupsCfg.getProtocol(RELAY2);
+         ProtocolConfiguration protocol = jgroupsCfg.getProtocol(TEST_RELAY2);
          protocol.getProperties().put("site", flags.siteName());
          if (flags.relayConfig() != null) //if not specified, use default
             protocol.getProperties().put("config", flags.relayConfig());
@@ -151,7 +151,7 @@ public class JGroupsConfigBuilder {
    }
 
    private static void removeRelay2(JGroupsProtocolCfg jgroupsCfg) {
-      jgroupsCfg.removeProtocol(RELAY2);
+      jgroupsCfg.removeProtocol(TEST_RELAY2);
    }
 
    private static String getTestPingDiscovery(String fullTestName, JGroupsProtocolCfg jgroupsCfg) {
@@ -305,7 +305,7 @@ public class JGroupsConfigBuilder {
       UFC, MFC, FC,
       FRAG2, FRAG3,
       STREAMING_STATE_TRANSFER,
-      RELAY2,
+      TEST_RELAY2,
       TOA
    }
 

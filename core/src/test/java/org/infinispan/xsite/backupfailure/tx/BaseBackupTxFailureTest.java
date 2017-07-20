@@ -33,7 +33,7 @@ public abstract class BaseBackupTxFailureTest extends AbstractTwoSitesTest {
       backup("LON").getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
    }
 
-   @Test(groups = "unstable_xsite")
+   @Test(groups = {"xsite", "unstable"})
    public void testPrepareFailure() {
       failureInterceptor.enable();
       try {

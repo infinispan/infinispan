@@ -17,6 +17,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.remoting.transport.jgroups.SiteMasterPickerImpl;
+import org.infinispan.test.TestingUtil;
 import org.jgroups.protocols.relay.RELAY2;
 import org.testng.annotations.Test;
 
@@ -46,9 +47,8 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
       for (TestSite testSite : sites) {
          for (EmbeddedCacheManager cacheManager : testSite.cacheManagers) {
             RELAY2 relay2 = getRELAY2(cacheManager);
-            Field field = relay2.getClass().getDeclaredField("site_master_picker");
-            field.setAccessible(true);
-            assertEquals(SiteMasterPickerImpl.class, field.get(relay2).getClass());
+            Object site_master_picker = TestingUtil.extractField(RELAY2.class, relay2, "site_master_picker");
+            assertEquals(SiteMasterPickerImpl.class, site_master_picker.getClass());
          }
       }
    }

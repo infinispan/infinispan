@@ -137,10 +137,11 @@ public class SessionImpl implements Session {
       }
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
       try {
-         if (tm.getTransaction() != null) {
+         if (tm != null && tm.getTransaction() != null) {
             tm.rollback();
          }
       } catch (Exception e) {
+         // Ignore the exception
       }
    }
 
