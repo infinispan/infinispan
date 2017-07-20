@@ -126,23 +126,14 @@ public interface Param<P> {
    enum ExecutionMode implements Param<ExecutionMode> {
       /**
        * Command is executed on its owners, in transactional mode in the context, too, but there it is not persisted.
-       * The result of the command is backed up to all sites configured for backup.
-       * Note: under some circumstances it may be necessary to transfer full value instead of executing the command
-       * on some owners; the application must not rely on any side effects of command execution.
        */
-      ALL,
+      CLUSTER,
       /**
        * Command is executed only locally, it is not sent to remote nodes. If the command is a write and this node
-       * is not an owner of given entry, the entry is not stored in the cache; if the node is an owner the entry is
-       * stored (even without contacting the primary owner, if this is a backup). If the command reads a value and
+       * is not an owner of given entry, the entry is not stored in the cache. If the command reads a value and
        * the entry is not available locally, null entry is provided instead.
        */
-      LOCAL,
-      /**
-       * Command is executed only in the current site (same as {@link #ALL}, but it is not sent for backup
-       * to other sites)
-       */
-      LOCAL_SITE;
+      LOCAL;
       // Other options: context-only write, write without remote read (SKIP_REMOTE_LOOKUP)...
 
       public static final int ID = ParamIds.EXECUTION_MODE_ID;
@@ -159,7 +150,7 @@ public interface Param<P> {
       }
 
       public static ExecutionMode defaultValue() {
-         return ALL;
+         return CLUSTER;
       }
 
       public static ExecutionMode valueOf(int ordinal) {

@@ -17,7 +17,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.remoting.transport.jgroups.SiteMasterPickerImpl;
-import org.infinispan.transaction.LockingMode;
 import org.jgroups.protocols.relay.RELAY2;
 import org.testng.annotations.Test;
 
@@ -41,9 +40,6 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
     * config element won't be used.
     */
    protected boolean implicitBackupCache = false;
-   protected CacheMode cacheMode;
-   protected boolean transactional;
-   protected LockingMode lockingMode;
 
    @Test(groups = "xsite")
    public void testSiteMasterPicked() throws NoSuchFieldException, IllegalAccessException {
@@ -125,40 +121,6 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
       return "k_" + site;
    }
 
-
-   public AbstractTwoSitesTest cacheMode(CacheMode cacheMode) {
-      this.cacheMode = cacheMode;
-      return this;
-   }
-
-   public AbstractTwoSitesTest transactional(boolean transactional) {
-      this.transactional = transactional;
-      return this;
-   }
-
-   public AbstractTwoSitesTest lockingMode(LockingMode lockingMode) {
-      this.lockingMode = lockingMode;
-      return this;
-   }
-
-   public AbstractTwoSitesTest use2Pc(boolean use2Pc) {
-      this.use2Pc = use2Pc;
-      return this;
-   }
-
-   @Override
-   protected String parameters() {
-      StringBuilder sb = new StringBuilder().append("[")
-            .append(cacheMode)
-            .append(", tx=").append(transactional);
-      if (lockingMode != null) {
-         sb.append(", lockingMode=").append(lockingMode);
-      }
-      if (use2Pc) {
-         sb.append(", 2PC");
-      }
-      return sb.append("]").toString();
-   }
 
    protected abstract ConfigurationBuilder getNycActiveConfig();
 

@@ -105,7 +105,6 @@ public final class Params {
       if (persistenceMode == PersistenceMode.SKIP) flagsBitSet |= FlagBitSets.SKIP_CACHE_LOAD | FlagBitSets.SKIP_CACHE_STORE;
       if (lockingMode == LockingMode.SKIP) flagsBitSet |= FlagBitSets.SKIP_LOCKING;
       if (executionMode == ExecutionMode.LOCAL) flagsBitSet |= FlagBitSets.CACHE_MODE_LOCAL;
-      else if (executionMode == ExecutionMode.LOCAL_SITE) flagsBitSet |= FlagBitSets.SKIP_XSITE_BACKUP;
       return flagsBitSet;
    }
 
@@ -119,8 +118,6 @@ public final class Params {
       }
       if ((flagsBitSet & FlagBitSets.CACHE_MODE_LOCAL) != 0) {
          params = params.addAll(ExecutionMode.LOCAL);
-      } else if ((flagsBitSet & FlagBitSets.SKIP_XSITE_BACKUP) != 0) {
-         params = params.addAll(ExecutionMode.LOCAL_SITE);
       }
       return params;
    }
@@ -144,7 +141,7 @@ public final class Params {
       // make sure that bit-set marshalling will work
       if (PersistenceMode.values().length > 2) throw new IllegalStateException();
       if (LockingMode.values().length > 2) throw new IllegalStateException();
-      if (ExecutionMode.values().length > 4) throw new IllegalStateException();
+      if (ExecutionMode.values().length > 2) throw new IllegalStateException();
    }
 
    public static void writeObject(ObjectOutput output, Params params) throws IOException {
@@ -161,7 +158,7 @@ public final class Params {
       int paramBits = input.readByte();
       PersistenceMode persistenceMode = PersistenceMode.valueOf(paramBits & 1);
       LockingMode lockingMode = LockingMode.valueOf((paramBits >>> 1) & 1);
-      ExecutionMode executionMode = ExecutionMode.valueOf((paramBits >>> 2) & 3);
+      ExecutionMode executionMode = ExecutionMode.valueOf((paramBits >>> 2) & 1);
       if (persistenceMode == PersistenceMode.defaultValue()
             && lockingMode == LockingMode.defaultValue()
             && executionMode == ExecutionMode.defaultValue()) {

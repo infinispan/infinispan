@@ -1,6 +1,5 @@
 package org.infinispan.xsite;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -37,25 +36,9 @@ public interface CustomFailurePolicy<K, V> {
 
    void handleReplaceFailure(String site, K key, V oldValue, V newValue);
 
-   default void handleComputeFailure(String site, K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent) {}
+   void handleComputeFailure(String site, K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent);
 
-   default void handleComputeIfAbsentFailure(String site, K key, Function<? super K, ? extends V> mappingFunction) {}
-
-   default void handleReadWriteKeyFailure(String site, K key) {}
-
-   default void handleReadWriteKeyValueFailure(String site, K key) {}
-
-   default void handleWriteOnlyKeyFailure(String site, K key) {}
-
-   default void handleWriteOnlyKeyValueFailure(String site, K key) {}
-
-   default void handleReadWriteManyFailure(String site, Collection<? extends K> keys) {}
-
-   default void handleReadWriteManyEntriesFailure(String site, Map<? extends K, ? extends V> keys) {}
-
-   default void handleWriteOnlyManyFailure(String site, Collection<? extends K> key) {}
-
-   default void handleWriteOnlyManyEntriesFailure(String site, Map<? extends K, ? extends V> key) {}
+   void handleComputeIfAbsentFailure(String site, K key, Function<? super K, ? extends V> mappingFunction);
 
    void handleClearFailure(String site);
 

@@ -64,7 +64,6 @@ import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -85,7 +84,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private static final long SKIP_REMOTE_FLAGS = FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP;
 
    private PartitionHandlingManager partitionHandlingManager;
-   private boolean forceRemoteReadForFunctionalCommands;
 
    private final TxReadOnlyManyHelper txReadOnlyManyHelper = new TxReadOnlyManyHelper();
    private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper();
@@ -94,15 +92,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Inject
    public void inject(PartitionHandlingManager partitionHandlingManager) {
       this.partitionHandlingManager = partitionHandlingManager;
-   }
-
-   @Override
-   public void configure() {
-      super.configure();
-      // When cross-site replication is enabled, we need to retrieve the previous value from remote node
-      // even for functional commands; we will need to send the modified value to backup sites and therefore
-      // we need it in the context.
-      forceRemoteReadForFunctionalCommands = cacheConfiguration.sites().hasEnabledBackups();
    }
 
    @Override
@@ -207,12 +196,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         if (forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
-            CompletableFuture<Void> cf = remoteGetAll(ctx, command, command.getAffectedKeys(), RemoteGetAllForWriteHandler.INSTANCE);
-            return asyncInvokeNext(ctx, command, cf);
-         } else {
-            return handleFunctionalReadManyCommand(ctx, command, readWriteManyHelper);
-         }
+         return handleFunctionalReadManyCommand(ctx, command, readWriteManyHelper);
       } else {
          return handleTxWriteManyCommand(ctx, command, command.getAffectedKeys(), readWriteManyHelper::copyForLocal);
       }
@@ -221,29 +205,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         if (forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
-            CompletableFuture<Void> cf = remoteGetAll(ctx, command, command.getAffectedKeys(), RemoteGetAllForWriteHandler.INSTANCE);
-            return asyncInvokeNext(ctx, command, cf);
-         } else {
-            return handleFunctionalReadManyCommand(ctx, command, readWriteManyEntriesHelper);
-         }
+         return handleFunctionalReadManyCommand(ctx, command, readWriteManyEntriesHelper);
       } else {
          return handleTxWriteManyEntriesCommand(ctx, command, command.getEntries(),
                (c, entries) -> new ReadWriteManyEntriesCommand<>(c).withEntries(entries));
-      }
-   }
-
-   private static class RemoteGetAllForWriteHandler implements RemoteGetAllHandler {
-      private static RemoteGetAllForWriteHandler INSTANCE = new RemoteGetAllForWriteHandler();
-
-      @Override
-      public void onUnsureResponse() {
-         throw OutdatedTopologyException.INSTANCE;
-      }
-
-      @Override
-      public void onKeysLost(Collection<?> lostKeys) {
-         throw AllOwnersLostException.INSTANCE;
       }
    }
 
@@ -459,8 +424,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             if (command.hasAnyFlag(SKIP_REMOTE_FLAGS)|| command.loadType() == VisitableCommand.LoadType.DONT_LOAD) {
                entryFactory.wrapExternalEntry(ctx, key, null, false, true);
                return invokeNext(ctx, command);
-            } else if (forceRemoteReadForFunctionalCommands && !command.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
-               return asyncInvokeNext(ctx, command, remoteGet(ctx, command, key, true));
             } else {
                LocalizedCacheTopology cacheTopology = checkTopologyId(command);
                Collection<Address> owners = cacheTopology.getDistribution(key).readOwners();
