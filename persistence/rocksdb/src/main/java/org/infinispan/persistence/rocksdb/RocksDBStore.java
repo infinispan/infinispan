@@ -84,7 +84,7 @@ public class RocksDBStore<K,V> implements AdvancedLoadWriteStore<K,V> {
 
     private WriteOptions dataWriteOptions() {
         if (dataWriteOptions == null)
-            dataWriteOptions = new WriteOptions().setSync(true).setDisableWAL(false);
+            dataWriteOptions = new WriteOptions().setDisableWAL(false);
         return dataWriteOptions;
     }
 
