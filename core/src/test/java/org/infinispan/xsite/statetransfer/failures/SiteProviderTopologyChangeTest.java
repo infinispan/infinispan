@@ -34,7 +34,8 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "xsite", testName = "xsite.statetransfer.failures.SiteProviderTopologyChangeTest")
+//unstable: it looks like not all cases are handled properly. Needs to be revisited! ISPN-6228
+@Test(groups = "unstable_xsite", testName = "xsite.statetransfer.failures.SiteProviderTopologyChangeTest")
 public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
 
    public SiteProviderTopologyChangeTest() {
