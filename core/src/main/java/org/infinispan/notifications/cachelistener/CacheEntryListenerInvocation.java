@@ -4,8 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.UUID;
 
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -40,11 +39,8 @@ public interface CacheEntryListenerInvocation<K, V> extends ListenerInvocation<E
 
    Set<Class<? extends Annotation>> getFilterAnnotations();
 
-   Encoder getKeyEncoder();
+   DataConversion getKeyDataConversion();
 
-   Encoder getValueEncoder();
+   DataConversion getValueDataConversion();
 
-   Wrapper getKeyWrapper();
-
-   Wrapper getValueWrapper();
 }

@@ -4,8 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 
@@ -47,8 +46,7 @@ public interface FilterIndexingServiceProvider {
    <K, V> void registerListenerInvocations(boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert,
                                            IndexedFilter<?, ?, ?> indexedFilter,
                                            Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners,
-                                           Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
-                                           Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass);
+                                           DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    /**
     * Stop the provider.

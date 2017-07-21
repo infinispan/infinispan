@@ -1650,4 +1650,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot create remote transaction %s, already completed", id = 482)
    CacheException remoteTransactionAlreadyCompleted(GlobalTransaction gtx);
+
+   @Message(value = "Class %s not found", id = 483)
+   CacheConfigurationException classNotFound(String name);
 }

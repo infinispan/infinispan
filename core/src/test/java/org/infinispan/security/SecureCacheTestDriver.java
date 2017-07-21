@@ -713,6 +713,16 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.NONE)
+   public void testGetKeyDataConversion(SecureCache<String, String> cache) {
+      cache.getKeyDataConversion();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testGetValueDataConversion(SecureCache<String, String> cache) {
+      cache.getValueDataConversion();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
    public void testWithEncoding_Class_Class(SecureCache<String, String> cache) {
       cache.withEncoding(IdentityEncoder.class, IdentityEncoder.class);
    }
