@@ -105,7 +105,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class);
 
-      AdvancedCache<K, V> cache = new CacheImpl<>(cacheName, keyDataConversion, valueDataConversion);
+      AdvancedCache<K, V> cache = new CacheImpl<>(cacheName);
 
       cache = new EncoderCache<>(cache, keyDataConversion, valueDataConversion);
 
