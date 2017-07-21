@@ -46,7 +46,7 @@ public class FunctionalWriteSkewInMemoryTest extends FunctionalTxInMemoryTest {
 
    @Test(dataProvider = "readCombos")
    public void testWriteSkew(boolean isOwner, ReadOp op1, ReadOp op2) throws Throwable {
-      Object key = getKey(isOwner);
+      Object key = getKey(isOwner, DIST);
       cache(0, DIST).put(key, "value0");
 
       tm.begin();

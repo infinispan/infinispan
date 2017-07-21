@@ -61,6 +61,11 @@ class WriteOnlyManyHelper extends WriteManyCommandHelper<WriteOnlyManyCommand, C
    }
 
    @Override
+   public Iterable<Object> toKeys(Collection<Object> list) {
+      return list;
+   }
+
+   @Override
    public boolean shouldRegisterRemoteCallback(WriteOnlyManyCommand cmd) {
       return !cmd.isForwarded();
    }

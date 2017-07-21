@@ -2,7 +2,6 @@ package org.infinispan.functional;
 
 import static org.infinispan.test.Exceptions.assertException;
 import static org.infinispan.test.Exceptions.assertExceptionNonStrict;
-import static org.infinispan.test.Exceptions.expectExceptionNonStrict;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -18,6 +17,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.remoting.RemoteException;
+import org.infinispan.test.TestException;
 import org.testng.annotations.Test;
 
 /**
@@ -32,7 +32,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "owningModeAndWriteMethod")
    public void testWriteLoad(boolean isOwner, WriteMethod method) {
-      Object key = getKey(isOwner);
+      Object key = getKey(isOwner, DIST);
 
       method.eval(key, wo, rw,
             view -> { assertFalse(view.find().isPresent()); return null; },
@@ -84,7 +84,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "owningModeAndWriteMethod")
    public void testExceptionPropagation(boolean isOwner, WriteMethod method) {
-      Object key = getKey(isOwner);
+      Object key = getKey(isOwner, DIST);
       try {
          method.eval(key, wo, rw,
                view -> null,
@@ -114,7 +114,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "owningModeAndReadWrites")
    public void testWriteOnMissingValue(boolean isOwner, WriteMethod method) {
-      Object key = getKey(isOwner);
+      Object key = getKey(isOwner, DIST);
       try {
          method.eval(key, null, rw,
                view -> view.get(),
@@ -134,7 +134,7 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "owningModeAndReadMethod")
    public void testReadLoad(boolean isOwner, ReadMethod method) {
-      Object key = getKey(isOwner);
+      Object key = getKey(isOwner, DIST);
 
       assertTrue(method.eval(key, ro, view -> { assertFalse(view.find().isPresent()); return true; }));
 
@@ -181,21 +181,11 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "owningModeAndReadMethod")
    public void testReadOnMissingValue(boolean isOwner, ReadMethod method) {
-      testReadOnMissingValue(getKey(isOwner), ro, method);
+      testReadOnMissingValue(getKey(isOwner, DIST), ro, method);
    }
 
    @Test(dataProvider = "methods")
    public void testOnMissingValueLocal(ReadMethod method) {
       testReadOnMissingValue(0, ReadOnlyMapImpl.create(fmapL1), method);
-   }
-
-   private <K> void testReadOnMissingValue(K key, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) {
-      assertEquals(ro.eval(key, view -> view.find().isPresent()).join(), Boolean.FALSE);
-      expectExceptionNonStrict(CompletionException.class, CacheException.class, NoSuchElementException.class, () ->
-            method.eval(key, ro, view -> view.get())
-      );
-   }
-
-   private static class TestException extends RuntimeException {
    }
 }

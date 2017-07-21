@@ -60,6 +60,11 @@ class ReadWriteManyHelper extends WriteManyCommandHelper<ReadWriteManyCommand, C
    }
 
    @Override
+   public Iterable<Object> toKeys(Collection<Object> list) {
+      return list;
+   }
+
+   @Override
    public boolean shouldRegisterRemoteCallback(ReadWriteManyCommand cmd) {
       return !cmd.isForwarded();
    }

@@ -2,7 +2,9 @@ package org.infinispan.functional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +20,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
 import org.infinispan.commands.functional.TxReadOnlyManyCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
@@ -36,6 +39,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static org.infinispan.test.Exceptions.expectExceptionNonStrict;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -46,10 +50,14 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    static ConcurrentMap<Class<? extends AbstractFunctionalOpTest>, AtomicInteger> invocationCounts = new ConcurrentHashMap<>();
 
    FunctionalMap.ReadOnlyMap<Object, String> ro;
+   FunctionalMap.ReadOnlyMap<Object, String> sro;
    FunctionalMap.ReadOnlyMap<Integer, String> lro;
    WriteOnlyMap<Object, String> wo;
    ReadWriteMap<Object, String> rw;
    AdvancedCache<Object, String> cache;
+   WriteOnlyMap<Object, String> swo;
+   ReadWriteMap<Object, String> srw;
+   AdvancedCache<Object, String> scatteredCache;
    WriteOnlyMap<Integer, String> lwo;
    ReadWriteMap<Integer, String> lrw;
    List<CountingRequestRepository> countingRequestRepositories;
@@ -108,10 +116,14 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    public void createBeforeMethod() throws Throwable {
       super.createBeforeMethod();
       this.ro = ReadOnlyMapImpl.create(fmapD1);
+      this.sro = ReadOnlyMapImpl.create(fmapS1);
       this.lro = ReadOnlyMapImpl.create(fmapL1);
       this.wo = WriteOnlyMapImpl.create(fmapD1);
       this.rw = ReadWriteMapImpl.create(fmapD1);
       this.cache = cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache();
+      this.swo = WriteOnlyMapImpl.create(fmapS1);
+      this.srw = ReadWriteMapImpl.create(fmapS1);
+      this.scatteredCache = cacheManagers.get(0).<Object, String>getCache(SCATTERED).getAdvancedCache();
       this.lwo = WriteOnlyMapImpl.create(fmapL1);
       this.lrw = ReadWriteMapImpl.create(fmapL1);
    }
@@ -120,7 +132,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
       countingRequestRepositories = cacheManagers.stream().map(cm -> CountingRequestRepository.replaceDispatcher(cm)).collect(Collectors.toList());
-      Stream.of(null, DIST, REPL).forEach(name -> caches(name).forEach(c -> {
+      Stream.of(null, DIST, REPL, SCATTERED).forEach(name -> caches(name).forEach(c -> {
          c.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(new CommandCachingInterceptor(), CallInterceptor.class);
       }));
    }
@@ -134,16 +146,16 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       }
    }
 
-   protected Object getKey(boolean isOwner) {
+   protected Object getKey(boolean isOwner, String cacheName) {
       Object key;
       if (isOwner) {
          // this is simple: find a key that is local to the originating node
-         key = getKeyForCache(0, DIST);
+         key = getKeyForCache(0, cacheName);
       } else {
          // this is more complicated: we need a key that is *not* local to the originating node
          key = IntStream.iterate(0, i -> i + 1)
                .mapToObj(i -> "key" + i)
-               .filter(k -> !cache(0, DIST).getAdvancedCache().getDistributionManager().getLocality(k).isLocal())
+               .filter(k -> !cache(0, cacheName).getAdvancedCache().getDistributionManager().getLocality(k).isLocal())
                .findAny()
                .get();
       }
@@ -163,6 +175,13 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
 
    private static void incrementInvocationCount(Class<? extends AbstractFunctionalOpTest> clazz) {
       invocationCounts.computeIfAbsent(clazz, k -> new AtomicInteger()).incrementAndGet();
+   }
+
+   protected <K> void testReadOnMissingValue(K key, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) {
+      assertEquals(ro.eval(key, view -> view.find().isPresent()).join(), Boolean.FALSE);
+      expectExceptionNonStrict(CompletionException.class, CacheException.class, NoSuchElementException.class, () ->
+            method.eval(key, ro, view -> view.get())
+      );
    }
 
    enum WriteMethod {

@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -58,7 +60,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeObject(entries);
+      MarshallUtil.marshallMap(entries, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
@@ -69,7 +71,8 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      entries = (Map<? extends K, ? extends V>) input.readObject();
+      // We use LinkedHashMap in order to guarantee the same order of iteration
+      entries = MarshallUtil.unmarshallMap(input, LinkedHashMap::new);
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
@@ -93,7 +96,8 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    @Override
    public boolean isReturnValueExpected() {
-      return false;
+      // Scattered cache always needs some response.
+      return true;
    }
 
    @Override

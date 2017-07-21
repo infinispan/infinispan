@@ -93,7 +93,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    @Override
    public boolean isReturnValueExpected() {
-      return false;
+      // Scattered cache always needs some response.
+      return true;
    }
 
    @Override

@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
@@ -146,8 +148,10 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1
       CyclicBarrier beforeCommitCache1Barrier = new CyclicBarrier(2);
+      // Scattered cache mode uses only PKVC or RemoveCommands for backup
       BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor<>(beforeCommitCache1Barrier,
-            op.getCommandClass(), true, false);
+            true, false, cacheMode.isScattered() ? t -> t instanceof PutKeyValueCommand || t instanceof RemoveCommand
+            : t -> t.getClass().equals(op.getCommandClass()));
 
       Class<? extends DDAsyncInterceptor> ewi = cacheMode.isScattered() ? RetryingEntryWrappingInterceptor.class : EntryWrappingInterceptor.class;
       assertTrue(cache1.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, ewi));

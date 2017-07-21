@@ -2,6 +2,7 @@ package org.infinispan.container.entries;
 
 import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CHANGED;
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.COMMITTED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CREATED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
@@ -44,7 +45,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       CHANGED(1),
       CREATED(1 << 1),
       REMOVED(1 << 2),
-      // 1 << 3 no longer used (was: VALID)
+      COMMITTED(1 << 3),
       EVICTED(1 << 4),
       EXPIRED(1 << 5),
       SKIP_LOOKUP(1 << 6),
@@ -206,6 +207,16 @@ public class ReadCommittedEntry implements MVCCEntry {
    @Override
    public boolean isExpired() {
       return isFlagSet(EXPIRED);
+   }
+
+   @Override
+   public void setCommitted() {
+      setFlag(COMMITTED);
+   }
+
+   @Override
+   public boolean isCommitted() {
+      return isFlagSet(COMMITTED);
    }
 
    @Override
