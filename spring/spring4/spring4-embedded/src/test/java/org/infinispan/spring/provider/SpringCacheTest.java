@@ -1,9 +1,14 @@
 package org.infinispan.spring.provider;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -12,7 +17,6 @@ import org.infinispan.spring.support.embedded.InfinispanNamedEmbeddedCacheFactor
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -30,8 +34,8 @@ import org.testng.annotations.Test;
  * @author Marius Bogoevici
  *
  */
-@Test(testName = "spring.provider.SpringCacheCacheTest", groups = {"unit", "smoke"})
-public class SpringCacheCacheTest extends SingleCacheManagerTest {
+@Test(testName = "spring.provider.SpringCacheTest", groups = {"unit", "smoke"})
+public class SpringCacheTest extends SingleCacheManagerTest {
 
    protected final static String CACHE_NAME = "testCache";
 
@@ -53,12 +57,6 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
    public void setUp() throws Exception {
       this.nativeCache = createNativeCache();
       this.cache = createCache(this.nativeCache);
-   }
-
-   @AfterMethod
-   public void tearDown() throws Exception {
-      this.nativeCache = null;
-      this.cache = null;
    }
 
    @Test
@@ -210,6 +208,43 @@ public class SpringCacheCacheTest extends SingleCacheManagerTest {
 
       //then
       assertEquals("test", valueFromCache.get());
+   }
+
+   /*
+    * In this test Thread 1 should exclusively block Cache#get method so that Thread 2 won't be able to
+    * insert "thread2" string into the cache.
+    *
+    * The test check this part of the Spring spec:
+    * Return the value to which this cache maps the specified key, obtaining that value from valueLoader if necessary.
+    * This method provides a simple substitute for the conventional "if cached, return; otherwise create, cache and return" pattern.
+    * @see http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/cache/Cache.html#get-java.lang.Object-java.util.concurrent.Callable-
+    */
+   @Test
+   public void testValueLoaderWithLocking() throws Exception {
+      //given
+      CountDownLatch waitUntilThread1LocksValueGetter = new CountDownLatch(1);
+
+      //when
+      Future<String> thread1 = fork(() -> cache.get("test", () -> {
+         waitUntilThread1LocksValueGetter.countDown();
+         return "thread1";
+      }));
+
+      Future<String> thread2 = fork(() -> {
+         waitUntilThread1LocksValueGetter.await(30, TimeUnit.SECONDS);
+         return cache.get("test", () -> "thread2");
+      });
+
+      String valueObtainedByThread1 = thread1.get();
+      String valueObtainedByThread2 = thread2.get();
+
+      Cache.ValueWrapper valueAfterGetterIsDone = cache.get("test");
+
+      //then
+      assertNotNull(valueAfterGetterIsDone);
+      assertEquals("thread1", valueAfterGetterIsDone.get());
+      assertEquals("thread1", valueObtainedByThread1);
+      assertEquals("thread1", valueObtainedByThread2);
    }
 
    @Test
