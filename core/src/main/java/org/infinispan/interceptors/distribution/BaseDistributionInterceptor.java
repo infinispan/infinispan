@@ -10,11 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -34,6 +32,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ArrayCollector;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -563,8 +562,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       // On FutureMode.ASYNC, there should be one command per target node going from the top level
       // to allow retries in StateTransferInterceptor in case of topology change.
       MergingCompletableFuture<Object> allFuture = new MergingCompletableFuture<>(
-         ctx, requestedKeys.size() + (availableKeys.isEmpty() ? 0 : 1),
-         new Object[keys.size()], helper::transformResult);
+            requestedKeys.size() + (availableKeys.isEmpty() ? 0 : 1),
+            new Object[keys.size()], helper::transformResult);
 
       handleLocallyAvailableKeys(ctx, command, availableKeys, allFuture, helper);
       int pos = availableKeys.size();
@@ -764,86 +763,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return responseValue instanceof Object[] ? (Object[]) responseValue : null;
    }
 
-   protected static class ArrayIterator {
-      private final Object[] array;
-      private int pos = 0;
-
-      public ArrayIterator(Object[] array) {
-         this.array = array;
-      }
-
-      public void add(Object item) {
-         array[pos] = item;
-         ++pos;
-      }
-
-      public void combine(ArrayIterator other) {
-         throw new UnsupportedOperationException("The stream is not supposed to be parallel");
-      }
-   }
-
-   protected static class CountDownCompletableFuture extends CompletableFuture<Object> {
-      protected final InvocationContext ctx;
-      protected final AtomicInteger counter;
-
-      public CountDownCompletableFuture(InvocationContext ctx, int participants) {
-         if (trace) log.tracef("Creating shortcut countdown with %d participants", participants);
-         this.ctx = ctx;
-         this.counter = new AtomicInteger(participants);
-      }
-
-      public void countDown() {
-         if (counter.decrementAndGet() == 0) {
-            Object result = null;
-            try {
-               result = result();
-            } catch (Throwable t) {
-               completeExceptionally(t);
-            } finally {
-               // no-op when completed with exception
-               complete(result);
-            }
-         }
-      }
-
-      public void increment() {
-         int preValue = counter.getAndIncrement();
-         if (preValue == 0) {
-            throw new IllegalStateException();
-         }
-      }
-
-      protected Object result() {
-         return null;
-      }
-   }
-
-   protected static class MergingCompletableFuture<T> extends CountDownCompletableFuture {
-      private final Function<T[], Object> transform;
-      protected final T[] results;
-      protected volatile boolean hasUnsureResponse;
-      protected volatile boolean lostData;
-
-      public MergingCompletableFuture(InvocationContext ctx, int participants, T[] results, Function<T[], Object> transform) {
-         super(ctx, participants);
-         // results can be null if the command has flag IGNORE_RETURN_VALUE
-         this.results = results;
-         this.transform = transform;
-      }
-
-      @Override
-      protected Object result() {
-         // If we've lost data but did not get any unsure responses we should return limited stream.
-         // If we've got unsure response but did not lose any data - no problem, there has been another
-         // response delivering the results.
-         // Only if those two combine we'll rather throw OTE and retry.
-         if (hasUnsureResponse && lostData) {
-            throw OutdatedTopologyException.INSTANCE;
-         }
-         return transform == null || results == null ? null : transform.apply(results);
-      }
-   }
-
    private Object visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       return ctx.lookupEntry(command.getKey()) == null ? onEntryMiss(ctx, command) : invokeNext(ctx, command);
    }
@@ -987,10 +906,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
       @Override
       public void applyLocalResult(MergingCompletableFuture allFuture, Object rv) {
-         Supplier<ArrayIterator> supplier = () -> new ArrayIterator(allFuture.results);
-         BiConsumer<ArrayIterator, Object> consumer = ArrayIterator::add;
-         BiConsumer<ArrayIterator, ArrayIterator> combiner = ArrayIterator::combine;
-         ((Stream) rv).collect(supplier, consumer, combiner);
+         ((Stream) rv).collect(new ArrayCollector(allFuture.results));
       }
 
       @Override
