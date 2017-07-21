@@ -22,6 +22,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -269,6 +270,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       requireNonNull(function, "Null functions are not supported!");
    }
 
+   private void assertBiConsumerNotNull(Object biconsumer) {
+      requireNonNull(biconsumer, "Null biconsumer are not supported!");
+   }
 
    // CacheSupport does not extend AdvancedCache, so it cannot really call up
    // to the cache methods that take Metadata parameter. Since CacheSupport
@@ -303,6 +307,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
       return replace(key, oldValue, value, lifespan, unit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public final void forEach(BiConsumer<? super K, ? super V> action) {
+      assertBiConsumerNotNull(action);
+      entrySet().stream().forEach(entry -> action.accept(entry.getKey(), entry.getValue()));
+   }
+
+   void forEach(BiConsumer<? super K, ? super V> action, long flags, InvocationContext ctx) {
+      assertBiConsumerNotNull(action);
+      entrySet(flags, ctx).stream().forEach(entry -> action.accept(entry.getKey(), entry.getValue()));
    }
 
    @Override
@@ -775,6 +790,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    CacheSet<Map.Entry<K, V>> entrySet(long explicitFlags) {
       InvocationContext ctx = invocationContextFactory.createInvocationContext(false, UNBOUNDED);
+      return entrySet(explicitFlags, ctx);
+   }
+
+   CacheSet<Map.Entry<K, V>> entrySet(long explicitFlags, InvocationContext ctx) {
       EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
       return (CacheSet<Map.Entry<K, V>>) invoker.invoke(ctx, command);
    }

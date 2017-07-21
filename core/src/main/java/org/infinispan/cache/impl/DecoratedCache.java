@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -153,9 +154,9 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
-       .lifespan(lifespan, unit)
-       .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
-       .build();
+            .lifespan(lifespan, unit)
+            .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+            .build();
 
       putForExternalRead(key, value, metadata);
    }
@@ -163,9 +164,9 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       Metadata metadata = new EmbeddedMetadata.Builder()
-       .lifespan(lifespan, lifespanUnit)
-       .maxIdle(maxIdle, maxIdleUnit)
-       .build();
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdle, maxIdleUnit)
+            .build();
 
       putForExternalRead(key, value, metadata);
    }
@@ -430,7 +431,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
-         final Metadata metadata) {
+                                           final Metadata metadata) {
       return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, writeContext(1));
    }
 
@@ -564,6 +565,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
       return computeIfAbsent(key, mappingFunction, cacheImplementation.defaultMetadata);
+   }
+
+   @Override
+   public void forEach(BiConsumer<? super K, ? super V> action) {
+      cacheImplementation.forEach(action, flags, writeContext(1));
    }
 
    //Not exposed on interface

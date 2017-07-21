@@ -14,6 +14,7 @@ import org.infinispan.stream.impl.termop.AbstractForEachOperation;
 
 /**
  * Terminal operation that handles for each where no map operations are defined
+ *
  * @param <K> key type of the supplied stream
  * @param <V> resulting value type
  */
@@ -21,7 +22,7 @@ public class ForEachOperation<K, V> extends AbstractForEachOperation<K, V, Strea
    private final Consumer<? super V> consumer;
 
    public ForEachOperation(Iterable<IntermediateOperation> intermediateOperations,
-           Supplier<Stream<CacheEntry>> supplier, int batchSize, Consumer<? super V> consumer) {
+                           Supplier<Stream<CacheEntry>> supplier, int batchSize, Consumer<? super V> consumer) {
       super(intermediateOperations, supplier, batchSize);
       this.consumer = consumer;
    }
@@ -45,6 +46,8 @@ public class ForEachOperation<K, V> extends AbstractForEachOperation<K, V, Strea
       super.handleInjection(registry);
       if (consumer instanceof CacheAware) {
          ((CacheAware) consumer).injectCache(registry.getComponent(Cache.class));
+      } else {
+         registry.wireDependencies(consumer);
       }
    }
 }

@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -27,6 +29,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.Test;
@@ -57,15 +60,16 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       }
    }
 
+
    private void assertOwnershipConsensus(String key) {
       List l1 = getCacheTopology(c1).getDistribution(key).writeOwners();
       List l2 = getCacheTopology(c2).getDistribution(key).writeOwners();
       List l3 = getCacheTopology(c3).getDistribution(key).writeOwners();
       List l4 = getCacheTopology(c4).getDistribution(key).writeOwners();
 
-      assertEquals("L1 "+l1+" and L2 "+l2+" don't agree.", l1, l2);
-      assertEquals("L2 "+l2+" and L3 "+l3+" don't agree.", l2, l3);
-      assertEquals("L3 "+l3+" and L4 "+l4+" don't agree.", l3, l4);
+      assertEquals("L1 " + l1 + " and L2 " + l2 + " don't agree.", l1, l2);
+      assertEquals("L2 " + l2 + " and L3 " + l3 + " don't agree.", l2, l3);
+      assertEquals("L3 " + l3 + " and L4 " + l4 + " don't agree.", l3, l4);
 
    }
 
@@ -396,5 +400,39 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          throw computeRaisedException;
       };
       expectException(RemoteException.class, () -> getFirstNonOwner("somethingWrong").computeIfAbsent("somethingWrong", mappingToException));
+   }
+
+   static final Map<Object, String> forEachStructure = new ConcurrentHashMap<>();
+   static final AtomicInteger forEachOffset = new AtomicInteger();
+
+   static int populateNextForEachStructure(String obj) {
+      int offset = forEachOffset.getAndIncrement();
+      forEachStructure.put(offset, obj);
+      return offset;
+   }
+
+   public void testForEach() throws Exception {
+      c1.put("1", "one");
+      asyncWait("1", PutKeyValueCommand.class);
+      c2.put("2", "two");
+      asyncWait("2", PutKeyValueCommand.class);
+      c3.put("3", "three");
+      asyncWait("3", PutKeyValueCommand.class);
+      c4.put("4", "four");
+      asyncWait("4", PutKeyValueCommand.class);
+
+      SerializableBiConsumer<Object, String> localConsumer = (k, v) -> {
+         populateNextForEachStructure(v);
+      };
+
+      c4.getAdvancedCache().forEach(localConsumer);
+
+      assertTrue(forEachStructure.size() == 4);
+      assertTrue(forEachStructure.containsValue("one")
+            && forEachStructure.containsValue("two")
+            && forEachStructure.containsValue("three")
+            && forEachStructure.containsValue("four"));
+
+      forEachStructure.clear();
    }
 }

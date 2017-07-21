@@ -16,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -30,11 +31,6 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.functional.FunctionalMap.ReadWriteMap;
-import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.functional.MetaParam.MetaLifespan;
-import org.infinispan.functional.MetaParam.MetaMaxIdle;
-import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CloseableIterator;
@@ -50,6 +46,11 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.functional.FunctionalMap.ReadWriteMap;
+import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
+import org.infinispan.functional.MetaParam.MetaLifespan;
+import org.infinispan.functional.MetaParam.MetaMaxIdle;
+import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
@@ -434,6 +435,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void forEach(BiConsumer<? super K, ? super V> action) {
       throw new UnsupportedOperationException();
    }
 

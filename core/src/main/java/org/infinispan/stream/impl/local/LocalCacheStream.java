@@ -263,6 +263,7 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
    @Override
    public void forEach(Consumer<? super R> action) {
       injectCache(action);
+      registry.wireDependencies(action);
       createStream().forEach(action);
    }
 
