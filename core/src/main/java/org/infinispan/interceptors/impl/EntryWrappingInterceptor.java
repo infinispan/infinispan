@@ -168,7 +168,8 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       isSync = cacheConfiguration.clustering().cacheMode().isSynchronous();
       // isolation level makes no sense without transactions
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
-            && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+            && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ
+            || cacheConfiguration.clustering().cacheMode().isScattered();
       isVersioned = Configurations.isTxVersioned(cacheConfiguration);
       totalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
    }
@@ -228,8 +229,12 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          if (useRepeatableRead) {
             for (Object key : getAllCommand.getKeys()) {
                CacheEntry cacheEntry = rCtx.lookupEntry(key);
-               if (trace && cacheEntry == null) log.tracef(t, "Missing entry for " + key);
-               cacheEntry.setSkipLookup(true);
+               if (cacheEntry == null) {
+                  // Data was lost
+                  if (trace) log.tracef(t, "Missing entry for " + key);
+               } else {
+                  cacheEntry.setSkipLookup(true);
+               }
             }
          }
 
@@ -329,12 +334,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       if (useRepeatableRead) {
          MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(key);
          if (trace) {
-            log.tracef("This is a retry - resetting previous value in entry ", entry);
+            log.tracef("This is a retry - resetting previous value in entry %s", entry);
          }
-         entry.resetCurrentValue();
+         if (entry != null) {
+            entry.resetCurrentValue();
+         }
       } else {
          if (trace) {
-            log.tracef("This is a retry - removing looked up entry " + ctx.lookupEntry(key));
+            log.tracef("This is a retry - removing looked up entry %s", ctx.lookupEntry(key));
          }
          ctx.removeLookedUpEntry(key);
       }

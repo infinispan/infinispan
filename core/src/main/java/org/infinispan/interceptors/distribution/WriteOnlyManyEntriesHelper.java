@@ -2,7 +2,7 @@ package org.infinispan.interceptors.distribution;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -48,7 +48,8 @@ class WriteOnlyManyEntriesHelper extends WriteManyCommandHelper<WriteOnlyManyEnt
 
    @Override
    public Map<Object, Object> newContainer() {
-      return new HashMap<>();
+      // Make sure the iteration in containers is ordered
+      return new LinkedHashMap<>();
    }
 
    @Override
@@ -59,6 +60,11 @@ class WriteOnlyManyEntriesHelper extends WriteManyCommandHelper<WriteOnlyManyEnt
    @Override
    public int containerSize(Map<Object, Object> map) {
       return map.size();
+   }
+
+   @Override
+   public Iterable<Object> toKeys(Map<Object, Object> map) {
+      return map.keySet();
    }
 
    @Override

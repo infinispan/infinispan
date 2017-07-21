@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
+import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -33,6 +34,9 @@ class MergingCompletableFuture<T> extends CountDownCompletableFuture {
          items = ((Map) rv).entrySet();
       } else if (rv instanceof Collection) {
          items = (Collection<?>) rv;
+      } else if (rv != null && rv.getClass().isArray() && !rv.getClass().getComponentType().isPrimitive()) {
+         System.arraycopy(rv, 0, f.results, myOffset, Array.getLength(rv));
+         return;
       } else {
          f.completeExceptionally(new IllegalArgumentException("Unexpected result value " + rv));
          return;

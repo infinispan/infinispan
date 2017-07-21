@@ -235,6 +235,9 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       e.setValid(false);
       e.setChanged(true);
       e.setValue(null);
+      if (metadata != null) {
+         e.setMetadata(metadata);
+      }
 
       if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
          return isConditional() ? true : prevValue;

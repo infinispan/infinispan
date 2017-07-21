@@ -16,7 +16,6 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.marshall.core.MarshallableFunctions;
-import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -81,7 +80,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
 
    @Test(dataProvider = "owningModeAndReadMethod")
    public void testReadsAfterMods(boolean isOwner, ReadMethod method) throws Exception {
-      Object KEY = getKey(isOwner);
+      Object KEY = getKey(isOwner, DIST);
       cache(0, DIST).put(KEY, "a");
 
       tm.begin();
@@ -94,7 +93,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
 
    @Test(dataProvider = "owningModeAndReadWrites")
    public void testReadWriteAfterMods(boolean isOwner, WriteMethod method) throws Exception {
-      Object KEY = getKey(isOwner);
+      Object KEY = getKey(isOwner, DIST);
       cache(0, DIST).put(KEY, "a");
 
       tm.begin();
@@ -108,7 +107,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
    }
 
    public void testNonFunctionalReadsAfterMods() throws Exception {
-      Object KEY = getKey(false);
+      Object KEY = getKey(false, DIST);
       cache(0, DIST).put(KEY, "a");
 
       tm.begin();
@@ -151,7 +150,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
 
    @Test(dataProvider = "owningModeAndReadWrites")
    public void testWriteModsInTxContext(boolean isOwner, WriteMethod method) throws Exception {
-      Object KEY = getKey(isOwner);
+      Object KEY = getKey(isOwner, DIST);
       cache(0, DIST).put(KEY, "a");
 
       tm.begin();
@@ -180,15 +179,15 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
 
    @Test(dataProvider = "owningModeAndReadMethod")
    public void testReadOnMissingValues(boolean isOwner, ReadMethod method) throws Exception {
-      testReadOnMissingValue(getKeys(isOwner, NUM_KEYS), ro, method);
+      testReadOnMissingValues(getKeys(isOwner, NUM_KEYS), ro, method);
    }
 
    @Test(dataProvider = "readMethods")
    public void testReadOnMissingValuesLocal(ReadMethod method) throws Exception {
-      testReadOnMissingValue(INT_KEYS, ReadOnlyMapImpl.create(fmapL1), method);
+      testReadOnMissingValues(INT_KEYS, lro, method);
    }
 
-   private <K> void testReadOnMissingValue(K[] keys, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) throws Exception {
+   private <K> void testReadOnMissingValues(K[] keys, FunctionalMap.ReadOnlyMap<K, String> ro, ReadMethod method) throws Exception {
       tm.begin();
       for (K key : keys) {
          Assert.assertEquals(ro.eval(key, view -> view.find().isPresent()).join(), Boolean.FALSE);

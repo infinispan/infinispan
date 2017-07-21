@@ -22,21 +22,25 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
    private static final Log log = LogFactory.getLog(BlockingInterceptor.class);
 
    private final CyclicBarrier barrier;
-   private final Class<T> commandClass;
    private final boolean blockAfter;
    private final boolean originLocalOnly;
    private final AtomicBoolean suspended = new AtomicBoolean();
-   private final Predicate<T> acceptCommand;
+   private final Predicate<VisitableCommand> acceptCommand;
 
    public BlockingInterceptor(CyclicBarrier barrier, Class<T> commandClass,
          boolean blockAfter, boolean originLocalOnly) {
-      this(barrier, commandClass, blockAfter, originLocalOnly, t -> true);
+      this(barrier, commandClass, blockAfter, originLocalOnly, t -> t != null && commandClass.equals(t.getClass()));
    }
 
    public BlockingInterceptor(CyclicBarrier barrier, Class<T> commandClass,
          boolean blockAfter, boolean originLocalOnly, Predicate<T> acceptCommand) {
+      this(barrier, blockAfter, originLocalOnly,
+            t -> t != null && commandClass.equals(t.getClass()) && acceptCommand.test(commandClass.cast(t)));
+   }
+
+   public BlockingInterceptor(CyclicBarrier barrier, boolean blockAfter, boolean originLocalOnly,
+                              Predicate<VisitableCommand> acceptCommand) {
       this.barrier = barrier;
-      this.commandClass = commandClass;
       this.blockAfter = blockAfter;
       this.originLocalOnly = originLocalOnly;
       this.acceptCommand = acceptCommand;
@@ -51,7 +55,7 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
          log.tracef("Suspended, not blocking command %s", command);
          return;
       }
-      if (commandClass.equals(command.getClass()) && (!originLocalOnly || ctx.isOriginLocal()) && acceptCommand.test(commandClass.cast(command))) {
+      if ((!originLocalOnly || ctx.isOriginLocal()) && acceptCommand.test(command)) {
          log.tracef("Command blocking %s completion of %s", blockAfter ? "after" : "before", command);
          // The first arrive and await is to sync with main thread
          barrier.await();

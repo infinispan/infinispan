@@ -18,10 +18,12 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
 
    /* Value before the last modification. Serves as the previous value when the operation is retried */
    protected Object oldValue;
+   protected Metadata oldMetadata;
 
    public RepeatableReadEntry(Object key, Object value, Metadata metadata) {
       super(key, value, metadata);
       this.oldValue = value;
+      this.oldMetadata = metadata;
    }
 
    @Override
@@ -49,11 +51,21 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    @Override
    public void resetCurrentValue() {
       value = oldValue;
+      metadata = oldMetadata;
    }
 
    @Override
    public void updatePreviousValue() {
       oldValue = value;
+      oldMetadata = metadata;
+   }
+
+   public Object getOldValue() {
+      return oldValue;
+   }
+
+   public Metadata getOldMetadata() {
+      return oldMetadata;
    }
 
    public void setRead() {

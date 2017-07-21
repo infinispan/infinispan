@@ -67,4 +67,14 @@ public interface MVCCEntry<K, V> extends CacheEntry<K, V>, StateChangingEntry {
    default boolean isRead() {
       return false;
    }
+
+   /**
+    * Mark this context-entry as already committed to the {@link DataContainer}.
+    */
+   default void setCommitted() {}
+
+   /**
+    * @return True if this context entry has been committed to the {@link DataContainer}
+    */
+   default boolean isCommitted() { return false; }
 }

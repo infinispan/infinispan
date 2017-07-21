@@ -16,7 +16,7 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 @Test(groups = "stress", testName = "ReadOnlyManyCommandStressTest", timeOut = 15*60*1000)
-@InCacheMode(CacheMode.DIST_SYNC)
+@InCacheMode(CacheMode.SCATTERED_SYNC)
 public class ReadOnlyManyCommandStressTest extends GetAllCommandStressTest {
 
    @Override

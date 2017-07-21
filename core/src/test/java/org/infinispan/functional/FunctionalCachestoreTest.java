@@ -34,7 +34,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "owningModeAndWriteMethod")
    public void testWriteLoad(boolean isSourceOwner, WriteMethod method) throws Exception {
-      Object key = getKey(isSourceOwner);
+      Object key = getKey(isSourceOwner, DIST);
 
       List<Cache<Object, Object>> owners = caches(DIST).stream()
             .filter(cache -> cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal())
@@ -103,7 +103,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "owningModeAndReadMethod")
    public void testReadLoad(boolean isSourceOwner, ReadMethod method) {
-      Object key = getKey(isSourceOwner);
+      Object key = getKey(isSourceOwner, DIST);
       List<Cache<Object, Object>> owners = caches(DIST).stream()
             .filter(cache -> cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal())
             .collect(Collectors.toList());
