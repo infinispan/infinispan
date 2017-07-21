@@ -39,16 +39,6 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public boolean isValid() {
-      return delegate().isValid();
-   }
-
-   @Override
-   public boolean isLoaded() {
-      return delegate().isLoaded();
-   }
-
-   @Override
    public K getKey() {
       return delegate().getKey();
    }
@@ -101,16 +91,6 @@ public abstract class ForwardingCacheEntry<K, V> implements CacheEntry<K, V> {
    @Override
    public void setEvicted(boolean evicted) {
       delegate().setEvicted(evicted);
-   }
-
-   @Override
-   public void setValid(boolean valid) {
-      delegate().setValid(valid);
-   }
-
-   @Override
-   public void setLoaded(boolean loaded) {
-      delegate().setLoaded(loaded);
    }
 
    @Override

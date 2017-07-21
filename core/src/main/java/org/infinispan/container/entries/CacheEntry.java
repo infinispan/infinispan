@@ -44,15 +44,20 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
    boolean isEvicted();
 
    /**
-    * @return true if this entry is still valid, false otherwise.
-    */
-   boolean isValid();
-
-   /**
-    * @deprecated Always returns false.
+    * @deprecated since 9.2
     */
    @Deprecated
-   boolean isLoaded();
+   default boolean isValid() {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
+    * @deprecated since 8.1
+    */
+   @Deprecated
+   default boolean isLoaded() {
+      throw new UnsupportedOperationException();
+   }
 
    /**
     * Retrieves the key to this entry
@@ -142,13 +147,19 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
 
    void setEvicted(boolean evicted);
 
-   void setValid(boolean valid);
-
    /**
-    * @deprecated Does nothing.
+    * @deprecated since 9.2
     */
    @Deprecated
-   void setLoaded(boolean loaded);
+   default void setValid(boolean valid) {
+   }
+
+   /**
+    * @deprecated since 8.1
+    */
+   @Deprecated
+   default void setLoaded(boolean loaded) {
+   }
 
    /**
     * See {@link #skipLookup()}.

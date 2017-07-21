@@ -69,26 +69,6 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public boolean isValid() {
-      return true;
-   }
-
-   @Override
-   public void setValid(boolean valid) {
-      /*no-op*/
-   }
-
-   @Override
-   public boolean isLoaded() {
-      return false;
-   }
-
-   @Override
-   public void setLoaded(boolean loaded) {
-      /*no-op*/
-   }
-
-   @Override
    public K getKey() {
       return null;
    }
