@@ -49,16 +49,6 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
-   public final void setValid(boolean valid) {
-      // no-op
-   }
-
-   @Override
-   public void setLoaded(boolean loaded) {
-      // no-op
-   }
-
-   @Override
    public void setSkipLookup(boolean skipLookup) {
       //no-op
    }
@@ -86,16 +76,6 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    @Override
    public final boolean isEvicted() {
       return true;
-   }
-
-   @Override
-   public final boolean isValid() {
-      return true;
-   }
-
-   @Override
-   public boolean isLoaded() {
-      return false;
    }
 
    @Override

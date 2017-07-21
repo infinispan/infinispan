@@ -6,7 +6,6 @@ import static org.infinispan.container.entries.ReadCommittedEntry.Flags.CREATED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EVICTED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.EXPIRED;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.REMOVED;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.VALID;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
@@ -45,7 +44,7 @@ public class ReadCommittedEntry implements MVCCEntry {
       CHANGED(1),
       CREATED(1 << 1),
       REMOVED(1 << 2),
-      VALID(1 << 3),
+      // 1 << 3 no longer used (was: VALID)
       EVICTED(1 << 4),
       EXPIRED(1 << 5),
       SKIP_LOOKUP(1 << 6),
@@ -120,8 +119,8 @@ public class ReadCommittedEntry implements MVCCEntry {
       // only do stuff if there are changes.
       if (isChanged()) {
          if (trace)
-            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s metadata=%s)",
-                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), toStr(value), getMetadata());
+            log.tracef("Updating entry (key=%s removed=%s changed=%s created=%s value=%s metadata=%s)",
+                  toStr(getKey()), isRemoved(), isChanged(), isCreated(), toStr(value), getMetadata());
 
          if (isEvicted()) {
             container.evict(key);
@@ -172,16 +171,6 @@ public class ReadCommittedEntry implements MVCCEntry {
       Object prev = this.value;
       this.value = value;
       return prev;
-   }
-
-   @Override
-   public boolean isValid() {
-      return isFlagSet(VALID);
-   }
-
-   @Override
-   public final void setValid(boolean valid) {
-      setFlag(valid, VALID);
    }
 
    @Override
@@ -244,17 +233,6 @@ public class ReadCommittedEntry implements MVCCEntry {
       setFlag(expired, EXPIRED);
    }
 
-   @Override
-   @Deprecated
-   public boolean isLoaded() {
-      return false;
-   }
-
-   @Override
-   @Deprecated
-   public void setLoaded(boolean loaded) {
-   }
-
    final void setFlag(boolean enable, Flags flag) {
       if (enable)
          setFlag(flag);
@@ -289,7 +267,6 @@ public class ReadCommittedEntry implements MVCCEntry {
             ", isCreated=" + isCreated() +
             ", isChanged=" + isChanged() +
             ", isRemoved=" + isRemoved() +
-            ", isValid=" + isValid() +
             ", isExpired=" + isExpired() +
             ", skipLookup=" + skipLookup() +
             ", metadata=" + metadata +

@@ -40,16 +40,6 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public boolean isValid() {
-      return false;
-   }
-
-   @Override
-   public boolean isLoaded() {
-      return false;
-   }
-
-   @Override
    public K getKey() {
       return null;
    }
@@ -101,16 +91,6 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
 
    @Override
    public void setEvicted(boolean evicted) {
-      // No-op
-   }
-
-   @Override
-   public void setValid(boolean valid) {
-      // No-op
-   }
-
-   @Override
-   public void setLoaded(boolean loaded) {
       // No-op
    }
 
