@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.DoubleSummaryStatistics;
 import java.util.Iterator;
@@ -28,6 +29,8 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.stream.impl.intops.primitive.d.BoxedDoubleOperation;
 import org.infinispan.stream.impl.intops.primitive.d.DistinctDoubleOperation;
@@ -53,6 +56,8 @@ import org.infinispan.util.function.SerializableDoubleToLongFunction;
 import org.infinispan.util.function.SerializableDoubleUnaryOperator;
 import org.infinispan.util.function.SerializableObjDoubleConsumer;
 import org.infinispan.util.function.SerializableSupplier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Implementation of {@link DoubleStream} that utilizes a lazily evaluated distributed back end execution.  Note this
@@ -61,6 +66,9 @@ import org.infinispan.util.function.SerializableSupplier;
  */
 public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, DoubleStream, DoubleCacheStream>
         implements DoubleCacheStream {
+
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
    /**
     * This constructor is to be used only when a user calls a map or flat map method changing to a DoubleStream
     * from a CacheStream, Stream, IntStream, LongStream etc.
@@ -68,6 +76,11 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
     */
    protected DistributedDoubleCacheStream(AbstractCacheStream other) {
       super(other);
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 
    @Override
@@ -425,7 +438,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
       // Since this is a remote iterator we have to add it to the remote intermediate operations queue
       intermediateOperations.add(BoxedDoubleOperation.getInstance());
       DistributedCacheStream<Double> stream = new DistributedCacheStream<>(this);
-      Iterator<Double> iterator = stream.remoteIterator();
+      Iterator<Double> iterator = stream.iterator();
       return new DoubleIteratorToPrimitiveDouble(iterator);
    }
 
@@ -473,7 +486,7 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
 
    @Override
    public DoubleCacheStream filterKeySegments(Set<Integer> segments) {
-      segmentsToFilter = segments;
+      segmentsToFilter = SmallIntSet.from(segments);
       return this;
    }
 

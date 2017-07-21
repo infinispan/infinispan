@@ -2,10 +2,10 @@ package org.infinispan.stream.impl.local;
 
 import static org.infinispan.commons.dataconversion.EncodingUtils.toStorage;
 
-import java.util.BitSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
@@ -15,10 +15,11 @@ import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.RemovableCloseableIterator;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -31,13 +32,13 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
-   private final ConsistentHash hash;
+   private final ToIntFunction<Object> toIntFunction;
    private final Supplier<Stream<CacheEntry<K, V>>> supplier;
    private final Wrapper wrapper = new ByteArrayWrapper();
 
-   public EntryStreamSupplier(Cache<K, V> cache, ConsistentHash hash, Supplier<Stream<CacheEntry<K, V>>> supplier) {
+   public EntryStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> toIntFunction, Supplier<Stream<CacheEntry<K, V>>> supplier) {
       this.cache = cache;
-      this.hash = hash;
+      this.toIntFunction = toIntFunction;
       this.supplier = supplier;
    }
 
@@ -66,13 +67,12 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
       } else {
          stream = supplier.get();
       }
-      if (segmentsToFilter != null && hash != null) {
+      if (segmentsToFilter != null && toIntFunction != null) {
          if (trace) {
             log.tracef("Applying segment filter %s", segmentsToFilter);
          }
-         BitSet bitSet = new BitSet(hash.getNumSegments());
-         segmentsToFilter.forEach(bitSet::set);
-         stream = stream.filter(k -> bitSet.get(hash.getSegment(k.getKey())));
+         IntSet intSet = SmallIntSet.from(segmentsToFilter);
+         stream = stream.filter(k -> intSet.contains(toIntFunction.applyAsInt(k.getKey())));
       }
       return stream;
    }
