@@ -9,8 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -52,13 +51,11 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
    private CacheNotifierImpl cacheNotifier;
 
    private ClusteringDependentLogic clusteringDependentLogic;
-   private EncoderRegistry encoderRegistry;
 
    @Inject
    protected void injectDependencies(CacheNotifier cacheNotifier, ClusteringDependentLogic clusteringDependentLogic, EncoderRegistry encoderRegistry) {
       this.cacheNotifier = (CacheNotifierImpl) cacheNotifier;
       this.clusteringDependentLogic = clusteringDependentLogic;
-      this.encoderRegistry = encoderRegistry;
    }
 
    @Override
@@ -90,26 +87,20 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
    public <K, V> void registerListenerInvocations(boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert,
                                                   IndexedFilter<?, ?, ?> indexedFilter,
                                                   Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners,
-                                                  Class<? extends Encoder> keyEncoderClass,
-                                                  Class<? extends Encoder> valueEncoderClass,
-                                                  Class<? extends Wrapper> keyWrapperClass,
-                                                  Class<? extends Wrapper> valueWrapperClass) {
+                                                  DataConversion keyDataConversion,
+                                                  DataConversion valueDataConversion) {
       final Matcher matcher = getMatcher(indexedFilter);
       final String queryString = getQueryString(indexedFilter);
       final Map<String, Object> namedParameters = getNamedParameters(indexedFilter);
       final boolean isDeltaFilter = isDelta(indexedFilter);
 
-      Encoder keyEncoder = encoderRegistry.getEncoder(keyEncoderClass);
-      Encoder valueEncoder = encoderRegistry.getEncoder(valueEncoderClass);
-      Wrapper keyWrapper = encoderRegistry.getWrapper(keyWrapperClass);
-      Wrapper valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
-      addFilteringInvocationForMatcher(matcher, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
+      addFilteringInvocationForMatcher(matcher, keyDataConversion, valueDataConversion);
       Event.Type[] eventTypes = new Event.Type[listeners.keySet().size()];
       int i = 0;
       for (Class<? extends Annotation> annotation : listeners.keySet()) {
          eventTypes[i++] = getEventTypeFromAnnotation(annotation);
       }
-      Callback<K, V> callback = new Callback<>(matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners, keyEncoder, keyWrapper);
+      Callback<K, V> callback = new Callback<>(matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
       callback.subscription = matcher.registerFilter(queryString, namedParameters, callback, isDeltaFilter, eventTypes);
    }
 
@@ -133,9 +124,9 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       return null;
    }
 
-   private void addFilteringInvocationForMatcher(Matcher matcher, Encoder keyEncoder, Encoder valueEncoder, Wrapper keyWrapper, Wrapper valueWrapper) {
+   private void addFilteringInvocationForMatcher(Matcher matcher, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       if (!filteringInvocations.containsKey(matcher)) {
-         FilteringListenerInvocation filteringInvocation = new FilteringListenerInvocation(matcher, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
+         FilteringListenerInvocation filteringInvocation = new FilteringListenerInvocation(matcher, keyDataConversion, valueDataConversion);
          if (filteringInvocations.putIfAbsent(matcher, filteringInvocation) == null) {
             // todo these are added but never removed until stop is called
             cacheNotifier.getListenerCollectionForAnnotation(CacheEntryActivated.class).add(filteringInvocation);
@@ -168,13 +159,11 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       private final DelegatingCacheEntryListenerInvocation<K, V>[] visited_invocations;
       private final DelegatingCacheEntryListenerInvocation<K, V>[] evicted_invocations;
       private final DelegatingCacheEntryListenerInvocation<K, V>[] expired_invocations;
-      private final Encoder keyEncoder;
-      private final Wrapper keyWrapper;
 
       private final Matcher matcher;
       protected volatile FilterSubscription subscription;
 
-      Callback(Matcher matcher, boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert, Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners, Encoder keyEncoder, Wrapper keyWrapper) {
+      Callback(Matcher matcher, boolean isClustered, boolean isPrimaryOnly, boolean filterAndConvert, Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners) {
          this.matcher = matcher;
          this.isClustered = isClustered;
          this.isPrimaryOnly = isPrimaryOnly;
@@ -189,8 +178,6 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
          visited_invocations = makeArray(listeners, CacheEntryVisited.class);
          evicted_invocations = makeArray(listeners, CacheEntriesEvicted.class);
          expired_invocations = makeArray(listeners, CacheEntryExpired.class);
-         this.keyEncoder = keyEncoder;
-         this.keyWrapper = keyWrapper;
       }
 
       private DelegatingCacheEntryListenerInvocation<K, V>[] makeArray(Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners, Class<? extends Annotation> eventType) {
@@ -297,17 +284,13 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
    private class FilteringListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
 
       private final Matcher matcher;
-      private final Encoder keyEncoder;
-      private final Encoder valueEncoder;
-      private final Wrapper keyWrapper;
-      private final Wrapper valueWrapper;
+      private final DataConversion keyDataConversion;
+      private final DataConversion valueDataConversion;
 
-      private FilteringListenerInvocation(Matcher matcher, Encoder keyEncoder, Encoder valueEncoder, Wrapper keyWrapper, Wrapper valueWrapper) {
+      private FilteringListenerInvocation(Matcher matcher, DataConversion keyDataConversion, DataConversion valueDataConversion) {
          this.matcher = matcher;
-         this.keyEncoder = keyEncoder;
-         this.valueEncoder = valueEncoder;
-         this.keyWrapper = keyWrapper;
-         this.valueWrapper = valueWrapper;
+         this.keyDataConversion = keyDataConversion;
+         this.valueDataConversion = valueDataConversion;
       }
 
       @Override
@@ -369,23 +352,13 @@ public abstract class BaseJPAFilterIndexingServiceProvider implements FilterInde
       }
 
       @Override
-      public Encoder getKeyEncoder() {
-         return keyEncoder;
+      public DataConversion getKeyDataConversion() {
+         return keyDataConversion;
       }
 
       @Override
-      public Encoder getValueEncoder() {
-         return valueEncoder;
-      }
-
-      @Override
-      public Wrapper getKeyWrapper() {
-         return keyWrapper;
-      }
-
-      @Override
-      public Wrapper getValueWrapper() {
-         return valueWrapper;
+      public DataConversion getValueDataConversion() {
+         return valueDataConversion;
       }
    }
 

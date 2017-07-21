@@ -86,6 +86,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
@@ -155,16 +156,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    protected RpcManager rpcManager;
    protected StreamingMarshaller marshaller;
    protected Metadata defaultMetadata;
-   protected EncoderRegistry encoderRegistry;
    private final String name;
-   private Encoder keyEncoder;
-   private Encoder valueEncoder;
-   private Wrapper keyWrapper;
-   private Wrapper valueWrapper;
-   Class<? extends Encoder> keyEncoderClass;
-   Class<? extends Encoder> valueEncoderClass;
-   Class<? extends Wrapper> keyWrapperClass;
-   Class<? extends Wrapper> valueWrapperClass;
+   private final DataConversion keyDataConversion;
+   private final DataConversion valueDataConversion;
    private EvictionManager evictionManager;
    private ExpirationManager<K, V> expirationManager;
    private DataContainer dataContainer;
@@ -184,19 +178,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    public CacheImpl(String name) {
       this.name = name;
-      this.keyEncoderClass = IdentityEncoder.class;
-      this.valueEncoderClass = IdentityEncoder.class;
-      this.keyWrapperClass = ByteArrayWrapper.class;
-      this.valueWrapperClass = ByteArrayWrapper.class;
+      this.keyDataConversion = new DataConversion(IdentityEncoder.class, ByteArrayWrapper.class);
+      this.valueDataConversion = new DataConversion(IdentityEncoder.class, ByteArrayWrapper.class);
    }
 
-   public CacheImpl(String name, Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
-                    Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+   public CacheImpl(String name, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       this.name = name;
-      this.keyEncoderClass = keyEncoderClass;
-      this.valueEncoderClass = valueEncoderClass;
-      this.keyWrapperClass = keyWrapperClass;
-      this.valueWrapperClass = valueWrapperClass;
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
    }
 
    @Inject
@@ -248,10 +237,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
       transactional = config.transaction().transactionMode().isTransactional();
       batchingEnabled = config.invocationBatching().enabled();
-      this.keyEncoder = encoderRegistry.getEncoder(keyEncoderClass);
-      this.valueEncoder = encoderRegistry.getEncoder(valueEncoderClass);
-      this.keyWrapper = encoderRegistry.getWrapper(keyWrapperClass);
-      this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
+      componentRegistry.wireDependencies(keyDataConversion);
+      componentRegistry.wireDependencies(valueDataConversion);
    }
 
    private void assertKeyNotNull(Object key) {
@@ -684,43 +671,53 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      return new EncoderCache<>(this, encoderClass, encoderClass, keyWrapperClass, valueWrapperClass);
+      return new EncoderCache<>(this, keyDataConversion.withEncoding(encoderClass), valueDataConversion.withEncoding(encoderClass));
    }
 
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      return new EncoderCache<>(this, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+      return new EncoderCache<>(this, keyDataConversion.withEncoding(keyEncoderClass), valueDataConversion.withEncoding(valueEncoderClass));
    }
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
-      return new EncoderCache<>(this, keyEncoderClass, valueEncoderClass, wrapperClass, wrapperClass);
-   }
-
-   @Override
-   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
-      return new EncoderCache<>(this, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+      return new EncoderCache<>(this, keyDataConversion.withWrapping(wrapperClass), valueDataConversion.withWrapping(wrapperClass));
    }
 
    @Override
    public Encoder getKeyEncoder() {
-      return keyEncoder;
+      return getKeyDataConversion().getEncoder();
    }
 
    @Override
    public Encoder getValueEncoder() {
-      return valueEncoder;
+      return getValueDataConversion().getEncoder();
    }
 
    @Override
    public Wrapper getKeyWrapper() {
-      return keyWrapper;
+      return getKeyDataConversion().getWrapper();
    }
 
    @Override
    public Wrapper getValueWrapper() {
-      return valueWrapper;
+      return getValueDataConversion().getWrapper();
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+      return new EncoderCache<>(this, keyDataConversion.withWrapping(keyWrapperClass), valueDataConversion.withWrapping(valueWrapperClass));
+   }
+
+   @Override
+   public DataConversion getKeyDataConversion() {
+      return keyDataConversion;
+   }
+
+   @Override
+   public DataConversion getValueDataConversion() {
+      return valueDataConversion;
    }
 
    @ManagedOperation(
@@ -988,7 +985,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private ReadWriteKeyValueCommand<K, Object, Object> createApplyDelta(K deltaAwareValueKey, Delta delta, long explicitFlags, InvocationContext ctx) {
       ReadWriteKeyValueCommand<K, Object, Object> command = commandsFactory.buildReadWriteKeyValueCommand(
-            deltaAwareValueKey, delta,new ApplyDelta<>(marshaller), Params.create());
+            deltaAwareValueKey, delta, new ApplyDelta<>(marshaller), Params.create());
       command.setFlagsBitSet(explicitFlags);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(command.getKeyLockOwner());

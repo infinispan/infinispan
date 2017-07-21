@@ -1,19 +1,16 @@
 package org.infinispan.cache.impl;
 
-import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.util.function.RemovableFunction;
 
 /**
@@ -23,26 +20,21 @@ import org.infinispan.util.function.RemovableFunction;
  * @since 9.1
  */
 public class EncoderKeyMapper<K> implements RemovableFunction<K, K> {
-   private final Class<? extends Encoder> keyEncoderClass;
-   private final Class<? extends Wrapper> keyWrapperClass;
-   private transient Encoder keyEncoder;
-   private transient Wrapper keyWrapper;
+   private final DataConversion dataConversion;
 
-   public EncoderKeyMapper(Class<? extends Encoder> encoder, Class<? extends Wrapper> keyWrapperClass) {
-      this.keyEncoderClass = encoder;
-      this.keyWrapperClass = keyWrapperClass;
+   public EncoderKeyMapper(DataConversion dataConversion) {
+      this.dataConversion = dataConversion;
    }
 
    @Inject
-   public void injectDependencies(EncoderRegistry registry) {
-      this.keyEncoder = registry.getEncoder(keyEncoderClass);
-      this.keyWrapper = registry.getWrapper(keyWrapperClass);
+   public void injectDependencies(ComponentRegistry registry) {
+      registry.wireDependencies(dataConversion);
    }
 
    @Override
    @SuppressWarnings("unchecked")
    public K apply(K k) {
-      return (K) fromStorage(k, keyEncoder, keyWrapper);
+      return (K) dataConversion.fromStorage(k);
    }
 
    public static class Externalizer implements AdvancedExternalizer<EncoderKeyMapper> {
@@ -59,14 +51,13 @@ public class EncoderKeyMapper<K> implements RemovableFunction<K, K> {
 
       @Override
       public void writeObject(ObjectOutput output, EncoderKeyMapper object) throws IOException {
-         output.writeObject(object.keyEncoderClass);
-         output.writeObject(object.keyWrapperClass);
+         output.writeObject(object.dataConversion);
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public EncoderKeyMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new EncoderKeyMapper((Class<? extends Encoder>) input.readObject(), (Class<? extends Wrapper>) input.readObject());
+         return new EncoderKeyMapper((DataConversion) input.readObject());
       }
    }
 }

@@ -1,7 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,8 +27,6 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
@@ -38,6 +34,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -304,9 +301,9 @@ class ClientListenerRegistry {
    private class StatefulClientEventSender extends BaseClientEventSender {
 
       protected StatefulClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version,
-                                          ClientEventType targetEventType, Encoder keyEncoder, Encoder valueEncoder,
-                                          Wrapper keyWrapper, Wrapper valueWrapper) {
-         super(cache, ch, listenerId, version, targetEventType, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
+                                          ClientEventType targetEventType, DataConversion keyDataConversion,
+                                          DataConversion valueDataConversion) {
+         super(cache, ch, listenerId, version, targetEventType, keyDataConversion, valueDataConversion);
       }
    }
 
@@ -314,8 +311,8 @@ class ClientListenerRegistry {
    private class StatelessClientEventSender extends BaseClientEventSender {
 
       protected StatelessClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType,
-                                           Encoder keyEncoder, Encoder valueEncoder, Wrapper keyWrapper, Wrapper valueWrapper) {
-         super(cache, ch, listenerId, version, targetEventType, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
+                                           DataConversion keyDataConversion, DataConversion valueDataConversion) {
+         super(cache, ch, listenerId, version, targetEventType, keyDataConversion, valueDataConversion);
       }
    }
 
@@ -324,10 +321,8 @@ class ClientListenerRegistry {
       protected final byte[] listenerId;
       protected final byte version;
       protected final ClientEventType targetEventType;
-      private final Encoder keyEncoder;
-      private final Encoder valueEncoder;
-      private final Wrapper keyWrapper;
-      private final Wrapper valueWrapper;
+      private final DataConversion keyDataConversion;
+      private final DataConversion valueDataConversion;
       protected final Cache cache;
 
       BlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(100);
@@ -335,16 +330,14 @@ class ClientListenerRegistry {
       private final Runnable writeEventsIfPossible = this::writeEventsIfPossible;
 
       protected BaseClientEventSender(Cache cache, Channel ch, byte[] listenerId, byte version, ClientEventType targetEventType,
-                                      Encoder keyEncoder, Encoder valueEncoder, Wrapper keyWrapper, Wrapper valueWrapper) {
+                                      DataConversion keyDataConversion, DataConversion valueDataConversion) {
          this.cache = cache;
          this.ch = ch;
          this.listenerId = listenerId;
          this.version = version;
          this.targetEventType = targetEventType;
-         this.keyEncoder = keyEncoder;
-         this.valueEncoder = valueEncoder;
-         this.keyWrapper = keyWrapper;
-         this.valueWrapper = valueWrapper;
+         this.keyDataConversion = keyDataConversion;
+         this.valueDataConversion = valueDataConversion;
       }
 
       boolean hasChannel(Channel channel) {
@@ -379,11 +372,11 @@ class ClientListenerRegistry {
             }
             Object k = event.getKey();
             Object v = event.getValue();
-            if (keyEncoder.isStorageFormatFilterable() && k != null) {
-               k = fromStorage(k, keyEncoder, keyWrapper);
+            if (keyDataConversion.isStorageFormatFilterable() && k != null) {
+               k = keyDataConversion.fromStorage(k);
             }
-            if (valueEncoder.isStorageFormatFilterable() && v != null) {
-               v = fromStorage(v, valueEncoder, valueWrapper);
+            if (valueDataConversion.isStorageFormatFilterable() && v != null) {
+               v = valueDataConversion.fromStorage(v);
             }
 
             sendEvent((byte[]) k, (byte[]) v, version, event);
@@ -489,14 +482,12 @@ class ClientListenerRegistry {
 
    Object getClientEventSender(boolean includeState, Channel ch, byte version,
                                Cache cache, byte[] listenerId, ClientEventType eventType) {
-      Encoder keyEncoder = cache.getAdvancedCache().getKeyEncoder();
-      Encoder valueEncoder = cache.getAdvancedCache().getValueEncoder();
-      Wrapper keyWrapper = cache.getAdvancedCache().getKeyWrapper();
-      Wrapper valueWrapper = cache.getAdvancedCache().getValueWrapper();
+      DataConversion keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
+      DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
       if (includeState) {
-         return new StatefulClientEventSender(cache, ch, listenerId, version, eventType, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
+         return new StatefulClientEventSender(cache, ch, listenerId, version, eventType, keyDataConversion, valueDataConversion);
       } else {
-         return new StatelessClientEventSender(cache, ch, listenerId, version, eventType, keyEncoder, valueEncoder, keyWrapper, valueWrapper);
+         return new StatelessClientEventSender(cache, ch, listenerId, version, eventType, keyDataConversion, valueDataConversion);
       }
    }
 

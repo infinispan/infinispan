@@ -4,8 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.UUID;
 
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 import org.infinispan.notifications.cachelistener.EventWrapper;
@@ -96,22 +95,12 @@ public abstract class DelegatingCacheEntryListenerInvocation<K, V> implements Ca
    }
 
    @Override
-   public Encoder getKeyEncoder() {
-      return invocation.getKeyEncoder();
+   public DataConversion getKeyDataConversion() {
+      return invocation.getKeyDataConversion();
    }
 
    @Override
-   public Encoder getValueEncoder() {
-      return invocation.getValueEncoder();
-   }
-
-   @Override
-   public Wrapper getValueWrapper() {
-      return invocation.getValueWrapper();
-   }
-
-   @Override
-   public Wrapper getKeyWrapper() {
-      return invocation.getKeyWrapper();
+   public DataConversion getValueDataConversion() {
+      return invocation.getValueDataConversion();
    }
 }
