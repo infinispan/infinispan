@@ -1,8 +1,12 @@
 package org.infinispan.spring.provider;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
+import org.infinispan.commons.api.BasicCache;
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
@@ -15,6 +19,8 @@ import org.springframework.util.Assert;
  * @author Sebastian Laskawiec
  */
 class CacheDelegate implements Cache {
+
+   private final Map<Object, ReentrantLock> synchronousGetLocks = new ConcurrentHashMap<>();
 
    //Implemented as a static holder class for backwards compatibility.
    //Imagine a situation where a client has new integration module and old Spring version. In that case
@@ -31,7 +37,7 @@ class CacheDelegate implements Cache {
    /**
     * @param nativeCache underlying cache
     */
-   public CacheDelegate(final org.infinispan.commons.api.BasicCache<Object, Object> nativeCache) {
+   public CacheDelegate(final BasicCache<Object, Object> nativeCache) {
       Assert.notNull(nativeCache, "A non-null Infinispan cache implementation is required");
       this.nativeCache = nativeCache;
    }
@@ -71,13 +77,31 @@ class CacheDelegate implements Cache {
 
    @Override
    public <T> T get(Object key, Callable<T> valueLoader) {
-      return (T) nativeCache.computeIfAbsent(key, keyToBeInserted -> {
+      ReentrantLock lock = null;
+      T value = (T) nativeCache.get(key);
+      if (value == null) {
+         lock = synchronousGetLocks.computeIfAbsent(key, k -> new ReentrantLock());
+         lock.lock();
          try {
-            return valueLoader.call();
-         } catch (Exception e) {
-            throw ValueRetrievalExceptionResolver.throwValueRetrievalException(key, valueLoader, e);
+            if ((value = (T) nativeCache.get(key)) == null) {
+               try {
+                  T newValue = valueLoader.call();
+                  // we can't use computeIfAbsent here since in distributed embedded scenario we would
+                  // send a lambda to other nodes. This is the behavior we want to avoid.
+                  value = (T) nativeCache.putIfAbsent(key, newValue);
+                  if (value == null) {
+                     value = newValue;
+                  }
+               } catch (Exception e) {
+                  throw ValueRetrievalExceptionResolver.throwValueRetrievalException(key, valueLoader, e);
+               }
+            }
+         } finally {
+            lock.unlock();
+            synchronousGetLocks.remove(key);
          }
-      });
+      }
+      return value;
    }
 
    /**
