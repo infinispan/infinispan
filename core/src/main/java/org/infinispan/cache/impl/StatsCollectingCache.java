@@ -6,11 +6,10 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stats.Stats;
@@ -31,10 +30,8 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
       super(cacheName);
    }
 
-   public StatsCollectingCache(String cacheName, Class<? extends Encoder> keyEncoderClass,
-                               Class<? extends Encoder> valueEncoderClass, Class<? extends Wrapper> keyWrapperClass,
-                               Class<? extends Wrapper> valueWrapperClass) {
-      super(cacheName, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+   public StatsCollectingCache(String cacheName, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      super(cacheName, keyDataConversion, valueDataConversion);
    }
 
    @Inject

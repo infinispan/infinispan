@@ -1,7 +1,5 @@
 package org.infinispan.query.impl.massindex;
 
-import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -14,12 +12,11 @@ import java.util.stream.Stream;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DistributedCallable;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
@@ -45,8 +42,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    private Set<Object> everywhereKeys;
    private Set<Object> keys = new HashSet<>();
    private ClusteringDependentLogic clusteringDependentLogic;
-   private Encoder valueEncoder;
-   private Wrapper valueWrapper;
+   private DataConversion valueDataConversion;
 
    public IndexWorker(IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
       this.indexedType = indexedType;
@@ -67,8 +63,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       if (inputKeys != null && inputKeys.size() > 0)
          keys.addAll(inputKeys);
 
-      valueEncoder = cache.getAdvancedCache().getValueEncoder();
-      valueWrapper = cache.getAdvancedCache().getValueWrapper();
+      valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
    }
 
    protected void preIndex() {
@@ -85,7 +80,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    private Object extractValue(Object storageValue) {
-      return fromStorage(storageValue, valueEncoder, valueWrapper);
+      return valueDataConversion.fromStorage(storageValue);
    }
 
    @Override

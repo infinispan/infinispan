@@ -26,6 +26,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -778,22 +779,36 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    /**
     * @return The associated {@link Encoder} for the keys.
+    * @deprecated Use {@link #getKeyDataConversion()} and then {@link DataConversion#getEncoder()}
     */
    Encoder getKeyEncoder();
 
    /**
     * @return The associated {@link Encoder} for the cache's values.
+    * @deprecated Use {@link #getValueDataConversion()} ()} and then {@link DataConversion#getEncoder()}
     */
    Encoder getValueEncoder();
 
    /**
     * @return The associated {@link Wrapper} for the cache's keys.
+    * @deprecated Use {@link #getKeyDataConversion()} and then {@link DataConversion#getWrapper()}
     */
    Wrapper getKeyWrapper();
 
    /**
     * @return The associated {@link Wrapper} for the cache's values.
+    * @deprecated Use {@link #getValueDataConversion()} ()} and then {@link DataConversion#getWrapper()}
     */
    Wrapper getValueWrapper();
+
+   /**
+    * @return The associated {@link DataConversion} for the keys.
+    */
+   DataConversion getKeyDataConversion();
+
+   /**
+    * @return The associated {@link DataConversion} for the cache's values.
+    */
+   DataConversion getValueDataConversion();
 
 }

@@ -57,6 +57,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -72,7 +73,6 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -117,14 +117,9 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          CacheEntryExpired.class};
 
    private final String name;
-   Class<? extends Encoder> keyEncoderClass;
-   Class<? extends Encoder> valueEncoderClass;
-   Class<? extends Wrapper> keyWrapperClass;
-   Class<? extends Wrapper> valueWrapperClass;
-   private Encoder keyEncoder;
-   private Encoder valueEncoder;
-   private Wrapper keyWrapper;
-   private Wrapper valueWrapper;
+   private DataConversion keyDataConversion;
+   private DataConversion valueDataConversion;
+
    private ComponentRegistry componentRegistry;
    private Configuration configuration;
    private EmbeddedCacheManager cacheManager;
@@ -137,16 +132,14 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private boolean hasListeners = false;
 
    public SimpleCacheImpl(String cacheName) {
-      this(cacheName, IdentityEncoder.class, IdentityEncoder.class, ByteArrayWrapper.class, ByteArrayWrapper.class);
+      this(cacheName, new DataConversion(IdentityEncoder.class, ByteArrayWrapper.class),
+            new DataConversion(IdentityEncoder.class, ByteArrayWrapper.class));
    }
 
-   public SimpleCacheImpl(String cacheName, Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
-                          Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+   public SimpleCacheImpl(String cacheName, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       this.name = cacheName;
-      this.keyEncoderClass = keyEncoderClass;
-      this.valueEncoderClass = valueEncoderClass;
-      this.keyWrapperClass = keyWrapperClass;
-      this.valueWrapperClass = valueWrapperClass;
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
    }
 
    @Inject
@@ -155,17 +148,15 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
                                   EmbeddedCacheManager cacheManager,
                                   DataContainer dataContainer,
                                   CacheNotifier cacheNotifier,
-                                  TimeService timeService, EncoderRegistry encoderRegistry) {
+                                  TimeService timeService) {
       this.componentRegistry = componentRegistry;
       this.configuration = configuration;
       this.cacheManager = cacheManager;
       this.dataContainer = dataContainer;
       this.cacheNotifier = cacheNotifier;
       this.timeService = timeService;
-      this.keyEncoder = encoderRegistry.getEncoder(keyEncoderClass);
-      this.valueEncoder = encoderRegistry.getEncoder(valueEncoderClass);
-      this.keyWrapper = encoderRegistry.getWrapper(keyWrapperClass);
-      this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
+      componentRegistry.wireDependencies(keyDataConversion);
+      componentRegistry.wireDependencies(valueDataConversion);
    }
 
    @Override
@@ -499,22 +490,33 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public Encoder getKeyEncoder() {
-      return keyEncoder;
+      return keyDataConversion.getEncoder();
    }
 
    @Override
    public Encoder getValueEncoder() {
-      return valueEncoder;
+      return valueDataConversion.getEncoder();
    }
 
    @Override
    public Wrapper getKeyWrapper() {
-      return keyWrapper;
+      return keyDataConversion.getWrapper();
    }
 
    @Override
    public Wrapper getValueWrapper() {
-      return valueWrapper;
+      return valueDataConversion.getWrapper();
+   }
+
+
+   @Override
+   public DataConversion getKeyDataConversion() {
+      return keyDataConversion;
+   }
+
+   @Override
+   public DataConversion getValueDataConversion() {
+      return valueDataConversion;
    }
 
    @Override
@@ -1214,7 +1216,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return computeIfAbsentInternal(key, mappingFunction, newValueRef, defaultMetadata);
    }
 
-   private  V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, ByRef<V> newValueRef, Metadata metadata) {
+   private V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, ByRef<V> newValueRef, Metadata metadata) {
       boolean hasListeners = this.hasListeners;
       componentRegistry.wireDependencies(mappingFunction);
       InternalCacheEntry<K, V> returnEntry = getDataContainer().compute(key, (k, oldEntry, factory) -> {
