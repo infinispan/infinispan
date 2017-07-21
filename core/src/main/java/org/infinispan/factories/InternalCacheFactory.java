@@ -20,6 +20,7 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.eviction.impl.ActivationManagerStub;
@@ -99,12 +100,14 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
                                                String cacheName) throws Exception {
       Class<? extends Encoder> encoderClass = getEncoderClass(globalComponentRegistry.getGlobalConfiguration(), configuration);
+      DataConversion keyDataConversion = new DataConversion(encoderClass, ByteArrayWrapper.class);
+      DataConversion valueDataConversion = new DataConversion(encoderClass, ByteArrayWrapper.class);
 
       StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class);
 
-      AdvancedCache<K, V> cache = new CacheImpl<>(cacheName, encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class);
+      AdvancedCache<K, V> cache = new CacheImpl<>(cacheName, keyDataConversion, valueDataConversion);
 
-      cache = new EncoderCache<>(cache, encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class);
+      cache = new EncoderCache<>(cache, keyDataConversion, valueDataConversion);
 
       bootstrap(cacheName, cache, configuration, globalComponentRegistry, marshaller);
       if (marshaller != null) {
@@ -120,14 +123,16 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
 
       JMXStatisticsConfiguration jmxStatistics = configuration.jmxStatistics();
       boolean statisticsAvailable = jmxStatistics != null && jmxStatistics.available();
+      DataConversion keyDataConversion = new DataConversion(encoderClass, ByteArrayWrapper.class);
+      DataConversion valueDataConversion = new DataConversion(encoderClass, ByteArrayWrapper.class);
       if (statisticsAvailable) {
-         cache = new StatsCollectingCache<>(cacheName, encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class);
+         cache = new StatsCollectingCache<>(cacheName, keyDataConversion, valueDataConversion);
       } else {
-         cache = new SimpleCacheImpl<>(cacheName, encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class);
+         cache = new SimpleCacheImpl<>(cacheName, keyDataConversion, valueDataConversion);
       }
       this.configuration = configuration;
 
-      cache = new EncoderCache<>(cache, encoderClass, encoderClass, ByteArrayWrapper.class, ByteArrayWrapper.class);
+      cache = new EncoderCache<>(cache, keyDataConversion, valueDataConversion);
 
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
          @Override

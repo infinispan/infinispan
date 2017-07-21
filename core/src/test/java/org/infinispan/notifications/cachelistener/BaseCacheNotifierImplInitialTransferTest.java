@@ -26,8 +26,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.CacheStream;
 import org.infinispan.cache.impl.EncoderCache;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactoryImpl;
@@ -37,6 +35,7 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -117,10 +116,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
    public void setUp() {
       n = new CacheNotifierImpl();
       mockCache = mock(EncoderCache.class, RETURNS_DEEP_STUBS);
-      when(mockCache.getAdvancedCache().getKeyEncoder()).thenReturn(IdentityEncoder.INSTANCE);
-      when(mockCache.getAdvancedCache().getValueEncoder()).thenReturn(IdentityEncoder.INSTANCE);
-      when(mockCache.getAdvancedCache().getKeyWrapper()).thenReturn(ByteArrayWrapper.INSTANCE);
-      when(mockCache.getAdvancedCache().getValueWrapper()).thenReturn(ByteArrayWrapper.INSTANCE);
+      when(mockCache.getAdvancedCache().getKeyDataConversion()).thenReturn(DataConversion.DEFAULT);
+      when(mockCache.getAdvancedCache().getValueDataConversion()).thenReturn(DataConversion.DEFAULT);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(cacheMode);
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);

@@ -4,6 +4,7 @@ package org.infinispan.commons.dataconversion;
  * Utilities to encode/decode keys and values from caches.
  *
  * @since 9.1
+ * @deprecated Use the org.infinispan.encoding.DataConversion obtained from the AdvancedCache.
  */
 public final class EncodingUtils {
 

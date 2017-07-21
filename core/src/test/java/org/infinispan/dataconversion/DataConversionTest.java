@@ -1,6 +1,5 @@
 package org.infinispan.dataconversion;
 
-import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
 import static org.infinispan.notifications.Listener.Observation.POST;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
@@ -15,17 +14,16 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.dataconversion.CompatModeEncoder;
-import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MarshallerEncoder;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -234,8 +232,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
    private class TestInterceptor extends BaseCustomAsyncInterceptor {
 
       private final int i;
-      private Encoder valueEncoder;
-      private Wrapper valueWrapper;
+      private DataConversion valueDataConversion;
 
       TestInterceptor(int i) {
          this.i = i;
@@ -243,17 +240,16 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
       @Inject
       protected void injectDependencies(Cache<?, ?> cache) {
-         this.valueEncoder = cache.getAdvancedCache().getValueEncoder();
-         this.valueWrapper = cache.getAdvancedCache().getValueWrapper();
+         this.valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
       }
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
             throws Throwable {
 
-         assertNotNull(valueEncoder);
+         assertNotNull(valueDataConversion);
          Object value = command.getValue();
-         assertEquals(i, fromStorage(value, valueEncoder, valueWrapper));
+         assertEquals(i, valueDataConversion.fromStorage(value));
          return invokeNext(ctx, command);
       }
    }
