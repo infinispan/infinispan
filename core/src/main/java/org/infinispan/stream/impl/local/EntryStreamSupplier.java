@@ -45,19 +45,15 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
          if (trace) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
+         DataConversion keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
          // Make sure we aren't going remote to retrieve these
          AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
                .withFlags(Flag.CACHE_MODE_LOCAL);
-         DataConversion keyDataConversion = advancedCache.getKeyDataConversion();
-         Encoder encoder = keyDataConversion.getEncoder();
-         Wrapper wrapper = keyDataConversion.getWrapper();
-         // Need to box the key to get the correct segment
-
          // We do type converter before getting CacheEntry, otherwise wrapper classes would have to both box and
          // unbox, this way we avoid multiple calls and just do the one.
          stream = keysToFilter.stream()
                .filter(Objects::nonNull)
-               .map(o -> wrapper.wrap(encoder.toStorage(o)))
+               .map(keyDataConversion::toStorage)
                .map(advancedCache::getCacheEntry)
                .filter(e -> e != null);
       } else {

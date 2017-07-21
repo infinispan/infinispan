@@ -66,9 +66,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
@@ -105,7 +103,6 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -157,8 +154,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    protected StreamingMarshaller marshaller;
    protected Metadata defaultMetadata;
    private final String name;
-   private final DataConversion keyDataConversion;
-   private final DataConversion valueDataConversion;
    private EvictionManager evictionManager;
    private ExpirationManager<K, V> expirationManager;
    private DataContainer dataContainer;
@@ -178,14 +173,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    public CacheImpl(String name) {
       this.name = name;
-      this.keyDataConversion = new DataConversion(IdentityEncoder.class, ByteArrayWrapper.class);
-      this.valueDataConversion = new DataConversion(IdentityEncoder.class, ByteArrayWrapper.class);
-   }
-
-   public CacheImpl(String name, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      this.name = name;
-      this.keyDataConversion = keyDataConversion;
-      this.valueDataConversion = valueDataConversion;
    }
 
    @Inject
@@ -208,7 +195,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   AuthorizationManager authorizationManager,
                                   GlobalConfiguration globalCfg,
                                   PartitionHandlingManager partitionHandlingManager,
-                                  LocalTopologyManager localTopologyManager, EncoderRegistry encoderRegistry) {
+                                  LocalTopologyManager localTopologyManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -237,8 +224,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
             .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
       transactional = config.transaction().transactionMode().isTransactional();
       batchingEnabled = config.invocationBatching().enabled();
-      componentRegistry.wireDependencies(keyDataConversion);
-      componentRegistry.wireDependencies(valueDataConversion);
    }
 
    private void assertKeyNotNull(Object key) {
@@ -671,18 +656,18 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      return new EncoderCache<>(this, keyDataConversion.withEncoding(encoderClass), valueDataConversion.withEncoding(encoderClass));
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withEncoding(encoderClass), DataConversion.DEFAULT.withEncoding(encoderClass));
    }
 
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      return new EncoderCache<>(this, keyDataConversion.withEncoding(keyEncoderClass), valueDataConversion.withEncoding(valueEncoderClass));
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withEncoding(keyEncoderClass), DataConversion.DEFAULT.withEncoding(valueEncoderClass));
    }
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
-      return new EncoderCache<>(this, keyDataConversion.withWrapping(wrapperClass), valueDataConversion.withWrapping(wrapperClass));
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withWrapping(wrapperClass), DataConversion.DEFAULT.withWrapping(wrapperClass));
    }
 
    @Override
@@ -707,17 +692,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
-      return new EncoderCache<>(this, keyDataConversion.withWrapping(keyWrapperClass), valueDataConversion.withWrapping(valueWrapperClass));
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withWrapping(keyWrapperClass), DataConversion.DEFAULT.withWrapping(valueWrapperClass));
    }
 
    @Override
    public DataConversion getKeyDataConversion() {
-      return keyDataConversion;
+      return DataConversion.DEFAULT;
    }
 
    @Override
    public DataConversion getValueDataConversion() {
-      return valueDataConversion;
+      return DataConversion.DEFAULT;
    }
 
    @ManagedOperation(

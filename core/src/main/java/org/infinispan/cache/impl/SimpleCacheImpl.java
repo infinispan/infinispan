@@ -34,9 +34,7 @@ import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
@@ -132,8 +130,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private boolean hasListeners = false;
 
    public SimpleCacheImpl(String cacheName) {
-      this(cacheName, new DataConversion(IdentityEncoder.class, ByteArrayWrapper.class),
-            new DataConversion(IdentityEncoder.class, ByteArrayWrapper.class));
+      this(cacheName, DataConversion.DEFAULT, DataConversion.DEFAULT);
    }
 
    public SimpleCacheImpl(String cacheName, DataConversion keyDataConversion, DataConversion valueDataConversion) {
