@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.transaction.Status;
@@ -358,7 +359,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
 
       int viewId = rpcManager.getTransport().getViewId();
-      if (!rpcManager.getTransport().getMembers().contains(globalTx.getAddress())) {
+      if (transactionOriginatorChecker.isOriginatorMissing(globalTx)) {
          throw log.remoteTransactionOriginatorNotInView(globalTx);
       }
 
@@ -385,7 +386,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       });
 
       if (rpcManager.getTransport().getViewId() != viewId &&
-            !rpcManager.getTransport().getMembers().contains(globalTx.getAddress())) {
+            transactionOriginatorChecker.isOriginatorMissing(globalTx)) {
          // Either cleanupLeaverTransactions didn't run for this view yet, or it missed the transaction we just created.
          // Kill the transaction here if necessary, but return normally, as if the cleanup task did it.
          if (partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(globalTx)) {
@@ -403,14 +404,20 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     * If none exists, will be created first.
     */
    public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, boolean implicitTransaction) {
+      return getOrCreateLocalTransaction(transaction, implicitTransaction, this::newGlobalTransaction);
+   }
+
+   /**
+    * Similar to {@link #getOrCreateLocalTransaction(Transaction, boolean)} but with a custom global transaction factory.
+    */
+   public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, boolean implicitTransaction, Supplier<GlobalTransaction> gtxFactory) {
       LocalTransaction current = localTransactions.get(transaction);
       if (current == null) {
          if (!running) {
             // Assume that we wouldn't get this far if the cache was already stopped
             throw log.cacheIsStopping(cacheName);
          }
-         Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
-         GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
+         GlobalTransaction tx = gtxFactory.get();
          current = txFactory.newLocalTransaction(transaction, tx, implicitTransaction, currentTopologyId);
          if (trace) log.tracef("Created a new local transaction: %s", current);
          localTransactions.put(transaction, current);
@@ -426,6 +433,11 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     */
    public boolean removeLocalTransaction(LocalTransaction localTransaction) {
       return localTransaction != null && (removeLocalTransactionInternal(localTransaction.getTransaction()) != null);
+   }
+
+   private GlobalTransaction newGlobalTransaction() {
+      Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
+      return txFactory.newGlobalTransaction(localAddress, false);
    }
 
    private LocalTransaction removeLocalTransactionInternal(Transaction tx) {

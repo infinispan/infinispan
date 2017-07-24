@@ -27,6 +27,6 @@ public final class ExternalizerIds {
    public static final int QUERY_ITERATION_FILTER = 1112;
    public static final int TX_STATE = 1113;
    public static final int CACHE_XID = 1114;
-   public static final int TX_FUNCTIONS = 1115;
+   public static final int CLIENT_ADDRESS = 1115;
 
 }

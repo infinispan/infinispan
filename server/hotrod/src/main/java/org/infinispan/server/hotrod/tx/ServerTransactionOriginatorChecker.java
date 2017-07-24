@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod.tx;
 
 import java.util.Collection;
-import java.util.Map;
 
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -19,12 +18,9 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  */
 public class ServerTransactionOriginatorChecker implements TransactionOriginatorChecker {
 
-   private final Map<CacheXid, TxState> globalTxTable;
    private RpcManager rpcManager;
 
-   public ServerTransactionOriginatorChecker(
-         Map<CacheXid, TxState> globalTxTable) {
-      this.globalTxTable = globalTxTable;
+   public ServerTransactionOriginatorChecker() {
    }
 
    @Inject
@@ -43,8 +39,6 @@ public class ServerTransactionOriginatorChecker implements TransactionOriginator
    }
 
    private boolean isNonClientTransaction(GlobalTransaction gtx) {
-      return globalTxTable.values().stream()
-            .map(TxFunctions.mapTxStateToGlobalTransaction())
-            .noneMatch(TxFunctions.equalsGlobalTransaction(gtx));
+      return !(gtx.getAddress() instanceof ClientAddress);
    }
 }

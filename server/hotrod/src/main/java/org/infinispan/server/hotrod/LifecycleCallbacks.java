@@ -4,11 +4,11 @@ import static org.infinispan.server.core.ExternalizerIds.BINARY_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER;
 import static org.infinispan.server.core.ExternalizerIds.BINARY_FILTER_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.CACHE_XID;
+import static org.infinispan.server.core.ExternalizerIds.CLIENT_ADDRESS;
 import static org.infinispan.server.core.ExternalizerIds.ITERATION_FILTER;
 import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_VERSION_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.KEY_VALUE_WITH_PREVIOUS_CONVERTER;
 import static org.infinispan.server.core.ExternalizerIds.SERVER_ADDRESS;
-import static org.infinispan.server.core.ExternalizerIds.TX_FUNCTIONS;
 import static org.infinispan.server.core.ExternalizerIds.TX_STATE;
 
 import java.util.EnumSet;
@@ -31,17 +31,17 @@ import org.infinispan.server.hotrod.ClientListenerRegistry.UnmarshallFilterExter
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterExternalizer;
 import org.infinispan.server.hotrod.iteration.IterationFilter;
 import org.infinispan.server.hotrod.tx.CacheXid;
+import org.infinispan.server.hotrod.tx.ClientAddress;
 import org.infinispan.server.hotrod.tx.ServerTransactionOriginatorChecker;
 import org.infinispan.server.hotrod.tx.ServerTransactionTable;
-import org.infinispan.server.hotrod.tx.TxFunctions;
 import org.infinispan.server.hotrod.tx.TxState;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.util.ByteString;
 
 /**
- * Module lifecycle callbacks implementation that enables module specific {@link AdvancedExternalizer}
- * implementations to be registered.
+ * Module lifecycle callbacks implementation that enables module specific {@link AdvancedExternalizer} implementations
+ * to be registered.
  *
  * @author Galder Zamarreño
  * @since 5.0
@@ -65,7 +65,7 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
       externalizers.put(ITERATION_FILTER, new IterationFilter.IterationFilterExternalizer());
       externalizers.put(TX_STATE, TxState.EXTERNALIZER);
       externalizers.put(CACHE_XID, CacheXid.EXTERNALIZER);
-      externalizers.put(TX_FUNCTIONS, TxFunctions.EXTERNALIZER);
+      externalizers.put(CLIENT_ADDRESS, ClientAddress.EXTERNALIZER);
    }
 
    @Override
@@ -91,9 +91,9 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
             .getComponent(EmbeddedCacheManager.class);
       Cache<CacheXid, TxState> globalTxTable = cacheManager.getCache(GLOBAL_TX_TABLE_CACHE_NAME);
       ServerTransactionTable transactionTable = new ServerTransactionTable(globalTxTable,
-            ByteString.fromString(cacheName));
+            ByteString.fromString(cacheName), cacheManager.getAddress());
       componentRegistry.registerComponent(transactionTable, ServerTransactionTable.class);
-      ServerTransactionOriginatorChecker checker = new ServerTransactionOriginatorChecker(globalTxTable);
+      ServerTransactionOriginatorChecker checker = new ServerTransactionOriginatorChecker();
       componentRegistry.registerComponent(checker, TransactionOriginatorChecker.class);
       componentRegistry.rewire();
    }
