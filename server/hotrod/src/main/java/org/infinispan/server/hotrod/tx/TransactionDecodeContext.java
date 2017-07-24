@@ -12,7 +12,6 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 
 /**
  * A base decode context to handle prepare, commit and rollback requests from a client.
@@ -27,7 +26,6 @@ abstract class TransactionDecodeContext {
    final RpcManager rpcManager;
    final Address localAddress;
    final TransactionTable transactionTable;
-   final EmbeddedTransactionManager tm;
    final CommandsFactory commandsFactory;
    private final ClusteringDependentLogic clusteringDependentLogic;
    TxState txState;
@@ -41,7 +39,6 @@ abstract class TransactionDecodeContext {
       this.transactionTable = registry.getComponent(TransactionTable.class);
       this.clusteringDependentLogic = registry.getComponent(ClusteringDependentLogic.class);
       this.serverTransactionTable = registry.getComponent(ServerTransactionTable.class);
-      this.tm = (EmbeddedTransactionManager) cache.getTransactionManager();
       this.txState = serverTransactionTable.getGlobalState(xid);
    }
 

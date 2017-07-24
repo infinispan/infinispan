@@ -117,15 +117,15 @@ public final class CacheDecodeContext {
 
       //forces the write-lock. used by pessimistic transaction. it ensures the key is not written after is it read and validated
       //optimistic transaction will use the write-skew check.
-      AdvancedCache<byte[], byte[]> readCache = cache.withFlags(Flag.FORCE_WRITE_LOCK);
+      AdvancedCache<byte[], byte[]> txCache = txContext.decorateCache(cache);
 
       try {
          for (TransactionWrite write : context.writes()) {
-            if (isValid(write, readCache)) {
+            if (isValid(write, txCache)) {
                if (write.isRemove()) {
-                  cache.remove(write.key);
+                  txCache.remove(write.key);
                } else {
-                  cache.put(write.key, write.value, buildMetadata(write.lifespan, write.maxIdle));
+                  txCache.put(write.key, write.value, buildMetadata(write.lifespan, write.maxIdle));
                }
             } else {
                txContext.setRollbackOnly();
