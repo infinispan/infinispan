@@ -8,6 +8,7 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ByteString;
@@ -28,11 +29,18 @@ public class ServerTransactionTable {
    private final Map<CacheXid, TxState> globalTxTable;
    private final Map<Xid, EmbeddedTransaction> localTxTable;
    private final ByteString cacheName;
+   private final ClientAddress clientAddress;
 
-   public ServerTransactionTable(Map<CacheXid, TxState> globalTxTable, ByteString cacheName) {
+   public ServerTransactionTable(Map<CacheXid, TxState> globalTxTable, ByteString cacheName,
+         Address address) {
       this.cacheName = cacheName;
       this.localTxTable = new ConcurrentHashMap<>();
       this.globalTxTable = globalTxTable;
+      clientAddress = new ClientAddress(address);
+   }
+
+   ClientAddress getClientAddress() {
+      return clientAddress;
    }
 
    /**
@@ -114,19 +122,6 @@ public class ServerTransactionTable {
     */
    TxState getGlobalState(XidImpl xid) {
       return globalTxTable.get(new CacheXid(cacheName, xid));
-   }
-
-   /**
-    * Removes the {@link TxState} from the global transaction table if it did not changed.
-    *
-    * @return {@code true} if remove, {@code false} otherwise.
-    */
-   boolean removeGlobalState(XidImpl xid, TxState current) {
-      boolean removed = globalTxTable.remove(new CacheXid(cacheName, xid), current);
-      if (trace && removed) {
-         log.tracef("[%s] Removed state=%s", xid, current);
-      }
-      return removed;
    }
 
    /**

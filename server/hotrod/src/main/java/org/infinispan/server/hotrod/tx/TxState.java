@@ -59,7 +59,7 @@ public class TxState {
    }
 
    public Address getOriginator() {
-      return globalTransaction.getAddress();
+      return ((ClientAddress) globalTransaction.getAddress()).getLocalAddress();
    }
 
    @Override
