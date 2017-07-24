@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "stream.BaseSetupStreamIteratorTest")
 public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersTest {
-   protected final String CACHE_NAME = getClass().getName();
+   protected final String CACHE_NAME = "testCache";
    protected ConfigurationBuilder builderUsed;
 
    public BaseSetupStreamIteratorTest(boolean tx, CacheMode mode) {

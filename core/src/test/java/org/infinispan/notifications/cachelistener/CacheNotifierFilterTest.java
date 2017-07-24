@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "notifications.cachelistener.CacheNotifierFilterTest")
 public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
-   protected final String CACHE_NAME = getClass().getName();
+   protected final String CACHE_NAME = "testCache";
    protected ConfigurationBuilder builderUsed;
 
    @Override
