@@ -61,7 +61,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional")
 public abstract class BaseStreamTest extends MultipleCacheManagersTest {
-   protected final String CACHE_NAME = getClass().getName();
+   protected final String CACHE_NAME = "testCache";
    protected ConfigurationBuilder builderUsed;
 
    static final Map<Integer, Object> forEachStructure = new ConcurrentHashMap<>();

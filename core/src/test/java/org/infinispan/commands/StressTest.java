@@ -18,7 +18,7 @@ import org.infinispan.test.fwk.TestResourceTracker;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public abstract class StressTest extends MultipleCacheManagersTest {
-   protected final String CACHE_NAME = getClass().getName();
+   protected final String CACHE_NAME = "testCache";
    final AtomicBoolean complete = new AtomicBoolean(false);
    final BlockingQueue<Throwable> exceptions = new LinkedBlockingDeque<>();
    protected ConfigurationBuilder builderUsed;

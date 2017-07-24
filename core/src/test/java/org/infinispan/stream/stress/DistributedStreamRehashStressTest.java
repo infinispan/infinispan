@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
 @Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest", timeOut = 15*60*1000)
 @InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC })
 public class DistributedStreamRehashStressTest extends StressTest {
-   protected final String CACHE_NAME = getClass().getName();
+   protected final String CACHE_NAME = "testCache";
    protected final static int CACHE_COUNT = 5;
    protected final static int THREAD_MULTIPLIER = 5;
    protected final static long CACHE_ENTRY_COUNT = 250000;
