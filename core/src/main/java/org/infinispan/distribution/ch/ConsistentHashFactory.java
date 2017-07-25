@@ -10,6 +10,12 @@ import org.infinispan.remoting.transport.Address;
 /**
  * Factory for {@link ConsistentHash} instances.
  *
+ * <p>We say a consistent hash {@code ch} is <em>balanced</em> iif {@code rebalance(ch).equals(ch)}.
+ *
+ * <p>The consistent hashes created by {@link #create(Hash, int, int, List, Map)} must be balanced,
+ * but the ones created by {@link #updateMembers(ConsistentHash, List, Map)} and
+ * {@link #union(ConsistentHash, ConsistentHash)} will likely be unbalanced.
+ *
  * @see <a href="https://community.jboss.org/wiki/Non-BlockingStateTransferV2">Non-BlockingStateTransferV2</a>
  *
  * @author Dan Berindei
@@ -19,6 +25,8 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
 
    /**
     * Create a new consistent hash instance.
+    *
+    * The consistent hash will be <em>balanced</em>.
     *
     * @param hashFunction The hash function to use on top of the keys' own {@code hashCode()} implementation.
     * @param numOwners The ideal number of owners for each key. The created consistent hash
@@ -34,11 +42,15 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
              Map<Address, Float> capacityFactors);
 
    /**
-    * Create a new consistent hash instance, based on an existing instance, but with a new list of members.
-    * <p/>
-    * This method will not assign any new owners, so it will not require a state transfer.
-    * The only exception is if a segment doesn't have any owners in the new members list - but there isn't
-    * anyone to transfer that segment from, so that won't require a state transfer either.
+    * Updates an existing consistent hash instance to remove owners that are not in the {@code newMembers} list.
+    *
+    * <p>If a segment has at least one owner in {@code newMembers}, this method will not add another owner.
+    * This guarantees that the new consistent hash can be used immediately, without transferring any state.
+    *
+    * <p>If a segment has no owners in {@code newMembers} and the {@link ConsistentHash} implementation
+    * (e.g. {@link org.infinispan.distribution.ch.impl.DefaultConsistentHash}) requires
+    * at least one owner for each segment, this method may add one or more owners for that segment.
+    * Since the data in that segment was lost, the new consistent hash can still be used without transferring state.
     *
     * @param baseCH An existing consistent hash instance, should not be {@code null}
     * @param newMembers A list of addresses representing the new cache members.
@@ -51,13 +63,8 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
    CH updateMembers(CH baseCH, List<Address> newMembers, Map<Address, Float> capacityFactors);
 
    /**
-    * Create a new consistent hash instance, based on an existing instance, but "balanced" according to
+    * Create a new consistent hash instance, based on an existing instance, but <em>balanced</em> according to
     * the implementation's rules.
-    * <p/>
-    * It must be possible to switch from the "intermediary" consistent hash that includes the
-    * old owners to the new consistent hash without any state transfer.
-    * <p/>
-    * {@code rebalance(rebalance(ch))} must be equivalent to {@code rebalance(ch)}.
     *
     * @param baseCH An existing consistent hash instance, should not be {@code null}
     * @return A new {@link ConsistentHash} instance, or {@code baseCH} if the existing instance
@@ -68,6 +75,10 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
    /**
     * Creates a union of two compatible ConsistentHashes (use the same hashing function and have the same configuration
     * parameters).
+    *
+    * <p>The owners of a segment {@code s} in {@code union(ch1, ch2)} will include both the owners of {@code s}
+    * in {@code ch1} and the owners of {@code s} in {@code ch2}, so a cache can switch from using
+    * {@code union(ch1, ch2)} to using {@code ch2} without transferring any state.
     */
    CH union(CH ch1, CH ch2);
 

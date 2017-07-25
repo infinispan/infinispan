@@ -19,10 +19,10 @@ import org.infinispan.remoting.transport.Address;
  *
  * A consistent hash assigns each key a list of owners; the number of owners is defined at creation time,
  * but the consistent hash is free to return a smaller or a larger number of owners, depending on
- * circumstances, as long as each key has at least one owner.
+ * circumstances.
  *
- * The first element in the list of owners is the "primary owner". A key will always have a primary owner.
- * The other owners are called "backup owners".
+ * The first element in the list of owners is the "primary owner". The other owners are called "backup owners".
+ * Some implementations guarantee that there will always be a primary owner, others do not.
  *
  * This interface gives access to some implementation details of the consistent hash.
  *
