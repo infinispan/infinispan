@@ -47,8 +47,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      cchf = new ControlledConsistentHashFactory.Default(new int[]{0, 1}, new int[]{1, 2},
-                                            new int[]{2, 3}, new int[]{3, 0});
+      cchf = new ControlledConsistentHashFactory.Default(new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 0}});
       configBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configBuilder.clustering().partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES);
       configBuilder.clustering().hash().numSegments(4).stateTransfer().timeout(30000);
@@ -89,8 +88,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
    private void testNodeCrashedBeforeStFinished(final int a0, final int a1, final int c0, final int c1) throws Exception {
 
-      cchf.setOwnerIndexes(new int[]{a0, a1}, new int[]{a1, c0},
-                           new int[]{c0, c1}, new int[]{c1, a0});
+      cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, c0}, {c0, c1}, {c1, a0}});
       configBuilder.clustering().hash().consistentHashFactory(cchf);
       createCluster(configBuilder, 4);
       waitForClusterToForm();
@@ -121,8 +119,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
       // Prepare for rebalance. Manager a1 will request state from c0 for segment 2
       cchf.setMembersToUse(advancedCache(a0).getRpcManager().getTransport().getMembers());
-      cchf.setOwnerIndexes(new int[]{a0, a1}, new int[]{a1, c0},
-            new int[]{c0, a1}, new int[]{c0, a0});
+      cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, c0}, {c0, a1}, {c0, a0}});
 
       Address missing = address(c1);
       log.tracef("Before killing node %s", missing);
@@ -169,8 +166,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       }
 
       log.debug("Changing partition availability mode back to AVAILABLE");
-      cchf.setOwnerIndexes(new int[]{a0, a1}, new int[]{a1, a0},
-            new int[]{a0, a1}, new int[]{a1, a0});
+      cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, a0}, {a0, a1}, {a1, a0}});
       LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(a0), LocalTopologyManager.class);
       ltm.setCacheAvailability(CacheContainer.DEFAULT_CACHE_NAME, AvailabilityMode.AVAILABLE);
       TestingUtil.waitForNoRebalance(cache(a0), cache(a1));

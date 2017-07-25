@@ -762,9 +762,9 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
 
       @Override
-      protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
-         assertEquals("Wrong number of owners.", 1, numberOfOwners);
-         return Collections.singletonList(members.get(members.size() - 1));
+      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+         assertEquals("Wrong number of owners.", 1, numOwners);
+         return new int[][]{{members.size() - 1}};
       }
    }
 

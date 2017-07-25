@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -107,8 +106,8 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
-         return Collections.singletonList(members.get(members.size() - 1));
+      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+         return new int[][]{{members.size() - 1}};
       }
 
       public static final class Ext implements Externalizer<MyBaseControlledConsistentHashFactory> {

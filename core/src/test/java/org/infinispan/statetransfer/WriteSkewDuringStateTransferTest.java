@@ -310,15 +310,17 @@ rebalance_start
       }
 
       @Override
-      protected final List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
-         assertEquals("Wrong number of owners", 3, numberOfOwners);
+      protected final int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+         assertEquals("Wrong number of owners", 3, numOwners);
          //the primary owner is the last member.
-         final List<Address> owners = new ArrayList<>(3);
-         owners.add(members.get(members.size() - 1));
-         for (int i = 0; i < members.size() - 1; ++i) {
-            owners.add(members.get(i));
+         switch (members.size()) {
+            case 1:
+               return new int[][]{{0}};
+            case 2:
+               return new int[][]{{1, 0}};
+            default:
+               return new int[][]{{members.size() - 1, 0, 1}};
          }
-         return owners;
       }
    }
 

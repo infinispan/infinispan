@@ -54,7 +54,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      consistentHashFactory = new ControlledConsistentHashFactory.Default(new int[]{1, 2, 3}, new int[]{1, 2, 3});
+      consistentHashFactory = new ControlledConsistentHashFactory.Default(new int[][]{{1, 2, 3}, {1, 2, 3}});
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(3);
       builder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
@@ -97,7 +97,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             .before("st:block_state_request", "st:resume_state_request");
 
       // Cache 0 will become an owner and will request state from cache 1
-      consistentHashFactory.setOwnerIndexes(new int[]{0, 1, 2}, new int[]{0, 1, 2});
+      consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1, 2}, {0, 1, 2}});
       consistentHashFactory.triggerRebalance(cache(0));
 
       sequencer.enter("st:simulate_old_response");
@@ -134,7 +134,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
    public void testStateResponseWhileRestartingBrokenTransfers() throws Throwable {
       // The initial topology is different from the other method's
-      consistentHashFactory.setOwnerIndexes(new int[]{1, 2, 3}, new int[]{2, 1, 3});
+      consistentHashFactory.setOwnerIndexes(new int[][]{{1, 2, 3}, {2, 1, 3}});
       consistentHashFactory.triggerRebalance(cache(0));
       // waitForStableTopology doesn't work here, since the cache looks already "balanced"
       // So we wait for the primary owner of segment 1 to change
@@ -202,7 +202,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       cache(0).put(k2, "v2");
 
       // Start the rebalance
-      consistentHashFactory.setOwnerIndexes(new int[]{0, 1, 2}, new int[]{0, 2, 1});
+      consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1, 2}, {0, 2, 1}});
       consistentHashFactory.triggerRebalance(cache(0));
 
       // Wait for cache0 to receive the state response

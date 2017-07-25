@@ -21,12 +21,12 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.Traversable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.Traversable;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -82,7 +82,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      chFactory = new ControlledConsistentHashFactory.Default(new int[] { 0, 1 } , new int[] { 0, 2 });
+      chFactory = new ControlledConsistentHashFactory.Default(new int[][]{{0, 1}, {0, 2}});
       cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().consistentHashFactory(chFactory).numSegments(2);
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
@@ -123,7 +123,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       }
 
       // node 2 should be backup for both segment 0
-      chFactory.setOwnerIndexes(new int[] { 0, 2 }, new int[] { 0, 2 });
+      chFactory.setOwnerIndexes(new int[][]{{0, 2}, {0, 2}});
       // block sending segment 0 to node 2
       crm0.blockBefore(StateResponseCommand.class);
       crm1.blockBefore(StateResponseCommand.class);

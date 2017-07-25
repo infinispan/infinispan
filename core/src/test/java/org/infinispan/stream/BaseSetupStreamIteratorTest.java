@@ -3,6 +3,7 @@ package org.infinispan.stream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -10,13 +11,18 @@ import java.util.stream.Stream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.filter.Converter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -42,7 +48,9 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
-      builderUsed.clustering().cacheMode(cacheMode).hash().numSegments(16);
+      BaseControlledConsistentHashFactory<? extends ConsistentHash> chf =
+            cacheMode.isScattered() ? new TestScatteredConsistentHashFactory() : new TestDefaultConsistentHashFactory();
+      builderUsed.clustering().cacheMode(cacheMode).hash().numSegments(3).consistentHashFactory(chf);
       if (transactional) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
@@ -59,7 +67,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
    }
 
    protected static <K, V> Map<K, V> mapFromIterator(Iterator<? extends Map.Entry<K, V>> iterator) {
-      Map<K, V> map = new HashMap<K, V>();
+      Map<K, V> map = new HashMap<>();
       while (iterator.hasNext()) {
          Map.Entry<K, V> entry = iterator.next();
          map.put(entry.getKey(), entry.getValue());
@@ -69,7 +77,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
 
    protected static <K, V> Map<K, V> mapFromStream(Stream<CacheEntry<K, V>> stream) {
       return stream.collect(CacheCollectors.serializableCollector(
-              () -> Collectors.toMap(e -> e.getKey(), e -> e.getValue())));
+            () -> Collectors.toMap(CacheEntry::getKey, CacheEntry::getValue)));
    }
 
    protected static class StringTruncator implements Converter<Object, String, String>, Serializable, ExternalPojo {
@@ -87,6 +95,48 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
             return value.substring(beginning, beginning + length);
          } else {
             throw new IllegalStateException("String should be longer than truncation size!  Possible double conversion performed!");
+         }
+      }
+   }
+
+   private static class TestDefaultConsistentHashFactory
+         extends BaseControlledConsistentHashFactory<DefaultConsistentHash> {
+      TestDefaultConsistentHashFactory() {
+         super(new DefaultTrait(), 3);
+      }
+
+      @Override
+      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+         // The test needs a segment owned by nodes 01, 12, and 21 when there are 3 nodes in the cluster.
+         // There are no restrictions for before/after, so we make the coordinator the primary owner of all segments.
+         switch (members.size()) {
+            case 1:
+               return new int[][]{{0}, {0}, {0}};
+            case 2:
+               return new int[][]{{0, 0}, {0, 1}, {0, 1}};
+            default:
+               return new int[][]{{0, 1}, {1, 2}, {2, 1}};
+         }
+      }
+   }
+
+   private static class TestScatteredConsistentHashFactory
+         extends BaseControlledConsistentHashFactory<ScatteredConsistentHash> {
+      TestScatteredConsistentHashFactory() {
+         super(new ScatteredTrait(), 3);
+      }
+
+      @Override
+      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+         // The test needs a segment owned by each node when there are 3 nodes in the cluster.
+         // There are no restrictions for before/after, so we make the coordinator the primary owner of all segments.
+         switch (members.size()) {
+            case 1:
+               return new int[][]{{0}, {0}, {0}};
+            case 2:
+               return new int[][]{{0}, {0}, {0}};
+            default:
+               return new int[][]{{0}, {1}, {2}};
          }
       }
    }

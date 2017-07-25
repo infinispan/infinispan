@@ -4,8 +4,11 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.hash.Hash;
@@ -37,16 +40,18 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
    public CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
                                        Map<Address, Float> capacityFactors) {
       assertNumberOfSegments(numSegments);
-      List<Address>[] segmentOwners = assignSegments(numOwners, numSegments, members);
+      List<Address>[] segmentOwners = assignSegments(numSegments, numOwners, members);
       return create(hashFunction, numOwners, numSegments, members, capacityFactors, segmentOwners, false);
    }
 
-   public List<Address>[] assignSegments(int numOwners, int numSegments, List<Address> members) {
-      List<Address>[] segmentOwners = new List[numSegments];
-      for (int i = 0; i < numSegments; i++) {
-         segmentOwners[i] = createOwnersCollection(members, numOwners, i);
-      }
-      return segmentOwners;
+   private List<Address>[] assignSegments(int numSegments, int numOwners, List<Address> members) {
+      int[][] ownerIndexes = assignOwners(numSegments, numOwners, members);
+      return Arrays.stream(ownerIndexes)
+                   .map(indexes -> Arrays.stream(indexes)
+                                         .mapToObj(members::get)
+                                         .collect(Collectors.toList()))
+                   .map(indexes -> indexes.subList(0, Math.min(indexes.size(), numOwners)))
+                   .toArray((IntFunction<List<Address>[]>) List[]::new);
    }
 
    protected CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors, List<Address>[] segmentOwners, boolean rebalanced) {
@@ -59,12 +64,16 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       assertNumberOfSegments(baseCH.getNumSegments());
       final int numOwners = baseCH.getNumOwners();
       List<Address>[] segmentOwners = new List[numSegments];
+      List<Address>[] balancedOwners = null;
       for (int i = 0; i < numSegments; i++) {
          List<Address> owners = new ArrayList<>(baseCH.locateOwnersForSegment(i));
          owners.retainAll(newMembers);
-         if (owners.isEmpty() && trait.requiresOneOwner()) {
-            // updateMembers should only add new owners if there are no owners left
-            owners = createOwnersCollection(newMembers, numOwners, i);
+         // updateMembers should only add new owners if there are no owners left and the trait requires a primary owner
+         if (owners.isEmpty() && trait.requiresPrimaryOwner()) {
+            if (balancedOwners == null) {
+               balancedOwners = assignSegments(numSegments, numOwners, newMembers);
+            }
+            owners = balancedOwners[i];
          }
          segmentOwners[i] = owners;
       }
@@ -75,8 +84,9 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
 
    @Override
    public CH rebalance(CH baseCH) {
+      List<Address>[] owners = assignSegments(baseCH.getNumSegments(), baseCH.getNumOwners(), baseCH.getMembers());
       CH rebalanced = create(baseCH.getHashFunction(), baseCH.getNumOwners(), baseCH.getNumSegments(),
-            baseCH.getMembers(), baseCH.getCapacityFactors(), assignSegments(baseCH.getNumOwners(), baseCH.getNumSegments(), baseCH.getMembers()), true);
+                             baseCH.getMembers(), baseCH.getCapacityFactors(), owners, true);
       return baseCH.equals(rebalanced) ? baseCH : rebalanced;
    }
 
@@ -87,7 +97,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       return trait.union(ch1, ch2);
    }
 
-   protected abstract List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex);
+   protected abstract int[][] assignOwners(int numSegments, int numOwners, List<Address> members);
 
    private void assertNumberOfSegments(int numSegments) {
       assertEquals("Wrong number of segments.", this.numSegments, numSegments);
@@ -97,7 +107,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors, List<Address>[] segmentOwners, boolean rebalanced);
       CH union(CH ch1, CH ch2);
 
-      boolean requiresOneOwner();
+      boolean requiresPrimaryOwner();
    }
 
    public static class DefaultTrait implements Trait<DefaultConsistentHash> {
@@ -112,7 +122,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       }
 
       @Override
-      public boolean requiresOneOwner() {
+      public boolean requiresPrimaryOwner() {
          return true;
       }
    }
@@ -133,7 +143,7 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       }
 
       @Override
-      public boolean requiresOneOwner() {
+      public boolean requiresPrimaryOwner() {
          return false;
       }
    }

@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.Version;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.eviction.PassivationManager;
@@ -167,6 +168,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
                                             transport.getCoordinator(), cacheStatus);
                return initialStatus.getCacheTopology();
+            } catch (NotSerializableException e) {
+               // There's no point in retrying if the cache join info is not serializable
+               throw new CacheJoinException(e);
             } catch (Exception e) {
                log.debugf(e, "Error sending join request for cache %s to coordinator", cacheName);
                if (e.getCause() != null && e.getCause() instanceof CacheJoinException) {

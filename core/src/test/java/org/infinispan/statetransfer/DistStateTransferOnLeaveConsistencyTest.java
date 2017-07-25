@@ -68,7 +68,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       }
 
       // Make it impossible for a key to be owned by nodes 0 and 2
-      consistentHashFactory = new ControlledConsistentHashFactory.Default(new int[]{0, 1}, new int[]{1, 2});
+      consistentHashFactory = new ControlledConsistentHashFactory.Default(new int[][]{{0, 1}, {1, 2}});
       builder.clustering().hash().numOwners(2).numSegments(2).consistentHashFactory(consistentHashFactory);
       builder.clustering().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
       builder.clustering().l1().disable().locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
@@ -182,7 +182,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       }, 0);
 
       // The indexes will only be used after node 1 is killed
-      consistentHashFactory.setOwnerIndexes(new int[]{0, 1}, new int[]{1, 0});
+      consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1}, {1, 0}});
       log.info("Killing node 1 ..");
       TestingUtil.killCacheManagers(manager(1));
       log.info("Node 1 killed");

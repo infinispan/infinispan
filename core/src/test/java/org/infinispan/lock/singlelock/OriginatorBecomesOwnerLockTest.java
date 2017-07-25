@@ -65,8 +65,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       configurationBuilder.locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       ControlledConsistentHashFactory consistentHashFactory =
-            new ControlledConsistentHashFactory.Default(new int[]{KILLED_INDEX, ORIGINATOR_INDEX},
-                  new int[]{KILLED_INDEX, OTHER_INDEX});
+            new ControlledConsistentHashFactory.Default(new int[][]{{KILLED_INDEX, ORIGINATOR_INDEX},
+                  {KILLED_INDEX, OTHER_INDEX}});
       configurationBuilder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
       createCluster(configurationBuilder, 3);
       waitForClusterToForm();
@@ -75,8 +75,8 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
       killedCache = cache(KILLED_INDEX);
       otherCache = cache(OTHER_INDEX);
       // Set up the consistent hash after node 1 is killed
-      consistentHashFactory.setOwnerIndexes(new int[]{ORIGINATOR_INDEX, OTHER_INDEX},
-            new int[]{OTHER_INDEX, ORIGINATOR_INDEX});
+      consistentHashFactory.setOwnerIndexes(new int[][]{{ORIGINATOR_INDEX, OTHER_INDEX},
+            {OTHER_INDEX, ORIGINATOR_INDEX}});
       // TODO Add another test method with ownership changing from [KILLED_INDEX, OTHER_INDEX] to [ORIGINATOR_INDEX, OTHER_INDEX]
       // i.e. the originator is a non-owner at first, and becomes the primary owner when the prepare is retried
    }

@@ -41,7 +41,7 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      controlledCHFactory = new ControlledConsistentHashFactory.Default(new int[]{1, 2}, new int[]{2, 3});
+      controlledCHFactory = new ControlledConsistentHashFactory.Default(new int[][]{{1, 2}, {2, 3}});
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       configuration.clustering().cacheMode(CacheMode.DIST_SYNC);
       configuration.clustering().hash().numSegments(2).numOwners(2).consistentHashFactory(controlledCHFactory);
@@ -91,7 +91,7 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       });
 
       ss.advance("before_kill_3");
-      controlledCHFactory.setOwnerIndexes(new int[]{1, 2}, new int[]{2, 1});
+      controlledCHFactory.setOwnerIndexes(new int[][]{{1, 2}, {2, 1}});
       manager(3).stop();
       cacheManagers.remove(3);
 
@@ -147,7 +147,7 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       });
 
       ss.advance("before_kill_3");
-      controlledCHFactory.setOwnerIndexes(new int[]{1, 2}, new int[]{2, 1});
+      controlledCHFactory.setOwnerIndexes(new int[][]{{1, 2}, {2, 1}});
       manager(3).stop();
       cacheManagers.remove(3);
 
