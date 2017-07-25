@@ -27,6 +27,8 @@ import net.jcip.annotations.Immutable;
 /**
  * Default {@link ConsistentHash} implementation. This object is immutable.
  *
+ * Every segment must have a primary owner.
+ *
  * @author Dan Berindei
  * @author anistor@redhat.com
  * @since 5.2

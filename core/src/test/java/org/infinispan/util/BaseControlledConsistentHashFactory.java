@@ -60,9 +60,9 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       final int numOwners = baseCH.getNumOwners();
       List<Address>[] segmentOwners = new List[numSegments];
       for (int i = 0; i < numSegments; i++) {
-         List<Address> owners = new ArrayList<Address>(baseCH.locateOwnersForSegment(i));
+         List<Address> owners = new ArrayList<>(baseCH.locateOwnersForSegment(i));
          owners.retainAll(newMembers);
-         if (owners.isEmpty()) {
+         if (owners.isEmpty() && trait.requiresOneOwner()) {
             // updateMembers should only add new owners if there are no owners left
             owners = createOwnersCollection(newMembers, numOwners, i);
          }
@@ -96,6 +96,8 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
    protected interface Trait<CH extends ConsistentHash> extends Serializable {
       CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors, List<Address>[] segmentOwners, boolean rebalanced);
       CH union(CH ch1, CH ch2);
+
+      boolean requiresOneOwner();
    }
 
    public static class DefaultTrait implements Trait<DefaultConsistentHash> {
@@ -108,17 +110,31 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       public DefaultConsistentHash union(DefaultConsistentHash ch1, DefaultConsistentHash ch2) {
          return ch1.union(ch2);
       }
+
+      @Override
+      public boolean requiresOneOwner() {
+         return true;
+      }
    }
 
    public static class ScatteredTrait implements Trait<ScatteredConsistentHash> {
       @Override
       public ScatteredConsistentHash create(Hash hashFunction, int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors, List<Address>[] segmentOwners, boolean rebalanced) {
-         return new ScatteredConsistentHash(hashFunction, numSegments, members, capacityFactors, Stream.of(segmentOwners).map(list -> list.get(0)).toArray(Address[]::new), rebalanced);
+         Address[] segmentOwners1 = Stream.of(segmentOwners)
+                                          .map(list -> list.isEmpty() ? null : list.get(0))
+                                          .toArray(Address[]::new);
+         return new ScatteredConsistentHash(hashFunction, numSegments, members, capacityFactors,
+                                            segmentOwners1, rebalanced);
       }
 
       @Override
       public ScatteredConsistentHash union(ScatteredConsistentHash ch1, ScatteredConsistentHash ch2) {
          return ch1.union(ch2);
+      }
+
+      @Override
+      public boolean requiresOneOwner() {
+         return false;
       }
    }
 

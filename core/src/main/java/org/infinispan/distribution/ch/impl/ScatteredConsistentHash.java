@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * {@link org.infinispan.distribution.ch.ConsistentHashFactory#updateMembers} is called and the result
  * is sent in CH_UPDATE. Such topology is installed and later during rebalance, a diff of segments
  * between the installed and new (rebalancing) topology is computed. If we assigned all the owners
- * right in updateMembers, this diff would be emtpy.
+ * right in updateMembers, this diff would be empty.
  *
  * @since 9.1
  */
@@ -112,7 +112,7 @@ public class ScatteredConsistentHash extends AbstractConsistentHash {
          throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
 
-      Set<Integer> segments = new HashSet<Integer>();
+      Set<Integer> segments = new HashSet<>();
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          if (Objects.equals(segmentOwners[segment], owner)) {
             segments.add(segment);
@@ -144,11 +144,11 @@ public class ScatteredConsistentHash extends AbstractConsistentHash {
    @Override
    public Set<Address> locateAllOwners(Collection<Object> keys) {
       // Use a HashSet assuming most of the time the number of keys is small.
-      HashSet<Integer> segments = new HashSet<Integer>();
+      HashSet<Integer> segments = new HashSet<>();
       for (Object key : keys) {
          segments.add(getSegment(key));
       }
-      HashSet<Address> ownersUnion = new HashSet<Address>();
+      HashSet<Address> ownersUnion = new HashSet<>();
       for (Integer segment : segments) {
          if (segmentOwners[segment] != null) {
             ownersUnion.add(segmentOwners[segment]);
@@ -224,7 +224,7 @@ public class ScatteredConsistentHash extends AbstractConsistentHash {
    public ScatteredConsistentHash union(ScatteredConsistentHash sch2) {
       checkSameHashAndSegments(sch2);
 
-      List<Address> unionMembers = new ArrayList<Address>(this.members);
+      List<Address> unionMembers = new ArrayList<>(this.members);
       mergeLists(unionMembers, sch2.getMembers());
 
       Address[] unionSegmentOwners = new Address[segmentOwners.length];
