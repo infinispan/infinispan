@@ -218,7 +218,8 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
          // Scattered cache throws AllOwnersLostException instead of returning map with only a subset of keys
          // because the owners might be unknown even if there's no data loss and then the command has to be retried.
-         if (t == null) {
+         if (t == null && rv instanceof Map) {
+            // rv could be UnsureResponse
             Map<Object, Object> result = ((Map<Object, Object>) rv);
             if (result.size() != getAllCommand.getKeys().size()) {
                Set<Object> missingKeys = new HashSet<>(getAllCommand.getKeys());

@@ -2,7 +2,6 @@ package org.infinispan.statetransfer;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -87,11 +86,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          throws Throwable {
       if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, getOrigin(ctx));
 
-      if (isLocalOnly(command)) {
-         return invokeNext(ctx, command);
-      }
       updateTopologyId(command);
-
       return invokeNextAndHandle(ctx, command, handleTxReturn);
    }
 
@@ -261,11 +256,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command) {
       if (trace) log.tracef("handleTxWriteCommand for command %s, origin %s", command, ctx.getOrigin());
 
-      if (isLocalOnly(command)) {
-         return invokeNext(ctx, command);
-      }
       updateTopologyId(command);
-
       return invokeNextAndHandle(ctx, command, handleTxWriteReturn);
    }
 
@@ -307,10 +298,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     */
    private Object handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command) {
       if (trace) log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
-
-      if (isLocalOnly(command)) {
-         return invokeNext(ctx, command);
-      }
 
       updateTopologyId(command);
 
@@ -365,11 +352,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
                                                 VisitableCommand command, Address origin) {
       if (trace) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
-      if (isLocalOnly((FlagAffectedCommand) command)) {
-         return invokeNext(ctx, command);
-      }
       updateTopologyId((TopologyAffectedCommand) command);
-
       return invokeNext(ctx, command);
    }
 

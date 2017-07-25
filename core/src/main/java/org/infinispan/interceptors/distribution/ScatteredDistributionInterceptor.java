@@ -156,7 +156,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       DistributionInfo info = cacheTopology.getDistribution(command.getKey());
       if (info.primary() == null) {
-         throw AllOwnersLostException.INSTANCE;
+         throw OutdatedTopologyException.INSTANCE;
       }
 
       if (isLocalModeForced(command)) {
@@ -302,7 +302,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
    private <T extends FlagAffectedCommand & TopologyAffectedCommand> LocalizedCacheTopology checkTopology(T command) {
       LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
-      if (!command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK) && command.getTopologyId() >= 0 && command.getTopologyId() != cacheTopology.getTopologyId()) {
+      assert command.getTopologyId() >= 0;
+      if (!command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL) && command.getTopologyId() != cacheTopology.getTopologyId()) {
          // When this exception is thrown and the topology is installed before we handle this in StateTransferInterceptor,
          // we would wait for topology with id that will never come (due to +1).
          // Note that this does not happen to write commands as these are not processed until we receive the topology
@@ -567,12 +568,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       // TODO [rvansa]: local lookup and hinted read, see improvements in package-info
 
       // ClusteredGetCommand invokes local-mode forced read, but we still have to check for primary owner
-      // Scattered cache always uses only writeCH
       DistributionInfo info = cacheTopology.getDistribution(command.getKey());
-      if (info.primary() == null) {
-         throw AllOwnersLostException.INSTANCE;
-      }
-
       if (info.isPrimary()) {
          if (trace) {
             log.tracef("In topology %d this is primary owner", cacheTopology.getTopologyId());
@@ -583,6 +579,8 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             log.trace("Ignoring ownership");
          }
          return invokeNext(ctx, command);
+      } else if (info.primary() == null) {
+         throw OutdatedTopologyException.INSTANCE;
       } else if (ctx.isOriginLocal()) {
          if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)) {
             if (ctx.lookupEntry(command.getKey()) == null) {
@@ -714,7 +712,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             localEntries.put(key, new MetadataImmortalCacheValue(entry.getValue(), metadata));
             commitSingleEntryIfNewer(ctxEntry, ctx, command);
          } else if (info.primary() == null) {
-            throw AllOwnersLostException.INSTANCE;
+            throw OutdatedTopologyException.INSTANCE;
          } else {
             Map<Object, Object> currentEntries = remoteEntries.computeIfAbsent(info.primary(), k -> new HashMap<>());
             currentEntries.put(key, entry.getValue());
@@ -861,7 +859,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          for (Object key : command.getKeys()) {
             DistributionInfo info = cacheTopology.getDistribution(key);
             if (info.primary() == null) {
-               throw AllOwnersLostException.INSTANCE;
+               throw OutdatedTopologyException.INSTANCE;
             } else if (!info.isPrimary()) {
                remoteKeys.computeIfAbsent(info.primary(), k -> new ArrayList<>()).add(key);
             }

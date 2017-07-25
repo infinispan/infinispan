@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.distexec.DistributedCallable;
@@ -25,11 +26,10 @@ public interface StateProvider {
    /**
     * Receive notification of topology changes. Cancels all outbound transfers to destinations that are no longer members.
     * The other outbound transfers remain unaffected.
-    *
-    * @param cacheTopology
+    *  @param cacheTopology
     * @param isRebalance
     */
-   void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
+   CompletableFuture<Void> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
 
    /**
     * Gets the list of transactions that affect keys from the given segments. This is invoked in response to a

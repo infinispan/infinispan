@@ -480,8 +480,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
-      return actual.buildInvalidateVersionsCommand(keys, topologyIds, versions, removed);
+   public InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
+      return actual.buildInvalidateVersionsCommand(topologyId, keys, topologyIds, versions, removed);
    }
 
 }

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -193,7 +194,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private void doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
       CacheTopology oldCacheTopology = stateConsumer.getCacheTopology();
 
-      if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newCacheTopology.getTopologyId()) {
+      int newTopologyId = newCacheTopology.getTopologyId();
+      if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newTopologyId) {
          throw new IllegalStateException("Old topology is higher: old=" + oldCacheTopology + ", new=" + newCacheTopology);
       }
 
@@ -203,23 +205,34 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       // No need for extra synchronization here, since LocalTopologyManager already serializes topology updates.
       if (firstTopologyAsMember == Integer.MAX_VALUE && newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
-         firstTopologyAsMember = newCacheTopology.getTopologyId();
+         firstTopologyAsMember = newTopologyId;
          if (trace) log.tracef("This is the first topology %d in which the local node is a member", firstTopologyAsMember);
       }
 
       // handle the partitioner
       newCacheTopology = addPartitioner(newCacheTopology);
+      int newRebalanceId = newCacheTopology.getRebalanceId();
+      CacheTopology.Phase phase = newCacheTopology.getPhase();
 
-      cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newCacheTopology.getTopologyId(), true);
+      cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, true);
 
-      stateConsumer.onTopologyUpdate(newCacheTopology, isRebalance);
-      stateProvider.onTopologyUpdate(newCacheTopology, isRebalance);
+      CompletableFuture<Void> consumerFuture = stateConsumer.onTopologyUpdate(newCacheTopology, isRebalance);
+      CompletableFuture<Void> providerFuture = stateProvider.onTopologyUpdate(newCacheTopology, isRebalance);
+      CompletableFuture.allOf(consumerFuture, providerFuture).thenRun(() -> {
+         switch (phase) {
+            case TRANSITORY:
+            case READ_OLD_WRITE_ALL:
+            case READ_ALL_WRITE_ALL:
+            case READ_NEW_WRITE_ALL:
+               localTopologyManager.confirmRebalancePhase(cacheName, newTopologyId, newRebalanceId, null);
+         }
+      });
 
-      cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newCacheTopology.getTopologyId(), false);
+      cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, false);
 
       if (initialStateTransferComplete.getCount() > 0) {
          assert stateConsumer.getCacheTopology() == newCacheTopology;
-         boolean isJoined = newCacheTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE
+         boolean isJoined = phase == CacheTopology.Phase.NO_REBALANCE
                && newCacheTopology.getReadConsistentHash().getMembers().contains(rpcManager.getAddress());
          if (isJoined) {
             initialStateTransferComplete.countDown();
@@ -321,11 +334,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
          }
       }
       return Collections.emptyMap();
-   }
-
-   @Override
-   public void notifyEndOfStateTransfer(int topologyId, int rebalanceId) {
-      localTopologyManager.confirmRebalancePhase(cacheName, topologyId, rebalanceId, null);
    }
 
    // TODO Investigate merging ownsData() and getFirstTopologyAsMember(), as they serve a similar purpose

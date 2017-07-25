@@ -534,5 +534,5 @@ public interface CommandsFactory {
 
    BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command);
 
-   InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, int[] topologyIds, long[] versions, boolean removed);
+   InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed);
 }

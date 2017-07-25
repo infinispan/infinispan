@@ -1639,4 +1639,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "LocalTransaction not found but present in the tx table for remote site transaction %s", id = 479)
    IllegalStateException unableToFindLocalTransactionFromRemoteSiteTransaction(GlobalTransaction globalTransaction);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Ignoring versions invalidation from topology %d, current topology is %d")
+   void ignoringInvalidateVersionsFromOldTopology(int invalidationTopology, int currentTopologyId);
 }

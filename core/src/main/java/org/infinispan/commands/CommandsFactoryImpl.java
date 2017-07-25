@@ -108,6 +108,7 @@ import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.LocalStreamManager;
@@ -175,6 +176,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private StateReceiver stateReceiver;
    private ComponentRegistry componentRegistry;
    private OrderedUpdatesManager orderedUpdatesManager;
+   private StateTransferLock stateTransferLock;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
    private StreamingMarshaller marshaller;
@@ -195,7 +197,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  CommandAckCollector commandAckCollector,
                                  StateReceiver stateReceiver,
                                  ComponentRegistry componentRegistry,
-                                 OrderedUpdatesManager orderedUpdatesManager) {
+                                 OrderedUpdatesManager orderedUpdatesManager, StateTransferLock stateTransferLock) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -225,6 +227,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.stateReceiver = stateReceiver;
       this.componentRegistry = componentRegistry;
       this.orderedUpdatesManager = orderedUpdatesManager;
+      this.stateTransferLock = stateTransferLock;
    }
 
    @Start(priority = 1)
@@ -539,7 +542,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case InvalidateVersionsCommand.COMMAND_ID:
             InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
-            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager);
+            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager, stateTransferLock, stateTransferManager);
             break;
          case ReadWriteKeyCommand.COMMAND_ID:
             ((ReadWriteKeyCommand) c).init(componentRegistry);
@@ -727,8 +730,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public InvalidateVersionsCommand buildInvalidateVersionsCommand(Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
-      return new InvalidateVersionsCommand(cacheName, keys, topologyIds, versions, removed);
+   public InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
+      return new InvalidateVersionsCommand(cacheName, topologyId, keys, topologyIds, versions, removed);
    }
 
    @Override

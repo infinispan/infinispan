@@ -598,7 +598,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNextThenApply(ctx, command, remoteReturnHandler);
    }
 
-   private class ReadManyHandler<C extends TopologyAffectedCommand> implements BiConsumer<Map<Address, Response>, Throwable> {
+   private class ReadManyHandler<C extends FlagAffectedCommand & TopologyAffectedCommand> implements BiConsumer<Map<Address, Response>, Throwable> {
       private final Address target;
       private final MergingCompletableFuture<Object> allFuture;
       private final InvocationContext ctx;
@@ -934,7 +934,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
       int currentTopologyId = cacheTopology.getTopologyId();
       int cmdTopology = command.getTopologyId();
-      if (currentTopologyId != cmdTopology && cmdTopology != -1) {
+      if (command instanceof FlagAffectedCommand && ((((FlagAffectedCommand) command).hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.CACHE_MODE_LOCAL)))) {
+         log.tracef("Skipping topology check for command %s", command);
+         return cacheTopology;
+      }
+      // TotalOrderStateTransferInterceptor does not set topologyId for write commands
+      if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {
          throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
             cmdTopology + ", got " + currentTopologyId);
       }

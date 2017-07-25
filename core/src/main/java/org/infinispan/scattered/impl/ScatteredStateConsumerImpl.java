@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -89,13 +90,13 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
+   public CompletableFuture<Void> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       Address nextMember = getNextMember(cacheTopology);
       backupAddress = nextMember == null ? Collections.emptySet() : Collections.singleton(nextMember);
       nonBackupAddresses = new ArrayList<>(cacheTopology.getActualMembers());
       nonBackupAddresses.remove(nextMember);
       nonBackupAddresses.remove(rpcManager.getAddress());
-      super.onTopologyUpdate(cacheTopology, isRebalance);
+      return super.onTopologyUpdate(cacheTopology, isRebalance);
    }
 
    @Override
@@ -167,7 +168,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             for (int segment : addedSegments) {
                svm.notifyKeyTransferFinished(segment, false, false);
             }
-            notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+            notifyEndOfStateTransferIfNeeded();
          }
       }).join(); // we need to wait synchronously for the completion
    }
@@ -199,7 +200,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          for (int segment : segments) {
             svm.notifyKeyTransferFinished(segment, false, false);
          }
-         notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+         notifyEndOfStateTransferIfNeeded();
       }
    }
 
@@ -347,7 +348,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       // as we could notify the end of rebalance too soon
       removeTransfer(inboundTransfer);
       if (chunkCounter.get() == 0) {
-         notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+         notifyEndOfStateTransferIfNeeded();
       }
    }
 
@@ -389,13 +390,13 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       // Theoretically we can just send these invalidations asynchronously, but we'd prefer to have old copies
       // removed when state transfer completes.
       chunkCounter.incrementAndGet();
-      InvalidateVersionsCommand ivc = commandsFactory.buildInvalidateVersionsCommand(keys, topologyIds, versions, true);
+      InvalidateVersionsCommand ivc = commandsFactory.buildInvalidateVersionsCommand(cacheTopology.getTopologyId(), keys, topologyIds, versions, true);
       rpcManager.invokeRemotelyAsync(Collections.singleton(member), ivc, synchronousRpcOptions).whenComplete((responses, t) -> {
          if (t != null) {
             log.failedInvalidatingRemoteCache(t);
          }
          if (chunkCounter.decrementAndGet() == 0) {
-            notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+            notifyEndOfStateTransferIfNeeded();
          }
       });
    }
@@ -422,7 +423,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
             }
          } finally {
             if (chunkCounter.decrementAndGet() == 0) {
-               notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+               notifyEndOfStateTransferIfNeeded();
             }
          }
       }));
@@ -454,7 +455,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
                throw t;
             } finally {
                if (chunkCounter.decrementAndGet() == 0) {
-                  notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+                  notifyEndOfStateTransferIfNeeded();
                }
             }
          });

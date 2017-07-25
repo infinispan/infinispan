@@ -1,6 +1,5 @@
 package org.infinispan.scattered.impl;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.RemoteMetadata;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
@@ -16,6 +15,7 @@ import org.infinispan.statetransfer.OutboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateProviderImpl;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,7 +23,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -32,7 +31,6 @@ import java.util.stream.Collectors;
  */
 public class ScatteredStateProviderImpl extends StateProviderImpl implements ScatteredStateProvider {
    protected ScatteredVersionManager svm;
-   protected CountDownLatch outboundTaskLatch;
    private RpcOptions syncIgnoreLeavers;
 
    @Inject
@@ -47,19 +45,20 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
    }
 
    @Override
-   public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
+   public CompletableFuture<Void> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       if (isRebalance) {
          // TODO [rvansa]: do this only when member was lost
-         replicateAndInvalidate(cacheTopology);
+         return replicateAndInvalidate(cacheTopology);
+      } else {
+         return CompletableFutures.completedNull();
       }
    }
 
    // This method handles creating the backup copy and invalidation on other nodes for segments
    // that this node keeps from previous topology.
-   private void replicateAndInvalidate(CacheTopology cacheTopology) {
+   private CompletableFuture<Void> replicateAndInvalidate(CacheTopology cacheTopology) {
       Address nextMember = getNextMember(cacheTopology);
       if (nextMember != null) {
-         outboundTaskLatch = new CountDownLatch(1);
          HashSet<Address> otherMembers = new HashSet<>(cacheTopology.getActualMembers());
          Address localAddress = rpcManager.getAddress();
          otherMembers.remove(localAddress);
@@ -70,34 +69,30 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
          oldSegments.retainAll(cacheTopology.getPendingCH().getSegmentsForOwner(localAddress));
          log.trace("Segments to replicate and invalidate: " + oldSegments);
          if (oldSegments.isEmpty()) {
-            return;
+            return CompletableFutures.completedNull();
          }
 
          // we'll start at 1, so the counter will never drop to 0 until we send all chunks
          AtomicInteger outboundInvalidations = new AtomicInteger(1);
+         CompletableFuture<Void> outboundTaskFuture = new CompletableFuture<>();
          OutboundTransferTask outboundTransferTask = new OutboundTransferTask(nextMember, oldSegments,
             chunkSize,
             cacheTopology.getTopologyId(), keyPartitioner,
             task -> {
                if (outboundInvalidations.decrementAndGet() == 0) {
-                  outboundTaskLatch.countDown();
+                  outboundTaskFuture.complete(null);
                }
-            }, chunks -> invalidateChunks(chunks, otherMembers, outboundInvalidations),
+            }, chunks -> invalidateChunks(chunks, otherMembers, outboundInvalidations, outboundTaskFuture, cacheTopology),
             OutboundTransferTask::defaultMapEntryFromDataContainer, OutboundTransferTask::defaultMapEntryFromStore,
             dataContainer, persistenceManager, rpcManager, commandsFactory, entryFactory, timeout, cacheName, true, true);
          outboundTransferTask.execute(executorService);
-         try {
-            // Not timeout, we use ST timeout only for one command (while this waits for whole task to be completed)
-            // CacheStatus lock is held during this call, so we won't complete the rebalance until this finishes (I hope).
-            outboundTaskLatch.await();
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new CacheException("Interrupted waiting for entries to be pushed");
-         }
+         return outboundTaskFuture;
+      } else {
+         return CompletableFutures.completedNull();
       }
    }
 
-   private void invalidateChunks(List<StateChunk> stateChunks, Set<Address> otherMembers, AtomicInteger outboundInvalidations) {
+   private void invalidateChunks(List<StateChunk> stateChunks, Set<Address> otherMembers, AtomicInteger outboundInvalidations, CompletableFuture<Void> outboundTaskFuture, CacheTopology cacheTopology) {
       int numEntries = stateChunks.stream().mapToInt(chunk -> chunk.getCacheEntries().size()).sum();
       if (numEntries == 0) {
          log.tracef("Nothing to invalidate");
@@ -123,7 +118,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
          log.tracef("Invalidating %d entries from segments %s", numEntries, stateChunks.stream().map(chunk -> chunk.getSegmentId()).collect(Collectors.toList()));
       }
       outboundInvalidations.incrementAndGet();
-      rpcManager.invokeRemotelyAsync(otherMembers, commandsFactory.buildInvalidateVersionsCommand(keys, topologyIds, versions, true),
+      rpcManager.invokeRemotelyAsync(otherMembers, commandsFactory.buildInvalidateVersionsCommand(cacheTopology.getTopologyId(), keys, topologyIds, versions, true),
          syncIgnoreLeavers).whenComplete((r, t) -> {
          try {
             if (t != null) {
@@ -131,12 +126,11 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
             }
          } finally {
             if (outboundInvalidations.decrementAndGet() == 0) {
-               outboundTaskLatch.countDown();
+               outboundTaskFuture.complete(null);
             }
          }
       });
    }
-
 
    private Address getNextMember(CacheTopology cacheTopology) {
       Address myAddress = rpcManager.getAddress();

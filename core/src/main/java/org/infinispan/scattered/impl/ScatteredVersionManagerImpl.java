@@ -456,7 +456,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
                isRemoved = Arrays.copyOf(isRemoved, numKeys);
             }
          }
-         InvalidateVersionsCommand command = commandsFactory.buildInvalidateVersionsCommand(keys, topologyIds, versions, false);
+         InvalidateVersionsCommand command = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, false);
          sendRegularInvalidations(command, keys, topologyIds, versions, numRemoved, isRemoved, force);
       });
    }
@@ -517,7 +517,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
                   versions = Arrays.copyOf(versions, numKeys);
                }
             }
-            InvalidateVersionsCommand removeCommand = commandsFactory.buildInvalidateVersionsCommand(keys, topologyIds, versions, true);
+            InvalidateVersionsCommand removeCommand = commandsFactory.buildInvalidateVersionsCommand(-1, keys, topologyIds, versions, true);
             sendRemoveInvalidations(removeCommand);
          });
       }
@@ -533,7 +533,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          }
       });
       // remove the entries on self, too
-      removeCommand.init(dataContainer, orderedUpdatesManager);
+      removeCommand.init(dataContainer, orderedUpdatesManager, null, null);
       removeCommand.invokeAsync();
    }
 
