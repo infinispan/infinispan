@@ -15,7 +15,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopologyControlCommand;
-import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.util.BlockingClusterTopologyManager;
 import org.jgroups.JChannel;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.AfterMethod;
@@ -35,11 +35,12 @@ import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-@Test(groups = "functional", testName = "partitionhandling.ScatteredCrashInSequenceTest", enabled = false, description = "ISPN-8097")
+@Test(groups = "functional", testName = "partitionhandling.ScatteredCrashInSequenceTest")
 public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
 
    private Transport oldTransportCoord;
    private Transport oldTransportA1;
+   private BlockingClusterTopologyManager bctm;
 
    {
       cacheMode = CacheMode.SCATTERED_SYNC;
@@ -78,6 +79,13 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
    }
 
    @Override
+   protected ConfigurationBuilder cacheConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().hash().numSegments(16);
+      return builder;
+   }
+
+   @Override
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
       // The default global RPC timeout is 4 minutes, and if GET_STATUS returns SuspectException, we wait 1/20 of
       // this timeout before retrying. This is 12 seconds, which is longer than default eventually() timeout.
@@ -101,7 +109,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       }).toArray(MagicKey[]::new);
 
 
-      StateSequencer ss = new StateSequencer().logicalThread("main", "st_begin", "check", "new_topology", "st_end", "degraded");
+      StateSequencer ss = new StateSequencer().logicalThread("main", "st_begin", "check", "new_topology", /* "st_end",*/ "degraded");
 
       DISCARD discard1 = TestingUtil.getDiscardForCache(cache(c1));
       DISCARD discard2 = TestingUtil.getDiscardForCache(cache(c2));
@@ -122,10 +130,8 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
             .afterState(ss, "check").matchCount(0).build()
       ).before("new_topology").getOriginalComponent();
 
-      // Since now coordinator's ClusterTopologyManager does not get rewired if we replace another component
-      advanceOnGlobalComponentMethod(ss, coordinator.getCacheManager(), ClusterTopologyManager.class,
-         matchMethodCall("handleRebalancePhaseConfirm").matchCount(0).build()
-      ).before("st_end"); // this is meant just to block until we get to new_topology
+      bctm = BlockingClusterTopologyManager.replace(coordinator.getCacheManager());
+      BlockingClusterTopologyManager.Handle<Integer> blockingSTE = bctm.startBlockingTopologyConfirmations(topologyId -> true);
 
       Function<EmbeddedCacheManager, JChannel> channelRetriever = ecm -> {
          if (ecm == manager(0) && c1 != 0) {
@@ -165,6 +171,8 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
       eventuallyDegraded(cache(a1));
       eventuallyDegraded(cache(a2));
       eventuallyDegraded(cache(c2));
+
+      blockingSTE.stopBlocking();
 
       assertKeysNotAvailableForRead(cache(a1), keys);
       assertKeysNotAvailableForRead(cache(a2), keys);

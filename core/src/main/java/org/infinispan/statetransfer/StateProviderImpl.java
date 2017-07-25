@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -37,6 +38,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -115,7 +117,7 @@ public class StateProviderImpl implements StateProvider {
       }
    }
 
-   public void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
+   public CompletableFuture<Void> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       // Cancel outbound state transfers for destinations that are no longer members in new topology
       // If the rebalance was cancelled, stop every outbound transfer. This will prevent "leaking" transfers
       // from one rebalance to the next.
@@ -132,7 +134,7 @@ public class StateProviderImpl implements StateProvider {
             }
          }
       }
-
+      return CompletableFutures.completedNull();
       //todo [anistor] must cancel transfers for all segments that we no longer own
    }
 

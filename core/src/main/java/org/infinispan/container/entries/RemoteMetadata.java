@@ -14,6 +14,11 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
+ * This is a metadata type used by scattered cache during state transfer. The address points to node which has last
+ * known version of given entry: During key transfer RemoteMetadata is created and overwritten if another response
+ * with higher version comes. During value transfer the address is already final and we request the value + metadata
+ * only from this node.
+ *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class RemoteMetadata implements InternalMetadata {

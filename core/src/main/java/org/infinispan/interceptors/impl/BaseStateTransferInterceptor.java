@@ -142,10 +142,10 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in TransactionTable.cleanupStaleTransactions
       if (command.getTopologyId() == -1) {
          CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-         if (cacheTopology != null) {
-            if (trace) getLog().tracef("Setting command topology to %d", cacheTopology.getTopologyId());
-            command.setTopologyId(cacheTopology.getTopologyId());
-         }
+         // Before the topology is set in STM/StateConsumer the topology in DistributionManager is 0
+         int topologyId = cacheTopology == null ? 0 : cacheTopology.getTopologyId();
+         if (trace) getLog().tracef("Setting command topology to %d", topologyId);
+         command.setTopologyId(topologyId);
       }
    }
 
@@ -187,13 +187,8 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    protected <C extends VisitableCommand & TopologyAffectedCommand & FlagAffectedCommand> Object handleReadCommand(
          InvocationContext ctx, C command) {
-      return isLocalOnly(command) ? invokeNext(ctx, command) :
-            updateAndInvokeNextRead(ctx, command);
-   }
-
-   private <C extends VisitableCommand & TopologyAffectedCommand> Object updateAndInvokeNextRead(InvocationContext ctx, C command) {
       updateTopologyId(command);
-      return invokeNextAndHandle(ctx, command,handleReadCommandReturn);
+      return invokeNextAndHandle(ctx, command, handleReadCommandReturn);
    }
 
    private Object handleReadCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t)
@@ -237,7 +232,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       } else if (ce instanceof AllOwnersLostException) {
          if (trace)
             getLog().tracef("All owners for command %s have been lost.", cmd);
-         // In scattered cache it might be common to lose the single owner, we need to retry. We fill find out that
+         // In scattered cache it might be common to lose the single owner, we need to retry. We will find out that
          // we can return null only after the next topology is installed. If partition handling is enabled we decide
          // only based on the availability status.
          // In other cache modes, during partition the exception is already handled in PartitionHandlingInterceptor,
@@ -286,10 +281,6 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          }
       }
       return Math.max(currentTopologyId, requestedTopologyId);
-   }
-
-   protected boolean isLocalOnly(FlagAffectedCommand command) {
-      return command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL);
    }
 
    @Override

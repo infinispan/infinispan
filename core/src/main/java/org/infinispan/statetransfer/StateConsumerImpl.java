@@ -84,6 +84,7 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.CommandAckCollector;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -152,6 +153,7 @@ public class StateConsumerImpl implements StateConsumer {
     * (before stateTransferTopologyId is set back to NO_REBALANCE_IN_PROGRESS).
     */
    protected final AtomicBoolean waitingForState = new AtomicBoolean(false);
+   protected CompletableFuture<Void> stateTransferFuture = CompletableFutures.completedNull();
 
    protected final Object transferMapsLock = new Object();
 
@@ -283,7 +285,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
-   public void onTopologyUpdate(final CacheTopology cacheTopology, final boolean isRebalance) {
+   public CompletableFuture<Void> onTopologyUpdate(final CacheTopology cacheTopology, final boolean isRebalance) {
       final boolean isMember = cacheTopology.getMembers().contains(rpcManager.getAddress());
       final boolean startConflictResolution = !isRebalance && cacheTopology.getPhase() == CacheTopology.Phase.CONFLICT_RESOLUTION;
       if (trace) log.tracef("Received new topology for cache %s, isRebalance = %b, isMember = %b, topology = %s", cacheName, isRebalance, isMember, cacheTopology);
@@ -323,6 +325,7 @@ public class StateConsumerImpl implements StateConsumer {
       // Make sure we don't send a REBALANCE_CONFIRM command before we've added all the transfer tasks
       // even if some of the tasks are removed and re-added
       waitingForState.set(false);
+      stateTransferFuture = new CompletableFuture<>();
 
       final ConsistentHash newWriteCh = cacheTopology.getWriteConsistentHash();
       final CacheTopology previousCacheTopology = this.cacheTopology;
@@ -456,7 +459,7 @@ public class StateConsumerImpl implements StateConsumer {
             waitingForState.set(true);
          }
 
-         notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+         notifyEndOfStateTransferIfNeeded();
 
          // Remove the transactions whose originators have left the cache.
          // Need to do it now, after we have applied any transactions from other nodes,
@@ -472,12 +475,12 @@ public class StateConsumerImpl implements StateConsumer {
 
          commandAckCollector.onMembersChange(newWriteCh.getMembers());
 
-         // The rebalance (READ_OLD_WRITE_ALL/TRANSITORY) is confirmed through notifyEndOfRebalanceIfNeeded
+         // The rebalance (READ_OLD_WRITE_ALL/TRANSITORY) is completed through notifyEndOfStateTransferIfNeeded
          // and STABLE does not have to be confirmed at all
          switch (cacheTopology.getPhase()) {
             case READ_ALL_WRITE_ALL:
             case READ_NEW_WRITE_ALL:
-               localTopologyManager.confirmRebalancePhase(cacheName, cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(), null);
+               stateTransferFuture.complete(null);
          }
 
          PartitionHandlingConfiguration phConfig = configuration.clustering().partitionHandling();
@@ -505,6 +508,7 @@ public class StateConsumerImpl implements StateConsumer {
             conflictManager.restartVersionRequests();
          }
       }
+      return stateTransferFuture;
    }
 
    protected void beforeTopologyInstalled(int topologyId, boolean startRebalance, ConsistentHash previousWriteCh, ConsistentHash newWriteCh) {
@@ -537,23 +541,20 @@ public class StateConsumerImpl implements StateConsumer {
                   "State Transfer in Total Order cache. All remote transactions are finished. Moving on...");
          }
       }
-
    }
 
-   protected boolean notifyEndOfStateTransferIfNeeded(int topologyId, int rebalanceId) {
+   protected void notifyEndOfStateTransferIfNeeded() {
       if (waitingForState.get()) {
          if (hasActiveTransfers()) {
-            return false;
+            return;
          }
          if (waitingForState.compareAndSet(true, false)) {
+            int topologyId = stateTransferTopologyId.get();
             log.debugf("Finished receiving of segments for cache %s for topology %d.", cacheName, topologyId);
-            stopApplyingState(stateTransferTopologyId.get());
-            stateTransferManager.notifyEndOfStateTransfer(topologyId, rebalanceId);
-            return true;
+            stopApplyingState(topologyId);
+            stateTransferFuture.complete(null);
          }
-         return false;
       }
-      return true;
    }
 
    protected Set<Integer> getOwnedSegments(ConsistentHash consistentHash) {
@@ -1139,7 +1140,7 @@ public class StateConsumerImpl implements StateConsumer {
       if (trace) log.tracef("Inbound transfer finished: %s", inboundTransfer);
       if (inboundTransfer.isCompletedSuccessfully()) {
          removeTransfer(inboundTransfer);
-         notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+         notifyEndOfStateTransferIfNeeded();
       }
    }
 
