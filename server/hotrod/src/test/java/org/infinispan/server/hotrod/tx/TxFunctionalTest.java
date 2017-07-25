@@ -33,6 +33,29 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.tx.TxFunctionalTest")
 public class TxFunctionalTest extends HotRodMultiNodeTest {
 
+   private org.infinispan.configuration.cache.TransactionMode transactionMode;
+
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            //TODO add optimistic tests!
+            new TxFunctionalTest()
+                  .transactionMode(org.infinispan.configuration.cache.TransactionMode.NON_XA).lockingMode(
+                  LockingMode.PESSIMISTIC),
+            new TxFunctionalTest()
+                  .transactionMode(org.infinispan.configuration.cache.TransactionMode.NON_DURABLE_XA).lockingMode(
+                  LockingMode.PESSIMISTIC),
+            new TxFunctionalTest()
+                  .transactionMode(org.infinispan.configuration.cache.TransactionMode.FULL_XA).lockingMode(
+                  LockingMode.PESSIMISTIC)
+      };
+   }
+
+   public TxFunctionalTest transactionMode(org.infinispan.configuration.cache.TransactionMode transactionMode) {
+      this.transactionMode = transactionMode;
+      return this;
+   }
+
    public void testKeyNotRead(Method method) {
       final byte[] k1 = k(method, "k1");
       final byte[] k2 = k(method, "k2");
@@ -483,6 +506,10 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
    }
 
+   @Override
+   protected String parameters() {
+      return "[" + lockingMode + "/" + transactionMode + "]";
+   }
 
    @Override
    protected String cacheName() {
@@ -493,9 +520,23 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
    protected ConfigurationBuilder createCacheConfig() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      builder.transaction().useSynchronization(true);
       builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
-      builder.transaction().lockingMode(LockingMode.PESSIMISTIC); //TODO OPTIMISTIC doesn't work because of ISPN-7672
+      builder.transaction().lockingMode(lockingMode);
+      switch (transactionMode) {
+         case NON_XA:
+            builder.transaction().useSynchronization(true);
+            break;
+         case NON_DURABLE_XA:
+            builder.transaction().useSynchronization(false);
+            builder.transaction().recovery().disable();
+            break;
+         case FULL_XA:
+            builder.transaction().useSynchronization(false);
+            builder.transaction().recovery().enable();
+            break;
+         default:
+            throw new IllegalStateException();
+      }
       builder.clustering().hash().numOwners(2);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       return builder;
