@@ -3,8 +3,6 @@ package org.infinispan.distribution.groups;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -160,17 +158,19 @@ public class StateTransferGetGroupKeysTest extends BaseUtilGroupTest {
       }
 
       @Override
-      protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
+      protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
          if (cacheMode.isDistributed()) {
-            assertEquals(2, numberOfOwners);
-            if (members.size() == 1)
-               return Arrays.asList(members.get(0));
-            else if (members.size() == 2)
-               return Arrays.asList(members.get(0), members.get(1));
-            else
-               return Arrays.asList(members.get(members.size() - 1), members.get(0));
+            assertEquals(2, numOwners);
+            switch (members.size()) {
+               case 1:
+                  return new int[][]{{0}};
+               case 2:
+                  return new int[][]{{0, 1}};
+               default:
+                  return new int[][]{{members.size() - 1, 0}};
+            }
          } else if (cacheMode.isScattered()) {
-            return Collections.singletonList(members.get(0));
+            return new int[][]{{0}};
          } else {
             throw new IllegalStateException();
          }

@@ -1,11 +1,10 @@
 package org.infinispan.util;
 
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -22,7 +21,7 @@ import org.infinispan.topology.ClusterTopologyManager;
 * @since 7.0
 */
 public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
-   private volatile List<int[]> ownerIndexes;
+   private volatile int[][] ownerIndexes;
 
    private volatile List<Address> membersToUse;
 
@@ -37,14 +36,16 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
    /**
     * Create a consistent hash factory with multiple segments.
     */
-   public ControlledConsistentHashFactory(Trait<CH> trait, int[] firstSegmentOwners, int[]... otherSegmentOwners) {
-      super(trait, 1 + (otherSegmentOwners != null ? otherSegmentOwners.length : 0));
-      setOwnerIndexes(firstSegmentOwners, otherSegmentOwners);
+   public ControlledConsistentHashFactory(Trait<CH> trait, int[][] segmentOwners) {
+      super(trait, segmentOwners.length);
+      if (segmentOwners.length == 0)
+         throw new IllegalArgumentException("Need at least one set of owners");
+      setOwnerIndexes(segmentOwners);
    }
 
    public void setOwnerIndexes(int primaryOwnerIndex, int... backupOwnerIndexes) {
       int[] firstSegmentOwners = concatOwners(primaryOwnerIndex, backupOwnerIndexes);
-      setOwnerIndexes(firstSegmentOwners);
+      setOwnerIndexes(new int[][]{firstSegmentOwners});
    }
 
    private int[] concatOwners(int primaryOwnerIndex, int[] backupOwnerIndexes) {
@@ -61,20 +62,10 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       return firstSegmentOwners;
    }
 
-   public void setOwnerIndexes(int[] segment1Owners, int[]... otherSegmentOwners) {
-      ArrayList<int[]> newOwnerIndexes = new ArrayList<int[]>(numSegments);
-      newOwnerIndexes.add(segment1Owners);
-      if (otherSegmentOwners != null) {
-         newOwnerIndexes.addAll(Arrays.asList(otherSegmentOwners));
-      }
-      assertEquals(numSegments, newOwnerIndexes.size());
-      this.ownerIndexes = newOwnerIndexes;
-   }
-
-   public void setOwnerIndexesForSegment(int segmentIndex, int primaryOwnerIndex, int... backupOwnerIndexes) {
-      ArrayList<int[]> newOwnerIndexes = new ArrayList<int[]>(ownerIndexes);
-      newOwnerIndexes.set(segmentIndex, concatOwners(primaryOwnerIndex, backupOwnerIndexes));
-      this.ownerIndexes = newOwnerIndexes;
+   public void setOwnerIndexes(int[][] segmentOwners) {
+      this.ownerIndexes = Arrays.stream(segmentOwners)
+                                .map(owners -> Arrays.copyOf(owners, owners.length))
+                                .toArray(int[][]::new);
    }
 
    public void triggerRebalance(Cache<?, ?> cache) throws Exception {
@@ -87,24 +78,32 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
    }
 
    @Override
-   protected List<Address> createOwnersCollection(List<Address> members, int numberOfOwners, int segmentIndex) {
-      int[] segmentOwnerIndexes = ownerIndexes.get(segmentIndex);
-      List<Address> owners = new ArrayList<>(segmentOwnerIndexes.length);
-      for (int index : segmentOwnerIndexes) {
+   protected int[][] assignOwners(int numSegments, int numOwners, List<Address> members) {
+      return Arrays.stream(ownerIndexes)
+                   .map(indexes -> mapOwnersToCurrentMembers(members, indexes))
+                   .toArray(int[][]::new);
+   }
+
+   private int[] mapOwnersToCurrentMembers(List<Address> members, int[] indexes) {
+      int[] newIndexes = Arrays.stream(indexes).flatMap(index -> {
          if (membersToUse != null) {
             Address owner = membersToUse.get(index);
-            if (members.contains(owner)) {
-               owners.add(owner);
+            int newIndex = members.indexOf(owner);
+            if (newIndex >= 0) {
+               return IntStream.of(newIndex);
             }
-         }  else  if (index < members.size()) {
-            owners.add(members.get(index));
+         } else if (index < members.size()) {
+            return IntStream.of(index);
          }
+         return IntStream.empty();
+      }).toArray();
+
+      // A DefaultConsistentHash segment must always have at least one owner
+      if (newIndexes.length == 0 && trait.requiresPrimaryOwner()) {
+         return new int[]{0};
       }
-      // A CH segment must always have at least one owner
-      if (owners.isEmpty()) {
-         owners.add(members.get(0));
-      }
-      return owners;
+
+      return newIndexes;
    }
 
    /**
@@ -119,8 +118,8 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
          super(new DefaultTrait(), primaryOwnerIndex, backupOwnerIndexes);
       }
 
-      public Default(int[] firstSegmentOwners, int[]... otherSegmentOwners) {
-         super(new DefaultTrait(), firstSegmentOwners, otherSegmentOwners);
+      public Default(int[][] segmentOwners) {
+         super(new DefaultTrait(), segmentOwners);
       }
    }
 
@@ -133,8 +132,7 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       }
 
       public Scattered(int[] segmentOwners) {
-         super(new ScatteredTrait(), new int[] { segmentOwners[0] },
-            Arrays.stream(segmentOwners, 1, segmentOwners.length).mapToObj(o -> new int[] { o }).toArray(int[][]::new));
+         super(new ScatteredTrait(), Arrays.stream(segmentOwners).mapToObj(o -> new int[]{o}).toArray(int[][]::new));
       }
 
       @Override
@@ -143,13 +141,8 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       }
 
       @Override
-      public void setOwnerIndexes(int[] segment1Owners, int[]... otherSegmentOwners) {
-         super.setOwnerIndexes(segment1Owners);
-      }
-
-      @Override
-      public void setOwnerIndexesForSegment(int segmentIndex, int primaryOwnerIndex, int... backupOwnerIndexes) {
-         super.setOwnerIndexesForSegment(segmentIndex, primaryOwnerIndex);
+      public void setOwnerIndexes(int[][] segmentOwners) {
+         super.setOwnerIndexes(segmentOwners);
       }
    }
 }
