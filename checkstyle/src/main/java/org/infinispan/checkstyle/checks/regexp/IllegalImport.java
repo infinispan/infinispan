@@ -1,8 +1,9 @@
 package org.infinispan.checkstyle.checks.regexp;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
@@ -12,9 +13,9 @@ import com.puppycrawl.tools.checkstyle.api.TokenTypes;
  *
  * @author Sanne Grinovero
  */
-public class IllegalImport extends Check {
+public class IllegalImport extends AbstractCheck {
 
-   private final HashSet<String> notAllowedImports = new HashSet<String>();
+   private final HashSet<String> notAllowedImports = new HashSet<>();
    private String message = "";
 
    /**
@@ -24,9 +25,7 @@ public class IllegalImport extends Check {
     *           array of illegal packages
     */
    public void setIllegalClassnames(String[] importStatements) {
-      for (String impo : importStatements) {
-         notAllowedImports.add(impo);
-      }
+      notAllowedImports.addAll(Arrays.asList(importStatements));
    }
 
    public void setMessage(String message) {
@@ -38,6 +37,16 @@ public class IllegalImport extends Check {
    @Override
    public int[] getDefaultTokens() {
       return new int[] { TokenTypes.IMPORT, TokenTypes.STATIC_IMPORT };
+   }
+
+   @Override
+   public int[] getAcceptableTokens() {
+      return getDefaultTokens();
+   }
+
+   @Override
+   public int[] getRequiredTokens() {
+      return getDefaultTokens();
    }
 
    @Override

@@ -114,6 +114,8 @@
         <version.avro>1.7.6</version.avro>
         <version.c3p0>0.9.5-pre8</version.c3p0>
         <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
+        <version.checkstyle>8.1</version.checkstyle>
+        <version.checkstyle.maven-plugin>2.17</version.checkstyle.maven-plugin>
         <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
         <version.commons.compress>1.4</version.commons.compress>
         <version.commons.codec>1.4</version.commons.codec>
@@ -1234,8 +1236,13 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>2.17</version>
+                    <version>${version.checkstyle.maven-plugin}</version>
                     <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>${version.checkstyle}</version>
+                        </dependency>
                         <dependency>
                             <groupId>org.infinispan</groupId>
                             <artifactId>infinispan-checkstyle</artifactId>

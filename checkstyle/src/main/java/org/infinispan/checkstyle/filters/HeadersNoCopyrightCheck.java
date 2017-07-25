@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.List;
 
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
+import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
+import com.puppycrawl.tools.checkstyle.api.FileText;
 
 /**
  * Use a simple CheckStyle rule to make sure no copyright templates are being used:
@@ -14,8 +16,8 @@ import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
 public class HeadersNoCopyrightCheck extends AbstractFileSetCheck {
 
    @Override
-   protected void processFiltered(File aFile, List<String> aLines) {
-      final String fileName = aFile.getName();
+   protected void processFiltered(File file, FileText fileText) {
+      final String fileName = file.getName();
       if (fileName != null && !fileName.endsWith(".java")) {
          //Not a Java source file, skip it.
          return;
@@ -24,8 +26,8 @@ public class HeadersNoCopyrightCheck extends AbstractFileSetCheck {
          //package-info files don't necessarily start with "package"
          return;
       }
-      else if (!aLines.isEmpty()) {
-         final String firstLine = aLines.get(0);
+      else if (fileText.size() != 0) {
+         final String firstLine = fileText.get(0);
          if (firstLine!=null && !firstLine.startsWith("package ")) {
             log(1, "Java files should start with \''package \''. Infinispan doesn\''t use bulky copyright headers!");
          }

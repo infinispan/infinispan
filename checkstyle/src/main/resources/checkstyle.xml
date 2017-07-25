@@ -17,8 +17,7 @@
         <!-- Checks for imports -->
         <module name="AvoidStarImport" />
         <module name="RedundantImport" />
-        <!-- Unfortunately unused import plugin is too buggy to be used https://github.com/checkstyle/checkstyle/issues/1004 -->
-        <!--<module name="UnusedImports" />-->
+        <module name="UnusedImports" />
 
         <!-- Checks for common coding problems -->
         <!--<module name="EqualsHashCode" />-->

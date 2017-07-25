@@ -11,13 +11,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.puppycrawl.tools.checkstyle.api.Check;
+import com.puppycrawl.tools.checkstyle.api.AbstractCheck;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 
 /**
  * Checks that if the interceptor handles one command it handles all conceptually similar ones.
  */
-public abstract class AbstractInterceptorCheck extends Check {
+public abstract class AbstractInterceptorCheck extends AbstractCheck {
    protected static Stream<DetailAST> stream(DetailAST ast, int type) {
       Stream.Builder<DetailAST> builder = Stream.builder();
       for (DetailAST child = ast.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -61,7 +61,7 @@ public abstract class AbstractInterceptorCheck extends Check {
             })) {
                // Don't report deprecated classes
                return;
-            };
+            }
          }
 
          Set<String> missingMethods = new HashSet<>(methods());
