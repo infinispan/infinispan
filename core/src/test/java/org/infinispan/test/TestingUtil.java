@@ -1142,7 +1142,7 @@ public class TestingUtil {
     *
     * @return the original component that was replaced
     */
-   public static <T> T replaceComponent(Cache<?, ?> cache, Class<T> componentType, T replacementComponent, boolean rewire) {
+   public static <T> T replaceComponent(Cache<?, ?> cache, Class<? extends T> componentType, T replacementComponent, boolean rewire) {
       ComponentRegistry cr = extractComponentRegistry(cache);
       T old = cr.getComponent(componentType);
       cr.registerComponent(replacementComponent, componentType);
@@ -1160,7 +1160,7 @@ public class TestingUtil {
     *
     * @return the original component that was replaced
     */
-   public static <T> T replaceComponent(CacheContainer cacheContainer, Class<T> componentType, T replacementComponent, boolean rewire) {
+   public static <T> T replaceComponent(CacheContainer cacheContainer, Class<? extends T> componentType, T replacementComponent, boolean rewire) {
       GlobalComponentRegistry cr = extractGlobalComponentRegistry(cacheContainer);
       T old = cr.getComponent(componentType);
       cr.registerComponent(replacementComponent, componentType);

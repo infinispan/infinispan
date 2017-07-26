@@ -1,9 +1,14 @@
 package org.infinispan.util;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.PrimitiveIterator;
 import java.util.Set;
+import java.util.stream.IntStream;
+
+import org.infinispan.commons.util.IntSet;
 
 /**
  * Read-only set representing all the integers from {@code 0} to {@code size - 1} (inclusive).
@@ -11,7 +16,7 @@ import java.util.Set;
  * @author Dan Berindei
  * @since 9.0
  */
-public class RangeSet implements Set<Integer> {
+public class RangeSet implements IntSet {
    final int size;
 
    public RangeSet(int size) {
@@ -33,11 +38,16 @@ public class RangeSet implements Set<Integer> {
       if (!(o instanceof Integer))
          return false;
       int i = (int) o;
+      return contains(i);
+   }
+
+   @Override
+   public boolean contains(int i) {
       return 0 <= i && i < size;
    }
 
    @Override
-   public Iterator<Integer> iterator() {
+   public PrimitiveIterator.OfInt iterator() {
       return new RangeSetIterator(size);
    }
 
@@ -71,12 +81,42 @@ public class RangeSet implements Set<Integer> {
    }
 
    @Override
+   public boolean remove(int i) {
+      throw new UnsupportedOperationException("RangeSet is immutable");
+   }
+
+   @Override
    public boolean containsAll(Collection<?> c) {
+      if (c instanceof IntSet) {
+         return containsAll((IntSet) c);
+      }
       for (Object o : c) {
          if (!contains(o))
             return false;
       }
       return true;
+   }
+
+   @Override
+   public boolean containsAll(IntSet set) {
+      if (set instanceof RangeSet) {
+         return size == ((RangeSet) set).size;
+      }
+      for (int i = 0; i < size; ++i) {
+         if (!set.contains(i)) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   @Override
+   public boolean add(int i) {
+      throw new UnsupportedOperationException("RangeSet is immutable");
+   }
+
+   public void set(int i) {
+      throw new UnsupportedOperationException("RangeSet is immutable");
    }
 
    @Override
@@ -86,6 +126,11 @@ public class RangeSet implements Set<Integer> {
 
    @Override
    public boolean retainAll(Collection<?> c) {
+      throw new UnsupportedOperationException("RangeSet is immutable");
+   }
+
+   @Override
+   public boolean retainAll(IntSet c) {
       throw new UnsupportedOperationException("RangeSet is immutable");
    }
 
@@ -117,6 +162,11 @@ public class RangeSet implements Set<Integer> {
    }
 
    @Override
+   public IntStream intStream() {
+      return IntStream.range(0, size);
+   }
+
+   @Override
    public int hashCode() {
       return size;
    }
@@ -126,7 +176,7 @@ public class RangeSet implements Set<Integer> {
       return "RangeSet(" + size + ")";
    }
 
-   private static class RangeSetIterator implements Iterator<Integer> {
+   private static class RangeSetIterator implements PrimitiveIterator.OfInt {
       private int size;
       private int next;
 
@@ -141,11 +191,16 @@ public class RangeSet implements Set<Integer> {
       }
 
       @Override
-      public Integer next() {
+      public int nextInt() {
          if (next >= size) {
             throw new NoSuchElementException();
          }
          return next++;
+      }
+
+      @Override
+      public Integer next() {
+         return nextInt();
       }
 
       @Override
