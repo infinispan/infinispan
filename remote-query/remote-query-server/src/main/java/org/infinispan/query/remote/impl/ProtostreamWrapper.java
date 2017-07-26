@@ -11,6 +11,11 @@ import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
  */
 public class ProtostreamWrapper implements Wrapper {
 
+   public static final ProtostreamWrapper INSTANCE = new ProtostreamWrapper();
+
+   private ProtostreamWrapper() {
+   }
+
    @Override
    public Object wrap(Object value) {
       if (value instanceof byte[]) {

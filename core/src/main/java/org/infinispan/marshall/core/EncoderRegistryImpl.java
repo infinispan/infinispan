@@ -13,7 +13,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @see EncoderRegistry
  * @since 9.1
  */
-@Scope(Scopes.NAMED_CACHE)
+@Scope(Scopes.GLOBAL)
 public class EncoderRegistryImpl implements EncoderRegistry {
 
    private final Map<Class<? extends Encoder>, Encoder> encoderMap = CollectionFactory.makeConcurrentMap();

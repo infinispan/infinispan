@@ -11,7 +11,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
  *
  * @since 9.1
  */
-public class MarshallerEncoder implements Encoder {
+public abstract class MarshallerEncoder implements Encoder {
 
    private final Marshaller marshaller;
 
