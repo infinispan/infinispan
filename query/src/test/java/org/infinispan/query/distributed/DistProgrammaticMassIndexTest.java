@@ -3,8 +3,6 @@ package org.infinispan.query.distributed;
 import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.util.List;
-
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;

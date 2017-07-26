@@ -1,7 +1,5 @@
 package org.infinispan.rest.http2;
 
-import static io.netty.buffer.Unpooled.wrappedBuffer;
-
 import java.io.FileInputStream;
 import java.security.KeyStore;
 import java.util.Queue;

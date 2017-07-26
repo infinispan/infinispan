@@ -1,7 +1,6 @@
 package org.infinispan;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -315,7 +314,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * mentioned {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD} is also configured.
     * <p/>
     * <h3>Modifying or Adding Entries</h3>
-    * An entry's value is supported to be modified by using the {@link Map.Entry#setValue(Object)} and it will update
+    * An entry's value is supported to be modified by using the {@link java.util.Map.Entry#setValue(Object)} and it will update
     * the cache as well.  Also this backing set does allow addition of a new Map.Entry(s) via the
     * {@link Set#add(Object)} or {@link Set#addAll(java.util.Collection)} methods.
     * <h3>Iterator Use</h3>

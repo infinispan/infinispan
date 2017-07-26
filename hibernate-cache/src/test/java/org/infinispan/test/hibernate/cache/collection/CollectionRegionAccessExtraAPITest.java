@@ -8,10 +8,6 @@ package org.infinispan.test.hibernate.cache.collection;
 
 import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.AbstractExtraAPITest;
-import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
-
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
 
 /**
  * @author Galder Zamarreño

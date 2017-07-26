@@ -30,7 +30,6 @@ import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;

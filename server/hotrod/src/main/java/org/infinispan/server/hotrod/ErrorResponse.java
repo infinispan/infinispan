@@ -1,9 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
-
-import io.netty.buffer.ByteBuf;
-
 /**
  * @author wburns
  * @since 9.0

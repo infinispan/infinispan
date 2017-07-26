@@ -40,7 +40,6 @@ import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.ClusterContainerStats;
-import org.infinispan.stats.impl.AbstractClusterStats;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.status.SiteStatus;
 import org.jboss.as.clustering.infinispan.DefaultCacheContainer;

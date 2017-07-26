@@ -2,7 +2,6 @@ package org.infinispan.rest;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Scanner;
 import java.util.StringTokenizer;
 
 import io.netty.buffer.ByteBuf;

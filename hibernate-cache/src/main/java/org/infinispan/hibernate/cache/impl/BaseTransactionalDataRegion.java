@@ -40,7 +40,6 @@ import org.infinispan.expiration.impl.ExpirationManagerImpl;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
@@ -49,8 +48,6 @@ import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 
 import javax.transaction.TransactionManager;
 
-import java.lang.reflect.Field;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 

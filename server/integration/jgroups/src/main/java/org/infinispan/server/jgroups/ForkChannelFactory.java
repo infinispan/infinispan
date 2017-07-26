@@ -23,7 +23,6 @@ package org.infinispan.server.jgroups;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 

@@ -1,6 +1,5 @@
 package org.infinispan.server.core;
 
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.core.configuration.MockServerConfigurationBuilder;

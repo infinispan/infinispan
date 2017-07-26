@@ -2,11 +2,6 @@ package org.infinispan.server.hotrod;
 
 import static org.infinispan.server.hotrod.ResponseWriting.writeResponse;
 
-import java.security.PrivilegedExceptionAction;
-
-import javax.security.auth.Subject;
-
-import org.infinispan.security.Security;
 import org.infinispan.server.core.transport.NettyTransport;
 
 import io.netty.channel.ChannelHandlerContext;

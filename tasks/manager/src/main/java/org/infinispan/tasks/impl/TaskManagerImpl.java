@@ -3,7 +3,6 @@ package org.infinispan.tasks.impl;
 import static org.infinispan.tasks.logging.Messages.MESSAGES;
 
 import java.lang.invoke.MethodHandles;
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,7 +10,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 import javax.security.auth.Subject;

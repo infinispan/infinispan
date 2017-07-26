@@ -27,7 +27,6 @@ import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jgroups.JChannel;
-import org.jgroups.protocols.TP;
 
 /**
  * Enumerates management metrics for a channel.

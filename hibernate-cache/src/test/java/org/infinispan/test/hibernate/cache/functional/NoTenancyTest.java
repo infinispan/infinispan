@@ -1,7 +1,6 @@
 package org.infinispan.test.hibernate.cache.functional;
 
 import org.infinispan.hibernate.cache.entity.EntityRegionImpl;
-import org.infinispan.hibernate.cache.util.Caches;
 import org.infinispan.test.hibernate.cache.functional.entities.Item;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;

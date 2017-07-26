@@ -7,7 +7,6 @@ import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
 import java.io.IOException;
-import java.io.InvalidClassException;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
 import java.util.Collection;

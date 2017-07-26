@@ -9,7 +9,6 @@ import java.util.Set;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
 
 /**
  * Externalizers for diverse array types.

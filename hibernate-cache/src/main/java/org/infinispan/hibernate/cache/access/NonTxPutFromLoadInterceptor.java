@@ -11,16 +11,11 @@ import org.infinispan.hibernate.cache.util.CacheCommandInitializer;
 import org.infinispan.hibernate.cache.util.EndInvalidationCommand;
 
 import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
-import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;

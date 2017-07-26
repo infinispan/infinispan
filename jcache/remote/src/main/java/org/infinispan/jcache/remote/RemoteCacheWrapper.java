@@ -1,8 +1,5 @@
 package org.infinispan.jcache.remote;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;

@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.function.Predicate;
 

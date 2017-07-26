@@ -51,7 +51,6 @@ import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.function.SerializableBiFunction;
 import org.testng.annotations.Test;
 
 /**

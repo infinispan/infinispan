@@ -8,7 +8,6 @@ package org.infinispan.hibernate.cache.util;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.context.Flag;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;

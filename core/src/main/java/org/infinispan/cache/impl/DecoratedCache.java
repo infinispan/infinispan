@@ -25,7 +25,6 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.local.ValueCacheCollection;
-import org.infinispan.util.function.SerializableBiFunction;
 
 /**
  * A decorator to a cache, which can be built with a specific set of {@link Flag}s.  This

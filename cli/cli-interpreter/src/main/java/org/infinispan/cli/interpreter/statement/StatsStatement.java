@@ -16,7 +16,6 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.JmxAttributeMetadata;
 import org.infinispan.factories.components.ManageableComponentMetadata;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.LogFactory;
 

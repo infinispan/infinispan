@@ -1,11 +1,8 @@
 package org.infinispan.persistence.rest.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
-import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.serializing.SerializedWith;
 
 /**
  * ConnectionPoolConfiguration.

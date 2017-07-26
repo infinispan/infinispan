@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod;
 
 import static org.infinispan.server.core.test.ServerTestingUtil.killServer;
-import static org.infinispan.server.hotrod.OperationStatus.ParseError;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.findNetworkInterfaces;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.getDefaultHotRodConfiguration;
@@ -12,7 +11,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.net.NetworkInterface;
@@ -23,7 +21,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.hotrod.test.HotRodClient;
-import org.infinispan.server.hotrod.test.TestErrorResponse;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

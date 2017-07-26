@@ -1,9 +1,6 @@
 package org.infinispan.commons.util;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
-
-import org.infinispan.commons.api.BasicCache;
 
 /**
  * A CloseableIterator implementation that allows for a CloseableIterator that doesn't allow remove operations to

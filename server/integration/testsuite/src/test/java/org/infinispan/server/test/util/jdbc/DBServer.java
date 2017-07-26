@@ -9,10 +9,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Callable;
-
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 
 /**
  * @author <a href="mailto:mgencur@redhat.com">Martin Gencur</a>

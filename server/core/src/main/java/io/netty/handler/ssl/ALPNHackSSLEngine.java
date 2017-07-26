@@ -33,7 +33,6 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.server.core.logging.Log;
 
 /**
  * SSLEngine wrapper that provides some super hacky ALPN support on JDK8.

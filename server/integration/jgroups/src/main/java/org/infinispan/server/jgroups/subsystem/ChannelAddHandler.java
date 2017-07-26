@@ -38,7 +38,6 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RunningMode;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.msc.service.ServiceTarget;
 import org.jgroups.JChannel;
 

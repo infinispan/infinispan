@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.configuration;
 
-import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.ProtocolVersion;

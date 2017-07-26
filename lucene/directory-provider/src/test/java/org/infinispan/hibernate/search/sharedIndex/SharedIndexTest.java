@@ -4,7 +4,6 @@ import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNod
 import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
 import static org.junit.Assert.assertEquals;
 
-import java.util.HashSet;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
@@ -20,8 +19,6 @@ import org.hibernate.search.spi.impl.IndexedTypeSets;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.test.util.FullTextSessionBuilder;
 import org.infinispan.hibernate.search.ClusterSharedConnectionProvider;
-import org.infinispan.hibernate.search.ClusterTestHelper;
-import org.infinispan.hibernate.search.SimpleEmail;
 import org.infinispan.hibernate.search.ClusterTestHelper.ExclusiveIndexUse;
 import org.infinispan.hibernate.search.ClusterTestHelper.IndexingFlushMode;
 import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;

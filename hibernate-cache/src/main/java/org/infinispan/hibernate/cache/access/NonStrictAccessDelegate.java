@@ -7,7 +7,6 @@
 package org.infinispan.hibernate.cache.access;
 
 import java.util.Comparator;
-import java.util.concurrent.TimeUnit;
 
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.impl.BaseTransactionalDataRegion;
