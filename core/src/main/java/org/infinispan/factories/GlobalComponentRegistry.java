@@ -31,6 +31,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
@@ -137,6 +138,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          getOrCreateComponent(LocalTopologyManager.class);
          getOrCreateComponent(ClusterTopologyManager.class);
          getOrCreateComponent(ClusterContainerStats.class);
+         getOrCreateComponent(EncoderRegistry.class);
 
          getOrCreateComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
       } catch (Exception e) {

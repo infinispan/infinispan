@@ -11,9 +11,8 @@ import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.MarshallerEncoder;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
@@ -91,7 +90,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
          return BinaryEncoder.class;
       }
       if (storageType == StorageType.OFF_HEAP) {
-         return MarshallerEncoder.class;
+         return GlobalMarshallerEncoder.class;
       }
 
       return IdentityEncoder.class;
@@ -168,16 +167,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       this.configuration = configuration;
 
       // injection bootstrap stuff
-      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
-         @Override
-         protected void bootstrapComponents() {
-            if (configuration.compatibility().enabled()) {
-               Marshaller compatMarshaller = configuration.compatibility().marshaller();
-               getEncoderRegistry().registerEncoder(new CompatModeEncoder(compatMarshaller));
-               getEncoderRegistry().registerEncoder(new MarshallerEncoder(compatMarshaller));
-            }
-         }
-      };
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
 
       /*
          --------------------------------------------------------------------------------------------------------------
