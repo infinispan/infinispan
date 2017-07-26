@@ -1,11 +1,15 @@
 package org.infinispan.xsite;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -17,11 +21,13 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.jgroups.protocols.relay.RELAY2;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -32,8 +38,8 @@ import org.testng.annotations.BeforeMethod;
  */
 public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
-   List<TestSite> sites = new ArrayList<TestSite>();
-   private Map<String, Integer> siteName2index = new HashMap<String, Integer>();
+   List<TestSite> sites = new ArrayList<>();
+   private Map<String, Integer> siteName2index = new HashMap<>();
 
    @BeforeMethod(alwaysRun = true) // run even for tests in the unstable group
    public void createBeforeMethod() throws Throwable {
@@ -93,6 +99,41 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return testSite;
    }
 
+   /**
+    * Wait for all the site masters to see a specific list of sites.
+    */
+   public void waitForSites(String... siteNames) {
+      waitForSites(10, TimeUnit.SECONDS, siteNames);
+   }
+
+   /**
+    * Wait for all the site masters to see a specific list of sites.
+    */
+   public void waitForSites(long timeout, TimeUnit unit, String... siteNames) {
+      long deadlineNanos = System.nanoTime() + unit.toNanos(timeout);
+      Set<String> expectedSites = new HashSet<>(Arrays.asList(siteNames));
+      sites.forEach(site -> {
+         site.cacheManagers.forEach(manager -> {
+            RELAY2 relay2 = ((JGroupsTransport) manager.getTransport()).getChannel().getProtocolStack()
+                                                                           .findProtocol(RELAY2.class);
+            if (!relay2.isSiteMaster())
+               return;
+
+            while (System.nanoTime() - deadlineNanos < 0) {
+               if (expectedSites.equals(manager.getTransport().getSitesView()))
+                  break;
+
+               LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
+            }
+
+            Set<String> currentSitesView = manager.getTransport().getSitesView();
+            if (!expectedSites.equals(currentSitesView)) {
+               throw new AssertionError(String.format("Timed out waiting for bridge view %s on %s after %d %s. Current bridge view is %s", expectedSites, manager.getAddress(), timeout, unit, currentSitesView));
+            }
+         });
+      });
+   }
+
    protected TestSite site(int index) {
       return sites.get(index);
    }
@@ -140,44 +181,38 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    protected final <K, V> void assertEventuallyInSite(final String siteName, final EventuallyAssertCondition<K, V> condition,
                                                 long timeout, TimeUnit timeUnit) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName)) {
-               if (!condition.assertInCache(cache)) {
-                  return false;
-               }
+      eventually(() -> {
+         for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName)) {
+            if (!condition.assertInCache(cache)) {
+               return false;
             }
-            return true;
          }
+         return true;
       }, timeUnit.toMillis(timeout));
    }
 
    protected final <K, V> void assertEventuallyInSite(final String siteName, final String cacheName, final EventuallyAssertCondition<K, V> condition,
                                                       long timeout, TimeUnit timeUnit) {
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName, cacheName)) {
-               if (!condition.assertInCache(cache)) {
-                  return false;
-               }
+      eventually(() -> {
+         for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName, cacheName)) {
+            if (!condition.assertInCache(cache)) {
+               return false;
             }
-            return true;
          }
+         return true;
       }, timeUnit.toMillis(timeout));
    }
 
-   protected static interface AssertCondition<K, V> {
+   protected interface AssertCondition<K, V> {
       void assertInCache(Cache<K, V> cache);
    }
 
-   protected static interface EventuallyAssertCondition<K, V> {
+   protected interface EventuallyAssertCondition<K, V> {
       boolean assertInCache(Cache<K, V> cache);
    }
 
    public static class TestSite {
-      protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>();
+      protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<>();
       private final String siteName;
       private final int siteIndex;
 
@@ -192,14 +227,14 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
       protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName,
                                                                GlobalConfigurationBuilder gcb, ConfigurationBuilder builder) {
-         List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
+         List<Cache<K, V>> caches = new ArrayList<>(numMembersInCluster);
          final TransportFlags flags = transportFlags();
          for (int i = 0; i < numMembersInCluster; i++) {
             EmbeddedCacheManager cm = addClusterEnabledCacheManager(flags, gcb, builder);
             if (cacheName != null)
                cm.defineConfiguration(cacheName, builder.build());
 
-            Cache<K, V> cache = cacheName == null ? cm.<K,V>getCache() : cm.<K,V>getCache(cacheName);
+            Cache<K, V> cache = cacheName == null ? cm.getCache() : cm.getCache(cacheName);
 
             caches.add(cache);
          }
@@ -245,9 +280,9 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
 
       public  <K,V> List<Cache<K,V>> getCaches(String cacheName) {
-         List<Cache<K,V>> caches = new ArrayList<Cache<K,V>>(cacheManagers.size());
+         List<Cache<K,V>> caches = new ArrayList<>(cacheManagers.size());
          for (EmbeddedCacheManager cm : cacheManagers) {
-            caches.add(cacheName == null ? cm.<K,V>getCache() : cm.<K,V>getCache(cacheName));
+            caches.add(cacheName == null ? cm.getCache() : cm.getCache(cacheName));
          }
          return caches;
       }

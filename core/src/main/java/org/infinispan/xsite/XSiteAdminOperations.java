@@ -273,14 +273,14 @@ public class XSiteAdminOperations {
                            "The remote site will be bring back online",
                      name = "pushState")
    public final String pushState(@Parameter(description = "The destination site name", name = "SiteName") String siteName) {
-      String status = bringSiteOnline(siteName);
-      if (!SUCCESS.equals(status)) {
-         return String.format("Unable to pushState to '%s'. %s", siteName, status);
-      }
       try {
+         String status = bringSiteOnline(siteName);
+         if (!SUCCESS.equals(status)) {
+            return String.format("Unable to pushState to '%s'. %s", siteName, status);
+         }
          stateTransferManager.startPushState(siteName);
       } catch (Throwable throwable) {
-         log.debugf(throwable, "Unable to pushState to '%s'.", siteName);
+         log.xsiteAdminOperationError("pushState", siteName, throwable);
          return String.format("Unable to pushState to '%s'. %s", siteName, throwable.getLocalizedMessage());
       }
       return SUCCESS;
@@ -313,7 +313,7 @@ public class XSiteAdminOperations {
                      description = "Clears the state transfer status.",
                      name = "ClearPushStateStatus")
    public final String clearPushStateStatus() {
-      return performOperation(() -> stateTransferManager.clearClusterStatus());
+      return performOperation("clearPushStateStatus", "(local)", () -> stateTransferManager.clearClusterStatus());
    }
 
    @ManagedOperation(displayName = "Cancel Push Status",
@@ -321,7 +321,7 @@ public class XSiteAdminOperations {
                      name = "CancelPushState")
    public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")
                                           final String siteName) {
-      return performOperation(() -> stateTransferManager.cancelPushState(siteName));
+      return performOperation("cancelPushState", siteName, () -> stateTransferManager.cancelPushState(siteName));
    }
 
    @ManagedOperation(displayName = "Cancel Receive State",
@@ -330,7 +330,7 @@ public class XSiteAdminOperations {
                      name = "CancelReceiveState")
    public final String cancelReceiveState(@Parameter(description = "The sending site name", name = "SiteName")
                                              final String siteName) {
-      return performOperation(() -> stateTransferManager.cancelReceive(siteName));
+      return performOperation("cancelReceiveState", siteName, () -> stateTransferManager.cancelReceive(siteName));
    }
 
    @ManagedOperation(displayName = "Sending Site Name",
@@ -340,10 +340,11 @@ public class XSiteAdminOperations {
       return stateTransferManager.getSendingSiteName();
    }
 
-   private static String performOperation(Operation operation) {
+   private static String performOperation(String operationName, String siteName, Operation operation) {
       try {
          operation.execute();
       } catch (Throwable t) {
+         log.xsiteAdminOperationError(operationName, siteName, t);
          return String.format("Unable to perform operation. Error=%s", t.getLocalizedMessage());
       }
       return SUCCESS;

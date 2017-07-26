@@ -1629,4 +1629,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Timed out waiting for responses for request %d from %s", id = 476)
    TimeoutException requestTimedOut(long requestId, String targetsWithoutResponses);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Unable to perform operation %s for site %s", id = 477)
+   void xsiteAdminOperationError(String operationName, String siteName, @Cause Throwable t);
 }

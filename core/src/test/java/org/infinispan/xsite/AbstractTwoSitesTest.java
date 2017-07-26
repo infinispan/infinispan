@@ -3,8 +3,6 @@ package org.infinispan.xsite;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.lang.reflect.Field;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
@@ -81,6 +79,7 @@ public abstract class AbstractTwoSitesTest extends AbstractXSiteTest {
          Configuration lonBackupConfig = cache(NYC, "lonBackup", 0).getCacheConfiguration();
          assertTrue(lonBackupConfig.sites().backupFor().isBackupFor(LON, CacheContainer.DEFAULT_CACHE_NAME));
       }
+      waitForSites(LON, NYC);
    }
 
    protected ConfigurationBuilder lonConfigurationBuilder() {
