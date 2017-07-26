@@ -9,7 +9,9 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
  */
 public class JavaSerializationEncoder extends MarshallerEncoder {
 
-   public JavaSerializationEncoder() {
+   public static final JavaSerializationEncoder INSTANCE = new JavaSerializationEncoder();
+
+   private JavaSerializationEncoder() {
       super(new JavaSerializationMarshaller());
    }
 }

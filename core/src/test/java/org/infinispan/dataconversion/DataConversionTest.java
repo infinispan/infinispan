@@ -14,12 +14,12 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.dataconversion.CompatModeEncoder;
+import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
-import org.infinispan.commons.dataconversion.MarshallerEncoder;
+import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.InvocationContext;
@@ -27,7 +27,6 @@ import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -112,18 +111,13 @@ public class DataConversionTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(new ConfigurationBuilder())) {
 
-         GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
-
          private byte[] marshall(Object o) throws IOException, InterruptedException {
-            return marshaller.objectToByteBuffer(o);
+            return (byte[]) GenericJbossMarshallerEncoder.INSTANCE.toStorage(o);
          }
 
          @Override
          public void call() throws IOException, InterruptedException {
             Cache<byte[], byte[]> cache = cm.getCache();
-
-            EncoderRegistry encoderRegistry = cache.getAdvancedCache().getComponentRegistry().getEncoderRegistry();
-            encoderRegistry.registerEncoder(new MarshallerEncoder(marshaller));
 
             // Write encoded content to the cache
             Person key1 = new Person("key1");
@@ -136,7 +130,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
             assertEquals(cache.get(encodedKey1), encodedValue1);
 
             // Read with a different valueEncoder
-            AdvancedCache<Person, Person> encodingCache = (AdvancedCache<Person, Person>) cache.getAdvancedCache().withEncoding(MarshallerEncoder.class);
+            AdvancedCache<Person, Person> encodingCache = (AdvancedCache<Person, Person>) cache.getAdvancedCache().withEncoding(GenericJbossMarshallerEncoder.class);
 
             assertEquals(encodingCache.get(key1), value1);
 
@@ -270,15 +264,13 @@ public class DataConversionTest extends AbstractInfinispanTest {
    public void testConversionWithListeners() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
 
-      JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
-
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(cfg)) {
          @Override
          public void call() throws IOException, InterruptedException {
             Cache<String, Person> cache = cm.getCache();
             // Obtain cache with custom valueEncoder
-            Cache storeMarshalled = cache.getAdvancedCache().withEncoding(MarshallerEncoder.class);
+            Cache storeMarshalled = cache.getAdvancedCache().withEncoding(JavaSerializationEncoder.class);
 
             // Add a listener
             SimpleListener simpleListener = new SimpleListener();

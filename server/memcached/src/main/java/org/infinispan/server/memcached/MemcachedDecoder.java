@@ -49,8 +49,12 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.CompatModeEncoder;
+import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.JavaCompatEncoder;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -84,9 +88,14 @@ public class MemcachedDecoder extends ReplayingDecoder<MemcachedDecoderState> {
    public MemcachedDecoder(AdvancedCache<String, byte[]> memcachedCache, ScheduledExecutorService scheduler,
                            NettyTransport transport, Predicate<? super String> ignoreCache) {
       super(MemcachedDecoderState.DECODE_HEADER);
-      boolean compat = memcachedCache.getCacheConfiguration().compatibility().enabled();
-      AdvancedCache<?, ?> c = compat ? memcachedCache.getAdvancedCache()
-            .withEncoding(IdentityEncoder.class, MemcachedCompatEncoder.class) : memcachedCache;
+      CompatibilityModeConfiguration compatibility = memcachedCache.getCacheConfiguration().compatibility();
+      boolean compat = compatibility.enabled();
+      AdvancedCache<?, ?> c = memcachedCache.getAdvancedCache();
+      if (compat) {
+         boolean hasCompatMarshaller = compatibility.marshaller() != null;
+         Class<? extends Encoder> valueEncoder = hasCompatMarshaller ? CompatModeEncoder.class : JavaCompatEncoder.class;
+         c = c.withEncoding(IdentityEncoder.class, valueEncoder);
+      }
       cache = (AdvancedCache<String, byte[]>) c;
       this.scheduler = scheduler;
       this.transport = transport;
