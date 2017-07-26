@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.entries.CacheEntry;

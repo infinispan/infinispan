@@ -7,7 +7,9 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
  */
 public class GenericJbossMarshallerEncoder extends MarshallerEncoder {
 
-   public GenericJbossMarshallerEncoder() {
+   public static final GenericJbossMarshallerEncoder INSTANCE = new GenericJbossMarshallerEncoder();
+
+   private GenericJbossMarshallerEncoder() {
       super(new GenericJBossMarshaller());
    }
 

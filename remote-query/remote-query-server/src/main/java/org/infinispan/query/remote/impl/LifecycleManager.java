@@ -67,6 +67,9 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
+      EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
+      encoderRegistry.registerEncoder(new ProtostreamCompatEncoder(cacheManager));
+      encoderRegistry.registerWrapper(ProtostreamWrapper.INSTANCE);
       initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
    }
 
@@ -115,11 +118,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-      EncoderRegistry encoderRegistry = cr.getEncoderRegistry();
       EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-      encoderRegistry.registerEncoder(new ProtostreamCompatEncoder(cacheManager));
-      encoderRegistry.registerWrapper(new ProtostreamWrapper());
-
       GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
       InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {

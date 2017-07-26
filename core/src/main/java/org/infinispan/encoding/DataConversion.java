@@ -6,12 +6,15 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -54,7 +57,13 @@ public class DataConversion {
 
    @Inject
    public void injectDependencies(EncoderRegistry encoderRegistry, Configuration configuration) {
-      this.encoder = encoderRegistry.getEncoder(encoderClass);
+      if (!CompatModeEncoder.class.equals(encoderClass)) {
+         this.encoder = encoderRegistry.getEncoder(encoderClass);
+      } else {
+         CompatibilityModeConfiguration compatibility = configuration.compatibility();
+         Marshaller compatMarshaller = compatibility.marshaller();
+         this.encoder = new CompatModeEncoder(compatMarshaller);
+      }
       this.wrapper = encoderRegistry.getWrapper(wrapperClass);
    }
 

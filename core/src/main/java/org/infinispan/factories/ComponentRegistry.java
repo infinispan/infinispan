@@ -265,10 +265,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return globalComponents.getTimeService();
    }
 
-   public EncoderRegistry getEncoderRegistry() {
-      return getOrCreateComponent(EncoderRegistry.class);
-   }
-
    public String getCacheName() {
       return cacheName;
    }
