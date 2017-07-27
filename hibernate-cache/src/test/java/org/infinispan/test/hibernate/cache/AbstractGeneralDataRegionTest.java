@@ -36,6 +36,7 @@ import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.infinispan.AdvancedCache;
@@ -113,6 +114,7 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 	}
 
 	@Test
+   @Ignore("Randomly failing on CI - ISPN-8027")
 	public void testEvict() throws Exception {
 		withSessionFactoriesAndRegions(2, ((sessionFactories, regions) -> {
 			GeneralDataRegion localRegion = regions.get(0);
