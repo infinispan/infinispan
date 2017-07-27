@@ -53,6 +53,7 @@ import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import junit.framework.AssertionFailedError;
 
@@ -348,6 +349,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	protected abstract S getAccessStrategy(R region);
 
 	@Test
+   @Ignore("Randomly failing on CI - ISPN-8026")
 	public void testRemove() throws Exception {
 		evictOrRemoveTest( false );
 	}
@@ -431,12 +433,14 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	}
 
 	@Test
-	public void testRemoveAll() throws Exception {
+   @Ignore("Randomly failing on CI - ISPN-8026")
+   public void testRemoveAll() throws Exception {
 		evictOrRemoveAllTest(false);
 	}
 
 	@Test
-	public void testEvictAll() throws Exception {
+   @Ignore("Randomly failing on CI - ISPN-8026")
+   public void testEvictAll() throws Exception {
 		evictOrRemoveAllTest(true);
 	}
 

@@ -17,6 +17,7 @@ import org.infinispan.test.hibernate.cache.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.functional.entities.Customer;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -29,6 +30,7 @@ import static org.junit.Assert.assertNull;
  * @author Galder Zamarreño
  * @since 3.5
  */
+@Ignore("Randomly failing on CI - ISPN-8026")
 public class BulkOperationsTest extends SingleNodeTest {
 	@Override
 	public List<Object[]> getParameters() {
