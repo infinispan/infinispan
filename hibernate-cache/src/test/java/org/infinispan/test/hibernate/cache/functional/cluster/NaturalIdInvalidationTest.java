@@ -25,6 +25,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.jboss.util.collection.ConcurrentSet;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -54,6 +55,7 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 	}
 
 	@Test
+   @Ignore("Randomly failing on CI - ISPN-8114")
 	public void testAll() throws Exception {
 		log.info( "*** testAll()" );
 
