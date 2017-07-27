@@ -14,8 +14,7 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
- * ServiceFinder is a {@link java.util.ServiceLoader} replacement which understands multiple
- * classpaths
+ * ServiceFinder is a {@link java.util.ServiceLoader} replacement which understands multiple classpaths.
  *
  * @author Tristan Tarrant
  * @author Brett Meyer
@@ -63,9 +62,9 @@ public class ServiceFinder {
          try {
             T service = i.next();
             if (services.putIfAbsent(service.getClass().getName(), service) == null) {
-               LOG.debugf("Loading service impl: %s", service.getClass().getSimpleName());
+               LOG.debugf("Loading service impl: %s", service.getClass().getName());
             } else {
-               LOG.debugf("Ignoring already loaded service: %s", service.getClass().getSimpleName());
+               LOG.debugf("Ignoring already loaded service: %s", service.getClass().getName());
             }
          } catch (ServiceConfigurationError e) {
             LOG.debugf("Skipping service impl", e);
