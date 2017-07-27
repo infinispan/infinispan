@@ -31,4 +31,15 @@ public interface SearchWorkCreator {
     * @return collection of Work instances
     */
    Collection<Work> createPerEntityWorks(Object entity, Serializable id, WorkType workType);
+
+   /**
+    * Creates a Work instance for a given entity.
+    *
+    * @param id the id of the entity
+    * @param entityType the entity type that the Work should be created for
+    * @param workType the type of the Work to be done
+    * @return Work instance to be performed by the Hibernate Search engine
+    */
+   Work createEntityWork(Serializable id, IndexedTypeIdentifier entityType, WorkType workType);
+
 }

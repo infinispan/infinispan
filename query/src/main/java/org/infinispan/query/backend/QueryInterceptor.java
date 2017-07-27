@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
@@ -188,7 +190,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
       InternalCacheEntry internalCacheEntry = dataContainer.get(command.getKey());
       Object stateBeforeCompute = internalCacheEntry != null ? internalCacheEntry.getValue() : null;
-      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processComputeCommand(((ComputeCommand) rCommand), rCtx, stateBeforeCompute, rv,null));
+      return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> processComputeCommand(((ComputeCommand) rCommand), rCtx, stateBeforeCompute, rv, null));
    }
 
    @Override
@@ -230,6 +232,18 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
 
    public void purgeIndex(Class<?> entityType) {
       purgeIndex(null, entityType);
+   }
+
+   /**
+    * Remove entries from all indexes by key
+    */
+   void removeFromIndexes(TransactionContext transactionContext, Object key) {
+      transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      Stream<IndexedTypeIdentifier> typeIdentifiers = getKnownClasses().stream().map(PojoIndexedTypeIdentifier::new);
+      Set<Work> deleteWorks = typeIdentifiers
+            .map(e -> searchWorkCreator.createEntityWork(keyToString(key), e, WorkType.DELETE))
+            .collect(Collectors.toSet());
+      performSearchWorks(deleteWorks, transactionContext);
    }
 
    private void purgeIndex(TransactionContext transactionContext, Class<?> entityType) {
@@ -517,7 +531,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processReadWriteKeyCommand(final ReadWriteKeyCommand command, final InvocationContext ctx, final Object prevValue, final Object commandResult, TransactionContext transactionContext) {
       if (command.isSuccessful()) {
-         if(command.getFunction() instanceof MergeFunction) {
+         if (command.getFunction() instanceof MergeFunction) {
             processFunctionalCommand(command, ctx, prevValue, commandResult, transactionContext);
          } else {
             throw new UnsupportedOperationException("ReadWriteKeyCommand is not supported for query");

@@ -6,11 +6,16 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.io.Serializable;
 import java.nio.file.Files;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.hibernate.search.backend.spi.Work;
+import org.hibernate.search.backend.spi.WorkType;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -26,6 +31,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.CacheManagerCallable;
@@ -154,6 +160,50 @@ public class QueryInterceptorTest {
 
    }
 
+   @Test
+   @SuppressWarnings("unchecked")
+   public void shouldDeleteFromAllIndexesById() throws Exception {
+      withCacheManager(new CacheManagerCallable(createVolatileCacheManager()) {
+         @Override
+         public void call() {
+            Cache<String, Object> cache = cm.getCache();
+
+            // Configure Query interceptor to ignore deletes of previous values
+            SearchWorkCreator searchWorkCreator = new IgnoreDeletesSearchWorkCreator();
+            QueryInterceptor queryInterceptor = cache.getAdvancedCache().getComponentRegistry().getComponent(QueryInterceptor.class);
+            queryInterceptor.setSearchWorkCreator(searchWorkCreator);
+
+            // Override entity
+            cache.put("key", person1);
+            cache.put("key", car1);
+
+            // Old entity will be left in the indexes
+            assertEquals(1, cache.size());
+            assertEquals(1, countIndex(Person.class, cache));
+            assertEquals(1, countIndex(Car.class, cache));
+
+            // Remove by id from all indexes
+            queryInterceptor.removeFromIndexes(null, "key");
+
+            // Assert indexes are empty
+            assertEquals(1, cache.size());
+            assertEquals(0, countIndex(Person.class, cache));
+            assertEquals(0, countIndex(Car.class, cache));
+         }
+      });
+   }
+
+   private class IgnoreDeletesSearchWorkCreator extends DefaultSearchWorkCreator {
+
+      @Override
+      public Collection<Work> createPerEntityWorks(Object entity, Serializable id, WorkType workType) {
+         if (workType.equals(WorkType.DELETE)) {
+            return Collections.emptySet();
+         }
+         return super.createPerEntityWorks(entity, id, workType);
+      }
+   }
+
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
       return new DefaultCacheManager(
               new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build(),
@@ -168,6 +218,19 @@ public class QueryInterceptorTest {
                       .addProperty("default.indexBase", indexDir.getAbsolutePath())
                       .addProperty("lucene_version", "LUCENE_CURRENT")
                       .build()
+      );
+   }
+
+   protected EmbeddedCacheManager createVolatileCacheManager() throws Exception {
+      return new DefaultCacheManager(
+            new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build(),
+            new ConfigurationBuilder()
+                  .indexing().index(Index.ALL)
+                  .addIndexedEntity(Person.class)
+                  .addIndexedEntity(Car.class)
+                  .addProperty("default.directory_provider", "local-heap")
+                  .addProperty("lucene_version", "LUCENE_CURRENT")
+                  .build()
       );
    }
 

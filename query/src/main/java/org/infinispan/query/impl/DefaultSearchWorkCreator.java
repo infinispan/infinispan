@@ -25,4 +25,9 @@ public class DefaultSearchWorkCreator implements SearchWorkCreator {
       Work work = new Work(entity, id, workType);
       return Collections.singleton(work);
    }
+
+   @Override
+   public Work createEntityWork(Serializable id, IndexedTypeIdentifier entityType, WorkType workType) {
+      return new Work(null, entityType, id, workType);
+   }
 }
