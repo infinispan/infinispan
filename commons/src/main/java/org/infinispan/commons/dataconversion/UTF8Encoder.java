@@ -29,4 +29,9 @@ public class UTF8Encoder implements Encoder {
       return false;
    }
 
+   @Override
+   public short id() {
+      return EncoderIds.UTF8;
+   }
+
 }

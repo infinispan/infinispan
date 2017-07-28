@@ -3,6 +3,7 @@ package org.infinispan.encoding;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 import java.util.Set;
 
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
@@ -28,15 +29,21 @@ public class DataConversion {
 
    public static final DataConversion DEFAULT = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE);
 
-   private final Class<? extends Encoder> encoderClass;
-   private final Class<? extends Wrapper> wrapperClass;
-
+   private Class<? extends Encoder> encoderClass;
+   private Class<? extends Wrapper> wrapperClass;
+   private Short encoderId;
+   private Byte wrapperId;
    private Encoder encoder;
    private Wrapper wrapper;
 
    public DataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass) {
       this.encoderClass = encoderClass;
       this.wrapperClass = wrapperClass;
+   }
+
+   private DataConversion(Short encoderId, Byte wrapperId) {
+      this.encoderId = encoderId;
+      this.wrapperId = wrapperId;
    }
 
    private DataConversion(Encoder encoder, Wrapper wrapper) {
@@ -47,41 +54,47 @@ public class DataConversion {
    }
 
    public DataConversion withEncoding(Class<? extends Encoder> encoderClass) {
+      if (Objects.equals(this.encoderClass, encoderClass)) return this;
       return new DataConversion(encoderClass, this.wrapperClass);
    }
 
    public DataConversion withWrapping(Class<? extends Wrapper> wrapperClass) {
+      if (Objects.equals(this.wrapperClass, wrapperClass)) return this;
       return new DataConversion(this.encoderClass, wrapperClass);
    }
 
-
    @Inject
    public void injectDependencies(EncoderRegistry encoderRegistry, Configuration configuration) {
+      if (wrapper == null) {
+         this.wrapper = encoderRegistry.getWrapper(wrapperClass, wrapperId);
+      }
       if (!CompatModeEncoder.class.equals(encoderClass)) {
-         this.encoder = encoderRegistry.getEncoder(encoderClass);
+         if (encoder == null) {
+            this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
+         }
       } else {
          CompatibilityModeConfiguration compatibility = configuration.compatibility();
          Marshaller compatMarshaller = compatibility.marshaller();
          this.encoder = new CompatModeEncoder(compatMarshaller);
       }
-      this.wrapper = encoderRegistry.getWrapper(wrapperClass);
    }
 
    public Object fromStorage(Object stored) {
-      if (encoder == null || wrapper == null) {
-         throw new IllegalArgumentException("Both Encoder and Wrapper must be provided!");
-      }
       if (stored == null) return null;
+      checkConverters();
       return encoder.fromStorage(wrapper.unwrap(stored));
-
    }
 
    public Object toStorage(Object toStore) {
-      if (encoder == null || wrapper == null) {
-         throw new IllegalArgumentException("Both Encoder and Wrapper must be provided!");
-      }
       if (toStore == null) return null;
+      checkConverters();
       return wrapper.wrap(encoder.toStorage(toStore));
+   }
+
+   private void checkConverters() {
+      if (encoder == null || wrapper == null) {
+         throw new IllegalArgumentException("Cannot convert object, both Encoder and Wrapper must be non-null!");
+      }
    }
 
    public Encoder getEncoder() {
@@ -104,6 +117,20 @@ public class DataConversion {
       return encoder.isStorageFormatFilterable();
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DataConversion that = (DataConversion) o;
+      return Objects.equals(encoderClass, that.encoderClass) &&
+            Objects.equals(wrapperClass, that.wrapperClass);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(encoderClass, wrapperClass);
+   }
+
    public static class Externalizer extends AbstractExternalizer<DataConversion> {
 
       @Override
@@ -113,8 +140,12 @@ public class DataConversion {
 
       @Override
       public void writeObject(ObjectOutput output, DataConversion dataConversion) throws IOException {
-         output.writeObject(dataConversion.encoderClass);
-         output.writeObject(dataConversion.wrapperClass);
+         boolean isDefault = dataConversion.equals(DEFAULT);
+         output.writeBoolean(isDefault);
+         if (!isDefault) {
+            output.writeShort(dataConversion.encoder.id());
+            output.writeByte(dataConversion.wrapper.id());
+         }
       }
 
       @Override
@@ -124,9 +155,8 @@ public class DataConversion {
 
       @Override
       public DataConversion readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Class<? extends Encoder> encoderClass = (Class<? extends Encoder>) input.readObject();
-         Class<? extends Wrapper> wrapperClass = (Class<? extends Wrapper>) input.readObject();
-         return new DataConversion(encoderClass, wrapperClass);
+         if (input.readBoolean()) return DataConversion.DEFAULT;
+         return new DataConversion(input.readShort(), input.readByte());
       }
    }
 }

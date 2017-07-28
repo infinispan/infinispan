@@ -28,4 +28,9 @@ public interface Encoder {
     */
    boolean isStorageFormatFilterable();
 
+   /**
+    * @return unique identifier for this encoder
+    */
+   short id();
+
 }

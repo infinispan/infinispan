@@ -13,4 +13,6 @@ public interface Wrapper {
 
    Object unwrap(Object obj);
 
+   byte id();
+
 }

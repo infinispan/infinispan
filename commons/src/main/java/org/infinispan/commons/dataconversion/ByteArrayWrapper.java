@@ -24,4 +24,9 @@ public class ByteArrayWrapper implements Wrapper {
       return obj;
    }
 
+   @Override
+   public byte id() {
+      return WrapperIds.BYTE_ARRAY_WRAPPER;
+   }
+
 }

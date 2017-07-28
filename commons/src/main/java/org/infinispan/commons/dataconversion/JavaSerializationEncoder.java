@@ -14,4 +14,9 @@ public class JavaSerializationEncoder extends MarshallerEncoder {
    private JavaSerializationEncoder() {
       super(new JavaSerializationMarshaller());
    }
+
+   @Override
+   public short id() {
+      return EncoderIds.JAVA_SERIALIZATION;
+   }
 }

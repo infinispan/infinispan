@@ -14,4 +14,9 @@ public class JavaCompatEncoder extends CompatModeEncoder {
    private JavaCompatEncoder() {
       super(new JavaSerializationMarshaller());
    }
+
+   @Override
+   public short id() {
+      return EncoderIds.JAVA_COMPAT;
+   }
 }
