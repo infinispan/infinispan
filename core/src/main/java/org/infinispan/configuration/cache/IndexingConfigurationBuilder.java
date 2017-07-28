@@ -202,6 +202,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             //TODO [anistor] This does not take into account eventual programmatically defined entity mappings
             log.noIndexableClassesDefined();
          }
+         if (attributes.attribute(INDEX).get() == Index.ALL && !clustering().cacheMode().isReplicated()) {
+            log.allIndexingInNonReplicatedCache();
+         }
       }
       //TODO [anistor] Infinispan 10 must not allow definition of indexed entities or indexing properties if indexing is not enabled
    }

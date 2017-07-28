@@ -7,7 +7,10 @@ package org.infinispan.configuration.cache;
  */
 public enum Index {
    NONE,
-   /* Use PRIMARY_OWNER instead */
+   /**
+    * Use PRIMARY_OWNER instead
+    * @deprecated since 9.1
+    */
    @Deprecated LOCAL,
    ALL,
    PRIMARY_OWNER;

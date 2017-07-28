@@ -311,6 +311,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    private <T> CacheQuery<T> createCacheQuery(String query) throws ParseException {
+      queryParser = createQueryParser(query.substring(0, query.indexOf(':')));
       Query q = queryParser.parse(query);
       return Search.getSearchManager(cache1).getQuery(q);
    }

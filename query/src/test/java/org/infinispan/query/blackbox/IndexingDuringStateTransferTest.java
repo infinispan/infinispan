@@ -85,6 +85,10 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
       test(c -> c.compute(KEY, (k, old) -> FLUFFY), this::assertFluffyIndexed);
    }
 
+   // The test fails as compute command on backup owner retrieves remote value from primary owner, but this may
+   // already have the value applied. This command then does not commit (as it thinks that there is no change)
+   // and therefore CommitManager does not know that it must not let the entry be state-transferred in.
+   @Test(enabled = false, description = "ISPN-7590")
    public void testComputeRemove() {
       test(c -> c.compute(KEY, (k, old) -> null), sm -> {});
    }

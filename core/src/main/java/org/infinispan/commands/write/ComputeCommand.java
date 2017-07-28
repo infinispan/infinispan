@@ -194,7 +194,7 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public LoadType loadType() {
-      return LoadType.PRIMARY;
+      return LoadType.OWNER;
    }
 
    @Override
