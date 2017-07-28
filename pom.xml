@@ -33,6 +33,13 @@
       <relativePath>parent/pom.xml</relativePath>
    </parent>
 
+   <licenses>
+      <license>
+         <name>GNU Lesser General Public License, Version 2.1</name>
+         <url>http://repository.jboss.org/licenses/lgpl-2.1.txt</url>
+         <distribution>repo</distribution>
+      </license>
+   </licenses>
    <artifactId>infinispan</artifactId>
 
    <name>Infinispan Distribution</name>
