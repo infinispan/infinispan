@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 9.0
  */
 class OffHeapMemory {
-   protected static final Log log = LogFactory.getLog(OffHeapMemory.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(OffHeapMemory.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private static final Unsafe UNSAFE = UnsafeHolder.UNSAFE;
 

@@ -30,6 +30,8 @@ import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,6 +56,9 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECU
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class ScatteredStateConsumerImpl extends StateConsumerImpl {
+   private static final Log log = LogFactory.getLog(ScatteredStateConsumerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    protected static final long SKIP_OWNERSHIP_FLAGS = FlagBitSets.SKIP_OWNERSHIP_CHECK;
 
    protected InternalEntryFactory entryFactory;

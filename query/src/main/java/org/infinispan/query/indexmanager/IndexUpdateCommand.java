@@ -6,8 +6,10 @@ import java.util.concurrent.CompletableFuture;
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.indexes.spi.IndexManager;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.impl.ModuleCommandIds;
+import org.infinispan.query.logging.Log;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletableFutures;
 
@@ -18,6 +20,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Sanne Grinovero
  */
 public class IndexUpdateCommand extends AbstractUpdateCommand {
+   private static final Log log = LogFactory.getLog(IndexUpdateCommand.class, Log.class);
 
    public static final byte COMMAND_ID = ModuleCommandIds.UPDATE_INDEX;
 

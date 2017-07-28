@@ -2,9 +2,6 @@ package org.infinispan.transaction.tm;
 
 import javax.transaction.xa.XAResource;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * Simple transaction manager implementation that maintains transaction state in memory only.
  * <p>
@@ -16,9 +13,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class EmbeddedTransactionManager extends EmbeddedBaseTransactionManager {
-
-   protected static final Log log = LogFactory.getLog(EmbeddedTransactionManager.class);
-
    private EmbeddedTransactionManager() {
    }
 

@@ -96,9 +96,8 @@ import net.jcip.annotations.GuardedBy;
  * @since 5.2
  */
 public class StateConsumerImpl implements StateConsumer {
-
-   protected static final Log log = LogFactory.getLog(StateConsumerImpl.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
    protected static final int NO_STATE_TRANSFER_IN_PROGRESS = -1;
    protected static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL,
                                                                       IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
