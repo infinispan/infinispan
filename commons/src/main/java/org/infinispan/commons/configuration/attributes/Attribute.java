@@ -90,6 +90,12 @@ public final class Attribute<T> implements Cloneable {
       listeners.add(listener);
    }
 
+   public void removeListener(AttributeListener<T> listener) {
+      if (listeners != null) {
+         listeners.remove(listener);
+      }
+   }
+
    T getValue() {
       return value;
    }
