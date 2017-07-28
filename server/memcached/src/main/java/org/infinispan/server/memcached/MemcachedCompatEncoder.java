@@ -1,6 +1,7 @@
 package org.infinispan.server.memcached;
 
 import org.infinispan.commons.dataconversion.CompatModeEncoder;
+import org.infinispan.commons.dataconversion.EncoderIds;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 
 /**
@@ -15,4 +16,8 @@ public class MemcachedCompatEncoder extends CompatModeEncoder {
       super(new JavaSerializationMarshaller());
    }
 
+   @Override
+   public short id() {
+      return EncoderIds.MEMCACHED_COMPAT;
+   }
 }

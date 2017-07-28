@@ -21,10 +21,11 @@ public class ProtostuffCompatibilityTest extends AbstractCompatibilityTest {
       Transcoder transcoder = new ProtostuffTranscoder(marshaller);
       cacheFactory = new CompatibilityCacheFactory<>("protoCache", marshaller, CacheMode.LOCAL, transcoder);
       cacheFactory.setup();
+      cacheFactory.registerEncoder(new ProtostuffEncoder());
    }
 
    @Override
-   protected Encoder getEmbeddedEncoder() {
-      return new ProtostuffEncoder();
+   protected Class<? extends Encoder> getEncoderClass() {
+      return ProtostuffEncoder.class;
    }
 }

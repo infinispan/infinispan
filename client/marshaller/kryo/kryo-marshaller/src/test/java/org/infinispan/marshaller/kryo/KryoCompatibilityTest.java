@@ -22,10 +22,11 @@ public class KryoCompatibilityTest extends AbstractCompatibilityTest {
       Transcoder transcoder = new KryoTranscoder(marshaller);
       cacheFactory = new CompatibilityCacheFactory<>("KryoCache", marshaller, CacheMode.LOCAL, transcoder);
       cacheFactory.setup();
+      cacheFactory.registerEncoder(new KryoEncoder());
    }
 
    @Override
-   protected Encoder getEmbeddedEncoder() {
-      return new KryoEncoder();
+   protected Class<? extends Encoder> getEncoderClass() {
+      return KryoEncoder.class;
    }
 }

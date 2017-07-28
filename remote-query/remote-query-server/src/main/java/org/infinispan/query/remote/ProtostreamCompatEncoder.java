@@ -1,6 +1,7 @@
 package org.infinispan.query.remote;
 
 import org.infinispan.commons.dataconversion.CompatModeEncoder;
+import org.infinispan.commons.dataconversion.EncoderIds;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
@@ -13,4 +14,8 @@ public class ProtostreamCompatEncoder extends CompatModeEncoder {
       ((CompatibilityProtoStreamMarshaller) marshaller).injectDependencies(cm);
    }
 
+   @Override
+   public short id() {
+      return EncoderIds.PROTOSTREAM_COMPAT;
+   }
 }
