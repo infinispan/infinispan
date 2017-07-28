@@ -7,6 +7,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
@@ -66,11 +67,12 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
    public void testPropertiesWhereRead() {
       SearchIntegrator searchFactory = TestQueryHelperFactory.extractSearchFactory(cache);
       EntityIndexBinding indexBindingForEntity = searchFactory.getIndexBindings().get(Person.class);
-      IndexManager[] managers = indexBindingForEntity.getIndexManagers();
-      assertEquals(1, managers.length);
-      assertNotNull(managers[0]);
-      assertTrue(managers[0] instanceof DirectoryBasedIndexManager);
-      DirectoryBasedIndexManager dbim = (DirectoryBasedIndexManager) managers[0];
+      Set<IndexManager> managers = indexBindingForEntity.getIndexManagerSelector().all();
+      assertEquals(1, managers.size());
+      IndexManager manager = managers.iterator().next();
+      assertNotNull(manager);
+      assertTrue(manager instanceof DirectoryBasedIndexManager);
+      DirectoryBasedIndexManager dbim = (DirectoryBasedIndexManager) manager;
       assertTrue(dbim.getDirectoryProvider() instanceof RAMDirectoryProvider);
    }
 

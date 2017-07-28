@@ -1,5 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
+import java.util.Set;
+
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
@@ -17,10 +19,10 @@ final class MassIndexStrategyFactory {
    }
 
    static MassIndexStrategy calculateStrategy(EntityIndexBinding indexBinding, Configuration cacheConfiguration) {
-      IndexManager[] indexManagers = indexBinding.getIndexManagers();
-      IndexManager indexManager = indexBinding.getIndexManagers()[0];
+      Set<IndexManager> indexManagers = indexBinding.getIndexManagerSelector().all();
+      IndexManager indexManager = indexManagers.iterator().next();
 
-      boolean sharded = indexManagers.length > 1;
+      boolean sharded = indexManagers.size() > 1;
       boolean replicated = cacheConfiguration.clustering().cacheMode().isReplicated();
       boolean singleMaster = !sharded && indexManager instanceof InfinispanIndexManager;
       boolean multiMaster = indexManager instanceof AffinityIndexManager;
