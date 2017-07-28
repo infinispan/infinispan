@@ -2,6 +2,8 @@ package org.infinispan.spring.support.embedded;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.AbstractEmbeddedCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -47,6 +49,7 @@ import org.springframework.beans.factory.InitializingBean;
  */
 public class InfinispanEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCacheManagerFactory
       implements FactoryBean<EmbeddedCacheManager>, InitializingBean, DisposableBean {
+   private static final Log logger = LogFactory.getLog(InfinispanEmbeddedCacheManagerFactoryBean.class);
 
    private EmbeddedCacheManager cacheManager;
 

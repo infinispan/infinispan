@@ -30,8 +30,8 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class EntryFactoryImpl implements EntryFactory {
 
-   protected static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
-   protected final static boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
+   private final static boolean trace = log.isTraceEnabled();
 
    private boolean useRepeatableRead;
    private DataContainer container;

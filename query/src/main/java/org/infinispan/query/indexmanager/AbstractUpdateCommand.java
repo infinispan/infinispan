@@ -17,9 +17,7 @@ import org.infinispan.query.impl.CommandInitializer;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.impl.SearchManagerImpl;
-import org.infinispan.query.logging.Log;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Base class for index commands
@@ -28,9 +26,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 public abstract class AbstractUpdateCommand extends BaseRpcCommand implements ReplicableCommand, CustomQueryCommand {
-
-   protected static final Log log = LogFactory.getLog(AbstractUpdateCommand.class, Log.class);
-
    protected SearchIntegrator searchFactory;
    protected String indexName;
    protected byte[] serializedModel;

@@ -53,8 +53,8 @@ import org.infinispan.util.logging.LogFactory;
 @Listener
 public class StateProviderImpl implements StateProvider {
 
-   protected static final Log log = LogFactory.getLog(StateProviderImpl.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(StateProviderImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    protected String cacheName;
    private Configuration configuration;
