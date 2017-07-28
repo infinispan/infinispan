@@ -30,7 +30,7 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    @Deprecated
    public SyncConfigurationBuilder replTimeout(long l) {
-      attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT).set(l);
+      attributes.attribute(SyncConfiguration.REPL_TIMEOUT).set(l);
       return this;
    }
 
