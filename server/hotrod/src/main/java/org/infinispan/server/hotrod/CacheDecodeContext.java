@@ -9,7 +9,6 @@ import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
-import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
@@ -80,7 +79,7 @@ public final class CacheDecodeContext {
     * Handles a rollback request from a client.
     */
    TransactionResponse rollbackTransaction() {
-      checkConfigurationAndTransactionManager();
+      validateConfiguration();
       return finishTransaction(new RollbackTransactionDecodeContext(cache, (XidImpl) operationDecodeContext));
    }
 
@@ -88,7 +87,7 @@ public final class CacheDecodeContext {
     * Handles a prepare request from a client
     */
    Response prepareTransaction() {
-      checkConfigurationAndTransactionManager();
+      validateConfiguration();
 
       PrepareTransactionContext context = (PrepareTransactionContext) operationDecodeContext;
       if (context.isEmpty()) {
@@ -145,7 +144,7 @@ public final class CacheDecodeContext {
     * Handles a commit request from a client
     */
    TransactionResponse commitTransaction() {
-      checkConfigurationAndTransactionManager();
+      validateConfiguration();
       return finishTransaction(new CommitTransactionDecodeContext(cache, (XidImpl) operationDecodeContext));
    }
 
@@ -168,7 +167,7 @@ public final class CacheDecodeContext {
    /**
     * Checks if the configuration (and the transaction manager) is able to handle client transactions.
     */
-   private void checkConfigurationAndTransactionManager() {
+   private void validateConfiguration() {
       Configuration configuration = cache.getCacheConfiguration();
       if (!configuration.transaction().transactionMode().isTransactional()) {
          throw log.expectedTransactionalCache(cache.getName());
@@ -183,10 +182,6 @@ public final class CacheDecodeContext {
          //no Log. see TODO.
          throw new IllegalStateException(
                format("Cache '%s' cannot use Optimistic neither Total Order transactions.", cache.getName()));
-      }
-      TransactionManager tm = cache.getTransactionManager();
-      if (!(tm instanceof EmbeddedTransactionManager)) {
-         throw log.unexpectedTransactionManager(cache.getName());
       }
    }
 
