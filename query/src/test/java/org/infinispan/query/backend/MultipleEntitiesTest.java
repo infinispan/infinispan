@@ -71,7 +71,8 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
    }
 
    private void assertEfficientIndexingUsed(SearchIntegrator searchIntegrator, Class<?> clazz) {
-      DirectoryBasedIndexManager im = (DirectoryBasedIndexManager) searchIntegrator.getIndexBindings().get(clazz).getIndexManagers()[0];
+      DirectoryBasedIndexManager im = (DirectoryBasedIndexManager) searchIntegrator.getIndexBindings().get(clazz)
+            .getIndexManagerSelector().all().iterator().next();
       WorkspaceHolder workspaceHolder = im.getWorkspaceHolder();
       LuceneBackendResources indexResources = workspaceHolder.getIndexResources();
       IndexWorkVisitor<Void, LuceneWorkExecutor> visitor = indexResources.getWorkVisitor();

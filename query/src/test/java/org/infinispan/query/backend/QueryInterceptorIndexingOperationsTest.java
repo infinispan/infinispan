@@ -145,7 +145,8 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    private Directory initializeAndExtractDirectory(Cache cache) {
       QueryInterceptor queryInterceptor = extractComponent(cache, QueryInterceptor.class);
       SearchIntegrator searchFactory = queryInterceptor.getSearchFactory();
-      DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) searchFactory.getIndexBindings().get(Entity1.class).getIndexManagers()[0];
+      DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) searchFactory.getIndexBindings().get(Entity1.class)
+            .getIndexManagerSelector().all().iterator().next();
       return indexManager.getDirectoryProvider().getDirectory();
    }
 

@@ -107,7 +107,7 @@ public class SharedIndexTest {
    protected int clusterSize(FullTextSessionBuilder node, Class<?> entityType) {
       SearchIntegrator integrator = node.getSearchFactory().unwrap(SearchIntegrator.class);
       EntityIndexBinding indexBinding = integrator.getIndexBinding(TOASTER_TYPE);
-      DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) indexBinding.getIndexManagers()[0];
+      DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) indexBinding.getIndexManagerSelector().all().iterator().next();
       InfinispanDirectoryProvider directoryProvider = (InfinispanDirectoryProvider) indexManager.getDirectoryProvider();
       EmbeddedCacheManager cacheManager = directoryProvider.getCacheManager();
       List<Address> members = cacheManager.getMembers();
