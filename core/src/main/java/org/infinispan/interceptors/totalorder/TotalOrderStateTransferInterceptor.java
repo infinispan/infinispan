@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.totalorder;
 
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.InvocationContext;
@@ -87,6 +88,14 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
 
    private boolean needsToRePrepare(Throwable throwable) {
       return throwable instanceof RemoteException && throwable.getCause() instanceof RetryPrepareException;
+   }
+
+   @Override
+   protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      if (command instanceof TopologyAffectedCommand) {
+         ((TopologyAffectedCommand) command).setTopologyId(currentTopologyId());
+      }
+      return invokeNext(ctx, command);
    }
 
    @Override

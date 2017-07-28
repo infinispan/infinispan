@@ -101,7 +101,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                // signal we encounter a REMOVE
                removeStartedLatch.countDown();
                // wait until it is ok to continue with REMOVE
-               if (!removeProceedLatch.await(15, TimeUnit.SECONDS)) {
+               if (!removeProceedLatch.await(10, TimeUnit.SECONDS)) {
                   throw new TimeoutException();
                }
             }
@@ -139,7 +139,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for REMOVE command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      if (!removeStartedLatch.await(15, TimeUnit.SECONDS)) {
+      if (!removeStartedLatch.await(10, TimeUnit.SECONDS)) {
          throw new TimeoutException();
       }
 
@@ -158,7 +158,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // allow REMOVE to continue
       removeProceedLatch.countDown();
 
-      Object oldVal = getFuture.get(15, TimeUnit.SECONDS);
+      Object oldVal = getFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
       assertEquals("myValue", oldVal);
 
@@ -192,7 +192,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                // signal we encounter a (non-state-transfer) PUT
                putStartedLatch.countDown();
                // wait until it is ok to continue with PUT
-               if (!putProceedLatch.await(15, TimeUnit.SECONDS)) {
+               if (!putProceedLatch.await(10, TimeUnit.SECONDS)) {
                   throw new TimeoutException();
                }
             }
@@ -230,7 +230,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for PUT command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      if (!putStartedLatch.await(15, TimeUnit.SECONDS)) {
+      if (!putStartedLatch.await(10, TimeUnit.SECONDS)) {
          throw new TimeoutException();
       }
 
@@ -249,7 +249,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // allow PUT to continue
       putProceedLatch.countDown();
 
-      Object oldVal = putFuture.get(15, TimeUnit.SECONDS);
+      Object oldVal = putFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
       assertEquals("myValue", oldVal);
 
@@ -270,7 +270,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                // signal we encounter a REPLACE
                replaceStartedLatch.countDown();
                // wait until it is ok to continue with REPLACE
-               if (!replaceProceedLatch.await(15, TimeUnit.SECONDS)) {
+               if (!replaceProceedLatch.await(10, TimeUnit.SECONDS)) {
                   throw new TimeoutException();
                }
             }
@@ -308,7 +308,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for REPLACE command on node B to reach beyond *EntryWrappingInterceptor, where it will block.
       // the value seen so far is null
-      if (!replaceStartedLatch.await(15, TimeUnit.SECONDS)) {
+      if (!replaceStartedLatch.await(10, TimeUnit.SECONDS)) {
          throw new TimeoutException();
       }
 
@@ -327,7 +327,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // allow REPLACE to continue
       replaceProceedLatch.countDown();
 
-      Object oldVal = getFuture.get(15, TimeUnit.SECONDS);
+      Object oldVal = getFuture.get(10, TimeUnit.SECONDS);
       assertNotNull(oldVal);
       assertEquals("myValue", oldVal);
 
@@ -350,7 +350,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                // signal we encounter a state transfer PUT
                applyStateStartedLatch.countDown();
                // wait until it is ok to apply state
-               if (!applyStateProceedLatch.await(15, TimeUnit.SECONDS)) {
+               if (!applyStateProceedLatch.await(10, TimeUnit.SECONDS)) {
                   throw new TimeoutException();
                }
             }
@@ -368,7 +368,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                // signal we encounter a GET
                getKeyStartedLatch.countDown();
                // wait until it is ok to continue with GET
-               if (!getKeyProceedLatch.await(15, TimeUnit.SECONDS)) {
+               if (!getKeyProceedLatch.await(10, TimeUnit.SECONDS)) {
                   throw new TimeoutException();
                }
             }
@@ -386,7 +386,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       assertEquals(0, cache(1).getAdvancedCache().getDataContainer().size());
 
       // wait for state transfer on node B to progress to the point where data segments are about to be applied
-      if (!applyStateStartedLatch.await(15, TimeUnit.SECONDS)) {
+      if (!applyStateStartedLatch.await(10, TimeUnit.SECONDS)) {
          throw new TimeoutException();
       }
 
@@ -398,7 +398,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
 
       // wait for GET command on node B to reach beyond *DistributionInterceptor, where it will block.
       // the value seen so far is null
-      if (!getKeyStartedLatch.await(15, TimeUnit.SECONDS)) {
+      if (!getKeyStartedLatch.await(10, TimeUnit.SECONDS)) {
          throw new TimeoutException();
       }
 
@@ -413,7 +413,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // allow GET to continue
       getKeyProceedLatch.countDown();
 
-      Object value = getFuture.get(15, TimeUnit.SECONDS);
+      Object value = getFuture.get(10, TimeUnit.SECONDS);
       assertEquals("myValue", value);
    }
 }

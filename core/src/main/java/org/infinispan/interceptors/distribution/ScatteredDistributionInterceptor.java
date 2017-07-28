@@ -1,5 +1,13 @@
 package org.infinispan.interceptors.distribution;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.MetadataAwareCommand;
@@ -60,6 +68,7 @@ import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.NotifyHelper;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -67,6 +76,7 @@ import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -74,14 +84,6 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * This interceptor mixes several functions:
@@ -187,8 +189,9 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) ->
                handleWriteOnOriginPrimary(rCtx, (T) rCommand, rv, cacheEntry, seenValue, seenVersion, cacheTopology, info));
          } else { // not primary owner
-            CompletableFuture<Map<Address, Response>> rpcFuture =
-               rpcManager.invokeRemotelyAsync(info.writeOwners(), command, defaultSyncOptions);
+            MapResponseCollector collector = new MapResponseCollector(false, info.writeOwners().size());
+            CompletionStage<Map<Address, Response>> rpcFuture =
+                  rpcManager.invokeCommand(info.writeOwners(), command, collector, rpcManager.getSyncRpcOptions());
             return asyncValue(rpcFuture).thenApply(ctx, command, handleWritePrimaryResponse);
          }
       } else { // remote origin
@@ -271,8 +274,9 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       Address backup = getNextMember(cacheTopology);
       if (backup != null) {
          // error responses throw exceptions from JGroupsTransport
-         CompletableFuture<Map<Address, Response>> rpcFuture =
-            rpcManager.invokeRemotelyAsync(Collections.singletonList(backup), command, defaultSyncOptions);
+         MapResponseCollector collector = new MapResponseCollector(false, 1);
+         CompletionStage<Map<Address, Response>> rpcFuture =
+               rpcManager.invokeCommand(backup, command, collector, rpcManager.getSyncRpcOptions());
          rpcFuture.thenRun(() -> {
             if (committed && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
                svm.scheduleKeyInvalidation(command.getKey(), cacheEntry.getMetadata().version(), cacheEntry.isRemoved());
@@ -592,7 +596,9 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          }
          ClusteredGetCommand clusteredGetCommand = cf.buildClusteredGetCommand(command.getKey(), command.getFlagsBitSet());
          clusteredGetCommand.setTopologyId(command.getTopologyId());
-         CompletableFuture<Map<Address, Response>> rpcFuture = rpcManager.invokeRemotelyAsync(Collections.singletonList(info.primary()), clusteredGetCommand, syncIgnoreLeavers);
+         MapResponseCollector collector = new MapResponseCollector(true, 1);
+         CompletionStage<Map<Address, Response>> rpcFuture =
+               rpcManager.invokeCommand(info.primary(), clusteredGetCommand, collector, rpcManager.getSyncRpcOptions());
          Object key = clusteredGetCommand.getKey();
          return asyncInvokeNext(ctx, command, rpcFuture.thenAccept(responseMap -> {
             Response response = getSingleResponse(responseMap);
@@ -730,7 +736,11 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             // carry only single Metadata instance.
             PutMapCommand backupCommand = cf.buildPutMapCommand(localEntries, command.getMetadata(), command.getFlagsBitSet());
             backupCommand.setForwarded(true);
-            rpcManager.invokeRemotelyAsync(Collections.singleton(backup), backupCommand, defaultSyncOptions).whenComplete((r, t) -> {
+            backupCommand.setTopologyId(command.getTopologyId());
+            MapResponseCollector collector = new MapResponseCollector(false, 1);
+            CompletionStage<Map<Address, Response>> rpcFuture =
+                  rpcManager.invokeCommand(backup, backupCommand, collector, rpcManager.getSyncRpcOptions());
+            rpcFuture.whenComplete((r, t) -> {
                if (t != null) {
                   allFuture.completeExceptionally(t);
                } else {
@@ -749,8 +759,10 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       for (Map.Entry<Address, Map<Object, Object>> ownerEntry : remoteEntries.entrySet()) {
          Address owner = ownerEntry.getKey();
          PutMapCommand toPrimary = cf.buildPutMapCommand(ownerEntry.getValue(), command.getMetadata(), command.getFlagsBitSet());
-         CompletableFuture<Map<Address, Response>> rpcFuture = rpcManager.invokeRemotelyAsync(
-            Collections.singletonList(owner), toPrimary, defaultSyncOptions);
+         toPrimary.setTopologyId(command.getTopologyId());
+         MapResponseCollector collector = new MapResponseCollector(false, 1);
+         CompletionStage<Map<Address, Response>> rpcFuture =
+               rpcManager.invokeCommand(owner, toPrimary, collector, rpcManager.getSyncRpcOptions());
          rpcFuture.whenComplete((responseMap, t) -> {
             if (t != null) {
                allFuture.completeExceptionally(t);
@@ -875,8 +887,10 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             List<Object> keys = remote.getValue();
             ClusteredGetAllCommand clusteredGetAllCommand = cf.buildClusteredGetAllCommand(keys, command.getFlagsBitSet(), null);
             clusteredGetAllCommand.setTopologyId(command.getTopologyId());
-            CompletableFuture<Map<Address, Response>> rpcFuture = rpcManager.invokeRemotelyAsync(
-                  Collections.singleton(remote.getKey()), clusteredGetAllCommand, syncIgnoreLeavers);
+            MapResponseCollector collector = new MapResponseCollector(true, 1);
+            CompletionStage<Map<Address, Response>> rpcFuture =
+                  rpcManager.invokeCommand(remote.getKey(), clusteredGetAllCommand, collector,
+                                           rpcManager.getSyncRpcOptions());
             rpcFuture.whenComplete(((responseMap, throwable) -> handleGetAllResponse(responseMap, throwable, ctx, keys, sync)));
          }
          return asyncInvokeNext(ctx, command, sync);
@@ -935,8 +949,14 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
       // local mode clear will have unpredictable results
       svm.clearInvalidations();
       if (ctx.isOriginLocal() && !isLocalModeForced(command)) {
-         RpcOptions rpcOptions = isSynchronous(command) ? syncIgnoreLeavers : defaultAsyncOptions;
-         return makeStage(asyncInvokeNext(ctx, command, rpcManager.invokeRemotelyAsync(null, command, rpcOptions)))
+         if (!isSynchronous(command)) {
+            rpcManager.sendToAll(command, DeliverOrder.PER_SENDER);
+            return invokeNextThenAccept(ctx, command, clearHandler);
+         }
+
+         RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
+         MapResponseCollector collector = new MapResponseCollector(true);
+         return makeStage(asyncInvokeNext(ctx, command, rpcManager.invokeCommandOnAll(command, collector, rpcOptions)))
                .thenAccept(ctx, command, clearHandler);
       } else {
          return invokeNextThenAccept(ctx, command, clearHandler);
@@ -1006,9 +1026,11 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          //don't go remote if we are an owner.
          return invokeNext(ctx, command);
       }
-      CompletableFuture<Void> future = rpcManager.invokeRemotelyAsync(
-            Collections.singleton(groupManager.getPrimaryOwner(groupName)),
-            command, defaultSyncOptions).thenAccept(responses -> {
+      Address primary = distributionManager.getCacheTopology().getDistribution(groupName).primary();
+      MapResponseCollector collector = new MapResponseCollector(false, 1);
+      CompletionStage<Void> future =
+            rpcManager.invokeCommand(primary, command, collector, rpcManager.getSyncRpcOptions())
+                      .thenAccept(responses -> {
          if (!responses.isEmpty()) {
             Response response = responses.values().iterator().next();
             if (response instanceof SuccessfulResponse) {

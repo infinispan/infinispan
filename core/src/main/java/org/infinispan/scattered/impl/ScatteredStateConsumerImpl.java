@@ -1,6 +1,23 @@
 package org.infinispan.scattered.impl;
 
-import net.jcip.annotations.GuardedBy;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -23,6 +40,8 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
@@ -33,23 +52,7 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -150,31 +153,38 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          inboundSegments = new HashSet<>(addedSegments);
       }
       chunkCounter.set(0);
+      if (trace)
+         log.tracef("Revoking all segments, chunk counter reset to 0");
 
-      rpcManager.invokeRemotelyAsync(null, commandsFactory.buildStateRequestCommand(
-            StateRequestCommand.Type.CONFIRM_REVOKED_SEGMENTS,
-            rpcManager.getAddress(), cacheTopology.getTopologyId(), null),
-            synchronousIgnoreLeaversRpcOptions).whenComplete((responses, throwable) -> {
-         if (throwable == null) {
-            try {
-               svm.startKeyTransfer(addedSegments);
-               requestKeyTransfer(addedSegments);
-            } catch (Throwable t) {
-               log.failedToRequestSegments(cacheName, null, addedSegments, t);
-            }
-         } else {
-            if (cache.getAdvancedCache().getComponentRegistry().getStatus() == ComponentStatus.RUNNING) {
-               log.failedConfirmingRevokedSegments(throwable);
-            } else {
-               // reduce verbosity for stopping cache
-               log.debug("Failed confirming revoked segments", throwable);
-            }
-            for (int segment : addedSegments) {
-               svm.notifyKeyTransferFinished(segment, false, false);
-            }
-            notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
-         }
-      }).join(); // we need to wait synchronously for the completion
+      StateRequestCommand command = commandsFactory.buildStateRequestCommand(
+            StateRequestCommand.Type.CONFIRM_REVOKED_SEGMENTS, rpcManager.getAddress(),
+            cacheTopology.getTopologyId(), null);
+      // we need to wait synchronously for the completion
+      rpcManager.blocking(
+            rpcManager.invokeCommandOnAll(command, new MapResponseCollector(true), rpcManager.getSyncRpcOptions())
+                      .whenComplete((responses, throwable) -> {
+                         if (throwable == null) {
+                            try {
+                               svm.startKeyTransfer(addedSegments);
+                               requestKeyTransfer(addedSegments);
+                            } catch (Throwable t) {
+                               log.failedToRequestSegments(cacheName, null, addedSegments, t);
+                            }
+                         } else {
+                            if (cache.getAdvancedCache().getComponentRegistry().getStatus() ==
+                                  ComponentStatus.RUNNING) {
+                               log.failedConfirmingRevokedSegments(throwable);
+                            } else {
+                               // reduce verbosity for stopping cache
+                               log.debug("Failed confirming revoked segments", throwable);
+                            }
+                            for (int segment : addedSegments) {
+                               svm.notifyKeyTransferFinished(segment, false, false);
+                            }
+                            notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(),
+                                                             cacheTopology.getRebalanceId());
+                         }
+                      }));
    }
 
    private void requestKeyTransfer(Set<Integer> segments) {
@@ -185,7 +195,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
          // Reorder the member set to distibute load more evenly
          Collections.shuffle(members);
          for (Address source : members) {
-            if (rpcManager.getAddress().equals(source)) {
+            if (source.equals(rpcManager.getAddress())) {
                continue;
             }
             isTransferringKeys = true;
@@ -351,6 +361,8 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       // we must not remove the transfer before the requests for values are sent
       // as we could notify the end of rebalance too soon
       removeTransfer(inboundTransfer);
+      if (trace)
+         log.tracef("Inbound transfer removed, chunk counter is %s", chunkCounter.get());
       if (chunkCounter.get() == 0) {
          notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
       }
@@ -393,16 +405,22 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
       }
       // Theoretically we can just send these invalidations asynchronously, but we'd prefer to have old copies
       // removed when state transfer completes.
-      chunkCounter.incrementAndGet();
+      long incrementedCounter = chunkCounter.incrementAndGet();
+      if (trace)
+         log.tracef("Invalidating versions on %s, chunk counter incremented to %d", member, incrementedCounter);
       InvalidateVersionsCommand ivc = commandsFactory.buildInvalidateVersionsCommand(keys, topologyIds, versions, true);
-      rpcManager.invokeRemotelyAsync(Collections.singleton(member), ivc, synchronousRpcOptions).whenComplete((responses, t) -> {
-         if (t != null) {
-            log.failedInvalidatingRemoteCache(t);
-         }
-         if (chunkCounter.decrementAndGet() == 0) {
-            notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
-         }
-      });
+      rpcManager.invokeCommand(member, ivc, SingleResponseCollector.INSTANCE, rpcManager.getSyncRpcOptions())
+                .whenComplete((response, t) -> {
+                   if (t != null) {
+                      log.failedInvalidatingRemoteCache(t);
+                   }
+                   long decrementedCounter = chunkCounter.decrementAndGet();
+                   if (trace)
+                      log.tracef("Versions invalidated on %s, chunk counter decremented to %d", member, decrementedCounter);
+                   if (decrementedCounter == 0) {
+                      notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
+                   }
+                });
    }
 
    private void backupEntry(InternalCacheEntry entry) {
@@ -414,19 +432,27 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    private void backupEntries(List<InternalCacheEntry> entries) {
-      chunkCounter.incrementAndGet();
+      long incrementedCounter = chunkCounter.incrementAndGet();
+      if (trace)
+         log.tracef("Backing up entries, chunk counter is %d", incrementedCounter);
       Map<Object, InternalCacheValue> map = new HashMap<>();
       for (InternalCacheEntry entry : entries) {
          map.put(entry.getKey(), entry.toInternalCacheValue());
       }
       PutMapCommand putMapCommand = commandsFactory.buildPutMapCommand(map, null, STATE_TRANSFER_FLAGS);
-      rpcManager.invokeRemotelyAsync(backupAddress, putMapCommand, synchronousRpcOptions).whenComplete(((responseMap, throwable) -> {
+      putMapCommand.setTopologyId(rpcManager.getTopologyId());
+      rpcManager.invokeCommand(backupAddress, putMapCommand, new MapResponseCollector(false, 1),
+                               rpcManager.getSyncRpcOptions())
+                .whenComplete(((responseMap, throwable) -> {
          try {
             if (throwable != null) {
                log.failedOutBoundTransferExecution(throwable);
             }
          } finally {
-            if (chunkCounter.decrementAndGet() == 0) {
+            long decrementedCounter = chunkCounter.decrementAndGet();
+            if (trace)
+               log.tracef("Backed up entries, chunk counter is %d", decrementedCounter);
+            if (decrementedCounter == 0) {
                notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
             }
          }
@@ -444,31 +470,36 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
 
    private void getValuesAndApply(Address address, List<Object> keys) {
       // TODO: throttle the number of commands sent, otherwise we could DDoS self
-      chunkCounter.incrementAndGet();
+      long incrementedCounter = chunkCounter.incrementAndGet();
+      if (trace)
+         log.tracef("Retrieving values, chunk counter is %d", incrementedCounter);
       ClusteredGetAllCommand command = commandsFactory.buildClusteredGetAllCommand(keys, SKIP_OWNERSHIP_FLAGS, null);
-      rpcManager.invokeRemotelyAsync(Collections.singleton(address), command, rpcManager.getDefaultRpcOptions(true))
-         .whenComplete((responseMap, throwable) -> {
+      command.setTopologyId(rpcManager.getTopologyId());
+      rpcManager.invokeCommand(address, command, SingleResponseCollector.INSTANCE, rpcManager.getSyncRpcOptions())
+         .whenComplete((response, throwable) -> {
             try {
                if (throwable != null) {
                   throw log.exceptionProcessingEntryRetrievalValues(throwable);
                } else {
-                  applyValues(address, keys, responseMap);
+                  applyValues(address, keys, response);
                }
             } catch (Throwable t) {
                log.failedProcessingValuesDuringRebalance(t);
                throw t;
             } finally {
-               if (chunkCounter.decrementAndGet() == 0) {
+               long decrementedCounter = chunkCounter.decrementAndGet();
+               if (trace)
+                  log.tracef("Applied values, chunk counter is %d", decrementedCounter);
+               if (decrementedCounter == 0) {
                   notifyEndOfStateTransferIfNeeded(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId());
                }
             }
          });
    }
 
-   private void applyValues(Address address, List<Object> keys, Map<Address, Response> responseMap) {
-      Response response = responseMap.get(address);
+   private void applyValues(Address address, List<Object> keys, Response response) {
       if (response == null) {
-         throw new CacheException("Did not get response from " + address + ", got " + responseMap);
+         throw new CacheException("Did not get response from " + address);
       } else if (!response.isSuccessful()) {
          throw new CacheException("Response from " + address + " is unsuccessful: " + response);
       }

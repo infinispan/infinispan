@@ -1,22 +1,19 @@
 package org.infinispan.statetransfer;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,8 +59,6 @@ public class InboundTransferTask {
 
    private final String cacheName;
 
-   private final RpcOptions rpcOptions;
-
    private final boolean applyState;
 
    public InboundTransferTask(Set<Integer> segments, Address source, int topologyId, RpcManager rpcManager,
@@ -84,10 +79,6 @@ public class InboundTransferTask {
       this.timeout = timeout;
       this.cacheName = cacheName;
       this.applyState = applyState;
-      //the rpc options does not changed in runtime and they are the same in all the remote invocations. re-use the
-      //same instance
-      this.rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS)
-            .timeout(timeout, TimeUnit.MILLISECONDS).build();
    }
 
    public SmallIntSet getSegments() {
@@ -135,8 +126,9 @@ public class InboundTransferTask {
          // start transfer of cache entries
          try {
             StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(type, rpcManager.getAddress(), topologyId, segmentsCopy);
-            Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
-            Response response = responses.get(source);
+            Response response = rpcManager.blocking(rpcManager.invokeCommand(source, cmd,
+                                                                             SingleResponseCollector.INSTANCE,
+                                                                             rpcManager.getSyncRpcOptions()));
             if (response instanceof SuccessfulResponse) {
                if (trace) {
                   log.tracef("Successfully requested state (%s) from node %s for segments %s", type, source, segmentsCopy);

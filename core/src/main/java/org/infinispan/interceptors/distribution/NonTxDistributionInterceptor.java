@@ -3,7 +3,6 @@ package org.infinispan.interceptors.distribution;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -40,8 +39,10 @@ import org.infinispan.distribution.util.ReadOnlySegmentAwareCollection;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -229,6 +230,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          Container myItems = filterAndWrap(ctx, command, segments, helper);
 
          C localCommand = helper.copyForLocal(command, myItems);
+         localCommand.setTopologyId(command.getTopologyId());
          // Local keys are backed up in the handler, and counters on allFuture are decremented when the backup
          // calls complete.
          invokeNextAndFinally(ctx, localCommand,
@@ -238,13 +240,15 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       C copy = helper.copyForPrimary(command, ch, segments);
+      copy.setTopologyId(command.getTopologyId());
       int size = helper.getItems(copy).size();
       if (size <= 0) {
          allFuture.countDown();
          return;
       }
 
-      rpcManager.invokeRemotelyAsync(Collections.singletonList(member), copy, defaultSyncOptions)
+      MapResponseCollector collector = new MapResponseCollector(false, 1);
+      rpcManager.invokeCommand(member, copy, collector, rpcManager.getSyncRpcOptions())
             .whenComplete((responseMap, throwable) -> {
                if (throwable != null) {
                   allFuture.completeExceptionally(throwable);
@@ -351,6 +355,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       offset.value += size;
 
       C localCommand = helper.copyForLocal(command, myItems);
+      localCommand.setTopologyId(command.getTopologyId());
       InvocationFinallyAction handler =
             createLocalInvocationHandler(ch, allFuture, segments, helper, moveListItemsToFuture(myOffset));
       if (retrievals == null) {
@@ -372,6 +377,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       final int myOffset = offset.value;
       // TODO: here we iterate through all entries - is the ReadOnlySegmentAwareMap really worth it?
       C copy = helper.copyForPrimary(command, ch, segments);
+      copy.setTopologyId(command.getTopologyId());
       int size = helper.getItems(copy).size();
       offset.value += size;
       if (size <= 0) {
@@ -380,7 +386,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
 
       // Send the command to primary owner
-      rpcManager.invokeRemotelyAsync(Collections.singletonList(member), copy, defaultSyncOptions)
+      MapResponseCollector collector = new MapResponseCollector(false, 1);
+      rpcManager.invokeCommand(member, copy, collector, rpcManager.getSyncRpcOptions())
             .whenComplete((responses, throwable) -> {
                if (throwable != null) {
                   allFuture.completeExceptionally(throwable);
@@ -432,7 +439,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                retrievals = new ArrayList<>();
             }
             GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key, command.getFlagsBitSet());
-            CompletableFuture<?> getFuture = remoteGet(ctx, fakeGetCommand, fakeGetCommand.getKey(), true);
+            CompletableFuture<?> getFuture =
+                  remoteGet(ctx, fakeGetCommand, fakeGetCommand.getKey(), true).toCompletableFuture();
             retrievals.add(getFuture);
          }
       }
@@ -453,11 +461,13 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             for (Entry<Address, Set<Integer>> backup : backupOwners.entrySet()) {
                // rCommand is the original command
                C backupCopy = helper.copyForBackup((C) rCommand, ch, backup.getValue());
+               backupCopy.setTopologyId(((C) rCommand).getTopologyId());
                if (helper.getItems(backupCopy).isEmpty()) continue;
-               Set<Address> backupOwner = Collections.singleton(backup.getKey());
+               Address backupOwner = backup.getKey();
                if (isSynchronous(backupCopy)) {
                   allFuture.increment();
-                  rpcManager.invokeRemotelyAsync(backupOwner, backupCopy, defaultSyncOptions)
+                  MapResponseCollector collector = new MapResponseCollector(false, 1);
+                  rpcManager.invokeCommand(backupOwner, backupCopy, collector, rpcManager.getSyncRpcOptions())
                         .whenComplete((responseMap, remoteThrowable) -> {
                            if (remoteThrowable != null) {
                               allFuture.completeExceptionally(remoteThrowable);
@@ -466,7 +476,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                            }
                         });
                } else {
-                  rpcManager.invokeRemotelyAsync(backupOwner, backupCopy, defaultAsyncOptions);
+                  rpcManager.sendTo(backupOwner, backupCopy, DeliverOrder.PER_SENDER);
                }
             }
             allFuture.countDown();
@@ -528,10 +538,15 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          int future = 0;
          for (Entry<Address, Set<Integer>> backup : backups.entrySet()) {
             C copy = copyForBackup(original, ch, backup.getValue());
+            copy.setTopologyId(original.getTopologyId());
+            Address backupOwner = backup.getKey();
             if (isSync) {
-               futures[future++] = rpcManager.invokeRemotelyAsync(Collections.singleton(backup.getKey()), copy, defaultSyncOptions);
+               MapResponseCollector collector = new MapResponseCollector(false, 1);
+               futures[future++] =
+                     rpcManager.invokeCommand(backupOwner, copy, collector, rpcManager.getSyncRpcOptions())
+                               .toCompletableFuture();
             } else {
-               rpcManager.invokeRemotelyAsync(Collections.singleton(backup.getKey()), copy, defaultAsyncOptions);
+               rpcManager.sendTo(backupOwner, copy, DeliverOrder.PER_SENDER);
             }
          }
          return isSync ? asyncValue(CompletableFuture.allOf(futures).thenApply(nil -> rv)) : rv;

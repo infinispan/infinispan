@@ -10,12 +10,12 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -46,13 +46,11 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -162,30 +160,29 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       final Map<Address, Set<Integer>> requestedSegments = CollectionFactory.makeConcurrentMap();
       final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<>();
-      when(rpcManager.invokeRemotely(any(Collection.class), any(StateRequestCommand.class), any(RpcOptions.class)))
+      when(rpcManager.invokeCommand(any(Address.class), any(StateRequestCommand.class), any(ResponseCollector.class),
+                                    any(RpcOptions.class)))
             .thenAnswer(invocation -> {
-               Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
-               Address recipient = recipients.iterator().next();
-               StateRequestCommand cmd = (StateRequestCommand) invocation.getArguments()[1];
-               Map<Address, Response> results = new HashMap<>(1);
+               Address recipient = invocation.getArgument(0);
+               StateRequestCommand cmd = invocation.getArgument(1);
+               SuccessfulResponse results;
                if (cmd.getType().equals(StateRequestCommand.Type.GET_TRANSACTIONS)) {
-                  results.put(recipient, SuccessfulResponse.create(new ArrayList<TransactionInfo>()));
                   Set<Integer> segments = cmd.getSegments();
                   requestedSegments.put(recipient, segments);
                   flatRequestedSegments.addAll(segments);
+                  results = SuccessfulResponse.create(new ArrayList<TransactionInfo>());
                } else if (cmd.getType().equals(StateRequestCommand.Type.START_STATE_TRANSFER)
                      || cmd.getType().equals(StateRequestCommand.Type.CANCEL_STATE_TRANSFER)) {
-                  results.put(recipient, SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE);
+                  results = SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
+               } else {
+                  throw new IllegalStateException("Unexpected command: " + cmd);
                }
-               return results;
+               return CompletableFuture.completedFuture(results);
             });
 
-      when(rpcManager.getRpcOptionsBuilder(any(ResponseMode.class))).thenAnswer(invocation -> {
-         Object[] args = invocation.getArguments();
-         return new RpcOptionsBuilder(10000, TimeUnit.MILLISECONDS, (ResponseMode) args[0],
-                                      DeliverOrder.PER_SENDER);
-      });
-
+      when(rpcManager.getSyncRpcOptions()).thenReturn(new RpcOptions(DeliverOrder.NONE, 10000, TimeUnit.MILLISECONDS));
+      when(rpcManager.blocking(any(CompletionStage.class))).thenAnswer(invocation -> ((CompletionStage) invocation
+            .getArgument(0)).toCompletableFuture().join());
 
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();

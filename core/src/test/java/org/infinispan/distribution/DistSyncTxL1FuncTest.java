@@ -24,9 +24,9 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
@@ -40,6 +40,7 @@ import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
@@ -211,7 +212,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
       doAnswer(invocationOnMock -> {
          throw new RemoteException("FAIL", new TimeoutException());
       }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager)
-            .invokeRemotelyAsync(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
+            .invokeCommandStaggered(anyCollection(), any(ClusteredGetCommand.class), any(ResponseCollector.class), any(RpcOptions.class));
 
       TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, mockManager, true);
       try {

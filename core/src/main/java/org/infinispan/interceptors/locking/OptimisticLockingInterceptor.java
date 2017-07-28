@@ -8,6 +8,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.util.logging.Log;
@@ -63,7 +64,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command,
+   protected <K> Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command,
                                                Collection<K> keys, boolean forwarded) throws Throwable {
       // TODO: can locks be acquired here with optimistic locking at all? Shouldn't we unlock only when exception is thrown?
       return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);

@@ -193,7 +193,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    private <C extends VisitableCommand & TopologyAffectedCommand> Object updateAndInvokeNextRead(InvocationContext ctx, C command) {
       updateTopologyId(command);
-      return invokeNextAndHandle(ctx, command,handleReadCommandReturn);
+      return invokeNextAndHandle(ctx, command, handleReadCommandReturn);
    }
 
    private Object handleReadCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t)

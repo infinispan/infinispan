@@ -2,9 +2,7 @@ package org.infinispan.remoting.rpc;
 
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.transport.Address;
 
 /**
  * Classes that wraps all the configuration parameters to configure a remote invocation.

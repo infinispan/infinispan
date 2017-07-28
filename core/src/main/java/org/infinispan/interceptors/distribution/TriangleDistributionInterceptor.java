@@ -5,13 +5,13 @@ import static org.infinispan.commands.VisitableCommand.LoadType.PRIMARY;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
@@ -47,6 +47,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.util.concurrent.CommandAckCollector;
@@ -179,6 +180,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
             log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
                   sequence);
          }
+         // TODO Should we use sendToAll in replicated mode?
          rpcManager.sendToMany(backups, backupPutMapRpcCommand, DeliverOrder.NONE);
       }
    }
@@ -272,7 +274,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       } else {
          GetCacheEntryCommand fakeGetCommand = cf.buildGetCacheEntryCommand(key, command.getFlagsBitSet());
          fakeGetCommand.setTopologyId(command.getTopologyId());
-         futureList.add(remoteGet(ctx, fakeGetCommand, key, true));
+         futureList.add(remoteGet(ctx, fakeGetCommand, key, true).toCompletableFuture());
       }
    }
 
@@ -290,9 +292,11 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       for (Map.Entry<Address, Map<Object, Object>> entry : splitter.primaries.entrySet()) {
          PutMapCommand copy = new PutMapCommand(command, false);
          copy.setMap(entry.getValue());
-         CompletableFuture<Map<Address, Response>> remoteFuture = rpcManager
-               .invokeRemotelyAsync(Collections.singleton(entry.getKey()), copy, defaultSyncOptions);
-         future = remoteFuture.thenCombine(future, TriangleDistributionInterceptor::mergeMaps);
+         copy.setTopologyId(command.getTopologyId());
+         MapResponseCollector collector = new MapResponseCollector(false, 1);
+         CompletionStage<Map<Address, Response>> remoteFuture =
+               rpcManager.invokeCommand(entry.getKey(), copy, collector, rpcManager.getSyncRpcOptions());
+         future = remoteFuture.toCompletableFuture().thenCombine(future, TriangleDistributionInterceptor::mergeMaps);
       }
       return future;
    }
@@ -401,6 +405,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
       if (trace) {
          log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
       }
+      // TODO Should we use sendToAll in replicated mode?
       // we must send the message only after the collector is registered in the map
       rpcManager.sendToMany(backupOwners, backupWriteRpcCommand, DeliverOrder.NONE);
    }
@@ -427,8 +432,10 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
    private void forwardToPrimary(DataWriteCommand command, DistributionInfo distributionInfo,
          Collector<Object> collector) {
-      CompletableFuture<Map<Address, Response>> remoteInvocation = rpcManager
-            .invokeRemotelyAsync(Collections.singletonList(distributionInfo.primary()), command, defaultSyncOptions);
+      MapResponseCollector responseCollector = new MapResponseCollector(false, 1);
+      CompletionStage<Map<Address, Response>> remoteInvocation =
+            rpcManager.invokeCommand(distributionInfo.primary(), command, responseCollector,
+                                     rpcManager.getSyncRpcOptions());
       remoteInvocation.handle((responses, throwable) -> {
          if (throwable != null) {
             collector.primaryException(CompletableFutures.extractException(throwable));

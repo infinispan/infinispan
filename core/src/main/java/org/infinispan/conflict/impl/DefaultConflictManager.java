@@ -33,7 +33,6 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.EnumUtil;
-import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -54,10 +53,9 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
@@ -87,7 +85,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private StateReceiver<K, V> stateReceiver;
    private String cacheName;
    private Address localAddress;
-   private RpcOptions rpcOptions;
    private final AtomicBoolean streamInProgress = new AtomicBoolean();
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
@@ -121,11 +118,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.localAddress = rpcManager.getAddress();
       this.installedTopology = distributionManager.getCacheTopology();
       this.entryMergePolicy = cache.getCacheConfiguration().clustering().partitionHandling().mergePolicy();
-
-      initRpcOptions();
-      cache.getCacheConfiguration().clustering()
-            .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
-            .addListener(((a, o) -> initRpcOptions()));
       this.running = true;
       if (trace) log.tracef("Starting %s. isRunning=%s", this.getClass().getSimpleName(), !running);
    }
@@ -138,10 +130,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          versionRequestMap.clear();
       }
       this.running = false;
-   }
-
-   private void initRpcOptions() {
-      this.rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS).build();
    }
 
    @Override
@@ -383,7 +371,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
          ClusteredGetCommand cmd = commandsFactory.buildClusteredGetCommand(key, FlagBitSets.SKIP_OWNERSHIP_CHECK);
          cmd.setTopologyId(topology.getTopologyId());
-         rpcFuture = rpcManager.invokeRemotelyAsync(keyOwners, cmd, rpcOptions);
+         MapResponseCollector collector = new MapResponseCollector(true, keyOwners.size());
+         rpcFuture = rpcManager.invokeCommand(keyOwners, cmd, collector, rpcManager.getSyncRpcOptions()).toCompletableFuture();
          rpcFuture.whenComplete((responseMap, exception) -> {
             if (trace) log.tracef("%s received responseMap %s, exception %s", this, responseMap, exception);
 
