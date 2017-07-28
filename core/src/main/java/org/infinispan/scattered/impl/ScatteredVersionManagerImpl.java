@@ -62,7 +62,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    private static final AtomicIntegerFieldUpdater<ScatteredVersionManagerImpl> topologyIdUpdater
          = AtomicIntegerFieldUpdater.newUpdater(ScatteredVersionManagerImpl.class, "topologyId");
 
-   private static final Log log = LogFactory.getLog(ScatteredVersionManager.class);
+   private static final Log log = LogFactory.getLog(ScatteredVersionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private Configuration configuration;
    private int invalidationBatchSize;

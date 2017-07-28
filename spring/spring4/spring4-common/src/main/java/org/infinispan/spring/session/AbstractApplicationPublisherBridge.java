@@ -20,8 +20,7 @@ import org.springframework.session.events.SessionExpiredEvent;
  * @since 9.0
  */
 public abstract class AbstractApplicationPublisherBridge implements ApplicationEventPublisherAware {
-
-   protected static final Log logger = LogFactory.getLog(AbstractApplicationPublisherBridge.class);
+   private static final Log logger = LogFactory.getLog(AbstractApplicationPublisherBridge.class);
 
    protected final SpringCache eventSource;
    protected Optional<ApplicationEventPublisher> springEventsPublisher = Optional.empty();

@@ -16,6 +16,8 @@ import org.infinispan.statetransfer.OutboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateProviderImpl;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,6 +33,9 @@ import java.util.stream.Collectors;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class ScatteredStateProviderImpl extends StateProviderImpl implements ScatteredStateProvider {
+   private static final Log log = LogFactory.getLog(ScatteredStateProviderImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    protected ScatteredVersionManager svm;
    protected CountDownLatch outboundTaskLatch;
    private RpcOptions syncIgnoreLeavers;

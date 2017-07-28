@@ -11,8 +11,8 @@ import sun.misc.Unsafe;
  * @since 9.0
  */
 public class UnsafeWrapper {
-   protected static final Log log = LogFactory.getLog(UnsafeWrapper.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(UnsafeWrapper.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    protected static final Unsafe UNSAFE = UnsafeHolder.UNSAFE;
 
