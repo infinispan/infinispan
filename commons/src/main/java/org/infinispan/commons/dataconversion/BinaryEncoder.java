@@ -45,6 +45,11 @@ public class BinaryEncoder implements Encoder {
       return false;
    }
 
+   @Override
+   public short id() {
+      return EncoderIds.BINARY;
+   }
+
    private static boolean isTypeExcluded(Class<?> type) {
       return type.equals(String.class) || type.isPrimitive() ||
             type.equals(Boolean.class) || type.equals(Character.class) ||

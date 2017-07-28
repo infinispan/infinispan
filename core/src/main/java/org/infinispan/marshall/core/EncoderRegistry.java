@@ -10,9 +10,9 @@ import org.infinispan.commons.dataconversion.Wrapper;
  */
 public interface EncoderRegistry {
 
-   Encoder getEncoder(Class<? extends Encoder> encoderClass);
+   Encoder getEncoder(Class<? extends Encoder> encoderClass, Short encoderId);
 
-   Wrapper getWrapper(Class<? extends Wrapper> wrapperClass);
+   Wrapper getWrapper(Class<? extends Wrapper> wrapperClass, Byte wrapperId);
 
    /**
     * @param encoder {@link Encoder to be registered}.

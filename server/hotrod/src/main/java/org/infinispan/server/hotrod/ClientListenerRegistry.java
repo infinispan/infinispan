@@ -372,10 +372,10 @@ class ClientListenerRegistry {
             }
             Object k = event.getKey();
             Object v = event.getValue();
-            if (keyDataConversion.isStorageFormatFilterable() && k != null) {
+            if (keyDataConversion.isStorageFormatFilterable()) {
                k = keyDataConversion.fromStorage(k);
             }
-            if (valueDataConversion.isStorageFormatFilterable() && v != null) {
+            if (valueDataConversion.isStorageFormatFilterable()) {
                v = valueDataConversion.fromStorage(v);
             }
 

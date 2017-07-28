@@ -11,4 +11,8 @@ public class MemcachedEncoder extends MarshallerEncoder {
       super(new SpyMemcachedCompatibleMarshaller());
    }
 
+   @Override
+   public short id() {
+      return 1000;
+   }
 }
