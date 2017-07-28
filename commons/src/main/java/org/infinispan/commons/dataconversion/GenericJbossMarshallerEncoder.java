@@ -13,4 +13,8 @@ public class GenericJbossMarshallerEncoder extends MarshallerEncoder {
       super(new GenericJBossMarshaller());
    }
 
+   @Override
+   public short id() {
+      return EncoderIds.GENERIC_MARSHALLER;
+   }
 }

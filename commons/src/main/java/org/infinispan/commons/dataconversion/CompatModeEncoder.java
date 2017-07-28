@@ -1,5 +1,7 @@
 package org.infinispan.commons.dataconversion;
 
+import static org.infinispan.commons.dataconversion.EncoderIds.COMPAT;
+
 import java.io.IOException;
 
 import org.infinispan.commons.CacheException;
@@ -43,6 +45,11 @@ public class CompatModeEncoder implements Encoder {
    @Override
    public boolean isStorageFormatFilterable() {
       return true;
+   }
+
+   @Override
+   public short id() {
+      return COMPAT;
    }
 
    protected Object unmarshall(byte[] source) throws IOException, ClassNotFoundException {

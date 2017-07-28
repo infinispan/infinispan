@@ -13,7 +13,6 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.it.compatibility.CompatibilityCacheFactory;
 import org.infinispan.it.compatibility.EmbeddedRestMemcachedHotRodTest;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -23,20 +22,12 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class AbstractCompatibilityTest extends EmbeddedRestMemcachedHotRodTest {
 
-   private Encoder embeddedEncoder;
-
    @AfterClass
    protected void teardown() {
       CompatibilityCacheFactory.killCacheFactories(cacheFactory);
    }
 
-   protected abstract Encoder getEmbeddedEncoder();
-
-   @BeforeMethod
-   public void setUp() throws Exception {
-      embeddedEncoder = getEmbeddedEncoder();
-      cacheFactory.registerEncoder(getEmbeddedEncoder());
-   }
+   protected abstract Class<? extends Encoder> getEncoderClass();
 
    @Test
    public void testRestPutEmbeddedMemcachedHotRodGetTest() throws Exception {
@@ -55,7 +46,7 @@ public abstract class AbstractCompatibilityTest extends EmbeddedRestMemcachedHot
 
       // 2. Get with Embedded (given a marshaller, it can unmarshall the result)
       assertEquals(value, cacheFactory.getEmbeddedCache().getAdvancedCache()
-            .withEncoding(IdentityEncoder.class, embeddedEncoder.getClass()).get(key));
+            .withEncoding(IdentityEncoder.class, getEncoderClass()).get(key));
 
       // 3. Get with Memcached (given a marshaller, it can unmarshall the result)
       bytes = (byte[]) cacheFactory.getMemcachedClient().get(key);

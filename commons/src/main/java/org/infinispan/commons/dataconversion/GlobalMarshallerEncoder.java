@@ -12,4 +12,9 @@ public class GlobalMarshallerEncoder extends MarshallerEncoder {
    public GlobalMarshallerEncoder(Marshaller globalMarshaller) {
       super(globalMarshaller);
    }
+
+   @Override
+   public short id() {
+      return EncoderIds.GLOBAL_MARSHALLER;
+   }
 }

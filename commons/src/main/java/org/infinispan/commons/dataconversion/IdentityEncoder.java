@@ -24,4 +24,9 @@ public class IdentityEncoder implements Encoder {
       return true;
    }
 
+   @Override
+   public short id() {
+      return EncoderIds.IDENTITY;
+   }
+
 }
