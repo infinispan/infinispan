@@ -440,7 +440,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    private void writeCommonClusteredCacheAttributes(XMLExtendedStreamWriter writer, Configuration configuration) throws XMLStreamException {
       ClusteringConfiguration clustering = configuration.clustering();
       writer.writeAttribute(Attribute.MODE, clustering.cacheMode().isSynchronous() ? "SYNC" : "ASYNC");
-      writer.writeAttribute(Attribute.REMOTE_TIMEOUT, Long.toString(clustering.remoteTimeout()));
+      clustering.attributes().write(writer, ClusteringConfiguration.REMOTE_TIMEOUT, Attribute.REMOTE_TIMEOUT);
    }
 
    private void writeCommonCacheAttributesElements(XMLExtendedStreamWriter writer, String name, Configuration configuration) throws XMLStreamException {

@@ -27,6 +27,8 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
    }
 
    private final Attribute<CacheMode> cacheMode;
+   private final Attribute<Long> remoteTimeout;
+   private final Attribute<Integer> invalidationBatchSize;
    private final HashConfiguration hashConfiguration;
    private final L1Configuration l1Configuration;
    private final StateTransferConfiguration stateTransferConfiguration;
@@ -39,11 +41,19 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
          PartitionHandlingConfiguration partitionHandlingStrategy) {
       this.attributes = attributes.checkProtection();
       this.cacheMode = attributes.attribute(CACHE_MODE);
+      this.remoteTimeout = attributes.attribute(REMOTE_TIMEOUT);
+      this.invalidationBatchSize = attributes.attribute(INVALIDATION_BATCH_SIZE);
       this.hashConfiguration = hashConfiguration;
       this.l1Configuration = l1Configuration;
       this.stateTransferConfiguration = stateTransferConfiguration;
       this.syncConfiguration = syncConfiguration;
       this.partitionHandlingConfiguration  = partitionHandlingStrategy;
+
+      // Expose the true value for users of attributes().attribute(REMOTE_TIMEOUT).get()
+      // and attributes().attribute(REMOTE_TIMEOUT).addListener()
+      syncConfiguration.attributes().attribute(SyncConfiguration.REPL_TIMEOUT)
+                       .addListener((attribute, oldValue) -> remoteTimeout.set(attribute.get()));
+      remoteTimeout.set(syncConfiguration.replTimeout());
    }
 
    /**
@@ -84,7 +94,7 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
     * For scattered cache, the threshold after which batched invalidations are sent
     */
    public int invalidationBatchSize() {
-      return attributes.attribute(INVALIDATION_BATCH_SIZE).get();
+      return invalidationBatchSize.get();
    }
 
    /**
