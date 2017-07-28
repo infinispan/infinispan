@@ -491,7 +491,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
       // TODO: add more determinism by waiting for all responses
       rpcManager0.blockAfter(ClusteredGetCommand.class);
-      rpcManager0.checkResponses(responseMap -> {
+      rpcManager0.checkResponses((Map<Address, Response> responseMap) -> {
          int succesful = 0;
          for (Map.Entry<Address, Response> rsp : responseMap.entrySet()) {
             if (rsp.getValue().isSuccessful()) {
@@ -568,7 +568,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
             .addInterceptor(new BlockingInterceptor(barrier1, GetCacheEntryCommand.class, false, false), 0);
 
       rpcManager0.blockAfter(ClusteredGetCommand.class);
-      rpcManager0.checkResponses(responseMap -> {
+      rpcManager0.checkResponses((Map<Address, Response> responseMap) -> {
          assertEquals(responseMap.toString(), 2, responseMap.size());
          for (Map.Entry<Address, Response> rsp : responseMap.entrySet()) {
             assertEquals(UnsureResponse.INSTANCE, rsp.getValue());

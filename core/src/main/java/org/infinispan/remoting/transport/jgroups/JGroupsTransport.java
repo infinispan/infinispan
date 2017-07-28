@@ -68,12 +68,15 @@ import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.impl.MultiTargetRequest;
 import org.infinispan.remoting.transport.Request;
+import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.SingleTargetRequest;
+import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -130,10 +133,6 @@ public class JGroupsTransport implements Transport {
    private static final boolean trace = log.isTraceEnabled();
    private static final CompletableFuture<Map<Address, Response>> EMPTY_RESPONSES_FUTURE =
          CompletableFuture.completedFuture(Collections.emptyMap());
-   private static final ResponseCollector<Map<Address, Response>>
-         SINGLE_RESPONSE_COLLECTOR = new SingletonMapResponseCollector(false);
-   private static final ResponseCollector<Map<Address, Response>>
-         SINGLE_IGNORE_LEAVERS_COLLECTOR = new SingletonMapResponseCollector(true);
    private static final short CORRELATOR_ID = (short) 0;
    private static final short HEADER_ID = ClassConfigurator.getProtocolId(RequestCorrelator.class);
    private static final byte REQUEST = 0;
@@ -277,29 +276,28 @@ public class JGroupsTransport implements Transport {
       }
 
       Collection<Address> actualTargets = broadcast ? localMembers : recipients;
-      assert singleTarget != null || actualTargets != null;
       return performSyncRemoteInvocation(actualTargets, command, mode, timeout, responseFilter, deliverOrder,
-                                         ignoreLeavers, sendStaggeredRequest, broadcast,
-                                         singleTarget);
+                                         ignoreLeavers, sendStaggeredRequest, broadcast, singleTarget);
    }
 
    @Override
-   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder) throws Exception {
+   public void sendTo(Address destination, ReplicableCommand command, DeliverOrder deliverOrder)   {
       if (destination.equals(address)) { //removed requireNonNull. this will throw a NPE in that case
-         if (trace) {
-            log.trace("sendTo: not sending to self.");
-         }
+         if (trace)
+            log.tracef("%s not sending command to self: %s", address, command);
          return;
       }
+      logCommand(command, destination);
       sendCommand(destination, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command), true);
    }
 
    @Override
-   public void sendToMany(Collection<Address> targets, ReplicableCommand command, DeliverOrder deliverOrder)
-         throws Exception {
+   public void sendToMany(Collection<Address> targets, ReplicableCommand command, DeliverOrder deliverOrder) {
       if (targets == null) {
+         logCommand(command, "all");
          sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder, false);
       } else {
+         logCommand(command, targets);
          sendCommand(targets, command, Request.NO_REQUEST_ID, deliverOrder, false);
       }
    }
@@ -330,9 +328,9 @@ public class JGroupsTransport implements Transport {
       }
 
       if (mode.isSynchronous()) {
-         SyncMapResponseCollector collector = new SyncMapResponseCollector(false, commands.size());
+         MapResponseCollector collector = new MapResponseCollector(false, commands.size());
          CompletableFuture<Map<Address, Response>> request =
-               invokeCommands(commands.keySet(), commands::get, collector, timeout, deliverOrder);
+               invokeCommands(commands.keySet(), commands::get, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
 
          try {
             return CompletableFutures.await(request);
@@ -341,8 +339,11 @@ public class JGroupsTransport implements Transport {
          }
       } else {
          commands.forEach(
-               (a, command) -> sendCommand(a, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command),
-                                           true));
+               (a, command) -> {
+                  logCommand(command, a);
+                  sendCommand(a, command, Request.NO_REQUEST_ID, deliverOrder, isRsvpCommand(command),
+                              true);
+               });
          return Collections.emptyMap();
       }
    }
@@ -350,9 +351,8 @@ public class JGroupsTransport implements Transport {
    @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand command)
          throws Exception {
-      if (trace) {
+      if (trace)
          log.tracef("About to send to backups %s, command %s", backups, command);
-      }
       boolean rsvp = isRsvpCommand(command);
       Map<XSiteBackup, Future<Response>> syncBackupCalls = new HashMap<>(backups.size());
       for (XSiteBackup xsb : backups) {
@@ -360,6 +360,7 @@ public class JGroupsTransport implements Transport {
          if (xsb.isSync()) {
             long timeout = xsb.getTimeout();
             long requestId = requests.newRequestId();
+            logRequest(requestId, command, recipient);
             SingleSiteRequest<Response> request =
                   new SingleSiteRequest<>(PassthroughSingleResponseCollector.INSTANCE, requestId, requests,
                                           xsb.getSiteName());
@@ -708,7 +709,11 @@ public class JGroupsTransport implements Transport {
 
       // Targets leaving may finish some requests and potentially potentially block for a long time.
       // We don't want to block view handling, so we unblock the commands on a separate thread.
-      remoteExecutor.execute(() -> requests.forEach(request -> request.onNewView(clusterView.getMembersSet())));
+      remoteExecutor.execute(() -> {
+         if (requests != null) {
+            requests.forEach(request -> request.onNewView(clusterView.getMembersSet()));
+         }
+      });
 
       JGroupsAddressCache.pruneAddressCache();
    }
@@ -786,10 +791,9 @@ public class JGroupsTransport implements Transport {
       if (view.isViewIdAtLeast(expectedViewId))
          return CompletableFutures.completedNull();
 
-      if (trace) {
+      if (trace)
          log.tracef("Waiting for transaction data for view %d, current view is %d", expectedViewId,
                     view.getViewId());
-      }
       viewUpdateLock.lock();
       try {
          view = this.clusterView;
@@ -845,7 +849,11 @@ public class JGroupsTransport implements Transport {
    public <T> CompletableFuture<T> invokeCommand(Address target, ReplicableCommand command,
                                                  ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                  long timeout, TimeUnit unit) {
+      if (target.equals(address) && deliverOrder != DeliverOrder.TOTAL) {
+         return CompletableFuture.completedFuture(collector.finish());
+      }
       long requestId = requests.newRequestId();
+      logRequest(requestId, command, target);
       SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, target);
       addRequest(request);
       sendCommand(target, command, requestId, deliverOrder, isRsvpCommand(command), true);
@@ -860,6 +868,10 @@ public class JGroupsTransport implements Transport {
                                                  ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                  long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
+      logRequest(requestId, command, targets);
+      if (targets.isEmpty()) {
+         return CompletableFuture.completedFuture(collector.finish());
+      }
       Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
@@ -880,6 +892,7 @@ public class JGroupsTransport implements Transport {
    public <T> CompletableFuture<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
                                                       DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
+      logRequest(requestId, command, "all");
       Address excludedTarget = deliverOrder == DeliverOrder.TOTAL ? null : getAddress();
       MultiTargetRequest<T> request =
             new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget);
@@ -901,6 +914,7 @@ public class JGroupsTransport implements Transport {
                                                           ResponseCollector<T> collector, DeliverOrder deliverOrder,
                                                           long timeout, TimeUnit unit) {
       long requestId = requests.newRequestId();
+      logRequest(requestId, command, "staggered " + targets);
       StaggeredRequest<T> request =
             new StaggeredRequest<>(collector, requestId, requests, targets, getAddress(), command, deliverOrder,
                                    timeout, unit, this);
@@ -917,19 +931,20 @@ public class JGroupsTransport implements Transport {
    @Override
    public <T> CompletableFuture<T> invokeCommands(Collection<Address> targets,
                                                   Function<Address, ReplicableCommand> commandGenerator,
-                                                  ResponseCollector<T> responseCollector, long timeout,
-                                                  DeliverOrder deliverOrder) {
+                                                  ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                                  long timeout,
+                                                  TimeUnit timeUnit) {
       long requestId;
       requestId = requests.newRequestId();
       Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(responseCollector, requestId, requests, targets, excludedTarget);
+            new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
       addRequest(request);
       try {
          for (Address target : targets) {
             ReplicableCommand command = commandGenerator.apply(target);
-
             boolean rsvp = isRsvpCommand(command);
+            logRequest(requestId, command, target);
             sendCommand(target, command, requestId, deliverOrder, rsvp, true);
          }
       } catch (Throwable t) {
@@ -938,7 +953,7 @@ public class JGroupsTransport implements Transport {
       }
 
       if (timeout > 0) {
-         request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
+         request.setTimeout(timeoutExecutor, timeout, timeUnit);
       }
       return request;
    }
@@ -960,8 +975,6 @@ public class JGroupsTransport implements Transport {
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, rsvp, noRelay);
 
-      if (trace)
-         logCommand(command, requestId, target.toString());
       send(message);
    }
 
@@ -998,14 +1011,6 @@ public class JGroupsTransport implements Transport {
       }
       if (rsvp) {
          message.setFlag(Message.Flag.RSVP.value());
-      }
-   }
-
-   private void logCommand(ReplicableCommand command, long requestId, String targets) {
-      if (requestId != Request.NO_REQUEST_ID) {
-         log.tracef("%s sending request %d to %s: %s", address, requestId, targets, command);
-      } else {
-         log.tracef("%s sending command to %s: %s", address, targets, command);
       }
    }
 
@@ -1070,10 +1075,13 @@ public class JGroupsTransport implements Transport {
                                                                                   boolean rsvp, boolean broadcast,
                                                                                   Address singleTarget) {
       if (broadcast) {
+         logCommand(command, "all");
          sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder, rsvp);
       } else if (singleTarget != null) {
+         logCommand(command, singleTarget);
          sendCommand(singleTarget, command, Request.NO_REQUEST_ID, deliverOrder, rsvp, true);
       } else {
+         logCommand(command, recipients);
          sendCommand(recipients, command, Request.NO_REQUEST_ID, deliverOrder, rsvp);
       }
       return EMPTY_RESPONSES_FUTURE;
@@ -1090,7 +1098,7 @@ public class JGroupsTransport implements Transport {
       } else {
          if (singleTarget != null) {
             ResponseCollector<Map<Address, Response>> collector =
-                  ignoreLeavers ? SINGLE_IGNORE_LEAVERS_COLLECTOR : SINGLE_RESPONSE_COLLECTOR;
+                  ignoreLeavers ? SingletonMapResponseCollector.SYNC_IGNORE_LEAVERS : SingletonMapResponseCollector.SYNC;
             request = invokeCommand(singleTarget, command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
          } else {
             ResponseCollector<Map<Address, Response>> collector;
@@ -1099,7 +1107,7 @@ public class JGroupsTransport implements Transport {
             } else if (responseFilter != null) {
                collector = new FilterMapResponseCollector(responseFilter, true, targets.size());
             } else {
-               collector = new SyncMapResponseCollector(ignoreLeavers, targets.size());
+               collector = new MapResponseCollector(ignoreLeavers, targets.size());
             }
             if (broadcast) {
                request = invokeCommandOnAll(command, collector, deliverOrder, timeout, TimeUnit.MILLISECONDS);
@@ -1111,8 +1119,8 @@ public class JGroupsTransport implements Transport {
       return request;
    }
 
-   public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder)
-         throws Exception {
+   public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
+      logCommand(command, "all");
       sendCommandToAll(command, Request.NO_REQUEST_ID, deliverOrder, false);
    }
 
@@ -1130,9 +1138,17 @@ public class JGroupsTransport implements Transport {
          message.dest(new AnycastAddress());
       }
 
-      if (trace)
-         logCommand(command, requestId, "all");
       send(message);
+   }
+
+   private void logRequest(long requestId, ReplicableCommand command, Object targets) {
+      if (trace)
+         log.tracef("%s sending request %d to %s: %s", address, requestId, targets, command);
+   }
+
+   private void logCommand(ReplicableCommand command, Object targets) {
+      if (trace)
+         log.tracef("%s sending command to %s: %s", address, targets, command);
    }
 
    public JChannel getChannel() {
@@ -1172,10 +1188,6 @@ public class JGroupsTransport implements Transport {
       Message message = new Message();
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, rsvp, true);
-
-      if (trace) {
-         logCommand(command, requestId, targets.toString());
-      }
 
       if (deliverOrder == DeliverOrder.TOTAL) {
          message.dest(new AnycastAddress(toJGroupsAddressList(targets)));
@@ -1285,6 +1297,13 @@ public class JGroupsTransport implements Transport {
                                long requestId) {
       try {
          DeliverOrder deliverOrder = decodeDeliverMode(flags);
+         if (deliverOrder != DeliverOrder.TOTAL && src.equals(((JGroupsAddress) getAddress()).getJGroupsAddress())) {
+            // DISCARD ignores the DONT_LOOPBACK flag, see https://issues.jboss.org/browse/JGRP-2205
+            if (trace)
+               log.tracef("Ignoring request %d from self without total order", requestId);
+            return;
+         }
+
          ReplicableCommand command = (ReplicableCommand) marshaller.objectFromByteBuffer(buffer, offset, length);
          Reply reply;
          if (requestId != Request.NO_REQUEST_ID) {

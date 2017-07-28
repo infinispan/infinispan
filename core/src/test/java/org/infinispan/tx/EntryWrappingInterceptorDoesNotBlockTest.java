@@ -230,11 +230,11 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
          // We have to force afterInvokeRemotely being invoked in another thread, because if the response
          // arrives too soon, we could be processing in the same thread that is about to wait for the prepare
          // command to finish without blocking
-         return future.thenApplyAsync(responses -> afterInvokeRemotely(rpc, responses, null));
+         return future.thenApplyAsync(responses -> ((Map<Address, Response>) afterInvokeRemotely(rpc, responses, null)));
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
+      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
          if (command instanceof ClusteredGetCommand) {
             ++clusterGet;
             try {
@@ -246,7 +246,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
                throw new RuntimeException(e);
             }
          }
-         return responseMap;
+         return responseObject;
       }
    }
 

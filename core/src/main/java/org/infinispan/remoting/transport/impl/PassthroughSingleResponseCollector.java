@@ -1,4 +1,4 @@
-package org.infinispan.remoting.transport.jgroups;
+package org.infinispan.remoting.transport.impl;
 
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;

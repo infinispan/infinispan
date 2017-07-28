@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -13,6 +15,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -30,6 +33,55 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
 
    public AbstractControlledRpcManager(RpcManager realOne) {
       this.realOne = realOne;
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommand(Address target, ReplicableCommand command,
+                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      log.trace("ControlledRpcManager.invokeCommand");
+      Object argument = beforeInvokeRemotely(command);
+      CompletionStage<T> future = realOne.invokeCommand(target, command, collector, rpcOptions);
+      return future.thenApply(response -> afterInvokeRemotely(command, response, argument));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommand(Collection<Address> targets, ReplicableCommand command,
+                                               ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      log.trace("ControlledRpcManager.invokeCommand");
+      Object argument = beforeInvokeRemotely(command);
+      CompletionStage<T> future = realOne.invokeCommand(targets, command, collector, rpcOptions);
+      return future.thenApply(response -> afterInvokeRemotely(command, response, argument));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandOnAll(ReplicableCommand command, ResponseCollector<T> collector,
+                                                    RpcOptions rpcOptions) {
+      log.trace("ControlledRpcManager.invokeCommandOnAll");
+      Object argument = beforeInvokeRemotely(command);
+      CompletionStage<T> future = realOne.invokeCommandOnAll(command, collector, rpcOptions);
+      return future.thenApply(response -> afterInvokeRemotely(command, response, argument));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommandStaggered(Collection<Address> targets, ReplicableCommand command,
+                                                        ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      log.trace("ControlledRpcManager.invokeCommandStaggered");
+      Object argument = beforeInvokeRemotely(command);
+      CompletionStage<T> future = realOne.invokeCommandStaggered(targets, command, collector, rpcOptions);
+      return future.thenApply(response -> afterInvokeRemotely(command, response, argument));
+   }
+
+   @Override
+   public <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
+                                                Function<Address, ReplicableCommand> commandGenerator,
+                                                ResponseCollector<T> collector, RpcOptions rpcOptions) {
+      // TODO: left blank until we need to implement
+      return realOne.invokeCommands(targets, commandGenerator, collector, rpcOptions);
+   }
+
+   @Override
+   public <T> T blocking(CompletionStage<T> request) {
+      return realOne.blocking(request);
    }
 
    @Override
@@ -69,6 +121,11 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    }
 
    @Override
+   public void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder) {
+      realOne.sendToAll(command, deliverOrder);
+   }
+
+   @Override
    public Transport getTransport() {
       return realOne.getTransport();
    }
@@ -104,6 +161,16 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    }
 
    @Override
+   public RpcOptions getSyncRpcOptions() {
+      return realOne.getSyncRpcOptions();
+   }
+
+   @Override
+   public RpcOptions getTotalSyncRpcOptions() {
+      return realOne.getTotalSyncRpcOptions();
+   }
+
+   @Override
    public List<Address> getMembers() {
       return realOne.getMembers();
    }
@@ -122,11 +189,11 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
     * method invoked after a successful remote invocation.
     *
     * @param command     the command invoked remotely.
-    * @param responseMap can be null if not response is expected.
+    * @param responseObject can be null if not response is expected.
     * @param argument
     * @return the new response map
     */
-   protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
-      return responseMap;
+   protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+      return (T) responseObject;
    }
 }

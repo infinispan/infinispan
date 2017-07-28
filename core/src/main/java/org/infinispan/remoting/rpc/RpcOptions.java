@@ -2,7 +2,9 @@ package org.infinispan.remoting.rpc;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.transport.Address;
 
 /**
  * Classes that wraps all the configuration parameters to configure a remote invocation.
@@ -19,6 +21,14 @@ public class RpcOptions {
    private final DeliverOrder deliverOrder;
 
    /**
+    * @since 9.2
+    */
+   @SuppressWarnings("deprecation")
+   public RpcOptions(DeliverOrder deliverOrder, long timeout, TimeUnit unit) {
+      this(timeout, unit, null, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, deliverOrder);
+   }
+
+   /**
     * @deprecated Since 9.0, use {@link #RpcOptions(long, TimeUnit, ResponseFilter, ResponseMode, DeliverOrder)} instead.
     */
    @Deprecated
@@ -27,6 +37,10 @@ public class RpcOptions {
       this(timeout, unit, responseFilter, responseMode, deliverOrder);
    }
 
+   /**
+    * @deprecated Since 9.2, use {@link #RpcOptions(DeliverOrder, long, TimeUnit)} instead.
+    */
+   @Deprecated
    public RpcOptions(long timeout, TimeUnit unit, ResponseFilter responseFilter, ResponseMode responseMode,
          DeliverOrder deliverOrder) {
       if (unit == null) {
@@ -67,6 +81,7 @@ public class RpcOptions {
    /**
     * @return the {@link ResponseFilter} to be used. Default is {@code null} meaning waiting for all or none responses
     * depending if the remote invocation is synchronous or asynchronous respectively.
+    * @deprecated Since 9.2, ignored by {@code RpcManager.invokeCommand*()}.
     */
    public ResponseFilter responseFilter() {
       return responseFilter;
@@ -74,7 +89,9 @@ public class RpcOptions {
 
    /**
     * @return the {@link ResponseMode} to handle with the responses.
+    * @deprecated Since 9.2, ignored by {@code RpcManager.invokeCommand*()}.
     */
+   @Deprecated
    public ResponseMode responseMode() {
       return responseMode;
    }

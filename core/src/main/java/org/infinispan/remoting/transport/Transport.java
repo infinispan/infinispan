@@ -48,7 +48,9 @@ public interface Transport extends Lifecycle {
     *                       TOB.
     * @return a map of responses from each member contacted.
     * @throws Exception in the event of problems.
+    * @deprecated Since 9.2, please use {@link #invokeCommand(Collection, ReplicableCommand, ResponseCollector, DeliverOrder, long, TimeUnit)} instead.
     */
+   @Deprecated
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                          ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception;
 
@@ -82,6 +84,14 @@ public interface Transport extends Lifecycle {
    void sendToMany(Collection<Address> destinations, ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception;
 
    /**
+    * Asynchronously sends the {@link ReplicableCommand} to the entire cluster.
+    *
+    * @since 9.2
+    */
+   @Experimental
+   void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception;
+
+   /**
     * @deprecated Use {@link #invokeRemotely(Map, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)} instead
     */
    @Deprecated
@@ -89,6 +99,10 @@ public interface Transport extends Lifecycle {
                                          boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder,
                                          boolean anycast) throws Exception;
 
+   /**
+    * @deprecated Since 9.2, please use {@link #invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)} instead.
+    */
+   @Deprecated
    Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
                                          long timeout, ResponseFilter responseFilter,
                                          DeliverOrder deliverOrder, boolean anycast) throws Exception;
@@ -212,6 +226,7 @@ public interface Transport extends Lifecycle {
     * Invoke a command on all the nodes in the cluster and pass the responses to a {@link ResponseCollector}.
     *
     * The command is only executed on the local node if the delivery order is {@link DeliverOrder#TOTAL}.
+    * The command is not sent across RELAY2 bridges to remote sites.
     *
     * @since 9.1
     */
@@ -248,6 +263,6 @@ public interface Transport extends Lifecycle {
    @Experimental
    <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                          Function<Address, ReplicableCommand> commandGenerator,
-                                         ResponseCollector<T> responseCollector, long timeout,
-                                         DeliverOrder deliverOrder);
+                                         ResponseCollector<T> collector, DeliverOrder deliverOrder,
+                                         long timeout, TimeUnit timeUnit);
 }
