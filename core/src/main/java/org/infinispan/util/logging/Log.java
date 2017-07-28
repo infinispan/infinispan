@@ -1698,4 +1698,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Unsupported content '%s' during transcoding", id = 497)
    EncodingException unsupportedContent(Object content);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Indexing mode ALL without owning all data locally (replicated mode).", id = 498)
+   void allIndexingInNonReplicatedCache();
 }

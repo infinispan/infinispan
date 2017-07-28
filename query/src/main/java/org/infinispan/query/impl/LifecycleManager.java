@@ -10,6 +10,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -28,7 +30,6 @@ import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
@@ -37,11 +38,10 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ManageableComponentMetadata;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
-import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -55,6 +55,7 @@ import org.infinispan.query.backend.IndexModificationStrategy;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.backend.QueryKnownClasses;
 import org.infinispan.query.backend.SearchableCacheConfiguration;
+import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.continuous.impl.ContinuousQueryResult;
 import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
@@ -84,6 +85,7 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
@@ -173,40 +175,44 @@ public class LifecycleManager implements ModuleLifecycle {
    private void createQueryInterceptorIfNeeded(ComponentRegistry cr, Configuration cfg, SearchIntegrator searchFactory) {
       QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
       if (queryInterceptor == null) {
-         queryInterceptor = buildQueryInterceptor(cfg, searchFactory, cr.getComponent(Cache.class));
+         ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues = new ConcurrentHashMap<>();
+         IndexModificationStrategy indexingStrategy = IndexModificationStrategy.configuredStrategy(searchFactory, cfg);
+         queryInterceptor = new QueryInterceptor(searchFactory, indexingStrategy, txOldValues, cr.getComponent(Cache.class));
 
          // Interceptor registration not needed, core configuration handling
          // already does it for all custom interceptors - UNLESS the InterceptorChain already exists in the component registry!
          AsyncInterceptorChain ic = cr.getComponent(AsyncInterceptorChain.class);
 
          ConfigurationBuilder builder = new ConfigurationBuilder().read(cfg);
-         InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
-         interceptorBuilder.interceptor(queryInterceptor);
 
-         boolean txVersioned = Configurations.isTxVersioned(cfg);
-         boolean isTotalOrder = cfg.transaction().transactionProtocol().isTotalOrder();
-
-         Class<? extends DDAsyncInterceptor> wrappingInterceptor = EntryWrappingInterceptor.class;
-
-         if (txVersioned) {
-            wrappingInterceptor = isTotalOrder ?
-                  TotalOrderVersionedEntryWrappingInterceptor.class : VersionedEntryWrappingInterceptor.class;
+         EntryWrappingInterceptor wrappingInterceptor = ic.findInterceptorExtending(EntryWrappingInterceptor.class);
+         AsyncInterceptor lastLoadingInterceptor = ic.findInterceptorExtending(CacheLoaderInterceptor.class);
+         if (lastLoadingInterceptor == null) {
+            lastLoadingInterceptor = wrappingInterceptor;
          }
 
-         if (ic != null) ic.addInterceptorAfter(queryInterceptor, wrappingInterceptor);
-         interceptorBuilder.after(wrappingInterceptor);
+         InterceptorConfigurationBuilder queryInterceptorBuilder = builder.customInterceptors().addInterceptor();
+         queryInterceptorBuilder.interceptor(queryInterceptor);
+         queryInterceptorBuilder.after(lastLoadingInterceptor.getClass());
 
          if (ic != null) {
+            ic.addInterceptorAfter(queryInterceptor, lastLoadingInterceptor.getClass());
             cr.registerComponent(queryInterceptor, QueryInterceptor.class);
             cr.registerComponent(queryInterceptor, queryInterceptor.getClass().getName(), true);
          }
+
+         if (cfg.transaction().transactionMode().isTransactional()) {
+            TxQueryInterceptor txQueryInterceptor = new TxQueryInterceptor(txOldValues, queryInterceptor);
+            if (ic != null) {
+               ic.addInterceptorBefore(txQueryInterceptor, wrappingInterceptor.getClass());
+            }
+            InterceptorConfigurationBuilder txQueryInterceptorBuilder = builder.customInterceptors().addInterceptor();
+            txQueryInterceptorBuilder.interceptor(txQueryInterceptor);
+            txQueryInterceptorBuilder.before(wrappingInterceptor.getClass());
+         }
+
          cfg.customInterceptors().interceptors(builder.build().customInterceptors().interceptors());
       }
-   }
-
-   private QueryInterceptor buildQueryInterceptor(Configuration cfg, SearchIntegrator searchFactory, Cache cache) {
-      IndexModificationStrategy indexingStrategy = IndexModificationStrategy.configuredStrategy(searchFactory, cfg);
-      return new QueryInterceptor(searchFactory, indexingStrategy, cache);
    }
 
    @Override

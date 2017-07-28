@@ -183,7 +183,7 @@ public class QueryInterceptorTest {
             assertEquals(1, countIndex(Car.class, cache));
 
             // Remove by id from all indexes
-            queryInterceptor.removeFromIndexes(null, "key");
+            queryInterceptor.removeFromIndexes(NoTransactionContext.INSTANCE, "key");
 
             // Assert indexes are empty
             assertEquals(1, cache.size());
