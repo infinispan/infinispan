@@ -45,7 +45,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
     private Map<String, String> sharedAttributeResolver = new HashMap<>();
 
     InfinispanResourceDescriptionResolver() {
-        this(Collections.<String>emptyList());
+        this(Collections.emptyList());
     }
 
     InfinispanResourceDescriptionResolver(String keyPrefix) {
