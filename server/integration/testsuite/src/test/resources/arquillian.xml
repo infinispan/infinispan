@@ -1317,7 +1317,7 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
-        <container qualifier="standalone-custom-compat-marshaller" mode="manual">
+        <container qualifier="custom-compat-marshaller" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
