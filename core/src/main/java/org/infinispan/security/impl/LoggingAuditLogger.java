@@ -25,4 +25,9 @@ public class LoggingAuditLogger implements AuditLogger {
          AuditResponse response) {
       auditLog.auditMessage(response, Security.getSubjectUserPrincipal(subject), permission, context, contextName);
    }
+
+   @Override
+   public boolean equals(Object obj) {
+      return (obj != null && obj instanceof LoggingAuditLogger);
+   }
 }

@@ -85,8 +85,8 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
    }
 
    private void compareStores(String name, List<StoreConfiguration> beforeStores, List<StoreConfiguration> afterStores) {
-      assertEquals("Configuration "+ name + " stores count mismatch", beforeStores.size(), afterStores.size());
-      for(int i = 0; i < beforeStores.size(); i++) {
+      assertEquals("Configuration " + name + " stores count mismatch", beforeStores.size(), afterStores.size());
+      for (int i = 0; i < beforeStores.size(); i++) {
          StoreConfiguration beforeStore = beforeStores.get(i);
          StoreConfiguration afterStore = afterStores.get(i);
          assertEquals("Configuration " + name + " stores class mismatch", beforeStore.getClass(), afterStore.getClass());
@@ -102,15 +102,16 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
          compareAttributeSets(name, beforeASC.singletonStore().attributes(), afterASC.singletonStore().attributes());
          compareAttributeSets(name, beforeASC.async().attributes(), afterASC.async().attributes());
       } else {
-         throw new IllegalArgumentException("Cannot compare stores of type: "+beforeStore.getClass().getName());
+         throw new IllegalArgumentException("Cannot compare stores of type: " + beforeStore.getClass().getName());
       }
    }
 
    protected void compareAttributeSets(String name, AttributeSet before, AttributeSet after, String... exclude) {
       List<String> exclusions = exclude != null ? Arrays.asList(exclude) : Collections.emptyList();
-      for(Attribute<?> attribute : before.attributes()) {
-         if (!exclusions.contains(attribute.name()))
-            assertEquals("Configuration "+name, attribute, after.attribute(attribute.name()));
+      for (Attribute<?> attribute : before.attributes()) {
+         if (!exclusions.contains(attribute.name())) {
+            assertEquals("Configuration " + name, attribute, after.attribute(attribute.name()));
+         }
       }
    }
 }
