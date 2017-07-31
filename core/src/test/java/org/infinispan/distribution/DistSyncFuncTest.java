@@ -352,10 +352,11 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       expectException(RemoteException.class, () -> getFirstNonOwner("k1").computeIfPresent("k1", mappingToException));
 
       // remove if after compute value is null
-      retval = getFirstNonOwner("k1").computeIfPresent("k1", (v1, v2) -> null);
-      asyncWait("k1", ComputeCommand.class);
-      if (testRetVals) assertNull(retval);
-      assertRemovedOnAllCaches("k1");
+      // TODO: Fix https://issues.jboss.org/browse/ISPN-8074
+//      retval = getFirstNonOwner("k1").computeIfPresent("k1", (v1, v2) -> null);
+//      asyncWait("k1", ComputeCommand.class);
+//      if (testRetVals) assertNull(retval);
+//      assertRemovedOnAllCaches("k1");
 
       // do nothing if absent
       retval = getFirstNonOwner("notThere").computeIfPresent("notThere", (k, v) -> "add_" + k);
