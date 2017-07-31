@@ -25,4 +25,9 @@ public class IdentityRoleMapper implements PrincipalRoleMapper {
    public void setContext(PrincipalRoleMapperContext context) {
       // Do nothing
    }
+
+   @Override
+   public boolean equals(Object obj) {
+      return (obj != null && obj instanceof IdentityRoleMapper);
+   }
 }

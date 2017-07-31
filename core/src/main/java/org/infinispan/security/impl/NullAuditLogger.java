@@ -20,4 +20,9 @@ public class NullAuditLogger implements AuditLogger {
    public void audit(Subject subject, AuditContext context, String contextName, AuthorizationPermission permission,
          AuditResponse response) {
    }
+
+   @Override
+   public boolean equals(Object obj) {
+      return (obj != null && obj instanceof NullAuditLogger);
+   }
 }

@@ -32,4 +32,9 @@ public class CommonNameRoleMapper implements PrincipalRoleMapper {
       // Do nothing
    }
 
+   @Override
+   public boolean equals(Object obj) {
+      return (obj != null && obj instanceof CommonNameRoleMapper);
+   }
+
 }

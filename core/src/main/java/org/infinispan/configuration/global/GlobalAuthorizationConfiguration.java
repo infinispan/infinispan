@@ -18,10 +18,10 @@ import org.infinispan.security.impl.NullAuditLogger;
  * @since 7.0
  */
 public class GlobalAuthorizationConfiguration {
-   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger)new NullAuditLogger()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   static final AttributeDefinition<PrincipalRoleMapper> PRINCIPAL_ROLE_MAPPER = AttributeDefinition.builder("principalRoleMapper", null, PrincipalRoleMapper.class).immutable().build();
-   static final AttributeDefinition<Map> ROLES = AttributeDefinition.builder("roles", null, Map.class).build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger)new NullAuditLogger()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
+   public static final AttributeDefinition<PrincipalRoleMapper> PRINCIPAL_ROLE_MAPPER = AttributeDefinition.builder("principalRoleMapper", null, PrincipalRoleMapper.class).immutable().build();
+   public static final AttributeDefinition<Map> ROLES = AttributeDefinition.builder("roles", null, Map.class).build();
 
    static final AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalAuthorizationConfiguration.class, ENABLED, AUDIT_LOGGER, PRINCIPAL_ROLE_MAPPER, ROLES);

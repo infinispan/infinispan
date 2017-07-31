@@ -46,6 +46,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
+import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
@@ -61,6 +62,11 @@ import org.infinispan.configuration.parsing.Parser.TransactionMode;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.Role;
+import org.infinispan.security.impl.ClusterRoleMapper;
+import org.infinispan.security.impl.CommonNameRoleMapper;
+import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -190,6 +196,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             writer.writeAttribute(Attribute.STATE_TRANSFER_EXECUTOR, "state-transfer-pool");
          }
          writeTransport(writer, globalConfiguration);
+         writeSecurity(writer, globalConfiguration);
          writeSerialization(writer, globalConfiguration);
          writeJMX(writer, globalConfiguration);
          writeGlobalState(writer, globalConfiguration);
@@ -252,6 +259,39 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
             writer.writeAttribute(Attribute.PATH, configuration.temporaryLocation());
             writer.writeEndElement();
          }
+         writer.writeEndElement();
+      }
+   }
+
+   private void writeSecurity(XMLExtendedStreamWriter writer, GlobalConfiguration configuration) throws XMLStreamException {
+      GlobalAuthorizationConfiguration authorization = configuration.security().authorization();
+      AttributeSet attributes = authorization.attributes();
+      if (attributes.isModified() && authorization.enabled()) {
+         writer.writeStartElement(Element.SECURITY);
+         writer.writeStartElement(Element.AUTHORIZATION);
+         attributes.write(writer, GlobalAuthorizationConfiguration.AUDIT_LOGGER, Attribute.AUDIT_LOGGER);
+         PrincipalRoleMapper mapper = authorization.principalRoleMapper();
+         if (mapper != null) {
+            if (mapper instanceof IdentityRoleMapper) {
+               writer.writeEmptyElement(Element.IDENTITY_ROLE_MAPPER);
+            } else if (mapper instanceof CommonNameRoleMapper) {
+               writer.writeEmptyElement(Element.COMMON_NAME_ROLE_MAPPER);
+            } else if (mapper instanceof ClusterRoleMapper) {
+               writer.writeEmptyElement(Element.CLUSTER_ROLE_MAPPER);
+            } else {
+               writer.writeStartElement(Element.CUSTOM_ROLE_MAPPER);
+               writer.writeAttribute(Attribute.CLASS, mapper.getClass().getName());
+               writer.writeEndElement();
+            }
+         }
+
+         for(Role role : authorization.roles().values()) {
+            writer.writeStartElement(Element.ROLE);
+            writer.writeAttribute(Attribute.NAME, role.getName());
+            writeCollectionAsAttribute(writer, Attribute.PERMISSIONS, role.getPermissions());
+            writer.writeEndElement();
+         }
+         writer.writeEndElement();
          writer.writeEndElement();
       }
    }
@@ -575,11 +615,11 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
       }
    }
 
-   private void writeCollectionAsAttribute(XMLExtendedStreamWriter writer, Attribute attribute, Collection<String> collection) throws XMLStreamException {
+   private void writeCollectionAsAttribute(XMLExtendedStreamWriter writer, Attribute attribute, Collection<?> collection) throws XMLStreamException {
       if (!collection.isEmpty()) {
          StringBuilder result = new StringBuilder();
          boolean separator = false;
-         for (String item : collection) {
+         for (Object item : collection) {
             if (separator)
                result.append(" ");
             result.append(item);

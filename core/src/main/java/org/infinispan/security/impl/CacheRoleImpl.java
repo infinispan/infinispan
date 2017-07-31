@@ -54,4 +54,23 @@ public class CacheRoleImpl implements Role {
       return "CacheRoleImpl [name=" + name + ", permissions=" + permissions + ", mask=" + mask + "]";
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CacheRoleImpl cacheRole = (CacheRoleImpl) o;
+
+      if (mask != cacheRole.mask) return false;
+      if (!name.equals(cacheRole.name)) return false;
+      return permissions.equals(cacheRole.permissions);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + permissions.hashCode();
+      result = 31 * result + mask;
+      return result;
+   }
 }
