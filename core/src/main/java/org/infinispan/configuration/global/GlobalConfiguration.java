@@ -77,14 +77,14 @@ public class GlobalConfiguration {
       this.serialization = serialization;
       this.shutdown = shutdown;
       this.globalState = globalState;
-      Map<Class<?>, Object> moduleMap = new HashMap<Class<?>, Object>();
+      Map<Class<?>, Object> moduleMap = new HashMap<>();
       for(Object module : modules) {
          moduleMap.put(module.getClass(), module);
       }
       this.modules = Collections.unmodifiableMap(moduleMap);
       this.site = site;
       this.defaultCacheName = defaultCacheName;
-      this.cl = new WeakReference<ClassLoader>(cl);
+      this.cl = new WeakReference<>(cl);
    }
 
    /**
