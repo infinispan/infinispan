@@ -35,7 +35,7 @@ import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-@Test(groups = "functional", testName = "partitionhandling.ScatteredCrashInSequenceTest")
+@Test(groups = "functional", testName = "partitionhandling.ScatteredCrashInSequenceTest", enabled = false, description = "ISPN-8097")
 public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
 
    private Transport oldTransportCoord;
