@@ -1,5 +1,43 @@
         <subsystem xmlns="urn:infinispan:server:core:9.2">
             <cache-container name="local" default-cache="default">
+                <modules>
+                    <module name="deployment.custom-test-entity.jar"/>
+                </modules>
+                <local-cache name="default">
+                    <compatibility enabled="true" marshaller="deployment.custom-compat-marshaller.jar:main:org.infinispan.server.test.query.RemoteQueryCompatModeIT$CustomCompatModeMarshaller"/>
+                    <indexing index="ALL">
+                        <indexed-entities>
+                            <indexed-entity>org.infinispan.server.test.query.TestEntity</indexed-entity>
+                            <!-- Alternatively, this could have been configured using a fully qualified class name -->
+                            <!-- including the module spec (if the module was not listed in the global list). -->
+                            <!-- <indexed-entity>deployment.custom-test-entity.jar:main:org.infinispan.server.test.query.TestEntity</indexed-entity> -->
+                        </indexed-entities>
+                        <property name="default.directory_provider">local-heap</property>
+                    </indexing>
+                </local-cache>
+                <local-cache name="memcachedCache"/>
+            </cache-container>
+
+            <!-- Test parsing of alternative config-->
+            <cache-container name="local_2" default-cache="default">
+                <modules>
+                    <module name="deployment.custom-test-entity.jar"/>
+                    <module name="deployment.custom-compat-marshaller.jar"/>
+                </modules>
+                <local-cache name="default">
+                    <compatibility enabled="true" marshaller="org.infinispan.server.test.query.RemoteQueryCompatModeIT$CustomCompatModeMarshaller"/>
+                    <indexing index="ALL">
+                        <indexed-entities>
+                            <indexed-entity>org.infinispan.server.test.query.TestEntity</indexed-entity>
+                        </indexed-entities>
+                        <property name="default.directory_provider">local-heap</property>
+                    </indexing>
+                </local-cache>
+                <local-cache name="memcachedCache"/>
+            </cache-container>
+
+            <!-- Test parsing of alternative config-->
+            <cache-container name="local_3" default-cache="default">
                 <local-cache name="default">
                     <compatibility enabled="true" marshaller="deployment.custom-compat-marshaller.jar:main:org.infinispan.server.test.query.RemoteQueryCompatModeIT$CustomCompatModeMarshaller"/>
                     <indexing index="ALL">

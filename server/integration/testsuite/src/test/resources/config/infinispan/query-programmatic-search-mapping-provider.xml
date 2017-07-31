@@ -1,0 +1,15 @@
+        <subsystem xmlns="urn:infinispan:server:core:9.2">
+            <cache-container name="local" default-cache="default">
+                <modules>
+                    <module name="deployment.test-ProgrammaticSearchMappingProvider.jar"/>
+                </modules>
+                <local-cache name="default">
+                    <indexing index="ALL">
+                        <property name="default.directory_provider">local-heap</property>
+                        <!-- Demonstrate that Hibernate Search is able to load a model mapping from global classloader -->
+                        <property name="hibernate.search.model_mapping">org.infinispan.server.test.query.TestSearchMappingFactory</property>
+                    </indexing>
+                </local-cache>
+                <local-cache name="memcachedCache"/>
+            </cache-container>
+        </subsystem>
