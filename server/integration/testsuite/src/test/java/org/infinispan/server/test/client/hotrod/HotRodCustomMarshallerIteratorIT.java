@@ -43,6 +43,7 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -55,6 +56,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 @Category(HotRodSingleNode.class)
+@Ignore("ISPN-8001")
 public class HotRodCustomMarshallerIteratorIT {
 
    private static final String TO_STRING_FILTER_CONVERTER_FACTORY_NAME = "to-string-filter-converter";
