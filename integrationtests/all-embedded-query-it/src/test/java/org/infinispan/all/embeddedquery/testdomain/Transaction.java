@@ -20,6 +20,10 @@ public interface Transaction {
 
    void setLongDescription(String longDescription);
 
+   String getNotes();
+
+   void setNotes(String notes);
+
    int getAccountId();
 
    void setAccountId(int accountId);

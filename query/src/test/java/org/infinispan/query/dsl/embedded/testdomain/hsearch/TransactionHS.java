@@ -88,10 +88,12 @@ public class TransactionHS implements Transaction, Serializable, ExternalPojo {
       this.description = description;
    }
 
+   @Override
    public String getNotes() {
       return notes;
    }
 
+   @Override
    public void setNotes(String notes) {
       this.notes = notes;
    }

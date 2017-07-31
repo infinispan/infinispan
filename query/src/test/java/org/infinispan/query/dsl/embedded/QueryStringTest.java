@@ -100,6 +100,7 @@ public class QueryStringTest extends AbstractQueryDslTest {
       transaction0.setAmount(1800);
       transaction0.setDate(makeDate("2012-09-07"));
       transaction0.setDebit(false);
+      transaction0.setNotes("card was not present");
       transaction0.setValid(true);
 
       Transaction transaction1 = getModelFactory().makeTransaction();

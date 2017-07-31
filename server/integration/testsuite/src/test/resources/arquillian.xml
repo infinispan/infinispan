@@ -1335,7 +1335,7 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
-        <container qualifier="standalone-custom-compat-marshaller" mode="manual">
+        <container qualifier="custom-compat-marshaller" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
@@ -1347,6 +1347,21 @@
                 </property>
                 <property name="managementPort">10290</property>
                 <property name="waitForPorts">11522 8380</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
+        <container qualifier="query-programmatic-search-mapping-provider" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">testsuite/standalone-query-programmatic-search-mapping-provider.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djboss.socket.binding.port-offset=400 -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">10390</property>
+                <property name="waitForPorts">11622 8480</property>
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>

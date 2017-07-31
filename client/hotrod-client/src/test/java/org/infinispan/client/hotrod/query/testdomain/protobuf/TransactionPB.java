@@ -14,6 +14,7 @@ public class TransactionPB implements Transaction {
    private int id;
    private String description;
    private String longDescription;
+   private String notes;
    private int accountId;
    private Date date;
    private BigDecimal amount;
@@ -43,6 +44,16 @@ public class TransactionPB implements Transaction {
    @Override
    public String getLongDescription() {
       return longDescription;
+   }
+
+   @Override
+   public String getNotes() {
+      return notes;
+   }
+
+   @Override
+   public void setNotes(String notes) {
+      this.notes = notes;
    }
 
    @Override
@@ -106,6 +117,7 @@ public class TransactionPB implements Transaction {
             "id=" + id +
             ", description='" + description + '\'' +
             ", longDescription='" + longDescription + '\'' +
+            ", notes='" + notes + '\'' +
             ", accountId=" + accountId +
             ", date=" + date +
             ", amount=" + amount +
