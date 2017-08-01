@@ -20,9 +20,8 @@ public class DistEmbeddedRestHotRodTest extends ReplEmbeddedRestHotRodTest {
    @Override
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new CompatibilityCacheFactory<Object, Object>(CacheMode.DIST_SYNC, numOwners, false).setup();
-      cacheFactory2 = new CompatibilityCacheFactory<Object, Object>(CacheMode.DIST_SYNC, numOwners, false)
-            .setup(cacheFactory1.getHotRodPort(), 100);
+      cacheFactory1 = new CompatibilityCacheFactory<>(CacheMode.DIST_SYNC, numOwners, false).setup();
+      cacheFactory2 = new CompatibilityCacheFactory<>(CacheMode.DIST_SYNC, numOwners, false).setup();
    }
 
    @Override

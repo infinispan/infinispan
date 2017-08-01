@@ -1,12 +1,11 @@
 package org.infinispan.client.hotrod.test;
 
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.util.Collection;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -27,13 +26,12 @@ import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.LogFactory;
-
-import io.netty.channel.unix.Errors.NativeIoException;
 
 /**
  * Utility methods for the Hot Rod client
@@ -45,56 +43,12 @@ public class HotRodClientTestingUtil {
 
    private static final Log log = LogFactory.getLog(HotRodClientTestingUtil.class, Log.class);
 
-   private static final int DEFAULT_PORT = 15232;
-
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, HotRodServerConfigurationBuilder builder) {
       return startHotRodServer(cacheManager, findFreePort(), builder);
    }
 
-   private static boolean isBindException(Throwable e) {
-      if (e instanceof BindException)
-         return true;
-      if (e instanceof NativeIoException) {
-         NativeIoException nativeIoException = (NativeIoException) e;
-         return nativeIoException.getMessage().contains("bind");
-      }
-      return false;
-   }
-
-   private static int findFreePort() {
-      try {
-         try (ServerSocket socket = new ServerSocket(0)) {
-            return socket.getLocalPort();
-         }
-      } catch (IOException e) {
-         log.debug("Error finding free port, using default of " + DEFAULT_PORT);
-      }
-      return DEFAULT_PORT;
-   }
-
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, int port, HotRodServerConfigurationBuilder builder) {
-      HotRodServer server = null;
-      int maxTries = 10;
-      int currentTries = 0;
-      Throwable lastError = null;
-      while (server == null && currentTries < maxTries) {
-         try {
-            server = HotRodTestingUtil.startHotRodServer(cacheManager, port, builder);
-         } catch (Throwable t) {
-            if (!isBindException(t)) {
-               throw t;
-            } else {
-               log.debug("Address already in use: [" + t.getMessage() + "], retrying");
-               currentTries++;
-               port = findFreePort();
-               lastError = t;
-            }
-         }
-      }
-      if (server == null && lastError != null)
-         throw new AssertionError(lastError);
-
-      return server;
+      return ServerTestingUtil.startProtocolServer(port, p -> HotRodTestingUtil.startHotRodServer(cacheManager, p, builder));
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager) {

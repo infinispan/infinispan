@@ -1,6 +1,5 @@
 package org.infinispan.it.compatibility;
 
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -19,12 +18,8 @@ public class ByteArrayKeyDistEmbeddedHotRodTest extends ByteArrayKeyReplEmbedded
    @Override
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new CompatibilityCacheFactory<Object, Object>(CacheMode.DIST_SYNC, 1, false)
-            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .setup();
-      cacheFactory2 = new CompatibilityCacheFactory<Object, Object>(CacheMode.DIST_SYNC, 1, false)
-            .keyEquivalence(ByteArrayEquivalence.INSTANCE)
-            .setup(cacheFactory1.getHotRodPort(), 100);
+      cacheFactory1 = new CompatibilityCacheFactory<>(CacheMode.DIST_SYNC, 1, false).setup();
+      cacheFactory2 = new CompatibilityCacheFactory<>(CacheMode.DIST_SYNC, 1, false).setup();
    }
 
    @Override

@@ -33,9 +33,8 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new CompatibilityCacheFactory<Object, Object>(CacheMode.REPL_SYNC).setup();
-      cacheFactory2 = new CompatibilityCacheFactory<Object, Object>(CacheMode.REPL_SYNC)
-            .setup(cacheFactory1.getHotRodPort(), 100);
+      cacheFactory1 = new CompatibilityCacheFactory<>(CacheMode.REPL_SYNC).setup();
+      cacheFactory2 = new CompatibilityCacheFactory<>(CacheMode.REPL_SYNC).setup();
    }
 
    @AfterClass
