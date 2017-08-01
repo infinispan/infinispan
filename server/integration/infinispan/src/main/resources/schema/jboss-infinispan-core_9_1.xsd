@@ -563,7 +563,7 @@
         <xs:attribute name="module" type="xs:string">
             <xs:annotation>
                 <xs:documentation>
-                    Defines the module whose class loader should be used when building this cache, if different from the enclosing cache container.
+                    Defines the module whose class loader should be used when building this cache, if different from the enclosing cache container. Deprecated: This attribute is currently ignored and usages will cause a warning to be logged. It will be removed in next major version.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>

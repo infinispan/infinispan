@@ -54,6 +54,7 @@ public class CacheConfigurationResource extends SimpleResourceDefinition impleme
                     .setDefaultValue(new ModelNode().set(InvocationBatchingConfiguration.ENABLED.getDefaultValue()))
                     .build();
 
+    @Deprecated
     static final SimpleAttributeDefinition CACHE_MODULE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MODULE, ModelType.STRING, true)
                     .setXmlName(Attribute.MODULE.getLocalName())

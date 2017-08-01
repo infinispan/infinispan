@@ -636,6 +636,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             }
             case MODULE: {
                 CacheConfigurationResource.CACHE_MODULE.parseAndSetParameter(value, cache, reader);
+                Location location = reader.getLocation();
+                ROOT_LOGGER.cacheModuleDeprecated(location.getLineNumber(), location.getColumnNumber());
                 break;
             }
             case SIMPLE_CACHE: {
