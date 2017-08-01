@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
@@ -80,11 +79,8 @@ public class ByteArrayValueReplEmbeddedHotRodTest extends AbstractInfinispanTest
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new CompatibilityCacheFactory<Object, Object>(CacheMode.REPL_SYNC)
-            .valueEquivalence(ByteArrayEquivalence.INSTANCE).setup();
-      cacheFactory2 = new CompatibilityCacheFactory<Object, Object>(CacheMode.REPL_SYNC)
-            .valueEquivalence(ByteArrayEquivalence.INSTANCE)
-            .setup(cacheFactory1.getHotRodPort(), 100);
+      cacheFactory1 = new CompatibilityCacheFactory<>(CacheMode.REPL_SYNC).setup();
+      cacheFactory2 = new CompatibilityCacheFactory<>(CacheMode.REPL_SYNC).setup();
    }
 
    @AfterClass

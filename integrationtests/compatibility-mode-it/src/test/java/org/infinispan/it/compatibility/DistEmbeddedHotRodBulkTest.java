@@ -32,8 +32,7 @@ public class DistEmbeddedHotRodBulkTest extends AbstractInfinispanTest {
     @BeforeClass
     protected void setup() throws Exception {
         cacheFactory1 = new CompatibilityCacheFactory<String, Integer>(CacheMode.DIST_SYNC, numOwners, false).setup();
-        cacheFactory2 = new CompatibilityCacheFactory<String, Integer>(CacheMode.DIST_SYNC, numOwners, false)
-                .setup(cacheFactory1.getHotRodPort(), 100);
+        cacheFactory2 = new CompatibilityCacheFactory<String, Integer>(CacheMode.DIST_SYNC, numOwners, false).setup();
     }
 
     @AfterClass

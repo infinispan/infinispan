@@ -33,9 +33,10 @@ public class DistMemcachedEmbeddedTest extends AbstractInfinispanTest {
 
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new CompatibilityCacheFactory<String, Object>(cacheName, new SpyMemcachedCompatibleMarshaller(), CacheMode.DIST_SYNC, numOwners, new MemcachedEncoder()).setup();
-      cacheFactory2 = new CompatibilityCacheFactory<String, Object>(cacheName, new SpyMemcachedCompatibleMarshaller(), CacheMode.DIST_SYNC, numOwners, new MemcachedEncoder())
-            .setup(cacheFactory1.getMemcachedPort(), 100);
+      cacheFactory1 = new CompatibilityCacheFactory<String, Object>(cacheName, new SpyMemcachedCompatibleMarshaller(),
+            CacheMode.DIST_SYNC, numOwners, new MemcachedEncoder()).setup();
+      cacheFactory2 = new CompatibilityCacheFactory<String, Object>(cacheName, new SpyMemcachedCompatibleMarshaller(),
+            CacheMode.DIST_SYNC, numOwners, new MemcachedEncoder()).setup();
    }
 
    @AfterClass
