@@ -1,7 +1,8 @@
 package org.infinispan.jcache;
 
 import static org.infinispan.jcache.util.JCacheTestingUtil.getEntryCount;
-import static org.infinispan.jcache.util.JCacheTestingUtil.sleep;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
@@ -9,9 +10,12 @@ import static org.testng.Assert.assertTrue;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,8 +48,8 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
    public void testCacheManagerXmlConfig(Method m) {
       Cache<String, String> cache = getCache1(m);
 
-      cache.put("key1", "val1");
-      assertEquals(cache.get("key1"), "val1");
+      cache.put(k(m), v(m));
+      assertEquals(cache.get(k(m)), v(m));
    }
 
    @Test
@@ -53,9 +57,9 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      assertEquals(cache1.get("key1"), "val1");
-      assertEquals(cache2.get("key1"), "val1");
+      cache1.put(k(m), v(m));
+      assertEquals(cache1.get(k(m)), v(m));
+      assertEquals(cache2.get(k(m)), v(m));
    }
 
    @Test
@@ -63,12 +67,12 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      assertTrue(cache1.containsKey("key1"));
-      assertTrue(cache2.containsKey("key1"));
-      cache2.remove("key1");
-      assertFalse(cache1.containsKey("key1"));
-      assertFalse(cache2.containsKey("key1"));
+      cache1.put(k(m), v(m));
+      assertTrue(cache1.containsKey(k(m)));
+      assertTrue(cache2.containsKey(k(m)));
+      cache2.remove(k(m));
+      assertFalse(cache1.containsKey(k(m)));
+      assertFalse(cache2.containsKey(k(m)));
    }
 
    @Test
@@ -76,24 +80,24 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      cache1.put("key2", "val2");
-      assertTrue(cache1.containsKey("key1"));
-      assertTrue(cache1.containsKey("key2"));
-      assertTrue(cache2.containsKey("key1"));
-      assertTrue(cache2.containsKey("key2"));
+      cache1.put(k(m), v(m));
+      cache1.put(k(m, 2), v(m, 2));
+      assertTrue(cache1.containsKey(k(m)));
+      assertTrue(cache1.containsKey(k(m, 2)));
+      assertTrue(cache2.containsKey(k(m)));
+      assertTrue(cache2.containsKey(k(m, 2)));
 
       Set<String> keySet = new HashSet<>();
-      keySet.add("key1");
+      keySet.add(k(m));
       cache2.removeAll(keySet);
-      assertFalse(cache1.containsKey("key1"));
-      assertTrue(cache1.containsKey("key2"));
-      assertFalse(cache2.containsKey("key1"));
-      assertTrue(cache2.containsKey("key2"));
+      assertFalse(cache1.containsKey(k(m)));
+      assertTrue(cache1.containsKey(k(m, 2)));
+      assertFalse(cache2.containsKey(k(m)));
+      assertTrue(cache2.containsKey(k(m, 2)));
 
       cache1.removeAll();
-      assertFalse(cache1.containsKey("key2"));
-      assertFalse(cache2.containsKey("key2"));
+      assertFalse(cache1.containsKey(k(m, 2)));
+      assertFalse(cache2.containsKey(k(m, 2)));
    }
 
    @Test
@@ -102,24 +106,24 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache2 = getCache2(m);
 
       Map<String, String> entryMap = new HashMap<>();
-      entryMap.put("key1", "val1");
-      entryMap.put("key2", "val2");
+      entryMap.put(k(m), v(m));
+      entryMap.put(k(m, 2), v(m, 2));
       cache1.putAll(entryMap);
-      assertTrue(cache1.containsKey("key1"));
-      assertTrue(cache1.containsKey("key2"));
-      assertTrue(cache2.containsKey("key1"));
-      assertTrue(cache2.containsKey("key2"));
+      assertTrue(cache1.containsKey(k(m)));
+      assertTrue(cache1.containsKey(k(m, 2)));
+      assertTrue(cache2.containsKey(k(m)));
+      assertTrue(cache2.containsKey(k(m, 2)));
    }
 
    @Test
    public void testPutAllMapNullValuesNotAllowed(Method m) {
       Cache<String, String> cache1 = getCache1(m);
       Map<String, String> entryMap = new ConcurrentHashMap<>();
-      entryMap.put("key1", "val1");
-      entryMap.put("key2", "val2");
+      entryMap.put(k(m), v(m));
+      entryMap.put(k(m, 2), v(m, 2));
       cache1.putAll(entryMap);
-      assertTrue(cache1.containsKey("key1"));
-      assertTrue(cache1.containsKey("key2"));
+      assertTrue(cache1.containsKey(k(m)));
+      assertTrue(cache1.containsKey(k(m, 2)));
    }
 
    @Test (expectedExceptions = NullPointerException.class)
@@ -130,14 +134,14 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
    @Test (expectedExceptions = NullPointerException.class)
    public void testPutAllMapWithNullKeys(Method m) {
       Map<String, String> entryMap = new HashMap<>();
-      entryMap.put(null, "val1");
+      entryMap.put(null, v(m));
       getCache1(m).putAll(entryMap);
    }
 
    @Test (expectedExceptions = NullPointerException.class)
    public void testPutAllMapWithNullValues(Method m) {
       Map<String, String> entryMap = new HashMap<>();
-      entryMap.put("key1", null);
+      entryMap.put(k(m), null);
       getCache1(m).putAll(entryMap);
    }
 
@@ -146,14 +150,14 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      cache2.putIfAbsent("key1", "val3");
-      assertEquals(cache1.get("key1"), "val1");
-      assertEquals(cache2.get("key1"), "val1");
+      cache1.put(k(m), v(m));
+      cache2.putIfAbsent(k(m), v(m, 3));
+      assertEquals(cache1.get(k(m)), v(m));
+      assertEquals(cache2.get(k(m)), v(m));
 
-      cache1.putIfAbsent("key2", "val2");
-      assertTrue(cache1.containsKey("key2"));
-      assertTrue(cache2.containsKey("key2"));
+      cache1.putIfAbsent(k(m, 2), v(m, 2));
+      assertTrue(cache1.containsKey(k(m, 2)));
+      assertTrue(cache2.containsKey(k(m, 2)));
    }
 
    @Test
@@ -161,11 +165,11 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      String result = cache2.getAndPut("key1", "val2");
-      assertEquals(result, "val1");
-      assertEquals(cache1.get("key1"), "val2");
-      assertEquals(cache2.get("key1"), "val2");
+      cache1.put(k(m), v(m));
+      String result = cache2.getAndPut(k(m), v(m, 2));
+      assertEquals(result, v(m));
+      assertEquals(cache1.get(k(m)), v(m, 2));
+      assertEquals(cache2.get(k(m)), v(m, 2));
    }
 
    @Test
@@ -173,11 +177,11 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      String result = cache2.getAndRemove("key1");
-      assertEquals(result, "val1");
-      assertFalse(cache1.containsKey("key1"));
-      assertFalse(cache2.containsKey("key1"));
+      cache1.put(k(m), v(m));
+      String result = cache2.getAndRemove(k(m));
+      assertEquals(result, v(m));
+      assertFalse(cache1.containsKey(k(m)));
+      assertFalse(cache2.containsKey(k(m)));
    }
 
    @Test
@@ -185,11 +189,11 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      String result = cache2.getAndReplace("key1", "val2");
-      assertEquals(result, "val1");
-      assertEquals(cache1.get("key1"), "val2");
-      assertEquals(cache2.get("key1"), "val2");
+      cache1.put(k(m), v(m));
+      String result = cache2.getAndReplace(k(m), v(m, 2));
+      assertEquals(result, v(m));
+      assertEquals(cache1.get(k(m)), v(m, 2));
+      assertEquals(cache2.get(k(m)), v(m, 2));
    }
 
    @Test
@@ -197,19 +201,19 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      cache1.put("key2", "val2");
+      cache1.put(k(m), v(m));
+      cache1.put(k(m, 2), v(m, 2));
       Set<String> keySet = new HashSet<>();
-      keySet.add("key1");
-      keySet.add("key2");
+      keySet.add(k(m));
+      keySet.add(k(m, 2));
       Map<String, String> result = cache2.getAll(keySet);
       assertEquals(result.size(), 2);
-      assertTrue(result.containsKey("key1"));
-      assertTrue(result.containsKey("key2"));
+      assertTrue(result.containsKey(k(m)));
+      assertTrue(result.containsKey(k(m, 2)));
       result = cache1.getAll(keySet);
       assertEquals(result.size(), 2);
-      assertTrue(result.containsKey("key1"));
-      assertTrue(result.containsKey("key2"));
+      assertTrue(result.containsKey(k(m)));
+      assertTrue(result.containsKey(k(m, 2)));
    }
 
    @Test
@@ -217,22 +221,22 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      assertTrue(cache1.containsKey("key1"));
-      assertTrue(cache2.containsKey("key1"));
+      cache1.put(k(m), v(m));
+      assertTrue(cache1.containsKey(k(m)));
+      assertTrue(cache2.containsKey(k(m)));
 
-      cache2.replace("key1", "val2");
-      assertEquals(cache1.get("key1"), "val2");
-      assertEquals(cache2.get("key1"), "val2");
+      cache2.replace(k(m), v(m, 2));
+      assertEquals(cache1.get(k(m)), v(m, 2));
+      assertEquals(cache2.get(k(m)), v(m, 2));
 
-      cache1.replace("key1", "val2", "val3");
-      assertEquals(cache1.get("key1"), "val3");
-      assertEquals(cache2.get("key1"), "val3");
+      cache1.replace(k(m), v(m, 2), v(m, 3));
+      assertEquals(cache1.get(k(m)), v(m, 3));
+      assertEquals(cache2.get(k(m)), v(m, 3));
 
-      boolean result = cache2.replace("key1", "staleValue", "val4");
+      boolean result = cache2.replace(k(m), "staleValue", v(m, 4));
       assertFalse(result);
-      assertEquals(cache1.get("key1"), "val3");
-      assertEquals(cache2.get("key1"), "val3");
+      assertEquals(cache1.get(k(m)), v(m, 3));
+      assertEquals(cache2.get(k(m)), v(m, 3));
    }
 
    @Test
@@ -241,7 +245,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache2 = getCache2(m);
 
       for (int i = 0; i < 5; i++) {
-         cache1.put(String.valueOf(i), "val");
+         cache1.put(k(m, i), v(m, i));
       }
       assertEquals(getEntryCount(cache1.iterator()), 5);
       assertEquals(getEntryCount(cache2.iterator()), 5);
@@ -252,13 +256,13 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      cache1.put("key2", "val2");
+      cache1.put(k(m), v(m));
+      cache1.put(k(m, 2), v(m, 2));
       cache2.clear();
-      assertNull(cache1.get("key1"));
-      assertNull(cache2.get("key1"));
-      assertNull(cache1.get("key2"));
-      assertNull(cache2.get("key2"));
+      assertNull(cache1.get(k(m)));
+      assertNull(cache2.get(k(m)));
+      assertNull(cache1.get(k(m, 2)));
+      assertNull(cache2.get(k(m, 2)));
    }
 
    @Test
@@ -266,10 +270,10 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache1 = getCache1(m);
       Cache<String, String> cache2 = getCache2(m);
 
-      cache1.put("key1", "val1");
-      cache2.invoke("key1", new CustomEntryProcessor(), null);
-      assertEquals(cache1.get("key1"), "val1_processed");
-      assertEquals(cache2.get("key1"), "val1_processed");
+      cache1.put(k(m), v(m));
+      cache2.invoke(k(m), new CustomEntryProcessor(), null);
+      assertEquals(cache1.get(k(m)), v(m) + "_processed");
+      assertEquals(cache2.get(k(m)), v(m) + "_processed");
    }
 
    @Test
@@ -278,18 +282,23 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache2 = getCache2(m);
 
       TestUpdatedListener listener = new TestUpdatedListener();
-      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, false);
-      cache1.registerCacheEntryListener(conf);
-      cache1.put("key1", "val2");
-      cache2.put("key1", "val3");
-      sleep(1000);
-      assertEquals(listener.getInvocationCount(), 1);
+      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, true);
+      try {
+         cache1.registerCacheEntryListener(conf);
+         cache1.put(k(m), v(m, 2));
+         cache2.put(k(m), v(m, 3));
 
-      listener.reset();
-      cache1.deregisterCacheEntryListener(conf);
-      cache2.put("key1", "val4");
-      sleep(1000);
-      assertEquals(listener.getInvocationCount(), 0);
+         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
+
+         cache1.deregisterCacheEntryListener(conf);
+         listener.reset();
+
+         cache2.put(k(m), v(m, 4));
+
+         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+      } finally {
+         cache1.deregisterCacheEntryListener(conf);
+      }
    }
 
    @Test
@@ -298,19 +307,23 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache2 = getCache2(m);
 
       TestRemovedListener listener = new TestRemovedListener();
-      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, false);
-      cache1.registerCacheEntryListener(conf);
-      cache1.put("key1", "val3");
-      cache2.remove("key1");
-      sleep(1000);
-      assertEquals(listener.getInvocationCount(), 1);
+      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, true);
+      try {
+         cache1.registerCacheEntryListener(conf);
+         cache1.put(k(m), v(m, 3));
+         cache2.remove(k(m));
+         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
 
-      listener.reset();
-      cache1.deregisterCacheEntryListener(conf);
-      cache1.put("key2", "val2");
-      cache2.remove("key2");
-      sleep(1000);
-      assertEquals(listener.getInvocationCount(), 0);
+         cache1.deregisterCacheEntryListener(conf);
+         listener.reset();
+
+         cache1.put(k(m, 2), v(m, 2));
+         cache2.remove(k(m, 2));
+
+         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+      } finally {
+         cache1.deregisterCacheEntryListener(conf);
+      }
    }
 
    @Test
@@ -319,17 +332,20 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       Cache<String, String> cache2 = getCache2(m);
 
       TestCreatedListener listener = new TestCreatedListener();
-      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, false);
-      cache1.registerCacheEntryListener(conf);
-      cache2.put("key1", "val3");
-      sleep(1000);
-      assertEquals(listener.getInvocationCount(), 1);
+      MutableCacheEntryListenerConfiguration conf = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, true);
+      try {
+         cache1.registerCacheEntryListener(conf);
+         cache2.put(k(m), v(m, 3));
+         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
 
-      listener.reset();
-      cache1.deregisterCacheEntryListener(conf);
-      cache2.put("key2", "val2");
-      sleep(1000);
-      assertEquals(listener.getInvocationCount(), 0);
+         cache1.deregisterCacheEntryListener(conf);
+         listener.reset();
+
+         cache2.put(k(m, 2), v(m, 2));
+         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+      } finally {
+         cache1.deregisterCacheEntryListener(conf);
+      }
    }
 
    @Test
@@ -340,20 +356,24 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       DiscardingCacheEntryEventFilter filter = new DiscardingCacheEntryEventFilter();
       TestCreatedListener listener1 = new TestCreatedListener();
       TestCreatedListener listener2 = new TestCreatedListener();
-      MutableCacheEntryListenerConfiguration conf1 = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener1), null, false, false);
-      MutableCacheEntryListenerConfiguration conf2 = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener2), FactoryBuilder.factoryOf(filter), false, false);
-      cache1.registerCacheEntryListener(conf1);
-      cache2.registerCacheEntryListener(conf2);
-      cache2.put("key1", "val3");
-      sleep(1000);
-      assertEquals(listener1.getInvocationCount(), 1);
-      assertEquals(listener2.getInvocationCount(), 0);
+      MutableCacheEntryListenerConfiguration conf1 = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener1), null, false, true);
+      MutableCacheEntryListenerConfiguration conf2 = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener2), FactoryBuilder.factoryOf(filter), false, true);
+      try {
+         cache1.registerCacheEntryListener(conf1);
+         cache2.registerCacheEntryListener(conf2);
+         cache2.put(k(m), v(m, 3));
+         eventually(() -> listener1.toString(), () -> listener1.getInvocationCount() == 1);
+         eventually(() -> listener2.toString(), () -> listener2.getInvocationCount() == 0);
 
-      listener1.reset();
-      cache1.deregisterCacheEntryListener(conf1);
-      cache2.put("key2", "val2");
-      sleep(1000);
-      assertEquals(listener1.getInvocationCount(), 0);
+         cache1.deregisterCacheEntryListener(conf1);
+         listener1.reset();
+
+         cache2.put(k(m, 2), v(m, 2));
+         eventually(() -> listener1.toString(), () -> listener1.getInvocationCount() == 0);
+      } finally {
+         cache1.deregisterCacheEntryListener(conf1);
+         cache2.deregisterCacheEntryListener(conf2);
+      }
    }
 
    private static class DiscardingCacheEntryEventFilter implements CacheEntryEventFilter, Serializable {
@@ -370,8 +390,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       public void onUpdated(Iterable iterable) throws CacheEntryListenerException {
          Iterator iterator = iterable.iterator();
          while (iterator.hasNext()) {
-            iterator.next();
-            invocationCount++;
+            addObject(iterator.next());
          }
       }
    }
@@ -382,8 +401,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       public void onCreated(Iterable iterable) throws CacheEntryListenerException {
          Iterator iterator = iterable.iterator();
          while (iterator.hasNext()) {
-            iterator.next();
-            invocationCount++;
+            addObject(iterator.next());
          }
       }
    }
@@ -394,22 +412,32 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       public void onRemoved(Iterable iterable) throws CacheEntryListenerException {
          Iterator iterator = iterable.iterator();
          while (iterator.hasNext()) {
-            iterator.next();
-            invocationCount++;
+            addObject(iterator.next());
          }
       }
    }
 
    private abstract static class InvocationAwareListener {
 
-      protected int invocationCount;
+      protected List<Object> objects = Collections.synchronizedList(new ArrayList<>());
 
-      public int getInvocationCount() {
-         return invocationCount;
+      public synchronized int getInvocationCount() {
+         return objects.size();
       }
 
-      public void reset() {
-         invocationCount = 0;
+      public synchronized void reset() {
+         objects.clear();
+      }
+
+      public synchronized void addObject(Object o) {
+         this.objects.add(o);
+      }
+
+      @Override
+      public String toString() {
+         return "InvocationAwareListener{" +
+               "objects=" + objects +
+               '}';
       }
    }
 

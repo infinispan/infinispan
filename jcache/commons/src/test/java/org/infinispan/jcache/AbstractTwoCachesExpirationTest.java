@@ -1,6 +1,8 @@
 package org.infinispan.jcache;
 
 import static org.infinispan.jcache.util.JCacheTestingUtil.sleep;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -23,7 +25,6 @@ import org.testng.annotations.Test;
  *
  * @author Matej Cimbora
  */
-@Test(testName = "org.infinispan.jcache.AbstractTwoCachesExpirationTest", groups = "functional")
 public abstract class AbstractTwoCachesExpirationTest extends MultipleCacheManagersTest {
 
    protected final ControlledTimeService controlledTimeService = new ControlledTimeService();
@@ -37,16 +38,16 @@ public abstract class AbstractTwoCachesExpirationTest extends MultipleCacheManag
       TestExpiredListener listener = new TestExpiredListener();
       MutableCacheEntryListenerConfiguration conf1 = new MutableCacheEntryListenerConfiguration(FactoryBuilder.factoryOf(listener), null, false, false);
       cache1.registerCacheEntryListener(conf1);
-      cache2.put("key1", "val1");
+      cache2.put(k(m), v(m));
       controlledTimeService.advance(EXPIRATION_TIMEOUT + 1000);
       eventually(() -> listener.invocationCount.get() >0);
-      assertNull(cache1.get("key1"));
+      assertNull(cache1.get(k(m)));
 
       listener.invocationCount.set(0);
       cache1.deregisterCacheEntryListener(conf1);
-      cache2.put("key2", "val2");
+      cache2.put(k(m, 2), v(m, 2));
       controlledTimeService.advance(EXPIRATION_TIMEOUT + 1000);
-      assertNull(cache1.get("key2"));
+      assertNull(cache1.get(k(m, 2)));
       sleep(EXPIRATION_TIMEOUT);
       assertEquals(listener.invocationCount.get(), 0);
    }

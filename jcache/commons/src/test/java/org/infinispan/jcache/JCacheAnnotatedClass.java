@@ -1,5 +1,7 @@
 package org.infinispan.jcache;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.cache.annotation.CacheDefaults;
 import javax.cache.annotation.CachePut;
 import javax.cache.annotation.CacheRemove;
@@ -14,11 +16,11 @@ import javax.cache.annotation.CacheResult;
 @CacheDefaults(cacheName = "annotation", cacheKeyGenerator = JCacheCustomKeyGenerator.class)
 public class JCacheAnnotatedClass {
 
-   private int resultInvocationCount;
+   private AtomicInteger resultInvocationCount = new AtomicInteger();
 
    @CacheResult
    public String result(String input) {
-      resultInvocationCount++;
+      resultInvocationCount.incrementAndGet();
       return input;
    }
 
@@ -38,7 +40,7 @@ public class JCacheAnnotatedClass {
    }
 
    public int getResultInvocationCount() {
-      return resultInvocationCount;
+      return resultInvocationCount.get();
    }
 
 }
