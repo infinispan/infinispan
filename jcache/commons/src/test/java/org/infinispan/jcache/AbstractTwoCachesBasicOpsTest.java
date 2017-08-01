@@ -9,9 +9,11 @@ import static org.testng.Assert.assertTrue;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -283,13 +285,13 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       cache1.put("key1", "val2");
       cache2.put("key1", "val3");
       sleep(1000);
-      assertEquals(listener.getInvocationCount(), 1);
+      assertEquals(listener.getInvocationCount(), 1, "listener content: " + listener);
 
       listener.reset();
       cache1.deregisterCacheEntryListener(conf);
       cache2.put("key1", "val4");
       sleep(1000);
-      assertEquals(listener.getInvocationCount(), 0);
+      assertEquals(listener.getInvocationCount(), 0, "listener content: " + listener);
    }
 
    @Test
@@ -303,14 +305,14 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       cache1.put("key1", "val3");
       cache2.remove("key1");
       sleep(1000);
-      assertEquals(listener.getInvocationCount(), 1);
+      assertEquals(listener.getInvocationCount(), 1, "listener content: " + listener);
 
       listener.reset();
       cache1.deregisterCacheEntryListener(conf);
       cache1.put("key2", "val2");
       cache2.remove("key2");
       sleep(1000);
-      assertEquals(listener.getInvocationCount(), 0);
+      assertEquals(listener.getInvocationCount(), 0, "listener content: " + listener);
    }
 
    @Test
@@ -323,13 +325,13 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       cache1.registerCacheEntryListener(conf);
       cache2.put("key1", "val3");
       sleep(1000);
-      assertEquals(listener.getInvocationCount(), 1);
+      assertEquals(listener.getInvocationCount(), 1, "listener content: " + listener);
 
       listener.reset();
       cache1.deregisterCacheEntryListener(conf);
       cache2.put("key2", "val2");
       sleep(1000);
-      assertEquals(listener.getInvocationCount(), 0);
+      assertEquals(listener.getInvocationCount(), 0, "listener content: " + listener);
    }
 
    @Test
@@ -346,14 +348,14 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       cache2.registerCacheEntryListener(conf2);
       cache2.put("key1", "val3");
       sleep(1000);
-      assertEquals(listener1.getInvocationCount(), 1);
-      assertEquals(listener2.getInvocationCount(), 0);
+      assertEquals(listener1.getInvocationCount(), 1, "listener content: " + listener1);
+      assertEquals(listener2.getInvocationCount(), 0, "listener content: " + listener2);
 
       listener1.reset();
       cache1.deregisterCacheEntryListener(conf1);
       cache2.put("key2", "val2");
       sleep(1000);
-      assertEquals(listener1.getInvocationCount(), 0);
+      assertEquals(listener1.getInvocationCount(), 0, "listener content: " + listener1);
    }
 
    private static class DiscardingCacheEntryEventFilter implements CacheEntryEventFilter, Serializable {
@@ -370,8 +372,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       public void onUpdated(Iterable iterable) throws CacheEntryListenerException {
          Iterator iterator = iterable.iterator();
          while (iterator.hasNext()) {
-            iterator.next();
-            invocationCount++;
+            addObject(iterator.next());
          }
       }
    }
@@ -382,8 +383,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       public void onCreated(Iterable iterable) throws CacheEntryListenerException {
          Iterator iterator = iterable.iterator();
          while (iterator.hasNext()) {
-            iterator.next();
-            invocationCount++;
+            addObject(iterator.next());
          }
       }
    }
@@ -394,22 +394,32 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       public void onRemoved(Iterable iterable) throws CacheEntryListenerException {
          Iterator iterator = iterable.iterator();
          while (iterator.hasNext()) {
-            iterator.next();
-            invocationCount++;
+            addObject(iterator.next());
          }
       }
    }
 
    private abstract static class InvocationAwareListener {
 
-      protected int invocationCount;
+      protected List<Object> objects = new ArrayList<>();
 
-      public int getInvocationCount() {
-         return invocationCount;
+      public synchronized int getInvocationCount() {
+         return objects.size();
       }
 
-      public void reset() {
-         invocationCount = 0;
+      public synchronized void reset() {
+         objects.clear();
+      }
+
+      public synchronized void addObject(Object o) {
+         this.objects.add(o);
+      }
+
+      @Override
+      public String toString() {
+         return "InvocationAwareListener{" +
+               "objects=" + objects +
+               '}';
       }
    }
 

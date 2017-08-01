@@ -21,8 +21,8 @@ import org.testng.annotations.Test;
 /**
  * @author Matej Cimbora
  */
-@Test(testName = "org.infinispan.jcache.JCacheTwoCachesBasicOpsTest", groups = "functional")
-public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
+@Test(testName = "org.infinispan.jcache.JCacheRemoteTwoCachesBasicOpsTest", groups = "functional")
+public class JCacheRemoteTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
 
    public static final String CACHE_NAME = "jcache-remote-cache";
    private HotRodServer hotRodServer1;
@@ -37,15 +37,15 @@ public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
 
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(0));
       hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(cacheManagers.get(1));
-      testSpecificClassLoader = new JCacheTestingUtil.TestClassLoader(JCacheTwoCachesBasicOpsTest.class.getClassLoader());
+      testSpecificClassLoader = new JCacheTestingUtil.TestClassLoader(JCacheRemoteTwoCachesBasicOpsTest.class.getClassLoader());
 
       Properties properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", hotRodServer1.getHost() + ":" + hotRodServer1.getPort());
-      cm1 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
+      cm1 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheRemoteTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
 
       properties = new Properties();
       properties.put("infinispan.client.hotrod.server_list", hotRodServer2.getHost() + ":" + hotRodServer2.getPort());
-      cm2 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
+      cm2 = createCacheManager(Caching.getCachingProvider(testSpecificClassLoader), JCacheRemoteTwoCachesBasicOpsTest.class, CACHE_NAME, properties);
 
       waitForClusterToForm(CACHE_NAME);
    }

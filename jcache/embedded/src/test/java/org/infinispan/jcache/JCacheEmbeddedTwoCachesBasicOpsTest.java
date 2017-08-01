@@ -14,9 +14,9 @@ import org.testng.annotations.Test;
 /**
  * @author Matej Cimbora
  */
-@Test(testName = "org.infinispan.jcache.JCacheTwoCachesBasicOpsTest", groups = "functional")
+@Test(testName = "org.infinispan.jcache.JCacheEmbeddedTwoCachesBasicOpsTest", groups = "functional")
 @CleanupAfterMethod
-public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
+public class JCacheEmbeddedTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
 
    @Override
    public Cache getCache1(Method m) {
