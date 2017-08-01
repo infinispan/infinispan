@@ -16,7 +16,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.L1InternalCacheEntry;
 import org.infinispan.distribution.groups.KXGrouper;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -192,7 +191,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
             assert ice instanceof ImmortalCacheEntry : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
          } else {
             if (allowL1) {
-               assert ice == null || ice instanceof L1InternalCacheEntry : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+               assert ice == null || ice.isL1Entry() : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
             } else {
                // Segments no longer owned are invalidated asynchronously
                eventuallyEquals("Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ")",
