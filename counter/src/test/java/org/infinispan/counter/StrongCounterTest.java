@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
@@ -35,13 +36,15 @@ public class StrongCounterTest extends AbstractCounterTest<StrongTestCounter> {
    private static final int CLUSTER_SIZE = 4;
 
    public void testUniqueReturnValues(Method method) throws ExecutionException, InterruptedException, TimeoutException {
-      final List<Future<List<Long>>> workers = new ArrayList<>(CLUSTER_SIZE);
+      final int numThreadsPerNode = 2;
+      final int totalThreads = CLUSTER_SIZE * numThreadsPerNode;
+      final List<Future<List<Long>>> workers = new ArrayList<>(totalThreads);
       final String counterName = method.getName();
-      final CyclicBarrier barrier = new CyclicBarrier(CLUSTER_SIZE);
+      final CyclicBarrier barrier = new CyclicBarrier(totalThreads);
       final long counterLimit = 1000;
 
-      for (int i = 0; i < CLUSTER_SIZE; ++i) {
-         final int cmIndex = i;
+      for (int i = 0; i < totalThreads; ++i) {
+         final int cmIndex = i % CLUSTER_SIZE;
          workers.add(fork(() -> {
             List<Long> retValues = new LinkedList<>();
             CounterManager manager = counterManager(cmIndex);
@@ -95,6 +98,57 @@ public class StrongCounterTest extends AbstractCounterTest<StrongTestCounter> {
          assertEquals(expect, counter.getValue());
       }
    }
+
+   public void testCompareAndSetConcurrent(Method method) throws ExecutionException, InterruptedException, TimeoutException {
+      final int numThreadsPerNode = 2;
+      final int totalThreads = CLUSTER_SIZE * numThreadsPerNode;
+      final List<Future<Boolean>> workers = new ArrayList<>(totalThreads);
+      final String counterName = method.getName();
+      final CyclicBarrier barrier = new CyclicBarrier(totalThreads);
+      final AtomicIntegerArray retValues = new AtomicIntegerArray(totalThreads);
+      final long maxIterations = 100;
+      for (int i = 0; i < totalThreads; ++i) {
+         final int threadIndex = i;
+         final int cmIndex = i % CLUSTER_SIZE;
+         workers.add(fork(() -> {
+            long iteration = 0;
+            final long initialValue = 0;
+            long previousValue = initialValue;
+            CounterManager manager = counterManager(cmIndex);
+            StrongTestCounter counter = createCounter(manager, counterName, initialValue);
+            while (iteration < maxIterations) {
+               assertEquals(previousValue, counter.getValue());
+               long update = previousValue + 1;
+               barrier.await();
+               //all threads calling compareAndSet at the same time, only one should succeed
+               boolean ret = counter.compareAndSet(previousValue, update);
+               if (ret) {
+                  previousValue = update;
+               } else {
+                  previousValue = counter.getValue();
+               }
+               retValues.set(threadIndex, ret == true ? 1 : 0);
+               barrier.await();
+               assertUnique(retValues, iteration);
+               ++iteration;
+            }
+            return true;
+         }));
+      }
+
+      for (Future<?> w : workers) {
+         w.get(1, TimeUnit.MINUTES);
+      }
+   }
+
+   private void assertUnique(AtomicIntegerArray retValues, long it) {
+      int successCount = 0;
+      for (int ix = 0; ix != retValues.length(); ++ix) {
+         successCount += retValues.get(ix);
+      }
+      assertEquals("Multiple threads succeeded with update in iteration " + it, 1, successCount);
+   }
+
 
    public void testCompareAndSetMaxAndMinLong(Method method) {
       final String counterName = method.getName();
