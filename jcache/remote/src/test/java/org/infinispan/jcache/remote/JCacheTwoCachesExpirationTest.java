@@ -1,4 +1,4 @@
-package org.infinispan.jcache;
+package org.infinispan.jcache.remote;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.jcache.util.JCacheTestingUtil.createCacheWithProperties;
@@ -15,6 +15,7 @@ import javax.cache.Caching;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.jcache.AbstractTwoCachesExpirationTest;
 import org.infinispan.jcache.util.JCacheTestingUtil;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -27,7 +28,7 @@ import org.testng.annotations.Test;
 /**
  * @author Matej Cimbora
  */
-@Test(testName = "org.infinispan.jcache.JCacheTwoCachesExpirationTest", groups = "functional")
+@Test(testName = "org.infinispan.jcache.remote.JCacheTwoCachesExpirationTest", groups = "functional")
 @CleanupAfterMethod
 public class JCacheTwoCachesExpirationTest extends AbstractTwoCachesExpirationTest {
 

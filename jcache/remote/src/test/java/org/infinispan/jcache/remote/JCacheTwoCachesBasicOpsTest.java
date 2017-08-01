@@ -1,4 +1,4 @@
-package org.infinispan.jcache;
+package org.infinispan.jcache.remote;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.jcache.util.JCacheTestingUtil.createCacheManager;
@@ -13,6 +13,7 @@ import javax.cache.Caching;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.jcache.AbstractTwoCachesBasicOpsTest;
 import org.infinispan.jcache.util.JCacheTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
@@ -21,7 +22,7 @@ import org.testng.annotations.Test;
 /**
  * @author Matej Cimbora
  */
-@Test(testName = "org.infinispan.jcache.JCacheTwoCachesBasicOpsTest", groups = "functional")
+@Test(testName = "org.infinispan.jcache.remote.JCacheTwoCachesBasicOpsTest", groups = "functional")
 public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
 
    public static final String CACHE_NAME = "jcache-remote-cache";

@@ -422,7 +422,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
 
    /**
     * Add a client listener to receive events that happen in the remote cache.
-    * The listener object must be annotated with @ClientListener annotation.
+    * The listener object must be annotated with @{@link org.infinispan.client.hotrod.annotation.ClientListener} annotation.
     */
    void addClientListener(Object listener);
 
