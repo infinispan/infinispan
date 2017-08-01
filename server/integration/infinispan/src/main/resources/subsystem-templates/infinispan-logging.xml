@@ -44,7 +44,7 @@
                <handler name="HR-ACCESS-FILE"/>
            </handlers>
        </logger>
-       <logger category="RestAccessLoggingHandler">
+       <logger category="org.infinispan.rest.logging.RestAccessLoggingHandler">
            <!-- Set to TRACE to enable access logging for rest or use DMR -->
            <level name="INFO"/>
            <handlers>
