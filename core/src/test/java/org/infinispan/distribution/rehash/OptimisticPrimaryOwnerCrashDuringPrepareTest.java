@@ -3,13 +3,18 @@ package org.infinispan.distribution.rehash;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
-import static org.testng.AssertJUnit.fail;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Future;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.xa.XAException;
 
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -17,6 +22,7 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 /**
@@ -55,14 +61,12 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
       killMember(1);
       ss.exit("crash_primary");
 
-      EmbeddedTransaction tx2 = tx2Future.get(10, SECONDS);
-      try {
-         tx2.runCommit(false);
-         fail("tx2 should not be able to commit");
-      } catch (Exception e) {
-         log.tracef(e, "Received expected exception");
-      }
+      // tx2 prepare times out trying to acquire the lock, but does not throw an exception at this time
+      EmbeddedTransaction tx2 = tx2Future.get(30, SECONDS);
+      assertEquals(Status.STATUS_MARKED_ROLLBACK, tx2.getStatus());
+      Exceptions.expectException(RollbackException.class, XAException.class, TimeoutException.class, () -> tx2.runCommit(false));
 
+      // tx1 should commit successfully
       tx1.runCommit(false);
    }
 
@@ -71,6 +75,7 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.clustering().cacheMode(CacheMode.DIST_SYNC);
       config.transaction().lockingMode(LockingMode.OPTIMISTIC);
+      config.clustering().locking().lockAcquisitionTimeout(2, SECONDS);
       config.clustering().hash().numSegments(1)
             .consistentHashFactory(new ControlledConsistentHashFactory.Default(1, 0));
       config.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
