@@ -205,7 +205,7 @@
         <version.maven.bundle>2.4.0</version.maven.bundle>
         <version.maven.shade>2.4.3</version.maven.shade>
         <version.maven.source>3.0.0</version.maven.source>
-        <version.maven.surefire>2.18.1</version.maven.surefire>
+        <version.maven.surefire>2.20</version.maven.surefire>
         <version.maven.invoker>1.8</version.maven.invoker>
         <version.metainf-services>1.7</version.metainf-services>
         <version.jacoco>0.7.5.201505241946</version.jacoco>
@@ -1558,7 +1558,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.18.1</version>
+                <version>${version.maven.surefire}</version>
             </plugin>
 
             <plugin>
