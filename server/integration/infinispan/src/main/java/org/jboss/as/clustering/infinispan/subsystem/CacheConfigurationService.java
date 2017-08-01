@@ -30,7 +30,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.as.clustering.infinispan.TransactionManagerProvider;
 import org.jboss.as.clustering.infinispan.TransactionSynchronizationRegistryProvider;
-import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoader;
 
 /**
@@ -50,7 +49,7 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
     private final ConfigurationBuilder builder;
     private final Dependencies dependencies;
 
-    public CacheConfigurationService(String name, ConfigurationBuilder builder, ModuleIdentifier moduleId, Dependencies dependencies) {
+    public CacheConfigurationService(String name, ConfigurationBuilder builder, Dependencies dependencies) {
         super(name);
         this.builder = builder;
         this.dependencies = dependencies;

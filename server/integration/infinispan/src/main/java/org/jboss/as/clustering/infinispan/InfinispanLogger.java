@@ -175,4 +175,11 @@ public interface InfinispanLogger extends BasicLogger {
     @LogMessage(level = ERROR)
     @Message(id = 16, value = "Waiting for deployment of Custom Cache Store (%s) timed out. Please check if this cache store is really present.")
     void loadingCustomCacheStoreTimeout(String customStoreClassName);
+
+    /**
+     * Logs a warning message indicating that the module attribute of the cache element is no longer valid.
+     */
+    @LogMessage(level = WARN)
+    @Message(id = 17, value = "Found and ignored unsupported (deprecated) attribute 'module' in cache configuration at [row,col] [%s, %s]")
+    void cacheModuleDeprecated(int row, int col);
 }
