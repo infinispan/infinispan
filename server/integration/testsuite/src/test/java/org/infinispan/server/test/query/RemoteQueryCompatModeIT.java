@@ -43,7 +43,7 @@ public class RemoteQueryCompatModeIT {
 
    private static RemoteCacheManager remoteCacheManager;
 
-   @InfinispanResource("standalone-custom-compat-marshaller")
+   @InfinispanResource("custom-compat-marshaller")
    RemoteInfinispanServer server1;
 
    @BeforeClass
@@ -51,14 +51,14 @@ public class RemoteQueryCompatModeIT {
       // We put the entity class in one jar and the marshaller in another jar, just to make things more interesting.
       JavaArchive entityArchive = ShrinkWrap.create(JavaArchive.class)
             .addClasses(TestEntity.class)
-            .add(new StringAsset("Dependencies: org.hibernate.search.engine"), "META-INF/MANIFEST.MF"); // we need the HS annotations
+            .add(new StringAsset("Dependencies: org.hibernate.search.engine"), "META-INF/MANIFEST.MF"); // we need the Hibernate Search annotations
 
       JavaArchive marshallerArchive = ShrinkWrap.create(JavaArchive.class)
             .addClasses(CustomCompatModeMarshaller.class)
             .add(new StringAsset("Dependencies: org.jboss.marshalling, " +
-                  "org.infinispan.commons, " +
-                  "org.infinispan.remote-query.client, " +
-                  "deployment.custom-test-entity.jar"),  // We depend on the jar containing the entity, so we can instantiate it.
+                        "org.infinispan.commons, " +
+                        "org.infinispan.remote-query.client, " +
+                        "deployment.custom-test-entity.jar"),  // We depend on the jar containing the entity, so we can instantiate it.
                   "META-INF/MANIFEST.MF")
             .addAsServiceProvider(Marshaller.class, CustomCompatModeMarshaller.class);
 
@@ -75,7 +75,7 @@ public class RemoteQueryCompatModeIT {
    }
 
    @Test
-   @WithRunningServer(@RunningServer(name = "standalone-custom-compat-marshaller"))
+   @WithRunningServer(@RunningServer(name = "custom-compat-marshaller"))
    public void testCompatQuery() throws Exception {
       remoteCacheManager = ITestUtils.createCacheManager(server1);
       RemoteCache<Integer, TestEntity> remoteCache = remoteCacheManager.getCache();

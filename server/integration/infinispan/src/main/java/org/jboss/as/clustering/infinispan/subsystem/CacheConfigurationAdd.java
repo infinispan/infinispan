@@ -31,8 +31,8 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -222,6 +222,9 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         ModelNode resolvedValue;
         final String templateConfiguration = (resolvedValue = CacheConfigurationResource.CONFIGURATION.resolveModelAttribute(context, cacheModel)).isDefined() ? resolvedValue.asString() : null;
         final ModuleIdentifier moduleId = ModelNodes.asModuleIdentifier(CacheConfigurationResource.CACHE_MODULE.resolveModelAttribute(context, cacheModel));
+        if (moduleId != null) {
+            log.warnf("Found and ignored unsupported attribute 'module' in cache configuration %s from cache container %s", cacheName, containerName);
+        }
 
         // create a list for dependencies which may need to be added during processing
         List<Dependency<?>> dependencies = new LinkedList<>();
@@ -232,21 +235,11 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         // process cache configuration ModelNode describing overrides to defaults
         processModelNode(context, containerName, cacheModel, builder, dependencies);
 
-        // get container Model to pick up the value of the default cache of the container
-        // AS7-3488 make default-cache no required attribute
-        String defaultCache = CacheContainerResource.DEFAULT_CACHE.resolveModelAttribute(context, containerModel).asString();
-
-        ServiceTarget target = context.getServiceTarget();
-        Configuration config = builder.build();
-
-        Collection<ServiceController<?>> controllers = new ArrayList<>(3);
-
         // install the cache configuration service (configures a cache)
-        controllers.add(installCacheConfigurationService(target, containerName, cacheName, defaultCache, moduleId,
-                        templateConfiguration, builder, config, dependencies));
+        ServiceController<?> serviceController = installCacheConfigurationService(context.getServiceTarget(), containerName, cacheName,
+              templateConfiguration, builder, dependencies);
         log.debugf("Cache configuration service for %s installed for container %s", cacheName, containerName);
-
-        return controllers;
+        return Collections.singletonList(serviceController);
     }
 
     @Override
@@ -274,12 +267,13 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         return configurationAddress.subAddress(0, configurationAddress.size() - 2);
     }
 
-    private ServiceController<?> installCacheConfigurationService(ServiceTarget target, String containerName, String cacheName, String defaultCache, ModuleIdentifier moduleId,
-            String templateConfiguration, ConfigurationBuilder builder, Configuration config, List<Dependency<?>> dependencies) {
+    private ServiceController<?> installCacheConfigurationService(ServiceTarget target, String containerName, String cacheName,
+            String templateConfiguration, ConfigurationBuilder builder, List<Dependency<?>> dependencies) {
 
+        Configuration config = builder.build();
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<>();
         final CacheConfigurationDependencies cacheConfigurationDependencies = new CacheConfigurationDependencies(container);
-        final Service<Configuration> service = new CacheConfigurationService(cacheName, builder, moduleId, cacheConfigurationDependencies);
+        final Service<Configuration> service = new CacheConfigurationService(cacheName, builder, cacheConfigurationDependencies);
         final ServiceBuilder<?> configBuilder = target.addService(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName), service)
                 .addDependency(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, container)
                 .addDependency(Services.JBOSS_SERVICE_MODULE_LOADER, ModuleLoader.class, cacheConfigurationDependencies.getModuleLoaderInjector())
@@ -310,7 +304,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
         // add in any additional dependencies resulting from ModelNode parsing
         for (Dependency<?> dependency : dependencies) {
-            this.addDependency(configBuilder, dependency);
+            addDependency(configBuilder, dependency);
         }
         return configBuilder.install();
     }
@@ -383,8 +377,19 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                         try {
                             if (split.length == 1) {
                                 // it's just a class name
-                                Class<?> entityClass = CacheLoader.class.getClassLoader().loadClass(className);
-                                builder.indexing().addIndexedEntity(entityClass);
+                                Injector<EmbeddedCacheManager> injector = new SimpleInjector<EmbeddedCacheManager>() {
+                                    @Override
+                                    public void inject(EmbeddedCacheManager cacheManager) {
+                                        try {
+                                            ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
+                                            Class<?> entityClass = Class.forName(className, false, classLoader);
+                                            builder.indexing().addIndexedEntity(entityClass);
+                                        } catch (Exception e) {
+                                            throw InfinispanMessages.MESSAGES.unableToInstantiateClass(className);
+                                        }
+                                    }
+                                };
+                                dependencies.add(new Dependency<>(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, injector));
                             } else {
                                 // it's an 'extended' class name, including the module id and slot
                                 String entityClassName = split[2];
@@ -402,6 +407,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                                         }
                                     }
                                 };
+                                // todo [anistor] only works for dynamic modules
                                 dependencies.add(new Dependency<>(ServiceModuleLoader.moduleServiceName(moduleIdentifier), Module.class, injector));
                             }
                         } catch (Exception e) {
@@ -526,8 +532,19 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                     if (split.length == 1) {
                         // it's just a class name
                         String marshallerClassName = split[0];
-                        Class<?> marshallerClass = CacheLoader.class.getClassLoader().loadClass(marshallerClassName);
-                        builder.compatibility().marshaller(marshallerClass.asSubclass(Marshaller.class).newInstance());
+                        Injector<EmbeddedCacheManager> injector = new SimpleInjector<EmbeddedCacheManager>() {
+                            @Override
+                            public void inject(EmbeddedCacheManager cacheManager) {
+                                try {
+                                    ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
+                                    Class<?> marshallerClass = Class.forName(marshallerClassName, false, classLoader);
+                                    builder.compatibility().marshaller(marshallerClass.asSubclass(Marshaller.class).newInstance());
+                                } catch (Exception e) {
+                                    throw InfinispanMessages.MESSAGES.unableToInstantiateClass(marshallerClassName);
+                                }
+                            }
+                        };
+                        dependencies.add(new Dependency<>(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, injector));
                     } else {
                         // it's an 'extended' class name, including the module id and slot
                         String marshallerClassName = split[2];
@@ -545,6 +562,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                                 }
                             }
                         };
+                        // todo [anistor] only works for dynamic modules
                         dependencies.add(new Dependency<>(ServiceModuleLoader.moduleServiceName(moduleIdentifier), Module.class, injector));
                     }
                 } catch (Exception e) {
@@ -1078,7 +1096,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         }
     }
 
-    private abstract class SimpleInjector<I> implements Injector<I> {
+    private static abstract class SimpleInjector<I> implements Injector<I> {
         @Override
         public void uninject() {
             // Do nothing

@@ -1,0 +1,14 @@
+        <subsystem xmlns="urn:infinispan:server:core:9.1">
+            <cache-container name="local" default-cache="default">
+                <modules>
+                    <module name="deployment.test-ProgrammaticSearchMappingProvider.jar"/>
+                </modules>
+                <local-cache name="default">
+                    <indexing index="ALL">
+                        <property name="default.directory_provider">local-heap</property>
+                        <!--<property name="hibernate.search.model_mapping">org.infinispan.server.test.query.TestSearchMappingFactory</property>-->
+                    </indexing>
+                </local-cache>
+                <local-cache name="memcachedCache"/>
+            </cache-container>
+        </subsystem>

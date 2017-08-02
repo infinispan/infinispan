@@ -24,6 +24,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -149,14 +150,13 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
             }
         }
 
-        AuthorizationConfigurationBuilder authorizationConfig = null;
         if (model.hasDefined(ModelKeys.SECURITY) && model.get(ModelKeys.SECURITY).hasDefined(ModelKeys.SECURITY_NAME)) {
             ModelNode securityModel = model.get(ModelKeys.SECURITY, ModelKeys.SECURITY_NAME);
 
             if (securityModel.hasDefined(ModelKeys.AUTHORIZATION) && securityModel.get(ModelKeys.AUTHORIZATION).hasDefined(ModelKeys.AUTHORIZATION_NAME)) {
                 ModelNode authzModel = securityModel.get(ModelKeys.AUTHORIZATION, ModelKeys.AUTHORIZATION_NAME);
 
-                authorizationConfig = configBuilder.setAuthorization();
+                AuthorizationConfigurationBuilder authorizationConfig = configBuilder.setAuthorization();
                 if (authzModel.hasDefined(ModelKeys.AUDIT_LOGGER)) {
                    authorizationConfig.setAuditLogger(ModelNodes.asString(CacheContainerAuthorizationResource.AUDIT_LOGGER.resolveModelAttribute(context, authzModel)));
                 }
@@ -171,8 +171,19 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
                     }
                     authorizationConfig.getRoles().put(roleName, permissions);
                 }
-
             }
+        }
+
+        if (model.hasDefined(ModelKeys.MODULES) && model.get(ModelKeys.MODULES).hasDefined(ModelKeys.MODULES_NAME)) {
+            ModelNode modulesModel = model.get(ModelKeys.MODULES, ModelKeys.MODULES_NAME);
+            LinkedList<ModuleIdentifier> modules = new LinkedList<>();
+            for (ModelNode moduleListNode : modulesModel.get(ModelKeys.MODULE).asList()) {
+                ModelNode moduleNode = moduleListNode.get(0);
+                String moduleName = CacheContainerModuleResource.NAME.resolveModelAttribute(context, moduleNode).asString();
+                String moduleSlot = moduleNode.hasDefined(ModelKeys.SLOT) ? CacheContainerModuleResource.SLOT.resolveModelAttribute(context, moduleNode).asString() : null;
+                modules.add(ModuleIdentifier.create(moduleName, moduleSlot));
+            }
+            configBuilder.setModules(modules);
         }
 
         // Install cache container configuration service
