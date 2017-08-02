@@ -47,6 +47,9 @@ pipeline {
                 junit testResults: '**/target/*-reports*/*.xml',
                         testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
                         healthScaleFactor: 100
+
+                sh 'zip logs-${BRANCH_NAME}-${BUILD_NUMBER}.zip $(find . -name target -prune -o -name \'*.log\' -print)'
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'logs*.zip'
             }
         }
 
