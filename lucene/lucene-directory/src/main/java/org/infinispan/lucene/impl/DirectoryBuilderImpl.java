@@ -116,16 +116,13 @@ public class DirectoryBuilderImpl implements BuildContext {
       return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName, affinitySegmentId);
    }
 
-   private static <T> T checkNotNull(final T v,final String objectname) {
+   private static <T> T checkNotNull(final T v, final String objectname) {
       if (v == null)
          throw log.requiredParameterWasPassedNull(objectname);
       return v;
    }
 
    private static Cache<?, ?> checkValidConfiguration(final Cache<?, ?> cache, String indexName) {
-      if (cache == null) {
-         return null;
-      }
       Configuration configuration = cache.getCacheConfiguration();
       if (configuration.expiration().maxIdle() != -1) {
          throw log.luceneStorageHavingIdleTimeSet(indexName, cache.getName());
