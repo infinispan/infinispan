@@ -213,6 +213,11 @@
                         </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <attributes>
+                        <rootDir>${project.basedir}/..</rootDir>
+                    </attributes>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

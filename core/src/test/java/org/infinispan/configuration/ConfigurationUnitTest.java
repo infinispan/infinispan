@@ -7,6 +7,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
+import java.io.IOException;
 import java.net.URL;
 
 import javax.xml.XMLConstants;
@@ -26,6 +27,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -49,6 +51,20 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       // Simple test to ensure we can actually build a config
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.build();
+   }
+
+   @Test
+   public void testDocumentationConfigs() throws IOException {
+      //tag::basic-example[]
+      EmbeddedCacheManager manager = new DefaultCacheManager("configs/my-custom-config.xml");
+      Cache defaultCache = manager.getCache();
+      //end::basic-example[]
+      //tag::named-cache-retrieval[]
+      Cache someNamedCache = manager.getCache("local");
+      //end::named-cache-retrieval[]
+
+      EmbeddedCacheManager manager2 = new DefaultCacheManager("configs/my-custom-config2.xml");
+      EmbeddedCacheManager manager3 = new DefaultCacheManager("configs/my-custom-config3.xml");
    }
 
    @Test

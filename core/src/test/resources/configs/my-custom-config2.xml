@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- //tag::example[] -->
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:9.1 http://www.infinispan.org/schemas/infinispan-config-9.1.xsd"
+      xmlns="urn:infinispan:config:9.1">
+
+   <cache-container default-cache="local">
+      <!-- template configurations -->
+      <local-cache-configuration name="local-template">
+         <expiration interval="10000" lifespan="10" max-idle="10"/>
+      </local-cache-configuration>
+
+      <!-- cache definitions -->
+      <local-cache name="local" configuration="local-template" />
+   </cache-container>
+
+</infinispan>
+<!-- //end::example[] -->
