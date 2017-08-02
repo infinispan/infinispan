@@ -43,9 +43,9 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
       caches(DIST).forEach(cache -> {
          if (cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal()) {
-            assertTrue(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString());
+            assertTrue(cacheContainsKey(key, cache), getAddress(cache).toString());
          } else {
-            assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString());
+            assertFalse(cacheContainsKey(key, cache), getAddress(cache).toString());
          }
       });
 
@@ -144,9 +144,9 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       caches(DIST).forEach(cache -> assertEquals(cache.get(key), "value", getAddress(cache).toString()));
       caches(DIST).forEach(cache -> {
          if (cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal()) {
-            assertTrue(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString());
+            assertTrue(cacheContainsKey(key, cache), getAddress(cache).toString());
          } else {
-            assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString());
+            assertFalse(cacheContainsKey(key, cache), getAddress(cache).toString());
          }
       });
 
@@ -196,6 +196,10 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
       );
    }
 
-   private static class TestException extends RuntimeException {
+   public static class TestException extends RuntimeException {
+   }
+
+   protected boolean cacheContainsKey(Object key, Cache<Object, Object> cache) {
+      return cache.getAdvancedCache().getDataContainer().containsKey(key);
    }
 }

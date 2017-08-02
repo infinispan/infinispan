@@ -24,21 +24,18 @@ import org.infinispan.util.function.RemovableFunction;
  */
 public class EncoderValueMapper<V> implements RemovableFunction<V, V> {
 
-   private final Class<? extends Encoder> valueEncoderClass;
-   private final Class<? extends Wrapper> valueWrapperClass;
-
+   private final EncodingClasses encodingClasses;
    private transient Encoder valueEncoder;
    private transient Wrapper valueWrapper;
 
-   public EncoderValueMapper(Class<? extends Encoder> valueEncoderClass, Class<? extends Wrapper> valueWrapperClass) {
-      this.valueEncoderClass = valueEncoderClass;
-      this.valueWrapperClass = valueWrapperClass;
+   public EncoderValueMapper(EncodingClasses encodingClasses) {
+      this.encodingClasses = encodingClasses;
    }
 
    @Inject
    public void injectDependencies(EncoderRegistry encoderRegistry) {
-      this.valueEncoder = encoderRegistry.getEncoder(valueEncoderClass);
-      this.valueWrapper = encoderRegistry.getWrapper(valueWrapperClass);
+      this.valueEncoder = encoderRegistry.getEncoder(encodingClasses.getValueEncoderClass());
+      this.valueWrapper = encoderRegistry.getWrapper(encodingClasses.getValueWrapperClass());
    }
 
    @Override
@@ -61,14 +58,13 @@ public class EncoderValueMapper<V> implements RemovableFunction<V, V> {
 
       @Override
       public void writeObject(ObjectOutput output, EncoderValueMapper object) throws IOException {
-         output.writeObject(object.valueEncoderClass);
-         output.writeObject(object.valueWrapperClass);
+         EncodingClasses.writeTo(output, object.encodingClasses);
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public EncoderValueMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new EncoderValueMapper((Class<? extends Encoder>) input.readObject(), (Class<? extends Wrapper>) input.readObject());
+         return new EncoderValueMapper(EncodingClasses.readFrom(input));
       }
    }
 }

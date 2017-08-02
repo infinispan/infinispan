@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
+import org.infinispan.cache.impl.CacheEncoders;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -44,7 +45,6 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.functional.EntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -53,7 +53,9 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -85,15 +87,18 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private static final long SKIP_REMOTE_FLAGS = FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP;
 
    private PartitionHandlingManager partitionHandlingManager;
+   private ComponentRegistry componentRegistry;
    private boolean forceRemoteReadForFunctionalCommands;
 
    private final TxReadOnlyManyHelper txReadOnlyManyHelper = new TxReadOnlyManyHelper();
+
    private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper();
    private final ReadWriteManyEntriesHelper readWriteManyEntriesHelper = new ReadWriteManyEntriesHelper();
 
    @Inject
-   public void inject(PartitionHandlingManager partitionHandlingManager) {
+   public void inject(PartitionHandlingManager partitionHandlingManager, ComponentRegistry componentRegistry) {
       this.partitionHandlingManager = partitionHandlingManager;
+      this.componentRegistry = componentRegistry;
    }
 
    @Override
@@ -467,7 +472,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
                List<Mutation> mutationsOnKey = getMutationsOnKey((TxInvocationContext) ctx, key);
                mutationsOnKey.add(command.toMutation(key));
-               TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey);
+               TxReadOnlyKeyCommand remoteRead = new TxReadOnlyKeyCommand(key, mutationsOnKey, command.getEncodingClasses(), componentRegistry);
 
                return asyncValue(rpcManager.invokeRemotelyAsync(owners, remoteRead, getStaggeredOptions(owners.size())).thenApply(responses -> {
                   for (Response r : responses.values()) {
@@ -525,7 +530,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!ctx.isInTxScope()) {
          return command;
       }
-      return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, command.getKey()));
+      return new TxReadOnlyKeyCommand(command, getMutationsOnKey((TxInvocationContext) ctx, command.getKey()), command.getEncodingClasses(), componentRegistry);
    }
 
    @Override
@@ -543,7 +548,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return cf.thenRun(() -> {
          entryFactory.wrapEntryForWriting(ctx, key, false, true);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
-         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry);
+         // TODO: ISPN-8090 support full cache encoding in tx cache
+         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, CacheEncoders.EMPTY);
          for (Mutation mutation : mutationsOnKey) {
             mutation.apply(readWriteEntryView);
             cacheEntry.updatePreviousValue();
@@ -566,7 +572,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          Object key = keysIterator.next();
          entryFactory.wrapEntryForWriting(ctx, key, false, true);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
-         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry);
+         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, CacheEncoders.EMPTY);
          for (Mutation mutation : mutationsIterator.next()) {
             mutation.apply(readWriteEntryView);
             cacheEntry.updatePreviousValue();
@@ -663,7 +669,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
                list.add(mutation);
             }
          }
-         return new TxReadOnlyManyCommand(keys, mutations);
+         return new TxReadOnlyManyCommand(keys, mutations, command.getEncodingClasses(), componentRegistry);
       }
 
       @Override

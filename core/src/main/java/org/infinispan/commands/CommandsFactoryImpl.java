@@ -17,6 +17,7 @@ import java.util.function.Function;
 import javax.transaction.xa.Xid;
 
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
@@ -24,6 +25,8 @@ import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
+import org.infinispan.commands.functional.TxReadOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
@@ -74,9 +77,6 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.functional.EntryView.ReadEntryView;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.LambdaExternalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
@@ -95,6 +95,9 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.functional.EntryView.ReadEntryView;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -541,8 +544,43 @@ public class CommandsFactoryImpl implements CommandsFactory {
             InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
             invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager);
             break;
+         // === Functional commands ====
+         case ReadOnlyKeyCommand.COMMAND_ID:
+            ((ReadOnlyKeyCommand)c).init(componentRegistry);
+            break;
+         case ReadOnlyManyCommand.COMMAND_ID:
+            ((ReadOnlyManyCommand)c).init(componentRegistry);
+            break;
          case ReadWriteKeyCommand.COMMAND_ID:
-            ((ReadWriteKeyCommand) c).init(componentRegistry);
+            ((ReadWriteKeyCommand)c).init(componentRegistry);
+            break;
+         case ReadWriteKeyValueCommand.COMMAND_ID:
+            ((ReadWriteKeyValueCommand)c).init(componentRegistry);
+            break;
+         case ReadWriteManyCommand.COMMAND_ID:
+            ((ReadWriteManyCommand)c).init(componentRegistry);
+            break;
+         case ReadWriteManyEntriesCommand.COMMAND_ID:
+            ((ReadWriteManyEntriesCommand)c).init(componentRegistry);
+            break;
+         case TxReadOnlyKeyCommand.COMMAND_ID:
+            ((TxReadOnlyKeyCommand)c).init(componentRegistry);
+            break;
+         case TxReadOnlyManyCommand.COMMAND_ID:
+            ((TxReadOnlyManyCommand)c).init(componentRegistry);
+            break;
+         case WriteOnlyKeyCommand.COMMAND_ID:
+            ((WriteOnlyKeyCommand)c).init(componentRegistry);
+            break;
+         case WriteOnlyKeyValueCommand.COMMAND_ID:
+            ((WriteOnlyKeyValueCommand)c).init(componentRegistry);
+            break;
+         case WriteOnlyManyCommand.COMMAND_ID:
+            ((WriteOnlyManyCommand)c).init(componentRegistry);
+            break;
+         case WriteOnlyManyEntriesCommand.COMMAND_ID:
+            ((WriteOnlyManyEntriesCommand)c).init(componentRegistry);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -694,36 +732,36 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f, Params params) {
-      return new ReadOnlyKeyCommand<>(key, f, params);
+   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f, Params params, EncodingClasses encodingClasses) {
+      return new ReadOnlyKeyCommand<>(key, f, params, encodingClasses, componentRegistry);
    }
 
    @Override
-   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f, Params params) {
-      return new ReadOnlyManyCommand<>(keys, f, params);
+   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f, Params params, EncodingClasses encodingClasses) {
+      return new ReadOnlyManyCommand<>(keys, f, params, encodingClasses, componentRegistry);
    }
 
    @Override
-   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(
-         K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteKeyValueCommand<>(key, value, f, generateUUID(transactional), getValueMatcher(f),
-            params);
+   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
+                                                                                    Params params, EncodingClasses encodingClasses) {
+      return new ReadWriteKeyValueCommand(key, value, f, generateUUID(transactional), getValueMatcher(f),
+            params, encodingClasses, componentRegistry);
    }
 
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
-         K key, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params, componentRegistry);
+         K key, Function<ReadWriteEntryView<K, V>, R> f, Params params, EncodingClasses encodingClasses) {
+      return new ReadWriteKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params, encodingClasses, componentRegistry);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteManyCommand<>(keys, f, params, generateUUID(transactional));
+   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params, EncodingClasses encodingClasses) {
+      return new ReadWriteManyCommand<>(keys, f, params, generateUUID(transactional), encodingClasses, componentRegistry);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
-      return new ReadWriteManyEntriesCommand<>(entries, f, params, generateUUID(transactional));
+   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params, EncodingClasses encodingClasses) {
+      return new ReadWriteManyEntriesCommand<>(entries, f, params, generateUUID(transactional), encodingClasses, componentRegistry);
    }
 
    @Override
@@ -733,26 +771,24 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
-         K key, Consumer<WriteEntryView<V>> f, Params params) {
-      return new WriteOnlyKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params);
+         K key, Consumer<WriteEntryView<V>> f, Params params, EncodingClasses encodingClasses) {
+      return new WriteOnlyKeyCommand<>(key, f, generateUUID(transactional), getValueMatcher(f), params, encodingClasses, componentRegistry);
    }
 
    @Override
-   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(
-         K key, V value, BiConsumer<V, WriteEntryView<V>> f, Params params) {
-      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID(transactional), getValueMatcher(f),
-            params);
+   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f, Params params, EncodingClasses encodingClasses) {
+      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID(transactional), getValueMatcher(f), params, encodingClasses, componentRegistry);
    }
 
    @Override
-   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params) {
-      return new WriteOnlyManyCommand<>(keys, f, params, generateUUID(transactional));
+   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params, EncodingClasses encodingClasses) {
+      return new WriteOnlyManyCommand<>(keys, f, params, generateUUID(transactional), encodingClasses, componentRegistry);
    }
 
    @Override
    public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
-         Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params) {
-      return new WriteOnlyManyEntriesCommand<>(entries, f, params, generateUUID(transactional));
+         Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params, EncodingClasses encodingClasses) {
+      return new WriteOnlyManyEntriesCommand<>(entries, f, params, generateUUID(transactional), encodingClasses, componentRegistry);
    }
 
    @Override

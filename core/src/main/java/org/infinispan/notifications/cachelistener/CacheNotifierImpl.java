@@ -42,6 +42,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
@@ -769,14 +770,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                callables.add(new ClusterListenerReplicateCallable(listener.getIdentifier(),
                      cache.getCacheManager().getAddress(), listener.getFilter(),
                      listener.getConverter(), listener.isSync(),
-                     filterAnnotations, listener.getKeyEncoder().getClass(), listener.getValueEncoder().getClass(), listener.getKeyWrapper().getClass(), listener.getValueWrapper().getClass()));
+                     filterAnnotations, new EncodingClasses(listener.getKeyEncoder().getClass(), listener.getValueEncoder().getClass(), listener.getKeyWrapper().getClass(), listener.getValueWrapper().getClass())));
                enlistedAlready.add(listener.getTarget());
             } else if (listener.getTarget() instanceof RemoteClusterListener) {
                RemoteClusterListener lcl = (RemoteClusterListener) listener.getTarget();
                Set<Class<? extends Annotation>> filterAnnotations = listener.getFilterAnnotations();
                callables.add(new ClusterListenerReplicateCallable(lcl.getId(), lcl.getOwnerAddress(), listener.getFilter(),
                      listener.getConverter(), listener.isSync(),
-                     filterAnnotations, listener.getKeyEncoder().getClass(), listener.getValueEncoder().getClass(), listener.getKeyWrapper().getClass(), listener.getValueWrapper().getClass()));
+                     filterAnnotations, new EncodingClasses(listener.getKeyEncoder().getClass(), listener.getValueEncoder().getClass(), listener.getKeyWrapper().getClass(), listener.getValueWrapper().getClass())));
                enlistedAlready.add(listener.getTarget());
             }
          }
@@ -878,7 +879,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                }
                Callable callable = new ClusterListenerReplicateCallable(
                      generatedId, ourAddress, filter, converter, l.sync(),
-                     findListenerCallbacks(listener), keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+                     findListenerCallbacks(listener), new EncodingClasses(keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass));
                for (Address member : members) {
                   if (!member.equals(ourAddress)) {
                      decs.submit(member, callable);
@@ -1147,7 +1148,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                }
                Callable callable = new ClusterListenerReplicateCallable(
                      generatedId, ourAddress, filter, converter, l.sync(),
-                     filterAnnotations, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+                     filterAnnotations, new EncodingClasses(keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass));
                for (Address member : members) {
                   if (!member.equals(ourAddress)) {
                      decs.submit(member, callable);

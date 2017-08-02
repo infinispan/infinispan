@@ -156,7 +156,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          return invokeNext(ctx, command);
       } else if (command instanceof ReadWriteKeyCommand) {
          ReadWriteKeyCommand readWriteKeyCommand = (ReadWriteKeyCommand) command;
-         return commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(), readWriteKeyCommand.getFunction(), readWriteKeyCommand.getParams());
+         return commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(), readWriteKeyCommand.getFunction(), readWriteKeyCommand.getParams(), readWriteKeyCommand.getEncodingClasses());
       }
       return invokeNextThenAccept(ctx, command, handleMultipleKeysWriteReturn);
    }
@@ -191,7 +191,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          return;
       }
       WriteOnlyManyEntriesCommand crossSiteCommand = commandsFactory.buildWriteOnlyManyEntriesCommand(map,
-            MarshallableFunctions.setInternalCacheValueConsumer(), Params.fromFlagsBitSet(writeCommand.getFlagsBitSet()));
+            MarshallableFunctions.setInternalCacheValueConsumer(), Params.fromFlagsBitSet(writeCommand.getFlagsBitSet()), null);
       backupSender.processResponses(backupSender.backupWrite(crossSiteCommand), writeCommand);
    }
 }

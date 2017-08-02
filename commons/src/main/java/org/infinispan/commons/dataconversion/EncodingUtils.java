@@ -42,4 +42,10 @@ public final class EncodingUtils {
       return wrapper.wrap(encoder.toStorage(toStore));
    }
 
+   public static boolean isWrapped(Object obj, Wrapper wrapper) {
+      if (wrapper == null) {
+         throw new IllegalArgumentException("Wrapper must be provided!");
+      }
+      return wrapper.isWrapped(obj);
+   }
 }

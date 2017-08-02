@@ -10,8 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.distexec.DistributedCallable;
@@ -40,41 +39,33 @@ import org.infinispan.util.logging.LogFactory;
 public class ClusterListenerReplicateCallable<K, V> implements DistributedCallable<K, V, Void> {
    private static final Log log = LogFactory.getLog(ClusterListenerReplicateCallable.class);
    private static final boolean trace = log.isTraceEnabled();
-
    private transient EmbeddedCacheManager cacheManager;
+
    private transient CacheNotifier cacheNotifier;
    private transient CacheManagerNotifier cacheManagerNotifier;
    private transient DistributedExecutorService distExecutor;
    private transient Address ourAddress;
    private transient ClusterEventManager<K, V> eventManager;
-
    private final UUID identifier;
+
    private final CacheEventFilter<K, V> filter;
    private final CacheEventConverter<K, V, ?> converter;
    private final Address origin;
    private final boolean sync;
    private final Set<Class<? extends Annotation>> filterAnnotations;
-   private final Class<? extends Encoder> keyEncoderClass;
-   private final Class<? extends Encoder> valueEncoderClass;
-   private final Class<? extends Wrapper> keyWrapperClass;
-   private final Class<? extends Wrapper> valueWrapperClass;
+   private final EncodingClasses encodingClasses;
 
    public ClusterListenerReplicateCallable(UUID identifier, Address origin, CacheEventFilter<K, V> filter,
                                            CacheEventConverter<K, V, ?> converter, boolean sync,
                                            Set<Class<? extends Annotation>> filterAnnotations,
-                                           Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
-                                           Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+                                           EncodingClasses encodingClasses) {
       this.identifier = identifier;
       this.origin = origin;
       this.filter = filter;
       this.converter = converter;
       this.sync = sync;
       this.filterAnnotations = filterAnnotations;
-      this.keyEncoderClass = keyEncoderClass;
-      this.valueEncoderClass = valueEncoderClass;
-      this.keyWrapperClass = keyWrapperClass;
-      this.valueWrapperClass = valueWrapperClass;
-
+      this.encodingClasses = encodingClasses;
       if (trace)
          log.tracef("Created clustered listener replicate callable for: %s", filterAnnotations);
    }
@@ -120,8 +111,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                if (!alreadyInstalled) {
                   RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, distExecutor, cacheNotifier,
                         cacheManagerNotifier, eventManager, sync);
-                  ListenerHolder listenerHolder = new ListenerHolder(listener, keyEncoderClass, valueEncoderClass,
-                        keyWrapperClass, valueWrapperClass);
+                  ListenerHolder listenerHolder = new ListenerHolder(listener, encodingClasses);
                   cacheNotifier.addFilteredListener(listenerHolder, filter, converter, filterAnnotations);
                   cacheManagerNotifier.addListener(listener);
                   // It is possible the member is now gone after registered, if so we have to remove just to be sure
@@ -169,10 +159,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          }
          output.writeBoolean(object.sync);
          MarshallUtil.marshallCollection(object.filterAnnotations, output);
-         output.writeObject(object.keyEncoderClass);
-         output.writeObject(object.valueEncoderClass);
-         output.writeObject(object.keyWrapperClass);
-         output.writeObject(object.valueWrapperClass);
+         EncodingClasses.writeTo(output, object.encodingClasses);
       }
 
       @Override
@@ -189,12 +176,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          }
          boolean sync = input.readBoolean();
          Set<Class<? extends Annotation>> listenerAnnots = MarshallUtil.unmarshallCollection(input, HashSet::new);
-         Class<? extends Encoder> keyEncoderClass = (Class<? extends Encoder>) input.readObject();
-         Class<? extends Encoder> valueEncoderClass = (Class<? extends Encoder>) input.readObject();
-         Class<? extends Wrapper> keyWrapperClass = (Class<? extends Wrapper>) input.readObject();
-         Class<? extends Wrapper> valueWrapperClass = (Class<? extends Wrapper>) input.readObject();
-         return new ClusterListenerReplicateCallable(id, address, filter, converter, sync, listenerAnnots,
-               keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+         return new ClusterListenerReplicateCallable(id, address, filter, converter, sync, listenerAnnots, EncodingClasses.readFrom(input));
       }
 
       @Override

@@ -4,12 +4,13 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.DecoratedCache;
+import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.Param;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.Param;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 
@@ -101,5 +102,10 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    @Override
    public void close() throws Exception {
       cache.stop();
+   }
+
+   @Override
+   public boolean isEncoded(){
+      return cache instanceof EncoderCache;
    }
 }

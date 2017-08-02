@@ -10,14 +10,20 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
+import org.infinispan.cache.impl.CacheEncoders;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.core.EncoderRegistry;
 
 // TODO: the command does not carry previous values to backup, so it can cause
 // the values on primary and backup owners to diverge in case of topology change
@@ -31,19 +37,31 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    private int topologyId = -1;
    boolean isForwarded = false;
 
-   public ReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params, CommandInvocationId commandInvocationId) {
-      super(commandInvocationId, params);
+   public ReadWriteManyCommand(Collection<? extends K> keys,
+                               Function<ReadWriteEntryView<K, V>, R> f, Params params,
+                               CommandInvocationId commandInvocationId,
+                               EncodingClasses encodingClasses,
+                               ComponentRegistry componentRegistry) {
+      super(commandInvocationId, params, encodingClasses);
       this.keys = keys;
       this.f = f;
+      init(componentRegistry);
    }
 
    public ReadWriteManyCommand(ReadWriteManyCommand command) {
       super(command);
       this.keys = command.keys;
       this.f = command.f;
+      this.encodingClasses = command.encodingClasses;
+      this.cacheEncoders = command.cacheEncoders;
    }
 
    public ReadWriteManyCommand() {
+   }
+
+   @Inject
+   public void injectDependencies(EncoderRegistry encoderRegistry) {
+      cacheEncoders = CacheEncoders.grabEncodersFromRegistry(encoderRegistry, encodingClasses);
    }
 
    public void setKeys(Collection<? extends K> keys) {
@@ -69,6 +87,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       Params.writeObject(output, params);
       output.writeInt(topologyId);
       output.writeLong(flags);
+      EncodingClasses.writeTo(output, encodingClasses);
    }
 
    @Override
@@ -80,6 +99,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
       params = Params.readObject(input);
       topologyId = input.readInt();
       flags = input.readLong();
+      encodingClasses = EncodingClasses.readFrom(input);
    }
 
    public boolean isForwarded() {
@@ -122,7 +142,7 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (entry != null) {
-            R r = f.apply(EntryViews.readWrite(entry));
+            R r = f.apply(EntryViews.readWrite(entry, cacheEncoders));
             returns.add(snapshot(r));
          }
       });
@@ -158,5 +178,15 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    @Override
    public Mutation toMutation(K key) {
       return new Mutations.ReadWrite<>(f);
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry) {
+      if (encodingClasses != null) {
+         componentRegistry.wireDependencies(this);
+      }
+      if (f instanceof InjectableComponent) {
+         ((InjectableComponent) f).inject(componentRegistry);
+      }
    }
 }

@@ -1,9 +1,12 @@
 package org.infinispan.commands.functional;
 
+import org.infinispan.cache.impl.CacheEncoders;
+import org.infinispan.cache.impl.EncodingClasses;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
@@ -16,11 +19,16 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    // TODO: this is used for the non-modifying read-write commands. Move required flags to Params
    // and make sure that ClusteringDependentLogic checks them.
    long flags;
+   EncodingClasses encodingClasses;
+   CacheEncoders cacheEncoders = CacheEncoders.EMPTY;
 
-   protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId, Params params) {
+   protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId,
+                                      Params params,
+                                      EncodingClasses encodingClasses) {
       this.commandInvocationId = commandInvocationId;
       this.params = params;
       this.flags = params.toFlagsBitSet();
+      this.encodingClasses = encodingClasses;
    }
 
    protected <K, V> AbstractWriteManyCommand(AbstractWriteManyCommand<K, V> command) {
@@ -113,4 +121,11 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    public boolean hasSkipLocking() {
       return hasAnyFlag(FlagBitSets.SKIP_LOCKING);
    }
+
+   @Override
+   public EncodingClasses getEncodingClasses() {
+      return encodingClasses;
+   }
+
+   abstract public void init(ComponentRegistry componentRegistry);
 }
