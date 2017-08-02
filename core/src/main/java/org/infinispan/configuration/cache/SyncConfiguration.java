@@ -23,7 +23,7 @@ public class SyncConfiguration {
    public static final AttributeDefinition<Long> REPL_TIMEOUT = AttributeDefinition.builder("replTimeout", TimeUnit.SECONDS.toMillis(15)).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SyncConfiguration.class.getSimpleName(), ClusteringConfiguration.REMOTE_TIMEOUT);
+      return new AttributeSet(SyncConfiguration.class.getSimpleName(), REPL_TIMEOUT);
    }
 
    private final Attribute<Long> remoteTimeout;
@@ -31,14 +31,15 @@ public class SyncConfiguration {
 
    SyncConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-      remoteTimeout = attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+      remoteTimeout = attributes.attribute(REPL_TIMEOUT);
    }
 
    /**
-    * This is the timeout used to wait for an acknowledgment when making a remote call, after which
+    * This is the timeout used to wait for an acknowledgment when ma      remoteTimeout.set()
+king a remote call, after which
     * the call is aborted and an exception is thrown.
     *
-    * @deprecated Since 9.0, please use {@link ClusteringConfiguration#replTimeout()} instead.
+    * @deprecated Since 9.0, please use {@link ClusteringConfiguration#remoteTimeout()} instead.
     */
    @Deprecated
    public long replTimeout() {
@@ -49,7 +50,7 @@ public class SyncConfiguration {
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
     *
-    * @deprecated Since 9.0, please use {@link ClusteringConfiguration#replTimeout(long)} instead.
+    * @deprecated Since 9.0, please use {@link ClusteringConfiguration#remoteTimeout(long)} instead.
     */
    @Deprecated
    public SyncConfiguration replTimeout(long l) {

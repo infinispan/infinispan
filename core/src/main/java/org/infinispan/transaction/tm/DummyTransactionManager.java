@@ -2,9 +2,6 @@ package org.infinispan.transaction.tm;
 
 import javax.transaction.xa.XAResource;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * Simple transaction manager implementation that maintains transaction state in memory only.
  *
@@ -16,9 +13,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Deprecated
 public class DummyTransactionManager extends DummyBaseTransactionManager {
-
-   protected static final Log log = LogFactory.getLog(DummyTransactionManager.class);
-
    private static final long serialVersionUID = 4396695354693176535L;
 
    public static DummyTransactionManager getInstance() {

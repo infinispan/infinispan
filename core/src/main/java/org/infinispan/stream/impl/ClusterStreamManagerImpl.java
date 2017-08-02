@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -29,6 +29,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.RangeSet;
@@ -186,18 +187,14 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
          Set<K> keysExcluded = determineExcludedKeys(keysToExclude, segments);
          Address dest = targetInfo.getKey();
          log.tracef("Submitting async task to %s for %s excluding keys %s", dest, id, keysExcluded);
-         CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(
-                 Collections.singleton(dest), factory.buildStreamRequestCommand(id, parallelStream, type, segments,
-                         keysToInclude, keysExcluded, includeLoader, operation),
-                 rpc.getDefaultRpcOptions(true));
-         completableFuture.whenComplete((v, e) -> {
-            if (v != null) {
-               Response response = v.values().iterator().next();
-               if (!response.isSuccessful()) {
-                  log.tracef("Unsuccessful response for %s from %s - making segments suspect", id, targetInfo.getKey());
-                  receiveResponse(id, targetInfo.getKey(), true, targetInfo.getValue(), null);
-               }
-            } else if (e != null) {
+         StreamRequestCommand<K> command = factory.buildStreamRequestCommand(id, parallelStream, type, segments,
+                                                                             keysToInclude, keysExcluded, includeLoader,
+                                                                             operation);
+         command.setTopologyId(rpc.getTopologyId());
+         CompletionStage<Response> completableFuture =
+               rpc.invokeCommand(dest, command, SingleResponseCollector.INSTANCE, rpc.getSyncRpcOptions());
+         completableFuture.whenComplete((response, e) -> {
+            if (e != null) {
                boolean wasSuspect = containedSuspectException(e);
 
                if (!wasSuspect) {
@@ -210,7 +207,12 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                   }
                } else {
                   log.tracef("Exception contained a SuspectException, making all segments %s suspect",
-                          targetInfo.getValue());
+                             targetInfo.getValue());
+                  receiveResponse(id, targetInfo.getKey(), true, targetInfo.getValue(), null);
+               }
+            } else if (response != null) {
+               if (!response.isSuccessful()) {
+                  log.tracef("Unsuccessful response for %s from %s - making segments suspect", id, targetInfo.getKey());
                   receiveResponse(id, targetInfo.getKey(), true, targetInfo.getValue(), null);
                }
             }

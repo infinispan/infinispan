@@ -1,14 +1,11 @@
 package org.infinispan.test.concurrent;
 
 import java.util.List;
-import java.util.Map;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.AbstractControlledRpcManager;
 
@@ -86,13 +83,13 @@ public class OutboundRpcSequencerAction {
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
+      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
          try {
             StateSequencerUtil.advanceMultiple(stateSequencer, (Boolean) argument, statesAfter);
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
-         return responseMap;
+         return responseObject;
       }
 
       public void beforeStates(List<String> states) {

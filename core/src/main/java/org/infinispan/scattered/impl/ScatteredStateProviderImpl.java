@@ -1,22 +1,5 @@
 package org.infinispan.scattered.impl;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.RemoteMetadata;
-import org.infinispan.container.versioning.SimpleClusteredVersion;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.scattered.ScatteredStateProvider;
-import org.infinispan.scattered.ScatteredVersionManager;
-import org.infinispan.statetransfer.OutboundTransferTask;
-import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.statetransfer.StateProviderImpl;
-import org.infinispan.topology.CacheTopology;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,13 +10,33 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.RemoteMetadata;
+import org.infinispan.container.versioning.SimpleClusteredVersion;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
+import org.infinispan.scattered.ScatteredStateProvider;
+import org.infinispan.scattered.ScatteredVersionManager;
+import org.infinispan.statetransfer.OutboundTransferTask;
+import org.infinispan.statetransfer.StateChunk;
+import org.infinispan.statetransfer.StateProviderImpl;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class ScatteredStateProviderImpl extends StateProviderImpl implements ScatteredStateProvider {
+   private static final Log log = LogFactory.getLog(ScatteredStateProviderImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    protected ScatteredVersionManager svm;
    protected CountDownLatch outboundTaskLatch;
-   private RpcOptions syncIgnoreLeavers;
 
    @Inject
    public void init(ScatteredVersionManager svm) {
@@ -43,7 +46,6 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
    @Override
    public void start() {
       super.start();
-      syncIgnoreLeavers = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS).build();
    }
 
    @Override
@@ -123,8 +125,10 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
          log.tracef("Invalidating %d entries from segments %s", numEntries, stateChunks.stream().map(chunk -> chunk.getSegmentId()).collect(Collectors.toList()));
       }
       outboundInvalidations.incrementAndGet();
-      rpcManager.invokeRemotelyAsync(otherMembers, commandsFactory.buildInvalidateVersionsCommand(keys, topologyIds, versions, true),
-         syncIgnoreLeavers).whenComplete((r, t) -> {
+      rpcManager.invokeCommand(otherMembers,
+                               commandsFactory.buildInvalidateVersionsCommand(keys, topologyIds, versions, true),
+                               new MapResponseCollector(true, otherMembers.size()), rpcManager.getSyncRpcOptions())
+                .whenComplete((r, t) -> {
          try {
             if (t != null) {
                log.failedInvalidatingRemoteCache(t);

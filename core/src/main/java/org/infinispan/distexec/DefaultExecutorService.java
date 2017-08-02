@@ -51,13 +51,15 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.TimeService;
@@ -977,10 +979,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void execute() {
          if (trace) log.tracef("Sending %s to remote execution at node %s", this, getExecutionTarget());
          try {
-            rpc.invokeRemotelyAsync(
-                  Collections.singletonList(getExecutionTarget()), getCommand(), rpc.getRpcOptionsBuilder(
-                        ResponseMode.SYNCHRONOUS).timeout(getOwningTask().timeout(), TimeUnit.MILLISECONDS)
-                        .build()).whenComplete((Map<Address, Response> v, Throwable t) -> {
+            rpc.invokeCommand(getExecutionTarget(), getCommand(), new MapResponseCollector(false, 1),
+                              new RpcOptions(DeliverOrder.NONE, getOwningTask().timeout(), TimeUnit.MILLISECONDS))
+               .whenComplete((Map<Address, Response> v, Throwable t) -> {
                if (t != null) {
                   completeExceptionally(t);
                } else {

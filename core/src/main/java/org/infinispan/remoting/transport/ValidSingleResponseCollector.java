@@ -6,8 +6,6 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ValidResponse;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Dan Berindei
@@ -15,8 +13,6 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Experimental
 public abstract class ValidSingleResponseCollector<T> implements ResponseCollector<T> {
-   protected static final Log log = LogFactory.getLog(ValidSingleResponseCollector.class);
-
    @Override
    public final T addResponse(Address sender, Response response) {
       if (response instanceof ValidResponse) {

@@ -69,10 +69,9 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
@@ -97,9 +96,8 @@ import net.jcip.annotations.GuardedBy;
  * @since 5.2
  */
 public class StateConsumerImpl implements StateConsumer {
-
-   protected static final Log log = LogFactory.getLog(StateConsumerImpl.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(StateConsumerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
    protected static final int NO_STATE_TRANSFER_IN_PROGRESS = -1;
    protected static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL,
                                                                       IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP,
@@ -178,16 +176,12 @@ public class StateConsumerImpl implements StateConsumer {
 
    private volatile boolean ownsData = false;
 
-   protected RpcOptions synchronousRpcOptions;
-   protected RpcOptions synchronousIgnoreLeaversRpcOptions;
-
    public StateConsumerImpl() {
    }
 
    /**
     * Stops applying incoming state. Also stops tracking updated keys. Should be called at the end of state transfer or
     * when a ClearCommand is committed during state transfer.
-    * @param topologyId
     */
    @Override
    public void stopApplyingState(int topologyId) {
@@ -543,6 +537,7 @@ public class StateConsumerImpl implements StateConsumer {
    protected boolean notifyEndOfStateTransferIfNeeded(int topologyId, int rebalanceId) {
       if (waitingForState.get()) {
          if (hasActiveTransfers()) {
+            log.tracef("notifyEndOfStateTransferIfNeeded: no active transfers");
             return false;
          }
          if (waitingForState.compareAndSet(true, false)) {
@@ -551,8 +546,10 @@ public class StateConsumerImpl implements StateConsumer {
             stateTransferManager.notifyEndOfStateTransfer(topologyId, rebalanceId);
             return true;
          }
+         log.tracef("notifyEndOfStateTransferIfNeeded: waitingForState already set to false by another thread");
          return false;
       }
+      log.tracef("notifyEndOfStateTransferIfNeeded: waitingForState already set to false by another thread");
       return true;
    }
 
@@ -746,11 +743,6 @@ public class StateConsumerImpl implements StateConsumer {
       CacheMode mode = configuration.clustering().cacheMode();
       isFetchEnabled = mode.needsStateTransfer() &&
               (configuration.clustering().stateTransfer().fetchInMemoryState() || configuration.persistence().fetchPersistentState());
-      //rpc options does not changes in runtime. we can use always the same instance.
-      synchronousRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
-            .timeout(timeout, TimeUnit.MILLISECONDS).build();
-      synchronousIgnoreLeaversRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS)
-            .timeout(timeout, TimeUnit.MILLISECONDS).build();
 
       stateRequestExecutor = new LimitedExecutor("StateRequest-" + cacheName, stateTransferExecutor, 1);
    }
@@ -925,8 +917,8 @@ public class StateConsumerImpl implements StateConsumer {
             try {
                StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_CACHE_LISTENERS,
                                                                                   rpcManager.getAddress(), topology.getTopologyId(), null);
-               Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, synchronousIgnoreLeaversRpcOptions);
-               Response response = responses.get(source);
+               Response response = rpcManager.blocking(rpcManager.invokeCommand(
+                     source, cmd, SingleResponseCollector.INSTANCE, rpcManager.getSyncRpcOptions()));
                if (response instanceof SuccessfulResponse) {
                   return (Collection<DistributedCallable>) ((SuccessfulResponse) response).getResponseValue();
                } else {
@@ -947,8 +939,8 @@ public class StateConsumerImpl implements StateConsumer {
       }
       // get transactions and locks
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_TRANSACTIONS, rpcManager.getAddress(), topologyId, segments);
-      Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, synchronousRpcOptions);
-      return responses.get(source);
+      return rpcManager.blocking(
+            rpcManager.invokeCommand(source, cmd, SingleResponseCollector.INSTANCE, rpcManager.getSyncRpcOptions()));
    }
 
    // not used in scattered cache

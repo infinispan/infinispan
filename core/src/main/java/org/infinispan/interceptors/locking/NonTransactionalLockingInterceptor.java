@@ -7,6 +7,7 @@ import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,7 +46,7 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
-   protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
+   protected <K> Object handleWriteManyCommand(InvocationContext ctx, WriteCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
       assertNonTransactional(ctx);
       if (forwarded || hasSkipLocking(command)) {
          return invokeNext(ctx, command);

@@ -1,4 +1,4 @@
-package org.infinispan.remoting.transport.jgroups;
+package org.infinispan.remoting.transport.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,6 +15,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.ValidResponseCollector;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
@@ -23,14 +24,18 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Dan Berindei
  * @since 9.1
  */
-public class SyncMapResponseCollector extends ValidResponseCollector<Map<Address, Response>> {
+public class MapResponseCollector extends ValidResponseCollector<Map<Address, Response>> {
    private final HashMap<Address, Response> map;
    private final boolean ignoreLeavers;
    private Exception exception;
 
-   public SyncMapResponseCollector(boolean ignoreLeavers, int expectedSize) {
+   public MapResponseCollector(boolean ignoreLeavers, int expectedSize) {
       this.map = new HashMap<>(CollectionFactory.computeCapacity(expectedSize));
       this.ignoreLeavers = ignoreLeavers;
+   }
+
+   public MapResponseCollector(boolean ignoreLeavers) {
+      this(ignoreLeavers, 4);
    }
 
    @Override
@@ -39,20 +44,23 @@ public class SyncMapResponseCollector extends ValidResponseCollector<Map<Address
          map.put(sender, CacheNotFoundResponse.INSTANCE);
          return null;
       } else {
-         throw ResponseCollectors.remoteNodeSuspected(sender);
+         recordException(ResponseCollectors.remoteNodeSuspected(sender));
+         return null;
       }
    }
 
    @Override
    protected Map<Address, Response> addException(Address sender, Exception exception) {
-      Exception e = ResponseCollectors.wrapRemoteException(sender, exception);
+      recordException(ResponseCollectors.wrapRemoteException(sender, exception));
+      return null;
+   }
 
+   private void recordException(Exception e) {
       if (this.exception == null) {
          this.exception = e;
       } else {
          this.exception.addSuppressed(e);
       }
-      return null;
    }
 
    @Override

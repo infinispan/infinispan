@@ -1,7 +1,7 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.test.TestingUtil.wrapComponent;
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.HashMap;
@@ -131,8 +131,8 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
       }
 
       @Override
-      protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap, Object argument) {
-         Map<Address, Response> result = super.afterInvokeRemotely(command, responseMap, argument);
+      protected <T> T afterInvokeRemotely(ReplicableCommand command, T responseObject, Object argument) {
+         T result = super.afterInvokeRemotely(command, responseObject, argument);
          log.debugf("After invoke remotely %s. Responses=%s", command, result);
          if (triggered || !(command instanceof PrepareCommand))
             return result;
@@ -146,9 +146,9 @@ public class TxReplay3Test extends MultipleCacheManagersTest {
             throw new CacheException(e);
          }
          Map<Address, Response> newResult = new HashMap<>();
-         result.forEach((address, response) -> newResult.put(address, UnsureResponse.INSTANCE));
+         ((Map<Address, Response>) result).forEach((address, response) -> newResult.put(address, UnsureResponse.INSTANCE));
          log.debugf("After invoke remotely %s. New Responses=%s", command, newResult);
-         return newResult;
+         return (T) newResult;
       }
    }
 

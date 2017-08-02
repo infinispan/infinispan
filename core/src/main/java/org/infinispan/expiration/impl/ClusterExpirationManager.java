@@ -47,8 +47,8 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> {
-   protected static final Log log = LogFactory.getLog(ClusterExpirationManager.class);
-   protected static final boolean trace = log.isTraceEnabled();
+   private static final Log log = LogFactory.getLog(ClusterExpirationManager.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private ExecutorService asyncExecutor;
    private AdvancedCache<K, V> cache;

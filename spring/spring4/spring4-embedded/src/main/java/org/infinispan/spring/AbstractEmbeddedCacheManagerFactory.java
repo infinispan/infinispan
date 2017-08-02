@@ -22,8 +22,7 @@ import org.springframework.core.io.Resource;
  * @author Marius Bogoevici
  */
 public class AbstractEmbeddedCacheManagerFactory {
-
-   protected static final Log logger = LogFactory.getLog(AbstractEmbeddedCacheManagerFactory.class);
+   private static final Log logger = LogFactory.getLog(AbstractEmbeddedCacheManagerFactory.class);
 
    private Resource configurationFileLocation;
    private GlobalConfigurationBuilder gcb;

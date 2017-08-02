@@ -1,12 +1,12 @@
 package org.infinispan.xsite;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -17,11 +17,12 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.LocalInvocation;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
+import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -163,11 +164,9 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
 
    private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) throws Exception {
       final RpcManager rpcManager = cache.getRpcManager();
-      CompletableFuture<Map<Address, Response>> remoteFuture = rpcManager
-            .invokeRemotelyAsync(null, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
-      final Map<Address, Response> responseMap = new HashMap<>();
+      Map<Address, Response> responseMap = rpcManager.blocking(
+            rpcManager.invokeCommandOnAll(command, new MapResponseCollector(false), rpcManager.getSyncRpcOptions()));
       responseMap.put(rpcManager.getAddress(), LocalInvocation.newInstanceFromCache(cache, command).call());
-      responseMap.putAll(remoteFuture.get());
       return responseMap;
    }
 
@@ -175,7 +174,7 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
       private final List<XSiteState> chunk;
       private final Address address;
       private final AdvancedCache<?, ?> cache;
-      private volatile Future<Map<Address, Response>> remoteFuture;
+      private volatile Future<Response> remoteFuture;
 
 
       private StatePushTask(List<XSiteState> chunk, Address address, AdvancedCache<?, ?> cache) {
@@ -186,29 +185,22 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
 
       public void executeRemote() {
          final RpcManager rpcManager = cache.getRpcManager();
-         remoteFuture = rpcManager.invokeRemotelyAsync(Collections.singletonList(address),
-                                                       newStatePushCommand(cache, chunk), rpcManager.getDefaultRpcOptions(true));
+         remoteFuture =
+               rpcManager.invokeCommand(address, newStatePushCommand(cache, chunk), SingleResponseCollector.INSTANCE,
+                                        rpcManager.getSyncRpcOptions()).toCompletableFuture();
       }
 
       public void executeLocal() {
          try {
             final Response response = LocalInvocation.newInstanceFromCache(cache, newStatePushCommand(cache, chunk)).call();
-            this.remoteFuture = CompletableFuture.completedFuture(Collections.singletonMap(address, response));
+            this.remoteFuture = CompletableFuture.completedFuture(response);
          } catch (final Exception e) {
             this.remoteFuture = CompletableFutures.completedExceptionFuture(new ExecutionException(e));
          }
       }
 
       public Response awaitResponse() throws Exception {
-         Future<Map<Address, Response>> future = remoteFuture;
-         if (future == null) {
-            throw new NullPointerException("Should not happen!");
-         }
-         Map<Address, Response> responseMap = future.get();
-         if (responseMap.size() != 1 || !responseMap.containsKey(address)) {
-            throw new IllegalStateException("Shouldn't happen. Map is " + responseMap);
-         }
-         return responseMap.values().iterator().next();
+         return Objects.requireNonNull(remoteFuture).get();
       }
 
    }

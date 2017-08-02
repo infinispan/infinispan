@@ -1,10 +1,12 @@
-package org.infinispan.remoting.transport;
+package org.infinispan.remoting.transport.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 
 /**
  * Receive responses from multiple nodes, without checking that the responses are valid.
