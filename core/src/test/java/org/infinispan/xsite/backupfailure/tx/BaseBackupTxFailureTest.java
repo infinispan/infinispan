@@ -3,8 +3,9 @@ package org.infinispan.xsite.backupfailure.tx;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
-import javax.transaction.xa.XAException;
+import javax.transaction.RollbackException;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.test.Exceptions;
 import org.infinispan.xsite.AbstractTwoSitesTest;
@@ -33,11 +34,10 @@ public abstract class BaseBackupTxFailureTest extends AbstractTwoSitesTest {
       backup("LON").getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
    }
 
-   @Test(groups = {"xsite", "unstable"})
    public void testPrepareFailure() {
       failureInterceptor.enable();
       try {
-         Exceptions.expectException(XAException.class, () -> cache("LON", 0).put("k", "v"));
+         Exceptions.expectException(CacheException.class, RollbackException.class, () -> cache("LON", 0).put("k", "v"));
       } finally {
          failureInterceptor.disable();
       }
