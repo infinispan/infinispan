@@ -14,10 +14,6 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "smoke"}, testName = "distribution.DistAsyncFuncTest")
 public class DistAsyncFuncTest extends DistSyncFuncTest {
 
-   ReplListener r1, r2, r3, r4;
-   ReplListener[] r;
-   Map<Cache<?, ?>, ReplListener> listenerLookup;
-
    @Override
    public Object[] factory() {
       return new Object[] {
@@ -29,18 +25,6 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
    public DistAsyncFuncTest() {
       cacheMode = CacheMode.DIST_ASYNC;
       testRetVals = false;
-   }
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      super.createCacheManagers();
-      r1 = new ReplListener(c1, true, true);
-      r2 = new ReplListener(c2, true, true);
-      r3 = new ReplListener(c3, true, true);
-      r4 = new ReplListener(c4, true, true);
-      r = new ReplListener[]{r1, r2, r3, r4};
-      listenerLookup = new HashMap<Cache<?, ?>, ReplListener>();
-      for (ReplListener rl : r) listenerLookup.put(rl.getCache(), rl);
    }
 
    @Override
