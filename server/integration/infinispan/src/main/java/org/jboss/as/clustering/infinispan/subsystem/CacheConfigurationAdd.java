@@ -79,7 +79,6 @@ import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
 import org.infinispan.persistence.rocksdb.configuration.CompressionType;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
-import org.infinispan.server.commons.dmr.ModelNodes;
 import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.transaction.LockingMode;
@@ -221,7 +220,6 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         // get model attributes
         ModelNode resolvedValue;
         final String templateConfiguration = (resolvedValue = CacheConfigurationResource.CONFIGURATION.resolveModelAttribute(context, cacheModel)).isDefined() ? resolvedValue.asString() : null;
-        final ModuleIdentifier moduleId = ModelNodes.asModuleIdentifier(CacheConfigurationResource.CACHE_MODULE.resolveModelAttribute(context, cacheModel));
 
         // create a list for dependencies which may need to be added during processing
         List<Dependency<?>> dependencies = new LinkedList<>();
@@ -242,7 +240,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         Collection<ServiceController<?>> controllers = new ArrayList<>(3);
 
         // install the cache configuration service (configures a cache)
-        controllers.add(installCacheConfigurationService(target, containerName, cacheName, defaultCache, moduleId,
+        controllers.add(installCacheConfigurationService(target, containerName, cacheName, defaultCache,
                         templateConfiguration, builder, config, dependencies));
         log.debugf("Cache configuration service for %s installed for container %s", cacheName, containerName);
 
@@ -274,12 +272,12 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
         return configurationAddress.subAddress(0, configurationAddress.size() - 2);
     }
 
-    private ServiceController<?> installCacheConfigurationService(ServiceTarget target, String containerName, String cacheName, String defaultCache, ModuleIdentifier moduleId,
+    private ServiceController<?> installCacheConfigurationService(ServiceTarget target, String containerName, String cacheName, String defaultCache,
             String templateConfiguration, ConfigurationBuilder builder, Configuration config, List<Dependency<?>> dependencies) {
 
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<>();
         final CacheConfigurationDependencies cacheConfigurationDependencies = new CacheConfigurationDependencies(container);
-        final Service<Configuration> service = new CacheConfigurationService(cacheName, builder, moduleId, cacheConfigurationDependencies);
+        final Service<Configuration> service = new CacheConfigurationService(cacheName, builder, cacheConfigurationDependencies);
         final ServiceBuilder<?> configBuilder = target.addService(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName), service)
                 .addDependency(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, container)
                 .addDependency(Services.JBOSS_SERVICE_MODULE_LOADER, ModuleLoader.class, cacheConfigurationDependencies.getModuleLoaderInjector())
@@ -310,7 +308,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
         // add in any additional dependencies resulting from ModelNode parsing
         for (Dependency<?> dependency : dependencies) {
-            this.addDependency(configBuilder, dependency);
+            addDependency(configBuilder, dependency);
         }
         return configBuilder.install();
     }

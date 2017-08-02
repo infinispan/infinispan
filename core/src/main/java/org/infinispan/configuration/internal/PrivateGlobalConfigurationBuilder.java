@@ -20,7 +20,7 @@ public class PrivateGlobalConfigurationBuilder implements Builder<PrivateGlobalC
    }
 
    public PrivateGlobalConfigurationBuilder serverMode(boolean serverMode) {
-      this.attributes.attribute(PrivateGlobalConfiguration.SERVER_MODE).set(true);
+      this.attributes.attribute(PrivateGlobalConfiguration.SERVER_MODE).set(serverMode);
       return this;
    }
 
