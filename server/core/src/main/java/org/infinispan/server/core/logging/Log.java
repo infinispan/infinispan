@@ -130,4 +130,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Administration task '%s' invoked without required parameter '%s'", id = 5030)
    NullPointerException missingRequiredAdminTaskParameter(String name, String parameter);
+
+   @Message(value = "Cannot allocate an ephemeral server port", id = 5031)
+   CacheConfigurationException cannotAllocateEphemeralServerPort();
 }

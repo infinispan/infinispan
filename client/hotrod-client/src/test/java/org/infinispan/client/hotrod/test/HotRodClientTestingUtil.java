@@ -44,7 +44,7 @@ public class HotRodClientTestingUtil {
    private static final Log log = LogFactory.getLog(HotRodClientTestingUtil.class, Log.class);
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, HotRodServerConfigurationBuilder builder) {
-      return startHotRodServer(cacheManager, findFreePort(), builder);
+      return startHotRodServer(cacheManager, 0, builder);
    }
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, int port, HotRodServerConfigurationBuilder builder) {

@@ -125,6 +125,9 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       if (proxyHost == null && host == null) {
          throw log.missingHostAddress();
       }
+      if (proxyPort < 0 && port == 0 && !startTransport) {
+         throw log.cannotUseEphemeralPortWithoutStartingTransport();
+      }
       authentication.validate();
    }
 

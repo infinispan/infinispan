@@ -1,6 +1,8 @@
 package org.infinispan.server.core;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 
 import javax.management.DynamicMBean;
 import javax.management.MBeanServer;
@@ -83,7 +85,15 @@ public abstract class AbstractProtocolServer<A extends ProtocolServerConfigurati
    }
 
    protected void startTransport() {
-      InetSocketAddress address = new InetSocketAddress(configuration.host(), configuration.port());
+      int port = configuration.port();
+      if (port == 0) {
+         try (ServerSocket socket = new ServerSocket(0)) {
+            port = socket.getLocalPort();
+         } catch (IOException e) {
+            throw log.cannotAllocateEphemeralServerPort();
+         }
+      }
+      InetSocketAddress address = new InetSocketAddress(configuration.host(), port);
       transport = new NettyTransport(address, configuration, getQualifiedName(), cacheManager);
       transport.initializeHandler(getInitializer());
 
