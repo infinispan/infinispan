@@ -37,7 +37,7 @@
 
     <dependency>
       <packageName>angular-patternfly</packageName>
-      <version>1.5.11</version>
+      <version>4.0.0-rc.1</version>
       <licenses>
         <license>
           <name>The MIT License</name>
@@ -145,20 +145,9 @@
       </licenses>
     </dependency>
 
-  	<dependency>
-      <packageName>c3-angular</packageName>
-      <version>3.5.17</version>
-      <licenses>
-        <license>
-          <name>BSD 3-clause "New" or "Revised" License</name>
-          <url>https://opensource.org/licenses/BSD-3-Clause</url>
-        </license>
-      </licenses>
-    </dependency>
-
-	<dependency>
+    <dependency>
       <packageName>d3</packageName>
-      <version>1.0.1</version>
+      <version>3.5.17</version>
       <licenses>
         <license>
           <name>The MIT License</name>
@@ -191,7 +180,7 @@
 
     <dependency>
       <packageName>jquery</packageName>
-      <version>3.1.0</version>
+      <version>3.1.1</version>
       <licenses>
         <license>
           <name>The MIT License</name>
@@ -213,10 +202,10 @@
 
     <dependency>
       <packageName>patternfly</packageName>
-      <version>4.0.0</version>
+      <version>4.0.0-rc.1</version>
       <licenses>
         <license>
-          <name>Apache Software License, Version 2.0</name>
+          <name>The Apache Software License, Version 2.0</name>
           <url>https://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
       </licenses>
@@ -226,10 +215,10 @@
     <dependency>
       <groupId>antlr</groupId>
       <artifactId>antlr</artifactId>
-      <version>2.7.7</version>
+      <version>3.4</version>
       <licenses>
         <license>
-          <name>The BSD License</name>
+          <name>BSD 3-Clause "New" or "Revised" License</name>
           <url>http://www.antlr.org/license.html</url>
           <distribution>repo</distribution>
         </license>
@@ -874,7 +863,7 @@
       <version>3.4</version>
       <licenses>
         <license>
-          <name>The BSD license</name>
+          <name>BSD 3-Clause "New" or "Revised" License</name>
           <url>http://www.antlr3.org/license.html</url>
         </license>
       </licenses>
@@ -885,7 +874,7 @@
       <version>3.2.1</version>
       <licenses>
         <license>
-          <name>The BSD license</name>
+          <name>BSD 3-Clause "New" or "Revised" License</name>
           <url>http://www.antlr3.org/license.html</url>
           <distribution>repo</distribution>
         </license>

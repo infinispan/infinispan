@@ -60,6 +60,7 @@
             <file file="${org.infinispan:infinispan-remote:jar}" />
             <mapper type="flatten" />
          </copy>
+         <base-distribution-licenses dir="${output.dir}" />
          <base-distribution-lib-remote dir="${output.dir}" />
          <base-distribution-common-files dir="${output.dir}" type="remote" />
          <base-distribution-javadocs dir="${output.dir}" type="remote" />
@@ -68,6 +69,7 @@
          <delete dir="${output.dir}/docs-all" />
          <delete dir="${output.dir}/bin" />
          <delete dir="${output.dir}/configs" />
+         <delete file="${output.dir}/docs/index.html" />
          <delete file="${output.dir}/README-GUI-Demo.txt" />
       </sequential>
    </target>

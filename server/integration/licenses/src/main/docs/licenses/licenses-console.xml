@@ -36,7 +36,7 @@
 
     <dependency>
       <packageName>angular-patternfly</packageName>
-      <version>1.5.11</version>
+      <version>4.0.0-rc.1</version>
       <licenses>
         <license>
           <name>The MIT License</name>
@@ -144,20 +144,9 @@
       </licenses>
     </dependency>
 
-  	<dependency>
-      <packageName>c3-angular</packageName>
-      <version>3.5.17</version>
-      <licenses>
-        <license>
-          <name>The 3-Clause BSD License</name>
-          <url>https://opensource.org/licenses/BSD-3-Clause</url>
-        </license>
-      </licenses>
-    </dependency>
-
 	<dependency>
       <packageName>d3</packageName>
-      <version>1.0.1</version>
+      <version>3.5.17</version>
       <licenses>
         <license>
           <name>The MIT License</name>
@@ -190,7 +179,7 @@
 
     <dependency>
       <packageName>jquery</packageName>
-      <version>3.1.0</version>
+      <version>3.1.1</version>
       <licenses>
         <license>
           <name>The MIT License</name>
@@ -212,7 +201,7 @@
 
     <dependency>
       <packageName>patternfly</packageName>
-      <version>4.0.0</version>
+      <version>4.0.0-rc.1</version>
       <licenses>
         <license>
           <name>The Apache Software License, Version 2.0</name>
