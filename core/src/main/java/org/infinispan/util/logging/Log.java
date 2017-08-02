@@ -1633,4 +1633,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Unable to perform operation %s for site %s", id = 477)
    void xsiteAdminOperationError(String operationName, String siteName, @Cause Throwable t);
+
+   @Message(value = "Couldn't find a local transaction corresponding to remote site transaction %s", id = 478)
+   CacheException unableToFindRemoteSiteTransaction(GlobalTransaction globalTransaction);
+
+   @Message(value = "LocalTransaction not found but present in the tx table for remote site transaction %s", id = 479)
+   IllegalStateException unableToFindLocalTransactionFromRemoteSiteTransaction(GlobalTransaction globalTransaction);
 }

@@ -86,7 +86,8 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
    // All conditional commands are unsupported
    private static final class BackupCacheUpdater extends AbstractVisitor {
 
-      private static Log log = LogFactory.getLog(BackupCacheUpdater.class);
+      private static final Log log = LogFactory.getLog(BackupCacheUpdater.class);
+      private static final boolean trace = log.isTraceEnabled();
 
       private final ConcurrentMap<GlobalTransaction, GlobalTransaction> remote2localTx;
 
@@ -161,7 +162,9 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
          if (!isTransactional()) {
             log.cannotRespondToCommit(command.getGlobalTransaction(), backupCache.getName());
          } else {
-            log.tracef("Committing remote transaction %s", command.getGlobalTransaction());
+            if (trace) {
+               log.tracef("Committing remote transaction %s", command.getGlobalTransaction());
+            }
             completeTransaction(command.getGlobalTransaction(), true);
          }
          return null;
@@ -173,7 +176,9 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
          if (!isTransactional()) {
             log.cannotRespondToRollback(command.getGlobalTransaction(), backupCache.getName());
          } else {
-            log.tracef("Rolling back remote transaction %s", command.getGlobalTransaction());
+            if (trace) {
+               log.tracef("Rolling back remote transaction %s", command.getGlobalTransaction());
+            }
             completeTransaction(command.getGlobalTransaction(), false);
          }
          return null;
@@ -191,14 +196,20 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
          TransactionTable txTable = txTable();
          GlobalTransaction localTxId = remote2localTx.remove(globalTransaction);
          if (localTxId == null) {
-            throw new CacheException("Couldn't find a local transaction corresponding to remote transaction " + globalTransaction);
+            throw log.unableToFindRemoteSiteTransaction(globalTransaction);
          }
          LocalTransaction localTx = txTable.getLocalTransaction(localTxId);
          if (localTx == null) {
-            throw new IllegalStateException("Local tx not found but present in the tx table!");
+            throw log.unableToFindLocalTransactionFromRemoteSiteTransaction(globalTransaction);
          }
          TransactionManager txManager = txManager();
          txManager.resume(localTx.getTransaction());
+         if (!localTx.isEnlisted()) {
+            if (trace) {
+               log.tracef("%s isn't enlisted! Removing it manually.", localTx);
+            }
+            txTable().removeLocalTransaction(localTx);
+         }
          if (commit) {
             txManager.commit();
          } else {
@@ -221,10 +232,14 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
 
                if (onePhaseCommit) {
                   if (replaySuccessful) {
-                     log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
+                     if (trace) {
+                        log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
+                     }
                      tm.commit();
                   } else {
-                     log.tracef("Rolling back remotely originated tx %s", command.getGlobalTransaction());
+                     if (trace) {
+                        log.tracef("Rolling back remotely originated tx %s", command.getGlobalTransaction());
+                     }
                      tm.rollback();
                   }
                } else { // Wait for a remote commit/rollback.

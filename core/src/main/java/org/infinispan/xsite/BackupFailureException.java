@@ -44,7 +44,7 @@ public class BackupFailureException extends RpcException {
    @Override
    public String getMessage() {
       if(failures == null || failures.isEmpty())
-         return super.toString();
+         return super.getMessage();
       return "The local cache " + localCacheName + " failed to backup data to the remote sites:\n" +
             failures.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue())
                     .collect(Collectors.joining("\n"));
