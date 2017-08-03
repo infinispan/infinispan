@@ -2,45 +2,42 @@ package org.infinispan.eviction.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.util.Util;
 import org.testng.annotations.Test;
 
-@Test(groups = "unstable", testName = "eviction.MarshalledValuesEvictionTest",
-      description = "See ISPN-4042. Is this test even valid?  Evictions don't go thru the " +
-            "marshalled value interceptor when initiated form the data container! " +
-            "-- original group: functional")
+@Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionTest")
 public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
 
-   private static final int CACHE_SIZE=128;
+   private static final int CACHE_SIZE = 128;
 
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.eviction().strategy(EvictionStrategy.LRU).maxEntries(CACHE_SIZE) // CACHE_SIZE max entries
-         .expiration().wakeUpInterval(100L)
-         .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
-         .storeAsBinary().enable()
-         .build();
+      cfg.memory().size(CACHE_SIZE).evictionType(EvictionType.COUNT).storageType(StorageType.BINARY)
+            .expiration().wakeUpInterval(100L)
+            .locking().useLockStriping(false) // to minimise chances of deadlock in the unit test
+            .build();
       cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cacheManager.getCache();
       return cacheManager;
    }
 
    public void testEvictCustomKeyValue() {
-      for (int i = 0; i<CACHE_SIZE*2;i++) {
+      for (int i = 0; i < CACHE_SIZE * 2; i++) {
          EvictionPojo p1 = new EvictionPojo();
-         p1.i = (int)Util.random(2000);
+         p1.i = (int) Util.random(2000);
          EvictionPojo p2 = new EvictionPojo();
          p2.i = 24;
          cache.put(p1, p2);
@@ -50,14 +47,15 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    }
 
    public void testEvictPrimitiveKeyCustomValue() {
-      for (int i = 0; i<CACHE_SIZE*2;i++) {
+      for (int i = 0; i < CACHE_SIZE * 2; i++) {
          EvictionPojo p1 = new EvictionPojo();
-         p1.i = (int)Util.random(2000);
+         p1.i = (int) Util.random(2000);
          cache.put(i, p1);
       }
    }
 
-   public static class EvictionPojo implements Externalizable {
+   @SerializeWith(EvictionPojo.Externalizer.class)
+   public static class EvictionPojo {
       int i;
 
       @Override
@@ -75,14 +73,18 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
          return result;
       }
 
-      @Override
-      public void writeExternal(ObjectOutput out) throws IOException {
-         out.writeInt(i);
-      }
+      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<EvictionPojo> {
+         @Override
+         public void writeObject(ObjectOutput out, EvictionPojo pojo) throws IOException {
+            out.writeInt(pojo.i);
+         }
 
-      @Override
-      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-         i = in.readInt();
+         @Override
+         public EvictionPojo readObject(ObjectInput in) throws IOException, ClassNotFoundException {
+            EvictionPojo pojo = new EvictionPojo();
+            pojo.i = in.readInt();
+            return pojo;
+         }
       }
 
    }
