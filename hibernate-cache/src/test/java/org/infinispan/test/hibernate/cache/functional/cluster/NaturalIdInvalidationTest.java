@@ -25,8 +25,9 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.jboss.util.collection.ConcurrentSet;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -40,6 +41,9 @@ import static org.junit.Assert.fail;
 public class NaturalIdInvalidationTest extends DualNodeTest {
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NaturalIdInvalidationTest.class);
+
+	@Rule
+   public TestName name = new TestName();
 
 	@Override
 	public List<Object[]> getParameters() {
@@ -55,9 +59,8 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 	}
 
 	@Test
-   @Ignore("Randomly failing on CI - ISPN-8114")
 	public void testAll() throws Exception {
-		log.info( "*** testAll()" );
+      log.infof("*** %s", name.getMethodName());
 
 		// Bind a listener to the "local" cache
 		// Our region factory makes its CacheManager available to us
@@ -79,7 +82,10 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 			assertTrue(remoteListener.isEmpty());
 			assertTrue(localListener.isEmpty());
 
-			CountDownLatch remoteUpdateLatch = expectAfterUpdate(remoteNaturalIdCache.getAdvancedCache(), 2);
+			CountDownLatch remoteUpdateLatch =
+               cacheMode.isInvalidation()
+                     ? expectAfterEndInvalidation(remoteNaturalIdCache.getAdvancedCache(), 1)
+                     : expectAfterUpdate(remoteNaturalIdCache.getAdvancedCache(), 2);
 			saveSomeCitizens(localFactory);
 
 			assertTrue(remoteUpdateLatch.await(2, TimeUnit.SECONDS));
@@ -130,6 +136,9 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 			log.error("Error", e);
 			throw e;
 		} finally {
+		   if (cacheMode.isInvalidation())
+            removeAfterEndInvalidationHandler(remoteNaturalIdCache.getAdvancedCache());
+
 			withTxSession(localFactory, s -> {
 				s.createQuery( "delete NaturalIdOnManyToOne" ).executeUpdate();
 				s.createQuery( "delete Citizen" ).executeUpdate();

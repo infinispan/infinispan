@@ -586,6 +586,9 @@ public class PutFromLoadValidator {
 						continue;
 					}
 					long now = regionFactory.nextTimestamp();
+               if (trace) {
+                  log.tracef("endInvalidatingKey(%s#%s, %s) remove invalidator from %s", cache.getName(), key, lockOwnerToString(lockOwner), pending);
+               }
 					pending.invalidate(now);
 					pending.addInvalidator(lockOwner, valueForPFER, now);
 				}
