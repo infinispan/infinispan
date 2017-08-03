@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(testName = "tx.TransactionXaAdapterTmIntegrationTest", groups = "unstable", description = "Disabled due to instability - see ISPN-1123 -- original group: unit")
+@Test(groups = "unit", testName = "tx.TransactionXaAdapterTmIntegrationTest")
 public class TransactionXaAdapterTmIntegrationTest {
    private LocalXaTransaction localTx;
    private TransactionXaAdapter xaAdapter;
@@ -45,8 +45,11 @@ public class TransactionXaAdapterTmIntegrationTest {
       Cache mockCache = mock(Cache.class);
       Configuration configuration = new ConfigurationBuilder().build();
       XaTransactionTable txTable = new XaTransactionTable();
+      txCoordinator = new TransactionCoordinator();
+
+
       txTable.initialize(null, configuration, null, null,
-                         null, null, null, null, mockCache, null, null, null, null);
+                         txCoordinator, null, null, null, mockCache, null, null, null, null);
       txTable.start();
       txTable.startXidMapping();
       TransactionFactory gtf = new TransactionFactory();
@@ -59,7 +62,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       InvocationContextFactory icf = new TransactionalInvocationContextFactory();
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
       InterceptorChain invoker = mock(InterceptorChain.class);
-      txCoordinator = new TransactionCoordinator();
+
       txCoordinator.init(commandsFactory, icf, invoker, txTable, null, configuration);
       xaAdapter = new TransactionXaAdapter(localTx, txTable);
 
