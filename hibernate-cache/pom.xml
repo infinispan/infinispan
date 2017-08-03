@@ -37,6 +37,12 @@
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-testing</artifactId>
          <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>log4j</groupId>
+               <artifactId>log4j</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.mockito</groupId>
