@@ -6,6 +6,8 @@
  */
 package org.infinispan.test.hibernate.cache.functional;
 
+import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +17,10 @@ import java.util.function.Predicate;
 import org.hibernate.Session;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.spi.MetadataImplementor;
+import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.hibernate.cache.util.EndInvalidationCommand;
 import org.infinispan.hibernate.cache.util.FutureUpdate;
+import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.util.TombstoneUpdate;
 import org.hibernate.cache.internal.SimpleCacheKeysFactory;
 import org.hibernate.cache.spi.RegionFactory;
@@ -33,6 +38,9 @@ import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLoca
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
 
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.hibernate.cache.util.ExpectingInterceptor;
 import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
@@ -239,4 +247,43 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 			return new CountDownLatch(0);
 		}
 	}
+
+   protected CountDownLatch expectAfterEndInvalidation(AdvancedCache cache, int numInvalidates) {
+      CountDownLatch latch = new CountDownLatch(numInvalidates);
+      wrapInboundInvocationHandler(cache, handler -> new ExpectingInboundInvocationHandler(handler, latch));
+      return latch;
+   }
+
+   protected void removeAfterEndInvalidationHandler(AdvancedCache cache) {
+      wrapInboundInvocationHandler(cache, handler -> ((ExpectingInboundInvocationHandler) handler).delegate);
+   }
+
+   private static final class ExpectingInboundInvocationHandler implements PerCacheInboundInvocationHandler {
+
+      private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider
+            .getLog(ExpectingInboundInvocationHandler.class);
+
+      final PerCacheInboundInvocationHandler delegate;
+      final CountDownLatch latch;
+
+      public ExpectingInboundInvocationHandler(PerCacheInboundInvocationHandler delegate, CountDownLatch latch) {
+         this.delegate = delegate;
+         this.latch = latch;
+      }
+
+      @Override
+      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+         if (command instanceof EndInvalidationCommand) {
+            delegate.handle(command, response -> {
+               latch.countDown();
+               log.tracef("Latch after count down %s", latch);
+               reply.reply(response);
+            }, order);
+         } else {
+            delegate.handle(command, reply, order);
+         }
+      }
+
+   }
+
 }
