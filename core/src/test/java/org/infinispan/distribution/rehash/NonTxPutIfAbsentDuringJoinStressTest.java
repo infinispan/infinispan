@@ -24,7 +24,8 @@ import org.testng.annotations.Test;
  *
  * @author Dan Berindei
  */
-@Test(groups = "functional", testName = "distribution.rehash.NonTxPutIfAbsentDuringJoinStressTest")
+//unstable. test fails with DIST_SYNC and SCATTERED_SYNC (ISPN-3918)
+@Test(groups = {"functional", "unstable"}, testName = "distribution.rehash.NonTxPutIfAbsentDuringJoinStressTest")
 @CleanupAfterMethod
 @InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersTest {
@@ -48,9 +49,6 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
       return getDefaultClusteredCacheConfig(cacheMode, false);
    }
 
-// The test is unstable only in dist/repl cache, scattered cache is fine
-//   @Test(groups = "unstable", description = "See ISPN-3918")
-   @InCacheMode({ CacheMode.SCATTERED_SYNC })
    public void testNodeJoiningDuringPutIfAbsent() throws Exception {
       Future[] futures = new Future[NUM_WRITERS];
       for (int i = 0; i < NUM_WRITERS; i++) {
