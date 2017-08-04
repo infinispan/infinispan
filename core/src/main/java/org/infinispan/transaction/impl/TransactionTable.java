@@ -390,7 +390,12 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             if (topologyId < minTxTopologyId) {
                if (trace)
                   log.tracef("Changing minimum topology ID from %d to %d", minTxTopologyId, topologyId);
-               minTxTopologyId = topologyId;
+               minTopologyRecalculationLock.lock();
+               try {
+                  minTxTopologyId = topologyId;
+               } finally {
+                  minTopologyRecalculationLock.unlock();
+               }
             }
             return newTransaction;
          }
