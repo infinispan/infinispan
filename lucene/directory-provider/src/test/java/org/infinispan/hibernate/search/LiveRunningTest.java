@@ -3,7 +3,6 @@ package org.infinispan.hibernate.search;
 import static org.infinispan.hibernate.search.ClusterTestHelper.clusterSize;
 import static org.infinispan.hibernate.search.ClusterTestHelper.createClusterNode;
 import static org.infinispan.hibernate.search.ClusterTestHelper.waitMembersCount;
-
 import static org.junit.Assert.assertEquals;
 
 import java.util.LinkedList;
@@ -21,7 +20,6 @@ import org.infinispan.hibernate.search.ClusterTestHelper.ExclusiveIndexUse;
 import org.infinispan.hibernate.search.ClusterTestHelper.IndexingFlushMode;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -50,7 +48,6 @@ public class LiveRunningTest {
    private int storedEmailsCount = 0;
 
    @Test
-   @Ignore("ISPN-8075")
    public void liveRun() {
       try {
          for (int i = 0; i < TEST_RUNS; i++) {
@@ -104,8 +101,7 @@ public class LiveRunningTest {
    }
 
    private void writeOnMaster() {
-      FullTextSession fullTextSession = master.openFullTextSession();
-      try {
+      try (FullTextSession fullTextSession = master.openFullTextSession()) {
          Transaction transaction = fullTextSession.beginTransaction();
          SimpleEmail simpleEmail = new SimpleEmail();
          simpleEmail.to = "outher space";
@@ -113,8 +109,6 @@ public class LiveRunningTest {
          fullTextSession.save(simpleEmail);
          transaction.commit();
          storedEmailsCount++;
-      } finally {
-         fullTextSession.close();
       }
    }
 
