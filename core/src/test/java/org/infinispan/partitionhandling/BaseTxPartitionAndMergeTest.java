@@ -34,8 +34,8 @@ import org.testng.AssertJUnit;
 public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingTest {
    private static final Log log = LogFactory.getLog(BaseTxPartitionAndMergeTest.class);
 
-   protected static final String INITIAL_VALUE = "init-value";
-   protected static final String FINAL_VALUE = "final-value";
+   static final String INITIAL_VALUE = "init-value";
+   static final String FINAL_VALUE = "final-value";
 
    private static NotifierFilter notifyCommandOn(Cache<?, ?> cache, Class<? extends CacheRpcCommand> blockClass) {
       NotifierFilter filter = new NotifierFilter(blockClass);
@@ -99,8 +99,8 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       assertNoTransactionsInPartitionHandler(cacheName);
       assertNoLocks(cacheName);
 
-      assertValue(keyInfo.getKey1(), value, this.<Object, String>caches(cacheName));
-      assertValue(keyInfo.getKey2(), value, this.<Object, String>caches(cacheName));
+      assertValue(keyInfo.getKey1(), value, this.caches(cacheName));
+      assertValue(keyInfo.getKey2(), value, this.caches(cacheName));
    }
 
    protected void assertNoLocks(String cacheName) {
@@ -217,13 +217,16 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
 
       @Override
       public boolean before(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+         log.tracef("[Blocking] Checking command %s.", command);
          if (aClass.isAssignableFrom(command.getClass())) {
+            log.tracef("[Blocking] Blocking command %s", command);
             notifier.open();
             try {
                blocker.await(30, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             }
+            log.tracef("[Blocking] Unblocking command %s", command);
          }
          return true;
       }
@@ -251,7 +254,9 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
 
       @Override
       public boolean before(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+         log.tracef("[Notifier] Checking command %s.", command);
          if (aClass.isAssignableFrom(command.getClass())) {
+            log.tracef("[Notifier] Notifying command %s.", command);
             notifier.countDown();
          }
          return true;
@@ -281,7 +286,9 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
 
       @Override
       public boolean before(CacheRpcCommand command, Reply reply, DeliverOrder order) {
+         log.tracef("[Discard] Checking command %s.", command);
          if (!notifier.isOpened() && aClass.isAssignableFrom(command.getClass())) {
+            log.tracef("[Discard] Discarding command %s.", command);
             notifier.open();
             return false;
          }
@@ -304,12 +311,12 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
       private final Object key1;
       private final Object key2;
 
-      public KeyInfo(Object key1, Object key2) {
+      KeyInfo(Object key1, Object key2) {
          this.key1 = key1;
          this.key2 = key2;
       }
 
-      public void putFinalValue(Cache<Object, String> cache) {
+      void putFinalValue(Cache<Object, String> cache) {
          cache.put(key1, FINAL_VALUE);
          cache.put(key2, FINAL_VALUE);
       }
@@ -326,7 +333,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
    protected static class FilterCollection implements AwaitAndUnblock {
       private final Collection<AwaitAndUnblock> collection;
 
-      public FilterCollection(Collection<AwaitAndUnblock> collection) {
+      FilterCollection(Collection<AwaitAndUnblock> collection) {
          this.collection = collection;
       }
 
