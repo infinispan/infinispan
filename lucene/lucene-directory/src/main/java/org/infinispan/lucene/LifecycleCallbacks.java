@@ -7,10 +7,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
-import org.infinispan.lucene.impl.AddOperation;
-import org.infinispan.lucene.impl.DeleteOperation;
 import org.infinispan.lucene.impl.FileListCacheValue;
-import org.infinispan.lucene.impl.FileListCacheValueDelta;
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -41,9 +38,6 @@ public class LifecycleCallbacks extends AbstractModuleLifecycle {
       externalizerMap.put(ExternalizerIds.FILE_METADATA, new FileMetadata.Externalizer());
       externalizerMap.put(ExternalizerIds.FILE_READLOCK_KEY, new FileReadLockKey.Externalizer());
       externalizerMap.put(ExternalizerIds.FILE_LIST_CACHE_VALUE, new FileListCacheValue.Externalizer());
-      externalizerMap.put(ExternalizerIds.FILE_LIST_VALUE_DELTA, new FileListCacheValueDelta.Externalizer());
-      externalizerMap.put(ExternalizerIds.FILE_LIST_DELTA_ADD, new AddOperation.AddOperationExternalizer());
-      externalizerMap.put(ExternalizerIds.FILE_LIST_DELTA_DEL, new DeleteOperation.DeleteElementOperationExternalizer());
       return externalizerMap;
    }
 

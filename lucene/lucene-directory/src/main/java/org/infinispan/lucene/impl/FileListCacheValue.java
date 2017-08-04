@@ -11,7 +11,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.lucene.ExternalizerIds;
@@ -26,10 +25,9 @@ import net.jcip.annotations.ThreadSafe;
  * @since 7.0
  */
 @ThreadSafe
-public final class FileListCacheValue implements DeltaAware {
+public final class FileListCacheValue {
 
    private final Set<String> filenames = new HashSet<>();
-   private FileListCacheValueDelta fileListValueDelta = new FileListCacheValueDelta();
    private final Lock writeLock;
    private final Lock readLock;
 
@@ -70,11 +68,7 @@ public final class FileListCacheValue implements DeltaAware {
    public boolean remove(String fileName) {
       writeLock.lock();
       try {
-         boolean removed = filenames.remove(fileName);
-         if (removed) {
-            fileListValueDelta.removeOperation(fileName);
-         }
-         return removed;
+         return filenames.remove(fileName);
       } finally {
          writeLock.unlock();
       }
@@ -88,11 +82,7 @@ public final class FileListCacheValue implements DeltaAware {
    public boolean add(String fileName) {
       writeLock.lock();
       try {
-         boolean added = filenames.add(fileName);
-         if (added) {
-            fileListValueDelta.addOperation(fileName);
-         }
-         return added;
+         return filenames.add(fileName);
       } finally {
          writeLock.unlock();
       }
@@ -103,12 +93,6 @@ public final class FileListCacheValue implements DeltaAware {
       try {
          boolean doneAdd = filenames.add(toAdd);
          boolean doneRemove = filenames.remove(toRemove);
-         if (doneAdd) {
-            fileListValueDelta.addOperation(toAdd);
-         }
-         if (doneRemove) {
-            fileListValueDelta.removeOperation(toRemove);
-         }
          return doneAdd || doneRemove;
       } finally {
          writeLock.unlock();
@@ -175,23 +159,6 @@ public final class FileListCacheValue implements DeltaAware {
       } finally {
          readLock.unlock();
       }
-   }
-
-   @Override
-   public FileListCacheValueDelta delta() {
-      readLock.lock();
-      try {
-         FileListCacheValueDelta toReturn = fileListValueDelta;
-         fileListValueDelta = new FileListCacheValueDelta();
-         return toReturn;
-      } finally {
-         readLock.unlock();
-      }
-   }
-
-   @Override
-   public void commit() {
-      fileListValueDelta.discardOps();
    }
 
    public static final class Externalizer extends AbstractExternalizer<FileListCacheValue> {
