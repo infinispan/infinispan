@@ -9,8 +9,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.functional.FunctionalMap;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.CounterType;
@@ -27,6 +27,7 @@ import org.infinispan.counter.impl.listener.NotificationManager;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.counter.util.Utils;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.notifications.Listener;
@@ -68,7 +69,7 @@ public class WeakCounterImpl implements WeakCounter {
    private final FunctionalMap.ReadWriteMap<WeakCounterKey, CounterValue> readWriteMap;
    private final NotificationManager notificationManager;
    private final CounterConfiguration configuration;
-   private volatile KeySelector selector;
+   private final KeySelector selector;
 
    public WeakCounterImpl(String counterName, AdvancedCache<WeakCounterKey, CounterValue> cache,
          CounterConfiguration configuration) {
@@ -88,7 +89,7 @@ public class WeakCounterImpl implements WeakCounter {
 
    private static Entry[] initKeys(String counterName, int concurrencyLevel) {
       ByteString name = ByteString.fromString(counterName);
-      int size = Utils.nextPowerOfTwo(concurrencyLevel);
+      int size = Util.findNextHighestPowerOfTwo(concurrencyLevel);
       Entry[] entries = new Entry[size];
       for (int i = 0; i < size; ++i) {
          entries[i] = new Entry(new WeakCounterKey(name, i));
@@ -145,8 +146,7 @@ public class WeakCounterImpl implements WeakCounter {
    public CompletableFuture<Void> reset() {
       final int size = entries.length;
       CompletableFuture[] futures = new CompletableFuture[size];
-      futures[0] = readWriteMap.eval(entries[0].key, ResetFunction.getInstance());
-      for (int i = 1; i < size; ++i) {
+      for (int i = 0; i < size; ++i) {
          futures[i] = readWriteMap.eval(entries[i].key, ResetFunction.getInstance());
       }
       return CompletableFuture.allOf(futures);
@@ -293,7 +293,7 @@ public class WeakCounterImpl implements WeakCounter {
 
       @TopologyChanged
       public void topologyChanged(TopologyChangedEvent<WeakCounterKey, CounterValue> event) {
-         updatePreferredKeys(event.getConsistentHashAtEnd());
+         updatePreferredKeys(event.getWriteConsistentHashAtEnd());
       }
 
    }
