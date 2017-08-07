@@ -9,7 +9,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
@@ -192,14 +196,19 @@ public class SingleNodeJdbcStoreIT {
     public void testRestartStringStoreAfter(boolean killed) throws Exception {
         assertEquals(0, server.getCacheManager(stringMBeans.managerName).getCache(stringMBeans.cacheName).getNumberOfEntriesInMemory());
 
-        assertNotNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k1")));
         if (killed) {
-            assertEquals(1, stringDB.stringTable.getAllRows().size());
-            assertEquals("v1", stringCache.get("k1")); // removed from store
-            assertNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k1")));
-            assertNull(stringCache.get("k2"));
-            assertNull(stringCache.get("k3"));
+            List<String> passivatedKeys = stringDB.stringTable.getAllKeys();
+            assertEquals(1, passivatedKeys.size());
+            String passivatedKey = fromStoredKey(stringCache, passivatedKeys.get(0));
+            assertEquals("v"+passivatedKey.substring(1), stringCache.get(passivatedKey)); // removed from store
+            assertNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, passivatedKey)));
+            Set<String> allKeys = new HashSet<>(Arrays.asList("k1", "k2", "k3"));
+            allKeys.remove(passivatedKey);
+            for(String key : allKeys) {
+                assertNull(stringCache.get(key));
+            }
         } else {
+            assertNotNull(stringDB.stringTable.getValueByKey(getStoredKey(stringCache, "k1")));
             assertEquals(3, stringDB.stringTable.getAllRows().size());
             assertEquals("v1", stringCache.get("k1"));
             assertEquals("v2", stringCache.get("k2"));
@@ -242,6 +251,12 @@ public class SingleNodeJdbcStoreIT {
         // 3. prefix it with 8 (again, done by DefaultTwoWayKey2StringMapper to mark the key as wrapped byte array type)
         // 4. prefix it with UTF-16 BOM (that is what DefaultTwoWayKey2StringMapper does for non string values)
         return '\uFEFF' + "8" + Base64.getEncoder().encodeToString(cache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(key));
+    }
+
+    public String fromStoredKey(RemoteCache cache, String key) throws IOException, InterruptedException, ClassNotFoundException {
+        Object o = cache.getRemoteCacheManager().getMarshaller().objectFromByteBuffer(Base64.getDecoder().decode(key.substring(2)));
+        log.tracef("Key in DB=%s > %s", key, o);
+        return (String)o;
     }
 
     public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans mbeans) {
