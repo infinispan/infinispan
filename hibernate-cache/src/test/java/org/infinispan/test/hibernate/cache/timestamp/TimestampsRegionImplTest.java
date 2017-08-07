@@ -37,6 +37,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivate
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.junit.Test;
 
 /**
  * Tests of TimestampsRegionImpl.
@@ -61,6 +62,7 @@ public class TimestampsRegionImplTest extends AbstractGeneralDataRegionTest {
 		return regionFactory.getCacheManager().getCache("timestamps").getAdvancedCache();
 	}
 
+   @Test
 	public void testClearTimestampsRegionInIsolated() throws Exception {
 		StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder();
 		final StandardServiceRegistry registry = ssrb.build();
