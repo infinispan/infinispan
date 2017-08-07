@@ -13,6 +13,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -30,6 +31,7 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.hibernate.cache.util.CacheTestUtil;
 import org.infinispan.test.hibernate.cache.util.ExpectingInterceptor;
 import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
@@ -101,6 +103,7 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 			);
 			regions.add(region);
 		}
+      waitForClusterToForm(regions);
 		try {
 			consumer.accept(sessionFactories, regions);
 		} finally {
@@ -113,8 +116,16 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 		}
 	}
 
+   private void waitForClusterToForm(List<GeneralDataRegion> regions) {
+      List<AdvancedCache> caches = regions.stream()
+            .map(r -> ((BaseRegion) r).getCache())
+            .collect(Collectors.toList());
+
+      TestingUtil.blockUntilViewsReceived(20000, caches);
+      TestingUtil.waitForNoRebalance(caches);
+   }
+
 	@Test
-   @Ignore("Randomly failing on CI - ISPN-8027")
 	public void testEvict() throws Exception {
 		withSessionFactoriesAndRegions(2, ((sessionFactories, regions) -> {
 			GeneralDataRegion localRegion = regions.get(0);
