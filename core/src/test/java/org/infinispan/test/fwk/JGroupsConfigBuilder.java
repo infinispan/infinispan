@@ -177,7 +177,7 @@ public class JGroupsConfigBuilder {
       Integer startPort = threadTcpStartPort.get();
       int portRange = TCP_PORT_RANGE_PER_THREAD;
       if (transportFlags.isPortRangeSpecified()) {
-         portRange = 10;
+         portRange = 25;
          int maxIndex = TCP_PORT_RANGE_PER_THREAD / portRange - 1;
          if (transportFlags.portRange() > maxIndex) {
             throw new IllegalStateException("Currently we only support " + (maxIndex + 1) + " ranges/sites!");
