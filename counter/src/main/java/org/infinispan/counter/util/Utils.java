@@ -54,14 +54,6 @@ public final class Utils {
    }
 
    /**
-    * @param number the number of check. It must be positive.
-    * @return the next round-up power of two based on the number.
-    */
-   public static int nextPowerOfTwo(int number) {
-      return 32 - Integer.numberOfLeadingZeros(number - 1);
-   }
-
-   /**
     * Returns a {@link CounterException} with the throwable.
     */
    public static CounterException rethrowAsCounterException(Throwable throwable) {
