@@ -176,7 +176,7 @@ public class RestartCounterTest extends BaseCounterTest {
                builder.addStrongCounter().name(name).lowerBound(0).storage(storage);
                break;
             case WEAK:
-               builder.addWeakCounter().name(name).storage(storage);
+               builder.addWeakCounter().name(name).storage(storage).concurrencyLevel(16);
          }
       }
 

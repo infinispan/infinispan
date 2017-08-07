@@ -38,6 +38,7 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
 import org.kohsuke.MetaInfServices;
@@ -60,7 +61,9 @@ public class CounterModuleLifecycle extends AbstractModuleLifecycle {
             .hash().numOwners(config.numOwners())
             .stateTransfer().fetchInMemoryState(true)
             .l1().disable()
-            .partitionHandling().enabled(config.reliability() == Reliability.CONSISTENT)
+            .partitionHandling().whenSplit(config.reliability() == Reliability.CONSISTENT ?
+                                           PartitionHandling.DENY_READ_WRITES :
+                                           PartitionHandling.ALLOW_READ_WRITES)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class)
             .interceptor(new CounterInterceptor());
@@ -72,7 +75,7 @@ public class CounterModuleLifecycle extends AbstractModuleLifecycle {
       builder.clustering().cacheMode(CacheMode.REPL_SYNC)
             .l1().disable()
             .stateTransfer().fetchInMemoryState(true)
-            .partitionHandling().enabled(true)
+            .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
             .customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class)
             .interceptor(new CounterConfigurationInterceptor());

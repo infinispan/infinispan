@@ -606,7 +606,7 @@ public final class Util {
       return s;
    }
 
-   private static String INDENT = "    ";
+   private final static String INDENT = "    ";
 
    public static String threadDump() {
       StringBuilder threadDump = new StringBuilder();
@@ -728,7 +728,7 @@ public final class Util {
       return Integer.toHexString(System.identityHashCode(o));
    }
 
-   static final String HEX_VALUES = "0123456789ABCDEF";
+   private static final String HEX_VALUES = "0123456789ABCDEF";
 
    public static String hexDump(byte[] buffer) {
       StringBuilder buf = new StringBuilder(buffer.length << 1);
@@ -829,7 +829,11 @@ public final class Util {
     * an argument.  The smallest number returned will be 1, not 0.
     */
    public static int findNextHighestPowerOfTwo(int num) {
-      if (num <= 0) return 1;
+      if (num <= 1) {
+         return 1;
+      } else if (num >= 0x40000000) {
+         return 0x40000000;
+      }
       int highestBit = Integer.highestOneBit(num);
       return num <= highestBit ? highestBit : highestBit << 1;
    }
