@@ -26,7 +26,7 @@ public class ClassFinder {
             + SecurityActions.getProperty("surefire.test.class.path");
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
+      List<Class<?>> clazzes = new ArrayList<>(classes.size());
       for (Class<?> clazz : classes) {
          if (clazz.isAnnotationPresent(c)) {
             clazzes.add(clazz);
@@ -36,7 +36,7 @@ public class ClassFinder {
    }
    
    public static List<Class<?>> withAnnotationDeclared(List<Class<?>> classes, Class<? extends Annotation> c) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
+      List<Class<?>> clazzes = new ArrayList<>(classes.size());
       for (Class<?> clazz : classes) {
          if (clazz.isAnnotationPresent(c)) {
             Annotation[] declaredAnnots = clazz.getDeclaredAnnotations();
@@ -51,7 +51,7 @@ public class ClassFinder {
    }
 
    public static List<Class<?>> isAssignableFrom(List<Class<?>> classes, Class<?> clazz) {
-      List<Class<?>> clazzes = new ArrayList<Class<?>>(classes.size());
+      List<Class<?>> clazzes = new ArrayList<>(classes.size());
       for (Class<?> c : classes) {
          if (clazz.isAssignableFrom(c)) {
             clazzes.add(c);
@@ -73,48 +73,43 @@ public class ClassFinder {
    }
 
    public static List<Class<?>> infinispanClasses(String javaClassPath) throws Exception {
-      List<File> files = new ArrayList<File>();
+      List<File> files = new ArrayList<>();
 
       // either infinispan jar or a directory of output classes contains infinispan classes
       for (String path : javaClassPath.split(File.pathSeparator)) {
-         if (contains("infinispan", path)) {
-            files.add(new File(path));
+         File file = new File(path);
+         boolean isInfinispanJar = file.isFile() && file.getName().contains("infinispan");
+         // Exclude the test utility classes in the commons-test module
+         boolean isTargetDirectory = file.isDirectory() &&
+               new File(file, "org/infinispan").isDirectory() &&
+               !new File(file, "org/infinispan/commons/test").isDirectory();
+         if (isInfinispanJar || isTargetDirectory) {
+            files.add(file);
          }
       }
       log.debugf("Looking for infinispan classes in %s", files);
       if (files.isEmpty()) {
          return Collections.emptyList();
       } else {
-         Set<Class<?>> classFiles = new HashSet<Class<?>>();
+         Set<Class<?>> classFiles = new HashSet<>();
          for (File file : files) {
             classFiles.addAll(findClassesOnPath(file));
          }
-         return new ArrayList<Class<?>>(classFiles);
+         return new ArrayList<>(classFiles);
       }
-   }
-
-   private static boolean contains(String what, String path) {
-      if (path.contains(what)) return true;
-      String[] list = new File(path).list();
-      if (list == null) //file
-        return false;
-      for (String childPath: list) {
-         if (contains(what, childPath)) return true;
-      }
-      return false;
    }
 
    private static List<Class<?>> findClassesOnPath(File path) {
-      List<Class<?>> classes = new ArrayList<Class<?>>();
+      List<Class<?>> classes = new ArrayList<>();
       Class<?> claz;
 
       if (path.isDirectory()) {
-         List<File> classFiles = new ArrayList<File>();
+         List<File> classFiles = new ArrayList<>();
          dir(classFiles, path);
          for (File cf : classFiles) {
             String clazz = null;
             try {
-               clazz = toClassName(cf.getAbsolutePath());
+               clazz = toClassName(path.toPath().relativize(cf.toPath()).toString());
                claz = Util.loadClassStrict(clazz, null);
                classes.add(claz);
             } catch (NoClassDefFoundError ncdfe) {
@@ -179,7 +174,9 @@ public class ClassFinder {
       }
    }
 
-   private static String toClassName(String fileName) {
-      return fileName.substring(fileName.lastIndexOf("org" + File.separator), fileName.length() - 6).replace(File.separator, ".");
+   private static String toClassName(String classFileName) {
+      // Remove the .class suffix and replace / with .
+      return classFileName.substring(0, classFileName.length() - 6)
+                          .replace(File.separator, ".");
    }
 }
