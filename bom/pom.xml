@@ -56,6 +56,7 @@
       <infinispan.core.schema.version>9.1</infinispan.core.schema.version>
 
       <version.java>1.8</version.java>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
       <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
 

@@ -26,6 +26,7 @@
    </developers>
 
    <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
    </properties>
@@ -47,7 +48,7 @@
       </plugins>
       <pluginManagement>
          <plugins>
-            
+
             <plugin>
                <groupId>org.eclipse.m2e</groupId>
                <artifactId>lifecycle-mapping</artifactId>
@@ -79,8 +80,8 @@
          </plugins>
       </pluginManagement>
    </build>
-   
-   
+
+
 
    <scm>
       <connection>scm:git:git://github.com/infinispan/infinispan.git</connection>
@@ -100,6 +101,6 @@
          <url>${jboss.snapshots.repo.url}</url>
       </snapshotRepository>
    </distributionManagement>
-   
+
 
 </project>
