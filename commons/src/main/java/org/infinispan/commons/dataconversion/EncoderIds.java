@@ -13,7 +13,6 @@ public interface EncoderIds {
    short JAVA_SERIALIZATION = 6;
    short COMPAT = 7;
    short MEMCACHED_COMPAT = 8;
-   short PROTOSTREAM_COMPAT = 9;
-   short JAVA_COMPAT = 10;
-
+   short JAVA_COMPAT = 9;
+   short UTF8_COMPAT = 10;
 }

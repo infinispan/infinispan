@@ -240,6 +240,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.MEMORY, null);
         sharedAttributeResolver.put(ModelKeys.EVICTION, null);
         sharedAttributeResolver.put(ModelKeys.EXPIRATION, null);
+        sharedAttributeResolver.put(ModelKeys.ENCODING, null);
         sharedAttributeResolver.put(ModelKeys.INDEXING, null);
         sharedAttributeResolver.put(ModelKeys.STATE_TRANSFER, null);
         sharedAttributeResolver.put(ModelKeys.PARTITION_HANDLING, null);

@@ -778,6 +778,14 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper);
 
    /**
+    * Perform any cache operations using an alternate {@link org.infinispan.commons.dataconversion.MediaType}.
+    * @param keyMediaType {@link org.infinispan.commons.dataconversion.MediaType} for the keys.
+    * @param valueMediaType {@link org.infinispan.commons.dataconversion} for the values.
+    * @return an instance of {@link AdvancedCache} where all data will formatted according to the supplied {@link org.infinispan.commons.dataconversion.MediaType}.
+    */
+   AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType);
+
+   /**
     * @return The associated {@link Encoder} for the keys.
     * @deprecated Use {@link #getKeyDataConversion()} and then {@link DataConversion#getEncoder()}
     */

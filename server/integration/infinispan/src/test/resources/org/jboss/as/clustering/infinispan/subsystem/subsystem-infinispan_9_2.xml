@@ -39,6 +39,10 @@
         <local-cache name="local-instance" configuration="local-template"/>
         <local-cache name="local-instance2" configuration="local-template"/>
         <local-cache name="local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
+            <encoding>
+                <key media-type="application/json"/>
+                <value media-type="application/json"/>
+            </encoding>
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <memory>
@@ -105,6 +109,9 @@
         </replicated-cache-configuration>
         <replicated-cache name="replicated-instance" configuration="replicated-template"/>
         <replicated-cache name="repl" mode="ASYNC" batching="true" start="EAGER" statistics="false">
+            <encoding>
+                <key media-type="application/x-protostream"/>
+            </encoding>
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="SERIALIZABLE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000" locking="OPTIMISTIC"/>
             <memory>

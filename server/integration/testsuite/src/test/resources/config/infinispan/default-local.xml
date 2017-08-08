@@ -6,6 +6,9 @@
                     name="default"
                     batching="false"
                     >
+                    <encoding>
+                        <value media-type="text/plain"/>
+                    </encoding>
                 </local-cache>
                 <local-cache-configuration name="compatibilityCacheConfiguration">
                     <compatibility enabled="true"/>

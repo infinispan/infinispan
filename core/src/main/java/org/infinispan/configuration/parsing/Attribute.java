@@ -40,6 +40,7 @@ public enum Attribute {
     DATA_CONTAINER("data-container"),
     DEFAULT_CACHE("default-cache"),
     ENABLED("enabled"),
+    ENCODER("encoder"),
     EXECUTOR("executor"),
     EVICTION("eviction"),
     @Deprecated
@@ -79,6 +80,7 @@ public enum Attribute {
     MAX_THREADS("max-threads"),
     MBEAN_SERVER_LOOKUP("mbean-server-lookup"),
     MERGE_POLICY("merge-policy"),
+    MEDIA_TYPE("media-type"),
     MODE("mode"),
     NODE_NAME("node-name"),
     MODIFICATION_QUEUE_SIZE("modification-queue-size"),

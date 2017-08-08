@@ -43,6 +43,10 @@
          <temporary-location path="tmpPath" relative-to="jboss.server.temp.dir" />
       </global-state>
       <local-cache name="local" start="EAGER" module="org.infinispan" statistics="true">
+         <encoding>
+            <key media-type="application/x-java-object"/>
+            <value media-type="application/x-java-object"/>
+         </encoding>
          <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
          <expiration interval="10000" lifespan="10" max-idle="10"/>
@@ -64,6 +68,10 @@
          </memory>
       </invalidation-cache>
       <replicated-cache name="repl" mode="SYNC" start="EAGER" statistics="true">
+         <encoding>
+            <key media-type="application/x-java-object"/>
+            <value media-type="application/x-java-object"/>
+         </encoding>
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
          <expiration interval="11000" lifespan="12" max-idle="12"/>

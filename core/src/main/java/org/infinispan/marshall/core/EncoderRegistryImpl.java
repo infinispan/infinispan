@@ -1,11 +1,17 @@
 package org.infinispan.marshall.core;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.EncodingException;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -20,6 +26,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
    private final Map<Class<? extends Wrapper>, Wrapper> wrapperMap = CollectionFactory.makeConcurrentMap(2);
    private final Map<Short, Class<? extends Encoder>> encoderById = CollectionFactory.makeConcurrentMap(10);
    private final Map<Byte, Class<? extends Wrapper>> wrapperById = CollectionFactory.makeConcurrentMap(2);
+   private final Set<Transcoder> transcoders = new ConcurrentHashSet<>();
 
    @Override
    public void registerEncoder(Encoder encoder) {
@@ -45,6 +52,28 @@ public class EncoderRegistryImpl implements EncoderRegistry {
       }
       wrapperById.put(id, wrapper.getClass());
       wrapperMap.put(wrapper.getClass(), wrapper);
+   }
+
+   @Override
+   public void registerTranscoder(Transcoder transcoder) {
+      transcoders.add(transcoder);
+   }
+
+   @Override
+   public Transcoder getTranscoder(MediaType mediaType, MediaType another) {
+      Optional<Transcoder> transcoder = transcoders
+            .stream()
+            .filter(t -> t.supportsConversion(mediaType, another))
+            .findAny();
+      if (!transcoder.isPresent()) {
+         throw new EncodingException("Cannot find transcoder from " + mediaType + " to " + another);
+      }
+      return transcoder.get();
+   }
+
+   @Override
+   public Set<String> getSupportedMediaTypes() {
+      return transcoders.stream().flatMap(t -> t.getSupportedMediaTypes().stream()).map(MediaType::getTypeSubtype).collect(Collectors.toSet());
    }
 
    @Override

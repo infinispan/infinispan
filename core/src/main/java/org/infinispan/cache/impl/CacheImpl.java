@@ -67,6 +67,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
@@ -669,6 +670,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
       return new EncoderCache<>(this, DataConversion.DEFAULT.withWrapping(wrapperClass), DataConversion.DEFAULT.withWrapping(wrapperClass));
    }
+
+   @Override
+   public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
+      MediaType km = MediaType.fromString(keyMediaType);
+      MediaType vm = MediaType.fromString(valueMediaType);
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withRequestMediaType(km), DataConversion.DEFAULT.withRequestMediaType(vm));
+   }
+
 
    @Override
    public Encoder getKeyEncoder() {

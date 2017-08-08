@@ -409,6 +409,11 @@
                     </xs:attribute>
                 </xs:complexType>
             </xs:element>
+            <xs:element name="encoding" type="tns:encoding" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>The cache encoding configuration.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
             <xs:element name="locking" type="tns:locking" minOccurs="0">
                 <xs:annotation>
                     <xs:documentation>The locking configuration of the cache.</xs:documentation>
@@ -637,6 +642,39 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="encodingType" abstract="true">
+        <xs:annotation>
+            <xs:documentation>
+                Describes the content-type and encoding.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="media-type" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="keyEncodingType">
+        <xs:complexContent>
+            <xs:extension base="tns:encodingType"/>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="valueEncodingType">
+        <xs:complexContent>
+            <xs:extension base="tns:encodingType"/>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="encoding">
+        <xs:annotation>
+            <xs:documentation>
+                Defines encoding for keys and values of the cache.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="key" type="tns:keyEncodingType" minOccurs="0"/>
+            <xs:element name="value" type="tns:valueEncodingType" minOccurs="0"/>
+        </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="memory">

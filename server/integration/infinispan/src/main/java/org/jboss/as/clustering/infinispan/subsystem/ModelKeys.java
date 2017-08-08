@@ -93,6 +93,7 @@ public class ModelKeys {
     static final String DISTRIBUTED_CACHE = "distributed-cache";
     static final String DISTRIBUTED_CACHE_CONFIGURATION = DISTRIBUTED_CACHE + CONFIGURATION_SUFFIX;
     static final String DROP_ON_EXIT = "drop-on-exit";
+    static final String ENCODING = "encoding";
     static final String ENCRYPTION = "encryption";
     static final String ENCRYPTION_NAME = "ENCRYPTION";
     static final String ENABLED = "enabled";
@@ -132,6 +133,7 @@ public class ModelKeys {
     static final String JDBC_STORE = "jdbc-store";
     static final String JDBC_STORE_NAME = "JDBC_STORE";
     static final String KEEPALIVE_TIME = "keepalive-time";
+    static final String KEY = "key";
     static final String ROCKSDB_EXPIRATION = "expiration-db";
     static final String ROCKSDB_STORE = "rocksdb-store";
     static final String LOADER = "loader";
@@ -165,6 +167,7 @@ public class ModelKeys {
     static final String MEMORY = "memory";
     static final String MERGE_POLICY = "merge-policy";
     static final String MIGRATOR_NAME = "migrator-name";
+    static final String MEDIA_TYPE = "media-type";
     static final String MIN_THREADS = "min-threads";
     static final String MODE = "mode";
     static final String MODIFICATION_QUEUE_SIZE = "modification-queue-size";
