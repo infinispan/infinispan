@@ -307,28 +307,21 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       // compute function applied
       initAndTest();
       Object retval = getFirstNonOwner("k1").compute("k1", (k, v) -> "computed_" + k + "_" + v);
+      asyncWait("k1", ComputeCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assertEquals("computed_k1_value", retval);
-      asyncWait("k1", ComputeCommand.class);
       assertOnAllCachesAndOwnership("k1", "computed_k1_value");
 
       // remove if after compute value is null
       retval = getFirstNonOwner("k1").compute("k1", (v1, v2) -> null);
-      asyncWait("k1", ComputeCommand.class);
+      asyncWait("k1", ComputeCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assertNull(retval);
       assertRemovedOnAllCaches("k1");
 
       // put computed value if absent
       retval = getFirstNonOwner("notThere").compute("notThere", (k, v) -> "add_" + k);
-      eventually(() -> {
-         try {
-            assertOnAllCachesAndOwnership("notThere", "add_notThere");
-         } catch (AssertionError e) {
-            log.debugf("Assertion failed once", e);
-            return false;
-         }
-         return true;
-      });
+      asyncWait("notThere", ComputeCommand.class);
       if (testRetVals) assertEquals("add_notThere", retval);
+      assertOnAllCachesAndOwnership("notThere", "add_notThere");
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");
       SerializableBiFunction<Object, Object, String> mappingToException = (k, v) -> {
@@ -342,7 +335,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       initAndTest();
       Object retval = getFirstNonOwner("k1").computeIfPresent("k1", (k, v) -> "computed_" + k + "_" + v);
       if (testRetVals) assertEquals("computed_k1_value", retval);
-      asyncWait("k1", ComputeCommand.class);
+      asyncWait("k1", ComputeCommand.class, getSecondNonOwner("k1"));
       assertOnAllCachesAndOwnership("k1", "computed_k1_value");
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");
@@ -353,7 +346,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       // remove if after compute value is null
       retval = getFirstNonOwner("k1").computeIfPresent("k1", (v1, v2) -> null);
-      asyncWait("k1", ComputeCommand.class);
+      asyncWait("k1", ComputeCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assertNull(retval);
       assertRemovedOnAllCaches("k1");
 
@@ -375,16 +368,9 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       // Compute key and add result value if absent
       retval = getFirstNonOwner("notExists").computeIfAbsent("notExists", (k) -> "computed_" + k);
-      eventually(() -> {
-         try {
-            assertOnAllCachesAndOwnership("notExists", "computed_notExists");
-         } catch (AssertionError e) {
-            log.debugf("Assertion failed once", e);
-            return false;
-         }
-         return true;
-      });
       if (testRetVals) assertEquals("computed_notExists", retval);
+      asyncWait("notExists", ComputeIfAbsentCommand.class);
+      assertOnAllCachesAndOwnership("notExists", "computed_notExists");
 
       // do nothing if function result is null
       retval = getFirstNonOwner("doNothing").computeIfAbsent("doNothing", k -> null);
@@ -407,47 +393,24 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       expectException(RemoteException.class, () -> getFirstNonOwner("k1").merge("k1", "ex", (k, v) -> {
          throw mergeException;
       }));
+      assertOnAllCachesAndOwnership("k1", "value");
 
       // merge function applied
       Object retval = getFirstNonOwner("k1").merge("k1", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
       asyncWait("k1", ReadWriteKeyCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assertEquals("merged_value_value2", retval);
-      eventually(() -> {
-         try {
-            assertOnAllCachesAndOwnership("k1", "merged_value_value2");
-         } catch (AssertionError e) {
-            log.debugf("Assertion failed once", e);
-            return false;
-         }
-         return true;
-      });
+      assertOnAllCachesAndOwnership("k1", "merged_value_value2");
 
       // remove when null
       retval = getFirstNonOwner("k1").merge("k1", "valueRem", (v1, v2) -> null);
       asyncWait("k1", ReadWriteKeyCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assertNull(retval);
-      eventually(() -> {
-         try {
-            assertRemovedOnAllCaches("k1");
-         } catch (AssertionError e) {
-            log.debugf("Assertion failed once", e);
-            return false;
-         }
-         return true;
-      });
+      assertRemovedOnAllCaches("k1");
 
       // put if absent
       retval = getFirstNonOwner("notThere").merge("notThere", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
       asyncWait("notThere", ReadWriteKeyCommand.class, getSecondNonOwner("notThere"));
       if (testRetVals) assertEquals("value2", retval);
-      eventually(() -> {
-         try {
-            assertOnAllCachesAndOwnership("notThere", "value2");
-         } catch (AssertionError e) {
-            log.debugf("Assertion failed once", e);
-            return false;
-         }
-         return true;
-      });
+      assertOnAllCachesAndOwnership("notThere", "value2");
    }
 }
