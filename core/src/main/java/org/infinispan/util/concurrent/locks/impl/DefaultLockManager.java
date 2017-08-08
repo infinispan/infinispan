@@ -52,10 +52,9 @@ public class DefaultLockManager implements LockManager {
    private static final AtomicReferenceFieldUpdater<CompositeLockPromise, LockState> UPDATER =
          newUpdater(CompositeLockPromise.class, LockState.class, "lockState");
 
-
-   protected LockContainer lockContainer;
-   protected Configuration configuration;
-   protected ScheduledExecutorService scheduler;
+   private LockContainer lockContainer;
+   private Configuration configuration;
+   private ScheduledExecutorService scheduler;
 
    @Inject
    public void inject(LockContainer container, Configuration configuration,
@@ -80,7 +79,7 @@ public class DefaultLockManager implements LockManager {
          // If the lock is already owned by this lock owner there is no reason to attempt the lock needlessly
          InfinispanLock lock = lockContainer.getLock(key);
          if (lock != null && lock.getLockOwner() == key) {
-            log.tracef("Not locking key=%s as it is already held by the same lock owner");
+            log.tracef("Not locking key=%s as it is already held by the same lock owner", key);
             return KeyAwareLockPromise.NO_OP;
          }
       }
@@ -285,6 +284,7 @@ public class DefaultLockManager implements LockManager {
 
       private final List<KeyAwareExtendedLockPromise> lockPromiseList;
       private final CompletableFuture<LockState> notifier;
+      @SuppressWarnings("CanBeFinal")
       volatile LockState lockState = LockState.ACQUIRED;
       private final AtomicInteger countersLeft = new AtomicInteger();
 
