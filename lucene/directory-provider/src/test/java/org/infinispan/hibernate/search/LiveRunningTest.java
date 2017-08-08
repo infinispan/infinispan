@@ -20,6 +20,7 @@ import org.infinispan.hibernate.search.ClusterTestHelper.ExclusiveIndexUse;
 import org.infinispan.hibernate.search.ClusterTestHelper.IndexingFlushMode;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -48,6 +49,7 @@ public class LiveRunningTest {
    private int storedEmailsCount = 0;
 
    @Test
+   @Ignore("ISPN-8075")
    public void liveRun() {
       try {
          for (int i = 0; i < TEST_RUNS; i++) {
