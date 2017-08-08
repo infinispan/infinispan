@@ -1,8 +1,8 @@
 package org.infinispan.xsite.statetransfer;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.TimeUnit;
@@ -13,7 +13,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.statetransfer.CommitManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.testng.annotations.Test;
@@ -35,72 +34,52 @@ public class LocalCacheStateTransferTest extends AbstractXSiteTest {
       takeSiteOffline(LON, NYC);
       assertOffline(LON, NYC);
 
-      assertNoStateTransferInReceivingSite(NYC);
-      assertNoStateTransferInSendingSite(LON);
+      assertNoStateTransferInReceivingSite();
+      assertNoStateTransferInSendingSite();
 
       //NYC is offline... lets put some initial data in
       //we have 2 nodes in each site and the primary owner sends the state. Lets try to have more key than the chunk
       //size in order to each site to send more than one chunk.
       final int amountOfData = chunkSize(LON) * 4;
       for (int i = 0; i < amountOfData; ++i) {
-         cache(LON, 0).put(key(i), value(0));
+         cache(LON, 0).put(key(i), value(i));
       }
 
       //check if NYC is empty (LON backup cache)
-      assertInSite(NYC, new AssertCondition<Object, Object>() {
-         @Override
-         public void assertInCache(Cache<Object, Object> cache) {
-            assertTrue(cache.isEmpty());
-         }
-      });
+      assertInSite(NYC, cache -> assertTrue(cache.isEmpty()));
 
       //check if NYC is empty (default cache)
-      assertInSite(NYC, new AssertCondition<Object, Object>() {
-         @Override
-         public void assertInCache(Cache<Object, Object> cache) {
-            assertTrue(cache.isEmpty());
-         }
-      });
+      assertInSite(NYC, cache -> assertTrue(cache.isEmpty()));
 
       startStateTransfer(LON, NYC);
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
-         }
-      }, TimeUnit.SECONDS.toMillis(30));
+      eventually(() -> extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty(),
+            TimeUnit.SECONDS.toMillis(30));
 
       assertOnline(LON, NYC);
 
       //check if all data is visible (LON backup cache)
-      assertInSite(NYC, new AssertCondition<Object, Object>() {
-         @Override
-         public void assertInCache(Cache<Object, Object> cache) {
-            for (int i = 0; i < amountOfData; ++i) {
-               assertEquals(value(0), cache.get(key(i)));
-            }
+      assertInSite(NYC, cache -> {
+         for (int i = 0; i < amountOfData; ++i) {
+            assertEquals(value(i), cache.get(key(i)));
          }
       });
 
       //check if all data is visible NYC
-      assertInSite(NYC, new AssertCondition<Object, Object>() {
-         @Override
-         public void assertInCache(Cache<Object, Object> cache) {
-            for (int i = 0; i < amountOfData; ++i) {
-               assertEquals(value(0), cache.get(key(i)));
-            }
+      assertInSite(NYC, cache -> {
+         for (int i = 0; i < amountOfData; ++i) {
+            assertEquals(value(i), cache.get(key(i)));
          }
       });
 
-      assertNoStateTransferInReceivingSite(NYC);
-      assertNoStateTransferInSendingSite(LON);
+      assertNoStateTransferInReceivingSite();
+      assertNoStateTransferInSendingSite();
    }
 
    @Override
    protected void createSites() {
       createSite(LON, 1, globalConfigurationBuilderForSite(LON), configurationBuilderForSite(NYC));
-      createSite(NYC, 1, globalConfigurationBuilderForSite(NYC), TestCacheManagerFactory.getDefaultCacheConfiguration(false));
+      createSite(NYC, 1, globalConfigurationBuilderForSite(NYC), getDefaultCacheConfiguration(false));
    }
 
    private GlobalConfigurationBuilder globalConfigurationBuilderForSite(String siteName) {
@@ -140,16 +119,20 @@ public class LocalCacheStateTransferTest extends AbstractXSiteTest {
       return cache(site, 0).getCacheConfiguration().sites().allBackups().get(0).stateTransfer().chunkSize();
    }
 
-   private void assertNoStateTransferInReceivingSite(String siteName) {
-      Cache<?, ?> cache = cache(siteName, 0);
-      CommitManager commitManager = extractComponent(cache, CommitManager.class);
-      assertFalse(commitManager.isTracking(Flag.PUT_FOR_STATE_TRANSFER));
-      assertFalse(commitManager.isTracking(Flag.PUT_FOR_X_SITE_STATE_TRANSFER));
-      assertTrue(commitManager.isEmpty());
+   private void assertNoStateTransferInReceivingSite() {
+      for (Cache<?, ?> cache : caches(NYC)) {
+         eventually(() -> extractComponent(cache, XSiteStateConsumer.class).getSendingSiteName() == null);
+         eventually(() -> {
+            CommitManager commitManager = extractComponent(cache, CommitManager.class);
+            return !commitManager.isTracking(Flag.PUT_FOR_STATE_TRANSFER) &&
+                   !commitManager.isTracking(Flag.PUT_FOR_X_SITE_STATE_TRANSFER) &&
+                   commitManager.isEmpty();
+         });
+      }
    }
 
-   private void assertNoStateTransferInSendingSite(String siteName) {
-      Cache<?, ?> cache = cache(siteName, 0);
+   private void assertNoStateTransferInSendingSite() {
+      Cache<?, ?> cache = cache(LON, 0);
       assertTrue(extractComponent(cache, XSiteStateProvider.class).getCurrentStateSending().isEmpty());
    }
 
