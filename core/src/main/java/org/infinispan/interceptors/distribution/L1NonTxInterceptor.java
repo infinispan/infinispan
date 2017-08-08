@@ -292,12 +292,21 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       //we also need to remove from L1 the keys that are not ours
       Iterator<VisitableCommand> subCommands = keys.stream().filter(
             k -> !cdl.getCacheTopology().isWriteOwner(k)).map(k -> removeFromL1Command(ctx, k)).iterator();
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+      return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable ex) -> {
          WriteCommand writeCommand = (WriteCommand) rCommand;
-         if (invalidationFuture != null && !invalidationFuture.isDone() && isSynchronous(writeCommand)) {
-            return asyncValue(invalidationFuture).thenApply(null, null, (rCtx2, rCommand2, rv2) -> MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv));
+         if (ex != null) {
+            if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
+               return asyncValue(invalidationFuture).thenApply(rCtx, rCommand, (rCtx1, rCommand1, rv1) -> {
+                  throw ex;
+               });
+            }
+            throw ex;
          } else {
-            return MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv);
+            if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
+               return asyncValue(invalidationFuture).thenApply(null, null, (rCtx2, rCommand2, rv2) -> MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv));
+            } else {
+               return MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv);
+            }
          }
       });
    }
@@ -359,24 +368,37 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          return invokeNext(ctx, command);
       }
       CompletableFuture<?> l1InvalidationFuture = invalidateL1InCluster(ctx, command, assumeOriginKeptEntryInL1);
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+      return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable ex) -> {
          DataWriteCommand dataWriteCommand = (DataWriteCommand) rCommand;
-         if (l1InvalidationFuture != null && !l1InvalidationFuture.isDone() && isSynchronous(dataWriteCommand)) {
-            if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)) {
-               VisitableCommand removeFromL1Command = removeFromL1Command(rCtx, dataWriteCommand.getKey());
-               makeStage(asyncInvokeNext(rCtx, removeFromL1Command, l1InvalidationFuture))
-                     .thenApply(null, null, (rCtx2, rCommand2, rv2) -> rv);
-            } else {
-               return asyncValue(l1InvalidationFuture.thenApply(nil -> rv));
+         if (ex != null) {
+            if (mustSyncInvalidation(l1InvalidationFuture, dataWriteCommand)) {
+               return asyncValue(l1InvalidationFuture).thenApply(rCtx, rCommand, (rCtx1, rCommand1, rv1) -> {
+                  throw ex;
+               });
             }
-         } else if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)){
-            VisitableCommand removeFromL1Command = removeFromL1Command(rCtx, dataWriteCommand.getKey());
-            return invokeNextThenApply(rCtx, removeFromL1Command, (rCtx2, rCommand2, rv2) -> rv);
-         } else if (trace) {
-            log.trace("Allowing entry to commit as local node is owner");
+            throw ex;
+         } else {
+            if (mustSyncInvalidation(l1InvalidationFuture, dataWriteCommand)) {
+               if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)) {
+                  VisitableCommand removeFromL1Command = removeFromL1Command(rCtx, dataWriteCommand.getKey());
+                  return makeStage(asyncInvokeNext(rCtx, removeFromL1Command, l1InvalidationFuture))
+                        .thenApply(null, null, (rCtx2, rCommand2, rv2) -> rv);
+               } else {
+                  return asyncValue(l1InvalidationFuture).thenApply(rCtx, rCommand, (rCtx1, rCommand1, rv1) -> rv);
+               }
+            } else if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)) {
+               VisitableCommand removeFromL1Command = removeFromL1Command(rCtx, dataWriteCommand.getKey());
+               return invokeNextThenApply(rCtx, removeFromL1Command, (rCtx2, rCommand2, rv2) -> rv);
+            } else if (trace) {
+               log.trace("Allowing entry to commit as local node is owner");
+            }
          }
          return rv;
       });
+   }
+
+   private boolean mustSyncInvalidation(CompletableFuture<?> invalidationFuture, WriteCommand writeCommand) {
+      return invalidationFuture != null && !invalidationFuture.isDone() && isSynchronous(writeCommand);
    }
 
    private boolean shouldRemoveFromLocalL1(InvocationContext ctx, DataWriteCommand command) {
