@@ -72,54 +72,93 @@
 
    <build>
       <plugins>
-         <plugin>
-            <artifactId>maven-war-plugin</artifactId>
-            <configuration>
-               <attachClasses>true</attachClasses>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>keytool-maven-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>default_server</id>
-                  <goals>
-                     <goal>generateKeyPair</goal>
-                  </goals>
-                  <phase>generate-test-resources</phase>
-                  <configuration>
-                     <alias>default</alias>
-                     <keystore>${project.build.testOutputDirectory}/default_server_keystore.jks</keystore>
-                     <dname>${certificate.dname}</dname>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>default_truststore</id>
-                  <goals>
-                     <goal>importKeystore</goal>
-                  </goals>
-                  <phase>generate-test-resources</phase>
-                  <configuration>
-                     <srckeystore>${project.build.testOutputDirectory}/default_server_keystore.jks</srckeystore>
-                     <srcstorepass>secret</srcstorepass>
-                     <destkeystore>${project.build.testOutputDirectory}/default_client_truststore.jks</destkeystore>
-                     <deststorepass>secret</deststorepass>
-                  </configuration>
-               </execution>
-            </executions>
-            <configuration>
-               <skipIfExist>true</skipIfExist>
-               <storepass>secret</storepass>
-               <keypass>secret</keypass>
-               <keysize>2048</keysize>
-               <keyalg>RSA</keyalg>
-               <validity>365</validity>
-               <noprompt>true</noprompt>
-               <trustcacerts>true</trustcacerts>
-               <verbose>true</verbose>
-            </configuration>
-         </plugin>
+          <plugin>
+              <artifactId>maven-war-plugin</artifactId>
+              <configuration>
+                  <attachClasses>true</attachClasses>
+              </configuration>
+          </plugin>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <dependencies>
+                  <dependency>
+                      <groupId>com.sun</groupId>
+                      <artifactId>tools</artifactId>
+                      <version>${java.version}</version>
+                      <scope>system</scope>
+                      <systemPath>${java.home}/../lib/tools.jar</systemPath>
+                  </dependency>
+              </dependencies>
+              <executions>
+                  <execution>
+                      <id>create-certificates</id>
+                      <phase>process-test-resources</phase>
+                      <goals>
+                          <goal>run</goal>
+                      </goals>
+                      <configuration>
+                          <target>
+                              <macrodef name="keytool">
+                                  <attribute name="command"/>
+                                  <element name="args"/>
+                                  <sequential>
+                                      <condition property="keytool.classname" value="com.ibm.crypto.tools.KeyTool">
+                                          <available classname="com.ibm.crypto.tools.KeyTool"/>
+                                      </condition>
+                                      <condition property="keytool.classname" value="sun.security.tools.keytool.Main">
+                                          <available classname="sun.security.tools.keytool.Main"/>
+                                      </condition>
+                                      <java classname="${keytool.classname}" failonerror="true">
+                                          <arg value="@{command}"/>
+                                          <!-- common arguments -->
+                                          <arg value="-validity"/>
+                                          <arg value="365"/>
+                                          <arg value="-keyalg"/>
+                                          <arg value="RSA"/>
+                                          <arg value="-keysize"/>
+                                          <arg value="2048"/>
+                                          <arg value="-noprompt"/>
+                                          <arg value="-storepass"/>
+                                          <arg value="secret"/>
+                                          <arg value="-keypass"/>
+                                          <arg value="secret"/>
+                                          <!-- additional arguments -->
+                                          <args/>
+                                      </java>
+                                  </sequential>
+                              </macrodef>
+                              <delete quiet="true">
+                                  <fileset dir="${project.build.testOutputDirectory}" includes="*.jks,*.csr,*.cer"/>
+                              </delete>
+                              <echo message="Generate the CA certificate"/>
+                              <keytool command="-genkeypair">
+                                  <args>
+                                      <arg value="-alias"/>
+                                      <arg value="default"/>
+                                      <arg value="-dname"/>
+                                      <arg value="${certificate.dname}"/>
+                                      <arg value="-keystore"/>
+                                      <arg value="${project.build.testOutputDirectory}/default_server_keystore.jks"/>
+                                  </args>
+                              </keytool>
+                              <keytool command="-importkeystore">
+                                  <args>
+                                      <arg value="-srckeystore"/>
+                                      <arg value="${project.build.testOutputDirectory}/default_server_keystore.jks"/>
+                                      <arg value="-srcstorepass"/>
+                                      <arg value="secret"/>
+                                      <arg value="-destkeystore"/>
+                                      <arg value="${project.build.testOutputDirectory}/default_client_truststore.jks"/>
+                                      <arg value="-deststorepass"/>
+                                      <arg value="secret"/>
+                                  </args>
+                              </keytool>
+                          </target>
+                      </configuration>
+                  </execution>
+              </executions>
+          </plugin>
       </plugins>
    </build>
 </project>

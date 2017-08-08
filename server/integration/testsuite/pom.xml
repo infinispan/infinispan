@@ -420,220 +420,6 @@
         </testResources>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>keytool-maven-plugin</artifactId>
-                <version>1.5</version>
-                <!-- Vaults -->
-                <executions>
-                    <execution>
-                        <id>ispn-vault</id>
-                        <goals>
-                            <goal>generateSecretKey</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>ispn-vault</alias>
-                            <storetype>JCEKS</storetype>
-                            <keystore>${project.build.testOutputDirectory}/vault/vault.keystore</keystore>
-                            <keyalg>AES</keyalg>
-                            <keysize>128</keysize>
-                        </configuration>
-                    </execution>
-                    <!-- CA -->
-                    <execution>
-                        <id>ca</id>
-                        <goals>
-                            <goal>generateKeyPair</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${ca.alias}</alias>
-                            <dname>${ca.dname}</dname>
-                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
-                            <ext>bc:c</ext>
-                        </configuration>
-                    </execution>
-                    <!-- Server -->
-                    <execution>
-                        <id>server</id>
-                        <goals>
-                            <goal>generateKeyPair</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${server.alias}</alias>
-                            <dname>${server.dname}</dname>
-                            <keystore>${server.keystore}</keystore>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>server-certreq</id>
-                        <goals>
-                            <goal>generateCertificateRequest</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${server.alias}</alias>
-                            <dname>${server.dname}</dname>
-                            <file>${project.build.testOutputDirectory}/server.csr</file>
-                            <keystore>${server.keystore}</keystore>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>server-gencert</id>
-                        <goals>
-                            <goal>generateCertificate</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${ca.alias}</alias>
-                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
-                            <infile>${project.build.testOutputDirectory}/server.csr</infile>
-                            <outfile>${project.build.testOutputDirectory}/server.cer</outfile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>server-import-ca</id>
-                        <goals>
-                            <goal>importKeystore</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <srcalias>${ca.alias}</srcalias>
-                            <srckeystore>${project.build.testOutputDirectory}/ca.jks</srckeystore>
-                            <destkeystore>${server.keystore}</destkeystore>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>server-signed-import</id>
-                        <goals>
-                            <goal>importCertificate</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${server.alias}</alias>
-                            <file>${project.build.testOutputDirectory}/server.cer</file>
-                            <keystore>${server.keystore}</keystore>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>server-no-ca</id>
-                        <goals>
-                            <goal>generateKeyPair</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${server.alias}</alias>
-                            <dname>${server.dname}</dname>
-                            <keystore>${project.build.testOutputDirectory}/keystore_server_no_ca.jks</keystore>
-                        </configuration>
-                    </execution>
-                    <!-- Client -->
-                    <execution>
-                        <id>client-import-ca</id>
-                        <goals>
-                            <goal>importKeystore</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <srcalias>${ca.alias}</srcalias>
-                            <srckeystore>${project.build.testOutputDirectory}/ca.jks</srckeystore>
-                            <destkeystore>${client.keystore}</destkeystore>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>client1</id>
-                        <goals>
-                            <goal>generateKeyPair</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${client1.alias}</alias>
-                            <dname>${client1.dname}</dname>
-                            <keystore>${client.keystore}</keystore>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>client1-certreq</id>
-                        <goals>
-                            <goal>generateCertificateRequest</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${client1.alias}</alias>
-                            <dname>${client1.dname}</dname>
-                            <file>${project.build.testOutputDirectory}/client1.csr</file>
-                            <keystore>${client.keystore}</keystore>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>client1-gencert</id>
-                        <goals>
-                            <goal>generateCertificate</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${ca.alias}</alias>
-                            <keystore>${project.build.testOutputDirectory}/ca.jks</keystore>
-                            <infile>${project.build.testOutputDirectory}/client1.csr</infile>
-                            <outfile>${project.build.testOutputDirectory}/client1.cer</outfile>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>client1-signed-import</id>
-                        <goals>
-                            <goal>importCertificate</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${client1.alias}</alias>
-                            <file>${project.build.testOutputDirectory}/client1.cer</file>
-                            <keystore>${client.keystore}</keystore>
-                        </configuration>
-                    </execution>
-                    <!-- A client certificate which is NOT signed by the CA -->
-                    <execution>
-                        <id>client2</id>
-                        <goals>
-                            <goal>generateKeyPair</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>${client2.alias}</alias>
-                            <dname>${client2.dname}</dname>
-                            <keystore>${client.keystore}</keystore>
-                        </configuration>
-                    </execution>
-                    <!-- Cluster key for JGroups encryption -->
-                    <execution>
-                        <id>cluster</id>
-                        <goals>
-                            <goal>generateSecretKey</goal>
-                        </goals>
-                        <phase>generate-test-resources</phase>
-                        <configuration>
-                            <alias>cluster</alias>
-                            <keystore>${cluster.keystore}</keystore>
-                            <keyalg>DESEDE</keyalg>
-                            <keysize>168</keysize>
-                            <storetype>JCEKS</storetype>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <keyalg>RSA</keyalg>
-                    <keysize>2048</keysize>
-                    <noprompt>true</noprompt>
-                    <storepass>secret</storepass>
-                    <keypass>secret</keypass>
-                    <srcstorepass>secret</srcstorepass>
-                    <deststorepass>secret</deststorepass>
-                    <trustcacerts>true</trustcacerts>
-                    <validity>365</validity>
-                    <verbose>true</verbose>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <executions>
@@ -692,19 +478,234 @@
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
-                    <!-- Delete the keystores before the keytool plugin runs -->
                     <execution>
-                        <id>clean-key-stores</id>
-                        <phase>process-test-sources</phase>
+                        <id>generate-certificates-and-keys</id>
+                        <phase>process-test-resources</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <tasks>
+                            <target>
+                                <macrodef name="keytool">
+                                    <attribute name="command"/>
+                                    <element name="args"/>
+                                    <sequential>
+                                        <condition property="keytool.classname" value="com.ibm.crypto.tools.KeyTool">
+                                            <available classname="com.ibm.crypto.tools.KeyTool"/>
+                                        </condition>
+                                        <condition property="keytool.classname" value="sun.security.tools.keytool.Main">
+                                            <available classname="sun.security.tools.keytool.Main"/>
+                                        </condition>
+                                        <java classname="${keytool.classname}" failonerror="true">
+                                            <arg value="@{command}"/>
+                                            <!-- common arguments -->
+                                            <arg value="-validity"/>
+                                            <arg value="365"/>
+                                            <arg value="-keyalg"/>
+                                            <arg value="RSA"/>
+                                            <arg value="-keysize"/>
+                                            <arg value="2048"/>
+                                            <arg value="-noprompt"/>
+                                            <arg value="-storepass"/>
+                                            <arg value="secret"/>
+                                            <arg value="-keypass"/>
+                                            <arg value="secret"/>
+                                            <!-- additional arguments -->
+                                            <args/>
+                                        </java>
+                                    </sequential>
+                                </macrodef>
                                 <delete quiet="true">
                                     <fileset dir="${project.build.testOutputDirectory}" includes="vault/*.keystore,*.jks,*.csr,*.cer"/>
                                 </delete>
-                            </tasks>
+                                <echo message="Generate the vault keystore"/>
+                                <mkdir dir="${project.build.testOutputDirectory}/vault"/>
+                                <keytool command="-genseckey">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="ispn-vault"/>
+                                        <arg value="-storetype"/>
+                                        <arg value="JCEKS"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${project.build.testOutputDirectory}/vault/vault.keystore"/>
+                                        <arg value="-keyalg"/>
+                                        <arg value="AES"/>
+                                        <arg value="-keysize"/>
+                                        <arg value="128"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Generate the CA"/>
+                                <keytool command="-genkeypair">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${ca.alias}"/>
+                                        <arg value="-dname"/>
+                                        <arg value="${ca.dname}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${ca.keystore}"/>
+                                        <arg value="-ext"/>
+                                        <arg value="bc:c"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Generate the server keystore"/>
+                                <keytool command="-genkeypair">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${server.alias}"/>
+                                        <arg value="-dname"/>
+                                        <arg value="${server.dname}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${server.keystore}"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Sign the server certificate with the CA"/>
+                                <keytool command="-certreq">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${server.alias}"/>
+                                        <arg value="-dname"/>
+                                        <arg value="${server.dname}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${server.keystore}"/>
+                                        <arg value="-file"/>
+                                        <arg value="${project.build.testOutputDirectory}/server.csr"/>
+                                    </args>
+                                </keytool>
+                                <keytool command="-gencert">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${ca.alias}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${ca.keystore}"/>
+                                        <arg value="-infile"/>
+                                        <arg value="${project.build.testOutputDirectory}/server.csr"/>
+                                        <arg value="-outfile"/>
+                                        <arg value="${project.build.testOutputDirectory}/server.cer"/>
+                                    </args>
+                                </keytool>
+                                <keytool command="-importkeystore">
+                                    <args>
+                                        <arg value="-srcalias"/>
+                                        <arg value="${ca.alias}"/>
+                                        <arg value="-srcstorepass"/>
+                                        <arg value="secret"/>
+                                        <arg value="-srckeystore"/>
+                                        <arg value="${ca.keystore}"/>
+                                        <arg value="-deststorepass"/>
+                                        <arg value="secret"/>
+                                        <arg value="-destkeystore"/>
+                                        <arg value="${server.keystore}"/>
+                                    </args>
+                                </keytool>
+                                <keytool command="-importcert">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${server.alias}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${server.keystore}"/>
+                                        <arg value="-file"/>
+                                        <arg value="${project.build.testOutputDirectory}/server.cer"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Generate an untrusted server certificate "/>
+                                <keytool command="-genkeypair">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${server.alias}"/>
+                                        <arg value="-dname"/>
+                                        <arg value="${server.dname}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${project.build.testOutputDirectory}/keystore_server_no_ca.jks"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Client store"/>
+                                <keytool command="-importkeystore">
+                                    <args>
+                                        <arg value="-srcalias"/>
+                                        <arg value="${ca.alias}"/>
+                                        <arg value="-srcstorepass"/>
+                                        <arg value="secret"/>
+                                        <arg value="-srckeystore"/>
+                                        <arg value="${ca.keystore}"/>
+                                        <arg value="-deststorepass"/>
+                                        <arg value="secret"/>
+                                        <arg value="-destkeystore"/>
+                                        <arg value="${client.keystore}"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Generate the client certificate"/>
+                                <keytool command="-genkeypair">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${client1.alias}"/>
+                                        <arg value="-dname"/>
+                                        <arg value="${client1.dname}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${client.keystore}"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Sign the client certificate with the CA"/>
+                                <keytool command="-certreq">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${client1.alias}"/>
+                                        <arg value="-dname"/>
+                                        <arg value="${client1.dname}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${client.keystore}"/>
+                                        <arg value="-file"/>
+                                        <arg value="${project.build.testOutputDirectory}/client1.csr"/>
+                                    </args>
+                                </keytool>
+                                <keytool command="-gencert">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${ca.alias}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${ca.keystore}"/>
+                                        <arg value="-infile"/>
+                                        <arg value="${project.build.testOutputDirectory}/client1.csr"/>
+                                        <arg value="-outfile"/>
+                                        <arg value="${project.build.testOutputDirectory}/client1.cer"/>
+                                    </args>
+                                </keytool>
+                                <keytool command="-importcert">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${client1.alias}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${client.keystore}"/>
+                                        <arg value="-file"/>
+                                        <arg value="${project.build.testOutputDirectory}/client1.cer"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Generate a client certificate which is NOT signed by the CA"/>
+                                <keytool command="-genkeypair">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="${client2.alias}"/>
+                                        <arg value="-dname"/>
+                                        <arg value="${client2.dname}"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${client.keystore}"/>
+                                    </args>
+                                </keytool>
+                                <echo message="Generate a key for JGroups encryption"/>
+                                <keytool command="-genseckey">
+                                    <args>
+                                        <arg value="-alias"/>
+                                        <arg value="cluster"/>
+                                        <arg value="-storetype"/>
+                                        <arg value="JCEKS"/>
+                                        <arg value="-keystore"/>
+                                        <arg value="${cluster.keystore}"/>
+                                        <arg value="-keyalg"/>
+                                        <arg value="DESEDE"/>
+                                        <arg value="-keysize"/>
+                                        <arg value="168"/>
+                                    </args>
+                                </keytool>
+                            </target>
                         </configuration>
                     </execution>
                     <execution>

@@ -1229,11 +1229,6 @@
                     <version>1.0-beta-1</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>keytool-maven-plugin</artifactId>
-                    <version>1.5</version>
-                </plugin>
-                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-checkstyle-plugin</artifactId>
                     <version>${version.checkstyle.maven-plugin}</version>
