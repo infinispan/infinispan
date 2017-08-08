@@ -934,6 +934,14 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 this.parseTransaction(reader, cache, operations);
                 break;
             }
+            case DATA_TYPE: {
+                if (namespace.since(Namespace.INFINISPAN_SERVER_9_2)) {
+                    this.parseDataType(reader, cache, operations);
+                } else {
+                    throw ParseUtils.unexpectedElement(reader);
+                }
+                break;
+            }
             case EVICTION: {
                 this.parseEviction(reader, cache, operations);
                 break;
@@ -1637,6 +1645,66 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
 
         operations.put(storeAddress, store);
         operations.putAll(additionalConfigurationOperations);
+    }
+
+
+    private void parseDataType(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+            Element element = Element.forName(reader.getLocalName());
+            switch (element) {
+                case KEY: {
+                    this.parseKeyDataType(reader, cache, operations);
+                    break;
+                }
+                case VALUE: {
+                    this.parseValueDataType(reader, cache, operations);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedElement(reader);
+                }
+            }
+        }
+    }
+
+    private void parseValueDataType(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress valueDataTypeAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(ValueDataTypeConfigurationResource.PATH);
+        ModelNode valueDataType = Util.createAddOperation(valueDataTypeAddress);
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case MEDIA_TYPE: {
+                    ValueDataTypeConfigurationResource.MEDIA_TYPE.parseAndSetParameter(value, valueDataType, reader);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            }
+        }
+        ParseUtils.requireNoContent(reader);
+        operations.put(valueDataTypeAddress, valueDataType);
+    }
+
+    private void parseKeyDataType(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress keyDataTypeAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(KeyDataTypeConfigurationResource.PATH);
+        ModelNode keyDataType = Util.createAddOperation(keyDataTypeAddress);
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case MEDIA_TYPE: {
+                    KeyDataTypeConfigurationResource.MEDIA_TYPE.parseAndSetParameter(value, keyDataType, reader);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            }
+        }
+        ParseUtils.requireNoContent(reader);
+        operations.put(keyDataTypeAddress, keyDataType);
     }
 
     private void parseRocksDBStore(XMLExtendedStreamReader reader, ModelNode cache, Map<PathAddress, ModelNode> operations) throws XMLStreamException {

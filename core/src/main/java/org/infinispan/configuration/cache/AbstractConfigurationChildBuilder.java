@@ -43,6 +43,11 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   public EncodingConfigurationBuilder encoding() {
+      return builder.encoding();
+   }
+
+   @Override
    public EvictionConfigurationBuilder eviction() {
       return builder.eviction();
    }

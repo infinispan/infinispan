@@ -30,7 +30,6 @@ import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResol
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.query.remote.ProtostreamCompatEncoder;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
 import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
@@ -69,7 +68,6 @@ public final class LifecycleManager implements ModuleLifecycle {
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
       EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
-      encoderRegistry.registerEncoder(new ProtostreamCompatEncoder(cacheManager));
       encoderRegistry.registerWrapper(ProtostreamWrapper.INSTANCE);
       initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
    }

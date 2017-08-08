@@ -5,6 +5,8 @@ import static org.infinispan.server.core.ExternalizerIds.MIME_METADATA;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.rest.dataconversion.JsonObjectTranscoder;
 import org.infinispan.rest.operations.mime.MimeMetadata;
 
 /**
@@ -20,5 +22,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       globalConfiguration.serialization().advancedExternalizers().put(
             MIME_METADATA, new MimeMetadata.Externalizer());
+      EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
+      encoderRegistry.registerTranscoder(new JsonObjectTranscoder());
    }
 }

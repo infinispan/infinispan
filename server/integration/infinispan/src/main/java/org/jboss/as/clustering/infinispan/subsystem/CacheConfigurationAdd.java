@@ -56,6 +56,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -74,7 +75,6 @@ import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurat
 import org.infinispan.persistence.remote.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.SslConfigurationBuilder;
-import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
 import org.infinispan.persistence.rocksdb.configuration.CompressionType;
@@ -506,6 +506,21 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 builder.expiration().enableReaper();
             } else {
                 builder.expiration().disableReaper();
+            }
+        }
+
+        if (cache.hasDefined(ModelKeys.ENCODING)) {
+            ModelNode dataTypeNode = cache.get(ModelKeys.ENCODING);
+            ModelNode node;
+            if ((node = dataTypeNode.get(ModelKeys.KEY)).isDefined()) {
+                final String mediaType = KeyDataTypeConfigurationResource.MEDIA_TYPE.resolveModelAttribute(context, node).asString();
+                ContentTypeConfigurationBuilder keyTypeConfigurationBuilder = builder.encoding().key();
+                keyTypeConfigurationBuilder.mediaType(mediaType);
+
+            } else if ((node = dataTypeNode.get(ModelKeys.VALUE)).isDefined()) {
+                final String mediaType = ValueDataTypeConfigurationResource.MEDIA_TYPE.resolveModelAttribute(context, node).asString();
+                ContentTypeConfigurationBuilder valueTypeConfigurationBuilder = builder.encoding().value();
+                valueTypeConfigurationBuilder.mediaType(mediaType);
             }
         }
 

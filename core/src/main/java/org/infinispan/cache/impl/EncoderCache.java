@@ -25,6 +25,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
@@ -548,6 +549,17 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       checkSubclass(valueWrapperClass, Wrapper.class);
       DataConversion newKeyDataConversion = keyDataConversion.withWrapping(keyWrapperClass);
       DataConversion newValueDataConversion = valueDataConversion.withWrapping(valueWrapperClass);
+      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
+      initState(encoderCache, this);
+      return encoderCache;
+   }
+
+   @Override
+   public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
+      MediaType kType = MediaType.fromString(keyMediaType);
+      MediaType vType = MediaType.fromString(valueMediaType);
+      DataConversion newKeyDataConversion = keyDataConversion.withRequestMediaType(kType);
+      DataConversion newValueDataConversion = valueDataConversion.withRequestMediaType(vType);
       EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, newValueDataConversion);
       initState(encoderCache, this);
       return encoderCache;

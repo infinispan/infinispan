@@ -22,6 +22,7 @@ public class Configuration {
    private final DataContainerConfiguration dataContainerConfiguration;
    private final MemoryConfiguration memoryConfiguration;
    private final DeadlockDetectionConfiguration deadlockDetectionConfiguration;
+   private final EncodingConfiguration encodingConfiguration;
    private final EvictionConfiguration evictionConfiguration;
    private final ExpirationConfiguration expirationConfiguration;
    private final IndexingConfiguration indexingConfiguration;
@@ -45,6 +46,7 @@ public class Configuration {
                  CustomInterceptorsConfiguration customInterceptorsConfiguration,
                  DataContainerConfiguration dataContainerConfiguration, DeadlockDetectionConfiguration deadlockDetectionConfiguration,
                  EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
+                 EncodingConfiguration encodingConfiguration,
                  IndexingConfiguration indexingConfiguration, InvocationBatchingConfiguration invocationBatchingConfiguration,
                  JMXStatisticsConfiguration jmxStatisticsConfiguration,
                  PersistenceConfiguration persistenceConfiguration,
@@ -64,6 +66,7 @@ public class Configuration {
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
       this.deadlockDetectionConfiguration = deadlockDetectionConfiguration;
+      this.encodingConfiguration = encodingConfiguration;
       this.evictionConfiguration = evictionConfiguration;
       this.expirationConfiguration = expirationConfiguration;
       this.indexingConfiguration = indexingConfiguration;
@@ -112,6 +115,10 @@ public class Configuration {
    @Deprecated
    public DeadlockDetectionConfiguration deadlockDetection() {
       return deadlockDetectionConfiguration;
+   }
+
+   public EncodingConfiguration encoding() {
+      return encodingConfiguration;
    }
 
    /**
@@ -205,6 +212,7 @@ public class Configuration {
             ", customInterceptors=" + customInterceptorsConfiguration +
             ", dataContainer=" + dataContainerConfiguration +
             ", deadlockDetection=" + deadlockDetectionConfiguration +
+            ", encodingConfiguration= " + encodingConfiguration +
             ", eviction=" + evictionConfiguration +
             ", expiration=" + expirationConfiguration +
             ", indexing=" + indexingConfiguration +
@@ -238,6 +246,7 @@ public class Configuration {
       result = prime * result
             + ((deadlockDetectionConfiguration == null) ? 0 : deadlockDetectionConfiguration.hashCode());
       result = prime * result + ((evictionConfiguration == null) ? 0 : evictionConfiguration.hashCode());
+      result = prime * result + ((encodingConfiguration == null) ? 0 : encodingConfiguration.hashCode());
       result = prime * result + ((expirationConfiguration == null) ? 0 : expirationConfiguration.hashCode());
       result = prime * result + ((indexingConfiguration == null) ? 0 : indexingConfiguration.hashCode());
       result = prime * result

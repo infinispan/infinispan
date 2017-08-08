@@ -632,6 +632,11 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
+      return new SecureCacheImpl<>(delegate.withMediaType(keyMediaType, valueMediaType), authzManager, subject);
+   }
+
+   @Override
    public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoderClass,
                                            Class<? extends Encoder> valueEncoderClass) {
       return new SecureCacheImpl<>(delegate.withEncoding(keyEncoderClass, valueEncoderClass), authzManager, subject);

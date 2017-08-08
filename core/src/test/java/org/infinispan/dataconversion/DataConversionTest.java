@@ -1,5 +1,8 @@
 package org.infinispan.dataconversion;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.notifications.Listener.Observation.POST;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.Assert.assertEquals;
@@ -8,7 +11,9 @@ import static org.testng.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -21,12 +26,14 @@ import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -105,7 +112,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
       });
    }
 
-
    @Test
    public void testObjectEncoder() throws Exception {
       withCacheManager(new CacheManagerCallable(
@@ -133,8 +139,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
             AdvancedCache<Person, Person> encodingCache = (AdvancedCache<Person, Person>) cache.getAdvancedCache().withEncoding(GenericJbossMarshallerEncoder.class);
 
             assertEquals(encodingCache.get(key1), value1);
-
-
          }
       });
 
@@ -185,7 +189,6 @@ public class DataConversionTest extends AbstractInfinispanTest {
          }
       });
    }
-
 
    @Test
    public void testExtractIndexable() throws Exception {
@@ -283,6 +286,118 @@ public class DataConversionTest extends AbstractInfinispanTest {
             assertEquals(simpleListener.events.size(), 1);
             assertEquals(simpleListener.events.get(0).getKey(), "1");
             assertEquals(simpleListener.events.get(0).getValue(), value);
+         }
+      });
+   }
+
+   @Test
+   @SuppressWarnings("unchecked")
+   public void testTranscoding() throws Exception {
+
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(cfg)) {
+         @Override
+         public void call() throws IOException, InterruptedException {
+            Cache<String, Map<String, String>> cache = cm.getCache();
+
+            EncoderRegistry encoderRegistry = cache.getAdvancedCache().getComponentRegistry().getComponent(EncoderRegistry.class);
+            encoderRegistry.registerTranscoder(new ObjectXMLTranscoder());
+
+            // Store a map in the cache
+            Map<String, String> valueMap = new HashMap<>();
+            valueMap.put("BTC", "Bitcoin");
+            valueMap.put("ETH", "Ethereum");
+            valueMap.put("LTC", "Litecoin");
+            cache.put("CoinMap", valueMap);
+
+            assertEquals(valueMap, cache.get("CoinMap"));
+
+            // Obtain the value with a different MediaType
+            AdvancedCache<String, String> xmlCache = (AdvancedCache<String, String>) cache.getAdvancedCache()
+                  .withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_XML_TYPE);
+
+            assertEquals(xmlCache.get("CoinMap"), "<root><BTC>Bitcoin</BTC><ETH>Ethereum</ETH><LTC>Litecoin</LTC></root>");
+
+            // Reading with same configured MediaType should not change content
+            assertEquals(xmlCache.withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE).get("CoinMap"), valueMap);
+
+            // Writing using XML
+            xmlCache.put("AltCoinMap", "<root><CAT>Catcoin</CAT><DOGE>Dogecoin</DOGE></root>");
+
+            // Read using object from undecorated cache
+            Map<String, String> map = cache.get("AltCoinMap");
+
+            assertEquals(map.get("CAT"), "Catcoin");
+            assertEquals(map.get("DOGE"), "Dogecoin");
+         }
+      });
+   }
+
+   @Test
+   @SuppressWarnings("unchecked")
+   public void testTranscodingWithCustomConfig() throws Exception {
+
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+
+      ContentTypeConfigurationBuilder key = cfg.encoding().key();
+      ContentTypeConfigurationBuilder value = cfg.encoding().value();
+
+      key.mediaType("application/foo");
+      value.mediaType("application/bar");
+
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(cfg)) {
+         @Override
+         public void call() throws IOException, InterruptedException {
+            Cache<String, String> cache = cm.getCache();
+
+            EncoderRegistry encoderRegistry = cache.getAdvancedCache().getComponentRegistry().getComponent(EncoderRegistry.class);
+            encoderRegistry.registerTranscoder(new FooBarTranscoder());
+
+            cache.put("foo-key", "bar-value");
+            assertEquals(cache.get("foo-key"), "bar-value");
+
+            Cache<String, String> fooCache = (Cache<String, String>) cache.getAdvancedCache().withMediaType("application/foo", "application/foo");
+            assertEquals(fooCache.get("foo-key"), "foo-value");
+
+            Cache<String, String> barCache = (Cache<String, String>) cache.getAdvancedCache().withMediaType("application/bar", "application/bar");
+            assertEquals(barCache.get("bar-key"), "bar-value");
+
+            Cache<String, String> barFooCache = (Cache<String, String>) cache.getAdvancedCache().withMediaType("application/bar", "application/foo");
+            assertEquals(barFooCache.get("bar-key"), "foo-value");
+         }
+      });
+   }
+
+   @Test
+   @SuppressWarnings("unchecked")
+   public void testTextTranscoder() throws Exception {
+
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+
+      String keyMediaType = "text/plain; charset=ISO-8859-1";
+
+      cfg.encoding().key().mediaType(keyMediaType);
+      cfg.encoding().value().mediaType("text/plain; charset=UTF-8");
+
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(cfg)) {
+         @Override
+         public void call() throws IOException, InterruptedException {
+            Cache<byte[], byte[]> cache = cm.getCache();
+
+            byte[] key = "key1".getBytes(ISO_8859_1);
+            byte[] value = new byte[]{97, 118, 105, -61, -93, 111};  // avião in UTF-8
+            cache.put(key, value);
+
+            assertEquals(cache.get(key), value);
+
+            // Value as UTF-16
+            Cache<byte[], byte[]> utf16ValueCache = (Cache<byte[], byte[]>) cache.getAdvancedCache().withMediaType(keyMediaType, "text/plain; charset=UTF-16");
+
+            assertEquals(utf16ValueCache.get(key), new byte[]{-2, -1, 0, 97, 0, 118, 0, 105, 0, -29, 0, 111});
          }
       });
    }

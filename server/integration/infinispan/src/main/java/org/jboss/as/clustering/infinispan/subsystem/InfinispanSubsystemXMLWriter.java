@@ -313,6 +313,25 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             writer.writeEndElement();
         }
 
+        ModelNode dataType = cache.get(ModelKeys.ENCODING);
+        if (dataType.isDefined()) {
+            writer.writeStartElement(Element.DATA_TYPE.getLocalName());
+
+            ModelNode key = dataType.get(ModelKeys.KEY);
+            if (key.isDefined()) {
+                writer.writeStartElement(Element.KEY.getLocalName());
+                this.writeOptional(writer, Attribute.MEDIA_TYPE, key, ModelKeys.MEDIA_TYPE);
+                writer.writeEndElement();
+            }
+            ModelNode value = dataType.get(ModelKeys.VALUE);
+            if (value.isDefined()) {
+                writer.writeStartElement(Element.VALUE.getLocalName());
+                this.writeOptional(writer, Attribute.MEDIA_TYPE, value, ModelKeys.MEDIA_TYPE);
+                writer.writeEndElement();
+            }
+            writer.writeEndElement();
+        }
+
         if (cache.get(ModelKeys.REMOTE_CACHE).isDefined() || cache.get(ModelKeys.REMOTE_SITE).isDefined()) {
             writer.writeStartElement(Element.BACKUP_FOR.getLocalName());
             CacheConfigurationResource.REMOTE_CACHE.marshallAsAttribute(cache, writer);

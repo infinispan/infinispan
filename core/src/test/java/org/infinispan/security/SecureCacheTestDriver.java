@@ -1,5 +1,7 @@
 package org.infinispan.security;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
@@ -776,4 +778,10 @@ public class SecureCacheTestDriver {
    public void testMerge_Object_Object_SerializableBiFunction_Metadata(SecureCache<String, String> cache) {
       cache.merge("a", "b", (k, v) -> "no", metadata);
    }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testWithMediaType_String_String(SecureCache<String, String> cache) {
+      cache.withMediaType(APPLICATION_OBJECT_TYPE, APPLICATION_OBJECT_TYPE);
+   }
+
 }

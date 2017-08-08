@@ -23,6 +23,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final DataContainerConfigurationBuilder dataContainer;
    private final DeadlockDetectionConfigurationBuilder deadlockDetection;
+   private final EncodingConfigurationBuilder encoding;
    private final EvictionConfigurationBuilder eviction;
    private final ExpirationConfigurationBuilder expiration;
    private final IndexingConfigurationBuilder indexing;
@@ -49,6 +50,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.customInterceptors = new CustomInterceptorsConfigurationBuilder(this);
       this.dataContainer = new DataContainerConfigurationBuilder(this);
       this.deadlockDetection = new DeadlockDetectionConfigurationBuilder(this);
+      this.encoding = new EncodingConfigurationBuilder(this);
       this.eviction = new EvictionConfigurationBuilder(this);
       this.expiration = new ExpirationConfigurationBuilder(this);
       this.indexing = new IndexingConfigurationBuilder(this);
@@ -99,6 +101,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public DeadlockDetectionConfigurationBuilder deadlockDetection() {
       return deadlockDetection;
+   }
+
+   @Override
+   public EncodingConfigurationBuilder encoding() {
+      return encoding;
    }
 
    /**
@@ -287,7 +294,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
          modulesConfig.add(module.create());
       return new Configuration(template, attributes.protect(), clustering.create(), customInterceptors.create(),
                dataContainer.create(), deadlockDetection.create(), eviction.create(),
-               expiration.create(), indexing.create(), invocationBatching.create(),
+               expiration.create(), encoding.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), persistence.create(), locking.create(), security.create(),
                storeAsBinary.create(), transaction.create(), unsafe.create(), versioning.create(), sites.create(),
                compatibility.create(), memory.create(),
@@ -315,6 +322,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.versioning.read(template.versioning());
       this.compatibility.read(template.compatibility());
       this.memory.read(template.memory());
+      this.encoding.read(template.encoding());
 
       for (Object c : template.modules().values()) {
          Builder<Object> builder = this.addModule(ConfigurationUtils.builderFor(c));

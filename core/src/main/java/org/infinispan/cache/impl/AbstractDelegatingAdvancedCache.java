@@ -414,6 +414,16 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public AdvancedCache<K, V> withMediaType(String keyMediaType, String valueMediaType) {
+      AdvancedCache encoderCache = this.cache.withMediaType(keyMediaType, valueMediaType);
+      if (encoderCache != cache) {
+         return this.wrapper.wrap(encoderCache);
+      } else {
+         return this;
+      }
+   }
+
+   @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
       AdvancedCache encoderCache = this.cache.withWrapping(keyWrapper, valueWrapper);
       if (encoderCache != cache) {

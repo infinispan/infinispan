@@ -42,7 +42,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
@@ -1484,6 +1486,10 @@ public class Parser implements ConfigurationParser {
             this.parseExpiration(reader, builder);
             break;
          }
+         case ENCODING: {
+            this.parseDataType(reader, builder, holder);
+            break;
+         }
          case PERSISTENCE: {
             this.parsePersistence(reader, holder);
             break;
@@ -1867,6 +1873,43 @@ public class Parser implements ConfigurationParser {
          }
       }
       ParseUtils.requireNoContent(reader);
+   }
+
+   protected void parseDataType(XMLExtendedStreamReader reader, ConfigurationBuilder builder, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      ParseUtils.requireNoAttributes(reader);
+      EncodingConfigurationBuilder encodingBuilder = builder.encoding();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case KEY_DATA_TYPE:
+               ContentTypeConfigurationBuilder keyBuilder = encodingBuilder.key();
+               parseContentType(reader, holder, keyBuilder);
+               ParseUtils.requireNoContent(reader);
+               break;
+            case VALUE_DATA_TYPE:
+               ContentTypeConfigurationBuilder valueBuilder = encodingBuilder.value();
+               parseContentType(reader, holder, valueBuilder);
+               ParseUtils.requireNoContent(reader);
+               break;
+            default:
+               throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseContentType(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, ContentTypeConfigurationBuilder builder) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = replaceProperties(reader.getAttributeValue(i));
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case MEDIA_TYPE:
+               builder.mediaType(value);
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
    }
 
    private void parseEviction(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {

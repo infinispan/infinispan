@@ -549,6 +549,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
+   public AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType) {
+      return cache.withMediaType(keyMediaType, valueMediaType);
+   }
+
+   @Override
    public Encoder getKeyEncoder() {
       return cache.getKeyEncoder();
    }

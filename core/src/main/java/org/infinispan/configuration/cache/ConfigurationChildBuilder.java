@@ -20,6 +20,8 @@ public interface ConfigurationChildBuilder {
    @Deprecated
    DeadlockDetectionConfigurationBuilder deadlockDetection();
 
+   EncodingConfigurationBuilder encoding();
+
    /**
     * @deprecated Use {@link ConfigurationBuilder#memory()} instead
     */
