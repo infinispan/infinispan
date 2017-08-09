@@ -1,8 +1,10 @@
 package org.infinispan.commands.read;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -16,15 +18,15 @@ import org.infinispan.context.InvocationContext;
  * @since 4.0
  */
 public class SizeCommand extends AbstractLocalCommand implements VisitableCommand {
-   private final Cache<Object, ?> cache;
+   private final AdvancedCache<?, ?> cache;
 
    public SizeCommand(Cache<Object, ?> cache, long flags) {
       setFlagsBitSet(flags);
+      AdvancedCache<Object, ?> advancedCache = cache.getAdvancedCache();
       if (flags != EnumUtil.EMPTY_BIT_SET) {
-         this.cache = cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flags, Flag.class));
-      } else {
-         this.cache = cache;
+         advancedCache = advancedCache.withFlags(EnumUtil.enumArrayOf(flags, Flag.class));
       }
+      this.cache = advancedCache.withEncoding(IdentityEncoder.class);
    }
 
    @Override
