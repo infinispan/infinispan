@@ -18,14 +18,12 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
- * Tests whether statistics of clustered Memcached instances
- * are calculated correctly.
+ * Tests whether statistics of clustered Memcached instances are calculated correctly.
  *
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = "unstable", testName = "server.memcached.MemcachedClusteredStatsTest",
-   description = "original group: functional - randomly fails with: expected [2] but found [1])")
+@Test(groups = "functional", testName = "server.memcached.MemcachedClusteredStatsTest")
 public class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
 
    private String jmxDomain = MemcachedClusteredStatsTest.class.getSimpleName();
@@ -39,14 +37,16 @@ public class MemcachedClusteredStatsTest extends MemcachedMultiNodeTest {
       // Per-thread mbean server won't work here because the registration will
       // happen in the 'main' thread and the remote call will try to resolve it
       // in a lookup instance associated with an 'OOB-' thread.
-      return TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(null, jmxDomain + "-" + index, true,
-              false, builder, mbeanServerLookup);
+      return TestCacheManagerFactory.createClusteredCacheManagerEnforceJmxDomain(jmxDomain,
+            jmxDomain + "-" + index, true,
+            false, builder, mbeanServerLookup);
    }
 
    public void testSingleConnectionPerServer() throws MalformedObjectNameException, AttributeNotFoundException,
-           MBeanException, ReflectionException, InstanceNotFoundException {
-      ConnectionStatsTest.testGlobalConnections(jmxDomain + "-0", "Memcached", 2,
-         mbeanServerLookup.getMBeanServer(null));
+         MBeanException, ReflectionException, InstanceNotFoundException {
+      MBeanServer mBeanServer = mbeanServerLookup.getMBeanServer(null);
+      ConnectionStatsTest.testGlobalConnections(jmxDomain + "-0", "Memcached-" + jmxDomain, 2,
+            mBeanServer);
    }
 
    class ProvidedMBeanServerLookup implements MBeanServerLookup {
