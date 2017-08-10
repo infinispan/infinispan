@@ -115,44 +115,70 @@ The same configuration can be achieved programmatically:
 
 [[cache-passivation]]
 === Cache Passivation
-A CacheWriter can be used to enforce entry passivation and activation on eviction in a cache. Cache passivation is the process of removing an object from in-memory cache and writing it to a secondary data store (e.g., file system, database) on eviction. Cache activation is the process of restoring an object from the data store into the in-memory cache when it's needed to be used. In order to fully support passivation, a store needs to be both a CacheWriter and a CacheLoader. In both cases, the configured cache store is used to read from the loader and write to the data writer.
+A CacheWriter can be used to enforce entry passivation and activation on eviction in a cache. Cache passivation is the
+process of removing an object from in-memory cache and writing it to a secondary data store (e.g., file system, database)
+on eviction. Cache activation is the process of restoring an object from the data store into the in-memory cache when
+it's needed to be used. In order to fully support passivation, a store needs to be both a CacheWriter and a CacheLoader.
+In both cases, the configured cache store is used to read from the loader and write to the data writer.
 
-When an eviction policy in effect evicts an entry from the cache, if passivation is enabled, a notification that the entry is being passivated will be emitted to the cache listeners and the entry will be stored. When a user attempts to retrieve a entry that was evicted earlier, the entry is (lazily) loaded from the cache loader into memory. When the entry and its children have been loaded, they're removed from the cache loader and a notification is emitted to the cache listeners that the entry has been activated. In order to enable passivation just set passivation to true (false by default). When passivation is used, only the first cache loader configured is used and all others are ignored.
+When an eviction policy in effect evicts an entry from the cache, if passivation is enabled, a notification that the
+entry is being passivated will be emitted to the cache listeners and the entry will be stored. When a user attempts to
+retrieve a entry that was evicted earlier, the entry is (lazily) loaded from the cache loader into memory. When the
+entry has been loaded a notification is emitted to the cache listeners that the entry has been activated. In order to
+enable passivation just set passivation to true (false by default). When passivation is used, only the first cache loader
+configured is used and all others are ignored.
+
+NOTE: Entries which have been activated, i.e. brought back from the store to memory, will still continue to exist in
+the cache store if this has been configured as `shared`. This happens because backup owners might still need to access it.
 
 ==== Cache Loader Behavior with Passivation Disabled vs Enabled
-When passivation is disabled, whenever an element is modified, added or removed, then that modification is persisted in the backend store via the cache loader. There is no direct relationship between eviction and cache loading. If you don't use eviction, what's in the persistent store is basically a copy of what's in memory. If you do use eviction, what's in the persistent store is basically a superset of what's in memory (i.e. it includes entries that have been evicted from memory). When passivation is enabled, there is a direct relationship between eviction and the cache loader. Writes to the persistent store via the cache loader only occur as part of the eviction process. Data is deleted from the persistent store when the application reads it back into memory. In this case, what's in memory and what's in the persistent store are two subsets of the total information set, with no intersection between the subsets.
+When passivation is disabled, whenever an element is modified, added or removed, then that modification is persisted in
+the backend store via the cache loader. There is no direct relationship between eviction and cache loading.
+If you don't use eviction, what's in the persistent store is basically a copy of what's in memory. If you do use eviction,
+what's in the persistent store is basically a superset of what's in memory (i.e. it includes entries that have been
+evicted from memory). When passivation is enabled, and with an unshared store, there is a direct relationship between
+eviction and the cache loader.
+Writes to the persistent store via the cache loader only occur as part of the eviction process. Data is deleted from the
+persistent store when the application reads it back into memory. In this case, what's in memory and what's in the
+persistent store are two subsets of the total information set, with no intersection between the subsets.
+With a shared store, entries which have been passivated in the past will continue to exist in the store, although they
+may have a stale value if this has been overwritten in memory.
 
 The following is a simple example, showing what state is in RAM and in the persistent store after each step of a 6 step process:
 
-
-. Insert keyOne
-. Insert keyTwo
-. Eviction thread runs, evicts keyOne
-. Read keyOne
-. Eviction thread runs, evicts keyTwo
-. Remove keyTwo
-
-.When passivation is _disabled_
-. *Memory:* keyOne *Disk:* keyOne
-. *Memory:* keyOne, keyTwo *Disk:* keyOne, keyTwo
-. *Memory:* keyTwo *Disk:* keyOne, keyTwo
-. *Memory:* keyOne, keyTwo *Disk:* keyOne, keyTwo
-. *Memory:* keyOne *Disk:* keyOne, keyTwo
-. *Memory:* keyOne *Disk:* keyOne
-
-.When passivation is _enabled_
-. *Memory:* keyOne *Disk:* (none)
-. *Memory:* keyOne, keyTwo *Disk:* (none)
-. *Memory:* keyTwo *Disk:* keyOne
-. *Memory:* keyOne, keyTwo *Disk:* (none)
-. *Memory:* keyOne *Disk:* keyTwo
-. *Memory:* keyOne *Disk:* (none)
+[options="header"]
+|===============
+|Operation|Passivation Off|Passivation On, Shared Off|Passivation On, Shared On
+|Insert keyOne|*Memory:* keyOne +
+*Disk:* keyOne|*Memory:* keyOne +
+*Disk:* (none)|*Memory:* keyOne +
+*Disk:* (none)
+|Insert keyTwo|*Memory:* keyOne, keyTwo +
+*Disk:* keyOne, keyTwo|*Memory:* keyOne, keyTwo +
+*Disk:* (none)|*Memory:* keyOne, keyTwo +
+*Disk:* (none)
+|Eviction thread runs, evicts keyOne|*Memory:* keyTwo +
+*Disk:* keyOne, keyTwo|*Memory:* keyTwo +
+*Disk:* keyOne|*Memory:* keyTwo +
+*Disk:* keyOne
+|Read keyOne|*Memory:* keyOne, keyTwo +
+*Disk:* keyOne, keyTwo|*Memory:* keyOne, keyTwo +
+*Disk:* (none)|*Memory:* keyOne, keyTwo +
+*Disk:* keyOne
+|Eviction thread runs, evicts keyTwo|*Memory:* keyOne +
+*Disk:* keyOne, keyTwo|*Memory:* keyOne +
+*Disk:* keyTwo|*Memory:* keyOne +
+*Disk:* keyOne, keyTwo
+|Remove keyTwo|*Memory:* keyOne +
+*Disk:* keyOne|*Memory:* keyOne +
+*Disk:* (none)|*Memory:* keyOne +
+*Disk:* keyOne
+|===============
 
 === Cache Loaders and transactional caches
 When a cache is transactional and a cache loader is present, the cache loader won't be enlisted in the transaction in which the cache is part.
 That means that it is possible to have inconsistencies at cache loader level: the transaction to succeed applying the in-memory state but (partially) fail applying the changes to the store.
 Manual recovery would not work with caches stores.
-
 
 ===  Write-Through And Write-Behind Caching
 Infinispan can optionally be configured with one or several cache stores allowing it to store data in a persistent location such as shared JDBC database, a local filesystem, etc. Infinispan can handle updates to the cache store in two different ways:
@@ -174,7 +200,7 @@ Configuring a write-through or synchronous cache store does not require any part
    <file-store fetch-state="true"
                read-only="false"
                purge="false" path="${java.io.tmpdir}"/>
-         </persistence>
+</persistence>
 
 ----
 
