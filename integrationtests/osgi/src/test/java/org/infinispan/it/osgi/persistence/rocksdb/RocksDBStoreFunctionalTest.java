@@ -5,6 +5,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.it.osgi.util.SuiteCategory;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -27,7 +28,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
-@Category(PerSuite.class)
+@Category(SuiteCategory.PersistenceSuite.class)
 public class RocksDBStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    private static String tmpDirectory;

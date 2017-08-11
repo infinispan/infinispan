@@ -21,17 +21,6 @@
             <skipOSGiTests>true</skipOSGiTests>
          </properties>
       </profile>
-      <profile>
-         <id>jigsaw</id>
-         <activation>
-            <jdk>[9,)</jdk>
-         </activation>
-         <properties>
-            <!-- TODO Upgrade to pax-exam 4.11.0 and remove this profile -->
-            <!-- 4.10.0 doesn't work with the latest JDK9 builds, see https://ops4j1.jira.com/browse/PAXEXAM-810 -->
-            <skipOSGiTests>true</skipOSGiTests>
-         </properties>
-      </profile>
    </profiles>
 
    <dependencies>
@@ -269,6 +258,7 @@
                <skipTests>${skipOSGiTests}</skipTests>
                <testNGArtifactName>none:none</testNGArtifactName>
                <disableXmlReport>false</disableXmlReport>
+               <runOrder>alphabetical</runOrder>
                <properties>
                   <property>
                      <name>listener</name>

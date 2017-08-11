@@ -5,6 +5,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.it.osgi.util.SuiteCategory;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
@@ -25,7 +26,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
-@Category(PerSuite.class)
+@Category(SuiteCategory.PersistenceSuite.class)
 public class SingleFileStoreFunctionalTest extends org.infinispan.persistence.file.SingleFileStoreFunctionalTest {
    private static String tmpDirectory;
 

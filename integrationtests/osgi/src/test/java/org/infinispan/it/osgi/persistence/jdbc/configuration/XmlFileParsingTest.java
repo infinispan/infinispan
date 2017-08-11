@@ -3,6 +3,7 @@ package org.infinispan.it.osgi.persistence.jdbc.configuration;
 import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
+import org.infinispan.it.osgi.util.SuiteCategory;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
@@ -20,7 +21,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
-@Category(PerSuite.class)
+@Category(SuiteCategory.PersistenceSuite.class)
 public class XmlFileParsingTest extends org.infinispan.persistence.jdbc.configuration.XmlFileParsingTest {
    @Configuration
    public Option[] config() throws Exception {
