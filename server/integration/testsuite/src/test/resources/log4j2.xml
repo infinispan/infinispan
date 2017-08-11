@@ -12,14 +12,21 @@
       <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%n%throwable{10}"/>
     </Console>
     <File name="File" fileName="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log"
-          append="false">
+          append="true">
       <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t:%x) [%c{1}] %m%n"/>
     </File>
   </Appenders>
 
   <Loggers>
+    <Logger name="org.jboss.arquillian" level="INFO"/>
+    <Logger name="org.infinispan.arquillian.core.WithRunningServerObserver" level="INFO"/>
+    <Logger name="org.infinispan.commons.test.JUnitTestListener" level="INFO"/>
     <Logger name="org.infinispan" level="DEBUG"/>
     <Logger name="com.mchange" level="WARN"/>
+    <Logger name="org.apache.auth" level="INFO"/>
+    <Logger name="org.apache.commons.httpclient.auth" level="INFO"/>
+    <Logger name="org.apache.http" level="INFO"/>
+    <Logger name="org.apache.directory" level="WARN"/>
     <Logger name="org.jgroups" level="DEBUG"/>
 
     <Root level="DEBUG">
