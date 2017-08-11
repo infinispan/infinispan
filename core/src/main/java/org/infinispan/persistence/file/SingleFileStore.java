@@ -8,7 +8,9 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -20,7 +22,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.persistence.Store;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
@@ -36,7 +37,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.CacheLoader}. This file store
+ * A filesystem-based implementation of a {@link org.infinispan.persistence.spi.AdvancedLoadWriteStore}. This file store
  * stores cache values in a single file <tt>&lt;location&gt;/&lt;cache name&gt;.dat</tt>,
  * keys and file positions are kept in memory.
  * <p/>
@@ -113,8 +114,11 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
          channel = new RandomAccessFile(file, "rw").getChannel();
 
-         // initialize data structures
-         entries = newEntryMap();
+         // initialize data structures. Only use LinkedHashMap (LRU) for entries when cache store is bounded
+         Map<K, FileEntry> entryMap = configuration.maxEntries() > 0 ?
+               new LinkedHashMap<>(16, 0.75f, true) :
+               new HashMap<>();
+         entries = Collections.synchronizedMap(entryMap);
          freeList = Collections.synchronizedSortedSet(new TreeSet<FileEntry>());
 
          // check file format and read persistent state if enabled for the cache
@@ -131,17 +135,6 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       } catch (Exception e) {
          throw new PersistenceException(e);
       }
-   }
-
-   private <Key> Map<Key, FileEntry> newEntryMap() {
-      // only use LinkedHashMap (LRU) for entries when cache store is bounded
-      final Map<Key, FileEntry> entryMap;
-      if (configuration.maxEntries() > 0)
-         entryMap = CollectionFactory.makeLinkedMap(16, 0.75f, true);
-      else
-         entryMap = CollectionFactory.makeMap();
-
-      return Collections.synchronizedMap(entryMap);
    }
 
    @Override
@@ -591,8 +584,8 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       }
 
       if (trace) {
-         log.tracef("Removed entries: " + removedEntries + ", Reclaimed Space: " + reclaimedSpace);
-         log.tracef("Time taken for truncateFile: " + (timeService.wallClockTime() - startTime) + " (ms)");
+         log.tracef("Removed entries: %d, Reclaimed Space: %d, Free Entries %d", removedEntries, reclaimedSpace, freeList.size());
+         log.tracef("Time taken for truncateFile: %d (ms)", timeService.wallClockTime() - startTime);
       }
    }
 
@@ -647,14 +640,14 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    @Override
    public void purge(Executor threadPool, final PurgeListener task) {
       long now = timeService.wallClockTime();
-      List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<KeyValuePair<Object, FileEntry>>();
+      List<KeyValuePair<Object, FileEntry>> entriesToPurge = new ArrayList<>();
       synchronized (entries) {
          for (Iterator<Map.Entry<K, FileEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<K, FileEntry> next = it.next();
             FileEntry fe = next.getValue();
             if (fe.isExpired(now)) {
                it.remove();
-               entriesToPurge.add(new KeyValuePair<Object, FileEntry>(next.getKey(), fe));
+               entriesToPurge.add(new KeyValuePair<>(next.getKey(), fe));
             }
          }
       }
@@ -724,43 +717,43 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       /**
        * File offset of this block.
        */
-      private final long offset;
+      final long offset;
 
       /**
        * Total size of this block.
        */
-      private final int size;
+      final int size;
 
       /**
        * Size of serialized key.
        */
-      private final int keyLen;
+      final int keyLen;
 
       /**
        * Size of serialized data.
        */
-      private final int dataLen;
+      final int dataLen;
 
       /**
        * Size of serialized metadata.
        */
-      private final int metadataLen;
+      final int metadataLen;
 
       /**
        * Time stamp when the entry will expire (i.e. will be collected by purge).
        */
-      private final long expiryTime;
+      final long expiryTime;
 
       /**
        * Number of current readers.
        */
-      private transient int readers = 0;
+      transient int readers = 0;
 
-      public FileEntry(long offset, int size) {
+      FileEntry(long offset, int size) {
          this(offset, size, 0, 0, 0, -1);
       }
 
-      public FileEntry(long offset, int size, int keyLen, int dataLen, int metadataLen, long expiryTime) {
+      FileEntry(long offset, int size, int keyLen, int dataLen, int metadataLen, long expiryTime) {
          this.offset = offset;
          this.size = size;
          this.keyLen = keyLen;
@@ -769,25 +762,25 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          this.expiryTime = expiryTime;
       }
 
-      public FileEntry(FileEntry fe, int keyLen, int dataLen, int metadataLen, long expiryTime) {
+      FileEntry(FileEntry fe, int keyLen, int dataLen, int metadataLen, long expiryTime) {
          this(fe.offset, fe.size, keyLen, dataLen, metadataLen, expiryTime);
       }
 
-      public synchronized boolean isLocked() {
+      synchronized boolean isLocked() {
          return readers > 0;
       }
 
-      public synchronized void lock() {
+      synchronized void lock() {
          readers++;
       }
 
-      public synchronized void unlock() {
+      synchronized void unlock() {
          readers--;
          if (readers == 0)
             notifyAll();
       }
 
-      public synchronized void waitUnlocked() {
+      synchronized void waitUnlocked() {
          while (readers > 0) {
             try {
                wait();
@@ -797,11 +790,11 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          }
       }
 
-      public boolean isExpired(long now) {
+      boolean isExpired(long now) {
          return expiryTime > 0 && expiryTime < now;
       }
 
-      public int actualSize() {
+      int actualSize() {
          return KEY_POS + keyLen + dataLen + metadataLen;
       }
 
