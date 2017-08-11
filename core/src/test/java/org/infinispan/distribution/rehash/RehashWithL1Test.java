@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 5.2
  */
-@Test(groups = "functional", testName = "distribution.rehash.RehashWithL1Test")
+@Test(groups = {"functional", "unstable"}, testName = "distribution.rehash.RehashWithL1Test", description = "See ISPN-7801")
 public class RehashWithL1Test extends MultipleCacheManagersTest {
 
    ConfigurationBuilder builder;
