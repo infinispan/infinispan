@@ -11,6 +11,7 @@ import org.infinispan.commons.test.skip.SkipOnOs;
 import org.infinispan.commons.test.skip.SkipOnOsRule;
 import org.infinispan.it.osgi.util.MavenUtils;
 import org.infinispan.it.osgi.util.PaxExamUtils;
+import org.infinispan.it.osgi.util.SuiteCategory;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,7 +35,7 @@ import org.osgi.framework.ServiceReference;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
-@Category(PerClass.class)
+@Category(SuiteCategory.FeaturesSuite.class)
 public class OSGiKarafFeaturesTest {
 
    @Rule

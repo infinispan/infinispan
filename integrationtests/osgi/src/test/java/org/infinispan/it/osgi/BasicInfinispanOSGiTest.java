@@ -7,6 +7,7 @@ import java.net.URL;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.it.osgi.util.SuiteCategory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -22,7 +23,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
-@Category(PerSuite.class)
+@Category(SuiteCategory.FeaturesSuite.class)
 public class BasicInfinispanOSGiTest extends BaseInfinispanCoreOSGiTest {
 
    @Test

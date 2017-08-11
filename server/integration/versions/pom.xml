@@ -69,7 +69,7 @@
       <version.xpp3>1.1.4c</version.xpp3>
       <version.pax.url>2.5.2</version.pax.url>
       <version.karaf>4.1.1</version.karaf>
-      <version.pax.exam>4.10.0</version.pax.exam>
+      <version.pax.exam>4.11.0</version.pax.exam>
       <version.h2.database>1.3.173</version.h2.database>
       <version.resteasy>3.1.0.Final</version.resteasy>
       <version.lucene>5.5.4</version.lucene>
@@ -118,13 +118,13 @@
             <artifactId>wildfly-security</artifactId>
             <version>${version.org.wildfly}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-transactions</artifactId>
             <version>${version.org.wildfly}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-dist</artifactId>
@@ -237,7 +237,7 @@
             <artifactId>infinispan-server-commons</artifactId>
             <version>${project.version}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-commons</artifactId>
@@ -294,7 +294,7 @@
             <artifactId>infinispan-server-endpoints</artifactId>
             <version>${project.version}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-feature-pack</artifactId>
@@ -319,7 +319,7 @@
             <artifactId>jboss-logmanager-log4j</artifactId>
             <version>${version.org.jboss.logmanager.jboss-logmanager-log4j}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.jboss.modules</groupId>
             <artifactId>jboss-modules</artifactId>
@@ -431,7 +431,7 @@
             <artifactId>infinispan-cli-interpreter</artifactId>
             <version>${version.org.infinispan}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-management-console</artifactId>
@@ -612,7 +612,7 @@
             <scope>test</scope>
             <version>${version.h2.database}</version>
          </dependency>
-         
+
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-security-integrationtests</artifactId>

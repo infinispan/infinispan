@@ -4,6 +4,7 @@ import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.it.osgi.util.SuiteCategory;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.junit.Ignore;
@@ -30,7 +31,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
-@Category(PerSuite.class)
+@Category(SuiteCategory.PersistenceSuite.class)
 @Ignore
 public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
 

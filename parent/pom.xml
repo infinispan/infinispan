@@ -211,7 +211,7 @@
         <version.jacoco>0.7.5.201505241946</version.jacoco>
         <version.pax.url>2.5.2</version.pax.url>
         <version.karaf>3.0.8</version.karaf>
-        <version.pax.exam>4.10.0</version.pax.exam>
+        <version.pax.exam>4.11.0</version.pax.exam>
         <version.ant-contrib>1.0b3</version.ant-contrib>
         <dir.ispn>../</dir.ispn>
         <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>

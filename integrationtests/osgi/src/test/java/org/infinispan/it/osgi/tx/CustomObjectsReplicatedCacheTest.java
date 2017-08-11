@@ -9,6 +9,7 @@ import java.io.Serializable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.it.osgi.util.PaxExamUtils;
+import org.infinispan.it.osgi.util.SuiteCategory;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -30,7 +31,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
-@Category(PerSuite.class)
+@Category(SuiteCategory.TransactionalSuite.class)
 public class CustomObjectsReplicatedCacheTest extends MultipleCacheManagersTest {
 
    @Override
