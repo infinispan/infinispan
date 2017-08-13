@@ -27,6 +27,7 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices
 @Namespaces({
       @Namespace(root = "counters"),
+      @Namespace(uri = "urn:infinispan:config:counters:9.1", root = "counters"),
       @Namespace(uri = "urn:infinispan:config:counters:9.0", root = "counters")
 })
 public class CounterConfigurationParser implements ConfigurationParser {
