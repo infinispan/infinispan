@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 9.0
  */
-@Test(groups = "functional")
+@Test(groups = {"functional", "smoke"})
 public abstract class AbstractCounterTest<T extends TestCounter> extends BaseCounterTest {
 
    public void testDiffInitValues(Method method) throws ExecutionException, InterruptedException {

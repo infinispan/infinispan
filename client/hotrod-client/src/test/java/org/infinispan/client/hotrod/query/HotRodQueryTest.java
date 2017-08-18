@@ -44,7 +44,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Test(testName = "client.hotrod.query.HotRodQueryTest", groups = "functional")
+@Test(testName = "client.hotrod.query.HotRodQueryTest", groups = {"functional", "smoke"})
 public class HotRodQueryTest extends SingleCacheManagerTest {
 
    protected static final String TEST_CACHE_NAME = "userCache";

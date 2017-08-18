@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  *
  * @author Vladimir Blagojevic
  */
-@Test(groups = {"functional", "smoke"}, testName = "distexec.ReplSyncDistributedExecutorTest")
+@Test(groups = {"functional"}, testName = "distexec.ReplSyncDistributedExecutorTest")
 public class ReplSyncDistributedExecutorTest extends DistributedExecutorTest {
 
    public ReplSyncDistributedExecutorTest() {

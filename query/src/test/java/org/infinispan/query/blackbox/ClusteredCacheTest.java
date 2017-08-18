@@ -57,7 +57,7 @@ import org.testng.annotations.Test;
  * @author Navin Surtani
  * @author Sanne Grinovero
  */
-@Test(groups = {"functional", "smoke"}, testName = "query.blackbox.ClusteredCacheTest")
+@Test(groups = {"functional"}, testName = "query.blackbox.ClusteredCacheTest")
 public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    protected Cache<Object, Person> cache1;

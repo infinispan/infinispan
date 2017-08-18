@@ -33,7 +33,7 @@
         <profile>
             <id>smoke</id>
             <properties>
-                <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
+                <defaultTestGroup>smoke,arquillian</defaultTestGroup>
             </properties>
         </profile>
     </profiles>

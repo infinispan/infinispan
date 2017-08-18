@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
-@Test(groups = "functional", testName = "cdi.test.cache.embedded.DefaultCacheTest")
+@Test(groups = {"functional", "smoke"}, testName = "cdi.test.cache.embedded.DefaultCacheTest")
 public class DefaultCacheTest extends Arquillian {
 
    @Deployment

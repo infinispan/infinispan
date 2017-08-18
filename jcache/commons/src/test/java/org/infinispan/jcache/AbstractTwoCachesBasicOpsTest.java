@@ -41,7 +41,7 @@ import org.testng.annotations.Test;
  *
  * @author Matej Cimbora
  */
-@Test(testName = "org.infinispan.jcache.AbstractTwoCachesBasicOpsTest", groups = "functional")
+@Test(testName = "org.infinispan.jcache.AbstractTwoCachesBasicOpsTest", groups = {"functional", "smoke"})
 public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManagersTest {
 
    @Test

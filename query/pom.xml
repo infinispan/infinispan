@@ -234,4 +234,27 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>smoke</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <!-- explicitly exclude some tests because of TestNG issue which ignores
+                          restricted groups in subclasses -->
+                     <includes>
+                        <include>**/LocalCacheTest.java</include>
+                        <include>**/QueryDslConditionsTest.java</include>
+                        <include>**/QueryStringTest.java</include>
+                     </includes>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>

@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = {"functional", "smoke"}, testName = "query.queries.spatial.QuerySpatialTest")
+@Test(groups = {"functional"}, testName = "query.queries.spatial.QuerySpatialTest")
 public class QuerySpatialTest extends SingleCacheManagerTest {
 
    public QuerySpatialTest() {

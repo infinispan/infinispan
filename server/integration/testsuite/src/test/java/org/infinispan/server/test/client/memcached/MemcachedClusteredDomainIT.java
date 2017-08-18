@@ -24,7 +24,7 @@ import org.junit.runner.RunWith;
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
-@Category({ MemcachedClusteredDomain.class, Smoke.class })
+@Category(MemcachedClusteredDomain.class)
 public class MemcachedClusteredDomainIT extends AbstractMemcachedClusteredIT {
 
     private static final int MEMCACHED_PORT1 = 11213;

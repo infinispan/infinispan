@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Listeners(TestResourceTrackingListener.class)
-@Test(groups = "functional", testName = "cdi.test.cache.remote.NamedCacheTest")
+@Test(groups = {"functional", "smoke"}, testName = "cdi.test.cache.remote.NamedCacheTest")
 public class NamedCacheTest extends Arquillian {
 
    private static final String SERVER_LIST_KEY = "infinispan.client.hotrod.server_list";

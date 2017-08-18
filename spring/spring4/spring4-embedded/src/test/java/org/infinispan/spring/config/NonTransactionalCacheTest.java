@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 5.1
  */
-@Test(groups = "functional", testName = "spring.config.NonTransactionalCacheTest")
+@Test(groups = {"functional", "smoke"}, testName = "spring.config.NonTransactionalCacheTest")
 @ContextConfiguration
 public class NonTransactionalCacheTest extends AbstractTestNGSpringContextTests {
 

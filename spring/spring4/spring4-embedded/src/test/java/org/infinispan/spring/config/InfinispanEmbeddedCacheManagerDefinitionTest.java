@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  * @author Marius Bogoevici
  */
 
-@Test(groups = "functional", testName = "spring.config.InfinispanEmbeddedCacheManagerDefinitionTest")
+@Test(groups = {"functional", "smoke"}, testName = "spring.config.InfinispanEmbeddedCacheManagerDefinitionTest")
 @ContextConfiguration
 public class InfinispanEmbeddedCacheManagerDefinitionTest extends AbstractTestNGSpringContextTests {
 

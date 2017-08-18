@@ -218,4 +218,30 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>smoke</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <excludes>
+                        <!-- explicitly exclude some tests because of TestNG issue which ignores
+                             restricted groups in subclasses -->
+                        <exclude>**/*Async*.java</exclude>
+                        <exclude>**/ReplSyncDistributedExecutor*.java</exclude>
+                        <exclude>**/DistributedExecutorWith*.java</exclude>
+                        <exclude>**/DistAsync*.java</exclude>
+                        <exclude>**/DistSyncUnsafe*.java</exclude>
+                        <exclude>**/TopologyAwareDist*.java</exclude>
+                     </excludes>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>

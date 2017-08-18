@@ -9,7 +9,6 @@ import java.util.List;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.RESTClusteredDomain;
-import org.infinispan.server.test.category.Smoke;
 import org.infinispan.server.test.util.ManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.AfterClass;
@@ -25,7 +24,7 @@ import org.junit.runner.RunWith;
  * @version August 2011
  */
 @RunWith(Arquillian.class)
-@Category({ RESTClusteredDomain.class, Smoke.class })
+@Category(RESTClusteredDomain.class)
 public class RESTClusteredDomainIT extends AbstractRESTClusteredIT {
 
     private static final int REST_PORT1 = 8081;

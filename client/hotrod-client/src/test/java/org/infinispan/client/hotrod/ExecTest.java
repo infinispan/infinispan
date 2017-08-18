@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
  * @author Tristan Tarrant
  * @since 7.2
  */
-@Test(groups = "functional", testName = "client.hotrod.ExecTest")
+@Test(groups = {"functional", "smoke"}, testName = "client.hotrod.ExecTest")
 public class ExecTest extends MultiHotRodServersTest {
    private static final String SCRIPT_CACHE = "___script_cache";
    static final String REPL_CACHE = "R";
