@@ -347,7 +347,7 @@
         <suite.client.repl.phase>integration-test</suite.client.repl.phase>
         <suite.client.repl.domain.phase>none</suite.client.repl.domain.phase>
         <suite.security.phase>none</suite.security.phase>
-        <suite.client.smoke.phase>none</suite.client.smoke.phase>
+        <suite.smoke.phase>none</suite.smoke.phase>
 
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
@@ -1046,13 +1046,13 @@
                     </execution>
                     <execution>
                         <id>suite-smoke</id>
-                        <phase>${suite.client.smoke.phase}</phase>
+                        <phase>${suite.smoke.phase}</phase>
                         <goals>
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
                             <groups>org.infinispan.server.test.category.Smoke</groups>
-                            <excludedGroups>${groups.unstable}</excludedGroups>
+                            <excludedGroups>${groups.unstable}, org.infinispan.server.test.category.MemcachedClustered</excludedGroups>
                             <systemPropertyVariables>
                                 <arquillian.launch>suite-client-dist</arquillian.launch>
                             </systemPropertyVariables>
@@ -1172,6 +1172,7 @@
         <profile>
             <id>smoke</id>
             <properties>
+                <suite.smoke.phase>integration-test</suite.smoke.phase>
                 <suite.manual.phase>none</suite.manual.phase>
                 <suite.manual.include.groups>org.infinispan.server.test.category.Smoke</suite.manual.include.groups>
                 <suite.queries.phase>none</suite.queries.phase>

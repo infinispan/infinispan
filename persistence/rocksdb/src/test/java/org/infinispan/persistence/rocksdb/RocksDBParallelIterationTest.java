@@ -9,7 +9,7 @@ import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguratio
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test (groups = "functional", testName = "persistence.rocksdb.RocksDBParallelIterationTest")
+@Test (groups = {"functional", "smoke"}, testName = "persistence.rocksdb.RocksDBParallelIterationTest")
 public class RocksDBParallelIterationTest extends ParallelIterationTest {
 
    private String tmpDirectory;

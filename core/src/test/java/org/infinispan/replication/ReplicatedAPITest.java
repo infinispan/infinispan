@@ -12,7 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "replication.ReplicatedAPITest")
+@Test(groups = {"functional", "smoke"}, testName = "replication.ReplicatedAPITest")
 public class ReplicatedAPITest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {

@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 /**
  * @author Galder Zamarreño
  */
-@Test(groups = "functional", testName = "client.hotrod.event.ClientEventsTest")
+@Test(groups = {"functional", "smoke"}, testName = "client.hotrod.event.ClientEventsTest")
 public class ClientEventsTest extends SingleHotRodServerTest {
 
    public void testCreatedEvent() {

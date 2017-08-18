@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @author mmarkus
  * @since 4.1
  */
-@Test (testName = "client.hotrod.HotRodIntegrationTest", groups = "functional" )
+@Test (testName = "client.hotrod.HotRodIntegrationTest", groups = {"functional", "smoke"} )
 public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    private static final Log log = LogFactory.getLog(HotRodIntegrationTest.class);

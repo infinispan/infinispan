@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
  * @author Marius Bogoevici
  *
  */
-@Test(testName = "spring.provider.SpringRemoteCacheManagerTest", groups = "functional")
+@Test(testName = "spring.provider.SpringRemoteCacheManagerTest", groups = {"functional", "smoke"})
 public class SpringRemoteCacheManagerTest extends SingleCacheManagerTest {
 
    private static final String TEST_CACHE_NAME = "spring.remote.cache.manager.Test";

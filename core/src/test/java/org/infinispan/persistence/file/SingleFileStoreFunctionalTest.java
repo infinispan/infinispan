@@ -34,6 +34,7 @@ public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
    @BeforeClass
    protected void setUpTempDir() {
       tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+      Util.recursiveFileRemove(tmpDirectory);
    }
 
    @AfterClass

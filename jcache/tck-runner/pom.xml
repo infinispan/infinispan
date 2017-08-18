@@ -354,6 +354,9 @@
 
       <profile>
          <id>smoke</id>
+         <properties>
+            <skipTests>true</skipTests>
+         </properties>
          <build>
             <plugins>
                <plugin>
@@ -365,6 +368,13 @@
                         <phase>none</phase>
                      </execution>
                   </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <configuration>
+                     <skipITs>${skipTests}</skipITs>
+                  </configuration>
                </plugin>
             </plugins>
          </build>

@@ -11,7 +11,7 @@ import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(groups = {"functional", "smoke"}, testName = "distribution.DistAsyncFuncTest")
+@Test(groups = {"functional"}, testName = "distribution.DistAsyncFuncTest")
 public class DistAsyncFuncTest extends DistSyncFuncTest {
 
    ReplListener r1, r2, r3, r4;

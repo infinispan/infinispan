@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = {"functional", "smoke"}, testName = "query.queries.phrases.QueryPhrasesTest")
+@Test(groups = {"functional"}, testName = "query.queries.phrases.QueryPhrasesTest")
 public class QueryPhrasesTest extends SingleCacheManagerTest {
    private Person person1;
    private Person person2;

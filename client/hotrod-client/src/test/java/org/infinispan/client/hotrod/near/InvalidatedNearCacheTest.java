@@ -12,7 +12,7 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.near.InvalidatedNearCacheTest")
+@Test(groups = {"functional", "smoke"}, testName = "client.hotrod.near.InvalidatedNearCacheTest")
 public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
 
    AssertsNearCache<Integer, String> assertClient;

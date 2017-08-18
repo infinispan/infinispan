@@ -10,7 +10,6 @@ import java.util.List;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.HotRodClusteredDomain;
-import org.infinispan.server.test.category.Smoke;
 import org.infinispan.server.test.util.ManagementClient;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -30,7 +29,7 @@ import org.junit.runner.RunWith;
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
-@Category({HotRodClusteredDomain.class, Smoke.class})
+@Category(HotRodClusteredDomain.class)
 public class HotRodRemoteCacheDomainIT extends AbstractRemoteCacheIT {
 
     @InfinispanResource(value = "master:server-one", jmxPort = 4447)

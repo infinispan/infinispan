@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  *
  * @author Anna Manukyan
  */
-@Test(groups = {"functional", "smoke"}, testName = "query.queries.ranges.QueryRangesTest")
+@Test(groups = {"functional"}, testName = "query.queries.ranges.QueryRangesTest")
 public class QueryRangesTest extends SingleCacheManagerTest {
 
    private final static TimeZone GMT = TimeZone.getTimeZone("GMT");

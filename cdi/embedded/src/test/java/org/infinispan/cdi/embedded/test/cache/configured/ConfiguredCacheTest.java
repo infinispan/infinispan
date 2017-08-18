@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  * @see Config
  */
-@Test(groups = "functional", testName = "cdi.test.cache.embedded.configured.ConfiguredCacheTest")
+@Test(groups = {"functional", "smoke"}, testName = "cdi.test.cache.embedded.configured.ConfiguredCacheTest")
 public class ConfiguredCacheTest extends Arquillian {
 
    @Deployment
