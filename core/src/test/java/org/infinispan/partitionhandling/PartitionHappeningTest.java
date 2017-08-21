@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
@@ -29,17 +30,17 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
 
-      eventually(() -> {
+      Eventually.eventually(() -> {
          for (ViewChangedHandler l : listeners)
             if (!l.isNotified()) return false;
          return true;
       });
 
       eventuallyEquals(2, () -> advancedCache(0).getRpcManager().getTransport().getMembers().size());
-      eventually(() -> clusterAndChFormed(0, 2));
-      eventually(() -> clusterAndChFormed(1, 2));
-      eventually(() -> clusterAndChFormed(2, 2));
-      eventually(() -> clusterAndChFormed(3, 2));
+      Eventually.eventually(() -> clusterAndChFormed(0, 2));
+      Eventually.eventually(() -> clusterAndChFormed(1, 2));
+      Eventually.eventually(() -> clusterAndChFormed(2, 2));
+      Eventually.eventually(() -> clusterAndChFormed(3, 2));
 
 
       cache(0).put("k", "v1");

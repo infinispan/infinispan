@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -82,13 +83,13 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assertPrepared(0, t0);
       assertPrepared(0, t1);
 
-      eventually(() -> {
+      Eventually.eventually(() -> {
          boolean noPrepTxOnFirstNode = cache(0, getRecoveryCacheName()).size() == 0;
          boolean noPrepTxOnSecondNode = cache(1, getRecoveryCacheName()).size() == 0;
          return noPrepTxOnFirstNode & noPrepTxOnSecondNode;
       });
 
-      eventually(() -> {
+      Eventually.eventually(() -> {
          final Set<RecoveryManager.InDoubtTxInfo> inDoubt = rm(cache(0)).getInDoubtTransactionInfo();
          return inDoubt.size() == 0;
       });
@@ -105,7 +106,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       manager(1).stop();
       super.cacheManagers.remove(1);
       TestingUtil.blockUntilViewReceived(cache(0), 1, 60000, false);
-      eventually(() -> {
+      Eventually.eventually(() -> {
          int size = rm(cache(0)).getInDoubtTransactionInfo().size();
          return size == 3;
       });
@@ -141,7 +142,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       //now let's start to forget transactions
       t1_4.firstEnlistedResource().forget(t1_1.getXid());
       log.info("returned");
-      eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 2);
+      Eventually.eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 2);
       inDoubtTransactions = rm(cache(0)).getInDoubtTransactions();
       assertEquals(2, inDoubtTransactions.size());
       assert inDoubtTransactions.contains(t1_2.getXid());
@@ -149,7 +150,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
       t1_4.firstEnlistedResource().forget(t1_2.getXid());
       t1_4.firstEnlistedResource().forget(t1_3.getXid());
-      eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 0);
+      Eventually.eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 0);
       assertEquals(0, rm(cache(0)).getInDoubtTransactionInfo().size());
    }
 

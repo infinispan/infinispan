@@ -8,6 +8,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
@@ -45,7 +47,7 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
          }
       });
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return interceptor.receivedReplRequest;
@@ -56,14 +58,14 @@ public class RemoteLockCleanupTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0));
       TestingUtil.waitForNoRebalance(cache(0));
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return interceptor.lockAcquired;
          }
       });
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return !TestingUtil.extractLockManager(cache(0)).isLocked("k");

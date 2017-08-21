@@ -51,6 +51,7 @@ import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.Test;
 
 /**
@@ -441,7 +442,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person4.setBlurb("Also eats grass");
 
       cache2.putForExternalRead("newGoat", person4);
-      eventually(() -> cache2.get("newGoat") != null);
+      Eventually.eventually(() -> cache2.get("newGoat") != null);
       List<Person> found = searchManager.<Person>getQuery(allQuery, Person.class).list();
       assertEquals(4, found.size());
 

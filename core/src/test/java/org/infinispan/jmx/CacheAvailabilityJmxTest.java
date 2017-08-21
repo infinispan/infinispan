@@ -18,6 +18,8 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.Test;
 
 /**
@@ -69,7 +71,7 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
       // Enter degraded mode
       log.debugf("Entering degraded mode");
       mBeanServer.setAttribute(cacheName0, new Attribute("CacheAvailability", "DEGRADED_MODE"));
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             Object availability0 = mBeanServer.getAttribute(cacheName0, "CacheAvailability");
@@ -96,7 +98,7 @@ public class CacheAvailabilityJmxTest extends MultipleCacheManagersTest {
       // Enter available mode
       log.debugf("Back to available mode");
       mBeanServer.setAttribute(cacheName0, new Attribute("CacheAvailability", "AVAILABLE"));
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             Object availability0 = mBeanServer.getAttribute(cacheName0, "CacheAvailability");

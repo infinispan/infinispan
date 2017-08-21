@@ -4,6 +4,7 @@ import static org.testng.Assert.assertEquals;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
@@ -93,7 +94,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
          //ignore
       }
 
-      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1));
+      Eventually.eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1));
 
 
       log.info("Before second failure");
@@ -106,7 +107,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
          //expected
       }
 
-      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1));
+      Eventually.eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1));
 
 
       tm(0).resume(dtm);
@@ -114,6 +115,6 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
 
       assertValue(k, false);
 
-      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
+      Eventually.eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
    }
 }

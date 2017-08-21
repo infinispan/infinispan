@@ -18,6 +18,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -98,7 +100,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
 
       //now wait for the idle thread to wake up and clean them
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             int numIdle = connectionPool.getNumIdle();

@@ -19,6 +19,7 @@ import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.xsite.XSiteBackup;
@@ -130,7 +131,7 @@ public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
 
       //the controller cache will finish the state transfer before the cache topology command
       log.debug("Await until X-Site state transfer is finished!");
-      eventually(() -> extractComponent(testCaches.controllerCache, XSiteStateProvider.class).getCurrentStateSending().isEmpty(),
+      Eventually.eventually(() -> extractComponent(testCaches.controllerCache, XSiteStateProvider.class).getCurrentStateSending().isEmpty(),
                  TimeUnit.SECONDS.toMillis(30));
 
       Future<Void> topologyEventFuture = triggerTopologyChange(LON, testCaches.removeIndex);

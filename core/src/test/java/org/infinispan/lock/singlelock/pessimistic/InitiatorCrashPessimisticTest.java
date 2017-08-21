@@ -2,7 +2,8 @@ package org.infinispan.lock.singlelock.pessimistic;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractInitiatorCrashTest;
-import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
@@ -53,7 +54,7 @@ public class InitiatorCrashPessimisticTest extends AbstractInitiatorCrashTest {
       assertNotLocked(k0);
       assertNotLocked(k1);
       assertNotLocked(k2);
-      eventually(new AbstractInfinispanTest.Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);

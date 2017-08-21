@@ -10,6 +10,8 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -68,7 +70,7 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
       TestingUtil.blockUntilViewsReceived(10000, false, caches.toArray(new Cache[0]));
       assertEquals(1, topology().size());
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return !keyAffinityService.isStarted();
@@ -77,7 +79,7 @@ public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinitySe
    }
 
    private void assertUnaffected() throws InterruptedException {
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return keyAffinityService.getAddress2KeysMapping().keySet().size() == getAddresses().size();

@@ -3,6 +3,7 @@ package org.infinispan.lock.singlelock;
 import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
@@ -37,7 +38,7 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
 
       killMember(1);
 
-      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
+      Eventually.eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
       assertNotLocked(k);
    }
 
@@ -62,6 +63,6 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       killMember(1);
 
       assertNotLocked(k);
-      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
+      Eventually.eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
    }
 }

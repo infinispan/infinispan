@@ -20,6 +20,8 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -83,7 +85,7 @@ public class ListenerCacheManagerStopTest extends AbstractInfinispanTest {
    }
 
    private void assertListenerThreadRunning(final String listenerId) {
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return isListenerThreadRunning(listenerId);
@@ -92,7 +94,7 @@ public class ListenerCacheManagerStopTest extends AbstractInfinispanTest {
    }
 
    private void assertListenerThreadNotRunning(final String listenerId) {
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return !isListenerThreadRunning(listenerId);

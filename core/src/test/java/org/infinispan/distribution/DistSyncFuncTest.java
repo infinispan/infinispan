@@ -28,6 +28,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.Test;
@@ -120,7 +121,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
 
-      eventually(() -> {
+      Eventually.eventually(() -> {
          try {
             assertOnAllCachesAndOwnership("k1", "value2");
          } catch (AssertionError e) {

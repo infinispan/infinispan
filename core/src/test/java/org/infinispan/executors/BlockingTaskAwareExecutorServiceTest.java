@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
@@ -42,7 +43,7 @@ public class BlockingTaskAwareExecutorServiceTest extends AbstractInfinispanTest
 
          assert doSomething.isReady();
 
-         eventually(doSomething::isExecuted);
+         Eventually.eventually(doSomething::isExecuted);
       } finally {
          executorService.shutdownNow();
       }
@@ -68,7 +69,7 @@ public class BlockingTaskAwareExecutorServiceTest extends AbstractInfinispanTest
          executorService.checkForReadyTasks();
 
          for (final DoSomething doSomething : tasks) {
-            eventually(doSomething::isExecuted);
+            Eventually.eventually(doSomething::isExecuted);
          }
 
       } finally {

@@ -31,6 +31,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestException;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -170,7 +171,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
          des.execute(runnable);
 
-         eventually(() -> counterMap.get(uuid) != null && counterMap.get(uuid).get() >= 1);
+         Eventually.eventually(() -> counterMap.get(uuid) != null && counterMap.get(uuid).get() >= 1);
       } finally {
          counterMap.remove(uuid);
       }

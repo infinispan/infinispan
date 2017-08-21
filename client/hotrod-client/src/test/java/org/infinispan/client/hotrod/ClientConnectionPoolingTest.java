@@ -22,6 +22,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -172,7 +173,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
          workerThread2.putAsync("k4", "v4");
          log.info("Async calls for k3 and k4 is done.");
 
-         eventually(() -> 1 == connectionPool.getNumActive(hrServ1Addr) &&
+         Eventually.eventually(() -> 1 == connectionPool.getNumActive(hrServ1Addr) &&
          1 == connectionPool.getNumActive(hrServ2Addr) &&
          0 == connectionPool.getNumIdle(hrServ1Addr) &&
          0 == connectionPool.getNumIdle(hrServ2Addr));
@@ -181,7 +182,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
          // another operation for each server, creating new connections
          workerThread3.putAsync("k5", "v5");
          workerThread4.putAsync("k6", "v6");
-         eventually(() -> 2 == connectionPool.getNumActive(hrServ1Addr) &&
+         Eventually.eventually(() -> 2 == connectionPool.getNumActive(hrServ1Addr) &&
                2 == connectionPool.getNumActive(hrServ2Addr) &&
                0 == connectionPool.getNumIdle(hrServ1Addr) &&
                0 == connectionPool.getNumIdle(hrServ2Addr));
@@ -205,7 +206,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       }
 
       // give the servers some time to process the operations
-      eventually(() -> connectionPool.getNumActive() == 0, 1000);
+      Eventually.eventually(() -> connectionPool.getNumActive() == 0, 1000);
 
       assertExistKeyValue("k3", "v3");
       assertExistKeyValue("k4", "v4");

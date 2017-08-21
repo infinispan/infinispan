@@ -12,6 +12,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.statetransfer.CommitManager;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.testng.annotations.Test;
@@ -64,7 +66,7 @@ public class BackupForStateTransferTest extends AbstractTwoSitesTest {
 
       startStateTransfer(LON, NYC);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();

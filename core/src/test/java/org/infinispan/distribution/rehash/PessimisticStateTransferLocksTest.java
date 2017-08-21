@@ -17,6 +17,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.InvocationMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -200,7 +202,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       for (Cache<Object, Object> c : caches()) {
          final TransactionTable txTable = getTransactionTable(c);
          assertTrue(txTable.getLocalTransactions().isEmpty());
-         eventually(new Condition() {
+         Eventually.eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
                return txTable.getRemoteTransactions().isEmpty();

@@ -24,6 +24,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -181,7 +182,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    protected final <K, V> void assertEventuallyInSite(final String siteName, final EventuallyAssertCondition<K, V> condition,
                                                 long timeout, TimeUnit timeUnit) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName)) {
             if (!condition.assertInCache(cache)) {
                return false;
@@ -193,7 +194,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
 
    protected final <K, V> void assertEventuallyInSite(final String siteName, final String cacheName, final EventuallyAssertCondition<K, V> condition,
                                                       long timeout, TimeUnit timeUnit) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName, cacheName)) {
             if (!condition.assertInCache(cache)) {
                return false;

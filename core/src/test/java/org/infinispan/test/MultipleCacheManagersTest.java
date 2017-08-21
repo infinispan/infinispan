@@ -36,6 +36,7 @@ import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -718,7 +719,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void assertNotLocked(final String cacheName, final Object key) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          boolean aNodeIsLocked = false;
          for (int i = 0; i < caches(cacheName).size(); i++) {
             final boolean isLocked = lockManager(i, cacheName).isLocked(key);
@@ -803,7 +804,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void assertNoTransactions(final String cacheName) {
-      eventually("There are pending transactions!", () -> {
+      Eventually.eventually("There are pending transactions!", () -> {
          for (Cache<?, ?> cache : caches(cacheName)) {
             final TransactionTable transactionTable = TestingUtil.extractComponent(cache, TransactionTable.class);
             int localTxCount = transactionTable.getLocalTxCount();
@@ -825,7 +826,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void assertEventuallyEquals(
          final int cacheIndex, final Object key, final Object value) {
-      eventually(() -> value == null
+      Eventually.eventually(() -> value == null
             ? null == cache(cacheIndex).get(key)
             : value.equals(cache(cacheIndex).get(key)));
    }

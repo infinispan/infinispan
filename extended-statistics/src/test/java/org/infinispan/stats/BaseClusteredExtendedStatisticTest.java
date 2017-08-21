@@ -44,6 +44,7 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stats.wrappers.ExtendedStatisticInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.function.SerializableBiFunction;
@@ -475,7 +476,7 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
       for (int i = 0; i < caches().size(); ++i) {
          statisticInterceptors[i] = getExtendedStatistic(cache(i));
       }
-      eventually(() -> {
+      Eventually.eventually(() -> {
          for (ExtendedStatisticInterceptor interceptor : statisticInterceptors) {
             if (interceptor.getCacheStatisticManager().hasPendingTransactions()) {
                return false;

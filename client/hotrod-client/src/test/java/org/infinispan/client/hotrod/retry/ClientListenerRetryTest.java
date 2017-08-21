@@ -22,6 +22,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.Test;
 
 /**
@@ -71,7 +72,7 @@ public class ClientListenerRetryTest extends MultiHotRodServersTest {
 
    private void assertListenerActive(RemoteCache<Integer, String> cache, Listener listener) {
       int received = listener.getReceived();
-      eventually(() -> {
+      Eventually.eventually(() -> {
          cache.put(counter.incrementAndGet(), "value");
          return listener.getReceived() > received;
       });

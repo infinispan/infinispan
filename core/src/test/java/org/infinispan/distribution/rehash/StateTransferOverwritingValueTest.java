@@ -28,6 +28,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
@@ -141,7 +142,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       final AdvancedCache<Object,Object> cache1 = advancedCache(1);
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(() -> cache0.getRpcManager().getMembers().size() == 2 &&
+      Eventually.eventually(() -> cache0.getRpcManager().getMembers().size() == 2 &&
             cache1.getRpcManager().getMembers().size() == 2);
 
       // Every PutKeyValueCommand will be blocked before committing the entry on cache1

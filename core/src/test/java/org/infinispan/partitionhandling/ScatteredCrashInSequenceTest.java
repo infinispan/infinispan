@@ -13,6 +13,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.BlockingClusterTopologyManager;
@@ -219,7 +220,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
    }
 
    private void eventuallyDegraded(Cache c) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          AvailabilityMode currentMode = partitionHandlingManager(c).getAvailabilityMode();
          log.tracef("Current availability mode: %s", currentMode);
          return AvailabilityMode.DEGRADED_MODE.equals(currentMode);
@@ -227,7 +228,7 @@ public class ScatteredCrashInSequenceTest extends BasePartitionHandlingTest {
    }
 
    private void eventuallyAvailable(Cache c) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          AvailabilityMode currentMode = partitionHandlingManager(c).getAvailabilityMode();
          log.tracef("Current availability mode: %s", currentMode);
          return AvailabilityMode.AVAILABLE.equals(currentMode);

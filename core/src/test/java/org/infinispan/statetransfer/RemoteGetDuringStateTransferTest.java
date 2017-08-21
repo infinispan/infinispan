@@ -39,6 +39,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
@@ -515,7 +516,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
       barrier1.await(10, TimeUnit.SECONDS);
       topologyManager1.stopBlocking(LatchType.CONSISTENT_HASH_UPDATE);
-      eventually(() -> wfti.stateTransferManager.getCacheTopology().getTopologyId() >= currentTopologyId + topologyOnNode2);
+      Eventually.eventually(() -> wfti.stateTransferManager.getCacheTopology().getTopologyId() >= currentTopologyId + topologyOnNode2);
       barrier1.await(10, TimeUnit.SECONDS);
 
       rpcManager0.waitForCommandToBlock();
@@ -675,7 +676,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private void awaitForTopology(final int expectedTopologyId, final Cache cache) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          int currentTopologyId = currentTopologyId(cache);
          assertTrue("Current topology is " + currentTopologyId, currentTopologyId <= expectedTopologyId);
          return expectedTopologyId == currentTopologyId;
@@ -683,7 +684,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    private void awaitUntilNotInDataContainer(final Cache cache, final Object key) {
-      eventually(() -> !cache.getAdvancedCache().getDataContainer().containsKey(key));
+      Eventually.eventually(() -> !cache.getAdvancedCache().getDataContainer().containsKey(key));
    }
 
    private NewNode addNode() {

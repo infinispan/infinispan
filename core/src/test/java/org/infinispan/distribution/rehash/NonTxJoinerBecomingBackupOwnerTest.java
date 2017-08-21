@@ -20,6 +20,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -109,7 +110,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       final AdvancedCache<Object,Object> cache2 = advancedCache(2);
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(() -> cache0.getRpcManager().getMembers().size() == 3 &&
+      Eventually.eventually(() -> cache0.getRpcManager().getMembers().size() == 3 &&
             cache1.getRpcManager().getMembers().size() == 3 &&
             cache2.getRpcManager().getMembers().size() == 3);
 

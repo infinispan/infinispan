@@ -12,6 +12,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.TimeService;
@@ -109,7 +110,7 @@ public class ClusterExpirationFunctionalTest extends MultipleCacheManagersTest {
       }  else {
          assertNull(expiredValue);
          // This should be expired on the other node soon - note expiration is done asynchronously on a get
-         eventually(() -> !other.containsKey(key), 10, TimeUnit.SECONDS);
+         Eventually.eventually(() -> !other.containsKey(key), 10, TimeUnit.SECONDS);
       }
    }
 

@@ -39,6 +39,7 @@ import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.PersistenceMockUtil;
@@ -209,7 +210,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    protected void assertEventuallyExpires(final String key) throws Exception {
-      eventually(() -> cl.load(key) == null);
+      Eventually.eventually(() -> cl.load(key) == null);
    }
 
    /* Override if the store cannot purge all expired entries upon request */

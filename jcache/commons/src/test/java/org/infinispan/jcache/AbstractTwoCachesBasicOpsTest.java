@@ -34,6 +34,7 @@ import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
 
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.Test;
 
 /**
@@ -288,14 +289,14 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
          cache1.put(k(m), v(m, 2));
          cache2.put(k(m), v(m, 3));
 
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
+         Eventually.eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
 
          cache1.deregisterCacheEntryListener(conf);
          listener.reset();
 
          cache2.put(k(m), v(m, 4));
 
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+         Eventually.eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
       } finally {
          cache1.deregisterCacheEntryListener(conf);
       }
@@ -312,7 +313,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
          cache1.registerCacheEntryListener(conf);
          cache1.put(k(m), v(m, 3));
          cache2.remove(k(m));
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
+         Eventually.eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
 
          cache1.deregisterCacheEntryListener(conf);
          listener.reset();
@@ -320,7 +321,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
          cache1.put(k(m, 2), v(m, 2));
          cache2.remove(k(m, 2));
 
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+         Eventually.eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
       } finally {
          cache1.deregisterCacheEntryListener(conf);
       }
@@ -336,13 +337,13 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       try {
          cache1.registerCacheEntryListener(conf);
          cache2.put(k(m), v(m, 3));
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
+         Eventually.eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 1);
 
          cache1.deregisterCacheEntryListener(conf);
          listener.reset();
 
          cache2.put(k(m, 2), v(m, 2));
-         eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
+         Eventually.eventually(() -> listener.toString(), () -> listener.getInvocationCount() == 0);
       } finally {
          cache1.deregisterCacheEntryListener(conf);
       }
@@ -362,14 +363,14 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
          cache1.registerCacheEntryListener(conf1);
          cache2.registerCacheEntryListener(conf2);
          cache2.put(k(m), v(m, 3));
-         eventually(() -> listener1.toString(), () -> listener1.getInvocationCount() == 1);
-         eventually(() -> listener2.toString(), () -> listener2.getInvocationCount() == 0);
+         Eventually.eventually(() -> listener1.toString(), () -> listener1.getInvocationCount() == 1);
+         Eventually.eventually(() -> listener2.toString(), () -> listener2.getInvocationCount() == 0);
 
          cache1.deregisterCacheEntryListener(conf1);
          listener1.reset();
 
          cache2.put(k(m, 2), v(m, 2));
-         eventually(() -> listener1.toString(), () -> listener1.getInvocationCount() == 0);
+         Eventually.eventually(() -> listener1.toString(), () -> listener1.getInvocationCount() == 0);
       } finally {
          cache1.deregisterCacheEntryListener(conf1);
          cache2.deregisterCacheEntryListener(conf2);

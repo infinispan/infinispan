@@ -25,6 +25,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.jgroups.protocols.DISCARD;
@@ -131,7 +133,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
          TestingUtil.blockForMemberToFail(30000, partitionTwoManagers.toArray(new CacheContainer[0]));
 
          log.infof("Nodes split, waiting for the caches to become degraded");
-         eventually(new Condition() {
+         Eventually.eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
                return TestingUtil.extractComponent(cache(0), PartitionHandlingManager.class).getAvailabilityMode() ==
@@ -148,7 +150,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
          TestingUtil.blockUntilViewsReceived(60000, true, cacheManagers.toArray(new CacheContainer[0]));
 
          log.infof("Partitions merged, waiting for the caches to become available");
-         eventually(new Condition() {
+         Eventually.eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
                return TestingUtil.extractComponent(cache(0), PartitionHandlingManager.class).getAvailabilityMode() ==

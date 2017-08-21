@@ -28,6 +28,7 @@ import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
 import org.mockito.AdditionalAnswers;
@@ -230,7 +231,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
          // It is possible that the async L1LastChance will blow away this get, so we have to make sure to check
          // it eventually
-         eventually(() -> {
+         Eventually.eventually(() -> {
             // The nonOwnerCache should retrieve new value as it isn't in L1
             assertEquals(secondValue, nonOwnerCache.get(key));
             return isInL1(nonOwnerCache, key);

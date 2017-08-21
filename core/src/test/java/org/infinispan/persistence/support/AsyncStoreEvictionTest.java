@@ -21,6 +21,8 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -146,7 +148,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             cache.put("k1", "v0");
             cache.put("k2", "v2"); // force eviction of "k1"
 
-            eventually(new Condition() {
+            Eventually.eventually(new Condition() {
                @Override
                public boolean isSatisfied() throws Exception {
                   return store.load("k1") != null;
@@ -183,7 +185,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
             cache.put("k1", "v1");
             cache.put("k2", "v2"); // force eviction of "k1"
 
-            eventually(() -> store.load("k1") != null);
+            Eventually.eventually(() -> store.load("k1") != null);
 
             // simulate slow back end store
             store.lock.lock();

@@ -9,6 +9,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
@@ -70,14 +72,14 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
    }
 
    protected void checkProperlyCleanup(final int managerIndex) {
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return TestingUtil.extractLockManager(cache(managerIndex)).getNumberOfLocksHeld() == 0;
          }
       });
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex), TransactionTable.class);
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             log.tracef("For cache %s have remoteTx=%s and localTx=%s", managerIndex, tt.getRemoteTxCount(), tt.getLocalTxCount());
@@ -85,7 +87,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
          }
       });
       final RecoveryManager rm = TestingUtil.extractComponent(cache(managerIndex), RecoveryManager.class);
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return rm.getInDoubtTransactions().isEmpty() && rm.getPreparedTransactionsFromCluster().all().length == 0;

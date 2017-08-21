@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.statetransfer.CommitManager;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.testng.annotations.Test;
@@ -53,7 +54,7 @@ public class LocalCacheStateTransferTest extends AbstractXSiteTest {
 
       startStateTransfer(LON, NYC);
 
-      eventually(() -> extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty(),
+      Eventually.eventually(() -> extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty(),
             TimeUnit.SECONDS.toMillis(30));
 
       assertOnline(LON, NYC);
@@ -121,8 +122,8 @@ public class LocalCacheStateTransferTest extends AbstractXSiteTest {
 
    private void assertNoStateTransferInReceivingSite() {
       for (Cache<?, ?> cache : caches(NYC)) {
-         eventually(() -> extractComponent(cache, XSiteStateConsumer.class).getSendingSiteName() == null);
-         eventually(() -> {
+         Eventually.eventually(() -> extractComponent(cache, XSiteStateConsumer.class).getSendingSiteName() == null);
+         Eventually.eventually(() -> {
             CommitManager commitManager = extractComponent(cache, CommitManager.class);
             return !commitManager.isTracking(Flag.PUT_FOR_STATE_TRANSFER) &&
                    !commitManager.isTracking(Flag.PUT_FOR_X_SITE_STATE_TRANSFER) &&

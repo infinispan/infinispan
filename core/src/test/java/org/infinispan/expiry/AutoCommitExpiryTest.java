@@ -20,6 +20,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -62,7 +63,7 @@ public abstract class AutoCommitExpiryTest extends SingleCacheManagerTest {
       ExpirationManager manager = applicationCache.getAdvancedCache().getExpirationManager();
       manager.processExpiration();
 
-      eventually(() -> 2 == expiryListener.getCount());
+      Eventually.eventually(() -> 2 == expiryListener.getCount());
    }
 
    @Override

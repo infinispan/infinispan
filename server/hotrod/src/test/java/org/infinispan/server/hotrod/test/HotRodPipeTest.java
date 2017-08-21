@@ -14,6 +14,7 @@ import org.infinispan.commons.util.Either;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -62,7 +63,7 @@ public class HotRodPipeTest extends SingleCacheManagerTest {
       try {
          client.start();
          client.writeN(numPipeReqs);
-         eventually(() -> {
+         Eventually.eventually(() -> {
             Either<List<String>, Integer> either = client.readN(numPipeReqs);
             switch (either.type()) {
                case LEFT:

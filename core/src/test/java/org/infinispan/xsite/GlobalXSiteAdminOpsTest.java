@@ -20,6 +20,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.NotifierLatch;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -238,7 +239,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
    }
 
    private void awaitXSiteStateTransferFor(String cacheName) {
-      eventually(format("Failed to complete the x-site state transfer for cache '%s'", cacheName),
+      Eventually.eventually(format("Failed to complete the x-site state transfer for cache '%s'", cacheName),
                  () -> xSiteAdminOperations(0, 0, cacheName).getRunningStateTransfer().isEmpty());
    }
 

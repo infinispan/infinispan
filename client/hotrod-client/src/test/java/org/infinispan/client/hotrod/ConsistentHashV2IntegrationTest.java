@@ -23,6 +23,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
@@ -141,7 +142,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       HotRodServer hotRodServer5 = HotRodClientTestingUtil.startHotRodServer(cm5);
 
       // Rebalancing to include the joiner will increment the topology id by 2
-      eventually(() -> {
+      Eventually.eventually(() -> {
          int topologyId = transportFactory.getTopologyId(new byte[]{});
          log.tracef("Client topology id is %d, waiting for it to become %d", topologyId,
                topologyIdBeforeJoin + 2);
@@ -160,7 +161,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       TestingUtil.killCacheManagers(cm5);
 
       // Rebalancing to exclude the leaver will again increment the topology id by 2
-      eventually(() -> {
+      Eventually.eventually(() -> {
          int topologyId = transportFactory.getTopologyId(new byte[]{});
          log.tracef("Client topology id is %d, waiting for it to become %d", topologyId,
                topologyIdBeforeJoin + 4);

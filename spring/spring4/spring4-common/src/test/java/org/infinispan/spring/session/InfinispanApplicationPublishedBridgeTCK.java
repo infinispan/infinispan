@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import org.infinispan.spring.provider.SpringCache;
 import org.infinispan.spring.session.util.EventsWaiter;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.eventually.Eventually;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.PayloadApplicationEvent;
@@ -68,7 +69,7 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
 
    private void sleepOneSecond() {
       long oneSecondSleep = System.currentTimeMillis() + 1000;
-      eventually(() -> System.currentTimeMillis() > oneSecondSleep);
+      Eventually.eventually(() -> System.currentTimeMillis() > oneSecondSleep);
    }
 
    @Test

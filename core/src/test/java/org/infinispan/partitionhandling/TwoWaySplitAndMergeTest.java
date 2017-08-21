@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.TwoWaySplitAndMergeTest")
@@ -67,7 +68,7 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
       assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
       assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
       assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
-      eventually(() -> {
+      Eventually.eventually(() -> {
          for (int i = 0; i < numMembersInCluster; i++) {
             if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
                return false;

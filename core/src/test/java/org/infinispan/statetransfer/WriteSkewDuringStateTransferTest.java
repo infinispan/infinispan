@@ -29,6 +29,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
@@ -153,7 +154,7 @@ rebalance_start
    }
 
    private void awaitForTopology(final int expectedTopologyId, final Cache cache) {
-      eventually(() -> expectedTopologyId == currentTopologyId(cache));
+      Eventually.eventually(() -> expectedTopologyId == currentTopologyId(cache));
    }
 
    private int currentTopologyId(Cache cache) {

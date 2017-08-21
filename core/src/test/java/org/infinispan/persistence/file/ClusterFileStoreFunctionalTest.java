@@ -18,6 +18,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -89,13 +91,13 @@ public class ClusterFileStoreFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void assertEventuallyNoLocksAcquired(final Object key) {
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return !TestingUtil.extractLockManager(cache1).isLocked(key);
          }
       });
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return !TestingUtil.extractLockManager(cache2).isLocked(key);

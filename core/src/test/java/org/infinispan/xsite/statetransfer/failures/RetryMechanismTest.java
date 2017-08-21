@@ -20,6 +20,8 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.BackupReceiverRepository;
@@ -118,7 +120,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       startStateTransfer(cache(LON, 0), NYC);
       assertOnline(LON, NYC);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return handler.discarded;
@@ -158,7 +160,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       startStateTransfer(cache(LON, 0), NYC);
       assertOnline(LON, NYC);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return handler.discarded;
@@ -200,7 +202,7 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       startStateTransfer(cache(LON, 0), NYC);
       assertOnline(LON, NYC);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return handler.discarded;
