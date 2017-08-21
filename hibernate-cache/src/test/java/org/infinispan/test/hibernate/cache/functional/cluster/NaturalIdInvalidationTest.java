@@ -16,6 +16,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.hibernate.criterion.Restrictions;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.hibernate.cache.functional.entities.Citizen;
 import org.infinispan.test.hibernate.cache.functional.entities.NaturalIdOnManyToOne;
 import org.infinispan.test.hibernate.cache.functional.entities.State;
@@ -147,12 +148,8 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 		}
 	}
 
-	private void assertLoadedFromCache(MyListener localListener, String id) {
-		for (String visited : localListener.visited){
-			if (visited.contains(id))
-				return;
-		}
-		fail("Citizen (" + id + ") should have present in the cache");
+	private void assertLoadedFromCache(MyListener listener, String id) {
+		Eventually.eventually(()-> "Citizen (" + id + ") should have present in the cache", () -> listener.hasItem(id));
 	}
 
 	private void saveSomeCitizens(SessionFactory sf) throws Exception {
@@ -233,6 +230,10 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 			if ( !event.isPre() ) {
 				visited.add(event.getKey().toString());
 			}
+		}
+
+		public boolean hasItem(String id) {
+			return visited.stream().anyMatch(v -> v.contains(id));
 		}
 	}
 
