@@ -12,6 +12,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -20,14 +21,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.CacheContainer;
@@ -42,6 +43,7 @@ import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.BackupReceiverRepository;
 import org.infinispan.xsite.BackupReceiverRepositoryDelegator;
 import org.infinispan.xsite.XSiteAdminOperations;
+import org.testng.annotations.Test;
 
 /**
  * Tests the cross-site replication with concurrent operations checking for consistency.
@@ -58,6 +60,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       this.cleanup = CleanupPhase.AFTER_METHOD;
    }
 
+   @Test(groups = "xsite")
    public void testStateTransferNonExistingSite() {
       XSiteAdminOperations operations = extractComponent(cache(LON, 0), XSiteAdminOperations.class);
       assertEquals("Unable to pushState to 'NO_SITE'. Incorrect site name: NO_SITE", operations.pushState("NO_SITE"));
@@ -65,6 +68,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       assertNoStateTransferInSendingSite(LON);
    }
 
+   @Test(groups = "xsite")
    public void testCancelStateTransfer() throws InterruptedException {
       takeSiteOffline(LON, NYC);
       assertOffline(LON, NYC);
@@ -148,6 +152,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       });
    }
 
+   @Test(groups = "xsite")
    public void testStateTransferWithClusterIdle() throws InterruptedException {
       takeSiteOffline(LON, NYC);
       assertOffline(LON, NYC);
@@ -195,78 +200,97 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       assertNoStateTransferInSendingSite(LON);
    }
 
+   @Test(groups = "xsite")
    public void testPutOperationBeforeState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.PUT, true);
    }
 
+   @Test(groups = "xsite")
    public void testPutOperationAfterState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.PUT, false);
    }
 
+   @Test(groups = "xsite")
    public void testRemoveOperationBeforeState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.REMOVE, true);
    }
 
+   @Test(groups = "xsite")
    public void testRemoveOperationAfterState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.REMOVE, false);
    }
 
+   @Test(groups = "xsite")
    public void testRemoveIfMatchOperationBeforeState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.REMOVE_IF_MATCH, true);
    }
 
+   @Test(groups = "xsite")
    public void testRemoveIfMatchOperationAfterState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.REMOVE_IF_MATCH, false);
    }
 
+   @Test(groups = "xsite")
    public void testReplaceOperationBeforeState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.REPLACE, true);
    }
 
+   @Test(groups = "xsite")
    public void testReplaceOperationAfterState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.REPLACE, false);
    }
 
+   @Test(groups = "xsite")
    public void testReplaceIfMatchOperationBeforeState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.REPLACE_IF_MATCH, true);
    }
 
+   @Test(groups = "xsite")
    public void testReplaceIfMatchOperationAfterState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.REPLACE_IF_MATCH, false);
    }
 
+   @Test(groups = "xsite")
    public void testClearOperationBeforeState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.CLEAR, true);
    }
 
+   @Test(groups = "xsite")
    public void testClearOperationAfterState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.CLEAR, false);
    }
 
+   @Test(groups = "xsite")
    public void testPutMapOperationBeforeState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.PUT_MAP, true);
    }
 
+   @Test(groups = "xsite")
    public void testPutMapOperationAfterState() throws Exception {
       testStateTransferWithConcurrentOperation(Operation.PUT_MAP, false);
    }
 
+   @Test(groups = "xsite")
    public void testPutIfAbsentFail() throws Exception {
       testStateTransferWithNoReplicatedOperation(Operation.PUT_IF_ABSENT_FAIL);
    }
 
+   @Test(groups = "xsite")
    public void testRemoveIfMatchFail() throws Exception {
       testStateTransferWithNoReplicatedOperation(Operation.REMOVE_IF_MATCH_FAIL);
    }
 
+   @Test(groups = "xsite")
    public void testReplaceIfMatchFail() throws Exception {
       testStateTransferWithNoReplicatedOperation(Operation.REPLACE_IF_MATCH_FAIL);
    }
 
+   @Test(groups = "xsite")
    public void testPutIfAbsent() throws Exception {
       testConcurrentOperation(Operation.PUT_IF_ABSENT);
    }
 
+   @Test(groups = "xsite")
    public void testRemoveNonExisting() throws Exception {
       testConcurrentOperation(Operation.REMOVE_NON_EXISTING);
    }
@@ -509,14 +533,11 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
                value.equals(((PutKeyValueCommand) command).getValue());
       } else if (command instanceof RemoveCommand) {
          return key.equals(((RemoveCommand) command).getKey());
-      } else if (command instanceof ReplaceCommand) {
-         return key.equals(((ReplaceCommand) command).getKey()) &&
-               value.equals(((ReplaceCommand) command).getNewValue());
       } else if (command instanceof ClearCommand) {
          return true;
-      } else if (command instanceof PutMapCommand) {
-         return ((PutMapCommand) command).getMap().containsKey(key) &&
-               ((PutMapCommand) command).getMap().get(key).equals(value);
+      } else if (command instanceof WriteOnlyManyEntriesCommand) {
+         InternalCacheValue icv = (InternalCacheValue) ((WriteOnlyManyEntriesCommand) command).getEntries().get(key);
+         return Objects.equals(icv.getValue(), value);
       } else if (command instanceof PrepareCommand) {
          for (WriteCommand writeCommand : ((PrepareCommand) command).getModifications()) {
             if (isUpdatingKeyWithValue(writeCommand, key, value)) {
