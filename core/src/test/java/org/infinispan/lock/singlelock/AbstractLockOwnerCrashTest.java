@@ -3,6 +3,7 @@ package org.infinispan.lock.singlelock;
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
@@ -44,7 +45,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
       });
 
 
-      eventually(() -> checkTxCount(0, 0, 1) &&  checkTxCount(1, 1, 0) &&  checkTxCount(2, 0, 1));
+      Eventually.eventually(() -> checkTxCount(0, 0, 1) &&  checkTxCount(1, 1, 0) &&  checkTxCount(2, 0, 1));
 
       killMember(2);
       assert caches().size() == 2;
@@ -71,10 +72,10 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
       transaction.runCommit(false);
 
       //make sure the 2nd transaction succeeds as well eventually
-      eventually(() -> cache(0).get(k).equals("v2") && cache(1).get(k).equals("v2"), 15000);
+      Eventually.eventually(() -> cache(0).get(k).equals("v2") && cache(1).get(k).equals("v2"), 15000);
       assertNotLocked(k);
 
-      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
+      Eventually.eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
    }
 
 }

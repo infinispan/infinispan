@@ -12,6 +12,7 @@ import javax.transaction.SystemException;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractLockOwnerCrashTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
@@ -42,9 +43,9 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
          }
       });
 
-      eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
+      Eventually.eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
-      eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
+      Eventually.eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
 
       killMember(2);
       assert caches().size() == 2;
@@ -56,7 +57,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       assertEquals("v", cache(1).get(k));
 
       assertNotLocked(k);
-      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
+      Eventually.eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
    }
 
    public void testLockOwnerCrashesBeforePrepareAndLockIsStillHeld() throws Exception {
@@ -71,7 +72,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
          }
       });
 
-      eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
+      Eventually.eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
 
       killMember(2);
       assert caches().size() == 2;
@@ -91,7 +92,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       assertEquals("v", cache(1).get(k));
 
       assertNotLocked(k);
-      eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
+      Eventually.eventually(() -> checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0));
    }
 
    public void lockOwnerCrasherBetweenPrepareAndCommit1() throws Exception {
@@ -118,9 +119,9 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
       });
 
 
-      eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
+      Eventually.eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
-      eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
+      Eventually.eventually(() -> !checkLocked(0, k) && !checkLocked(1, k) && checkLocked(2, k));
 
 
       killMember(2);

@@ -22,6 +22,7 @@ import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -103,7 +104,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
 
 
    private void eventuallyExpectCompleteTopology(HotRodClient c, int expectedTopologyId) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          TestResponse resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
          assertStatus(resp, Success);
          if (resp.topologyResponse == null || (resp.topologyResponse.topologyId < expectedTopologyId)) {
@@ -121,7 +122,7 @@ public class HotRodMergeTest extends BasePartitionHandlingTest {
    }
 
    private void eventuallyExpectPartialTopology(HotRodClient c, int expectedTopologyId) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          TestResponse resp = c.ping(INTELLIGENCE_HASH_DISTRIBUTION_AWARE, 0);
          assertStatus(resp, Success);
          if (resp.topologyResponse == null || (resp.topologyResponse.topologyId < expectedTopologyId)) {

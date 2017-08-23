@@ -24,6 +24,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -128,6 +129,6 @@ public class StaleTxWithCommitDuringStateTransferTest extends MultipleCacheManag
       // Check for stale locks
       final TransactionTable tt0 = TestingUtil.extractComponent(cache0, TransactionTable.class);
       final TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
-      eventually(() -> tt0.getLocalTxCount() == 0 && tt1.getRemoteTxCount() == 0);
+      Eventually.eventually(() -> tt0.getLocalTxCount() == 0 && tt1.getRemoteTxCount() == 0);
    }
 }

@@ -35,6 +35,7 @@ import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.tx.dld.ControlledRpcManager;
@@ -437,7 +438,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       backupOwnerCache.getCacheManager().stop();
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(() -> primaryOwnerCache.getRpcManager().getMembers().size() == 2 &&
+      Eventually.eventually(() -> primaryOwnerCache.getRpcManager().getMembers().size() == 2 &&
             nonOwnerCache.getRpcManager().getMembers().size() == 2);
 
       TestingUtil.waitForNoRebalance(primaryOwnerCache, nonOwnerCache);

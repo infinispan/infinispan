@@ -10,6 +10,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
@@ -321,7 +322,7 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest<Object, String> {
       LockManager lm = extractComponent(c, LockManager.class);
       for (Object key : keys) {
          //the keys are unlocked asynchronously
-         eventually(() -> format("Expected unlocked key '%s' (lock-owner='%s')", key, lm.getOwner(key)),
+         Eventually.eventually(() -> format("Expected unlocked key '%s' (lock-owner='%s')", key, lm.getOwner(key)),
                () -> !lm.isLocked(key));
       }
    }

@@ -35,6 +35,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
@@ -141,7 +142,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       checkPoint.trigger("allow_topology_" + duringJoinTopologyId + "_on_" + address(2));
 
       // Wait for the write CH to contain the joiner everywhere
-      eventually(() -> cache0.getRpcManager().getMembers().size() == 3 &&
+      Eventually.eventually(() -> cache0.getRpcManager().getMembers().size() == 3 &&
             cache1.getRpcManager().getMembers().size() == 3 &&
             cache2.getRpcManager().getMembers().size() == 3);
 

@@ -20,6 +20,8 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.concurrent.locks.LockManager;
 
@@ -58,8 +60,8 @@ public class DatagridManager extends MultipleCacheManagersTest
    /* ========================= AbstractInfinispanTest methods ================== */
 
    //name change
-   public void waitForCondition(Condition ec, long timeout) {
-      eventually(ec, timeout);
+   public static void waitForCondition(Condition ec, long timeout) {
+      Eventually.eventually(ec, timeout);
    }
 
    //name change
@@ -69,7 +71,7 @@ public class DatagridManager extends MultipleCacheManagersTest
 
    //name change
    public void waitForCondition(Condition ec) {
-      eventually(ec);
+      Eventually.eventually(ec);
    }
 
    /* =========================== AbstractCacheTest methods ====================== */

@@ -21,6 +21,7 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestResourceTracker;
 
 /**
@@ -110,7 +111,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
     * Waits until the index reaches a certain size. Useful for async backend
     */
    private void waitForIndexSize(final int expected) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          int idxCount = countIndex();
          System.out.printf("\rWaiting for indexing completion (%d): %d indexed so far", expected, +idxCount);
          return idxCount == expected;

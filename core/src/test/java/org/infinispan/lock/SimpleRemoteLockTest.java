@@ -14,6 +14,7 @@ import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
@@ -50,7 +51,7 @@ public class SimpleRemoteLockTest extends MultipleCacheManagersTest {
       }
 
       //it sends the reply before invoke the finally. So, we need to use eventually :)
-      eventually(() -> !lockManager.isLocked(key));
+      Eventually.eventually(() -> !lockManager.isLocked(key));
    }
 
    public static class ExceptionInRemotePutInterceptor extends BaseCustomInterceptor {

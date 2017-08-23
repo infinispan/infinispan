@@ -18,6 +18,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
@@ -140,7 +142,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       assertEquals(cache(1, "test").keySet().size(), entryCount);
 
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return showInDoubtTransactions(0).isEmpty() && showInDoubtTransactions(1).isEmpty();
@@ -155,12 +157,12 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
 
    @Override
    protected void checkProperlyCleanup(final int managerIndex) {
-      eventually(() -> TestingUtil.extractLockManager(cache(managerIndex, "test")).getNumberOfLocksHeld() == 0);
+      Eventually.eventually(() -> TestingUtil.extractLockManager(cache(managerIndex, "test")).getNumberOfLocksHeld() == 0);
       final TransactionTable tt = TestingUtil.extractComponent(cache(managerIndex, "test"), TransactionTable.class);
-      eventually(() -> (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0));
+      Eventually.eventually(() -> (tt.getRemoteTxCount() == 0) && (tt.getLocalTxCount() == 0));
       final RecoveryManager rm = TestingUtil.extractComponent(cache(managerIndex, "test"), RecoveryManager.class);
-      eventually(() -> rm.getInDoubtTransactions().size() == 0);
-      eventually(() -> rm.getPreparedTransactionsFromCluster().all().length == 0);
+      Eventually.eventually(() -> rm.getInDoubtTransactions().size() == 0);
+      Eventually.eventually(() -> rm.getPreparedTransactionsFromCluster().all().length == 0);
    }
 
 

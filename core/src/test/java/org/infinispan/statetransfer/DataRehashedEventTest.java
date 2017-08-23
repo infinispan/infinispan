@@ -17,6 +17,8 @@ import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
@@ -161,7 +163,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       }
 
       void waitForEvents(final int count) {
-         eventually(new Condition() {
+         Eventually.eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
                return events.size() >= count;

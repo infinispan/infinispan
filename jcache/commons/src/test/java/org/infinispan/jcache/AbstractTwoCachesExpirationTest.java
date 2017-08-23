@@ -17,6 +17,7 @@ import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListenerException;
 
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.util.ControlledTimeService;
 import org.testng.annotations.Test;
 
@@ -40,7 +41,7 @@ public abstract class AbstractTwoCachesExpirationTest extends MultipleCacheManag
       cache1.registerCacheEntryListener(conf1);
       cache2.put(k(m), v(m));
       controlledTimeService.advance(EXPIRATION_TIMEOUT + 1000);
-      eventually(() -> listener.invocationCount.get() >0);
+      Eventually.eventually(() -> listener.invocationCount.get() >0);
       assertNull(cache1.get(k(m)));
 
       listener.invocationCount.set(0);

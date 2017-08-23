@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -104,7 +105,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       eventuallyEquals(0, () -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
 
 
-      eventually(() -> {
+      Eventually.eventually(() -> {
          boolean allZero = true;
          for (int i = 0; i < 3; i++) {
             TransactionTable tt = TestingUtil.getTransactionTable(cache(i));

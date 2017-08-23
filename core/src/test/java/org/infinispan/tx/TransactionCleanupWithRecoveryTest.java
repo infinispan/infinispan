@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -75,14 +76,14 @@ public class TransactionCleanupWithRecoveryTest extends MultipleCacheManagersTes
    private void assertNoTx() {
       final TransactionTable tt0 = TestingUtil.getTransactionTable(cache(0));
       // Message to forget transactions is sent asynchronously
-      eventually(() -> {
+      Eventually.eventually(() -> {
          int localTxCount = tt0.getLocalTxCount();
          int remoteTxCount = tt0.getRemoteTxCount();
          return localTxCount == 0 && remoteTxCount == 0;
       });
 
       final TransactionTable tt1 = TestingUtil.getTransactionTable(cache(1));
-      eventually(() -> {
+      Eventually.eventually(() -> {
          int localTxCount = tt1.getLocalTxCount();
          int remoteTxCount = tt1.getRemoteTxCount();
          return localTxCount == 0 && remoteTxCount == 0;

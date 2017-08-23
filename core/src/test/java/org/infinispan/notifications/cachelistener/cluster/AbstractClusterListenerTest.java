@@ -18,6 +18,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.Test;
 
 /**
@@ -541,7 +542,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertNull(cache0.get(key));
 
       int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
-      eventually(() -> clusterListener.events.size() >= expectCount, 200000);
+      Eventually.eventually(() -> clusterListener.events.size() >= expectCount, 200000);
       assertEquals(expectCount, clusterListener.events.size());
       CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
 
@@ -568,7 +569,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertNull(cache1.get(key));
 
       int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
-      eventually(() -> clusterListener.events.size() >= expectCount);
+      Eventually.eventually(() -> clusterListener.events.size() >= expectCount);
       assertEquals(expectCount, clusterListener.events.size());
       CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
 
@@ -594,7 +595,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertNull(cache0.get(key));
 
       int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
-      eventually(() -> clusterListener.events.size() >= expectCount);
+      Eventually.eventually(() -> clusterListener.events.size() >= expectCount);
       assertEquals(expectCount, clusterListener.events.size());
       CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
 
@@ -620,7 +621,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertNull(cache1.get(key));
 
       int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
-      eventually(() -> clusterListener.events.size() >= expectCount);
+      Eventually.eventually(() -> clusterListener.events.size() >= expectCount);
       assertEquals(expectCount, clusterListener.events.size());
       CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
 
@@ -651,7 +652,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       assertNull(cache2.get(key));
 
       int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
-      eventually(() -> clusterListener.events.size() >= expectCount);
+      Eventually.eventually(() -> clusterListener.events.size() >= expectCount);
       // We can't assert size here, thiis is because expiration is done asynchronously.  As such you could have more
       // than 1 expire command come at the same time, although from different nodes.  Currently we assume a null is
       // okay to say it was expired, so you can get multiple expirations

@@ -17,6 +17,8 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.BeforeMethod;
@@ -80,7 +82,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
       log.trace("Triggering rebalance to cause segment ownership to change");
       factory.triggerRebalance(cache0);
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).containsKey(KEY);
@@ -108,7 +110,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
       log.trace("Triggering rebalance to cause segment ownership to change");
       factory.triggerRebalance(cache0);
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).containsKey(KEY);
@@ -134,7 +136,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
       log.trace("Triggering rebalance to cause segment ownership to change");
       factory.triggerRebalance(cache0);
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_OWNERSHIP_CHECK).containsKey(KEY);
@@ -160,7 +162,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
 
       log.trace("Triggering rebalance to cause segment ownership to change");
       factory.triggerRebalance(cache0);
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return cache0.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).containsKey(KEY);

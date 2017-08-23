@@ -33,6 +33,8 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -217,14 +219,14 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
             cache.put(1, "uno");
             cache.put(2, "dos");
             cache.put(3, "tres");
-            eventually(new Condition() {
+            Eventually.eventually(new Condition() {
                @Override
                public boolean isSatisfied() throws Exception {
                   return dummyStore.size() == 3;
                }
             });
             cache.clear();
-            eventually(new Condition() {
+            Eventually.eventually(new Condition() {
                @Override
                public boolean isSatisfied() throws Exception {
                   return dummyStore.size() == 0;

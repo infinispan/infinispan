@@ -33,6 +33,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.AbstractControlledRpcManager;
@@ -87,7 +88,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       //after this, the primary owner has committed the new value but still have the locks acquired.
       //in the backup owner, it still has the old value
 
-      eventually(() -> {
+      Eventually.eventually(() -> {
          Integer value = (Integer) cache(3).get(key);
          return value != null && value == 2;
       });

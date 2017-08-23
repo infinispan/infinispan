@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -59,7 +60,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       assertTrue(topologyId2 > topologyId);
 
       final TransactionTable tt2 = TestingUtil.getTransactionTable(cache(2));
-      eventually(() -> tt0.getMinTopologyId() == topologyId2
+      Eventually.eventually(() -> tt0.getMinTopologyId() == topologyId2
             && tt1.getMinTopologyId() == topologyId2
             && tt2.getMinTopologyId() == topologyId2);
    }
@@ -77,7 +78,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       t.runPrepare();
       tm(1).suspend();
 
-      eventually(() -> checkTxCount(0, 0, 1));
+      Eventually.eventually(() -> checkTxCount(0, 0, 1));
 
       log.trace("Adding new node ..");
       //add a new cache and check that min view is updated
@@ -94,6 +95,6 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       tm(1).resume(t);
       t.runCommit(false);
 
-      eventually(() -> tt0.getMinTopologyId() == topologyId2 && tt1.getMinTopologyId() == topologyId2);
+      Eventually.eventually(() -> tt0.getMinTopologyId() == topologyId2 && tt1.getMinTopologyId() == topologyId2);
    }
 }

@@ -17,6 +17,7 @@ import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -104,7 +105,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
    }
 
    protected void assertNoLocks(String cacheName) {
-      eventually("Expected no locks acquired in all nodes.", () -> {
+      Eventually.eventually("Expected no locks acquired in all nodes.", () -> {
          for (Cache<?, ?> cache : caches(cacheName)) {
             LockManager lockManager = extractLockManager(cache);
             getLog().tracef("Locks info=%s", lockManager.printLockInfo());
@@ -132,7 +133,7 @@ public abstract class BaseTxPartitionAndMergeTest extends BasePartitionHandlingT
    }
 
    private void assertNoTransactionsInPartitionHandler(final String cacheName) {
-      eventually("Transactions pending in PartitionHandlingManager", () -> {
+      Eventually.eventually("Transactions pending in PartitionHandlingManager", () -> {
          for (Cache<?, ?> cache : caches(cacheName)) {
             Collection<GlobalTransaction> partialTransactions = extractComponent(cache, PartitionHandlingManager.class).getPartialTransactions();
             if (!partialTransactions.isEmpty()) {

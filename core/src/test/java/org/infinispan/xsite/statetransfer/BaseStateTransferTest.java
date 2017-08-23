@@ -35,6 +35,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.CommitManager;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.BackupReceiver;
@@ -107,7 +109,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
 
       controllerTransport.stopBlocking();
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
@@ -127,7 +129,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       assertEquals(XSiteStateTransferManager.STATUS_SENDING, extractComponent(cache(LON, 0), XSiteAdminOperations.class).getPushStateStatus().get(NYC));
       controllerTransport.stopBlocking();
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
@@ -172,7 +174,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
 
       startStateTransfer(LON, NYC);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
@@ -345,7 +347,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       //safe, perform is async
       operation.perform(cache(LON, 0), key).get();
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
@@ -403,7 +405,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       control.trigger();
       f.get(30, TimeUnit.SECONDS);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
@@ -478,7 +480,7 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       assertFalse(commandReceived.get());
       checkPoint.trigger("before-update");
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();

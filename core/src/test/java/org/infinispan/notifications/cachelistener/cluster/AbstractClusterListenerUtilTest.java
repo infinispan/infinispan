@@ -48,6 +48,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledTimeService;
@@ -298,7 +299,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    }
 
    protected void verifySimpleExpirationEvents(ClusterListener listener, int expectedNumEvents, Object key, Object expectedValue) {
-      eventually(() -> listener.events.size() >= expectedNumEvents);
+      Eventually.eventually(() -> listener.events.size() >= expectedNumEvents);
 
       CacheEntryEvent event = listener.events.get(expectedNumEvents - 1); //the index starts from 0
 

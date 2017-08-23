@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.BlockingClusterTopologyManager;
 import org.infinispan.util.BlockingLocalTopologyManager;
@@ -53,7 +54,7 @@ public class LeaveDuringStateTransferTest extends MultipleCacheManagersTest {
 
          log.debug("State transfer almost complete");
 
-         eventually(() -> currentTopologyId(cache(2)) == currentTopology + 3);
+         Eventually.eventually(() -> currentTopologyId(cache(2)) == currentTopology + 3);
          localTopologyManager2.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
          localTopologyManager2.startBlocking(BlockingLocalTopologyManager.LatchType.REBALANCE);
          // Block rebalance that could follow even if the previous rebalance was not completed
@@ -65,7 +66,7 @@ public class LeaveDuringStateTransferTest extends MultipleCacheManagersTest {
 
          log.debug("Waiting for topology update from view change");
          // since we're blocking confirmation for topology +3, the updated topology will be +4
-         eventually(() -> currentTopologyId(cache(0)) >= currentTopology + 4);
+         Eventually.eventually(() -> currentTopologyId(cache(0)) >= currentTopology + 4);
 
          StateTransferLock originalLock = TestingUtil.extractComponent(cache(2), StateTransferLock.class);
          UnblockingStateTransferLock lock = new UnblockingStateTransferLock(originalLock, currentTopology + 4, localTopologyManager2);

@@ -1,8 +1,5 @@
 package org.infinispan.test;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
-
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -21,12 +18,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import javax.transaction.TransactionManager;
 
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.ChainMethodInterceptor;
 import org.infinispan.test.fwk.NamedTestMethod;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -145,91 +141,13 @@ public class AbstractInfinispanTest {
    }
 
    protected <T> void eventuallyEquals(T expected, Supplier<T> supplier) {
-      eventually(() -> "expected:<" + expected + ">, got:<" + supplier.get() + ">",
+      Eventually.eventually(() -> "expected:<" + expected + ">, got:<" + supplier.get() + ">",
             () -> Objects.equals(expected, supplier.get()));
    }
 
    protected <T> void eventuallyEquals(String message, T expected, Supplier<T> supplier) {
-      eventually(() -> message + " expected:<" + expected + ">, got:<" + supplier.get() + ">",
+      Eventually.eventually(() -> message + " expected:<" + expected + ">, got:<" + supplier.get() + ">",
                  () -> Objects.equals(expected, supplier.get()));
-   }
-
-   protected void eventually(Supplier<String> messageSupplier, BooleanSupplier condition) {
-      eventually(messageSupplier, condition, 30, TimeUnit.SECONDS);
-   }
-
-   protected void eventually(Supplier<String> messageSupplier, BooleanSupplier condition, long timeout,
-         TimeUnit timeUnit) {
-      try {
-         long timeoutNanos = timeUnit.toNanos(timeout);
-         // We want the sleep time to increase in arithmetic progression
-         // 30 loops with the default timeout of 30 seconds means the initial wait is ~ 65 millis
-         int loops = 30;
-         int progressionSum = loops * (loops + 1) / 2;
-         long initialSleepNanos = timeoutNanos / progressionSum;
-         long sleepNanos = initialSleepNanos;
-         long expectedEndTime = System.nanoTime() + timeoutNanos;
-         while (expectedEndTime - System.nanoTime() > 0) {
-            if (condition.getAsBoolean())
-               return;
-            LockSupport.parkNanos(sleepNanos);
-            sleepNanos += initialSleepNanos;
-         }
-         if (!condition.getAsBoolean()) {
-            fail(messageSupplier.get());
-         }
-      } catch (Exception e) {
-         throw new RuntimeException("Unexpected!", e);
-      }
-   }
-
-   protected void eventually(Condition ec, long timeoutMillis) {
-      eventually(ec, timeoutMillis, TimeUnit.MILLISECONDS);
-   }
-
-   /**
-    * @deprecated Use {@link #eventually(Condition, long, long, TimeUnit)} instead.
-    */
-   @Deprecated
-   protected void eventually(Condition ec, long timeoutMillis, int loops) {
-      eventually(null, ec, timeoutMillis, loops);
-   }
-
-   /**
-    * @deprecated Use {@link #eventually(String, Condition, long, long, TimeUnit)} instead.
-    */
-   @Deprecated
-   protected void eventually(String message, Condition ec, long timeoutMillis, int loops) {
-      if (loops <= 0) {
-         throw new IllegalArgumentException("Number of loops must be positive");
-      }
-      long sleepDuration = timeoutMillis / loops + 1;
-      eventually(message, ec, timeoutMillis, sleepDuration, TimeUnit.MILLISECONDS);
-   }
-
-   protected void eventually(Condition ec, long timeout, TimeUnit unit) {
-      eventually(null, ec, unit.toMillis(timeout), 500, TimeUnit.MILLISECONDS);
-   }
-
-   protected void eventually(Condition ec, long timeout, long pollInterval, TimeUnit unit) {
-      eventually(null, ec, timeout, pollInterval, unit);
-   }
-
-   protected void eventually(String message, Condition ec, long timeout, long pollInterval, TimeUnit unit) {
-      if (pollInterval <= 0) {
-         throw new IllegalArgumentException("Check interval must be positive");
-      }
-      try {
-         long expectedEndTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout, unit);
-         long sleepMillis = TimeUnit.MILLISECONDS.convert(pollInterval, unit);
-         while (expectedEndTime - System.nanoTime() > 0) {
-            if (ec.isSatisfied()) return;
-            Thread.sleep(sleepMillis);
-         }
-         assertTrue(message, ec.isSatisfied());
-      } catch (Exception e) {
-         throw new RuntimeException("Unexpected!", e);
-      }
    }
 
    /**
@@ -516,18 +434,6 @@ public class AbstractInfinispanTest {
       }
    }
 
-
-   protected void eventually(Condition ec) {
-      eventually(ec, 10000);
-   }
-
-   protected void eventually(String message, Condition ec) {
-      eventually(message, ec, 10000, 500, TimeUnit.MILLISECONDS);
-   }
-
-   protected interface Condition {
-      boolean isSatisfied() throws Exception;
-   }
 
    private class LoggingCallable<T> implements Callable<T> {
       private final Callable<? extends T> c;

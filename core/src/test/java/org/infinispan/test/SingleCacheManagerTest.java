@@ -7,6 +7,8 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -120,7 +122,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    }
 
    protected void assertNoTransactions(final Cache<?, ?> cache) {
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             int localTxCount = TestingUtil.extractComponent(cache, TransactionTable.class).getLocalTxCount();

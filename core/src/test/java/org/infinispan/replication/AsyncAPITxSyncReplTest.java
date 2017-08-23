@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "replication.AsyncAPITxSyncReplTest")
@@ -74,7 +75,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       tm.begin();
       final Future<Void> f2 = c1.putAllAsync(Collections.singletonMap(key, v3));
       assert f2 != null;
-      eventually(f2::isDone);
+      Eventually.eventually(f2::isDone);
       t = tm.suspend();
       assert c2.get(key).equals(v2);
       tm.resume(t);
@@ -87,7 +88,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       tm.begin();
       final Future f1 = c1.putIfAbsentAsync(key, v4);
       assert f1 != null;
-      eventually(f1::isDone);
+      Eventually.eventually(f1::isDone);
       t = tm.suspend();
       assert c2.get(key).equals(v3);
       tm.resume(t);
@@ -100,7 +101,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       tm.begin();
       final Future f3 = c1.removeAsync(key);
       assert f3 != null;
-      eventually(f3::isDone);
+      Eventually.eventually(f3::isDone);
       t = tm.suspend();
       assert c2.get(key).equals(v3);
       tm.resume(t);
@@ -113,7 +114,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       tm.begin();
       final Future f4 = c1.putIfAbsentAsync(key, v4);
       assert f4 != null;
-      eventually(f4::isDone);
+      Eventually.eventually(f4::isDone);
       assert f4.isDone();
       t = tm.suspend();
       assert c2.get(key) == null;
@@ -136,7 +137,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       tm.begin();
       final Future f6 = c1.removeAsync(key, v4);
       assert f6 != null;
-      eventually(f6::isDone);
+      Eventually.eventually(f6::isDone);
       assert f6.isDone();
       t = tm.suspend();
       assert c2.get(key).equals(v4);
@@ -164,7 +165,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       tm.begin();
       final Future f8 = c1.replaceAsync(key, v5);
       assert f8 != null;
-      eventually(f8::isDone);
+      Eventually.eventually(f8::isDone);
       t = tm.suspend();
       assert c2.get(key).equals(v);
       tm.resume(t);
@@ -186,7 +187,7 @@ public class AsyncAPITxSyncReplTest extends MultipleCacheManagersTest {
       tm.begin();
       final Future f10 = c1.replaceAsync(key, v5, v6);
       assert f10 != null;
-      eventually(f10::isDone);
+      Eventually.eventually(f10::isDone);
       t = tm.suspend();
       assert c2.get(key).equals(v5);
       tm.resume(t);

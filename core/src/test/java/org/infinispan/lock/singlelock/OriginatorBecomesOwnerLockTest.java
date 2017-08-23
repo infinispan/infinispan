@@ -24,6 +24,8 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -217,7 +219,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
       final TransactionTable transactionTable = TestingUtil.extractComponent(cache, TransactionTable.class);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return transactionTable.getLocalTxCount() == 0 && transactionTable.getRemoteTxCount() == 0;

@@ -31,6 +31,7 @@ import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.InTransactionMode;
@@ -117,7 +118,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
       // Verify that the key is written on the origin afterwards
       barrier.await(10, TimeUnit.SECONDS);
-      eventually(() -> value.equals(cache1.get(myKey)) && value.equals(cache2.get(myKey)));
+      Eventually.eventually(() -> value.equals(cache1.get(myKey)) && value.equals(cache2.get(myKey)));
    }
 
    public void testNoOpWhenKeyPresent() {
@@ -125,16 +126,16 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       final Cache<String, String> cache2 = cache(1, CACHE_NAME);
       cache1.putForExternalRead(key, value);
 
-      eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
+      Eventually.eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
 
       // reset
       cache1.remove(key);
 
-      eventually(() -> cache1.isEmpty() && cache2.isEmpty());
+      Eventually.eventually(() -> cache1.isEmpty() && cache2.isEmpty());
 
       cache1.put(key, value);
 
-      eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
+      Eventually.eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
 
       // now this pfer should be a no-op
       cache1.putForExternalRead(key, value2);
@@ -150,7 +151,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
       cache1.put(key + "0", value);
 
-      eventually(() -> value.equals(cache2.get(key+"0")));
+      Eventually.eventually(() -> value.equals(cache2.get(key+"0")));
 
       // start a tx and do some stuff.
       tm(0, CACHE_NAME).begin();
@@ -158,12 +159,12 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value); // should have happened in a separate tx and have committed already.
       Transaction t = tm(0, CACHE_NAME).suspend();
 
-      eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
+      Eventually.eventually(() -> value.equals(cache1.get(key)) && value.equals(cache2.get(key)));
 
       tm(0, CACHE_NAME).resume(t);
       tm(0, CACHE_NAME).commit();
 
-      eventually(() -> value.equals(cache1.get(key + "0")) && value.equals(cache2.get(key + "0")));
+      Eventually.eventually(() -> value.equals(cache1.get(key + "0")) && value.equals(cache2.get(key + "0")));
    }
 
    public void testExceptionSuppression() throws Exception {
@@ -219,7 +220,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       replListener2.waitForRpc();
 
       // wait for command the finish executing asynchronously
-      eventually(() -> cache1.containsKey(key) && cache2.containsKey(key));
+      Eventually.eventually(() -> cache1.containsKey(key) && cache2.containsKey(key));
 
       assertEquals("PFER updated cache1", value, cache1.get(key));
       assertEquals("PFER propagated to cache2 as expected", value, cache2.get(key));
@@ -266,7 +267,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       final TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
       final TransactionTable tt2 = TestingUtil.extractComponent(cache2, TransactionTable.class);
 
-      eventually(() -> tt1.getRemoteTxCount() == 0 && tt1.getLocalTxCount() == 0 &&
+      Eventually.eventually(() -> tt1.getRemoteTxCount() == 0 && tt1.getLocalTxCount() == 0 &&
             tt2.getRemoteTxCount() == 0 && tt2.getLocalTxCount() == 0);
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
@@ -279,7 +280,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       log.info("Before commit!!");
       tm1.commit();
 
-      eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+      Eventually.eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
             && (tt2.getLocalTxCount() == 0));
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
@@ -288,7 +289,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value);
       tm1.commit();
 
-      eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+      Eventually.eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
             && (tt2.getLocalTxCount() == 0));
 
       replListener2.expectWithTx(PutKeyValueCommand.class, PutKeyValueCommand.class);
@@ -298,7 +299,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.put(key, value);
       tm1.commit();
 
-      eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
+      Eventually.eventually(() -> (tt1.getRemoteTxCount() == 0) && (tt1.getLocalTxCount() == 0) &&  (tt2.getRemoteTxCount() == 0)
             && (tt2.getLocalTxCount() == 0));
    }
 
@@ -309,7 +310,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value);
 
       // wait for command the finish executing asynchronously
-      eventually(() -> cache1.containsKey(key) && cache2.containsKey(key));
+      Eventually.eventually(() -> cache1.containsKey(key) && cache2.containsKey(key));
 
       cache1.putForExternalRead(key, value2);
 

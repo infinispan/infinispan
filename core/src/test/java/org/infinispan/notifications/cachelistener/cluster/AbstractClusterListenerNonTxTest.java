@@ -18,6 +18,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.testng.annotations.Test;
@@ -104,7 +105,7 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
          //only 1 put is waiting (it may receive the backup ack, but not the primary ack since it is blocked!)
          assertEquals(1, pendingCommands.size());
          //make sure that the backup received the update
-         eventually(() -> !collector.hasPendingBackupAcks(pendingCommands.get(0)));
+         Eventually.eventually(() -> !collector.hasPendingBackupAcks(pendingCommands.get(0)));
       }
    }
 }

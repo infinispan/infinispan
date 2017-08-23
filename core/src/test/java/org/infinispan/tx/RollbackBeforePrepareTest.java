@@ -12,6 +12,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -65,7 +67,7 @@ public class RollbackBeforePrepareTest extends MultipleCacheManagersTest {
       //give some time for the prepare to execute
       Thread.sleep(3000);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             int remoteTxCount0 = TestingUtil.getTransactionTable(cache(0)).getRemoteTxCount();

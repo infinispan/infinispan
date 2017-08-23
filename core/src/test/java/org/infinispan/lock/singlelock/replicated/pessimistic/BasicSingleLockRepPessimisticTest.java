@@ -3,6 +3,7 @@ package org.infinispan.lock.singlelock.replicated.pessimistic;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
@@ -92,7 +93,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
+      Eventually.eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
 
 
       tm(1).begin();
@@ -103,7 +104,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
+      Eventually.eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
 
 
       tm(0).resume(dtm);
@@ -111,7 +112,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
 
       assertValue(k0, false);
 
-      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
+      Eventually.eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
    }
 
    public void testSecondTxCannotPrepare2() throws Exception {
@@ -132,7 +133,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
+      Eventually.eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
 
       tm(1).begin();
@@ -143,7 +144,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
+      Eventually.eventually(() -> checkTxCount(0, 0, 1) && checkTxCount(1, 1, 0) && checkTxCount(2, 0, 1));
 
 
       tm(0).resume(dtm);
@@ -151,6 +152,6 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
 
       assertValue(k0, false);
 
-      eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
+      Eventually.eventually(() -> noPendingTransactions(0) && noPendingTransactions(1) && noPendingTransactions(2));
    }
 }

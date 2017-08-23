@@ -13,6 +13,8 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
@@ -127,7 +129,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
 
          assertEquals(value, futurePut.get(1, TimeUnit.SECONDS));
 
-         eventually(new Condition() {
+         Eventually.eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
                // Value should be removed from L1 eventually

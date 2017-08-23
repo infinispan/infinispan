@@ -6,6 +6,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.byteman.contrib.bmunit.BMNGListener;
 import org.jboss.byteman.contrib.bmunit.BMRule;
@@ -56,7 +57,7 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
    }
 
    private void assertAllIndexed(final Cache cache) {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          int size = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), Transaction.class).list().size();
          return size == NUM_ENTRIES;
       });

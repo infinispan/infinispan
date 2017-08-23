@@ -13,6 +13,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
@@ -44,14 +46,14 @@ public class LockAfterNodesLeftTest extends MultipleCacheManagersTest {
       for (int i = 0; i < INITIAL_CLUSTER_SIZE; i++) {
          final TransactionTable transactionTable = TestingUtil.getTransactionTable(cache(i));
 
-         eventually(new Condition() {
+         Eventually.eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
                return transactionTable.getLocalTransactions().isEmpty();
             }
          });
 
-         eventually(new Condition() {
+         Eventually.eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
                return transactionTable.getRemoteTransactions().isEmpty();

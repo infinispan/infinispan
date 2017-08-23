@@ -21,6 +21,7 @@ import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.testng.annotations.Test;
@@ -261,7 +262,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          backupOwnerWriteBarrier.await(5, TimeUnit.SECONDS);
 
          // Wait until the L1 is cleared out from the owners L1 invalidation
-         eventually(() -> !isInL1(nonOwnerCache, key), 5000, 50, TimeUnit.MILLISECONDS);
+         Eventually.eventually(() -> !isInL1(nonOwnerCache, key), 5000, 50, TimeUnit.MILLISECONDS);
 
          // This should come back from the backup owner, since the primary owner is blocked
          assertEquals(firstValue, nonOwnerCache.get(key));
@@ -275,7 +276,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          future.get(5, TimeUnit.SECONDS);
 
          // The Last chance interceptor is async so wait to make sure it was invalidated
-         eventually(() -> !isInL1(nonOwnerCache, key), 5000, 50, TimeUnit.MILLISECONDS);
+         Eventually.eventually(() -> !isInL1(nonOwnerCache, key), 5000, 50, TimeUnit.MILLISECONDS);
          // The L1 value shouldn't be present
          assertIsNotInL1(nonOwnerCache, key);
 
@@ -328,7 +329,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
          CommandAckCollector collector = TestingUtil.extractComponent(nonOwnerCache, CommandAckCollector.class);
          List<Long> pendingIds = collector.getPendingCommands();
          assertEquals(1, pendingIds.size());
-         eventually(() -> !collector.hasPendingBackupAcks(pendingIds.get(0)));
+         Eventually.eventually(() -> !collector.hasPendingBackupAcks(pendingIds.get(0)));
 
          assertEquals(firstValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
          assertEquals(secondValue, backupOwnerCache.getAdvancedCache().getDataContainer().get(key).getValue());

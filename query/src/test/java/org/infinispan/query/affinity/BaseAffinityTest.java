@@ -41,6 +41,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.TransportFlags;
 
 public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
@@ -211,7 +212,7 @@ public abstract class BaseAffinityTest extends MultipleCacheManagersTest {
 
    protected void assertDocsIndexed(long millis) {
       int numEntries = getNumEntries();
-      this.eventually(() -> {
+      Eventually.eventually(() -> {
          CacheQuery<Object[]> query = Search.getSearchManager(pickCache()).getQuery(new MatchAllDocsQuery()).projection("val");
          Set<Integer> indexedDocsIds = query.list().stream().map(projections -> (Integer) projections[0]).collect(Collectors.toSet());
          int resultSize = indexedDocsIds.size();

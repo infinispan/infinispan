@@ -4,6 +4,8 @@ import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractCrashTest;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
@@ -44,7 +46,7 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       killMember(1);
 
       assertNotLocked("k");
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
@@ -70,7 +72,7 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
 
       killMember(1);
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);
@@ -100,7 +102,7 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       txControlInterceptor.prepareProgress.countDown();
 
       assertNotLocked("k");
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return checkTxCount(0, 0, 0) && checkTxCount(1, 0, 0);

@@ -42,6 +42,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -337,7 +338,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
          ownerGetBarrier.await(10, TimeUnit.SECONDS);
 
          // This is async in the LastChance interceptor
-         eventually(() -> !isInL1(nonOwnerCache, key));
+         Eventually.eventually(() -> !isInL1(nonOwnerCache, key));
 
          assertEquals(secondValue, ownerCache.getAdvancedCache().getDataContainer().get(key).getValue());
       } finally {

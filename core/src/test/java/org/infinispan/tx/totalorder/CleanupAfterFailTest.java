@@ -18,6 +18,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -122,7 +123,7 @@ public class CleanupAfterFailTest extends MultipleCacheManagersTest {
    }
 
    private void assertNoLocks() {
-      eventually(() -> {
+      Eventually.eventually(() -> {
          for (Cache cache : caches()) {
             if (TestingUtil.extractComponent(cache, TotalOrderManager.class).hasAnyLockAcquired()) {
                return false;

@@ -12,6 +12,8 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.BeforeMethod;
@@ -83,7 +85,7 @@ public class NoPrepareRpcForPessimisticTransactionsTest extends MultipleCacheMan
 
       tm(0).commit();
 
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             //prepare + tx completion notification

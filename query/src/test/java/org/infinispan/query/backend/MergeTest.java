@@ -20,6 +20,8 @@ import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.eventually.Condition;
+import org.infinispan.test.eventually.Eventually;
 import org.testng.annotations.Test;
 
 /**
@@ -109,7 +111,7 @@ public class MergeTest extends MultipleCacheManagersTest {
       SearchManager searchManager = Search.getSearchManager(cache1);
       final CacheQuery<Person> query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
       final int total = NUMBER_OF_THREADS * OBJECT_COUNT;
-      eventually(new Condition() {
+      Eventually.eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return query.list().size() == total;
