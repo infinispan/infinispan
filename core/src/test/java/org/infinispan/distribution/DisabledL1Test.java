@@ -5,7 +5,6 @@ import static org.infinispan.test.TestingUtil.v;
 
 import java.lang.reflect.Method;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.testng.annotations.Test;
@@ -19,14 +18,12 @@ public class DisabledL1Test extends BaseDistFunctionalTest<Object, String> {
    }
 
    public void testRemoveFromNonOwner() {
-      for (Cache<Object, String> c : caches) assert c.isEmpty();
-
       Object retval = getFirstNonOwner("k1").put("k1", "value");
-      asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", PutKeyValueCommand.class);
       if (testRetVals) assert retval == null;
 
       retval = getOwners("k1")[0].remove("k1");
-      asyncWait("k1", RemoveCommand.class, getFirstNonOwner("k1"));
+      asyncWait("k1", RemoveCommand.class);
       if (testRetVals) assert "value".equals(retval);
 
       assertRemovedOnAllCaches("k1");
@@ -38,5 +35,4 @@ public class DisabledL1Test extends BaseDistFunctionalTest<Object, String> {
       getOwners(k)[0].put(k, v);
       getNonOwners(k)[0].replace(k, v(m, 1));
    }
-
 }

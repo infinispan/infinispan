@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import javax.transaction.TransactionManager;
 
@@ -187,15 +188,17 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
          DataContainer dc = c.getAdvancedCache().getDataContainer();
          InternalCacheEntry ice = dc.get(key);
          if (isOwner(c, key)) {
-            assert ice != null : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned null!";
+            assert ice != null && ice.getValue() != null : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice;
             assert ice instanceof ImmortalCacheEntry : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
          } else {
             if (allowL1) {
-               assert ice == null || ice.isL1Entry() : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+               assert ice == null || ice.getValue() == null || ice.isL1Entry() : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
             } else {
                // Segments no longer owned are invalidated asynchronously
-               eventuallyEquals("Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ")",
-                     null, () -> dc.get(key));
+               eventually("Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ")", () -> {
+                  InternalCacheEntry ice2 = dc.get(key);
+                  return ice2 == null || ice2.getValue() == null;
+               });
             }
          }
       }
@@ -208,7 +211,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
    protected boolean isInL1(Cache<?, ?> cache, Object key) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry ice = dc.get(key);
-      return ice != null && !(ice instanceof ImmortalCacheEntry);
+      return ice != null && ice.getValue() != null && !(ice instanceof ImmortalCacheEntry);
    }
 
    protected void assertIsInL1(Cache<?, ?> cache, Object key) {
@@ -289,19 +292,20 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
 
    /**
     * Blocks and waits for a replication event on async caches
-    *
-    * @param key     key that causes the replication.  Used to determine which caches to listen on.  If null, all caches
+    *  @param key     key that causes the replication.  Used to determine which caches to listen on.  If null, all caches
     *                are checked
     * @param command command to listen for
-    * @param caches  on which this key should be invalidated
     */
-   protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... caches) {
+   protected void asyncWait(Object key, Class<? extends VisitableCommand> command) {
+      asyncWait(key, command::isInstance);
+   }
+
+   protected void asyncWait(Object key, Predicate<VisitableCommand> test) {
       // no op.
    }
 
    /**
     * Blocks and waits for a replication event on primary owners in async caches
-    *
     * @param key     key that causes the replication. Must be non-null.
     * @param command command to listen for
     */

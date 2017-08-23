@@ -51,7 +51,7 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       CacheLoader nonOwnerStore = TestingUtil.getFirstLoader(nonOwner);
       assert !nonOwnerStore.contains(key);
       Object retval = nonOwner.put(key, value);
-      asyncWait(key, PutKeyValueCommand.class, getSecondNonOwner(key));
+      asyncWait(key, PutKeyValueCommand.class);
 
       Cache[] owners = getOwners(key);
       CacheLoader store = TestingUtil.getFirstLoader(owners[0]);
@@ -79,7 +79,7 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       Cache[] owners = getOwners(key);
       Object retval = owners[0].put(key, value);
-      asyncWait(key, PutKeyValueCommand.class, getNonOwners(key));
+      asyncWait(key, PutKeyValueCommand.class);
       CacheLoader store = TestingUtil.getFirstLoader(owners[0]);
       assertIsInContainerImmortal(owners[0], key);
       assert store.contains(key);
@@ -140,13 +140,11 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       }
 
       Object retval = getFirstNonOwner(key).remove(key);
-      asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", RemoveCommand.class);
       if (testRetVals) assert value.equals(retval);
       for (Cache<Object, String> c : caches) {
          CacheLoader store = TestingUtil.getFirstLoader(c);
          MarshalledEntry me = store.load(key);
-         // handle tombstone writes
-         assert me == null || me.getValue() == null;
          if (me == null) {
             assertNumberOfInvocations(store, "delete", 1);
             assertNumberOfInvocations(store, "write", 1);
@@ -169,7 +167,7 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       }
 
       Object retval = getFirstNonOwner(key).replace(key, value2);
-      asyncWait(key, ReplaceCommand.class, getSecondNonOwner(key));
+      asyncWait(key, ReplaceCommand.class);
       if (testRetVals) assert value.equals(retval);
       for (Cache<Object, String> c : caches) {
          CacheLoader store = TestingUtil.getFirstLoader(c);
@@ -185,7 +183,7 @@ public class DistSyncStoreSharedTest extends BaseDistStoreTest<Object, String> {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
       for (int i = 0; i < 5; i++) {
          getOwners("k" + i)[0].put("k" + i, "value" + i);
-         asyncWait("k" + i, PutKeyValueCommand.class, getNonOwners("k" + i));
+         asyncWait("k" + i, PutKeyValueCommand.class);
       }
       // this will fill up L1 as well
       for (int i = 0; i < 5; i++) assertOnAllCachesAndOwnership("k" + i, "value" + i);

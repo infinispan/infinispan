@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -100,7 +101,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       Cache<Object, String> nonOwner = getFirstNonOwner("k1");
 
       Object retval = nonOwner.put("k1", "value2");
-      asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", PutKeyValueCommand.class);
 
       if (testRetVals) assertEquals("value", retval);
       assertOnAllCachesAndOwnership("k1", "value2");
@@ -112,6 +113,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       Object retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
 
       if (testRetVals) assertEquals("value", retval);
+      asyncWaitOnPrimary("k1", PutKeyValueCommand.class);
 
       assertOnAllCachesAndOwnership("k1", "value");
 
@@ -120,15 +122,8 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
 
-      eventually(() -> {
-         try {
-            assertOnAllCachesAndOwnership("k1", "value2");
-         } catch (AssertionError e) {
-            log.debugf("Assertion failed once", e);
-            return false;
-         }
-         return true;
-      });
+      asyncWait("k1", PutKeyValueCommand.class);
+      assertOnAllCachesAndOwnership("k1", "value2");
 
       if (testRetVals) assertNull(retval);
    }
@@ -136,7 +131,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
    public void testRemoveFromNonOwner() {
       initAndTest();
       Object retval = getFirstNonOwner("k1").remove("k1");
-      asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", RemoveCommand.class);
       if (testRetVals) assertEquals("value", retval);
 
       assertRemovedOnAllCaches("k1");
@@ -147,15 +142,14 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       log.trace("Here we start");
       boolean retval = getFirstNonOwner("k1").remove("k1", "value2");
       if (testRetVals) assertFalse("Should not have removed entry", retval);
+      asyncWaitOnPrimary("k1", RemoveCommand.class);
 
       assertOnAllCachesAndOwnership("k1", "value");
 
       assertEquals("value", caches.get(1).get("k1"));
 
-      Cache<Object, String> owner = getFirstNonOwner("k1");
-
-      retval = owner.remove("k1", "value");
-      asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
+      retval = getFirstNonOwner("k1").remove("k1", "value");
+      asyncWait("k1", RemoveCommand.class);
       if (testRetVals) assertTrue("Should have removed entry", retval);
 
       assertNull("expected null but received " + caches.get(1).get("k1"), caches.get(1).get("k1"));
@@ -167,7 +161,9 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       Object retval = getFirstNonOwner("k1").replace("k1", "value2");
       if (testRetVals) assertEquals("value", retval);
 
-      asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
+      // Replace going to backup owners becomes PKVC
+      asyncWait("k1", cmd -> Stream.of(ReplaceCommand.class, PutKeyValueCommand.class)
+            .anyMatch(clazz -> clazz.isInstance(cmd)));
 
       assertOnAllCachesAndOwnership("k1", "value2");
 
@@ -185,12 +181,14 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       Cache<Object, String> nonOwner = getFirstNonOwner("k1");
       boolean retval = nonOwner.replace("k1", "valueX", "value2");
       if (testRetVals) assertFalse("Should not have replaced", retval);
+      asyncWaitOnPrimary("k1", ReplaceCommand.class);
 
       assertOnAllCachesAndOwnership("k1", "value");
 
       assertFalse(extractComponent(nonOwner, DistributionManager.class).getCacheTopology().isWriteOwner("k1"));
       retval = nonOwner.replace("k1", "value", "value2");
-      asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", cmd -> Stream.of(ReplaceCommand.class, PutKeyValueCommand.class)
+            .anyMatch(clazz -> clazz.isInstance(cmd)));
       if (testRetVals) assertTrue("Should have replaced", retval);
 
       assertOnAllCachesAndOwnership("k1", "value2");
@@ -307,13 +305,13 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       // compute function applied
       initAndTest();
       Object retval = getFirstNonOwner("k1").compute("k1", (k, v) -> "computed_" + k + "_" + v);
-      asyncWait("k1", ComputeCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", ComputeCommand.class);
       if (testRetVals) assertEquals("computed_k1_value", retval);
       assertOnAllCachesAndOwnership("k1", "computed_k1_value");
 
       // remove if after compute value is null
       retval = getFirstNonOwner("k1").compute("k1", (v1, v2) -> null);
-      asyncWait("k1", ComputeCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", ComputeCommand.class);
       if (testRetVals) assertNull(retval);
       assertRemovedOnAllCaches("k1");
 
@@ -335,7 +333,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       initAndTest();
       Object retval = getFirstNonOwner("k1").computeIfPresent("k1", (k, v) -> "computed_" + k + "_" + v);
       if (testRetVals) assertEquals("computed_k1_value", retval);
-      asyncWait("k1", ComputeCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", ComputeCommand.class);
       assertOnAllCachesAndOwnership("k1", "computed_k1_value");
 
       RuntimeException computeRaisedException = new RuntimeException("hi there");
@@ -346,7 +344,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       // remove if after compute value is null
       retval = getFirstNonOwner("k1").computeIfPresent("k1", (v1, v2) -> null);
-      asyncWait("k1", ComputeCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", ComputeCommand.class);
       if (testRetVals) assertNull(retval);
       assertRemovedOnAllCaches("k1");
 
@@ -374,7 +372,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       // do nothing if function result is null
       retval = getFirstNonOwner("doNothing").computeIfAbsent("doNothing", k -> null);
-      asyncWait("doNothing", ComputeIfAbsentCommand.class);
+      asyncWaitOnPrimary("doNothing", ComputeIfAbsentCommand.class);
       if (testRetVals) assertNull(retval);
       assertRemovedOnAllCaches("doNothing");
 
@@ -393,23 +391,24 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       expectException(RemoteException.class, () -> getFirstNonOwner("k1").merge("k1", "ex", (k, v) -> {
          throw mergeException;
       }));
+      asyncWaitOnPrimary("k1", ReadWriteKeyCommand.class);
       assertOnAllCachesAndOwnership("k1", "value");
 
       // merge function applied
       Object retval = getFirstNonOwner("k1").merge("k1", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
-      asyncWait("k1", ReadWriteKeyCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", ReadWriteKeyCommand.class);
       if (testRetVals) assertEquals("merged_value_value2", retval);
       assertOnAllCachesAndOwnership("k1", "merged_value_value2");
 
       // remove when null
       retval = getFirstNonOwner("k1").merge("k1", "valueRem", (v1, v2) -> null);
-      asyncWait("k1", ReadWriteKeyCommand.class, getSecondNonOwner("k1"));
+      asyncWait("k1", ReadWriteKeyCommand.class);
       if (testRetVals) assertNull(retval);
       assertRemovedOnAllCaches("k1");
 
       // put if absent
       retval = getFirstNonOwner("notThere").merge("notThere", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
-      asyncWait("notThere", ReadWriteKeyCommand.class, getSecondNonOwner("notThere"));
+      asyncWait("notThere", ReadWriteKeyCommand.class);
       if (testRetVals) assertEquals("value2", retval);
       assertOnAllCachesAndOwnership("notThere", "value2");
    }
