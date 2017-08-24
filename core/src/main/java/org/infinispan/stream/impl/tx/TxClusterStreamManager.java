@@ -34,39 +34,39 @@ public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
    }
 
    @Override
-   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
-                                           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-                                           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
+   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+           TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, hash);
-      return manager.remoteStreamOperation(parallelDistribution, parallelStream, segments, keysToInclude,
+      return manager.remoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
               txExcludedKeys, includeLoader, operation, callback, earlyTerminatePredicate);
    }
 
    @Override
    public <R> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-                                                      Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-                                                      boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
-                                                      Predicate<? super R> earlyTerminatePredicate) {
+           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+           boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
+           Predicate<? super R> earlyTerminatePredicate) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, hash);
-      return manager.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, segments, keysToInclude,
+      return manager.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, ch, segments, keysToInclude,
               txExcludedKeys, includeLoader, operation, callback, earlyTerminatePredicate);
    }
 
    @Override
-   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
-                                           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
-                                           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
+   public <R> Object remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
+           Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
+           KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, hash);
-      return manager.remoteStreamOperation(parallelDistribution, parallelStream, segments, keysToInclude,
+      return manager.remoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
               txExcludedKeys, includeLoader, operation, callback);
    }
 
    @Override
    public <R2> Object remoteStreamOperationRehashAware(boolean parallelDistribution, boolean parallelStream,
-                                                       Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-                                                       boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation, ResultsCallback<Map<K, R2>> callback) {
+           ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
+           boolean includeLoader, KeyTrackingTerminalOperation<K, ?, R2> operation, ResultsCallback<Map<K, R2>> callback) {
       TxExcludedKeys<K> txExcludedKeys = new TxExcludedKeys<>(keysToExclude, ctx, hash);
-      return manager.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, segments, keysToInclude,
+      return manager.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, ch, segments, keysToInclude,
               txExcludedKeys, includeLoader, operation, callback);
    }
 
