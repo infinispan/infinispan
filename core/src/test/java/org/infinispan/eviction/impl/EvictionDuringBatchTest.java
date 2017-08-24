@@ -7,8 +7,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -32,7 +30,7 @@ public class EvictionDuringBatchTest extends SingleCacheManagerTest {
             .invocationBatching().enable(true);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfgBuilder);
       cache = cm.getCache();
-      cache.addListener(new BaseEvictionFunctionalTest.EvictionListener());
+      cache.addListener(new EvictionFunctionalTest.EvictionListener());
       return cm;
    }
 
