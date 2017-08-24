@@ -66,17 +66,19 @@ public class TcpTransport extends AbstractTransport {
       try {
          if (inetSocketAddress.isUnresolved())
             inetSocketAddress = new InetSocketAddress(inetSocketAddress.getHostString(), inetSocketAddress.getPort());
+
+         IoSupplier<Socket> socketF;
          if (transportFactory.getSSLContext() != null) {
             socketChannel = null; // We don't use a SocketChannel in the SSL case
             SSLContext sslContext = transportFactory.getSSLContext();
             SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-            socket = sslSocketFactory.createSocket();
+            socketF = sslSocketFactory::createSocket;
             setSniHostName(transportFactory.getSniHostName());
          } else {
             socketChannel = SocketChannel.open();
-            socket = socketChannel.socket();
+            socketF = socketChannel::socket;
          }
-         socket.connect(inetSocketAddress, transportFactory.getConnectTimeout());
+         socket = connectSocket(socketF, transportFactory, inetSocketAddress);
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
          socket.setKeepAlive(transportFactory.isTcpKeepAlive());
          socket.setSoTimeout(transportFactory.getSoTimeout());
@@ -88,6 +90,26 @@ public class TcpTransport extends AbstractTransport {
          log.tracef(e, "Could not connect to server: %s", serverAddress);
          throw new TransportException(message, e, serverAddress);
       }
+   }
+
+   public Socket connectSocket(IoSupplier<Socket> socketF,
+         TransportFactory transportFactory,
+         InetSocketAddress inetSocketAddress) throws IOException {
+      int port;
+      int localport;
+      Socket socket;
+      do {
+         socket = socketF.get();
+         socket.connect(inetSocketAddress, transportFactory.getConnectTimeout());
+         port = socket.getPort();
+         localport = socket.getLocalPort();
+         if (port == localport) {
+            log.debugf("Socket port(%d) and localport(%d) same, disconnect and try again", port, localport);
+            socket.close();
+         }
+      } while (port == localport);
+
+      return socket;
    }
 
    private void setSniHostName(String sniHostName) {
@@ -370,6 +392,10 @@ public class TcpTransport extends AbstractTransport {
    @Override
    public void invalidate() {
       invalid = true;
+   }
+
+   private interface IoSupplier<T> {
+      T get() throws IOException;
    }
 
 }
