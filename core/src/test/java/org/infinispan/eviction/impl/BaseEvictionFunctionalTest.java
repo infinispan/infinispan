@@ -9,6 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
@@ -33,12 +34,12 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   protected abstract EvictionStrategy getEvictionStrategy();
+   protected abstract StorageType getStorageType();
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.eviction().size(CACHE_SIZE)
-            .strategy(getEvictionStrategy()).expiration().wakeUpInterval(100L).locking()
+      builder.memory().size(CACHE_SIZE).storageType(getStorageType())
+            .expiration().wakeUpInterval(100L).locking()
             .useLockStriping(false) // to minimize chances of deadlock in the unit test
             .invocationBatching();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
@@ -67,7 +68,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
 
    public void testSimpleExpirationMaxIdle() throws Exception {
 
-      for (int i = 0; i < CACHE_SIZE*2; i++) {
+      for (int i = 0; i < CACHE_SIZE * 2; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MILLISECONDS);
       }
       Thread.sleep(1000); // sleep long enough to allow the thread to wake-up and purge all expired entries
@@ -91,16 +92,18 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       for (Writer writer : w) writer.join();
 
       // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
-      long giveUpTime = System.currentTimeMillis() + (1000 * 10); // 10 sec
+      long giveUpTime = System.currentTimeMillis() + (1000 * Writer.LIFESPAN);
       while (cache.getAdvancedCache().getDataContainer().size() > 1 && System.currentTimeMillis() < giveUpTime) {
          //System.out.println("Cache size is " + cache.size() + " and time diff is " + (giveUpTime - System.currentTimeMillis()));
          Thread.sleep(100);
       }
 
-      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size(); // this is what we expect the cache to be pruned to
+      assertTrue(String.format("Cache was expected to be pruned to %d, but was %d", CACHE_SIZE, cache.size()),
+            cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE);
    }
 
    private class Writer extends Thread {
+      public static final int LIFESPAN = 10;
       CountDownLatch startLatch;
       volatile boolean running = true;
       Random r = new Random();
@@ -130,7 +133,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
             if (Math.random() < 0.5) {
                cache.put("key" + r.nextInt(), "value");
             } else {
-               cache.put("key" + r.nextInt(), "value", 10, TimeUnit.SECONDS);
+               cache.put("key" + r.nextInt(), "value", LIFESPAN, TimeUnit.SECONDS);
             }
          }
       }
@@ -142,7 +145,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       private List<Map.Entry> evictedEntries = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntriesEvicted
-      public void nodeEvicted(CacheEntriesEvictedEvent e){
+      public void nodeEvicted(CacheEntriesEvictedEvent e) {
          assert e.isPre() || !e.isPre();
          Object key = e.getEntries().keySet().iterator().next();
          assert key != null;

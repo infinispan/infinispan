@@ -1,5 +1,6 @@
 package org.infinispan.server.test.eviction;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -21,13 +22,12 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for eviction strategy configurations
- * <p/>
- * LIRS not tested, see https://issues.jboss.org/browse/ISPN-1347
+ * Tests for eviction storage configurations
+ *
  */
 @RunWith(Arquillian.class)
 @WithRunningServer({@RunningServer(name = "eviction")})
-public class EvictionStrategyIT {
+public class EvictionStorageIT {
 
     @InfinispanResource("eviction")
     RemoteInfinispanServer server1;
@@ -41,28 +41,36 @@ public class EvictionStrategyIT {
         }
     }
 
-    /*
-     * Test for Eviction turned off
-     */
     @Test
-    public void testEvictionStrategyNone() {
+    public void testEvictionNone() {
         RemoteCache<String, String> rc = remoteCacheManager.getCache("none");
         rc.clear();
         storeKeys(rc, "A", "B", "C");
         rc.put("keyD", "D");
-        assertTrue("A".equals(rc.get("keyA")));
-        assertTrue("B".equals(rc.get("keyB")));
-        assertTrue("C".equals(rc.get("keyC")));
-        assertTrue("D".equals(rc.get("keyD")));
+        assertEquals(4, rc.size());
+        assertEquals("A",rc.get("keyA"));
+        assertEquals("B", rc.get("keyB"));
+        assertEquals("C", rc.get("keyC"));
+        assertEquals("D", rc.get("keyD"));
     }
 
-    /*
-     * Test for Eviction with LRU(Least Recently used) ordering
-     */
     @Test
-    @Category(Unstable.class) // See ISPN-4040
-    public void testEvictionStrategyLRU() {
-        RemoteCache<String, String> rc = remoteCacheManager.getCache("lru");
+    public void testBinaryStorage() {
+        testEviction("binary");
+    }
+
+    @Test
+    public void testObjectStorage() {
+        testEviction("object");
+    }
+
+    @Test
+    public void testOffHeapStorage() {
+        testEviction("off-heap");
+    }
+
+    private void testEviction(String cacheName) {
+        RemoteCache<String, String> rc = remoteCacheManager.getCache(cacheName);
         rc.clear();
         storeKeys(rc, "A", "B", "C");
 
@@ -71,17 +79,11 @@ public class EvictionStrategyIT {
 
         rc.put("keyD", "D");
 
-        assertTrue("A".equals(rc.get("keyA")));
-        assertTrue("B".equals(rc.get("keyB")));
-        assertTrue("D".equals(rc.get("keyD")));
-        assertNull(rc.get("keyC"));
+        assertEquals(3, rc.size());
+        assertEquals("D", rc.get("keyD"));
     }
 
     private void storeKeys(RemoteCache<String, String> rc, String... values) {
-        storeKeys(rc, Arrays.asList(values));
-    }
-
-    private void storeKeys(RemoteCache<String, String> rc, List<String> values) {
         for (String value : values) {
             rc.put("key" + value, value);
         }

@@ -429,9 +429,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    }
 
    protected void configureEviction(ConfigurationBuilder builder) {
-      builder.eviction()
-            .maxEntries(1)
-            .strategy(EvictionStrategy.LRU);
+      builder.memory().size(1);
    }
 
    protected void configurePersistence(ConfigurationBuilder builder) {

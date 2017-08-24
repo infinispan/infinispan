@@ -20,8 +20,7 @@ public class ExpensiveEvictionTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg
-         .eviction().strategy(EvictionStrategy.LRU).maxEntries(MAX_CACHE_ELEMENTS)
+      cfg.memory().size(MAX_CACHE_ELEMENTS)
          .expiration().wakeUpInterval(3000L)
          .build();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);

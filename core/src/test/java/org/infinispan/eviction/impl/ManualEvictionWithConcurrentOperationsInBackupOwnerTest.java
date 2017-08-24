@@ -17,6 +17,6 @@ public class ManualEvictionWithConcurrentOperationsInBackupOwnerTest
 
    @Override
    protected void configureEviction(ConfigurationBuilder builder) {
-      builder.eviction().maxEntries(-1).strategy(EvictionStrategy.NONE);
+      builder.memory().size(-1);
    }
 }
