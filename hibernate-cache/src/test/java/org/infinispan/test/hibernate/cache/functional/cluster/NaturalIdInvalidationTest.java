@@ -60,7 +60,6 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 	}
 
 	@Test
-	@Ignore("Randomly failing on CI - ISPN-8114")
 	public void testAll() throws Exception {
       log.infof("*** %s", name.getMethodName());
 
@@ -84,10 +83,7 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 			assertTrue(remoteListener.isEmpty());
 			assertTrue(localListener.isEmpty());
 
-			CountDownLatch remoteUpdateLatch =
-               cacheMode.isInvalidation()
-                     ? expectAfterEndInvalidation(remoteNaturalIdCache.getAdvancedCache(), 1)
-                     : expectAfterUpdate(remoteNaturalIdCache.getAdvancedCache(), 2);
+			CountDownLatch remoteUpdateLatch = getRemoteUpdateLatch(remoteNaturalIdCache);
 			saveSomeCitizens(localFactory);
 
 			assertTrue(remoteUpdateLatch.await(2, TimeUnit.SECONDS));
@@ -148,6 +144,16 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 			});
 		}
 	}
+
+   public CountDownLatch getRemoteUpdateLatch(Cache remoteNaturalIdCache) {
+      if (cacheMode.isInvalidation()) {
+         return useTransactionalCache
+            ? expectAfterEndInvalidation(remoteNaturalIdCache.getAdvancedCache(), 1)
+            : expectAfterEndInvalidation(remoteNaturalIdCache.getAdvancedCache(), 2);
+      }
+
+      return expectAfterUpdate(remoteNaturalIdCache.getAdvancedCache(), 2);
+   }
 
 	private void assertLoadedFromCache(MyListener localListener, String id) {
 		for (String visited : localListener.visited){
