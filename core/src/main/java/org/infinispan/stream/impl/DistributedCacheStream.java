@@ -54,6 +54,7 @@ import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
@@ -595,7 +596,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
             log.tracef("Thread %s submitted iterator request for stream", thread);
 
             if (!stayLocal) {
-               Object id = csm.remoteStreamOperation(iteratorParallelDistribute, parallel, segmentsToFilter,
+               Object id = csm.remoteStreamOperation(iteratorParallelDistribute, parallel, ch, segmentsToFilter,
                        keysToFilter, Collections.<Object, Set<R>>emptyMap(), includeLoader, op, remoteResults);
                // Make sure to run this after we submit to the manager so it can process the other nodes
                // asynchronously with the local operation
@@ -641,8 +642,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       } else {
          listenerNotifier = null;
       }
-      KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(keyPartitioner, segmentInfoCH,
-                                                                         iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
+      KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(keyPartitioner,
+            segmentInfoCH.getNumSegments(), iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
                                                                          listenerNotifier);
       Thread thread = Thread.currentThread();
       executor.execute(() -> {
@@ -651,7 +652,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
             Set<Integer> segmentsToProcess = segmentsToFilter == null ?
                                              new RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
             do {
-               ConsistentHash ch = dm.getReadConsistentHash();
+               LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+               ConsistentHash ch = cacheTopology.getReadConsistentHash();
                boolean runLocal = ch.getMembers().contains(localAddress);
                Set<Integer> segments;
                Set<Object> excludedKeys;
@@ -677,8 +679,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                        intermediateOperations, supplierForSegments(ch, segmentsToProcess, excludedKeys, !stayLocal),
                        distributedBatchSize);
                if (!stayLocal) {
-                  Object id = csm.remoteStreamOperationRehashAware(iteratorParallelDistribute, parallel,
-                        segmentsToProcess, keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray),
+                  Object id = csm.remoteStreamOperationRehashAware(iteratorParallelDistribute, parallel, ch,
+                          segmentsToProcess, keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray),
                           includeLoader, op, results);
                   if (id != null) {
                      supplier.pending = id;
@@ -697,14 +699,14 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                            throw new CacheException(e);
                         }
                      }
-                     segmentsToProcess = segmentsToProcess(supplier, results, segmentsToProcess, id);
+                     segmentsToProcess = segmentsToProcess(supplier, results, segmentsToProcess, id, cacheTopology.getTopologyId());
                   } finally {
                      csm.forgetOperation(id);
                   }
                } else {
                   performLocalRehashAwareOperation(results, segmentsToProcess, ch, segments, op,
                           () -> ch.getSegmentsForOwner(localAddress), null);
-                  segmentsToProcess = segmentsToProcess(supplier, results, segmentsToProcess, null);
+                  segmentsToProcess = segmentsToProcess(supplier, results, segmentsToProcess, null, cacheTopology.getTopologyId());
                }
             } while (!complete.get());
          } catch (CacheException e) {
@@ -718,12 +720,19 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    private Set<Integer> segmentsToProcess(IteratorSupplier<R> supplier, KeyTrackingConsumer<Object, R> results,
-                                          Set<Integer> segmentsToProcess, Object id) {
+                                          Set<Integer> segmentsToProcess, Object id, int topologyId) {
       String strId = id == null ? "local" : id.toString();
       if (!results.lostSegments.isEmpty()) {
          segmentsToProcess = new HashSet<>(results.lostSegments);
          results.lostSegments.clear();
          log.tracef("Found %s lost segments for %s", segmentsToProcess, strId);
+         if (results.requiresNextTopology) {
+            try {
+               stateTransferLock.waitForTopology(topologyId + 1, timeout, timeoutUnit);
+            } catch (InterruptedException | java.util.concurrent.TimeoutException e) {
+               throw new CacheException(e);
+            }
+         }
       } else {
          supplier.close();
          log.tracef("Finished rehash aware operation for %s", strId);

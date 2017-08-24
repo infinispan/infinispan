@@ -25,11 +25,13 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.termop.SegmentRetryingOperation;
 import org.infinispan.stream.impl.termop.SingleRunOperation;
@@ -60,6 +62,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
    protected final ComponentRegistry registry;
    protected final PartitionHandlingManager partition;
    protected final KeyPartitioner keyPartitioner;
+   protected final StateTransferLock stateTransferLock;
 
    protected Runnable closeRunnable = null;
 
@@ -94,6 +97,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       this.registry = registry;
       this.partition = registry.getComponent(PartitionHandlingManager.class);
       this.keyPartitioner = registry.getComponent(KeyPartitioner.class);
+      this.stateTransferLock = registry.getComponent(StateTransferLock.class);
       intermediateOperations = new ArrayDeque<>();
    }
 
@@ -108,6 +112,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       this.registry = other.registry;
       this.partition = other.partition;
       this.keyPartitioner = other.keyPartitioner;
+      this.stateTransferLock = other.stateTransferLock;
 
       this.closeRunnable = other.closeRunnable;
 
@@ -206,7 +211,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       ConsistentHash ch = dm.getWriteConsistentHash();
       TerminalOperation<R> op = new SingleRunOperation(intermediateOperations,
               supplierForSegments(ch, segmentsToFilter, null), function);
-      Object id = csm.remoteStreamOperation(getParallelDistribution(), parallel, segmentsToFilter, keysToFilter,
+      Object id = csm.remoteStreamOperation(getParallelDistribution(), parallel, ch, segmentsToFilter, keysToFilter,
               Collections.emptyMap(), includeLoader, op, remoteResults, earlyTerminatePredicate);
       try {
          R localValue = op.performOperation();
@@ -235,7 +240,8 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       Set<Integer> segmentsToProcess = segmentsToFilter;
       TerminalOperation<R> op;
       do {
-         ConsistentHash ch = dm.getReadConsistentHash();
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+         ConsistentHash ch = cacheTopology.getReadConsistentHash();
          if (retryOnRehash) {
             op = new SegmentRetryingOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess,
                     null), function);
@@ -243,7 +249,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
             op = new SingleRunOperation(intermediateOperations, supplierForSegments(ch, segmentsToProcess, null),
                     function);
          }
-         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, segmentsToProcess,
+         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
                  keysToFilter, Collections.emptyMap(), includeLoader, op, remoteResults, earlyTerminatePredicate);
          try {
             R localValue;
@@ -285,6 +291,13 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
                segmentsToProcess = new HashSet<>(remoteResults.lostSegments);
                remoteResults.lostSegments.clear();
                log.tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
+               if (remoteResults.requiresNextTopology) {
+                  try {
+                     stateTransferLock.waitForTopology(cacheTopology.getTopologyId(), timeout, timeoutUnit);
+                  } catch (InterruptedException | java.util.concurrent.TimeoutException e) {
+                     throw new CacheException(e);
+                  }
+               }
             } else {
                // If we didn't lose any segments we don't need to process anymore
                if (segmentsToProcess != null) {
@@ -305,12 +318,13 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       final AtomicBoolean complete = new AtomicBoolean();
 
       ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
-      KeyTrackingConsumer<Object, Object> results = new KeyTrackingConsumer<>(keyPartitioner, segmentInfoCH, (c) -> {},
-              c -> c, null);
+      KeyTrackingConsumer<Object, Object> results = new KeyTrackingConsumer<>(keyPartitioner, segmentInfoCH.getNumSegments(), c -> {},
+            c -> c, null);
       Set<Integer> segmentsToProcess = segmentsToFilter == null ?
               new RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
       do {
-         ConsistentHash ch = dm.getReadConsistentHash();
+         LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+         ConsistentHash ch = cacheTopology.getReadConsistentHash();
          boolean localRun = ch.getMembers().contains(localAddress);
          Set<Integer> segments;
          Set<Object> excludedKeys;
@@ -328,7 +342,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
          KeyTrackingTerminalOperation<Object, ? extends T, Object> op = function.apply(supplierForSegments(ch,
                  segmentsToProcess, excludedKeys));
          op.handleInjection(registry);
-         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, segmentsToProcess,
+         Object id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
                  keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray), includeLoader, op,
                  results);
          try {
@@ -360,6 +374,14 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
                segmentsToProcess = new HashSet<>(results.lostSegments);
                results.lostSegments.clear();
                log.tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
+               if (results.requiresNextTopology) {
+                  try {
+                     stateTransferLock.waitForTopology(cacheTopology.getTopologyId() + 1, timeout, timeoutUnit);
+                     results.requiresNextTopology = false;
+                  } catch (InterruptedException | java.util.concurrent.TimeoutException e) {
+                     throw new CacheException(e);
+                  }
+               }
             } else {
                log.tracef("Finished rehash aware operation for id %s", id);
                complete.set(true);
@@ -425,26 +447,25 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
    class KeyTrackingConsumer<K, V> implements ClusterStreamManager.ResultsCallback<Collection<CacheEntry<K, Object>>>,
            KeyTrackingTerminalOperation.IntermediateCollector<Collection<CacheEntry<K, Object>>> {
       final KeyPartitioner keyPartitioner;
-      final ConsistentHash ch;
       final Consumer<V> consumer;
       final Set<Integer> lostSegments = new ConcurrentHashSet<>();
       final Function<CacheEntry<K, Object>, V> valueFunction;
+      boolean requiresNextTopology;
 
       final AtomicReferenceArray<Set<K>> referenceArray;
 
       final DistributedCacheStream.SegmentListenerNotifier listenerNotifier;
 
-      KeyTrackingConsumer(KeyPartitioner keyPartitioner, ConsistentHash ch, Consumer<V> consumer,
+      KeyTrackingConsumer(KeyPartitioner keyPartitioner, int numSegments, Consumer<V> consumer,
                           Function<CacheEntry<K, Object>, V> valueFunction,
                           DistributedCacheStream.SegmentListenerNotifier completedSegments) {
          this.keyPartitioner = keyPartitioner;
-         this.ch = ch;
          this.consumer = consumer;
          this.valueFunction = valueFunction;
 
          this.listenerNotifier = completedSegments;
 
-         this.referenceArray = new AtomicReferenceArray<>(ch.getNumSegments());
+         this.referenceArray = new AtomicReferenceArray<>(numSegments);
          for (int i = 0; i < referenceArray.length(); ++i) {
             // We only allow 1 request per id
             referenceArray.set(i, new HashSet<>());
@@ -516,6 +537,11 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       }
 
       @Override
+      public void requestFutureTopology() {
+        requiresNextTopology = true;
+      }
+
+      @Override
       public void sendDataResonse(Collection<CacheEntry<K, Object>> response) {
          onIntermediateResult(null, response);
       }
@@ -525,6 +551,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
       private final BinaryOperator<R> binaryOperator;
       private final Set<Integer> lostSegments = new ConcurrentHashSet<>();
       R currentValue;
+      boolean requiresNextTopology;
 
       ResultsAccumulator(BinaryOperator<R> binaryOperator) {
          this.binaryOperator = binaryOperator;
@@ -556,6 +583,11 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
             lostSegments.add(segment);
          }
       }
+
+      @Override
+      public void requestFutureTopology() {
+         requiresNextTopology = true;
+      }
    }
 
    static class CollectionConsumer<R> implements ClusterStreamManager.ResultsCallback<Collection<R>>,
@@ -581,6 +613,10 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, S2 exte
 
       @Override
       public void onSegmentsLost(Set<Integer> segments) {
+      }
+
+      @Override
+      public void requestFutureTopology() {
       }
 
       @Override
