@@ -75,8 +75,6 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    public static class EvictionPojo {
       int i;
 
-
-
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;

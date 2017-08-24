@@ -5,21 +5,20 @@
                          <object/>
                      </memory>
                  </local-cache>
-                 <local-cache name="unordered" >
+                 <local-cache name="binary" >
+                     <memory>
+                         <binary size="3"/>
+                     </memory>
+                 </local-cache>
+                 <local-cache name="object" >
                      <memory>
                          <object size="3"/>
                      </memory>
                  </local-cache>
-                 <local-cache name="lirs" >
+                 <local-cache name="off-heap" >
                      <memory>
-                         <object size="5"/>
+                         <off-heap size="3"/>
                      </memory>
                  </local-cache>
-                 <local-cache name="lru" >
-                     <memory>
-                         <object size="3"/>
-                     </memory>
-                 </local-cache>
-                 <local-cache name="memcachedCache"/>
              </cache-container>
         </subsystem>

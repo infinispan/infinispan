@@ -321,7 +321,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       int hashCode = 0;
       SameHashCodeKey key = new SameHashCodeKey(name, hashCode);
-      while (!distributionManager.getPrimaryLocation(key).equals(address)) {
+      while (!distributionManager.getCacheTopology().getDistribution(key).primary().equals(address)) {
          hashCode++;
          key = new SameHashCodeKey(name, hashCode);
       }
