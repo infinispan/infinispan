@@ -1,5 +1,8 @@
 package org.infinispan.eviction.impl;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,9 +11,9 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.EvictionListener;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -18,23 +21,38 @@ import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
-@Test(groups = "functional", testName = "eviction.BaseEvictionFunctionalTest")
-public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest {
+@Test(groups = "functional", testName = "eviction.EvictionFunctionalTest")
+public class EvictionFunctionalTest extends SingleCacheManagerTest {
 
    private static final int CACHE_SIZE = 64;
 
+   private StorageType storageType;
    private EvictionListener evictionListener;
 
-   protected BaseEvictionFunctionalTest() {
+   protected EvictionFunctionalTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   protected abstract StorageType getStorageType();
+   public EvictionFunctionalTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
+
+   public StorageType getStorageType() {
+      return storageType;
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new EvictionFunctionalTest().storageType(StorageType.BINARY),
+            new EvictionFunctionalTest().storageType(StorageType.OBJECT),
+            new EvictionFunctionalTest().storageType(StorageType.OFF_HEAP)
+      };
+   }
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);

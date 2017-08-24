@@ -1,7 +1,6 @@
 package org.infinispan.eviction.impl;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.testng.annotations.Test;
 
 /**
