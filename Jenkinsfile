@@ -48,7 +48,7 @@ pipeline {
                         testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
                         healthScaleFactor: 100
 
-                sh 'find . -name target -prune -o -name \'*.log\' -exec xz {} \\;'
+                sh 'find . -name \'*.log\' -exec xz {} \\;'
                 archiveArtifacts allowEmptyArchive: true, artifacts: '**/*log.xz'
             }
         }
