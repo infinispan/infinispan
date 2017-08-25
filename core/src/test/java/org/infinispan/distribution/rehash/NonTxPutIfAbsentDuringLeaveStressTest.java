@@ -81,18 +81,11 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
                   log.tracef("Successfully inserted value %s for key %s", value, key);
                   assertEquals(value, newValue);
                   String duplicateInsertedValue = insertedValues.putIfAbsent(key, value);
-                  if (duplicateInsertedValue != null) {
-                     // ISPN-4286: two concurrent putIfAbsent operations can both return null
-                     assertEquals(value, duplicateInsertedValue);
-                  }
+                  assertEquals(null, duplicateInsertedValue);
                } else {
                   // failed
-                  if (newValue == null) {
-                     // ISPN-3918: cache.get(key) == null if another command succeeded but didn't finish
-                     eventuallyEquals(oldValue, () -> cache.get(key));
-                  } else {
-                     assertEquals(oldValue, newValue);
-                  }
+                  // ISPN-3918: cache.get(key) == null if another command succeeded but didn't finish
+                  eventuallyEquals(oldValue, () -> cache.get(key));
                }
             }
          });

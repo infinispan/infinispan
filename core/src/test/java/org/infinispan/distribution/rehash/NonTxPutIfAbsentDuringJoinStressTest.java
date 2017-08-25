@@ -2,7 +2,6 @@ package org.infinispan.distribution.rehash;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
@@ -24,8 +23,7 @@ import org.testng.annotations.Test;
  *
  * @author Dan Berindei
  */
-//unstable. test fails with DIST_SYNC and SCATTERED_SYNC (ISPN-3918)
-@Test(groups = {"functional", "unstable"}, testName = "distribution.rehash.NonTxPutIfAbsentDuringJoinStressTest")
+@Test(groups = "functional", testName = "distribution.rehash.NonTxPutIfAbsentDuringJoinStressTest")
 @CleanupAfterMethod
 public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersTest {
 
@@ -68,16 +66,17 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
                   String key = "key_" + j;
                   String value = "value_" + j + "_" + writerIndex;
                   Object oldValue = cache.putIfAbsent(key, value);
-                  Object newValue = cache.get(key);
                   if (oldValue == null) {
                      // succeeded
                      log.tracef("Successfully inserted value %s for key %s", value, key);
+                     Object newValue = cache.get(key);
                      assertEquals(value, newValue);
-                     boolean isFirst = insertedValues.putIfAbsent(key, value) == null;
-                     assertTrue("A second putIfAbsent succeeded for " + key, isFirst);
+                     Object insertedValue = insertedValues.putIfAbsent(key, value);
+                     assertEquals(null, insertedValue);
                   } else {
                      // failed
-                     assertEquals(oldValue, newValue);
+                     // ISPN-3918: cache.get(key) == null if another command succeeded but didn't finish
+                     eventuallyEquals(oldValue, () -> cache.get(key));
                   }
                }
             }
