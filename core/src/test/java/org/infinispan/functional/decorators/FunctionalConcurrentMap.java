@@ -89,7 +89,11 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public V get(Object key) {
-      return await(readOnly.eval(toK(key), returnReadOnlyFindOrNull()));
+      return await(getAsync(key));
+   }
+
+   protected CompletableFuture<V> getAsync(Object key) {
+      return readOnly.eval(toK(key), returnReadOnlyFindOrNull());
    }
 
    @SuppressWarnings("unchecked")
@@ -104,22 +108,38 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public V put(K key, V value) {
-      return await(readWrite.eval(toK(key), value, setValueReturnPrevOrNull()));
+      return await(putAsync(key, value));
+   }
+
+   protected CompletableFuture<V> putAsync(K key, V value) {
+      return readWrite.eval(toK(key), value, setValueReturnPrevOrNull());
    }
 
    @Override
    public V remove(Object key) {
-      return await(readWrite.eval(toK(key), removeReturnPrevOrNull()));
+      return await(removeAsync(key));
+   }
+
+   protected CompletableFuture<V> removeAsync(Object key) {
+      return readWrite.eval(toK(key), removeReturnPrevOrNull());
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> m) {
-      await(writeOnly.evalMany(m, setValueConsumer()));
+      await(putAllAsync(m));
+   }
+
+   protected CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> m) {
+      return writeOnly.evalMany(m, setValueConsumer());
    }
 
    @Override
    public void clear() {
-      await(writeOnly.truncate());
+      await(clearAsync());
+   }
+
+   protected CompletableFuture<Void> clearAsync() {
+      return writeOnly.truncate();
    }
 
    @Override
@@ -140,22 +160,38 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public V putIfAbsent(K key, V value) {
-      return await(readWrite.eval(toK(key), value, setValueIfAbsentReturnPrevOrNull()));
+      return await(putIfAbsentAsync(key, value));
+   }
+
+   protected CompletableFuture<V> putIfAbsentAsync(K key, V value) {
+      return readWrite.eval(toK(key), value, setValueIfAbsentReturnPrevOrNull());
    }
 
    @Override
    public boolean remove(Object key, Object value) {
-      return await(readWrite.eval(toK(key), toV(value), removeIfValueEqualsReturnBoolean()));
+      return await(removeAsync(key, value));
+   }
+
+   protected CompletableFuture<Boolean> removeAsync(Object key, Object value) {
+      return readWrite.eval(toK(key), toV(value), removeIfValueEqualsReturnBoolean());
    }
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return await(readWrite.eval(toK(key), newValue, setValueIfEqualsReturnBoolean(oldValue)));
+      return await(replaceAsync(key, oldValue, newValue));
+   }
+
+   protected CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return readWrite.eval(toK(key), newValue, setValueIfEqualsReturnBoolean(oldValue));
    }
 
    @Override
    public V replace(K key, V value) {
-      return await(readWrite.eval(toK(key), value, setValueIfPresentReturnPrevOrNull()));
+      return await(replaceAsync(key, value));
+   }
+
+   protected CompletableFuture<V> replaceAsync(K key, V value) {
+      return readWrite.eval(toK(key), value, setValueIfPresentReturnPrevOrNull());
    }
 
    public static <T> T await(CompletableFuture<T> cf) {

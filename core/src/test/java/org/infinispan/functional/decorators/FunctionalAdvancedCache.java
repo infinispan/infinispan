@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -71,11 +70,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    final AdvancedCache<K, V> cache;
 
-   final ConcurrentMap<K, V> map;
+   final FunctionalConcurrentMap<K, V> map;
    final ReadWriteMap<K, V> rw;
    final WriteOnlyMap<K, V> wo;
 
-   private FunctionalAdvancedCache(ConcurrentMap<K, V> map, AdvancedCache<K, V> cache) {
+   private FunctionalAdvancedCache(FunctionalConcurrentMap<K, V> map, AdvancedCache<K, V> cache) {
       this.map = map;
       this.cache = cache;
       FunctionalMapImpl<K, V> fmap = FunctionalMapImpl.create(cache);
@@ -151,67 +150,52 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
-      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      return await(rw.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+      return await(putAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
-      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      await(wo.evalMany(map, setValueMetasConsumer(metaLifespan, metaMaxIdle)));
+      await(putAllAsync(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
-      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      return await(rw.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+      return await(putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
-      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      return await(rw.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+      return await(replaceAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
-      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
-      return await(rw.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan, metaMaxIdle)));
+      return await(replaceAsync(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit unit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      return await(rw.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan)));
+      return await(putAsync(key, value, lifespan, unit));
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      await(wo.evalMany(map, setValueMetasConsumer(metaLifespan)));
+      await(putAllAsync(map, lifespan, unit));
    }
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      return await(rw.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan)));
+      return await(putIfAbsentAsync(key, value, lifespan, unit));
    }
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit unit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      return await(rw.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan)));
+      return await(replaceAsync(key, value, lifespan, unit));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
-      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
-      return await(rw.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan)));
+      return await(replaceAsync(key, oldValue, value, lifespan, unit));
    }
 
    @Override
@@ -635,97 +619,112 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value) {
-      return null;  // TODO: Customise this generated block
+      return map.putAsync(key, value);
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return rw.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan));
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdle, maxIdleUnit);
+      return rw.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan, metaMaxIdle));
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return null;  // TODO: Customise this generated block
+      return map.putAllAsync(data);
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return wo.evalMany(data, setValueMetasConsumer(metaLifespan));
    }
 
    @Override
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdle, maxIdleUnit);
+      return wo.evalMany(data, setValueMetasConsumer(metaLifespan, metaMaxIdle));
    }
 
    @Override
    public CompletableFuture<Void> clearAsync() {
-      return null;  // TODO: Customise this generated block
+      return map.clearAsync();
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
-      return null;  // TODO: Customise this generated block
+      return map.putIfAbsentAsync(key, value);
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return rw.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan));
    }
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdle, maxIdleUnit);
+      return rw.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan, metaMaxIdle));
    }
 
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
-      return null;  // TODO: Customise this generated block
+      return map.removeAsync(key);
    }
 
    @Override
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      return null;  // TODO: Customise this generated block
+      return map.removeAsync(key, value);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value) {
-      return null;  // TODO: Customise this generated block
+      return map.replaceAsync(key, value);
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return rw.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan));
    }
 
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdle, maxIdleUnit);
+      return rw.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan, metaMaxIdle));
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return null;  // TODO: Customise this generated block
+      return map.replaceAsync(key, oldValue, newValue);
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return rw.eval(key, newValue, setValueIfEqualsReturnBoolean(oldValue, metaLifespan));
    }
 
    @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdle, maxIdleUnit);
+      return rw.eval(key, newValue, setValueIfEqualsReturnBoolean(oldValue, metaLifespan, metaMaxIdle));
    }
 
    @Override
    public CompletableFuture<V> getAsync(K key) {
-      return null;  // TODO: Customise this generated block
+      return map.getAsync(key);
    }
 
    @Override

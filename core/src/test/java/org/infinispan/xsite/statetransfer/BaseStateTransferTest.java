@@ -36,6 +36,7 @@ import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.functional.decorators.FunctionalAdvancedCache;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
@@ -175,97 +176,192 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
    @Test(groups = "xsite")
    public void testPutOperationBeforeState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.PUT, true, method);
+      testStateTransferWithConcurrentOperation(Operation.PUT, true, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testPutOperationBeforeStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.PUT, true, true, method);
    }
 
    @Test(groups = "xsite")
    public void testPutOperationAfterState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.PUT, false, method);
+      testStateTransferWithConcurrentOperation(Operation.PUT, false, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testPutOperationAfterStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.PUT, false, true, method);
    }
 
    @Test(groups = "xsite")
    public void testRemoveOperationBeforeState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.REMOVE, true, method);
+      testStateTransferWithConcurrentOperation(Operation.REMOVE, true, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testRemoveOperationBeforeStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.REMOVE, true, true, method);
    }
 
    @Test(groups = "xsite")
    public void testRemoveOperationAfterState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.REMOVE, false, method);
+      testStateTransferWithConcurrentOperation(Operation.REMOVE, false, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testRemoveOperationAfterStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.REMOVE, false, true, method);
    }
 
    @Test(groups = "xsite")
    public void testRemoveIfMatchOperationBeforeState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.REMOVE_IF_MATCH, true, method);
+      testStateTransferWithConcurrentOperation(Operation.REMOVE_IF_MATCH, true, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testRemoveIfMatchOperationBeforeStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.REMOVE_IF_MATCH, true, true, method);
    }
 
    @Test(groups = "xsite")
    public void testRemoveIfMatchOperationAfterState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.REMOVE_IF_MATCH, false, method);
+      testStateTransferWithConcurrentOperation(Operation.REMOVE_IF_MATCH, false, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testRemoveIfMatchOperationAfterStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.REMOVE_IF_MATCH, false, true, method);
    }
 
    @Test(groups = "xsite")
    public void testReplaceOperationBeforeState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.REPLACE, true, method);
+      testStateTransferWithConcurrentOperation(Operation.REPLACE, true, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testReplaceOperationBeforeStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.REPLACE, true, true, method);
    }
 
    @Test(groups = "xsite")
    public void testReplaceOperationAfterState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.REPLACE, false, method);
+      testStateTransferWithConcurrentOperation(Operation.REPLACE, false, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testReplaceOperationAfterStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.REPLACE, false, true, method);
    }
 
    @Test(groups = "xsite")
    public void testReplaceIfMatchOperationBeforeState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.REPLACE_IF_MATCH, true, method);
+      testStateTransferWithConcurrentOperation(Operation.REPLACE_IF_MATCH, true, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testReplaceIfMatchOperationBeforeStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.REPLACE_IF_MATCH, true, true, method);
    }
 
    @Test(groups = "xsite")
    public void testReplaceIfMatchOperationAfterState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.REPLACE_IF_MATCH, false, method);
+      testStateTransferWithConcurrentOperation(Operation.REPLACE_IF_MATCH, false, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testReplaceIfMatchOperationAfterStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.REPLACE_IF_MATCH, false, true, method);
    }
 
    @Test(groups = "xsite")
    public void testClearOperationBeforeState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.CLEAR, true, method);
+      testStateTransferWithConcurrentOperation(Operation.CLEAR, true, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testClearOperationBeforeStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.CLEAR, true, true, method);
    }
 
    @Test(groups = "xsite")
    public void testClearOperationAfterState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.CLEAR, false, method);
+      testStateTransferWithConcurrentOperation(Operation.CLEAR, false, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testClearOperationAfterStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.CLEAR, false, true, method);
    }
 
    @Test(groups = "xsite")
    public void testPutMapOperationBeforeState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.PUT_MAP, true, method);
+      testStateTransferWithConcurrentOperation(Operation.PUT_MAP, true, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testPutMapOperationBeforeStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.PUT_MAP, true, true, method);
    }
 
    @Test(groups = "xsite")
    public void testPutMapOperationAfterState(Method method) throws Exception {
-      testStateTransferWithConcurrentOperation(Operation.PUT_MAP, false, method);
+      testStateTransferWithConcurrentOperation(Operation.PUT_MAP, false, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testPutMapOperationAfterStateFunctional(Method method) throws Exception {
+      testStateTransferWithConcurrentOperation(Operation.PUT_MAP, false, true, method);
    }
 
    @Test(groups = "xsite")
    public void testPutIfAbsentFail(Method method) throws Exception {
-      testStateTransferWithNoReplicatedOperation(Operation.PUT_IF_ABSENT_FAIL, method);
+      testStateTransferWithNoReplicatedOperation(Operation.PUT_IF_ABSENT_FAIL, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testPutIfAbsentFailFunctional(Method method) throws Exception {
+      testStateTransferWithNoReplicatedOperation(Operation.PUT_IF_ABSENT_FAIL, true, method);
    }
 
    @Test(groups = "xsite")
    public void testRemoveIfMatchFail(Method method) throws Exception {
-      testStateTransferWithNoReplicatedOperation(Operation.REMOVE_IF_MATCH_FAIL, method);
+      testStateTransferWithNoReplicatedOperation(Operation.REMOVE_IF_MATCH_FAIL, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testRemoveIfMatchFailFunctional(Method method) throws Exception {
+      testStateTransferWithNoReplicatedOperation(Operation.REMOVE_IF_MATCH_FAIL, true, method);
    }
 
    @Test(groups = "xsite")
    public void testReplaceIfMatchFail(Method method) throws Exception {
-      testStateTransferWithNoReplicatedOperation(Operation.REPLACE_IF_MATCH_FAIL, method);
+      testStateTransferWithNoReplicatedOperation(Operation.REPLACE_IF_MATCH_FAIL, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testReplaceIfMatchFailFunctional(Method method) throws Exception {
+      testStateTransferWithNoReplicatedOperation(Operation.REPLACE_IF_MATCH_FAIL, true, method);
    }
 
    @Test(groups = "xsite")
    public void testPutIfAbsent(Method method) throws Exception {
-      testConcurrentOperation(Operation.PUT_IF_ABSENT, method);
+      testConcurrentOperation(Operation.PUT_IF_ABSENT, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testPutIfAbsentFunctional(Method method) throws Exception {
+      testConcurrentOperation(Operation.PUT_IF_ABSENT, true, method);
    }
 
    @Test(groups = "xsite")
    public void testRemoveNonExisting(Method method) throws Exception {
-      testConcurrentOperation(Operation.REMOVE_NON_EXISTING, method);
+      testConcurrentOperation(Operation.REMOVE_NON_EXISTING, false, method);
+   }
+
+   @Test(groups = "xsite")
+   public void testRemoveNonExistingFunctional(Method method) throws Exception {
+      testConcurrentOperation(Operation.REMOVE_NON_EXISTING, true, method);
    }
 
    @Override
@@ -273,8 +369,9 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       builder.stateTransfer().chunkSize(2).timeout(2000);
    }
 
-   private void testStateTransferWithConcurrentOperation(final Operation operation, final boolean performBeforeState,
-         final Method method) throws Exception {
+   private void testStateTransferWithConcurrentOperation(final Operation operation,
+                                                         final boolean performBeforeState, boolean functional,
+                                                         Method method) throws Exception {
       assertNotNull(operation);
       assertTrue(operation.replicates());
       takeSiteOffline();
@@ -340,7 +437,11 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
 
 
       //safe, perform is async
-      operation.perform(cache(LON, 0), key).get();
+      Cache<Object, Object> cacheLon0 = cache(LON, 0);
+      if (functional) {
+         cacheLon0 = FunctionalAdvancedCache.create(cacheLon0.getAdvancedCache());
+      }
+      operation.perform(cacheLon0, key).get();
 
       assertEventuallyStateTransferNotRunning();
 
@@ -352,7 +453,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertInSite(LON, cache -> assertEquals(operation.finalValue(), cache.get(key)));
    }
 
-   private void testConcurrentOperation(final Operation operation, final Method method) throws Exception {
+   private void testConcurrentOperation(final Operation operation, boolean functional, Method method) throws Exception {
       assertNotNull(operation);
       assertTrue(operation.replicates());
       takeSiteOffline();
@@ -375,7 +476,11 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertOnline(LON, NYC);
 
       //safe, perform is async
-      operation.perform(cache(LON, 0), key).get();
+      Cache<Object, Object> cacheLon0 = cache(LON, 0);
+      if (functional) {
+         cacheLon0 = FunctionalAdvancedCache.create(cacheLon0.getAdvancedCache());
+      }
+      operation.perform(cacheLon0, key).get();
 
       control.trigger();
       f.get(30, TimeUnit.SECONDS);
@@ -390,7 +495,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertInSite(LON, cache -> assertEquals(operation.finalValue(), cache.get(key)));
    }
 
-   private void testStateTransferWithNoReplicatedOperation(final Operation operation, final Method method)
+   private void testStateTransferWithNoReplicatedOperation(final Operation operation, boolean functional, final Method method)
          throws Exception {
       assertNotNull(operation);
       assertFalse(operation.replicates());
@@ -436,7 +541,11 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       checkPoint.awaitStrict("before-state", 30, TimeUnit.SECONDS);
 
       //safe, perform is async
-      operation.perform(cache(LON, 0), key).get();
+      Cache<Object, Object> cacheLon0 = cache(LON, 0);
+      if (functional) {
+         cacheLon0 = FunctionalAdvancedCache.create(cacheLon0.getAdvancedCache());
+      }
+      operation.perform(cacheLon0, key).get();
 
       assertFalse(commandReceived.get());
       checkPoint.trigger("before-update");

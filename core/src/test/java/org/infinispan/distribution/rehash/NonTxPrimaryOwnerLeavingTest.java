@@ -52,16 +52,32 @@ public class NonTxPrimaryOwnerLeavingTest extends MultipleCacheManagersTest {
       doTest(TestWriteOperation.PUT_CREATE, false);
    }
 
+   public void testPrimaryOwnerLeavingDuringPutFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_CREATE_FUNCTIONAL, false);
+   }
+
    public void testPrimaryOwnerLeavingDuringPutIfAbsent() throws Exception {
       doTest(TestWriteOperation.PUT_IF_ABSENT, false);
+   }
+
+   public void testPrimaryOwnerLeavingDuringPutIfAbsentFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL, false);
    }
 
    public void testPrimaryOwnerLeaveDuringPutAll() throws Exception {
       doTest(TestWriteOperation.PUT_MAP_CREATE, false);
    }
 
+   public void testPrimaryOwnerLeaveDuringPutAllFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_MAP_CREATE_FUNCTIONAL, false);
+   }
+
    public void testPrimaryOwnerLeaveDuringPutAll2() throws Exception {
       doTest(TestWriteOperation.PUT_MAP_CREATE, true);
+   }
+
+   public void testPrimaryOwnerLeaveDuringPutAllFunctional2() throws Exception {
+      doTest(TestWriteOperation.PUT_MAP_CREATE_FUNCTIONAL, true);
    }
 
    private void doTest(TestWriteOperation operation, boolean blockTopologyOnOriginator) throws Exception {

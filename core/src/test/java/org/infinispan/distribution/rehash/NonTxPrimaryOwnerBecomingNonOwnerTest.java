@@ -70,24 +70,48 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
       doTest(TestWriteOperation.PUT_CREATE);
    }
 
+   public void testPrimaryOwnerChangingDuringPutFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_CREATE_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringPutIfAbsent() throws Exception {
       doTest(TestWriteOperation.PUT_IF_ABSENT);
+   }
+
+   public void testPrimaryOwnerChangingDuringPutIfAbsentFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL);
    }
 
    public void testPrimaryOwnerChangingDuringReplace() throws Exception {
       doTest(TestWriteOperation.REPLACE);
    }
 
+   public void testPrimaryOwnerChangingDuringReplaceFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringReplaceExact() throws Exception {
       doTest(TestWriteOperation.REPLACE_EXACT);
+   }
+
+   public void testPrimaryOwnerChangingDuringReplaceExactFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL);
    }
 
    public void testPrimaryOwnerChangingDuringRemove() throws Exception {
       doTest(TestWriteOperation.REMOVE);
    }
 
+   public void testPrimaryOwnerChangingDuringRemoveFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringRemoveExact() throws Exception {
       doTest(TestWriteOperation.REMOVE_EXACT);
+   }
+
+   public void testPrimaryOwnerChangingDuringRemoveExactFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL);
    }
 
    private void doTest(final TestWriteOperation op) throws Exception {

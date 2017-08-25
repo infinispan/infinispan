@@ -91,28 +91,56 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       doTest(TestWriteOperation.PUT_CREATE);
    }
 
+   public void testBackupOwnerJoiningDuringPutFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_CREATE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringPutOverwrite() throws Exception {
       doTest(TestWriteOperation.PUT_OVERWRITE);
+   }
+
+   public void testBackupOwnerJoiningDuringPutOverwriteFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_OVERWRITE_FUNCTIONAL);
    }
 
    public void testBackupOwnerJoiningDuringPutIfAbsent() throws Exception {
       doTest(TestWriteOperation.PUT_IF_ABSENT);
    }
 
+   public void testBackupOwnerJoiningDuringPutIfAbsentFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringReplace() throws Exception {
       doTest(TestWriteOperation.REPLACE);
+   }
+
+   public void testBackupOwnerJoiningDuringReplaceFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_FUNCTIONAL);
    }
 
    public void testBackupOwnerJoiningDuringReplaceWithPreviousValue() throws Exception {
       doTest(TestWriteOperation.REPLACE_EXACT);
    }
 
+   public void testBackupOwnerJoiningDuringReplaceWithPreviousValueFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringRemove() throws Exception {
       doTest(TestWriteOperation.REMOVE);
    }
 
+   public void testBackupOwnerJoiningDuringRemoveFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringRemoveWithPreviousValue() throws Exception {
       doTest(TestWriteOperation.REMOVE_EXACT);
+   }
+
+   public void testBackupOwnerJoiningDuringRemoveWithPreviousValueFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL);
    }
 
    private void doTest(final TestWriteOperation op) throws Exception {

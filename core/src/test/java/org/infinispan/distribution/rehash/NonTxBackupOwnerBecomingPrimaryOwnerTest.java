@@ -22,10 +22,15 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.MetaParam;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.distribution.TriangleDistributionInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -78,28 +83,64 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       doTest(TestWriteOperation.PUT_CREATE);
    }
 
+   public void testPrimaryOwnerChangingDuringPutFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_CREATE_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringPutOverwrite() throws Exception {
       doTest(TestWriteOperation.PUT_OVERWRITE);
+   }
+
+   public void testPrimaryOwnerChangingDuringPutOverwriteFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_OVERWRITE_FUNCTIONAL);
    }
 
    public void testPrimaryOwnerChangingDuringPutIfAbsent() throws Exception {
       doTest(TestWriteOperation.PUT_IF_ABSENT);
    }
 
+   public void testPrimaryOwnerChangingDuringPutIfAbsentFunctional() throws Exception {
+      doTest(TestWriteOperation.PUT_IF_ABSENT_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringReplace() throws Exception {
       doTest(TestWriteOperation.REPLACE);
+   }
+
+   public void testPrimaryOwnerChangingDuringReplaceFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_FUNCTIONAL);
    }
 
    public void testPrimaryOwnerChangingDuringReplaceExact() throws Exception {
       doTest(TestWriteOperation.REPLACE_EXACT);
    }
 
+   public void testPrimaryOwnerChangingDuringReplaceExactFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringRemove() throws Exception {
       doTest(TestWriteOperation.REMOVE);
    }
 
+   public void testPrimaryOwnerChangingDuringRemoveFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_FUNCTIONAL);
+   }
+
    public void testPrimaryOwnerChangingDuringRemoveExact() throws Exception {
       doTest(TestWriteOperation.REMOVE_EXACT);
+   }
+
+   public void testPrimaryOwnerChangingDuringRemoveExactFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL);
+   }
+
+   public void testPrimaryOwnerChangingDuringReplaceBasedOnMeta() throws Exception {
+      // TODO: Move initial set and replace with meta logic to TestWriteOperation
+      FunctionalMapImpl<String, String> impl = FunctionalMapImpl.create(advancedCache(0));
+      FunctionalMap.WriteOnlyMap<String, String> wo0 = WriteOnlyMapImpl.create(impl);
+      wo0.eval("testkey", wo -> wo.set("v0", new MetaParam.MetaEntryVersion(new NumericVersion(1))));
+      doTest(TestWriteOperation.REPLACE_META_FUNCTIONAL);
    }
 
    protected void doTest(final TestWriteOperation op) throws Exception {

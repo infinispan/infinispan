@@ -80,6 +80,11 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       doTest(TestWriteOperation.PUT_OVERWRITE);
    }
 
+   public void testBackupOwnerJoiningDuringPutOverwriteFunctional() throws Exception {
+      // Need a previous value for this test, so we can't test PUT_CREATE
+      doTest(TestWriteOperation.PUT_OVERWRITE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringReplace() throws Exception {
       doTest(TestWriteOperation.REPLACE);
    }
@@ -88,12 +93,24 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
       doTest(TestWriteOperation.REPLACE_EXACT);
    }
 
+   public void testBackupOwnerJoiningDuringReplaceWithPreviousValueFunctional() throws Exception {
+      doTest(TestWriteOperation.REPLACE_EXACT_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringRemove() throws Exception {
       doTest(TestWriteOperation.REMOVE);
    }
 
+   public void testBackupOwnerJoiningDuringRemoveFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_FUNCTIONAL);
+   }
+
    public void testBackupOwnerJoiningDuringRemoveWithPreviousValue() throws Exception {
       doTest(TestWriteOperation.REMOVE_EXACT);
+   }
+
+   public void testBackupOwnerJoiningDuringRemoveWithPreviousValueFunctional() throws Exception {
+      doTest(TestWriteOperation.REMOVE_EXACT_FUNCTIONAL);
    }
 
    private void doTest(final TestWriteOperation op) throws Exception {

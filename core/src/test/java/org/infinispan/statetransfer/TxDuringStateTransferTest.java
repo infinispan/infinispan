@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.functional.decorators.FunctionalAdvancedCache;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -34,27 +35,51 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
    private static final String FINAL_VALUE = "v2";
 
    public void testPut() throws Exception {
-      performTest(Operation.PUT);
+      performTest(Operation.PUT, false);
+   }
+
+   public void testPutFunctional() throws Exception {
+      performTest(Operation.PUT, true);
    }
 
    public void testRemove() throws Exception {
-      performTest(Operation.REMOVE);
+      performTest(Operation.REMOVE, false);
+   }
+
+   public void testRemoveFunctional() throws Exception {
+      performTest(Operation.REMOVE, true);
    }
 
    public void testReplace() throws Exception {
-      performTest(Operation.REPLACE);
+      performTest(Operation.REPLACE, false);
+   }
+
+   public void testReplaceFunctional() throws Exception {
+      performTest(Operation.REPLACE, true);
    }
 
    public void testConditionalPut() throws Exception {
-      performTest(Operation.CONDITIONAL_PUT);
+      performTest(Operation.CONDITIONAL_PUT, false);
+   }
+
+   public void testConditionalPutFunctional() throws Exception {
+      performTest(Operation.CONDITIONAL_PUT, true);
    }
 
    public void testConditionalRemove() throws Exception {
-      performTest(Operation.CONDITIONAL_REMOVE);
+      performTest(Operation.CONDITIONAL_REMOVE, false);
+   }
+
+   public void testConditionalRemoveFunctional() throws Exception {
+      performTest(Operation.CONDITIONAL_REMOVE, true);
    }
 
    public void testConditionalReplace() throws Exception {
-      performTest(Operation.CONDITIONAL_REPLACE);
+      performTest(Operation.CONDITIONAL_REPLACE, false);
+   }
+
+   public void testConditionalReplaceFunctional() throws Exception {
+      performTest(Operation.CONDITIONAL_REPLACE, true);
    }
 
    @Override
@@ -70,7 +95,7 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
       createClusteredCaches(4, builder);
    }
 
-   private void performTest(Operation operation) throws Exception {
+   private void performTest(Operation operation, boolean functional) throws Exception {
       assertClusterSize("Wrong number of caches.", 4);
       final Object key = new MagicKey(cache(0), cache(1), cache(2));
       //init
@@ -78,7 +103,11 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
 
       final EmbeddedTransactionManager transactionManager = (EmbeddedTransactionManager) tm(0);
       transactionManager.begin();
-      operation.perform(cache(0), key);
+      Cache<Object, Object> cache0 = cache(0);
+      if (functional) {
+         cache0 = FunctionalAdvancedCache.create(cache0.getAdvancedCache());
+      }
+      operation.perform(cache0, key);
       final EmbeddedTransaction transaction = transactionManager.getTransaction();
       transaction.runPrepare();
       assertEquals("Wrong transaction status before killing backup owner.",
