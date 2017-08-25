@@ -1,5 +1,6 @@
 package org.infinispan.container.offheap;
 
+import java.util.Collections;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.LongUnaryOperator;
@@ -223,7 +224,9 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
                      addressToRemove, currentSize, maxSize);
             }
             try {
+               InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
                performRemove(addressToRemove, offHeapEntryFactory.getKey(addressToRemove));
+               evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
             } finally {
                entryWriteLock.unlock();
             }
