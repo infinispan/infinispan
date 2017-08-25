@@ -72,8 +72,11 @@ public class TcpTransport extends AbstractTransport {
             socketChannel = null; // We don't use a SocketChannel in the SSL case
             SSLContext sslContext = transportFactory.getSSLContext();
             SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-            socketF = sslSocketFactory::createSocket;
-            setSniHostName(transportFactory.getSniHostName());
+            socketF = () -> {
+               Socket socket = sslSocketFactory.createSocket();
+               setSniHostName(socket, transportFactory.getSniHostName());
+               return socket;
+            };
          } else {
             socketChannel = SocketChannel.open();
             socketF = socketChannel::socket;
@@ -112,9 +115,9 @@ public class TcpTransport extends AbstractTransport {
       return socket;
    }
 
-   private void setSniHostName(String sniHostName) {
+   private void setSniHostName(Socket socket, String sniHostName) {
       if(sniHostName != null) {
-         SSLSocket sslSocket = (SSLSocket) this.socket;
+         SSLSocket sslSocket = (SSLSocket) socket;
          SSLParameters sslParameters = sslSocket.getSSLParameters();
          sslParameters.setServerNames(Arrays.asList(new SNIHostName(sniHostName)));
          sslSocket.setSSLParameters(sslParameters);
