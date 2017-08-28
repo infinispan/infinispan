@@ -405,7 +405,9 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		SessionImplementor s6 = mockedSession();
 		assertEquals(VALUE1, remoteAccessStrategy.get(s6, KEY, s6.getTimestamp()));
 
-		SessionImplementor session = mockedSession();
+      CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict);
+
+      SessionImplementor session = mockedSession();
 		withTx(localEnvironment, session, () -> {
 			if (evict) {
 				localAccessStrategy.evict(KEY);
@@ -422,6 +424,8 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		SessionImplementor s8 = mockedSession();
 		assertNull(remoteAccessStrategy.get(s8, KEY, s8.getTimestamp()));
 		assertEquals(0, remoteRegion.getCache().size());
+
+      assertTrue(endInvalidationLatch.await(1, TimeUnit.SECONDS));
 	}
 
 	protected void doRemove(S strategy, SessionImplementor session, Object key) throws SystemException, RollbackException {
@@ -492,37 +496,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		assertEquals(VALUE1, localAccessStrategy.get(s4, KEY, s4.getTimestamp()));
 		assertEquals(VALUE1, remoteAccessStrategy.get(s6, KEY, s6.getTimestamp()));
 
-		CountDownLatch endInvalidationLatch;
-		if (invalidation && !evict) {
-			// removeAll causes transactional remove commands which trigger EndInvalidationCommands on the remote side
-			// if the cache is non-transactional, PutFromLoadValidator.registerRemoteInvalidations cannot find
-			// current session nor register tx synchronization, so it falls back to simple InvalidationCommand.
-			endInvalidationLatch = new CountDownLatch(1);
-			if (transactional) {
-				PutFromLoadValidator originalValidator = PutFromLoadValidator.removeFromCache(remoteRegion.getCache());
-				assertEquals(PutFromLoadValidator.class, originalValidator.getClass());
-				PutFromLoadValidator mockValidator = spy(originalValidator);
-				doAnswer(invocation -> {
-					try {
-						return invocation.callRealMethod();
-					} finally {
-						endInvalidationLatch.countDown();
-					}
-				}).when(mockValidator).endInvalidatingKey(any(), any());
-				PutFromLoadValidator.addToCache(remoteRegion.getCache(), mockValidator);
-				cleanup.add(() -> {
-					PutFromLoadValidator.removeFromCache(remoteRegion.getCache());
-					PutFromLoadValidator.addToCache(remoteRegion.getCache(), originalValidator);
-				});
-			} else {
-				ExpectingInterceptor.get(remoteRegion.getCache())
-					.when((ctx, cmd) -> cmd instanceof InvalidateCommand)
-					.countDown(endInvalidationLatch);
-				cleanup.add(() -> ExpectingInterceptor.cleanup(remoteRegion.getCache()));
-			}
-		} else {
-			endInvalidationLatch = new CountDownLatch(0);
-		}
+      CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict);
 
 		withTx(localEnvironment, mockedSession(), () -> {
 			if (evict) {
@@ -565,7 +539,42 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		assertEquals(VALUE1, remoteAccessStrategy.get(s12, KEY, s12.getTimestamp()));
 	}
 
-	private CountDownLatch expectRemotePutFromLoad(AdvancedCache localCache, AdvancedCache remoteCache) {
+   private CountDownLatch createEndInvalidationLatch(boolean evict) {
+      CountDownLatch endInvalidationLatch;
+      if (invalidation && !evict) {
+         // removeAll causes transactional remove commands which trigger EndInvalidationCommands on the remote side
+         // if the cache is non-transactional, PutFromLoadValidator.registerRemoteInvalidations cannot find
+         // current session nor register tx synchronization, so it falls back to simple InvalidationCommand.
+         endInvalidationLatch = new CountDownLatch(1);
+         if (transactional) {
+            PutFromLoadValidator originalValidator = PutFromLoadValidator.removeFromCache(remoteRegion.getCache());
+            assertEquals(PutFromLoadValidator.class, originalValidator.getClass());
+            PutFromLoadValidator mockValidator = spy(originalValidator);
+            doAnswer(invocation -> {
+               try {
+                  return invocation.callRealMethod();
+               } finally {
+                  endInvalidationLatch.countDown();
+               }
+            }).when(mockValidator).endInvalidatingKey(any(), any());
+            PutFromLoadValidator.addToCache(remoteRegion.getCache(), mockValidator);
+            cleanup.add(() -> {
+               PutFromLoadValidator.removeFromCache(remoteRegion.getCache());
+               PutFromLoadValidator.addToCache(remoteRegion.getCache(), originalValidator);
+            });
+         } else {
+            ExpectingInterceptor.get(remoteRegion.getCache())
+               .when((ctx, cmd) -> cmd instanceof InvalidateCommand)
+               .countDown(endInvalidationLatch);
+            cleanup.add(() -> ExpectingInterceptor.cleanup(remoteRegion.getCache()));
+         }
+      } else {
+         endInvalidationLatch = new CountDownLatch(0);
+      }
+      return endInvalidationLatch;
+   }
+
+   private CountDownLatch expectRemotePutFromLoad(AdvancedCache localCache, AdvancedCache remoteCache) {
 		CountDownLatch putFromLoadLatch;
 		if (!isUsingInvalidation()) {
 			putFromLoadLatch = new CountDownLatch(1);
