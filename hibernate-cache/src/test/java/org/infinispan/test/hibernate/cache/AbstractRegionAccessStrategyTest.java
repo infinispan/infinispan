@@ -39,6 +39,7 @@ import org.hibernate.resource.transaction.TransactionCoordinator;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorOwner;
 import org.hibernate.service.ServiceRegistry;
 
+import org.infinispan.hibernate.cache.util.VersionedEntry;
 import org.infinispan.test.hibernate.cache.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.util.BatchModeTransactionCoordinator;
 import org.infinispan.test.hibernate.cache.util.ExpectingInterceptor;
@@ -185,6 +186,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		final CountDownLatch completionLatch = new CountDownLatch(2);
 
 		Thread node1 = new Thread(() -> {
+         final CountDownLatch remotePutFromLoadLatch = expectPutFromLoad(remoteRegion);
 				try {
 					SessionImplementor session = mockedSession();
 					withTx(localEnvironment, session, () -> {
@@ -209,11 +211,16 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 				} finally {
 					// Let node2 write
 					writeLatch2.countDown();
+
+               if (!await(remotePutFromLoadLatch) && node1Failure == null)
+                  node1Failure = new AssertionFailedError("Put from load not completed remotely");
+
 					completionLatch.countDown();
-				}
-			});
+            }
+      }, putFromLoadTestThreadName("node1", useMinimalAPI, isRemoval));
 
 		Thread node2 = new Thread(() -> {
+            CountDownLatch localPutFromLoadLatch = expectPutFromLoad(localRegion);
 				try {
 					SessionImplementor session = mockedSession();
 					withTx(remoteEnvironment, session, () -> {
@@ -238,9 +245,12 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 				} catch (AssertionFailedError e) {
 					node2Failure = e;
 				} finally {
+               if (!await(localPutFromLoadLatch) && node2Failure == null)
+                  node2Failure = new AssertionFailedError("Put from load not completed locally");
+
 					completionLatch.countDown();
 				}
-			});
+      }, putFromLoadTestThreadName("node2", useMinimalAPI, isRemoval));
 
 		node1.setDaemon(true);
 		node2.setDaemon(true);
@@ -269,6 +279,19 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		}
 	}
 
+   private boolean await(CountDownLatch latch) {
+      try {
+         return latch.await(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+         // ignore;
+         return false;
+      }
+   }
+
+   String putFromLoadTestThreadName(String node, boolean useMinimalAPI, boolean isRemoval) {
+      return String.format("putFromLoad,node=%s,minimal=%s,isRemove=%s", mode, useMinimalAPI, isRemoval);
+   }
+
 	protected CountDownLatch expectAfterUpdate() {
 		return expectPutWithValue(value -> value instanceof FutureUpdate);
 	}
@@ -289,6 +312,23 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	protected CountDownLatch expectPutFromLoad() {
 		return expectPutWithValue(value -> value instanceof TombstoneUpdate);
 	}
+
+   protected CountDownLatch expectPutFromLoad(R region) {
+      Predicate<Object> valuePredicate = accessType == AccessType.NONSTRICT_READ_WRITE
+         ? value -> value instanceof VersionedEntry
+         : value -> value instanceof TombstoneUpdate;
+      if (!isUsingInvalidation()) {
+         CountDownLatch latch = new CountDownLatch(1);
+         ExpectingInterceptor.get(region.getCache())
+            .when((ctx, cmd) -> cmd instanceof PutKeyValueCommand
+                  && valuePredicate.test(((PutKeyValueCommand) cmd).getValue()))
+            .countDown(latch);
+         cleanup.add(() -> ExpectingInterceptor.cleanup(region.getCache()));
+         return latch;
+      } else {
+         return new CountDownLatch(0);
+      }
+   }
 
 	protected abstract void doUpdate(S strategy, SessionImplementor session, Object key, Object value, Object version) throws RollbackException, SystemException;
 
