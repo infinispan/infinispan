@@ -113,7 +113,7 @@ public class RestStore implements AdvancedLoadWriteStore {
       b.option(ChannelOption.SO_RCVBUF, pool.bufferSize());
       b.option(ChannelOption.TCP_NODELAY, pool.tcpNoDelay());
       bootstrap = b;
-      maxContentLength = 10 * 1024 * 1024; // TODO make this part of configuration options.
+      maxContentLength = configuration.maxContentLength();
 
       this.key2StringMapper = Util.getInstance(configuration.key2StringMapper(), ctx.getCache().getAdvancedCache().getClassLoader());
       this.key2StringMapper.setMarshaller(ctx.getMarshaller());

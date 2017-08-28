@@ -67,4 +67,9 @@ public interface RestStoreConfigurationChildBuilder<S> extends StoreConfiguratio
     * Reads/writes "raw" values to the REST server instead of marshalling (used by the rolling upgrades feature)
     */
    RestStoreConfigurationBuilder rawValues(boolean rawValues);
+
+   /**
+    * Sets the maximum content length. Defaults to 10M.
+    */
+   RestStoreConfigurationBuilder maxContentLength(int maxContentLength);
 }

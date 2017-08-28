@@ -66,20 +66,24 @@ public class RestService implements Service<RestServer>, EncryptableService {
    private final Set<String> ignoredCaches;
    private RestServer restServer;
    private boolean clientAuth;
+   private final int maxContentLength;
 
-   public RestService(String serverName, RestAuthMethod authMethod, String contextPath, ExtendedHeaders extendedHeaders, Set<String> ignoredCaches) {
+   public RestService(String serverName, RestAuthMethod authMethod, String contextPath, ExtendedHeaders extendedHeaders, Set<String> ignoredCaches,
+                      int maxContentLength) {
       this.serverName = serverName;
       this.authMethod = authMethod;
       this.contextPath = contextPath;
       this.extendedHeaders = extendedHeaders;
       this.ignoredCaches = ignoredCaches;
+      this.maxContentLength = maxContentLength;
    }
 
    /** {@inheritDoc} */
    @Override
    public synchronized void start(StartContext startContext) throws StartException {
       RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
-      builder.name(serverName).extendedHeaders(extendedHeaders).ignoredCaches(ignoredCaches).contextPath(contextPath);
+      builder.name(serverName).extendedHeaders(extendedHeaders).ignoredCaches(ignoredCaches).contextPath(contextPath)
+            .maxContentLength(maxContentLength);
 
       EncryptableServiceHelper.fillSecurityConfiguration(this, builder.ssl());
 

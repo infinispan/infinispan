@@ -70,4 +70,9 @@ public abstract class AbstractRestStoreConfigurationChildBuilder<S> extends Abst
    public RestStoreConfigurationBuilder rawValues(boolean rawValues) {
       return builder.rawValues(rawValues);
    }
+
+   @Override
+   public RestStoreConfigurationBuilder maxContentLength(int maxContentLength) {
+      return builder.maxContentLength(maxContentLength);
+   }
 }

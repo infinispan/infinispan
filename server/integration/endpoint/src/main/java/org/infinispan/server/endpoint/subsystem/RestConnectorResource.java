@@ -65,7 +65,15 @@ public class RestConnectorResource extends CommonConnectorResource {
                  .setRestartAllServices()
                  .build();
 
-   static final SimpleAttributeDefinition[] REST_ATTRIBUTES = { SOCKET_BINDING, CONTEXT_PATH, EXTENDED_HEADERS };
+   static final SimpleAttributeDefinition MAX_CONTENT_LENGTH =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_CONTENT_LENGTH, ModelType.INT, true)
+               .setAllowExpression(true)
+               .setXmlName(ModelKeys.MAX_CONTENT_LENGTH)
+               .setRestartAllServices()
+               .setDefaultValue(new ModelNode().set(RestServerConfigurationBuilder.DEFAULT_MAX_CONTENT_LENGTH))
+               .build();
+
+   static final SimpleAttributeDefinition[] REST_ATTRIBUTES = { SOCKET_BINDING, CONTEXT_PATH, EXTENDED_HEADERS, MAX_CONTENT_LENGTH };
 
    public RestConnectorResource(boolean isRuntimeRegistration) {
       super(REST_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.REST_CONNECTOR), RestSubsystemAdd.INSTANCE, RestSubsystemRemove.INSTANCE, isRuntimeRegistration);

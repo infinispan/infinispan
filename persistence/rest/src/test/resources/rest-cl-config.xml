@@ -3,8 +3,7 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="urn:infinispan:config:9.2 http://www.infinispan.org/schemas/infinispan-config-9.2.xsd
                           urn:infinispan:config:store:rest:9.2 http://www.infinispan.org/schemas/infinispan-cachestore-rest-config-9.2.xsd"
-      xmlns="urn:infinispan:config:9.2"
-      xmlns:remote="urn:infinispan:config:store:rest:9.2" >
+      xmlns="urn:infinispan:config:9.2">
 
    <cache-container default-cache="default">
       <local-cache name="default">
@@ -12,9 +11,10 @@
             <rest-store xmlns="urn:infinispan:config:store:rest:9.2"
                         fetch-state="false" read-only="false" preload="false" purge="false" shared="true" raw-values="false"
                         path="/rest/___defaultcache" append-cache-name-to-path="false"
-                        key-to-string-mapper="org.infinispan.persistence.keymappers.WrappedByteArrayOrPrimitiveMapper">
-               <connection-pool connection-timeout="10000" max-connections-per-host="10" max-total-connections="10" buffer-size="20000" socket-timeout="10000" tcp-no-delay="true" />
+                        key-to-string-mapper="org.infinispan.persistence.keymappers.WrappedByteArrayOrPrimitiveMapper"
+                        max-content-length="15000000">
                <remote-server host="localhost" port="18212" outbound-socket-binding="rest-server-1" />
+               <connection-pool connection-timeout="10000" max-connections-per-host="10" max-total-connections="10" buffer-size="20000" socket-timeout="10000" tcp-no-delay="true" />
             </rest-store>
          </persistence>
       </local-cache>

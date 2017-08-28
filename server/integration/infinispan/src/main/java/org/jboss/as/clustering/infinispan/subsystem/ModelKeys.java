@@ -155,6 +155,7 @@ public class ModelKeys {
     static final String MARSHALLER = "marshaller";
     static final String MAX_BATCH_SIZE = "max-batch-size";
     static final String MAX_CONNECTIONS_PER_HOST = "max-connections-per-host";
+    static final String MAX_CONTENT_LENGTH = "max-content-length";
     static final String MAX_ENTRIES = "max-entries";
     static final String MAX_IDLE = "max-idle";
     static final String MAX_RETRIES = "max-retries";
@@ -278,5 +279,4 @@ public class ModelKeys {
     static final String TRANSPORT_THREAD_POOL = "transport-thread-pool";
     static final String READ_BATCH = "read-batch";
     static final String WRITE_THREADS = "write-threads";
-
 }

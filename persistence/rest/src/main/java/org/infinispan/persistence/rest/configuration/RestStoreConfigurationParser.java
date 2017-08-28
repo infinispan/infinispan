@@ -168,6 +168,10 @@ public class RestStoreConfigurationParser implements ConfigurationParser {
                builder.rawValues(Boolean.parseBoolean(value));
                break;
             }
+            case MAX_CONTENT_LENGTH: {
+               builder.maxContentLength(Integer.parseInt(value));
+               break;
+            }
             default: {
                Parser.parseStoreAttribute(reader, i, builder);
                break;

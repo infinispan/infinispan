@@ -1789,6 +1789,10 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                      RestStoreConfigurationResource.PATH.parseAndSetParameter(value, store, reader);
                      break;
                  }
+                 case MAX_CONTENT_LENGTH: {
+                     RestStoreConfigurationResource.MAX_CONTENT_LENGTH.parseAndSetParameter(value, store, reader);
+                     break;
+                 }
 
                  default: {
                      name = this.parseStoreAttribute(name, reader, i, attribute, value, store);
@@ -1827,33 +1831,33 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
          operations.putAll(additionalConfigurationOperations);
      }
 
-    private void parseRestConnectionPool(XMLExtendedStreamReader reader, ModelNode table) throws XMLStreamException {
+    private void parseRestConnectionPool(XMLExtendedStreamReader reader, ModelNode pool) throws XMLStreamException {
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case BUFFER_SIZE: {
-                    RestStoreConfigurationResource.BUFFER_SIZE.parseAndSetParameter(value, table, reader);
+                    RestStoreConfigurationResource.BUFFER_SIZE.parseAndSetParameter(value, pool, reader);
                     break;
                 }
                 case CONNECTION_TIMEOUT: {
-                    RestStoreConfigurationResource.CONNECTION_TIMEOUT.parseAndSetParameter(value, table, reader);
+                    RestStoreConfigurationResource.CONNECTION_TIMEOUT.parseAndSetParameter(value, pool, reader);
                     break;
                 }
                 case MAX_CONNECTIONS_PER_HOST: {
-                    RestStoreConfigurationResource.MAX_CONNECTIONS_PER_HOST.parseAndSetParameter(value, table, reader);
+                    RestStoreConfigurationResource.MAX_CONNECTIONS_PER_HOST.parseAndSetParameter(value, pool, reader);
                     break;
                 }
                 case MAX_TOTAL_CONNECTIONS: {
-                    RestStoreConfigurationResource.MAX_TOTAL_CONNECTIONS.parseAndSetParameter(value, table, reader);
+                    RestStoreConfigurationResource.MAX_TOTAL_CONNECTIONS.parseAndSetParameter(value, pool, reader);
                     break;
                 }
                 case SOCKET_TIMEOUT: {
-                    RestStoreConfigurationResource.SOCKET_TIMEOUT.parseAndSetParameter(value, table, reader);
+                    RestStoreConfigurationResource.SOCKET_TIMEOUT.parseAndSetParameter(value, pool, reader);
                     break;
                 }
                 case TCP_NO_DELAY: {
-                    RestStoreConfigurationResource.TCP_NO_DELAY.parseAndSetParameter(value, table, reader);
+                    RestStoreConfigurationResource.TCP_NO_DELAY.parseAndSetParameter(value, pool, reader);
                     break;
                 }
                 default: {

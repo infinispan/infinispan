@@ -23,16 +23,17 @@ import org.infinispan.persistence.rest.metadata.EmbeddedMetadataHelper;
 @ConfigurationFor(RestStore.class)
 @SerializedWith(RestStoreConfigurationSerializer.class)
 public class RestStoreConfiguration extends AbstractStoreConfiguration {
-   static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", WrappedByteArrayOrPrimitiveMapper.class.getName()).immutable().xmlName("key-to-string-mapper").build();
-   static final AttributeDefinition<String> METADATA_HELPER = AttributeDefinition.builder("metadataHelper", EmbeddedMetadataHelper.class.getName()).immutable().build();
-   static final AttributeDefinition<String> HOST = AttributeDefinition.builder("host", null, String.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder("port", 80).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", "/").immutable().build();
-   static final AttributeDefinition<Boolean> APPEND_CACHE_NAME_TO_PATH = AttributeDefinition.builder("appendCacheNameToPath", false).immutable().build();
-   static final AttributeDefinition<Boolean> RAW_VALUES = AttributeDefinition.builder("rawValues", false).immutable().build();
+   public static final AttributeDefinition<String> KEY2STRING_MAPPER = AttributeDefinition.builder("key2StringMapper", WrappedByteArrayOrPrimitiveMapper.class.getName()).immutable().xmlName("key-to-string-mapper").build();
+   public static final AttributeDefinition<String> METADATA_HELPER = AttributeDefinition.builder("metadataHelper", EmbeddedMetadataHelper.class.getName()).immutable().build();
+   public static final AttributeDefinition<String> HOST = AttributeDefinition.builder("host", null, String.class).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Integer> PORT = AttributeDefinition.builder("port", 80).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", "/").immutable().build();
+   public static final AttributeDefinition<Boolean> APPEND_CACHE_NAME_TO_PATH = AttributeDefinition.builder("appendCacheNameToPath", false).immutable().build();
+   public static final AttributeDefinition<Boolean> RAW_VALUES = AttributeDefinition.builder("rawValues", false).immutable().build();
+   public static final AttributeDefinition<Integer> MAX_CONTENT_LENGTH = AttributeDefinition.builder("maxContentLength", 10 * 1024 * 1024).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RestStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), KEY2STRING_MAPPER, METADATA_HELPER, HOST, PORT, PATH, APPEND_CACHE_NAME_TO_PATH, RAW_VALUES);
+      return new AttributeSet(RestStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), KEY2STRING_MAPPER, METADATA_HELPER, HOST, PORT, PATH, APPEND_CACHE_NAME_TO_PATH, RAW_VALUES, MAX_CONTENT_LENGTH);
    }
 
    private final Attribute<String> key2StringMapper;
@@ -42,6 +43,7 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
    private final Attribute<String> path;
    private final Attribute<Boolean> appendCacheNameToPath;
    private final Attribute<Boolean> rawValues;
+   private final Attribute<Integer> maxContentLength;
    private final ConnectionPoolConfiguration connectionPool;
 
    public RestStoreConfiguration(AttributeSet attributes,
@@ -54,6 +56,7 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
       path = attributes.attribute(PATH);
       appendCacheNameToPath = attributes.attribute(APPEND_CACHE_NAME_TO_PATH);
       rawValues = attributes.attribute(RAW_VALUES);
+      maxContentLength = attributes.attribute(MAX_CONTENT_LENGTH);
       this.connectionPool = connectionPool;
    }
 
@@ -87,6 +90,10 @@ public class RestStoreConfiguration extends AbstractStoreConfiguration {
 
    public boolean rawValues() {
       return rawValues.get();
+   }
+
+   public int maxContentLength() {
+      return maxContentLength.get();
    }
 
    @Override

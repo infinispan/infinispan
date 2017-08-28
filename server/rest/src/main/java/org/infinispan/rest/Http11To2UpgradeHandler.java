@@ -24,11 +24,8 @@ import io.netty.util.AsciiString;
  */
 @ChannelHandler.Sharable
 public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandler {
-
-   private static final int MAX_PAYLOAD_SIZE = 5 * 1024 * 1024;
    private static final int MAX_INITIAL_LINE_SIZE = 4096;
    private static final int MAX_HEADER_SIZE = 8192;
-   private static final int MAX_CONTENT_SIZE = MAX_PAYLOAD_SIZE + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
 
    private final RestServer restServer;
 
@@ -62,22 +59,23 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
    }
 
    private void configureHttp1(ChannelPipeline pipeline) {
-      final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, MAX_PAYLOAD_SIZE);
+      final HttpServerCodec httpCodec = new HttpServerCodec(MAX_INITIAL_LINE_SIZE, MAX_HEADER_SIZE, restServer.getConfiguration().maxContentLength());
       pipeline.addLast(httpCodec);
-      pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, new HttpServerUpgradeHandler.UpgradeCodecFactory() {
-         @Override
-         public HttpServerUpgradeHandler.UpgradeCodec newUpgradeCodec(CharSequence protocol) {
-            if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
-               return new Http2ServerUpgradeCodec(getHttp11To2ConnectionHandler());
-            } else {
-               // if we don't understand the protocol, we don't want to upgrade
-               return null;
-            }
+      pipeline.addLast(new HttpServerUpgradeHandler(httpCodec, protocol -> {
+         if (AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
+            return new Http2ServerUpgradeCodec(getHttp11To2ConnectionHandler());
+         } else {
+            // if we don't understand the protocol, we don't want to upgrade
+            return null;
          }
       }));
 
-      pipeline.addLast(new HttpObjectAggregator(MAX_CONTENT_SIZE));
+      pipeline.addLast(new HttpObjectAggregator(maxContentLength()));
       pipeline.addLast("rest-handler", getHttp1Handler());
+   }
+
+   private int maxContentLength() {
+      return restServer.getConfiguration().maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
    }
 
    /**
@@ -90,7 +88,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       InboundHttp2ToHttpAdapter listener = new InboundHttp2ToHttpAdapterBuilder(connection)
             .propagateSettings(true)
             .validateHttpHeaders(false)
-            .maxContentLength(MAX_CONTENT_SIZE)
+            .maxContentLength(maxContentLength())
             .build();
 
       return new HttpToHttp2ConnectionHandlerBuilder()
