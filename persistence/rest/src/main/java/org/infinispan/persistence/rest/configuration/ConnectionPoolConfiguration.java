@@ -12,12 +12,12 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  */
 @BuiltBy(ConnectionPoolConfigurationBuilder.class)
 public class ConnectionPoolConfiguration {
-   static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder("connectionTimeout", 60000).immutable().build();
-   static final AttributeDefinition<Integer> MAX_CONNECTIONS_PER_HOST = AttributeDefinition.builder("maxConnectionsPerHostTimeout", 4).immutable().build();
-   static final AttributeDefinition<Integer> MAX_TOTAL_CONNECTIONS = AttributeDefinition.builder("maxTotalConnections", 20).immutable().build();
-   static final AttributeDefinition<Integer> BUFFER_SIZE = AttributeDefinition.builder("bufferSize", 8192).immutable().build();
-   static final AttributeDefinition<Integer> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", 60000).immutable().build();
-   static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).immutable().build();
+   public static final AttributeDefinition<Integer> CONNECTION_TIMEOUT = AttributeDefinition.builder("connectionTimeout", 60000).immutable().build();
+   public static final AttributeDefinition<Integer> MAX_CONNECTIONS_PER_HOST = AttributeDefinition.builder("maxConnectionsPerHostTimeout", 4).immutable().build();
+   public static final AttributeDefinition<Integer> MAX_TOTAL_CONNECTIONS = AttributeDefinition.builder("maxTotalConnections", 20).immutable().build();
+   public static final AttributeDefinition<Integer> BUFFER_SIZE = AttributeDefinition.builder("bufferSize", 8192).immutable().build();
+   public static final AttributeDefinition<Integer> SOCKET_TIMEOUT = AttributeDefinition.builder("socketTimeout", 60000).immutable().build();
+   public static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder("tcpNoDelay", true).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ConnectionPoolConfiguration.class, CONNECTION_TIMEOUT, MAX_CONNECTIONS_PER_HOST,

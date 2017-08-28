@@ -78,6 +78,11 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion isPayloadTooLarge() {
+      Assertions.assertThat(response.getStatus()).isEqualTo(413);
+      return this;
+   }
+
    public ResponseAssertion isNotModified() {
       Assertions.assertThat(response.getStatus()).isEqualTo(304);
       return this;

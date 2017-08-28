@@ -3,6 +3,7 @@ package org.infinispan.persistence.rest.configuration;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.HOST;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.KEY2STRING_MAPPER;
+import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.MAX_CONTENT_LENGTH;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.METADATA_HELPER;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.PATH;
 import static org.infinispan.persistence.rest.configuration.RestStoreConfiguration.PORT;
@@ -52,7 +53,6 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
       return this;
    }
 
-
    @Override
    public RestStoreConfigurationBuilder key2StringMapper(Class<? extends MarshallingTwoWayKey2StringMapper> klass) {
       attributes.attribute(KEY2STRING_MAPPER).set(klass.getName());
@@ -92,6 +92,12 @@ public class RestStoreConfigurationBuilder extends AbstractStoreConfigurationBui
    @Override
    public RestStoreConfigurationBuilder rawValues(boolean rawValues) {
       attributes.attribute(RAW_VALUES).set(rawValues);
+      return this;
+   }
+
+   @Override
+   public RestStoreConfigurationBuilder maxContentLength(int maxContentLength) {
+      attributes.attribute(MAX_CONTENT_LENGTH).set(maxContentLength);
       return this;
    }
 

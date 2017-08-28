@@ -22,6 +22,8 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.persistence.rest.configuration.ConnectionPoolConfiguration;
+import org.infinispan.persistence.rest.configuration.RestStoreConfiguration;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ObjectListAttributeDefinition;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
@@ -55,8 +57,15 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
                     .setXmlName(Attribute.APPEND_CACHE_NAME_TO_PATH.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
+                    .setDefaultValue(new ModelNode().set(RestStoreConfiguration.APPEND_CACHE_NAME_TO_PATH.getDefaultValue().booleanValue()))
                     .build();
+    static final SimpleAttributeDefinition MAX_CONTENT_LENGTH =
+          new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_CONTENT_LENGTH, ModelType.INT, true)
+                .setXmlName(Attribute.MAX_CONTENT_LENGTH.getLocalName())
+                .setAllowExpression(true)
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                .setDefaultValue(new ModelNode().set(RestStoreConfiguration.MAX_CONTENT_LENGTH.getDefaultValue().intValue()))
+                .build();
     // connection pool attributes
     static final SimpleAttributeDefinition BUFFER_SIZE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.BUFFER_SIZE, ModelType.INT, true)
@@ -64,7 +73,7 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
                     .setMeasurementUnit(MeasurementUnit.BYTES)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(8192))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.BUFFER_SIZE.getDefaultValue().intValue()))
                     .build();
     static final SimpleAttributeDefinition CONNECTION_TIMEOUT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.CONNECTION_TIMEOUT, ModelType.INT, true)
@@ -72,21 +81,21 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(60000))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.CONNECTION_TIMEOUT.getDefaultValue().intValue()))
                     .build();
     static final SimpleAttributeDefinition MAX_CONNECTIONS_PER_HOST =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_CONNECTIONS_PER_HOST, ModelType.INT, true)
                     .setXmlName(Attribute.MAX_CONNECTIONS_PER_HOST.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(4))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.MAX_CONNECTIONS_PER_HOST.getDefaultValue().intValue()))
                     .build();
     static final SimpleAttributeDefinition MAX_TOTAL_CONNECTIONS =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_TOTAL_CONNECTIONS, ModelType.INT, true)
                     .setXmlName(Attribute.MAX_TOTAL_CONNECTIONS.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(20))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.MAX_TOTAL_CONNECTIONS.getDefaultValue().intValue()))
                     .build();
     static final SimpleAttributeDefinition SOCKET_TIMEOUT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.SOCKET_TIMEOUT, ModelType.INT, true)
@@ -94,14 +103,14 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(60000))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.SOCKET_TIMEOUT.getDefaultValue().intValue()))
                     .build();
     static final SimpleAttributeDefinition TCP_NO_DELAY =
             new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_NO_DELAY, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.TCP_NO_DELAY.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(true))
+                    .setDefaultValue(new ModelNode().set(ConnectionPoolConfiguration.TCP_NO_DELAY.getDefaultValue().booleanValue()))
                     .build();
     static final ObjectTypeAttributeDefinition CONNECTION_POOL = ObjectTypeAttributeDefinition.
             Builder.of(ModelKeys.CONNECTION_POOL, BUFFER_SIZE, CONNECTION_TIMEOUT, MAX_CONNECTIONS_PER_HOST, MAX_TOTAL_CONNECTIONS, SOCKET_TIMEOUT, TCP_NO_DELAY).
@@ -126,7 +135,7 @@ public class RestStoreConfigurationResource extends BaseStoreConfigurationResour
             setAllowNull(false).
             build();
 
-    static final AttributeDefinition[] REST_STORE_ATTRIBUTES = {PATH, APPEND_CACHE_NAME_TO_PATH, CONNECTION_POOL, REMOTE_SERVERS};
+    static final AttributeDefinition[] REST_STORE_ATTRIBUTES = {PATH, APPEND_CACHE_NAME_TO_PATH, MAX_CONTENT_LENGTH, CONNECTION_POOL, REMOTE_SERVERS};
 
     public RestStoreConfigurationResource(CacheConfigurationResource parent) {
         super(REST_STORE_PATH, ModelKeys.REST_STORE, parent, REST_STORE_ATTRIBUTES);

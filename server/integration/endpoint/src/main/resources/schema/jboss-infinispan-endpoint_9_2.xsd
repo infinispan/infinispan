@@ -171,6 +171,11 @@
                 <xs:documentation>The list of ignored caches for this connector</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="max-content-length" type="xs:int" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the maximum allowed content length.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="websocket-connector">

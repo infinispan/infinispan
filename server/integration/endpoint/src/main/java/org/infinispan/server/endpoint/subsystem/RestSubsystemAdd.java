@@ -64,8 +64,9 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
          ignoredCaches = config.get(ModelKeys.IGNORED_CACHES).asList()
                .stream().map(ModelNode::asString).collect(Collectors.toSet());
       }
+      int maxContentLength = RestConnectorResource.MAX_CONTENT_LENGTH.resolveModelAttribute(context, config).asInt();
       // Create the service
-      final RestService service = new RestService(getServiceName(config), restAuthMethod, cleanContextPath(contextPath), extendedHeaders, ignoredCaches);
+      final RestService service = new RestService(getServiceName(config), restAuthMethod, cleanContextPath(contextPath), extendedHeaders, ignoredCaches, maxContentLength);
 
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "rest"), service);

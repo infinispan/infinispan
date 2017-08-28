@@ -18,14 +18,16 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    public static final String DEFAULT_CONTEXT_PATH = "rest";
    public static final int DEFAULT_PORT = 8080;
-   public static final String DEFAILT_NAME = "rest";
+   public static final String DEFAULT_NAME = "rest";
+   public static final int DEFAULT_MAX_CONTENT_LENGTH = 10 * 1024 * 1024;
 
    private ExtendedHeaders extendedHeaders = ExtendedHeaders.ON_DEMAND;
    private String contextPath = DEFAULT_CONTEXT_PATH;
+   private int maxContentLength = DEFAULT_MAX_CONTENT_LENGTH;
 
    public RestServerConfigurationBuilder() {
       super(DEFAULT_PORT);
-      name(DEFAILT_NAME);
+      name(DEFAULT_NAME);
    }
 
    public RestServerConfigurationBuilder extendedHeaders(ExtendedHeaders extendedHeaders) {
@@ -38,6 +40,11 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       return this;
    }
 
+   public RestServerConfigurationBuilder maxContentLength(int maxContentLength) {
+      this.maxContentLength = maxContentLength;
+      return this;
+   }
+
    @Override
    public void validate() {
       // Nothing to do
@@ -46,7 +53,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    @Override
    public RestServerConfiguration create() {
       return new RestServerConfiguration(defaultCacheName, name, extendedHeaders, host, port, ignoredCaches, ssl.create(),
-            startTransport, contextPath, adminOperationsHandler);
+            startTransport, contextPath, adminOperationsHandler, maxContentLength);
    }
 
    @Override
@@ -54,6 +61,7 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
       this.extendedHeaders = template.extendedHeaders();
       this.host = template.host();
       this.port = template.port();
+      this.maxContentLength = template.maxContentLength();
       return this;
    }
 

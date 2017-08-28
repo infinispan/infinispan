@@ -25,7 +25,8 @@ public enum Attribute {
    PORT("port"),
    RAW_VALUES("raw-values"),
    SOCKET_TIMEOUT("socket-timeout"),
-   TCP_NO_DELAY("tcp-no-delay"), ;
+   TCP_NO_DELAY("tcp-no-delay"),
+   MAX_CONTENT_LENGTH("max-content-length");
 
    private final String name;
 

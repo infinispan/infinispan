@@ -42,6 +42,11 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="max-content-length" type="xs:int" default="${RestStore.maxContentLength}">
+          <xs:annotation>
+            <xs:documentation>The maximum allowed content length of a POST/PUT request.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

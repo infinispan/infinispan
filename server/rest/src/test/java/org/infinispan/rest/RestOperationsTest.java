@@ -7,11 +7,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.ByteBufferContentProvider;
 import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
@@ -837,6 +839,42 @@ public class RestOperationsTest extends AbstractInfinispanTest {
       ResponseAssertion.assertThat(response).isOk();
       Assertions.assertThat(metadata.lifespan()).isEqualTo(50 * 1000);
       Assertions.assertThat(metadata.maxIdle()).isEqualTo(50 * 1000);
+   }
+
+   @Test
+   public void shouldPutLargeObject() throws Exception {
+      //when
+      ByteBuffer payload = ByteBuffer.allocate(1_000_000);
+      ContentResponse response = client
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .content(new ByteBufferContentProvider(payload))
+            .send();
+
+      InternalCacheEntry<String, byte[]> cacheEntry = (InternalCacheEntry<String, byte[]>) restServer.getCacheManager()
+            .<String, byte[]>getCache("default", false)
+            .getAdvancedCache()
+            .getCacheEntry("test");
+      MimeMetadata metadata = ((MimeMetadata) cacheEntry.getMetadata());
+
+      //then
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasEtag();
+
+      Assertions.assertThat(cacheEntry.getValue().length).isEqualTo(1_000_000);
+      Assertions.assertThat(metadata.contentType()).isEqualTo("application/octet-stream");
+   }
+
+   @Test
+   public void shouldFailTooLargeObject() throws Exception {
+      //when
+      ByteBuffer payload = ByteBuffer.allocate(1_100_000);
+      ContentResponse response = client
+            .POST(String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
+            .content(new ByteBufferContentProvider(payload))
+            .send();
+
+      //then
+      ResponseAssertion.assertThat(response).isPayloadTooLarge();
    }
 
    static class TestClass implements Serializable {

@@ -74,6 +74,7 @@ import org.infinispan.persistence.jdbc.configuration.TableManipulationConfigurat
 import org.infinispan.persistence.remote.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.SslConfigurationBuilder;
+import org.infinispan.persistence.rest.RestStore;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
 import org.infinispan.persistence.rocksdb.configuration.CompressionType;
@@ -891,35 +892,20 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                     };
                     dependencies.add(new Dependency<>(OutboundSocketBinding.OUTBOUND_SOCKET_BINDING_BASE_SERVICE_NAME.append(outboundSocketBinding), OutboundSocketBinding.class, injector));
                 }
-                if (store.hasDefined(ModelKeys.APPEND_CACHE_NAME_TO_PATH)) {
-                    builder.appendCacheNameToPath(store.require(ModelKeys.APPEND_CACHE_NAME_TO_PATH).asBoolean());
-                }
-                if (store.hasDefined(ModelKeys.PATH)) {
-                    builder.path(store.get(ModelKeys.PATH).asString());
-                }
+                builder.appendCacheNameToPath(RestStoreConfigurationResource.APPEND_CACHE_NAME_TO_PATH.resolveModelAttribute(context, store).asBoolean());
+                builder.path(RestStoreConfigurationResource.PATH.resolveModelAttribute(context, store).asString());
+                builder.maxContentLength(RestStoreConfigurationResource.MAX_CONTENT_LENGTH.resolveModelAttribute(context, store).asInt());
                 builder.rawValues(true);
                 builder.metadataHelper(MimeMetadataHelper.class);
 
                 if (store.hasDefined(ModelKeys.CONNECTION_POOL)) {
                     ModelNode pool = store.get(ModelKeys.CONNECTION_POOL);
-                    if (pool.hasDefined(ModelKeys.CONNECTION_TIMEOUT)) {
-                        builder.connectionPool().connectionTimeout(pool.require(ModelKeys.CONNECTION_TIMEOUT).asInt());
-                    }
-                    if (pool.hasDefined(ModelKeys.MAX_CONNECTIONS_PER_HOST)) {
-                        builder.connectionPool().maxConnectionsPerHost(pool.require(ModelKeys.MAX_CONNECTIONS_PER_HOST).asInt());
-                    }
-                    if (pool.hasDefined(ModelKeys.MAX_TOTAL_CONNECTIONS)) {
-                        builder.connectionPool().maxTotalConnections(pool.require(ModelKeys.MAX_TOTAL_CONNECTIONS).asInt());
-                    }
-                    if (pool.hasDefined(ModelKeys.BUFFER_SIZE)) {
-                        builder.connectionPool().bufferSize(pool.require(ModelKeys.BUFFER_SIZE).asInt());
-                    }
-                    if (pool.hasDefined(ModelKeys.SOCKET_TIMEOUT)) {
-                        builder.connectionPool().socketTimeout(pool.require(ModelKeys.SOCKET_TIMEOUT).asInt());
-                    }
-                    if (pool.hasDefined(ModelKeys.TCP_NO_DELAY)) {
-                        builder.connectionPool().tcpNoDelay(pool.require(ModelKeys.TCP_NO_DELAY).asBoolean());
-                    }
+                    builder.connectionPool().bufferSize(RestStoreConfigurationResource.BUFFER_SIZE.resolveModelAttribute(context, pool).asInt());
+                    builder.connectionPool().connectionTimeout(RestStoreConfigurationResource.CONNECTION_TIMEOUT.resolveModelAttribute(context, pool).asInt());
+                    builder.connectionPool().maxConnectionsPerHost(RestStoreConfigurationResource.MAX_CONNECTIONS_PER_HOST.resolveModelAttribute(context, pool).asInt());
+                    builder.connectionPool().maxTotalConnections(RestStoreConfigurationResource.MAX_TOTAL_CONNECTIONS.resolveModelAttribute(context, pool).asInt());
+                    builder.connectionPool().socketTimeout(RestStoreConfigurationResource.SOCKET_TIMEOUT.resolveModelAttribute(context, pool).asInt());
+                    builder.connectionPool().tcpNoDelay(RestStoreConfigurationResource.TCP_NO_DELAY.resolveModelAttribute(context, pool).asBoolean());
                 }
                 return builder;
         } else if (storeKey.equals(ModelKeys.STORE)) {
