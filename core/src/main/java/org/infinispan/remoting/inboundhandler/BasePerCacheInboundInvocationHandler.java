@@ -16,8 +16,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -130,7 +130,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    }
 
    final ExceptionResponse outdatedTopology(OutdatedTopologyException exception) {
-      getLog().tracef("Topology changed, notifying the originator: %s", exception);
+      getLog().tracef("Topology changed, retrying: %s", exception);
       return new ExceptionResponse(exception);
    }
 

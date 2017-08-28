@@ -3,12 +3,14 @@ package org.infinispan.interceptors.totalorder;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.transport.Address;
@@ -71,6 +73,17 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
          throw new IllegalStateException("Expected a Versioned Prepare Command in version aware component");
       }
       return totalOrderPrepare(ctx, command, recipients);
+   }
+
+   @Override
+   protected LocalizedCacheTopology checkTopologyId(TopologyAffectedCommand command) {
+      LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+      int currentTopologyId = cacheTopology.getTopologyId();
+      int cmdTopology = command.getTopologyId();
+      if (trace) {
+         log.tracef("Current topology %d, command topology %d", currentTopologyId, cmdTopology);
+      }
+      return cacheTopology;
    }
 
    @Override

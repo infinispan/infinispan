@@ -25,7 +25,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.InvocationExceptionFunction;
-import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.statetransfer.OutdatedTopologyException;
@@ -128,10 +127,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
             // We log this as DEBUG rather than ERROR - see ISPN-2076
             log.debug("Exception executing call", th);
          } else if (th instanceof OutdatedTopologyException) {
-            log.tracef("Topology changed, notifying the originator: %s", th);
-         } else if (th instanceof RetryPrepareException) {
-            log.debugf("Retrying total order prepare command for transaction %s, affected keys %s",
-               ctx.getLockOwner(), toStr(extractWrittenKeys(ctx, command)));
+            if (trace) log.tracef("Topology changed, retrying command: %s", th);
          } else {
             Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
             log.executionError(command.getClass().getSimpleName(), toStr(affectedKeys), th);

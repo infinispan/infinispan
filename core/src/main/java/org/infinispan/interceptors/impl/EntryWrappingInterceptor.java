@@ -136,7 +136,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private final InvocationSuccessAction commitEntriesSuccessHandler = (rCtx, rCommand, rv) -> commitContextEntries(rCtx, null);
 
    private final InvocationFinallyAction
-         commitEntriesFinallyHandler = (rCtx, rCommand, rv, t) -> commitContextEntries(rCtx, null);
+         commitEntriesFinallyHandler = this::commitEntriesFinally;
 
    private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
 
@@ -683,6 +683,14 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             }
          }
       });
+   }
+
+   private void commitEntriesFinally(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable t) {
+      // Do not commit if the command will be retried
+      if (t instanceof OutdatedTopologyException)
+         return;
+
+      commitContextEntries(rCtx, null);
    }
 
    // This visitor replays the entry wrapping during remote prepare.
