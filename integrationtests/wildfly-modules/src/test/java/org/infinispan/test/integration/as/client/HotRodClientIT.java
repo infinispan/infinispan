@@ -16,6 +16,7 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -28,6 +29,8 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class HotRodClientIT {
 
+   private RemoteCacheManager rcm;
+
    @Deployment
    public static Archive<?> deployment() {
       return ShrinkWrap
@@ -36,14 +39,19 @@ public class HotRodClientIT {
             .add(manifest(), "META-INF/MANIFEST.MF");
    }
 
+   @After
+   public void cleanUp() {
+      if (rcm != null)
+         rcm.stop();
+   }
+
    @Test
    public void testCacheManager() {
-      RemoteCacheManager rcm = createCacheManager();
+      rcm = createCacheManager();
       RemoteCache<String, String> cache = rcm.getCache();
       cache.clear();
       cache.put("a", "a");
       assertEquals("a", cache.get("a"));
-      rcm.stop();
    }
 
    private static Asset manifest() {

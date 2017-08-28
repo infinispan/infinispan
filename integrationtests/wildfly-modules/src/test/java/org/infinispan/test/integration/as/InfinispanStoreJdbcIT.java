@@ -20,6 +20,7 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -31,6 +32,8 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class InfinispanStoreJdbcIT {
+
+   private EmbeddedCacheManager cm;
 
    @Deployment
    public static Archive<?> deployment() {
@@ -46,6 +49,12 @@ public class InfinispanStoreJdbcIT {
       return new StringAsset(manifest);
    }
 
+   @After
+   public void cleanUp() {
+      if (cm != null)
+         cm.stop();
+   }
+
    @Test
    public void testCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
@@ -53,7 +62,7 @@ public class InfinispanStoreJdbcIT {
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
-         .table()
+            .table()
             .tableNamePrefix("ISPN")
             .idColumnName("K")
             .idColumnType("VARCHAR(255)")
@@ -61,33 +70,21 @@ public class InfinispanStoreJdbcIT {
             .dataColumnType("BLOB")
             .timestampColumnName("T")
             .timestampColumnType("BIGINT")
-         .dataSource().jndiUrl("java:jboss/datasources/ExampleDS");
+            .dataSource().jndiUrl("java:jboss/datasources/ExampleDS");
 
-      EmbeddedCacheManager cm = null;
-      try {
-         cm = new DefaultCacheManager(gcb.build(), builder.build());
+      cm = new DefaultCacheManager(gcb.build(), builder.build());
 
-         Cache<String, String> cache = cm.getCache();
-         cache.put("a", "a");
-         assertEquals("a", cache.get("a"));
-      } finally {
-         if (cm != null)
-            cm.stop();
-      }
+      Cache<String, String> cache = cm.getCache();
+      cache.put("a", "a");
+      assertEquals("a", cache.get("a"));
    }
 
    @Test
    public void testXmlConfig() throws IOException {
-      EmbeddedCacheManager cm = null;
-      try {
-         cm = new DefaultCacheManager("jdbc-config.xml");
-         Cache<String, String> cache = cm.getCache("anotherCache");
-         cache.put("a", "a");
-         assertEquals("a", cache.get("a"));
-      } finally {
-         if (cm != null)
-            cm.stop();
-      }
+      cm = new DefaultCacheManager("jdbc-config.xml");
+      Cache<String, String> cache = cm.getCache("anotherCache");
+      cache.put("a", "a");
+      assertEquals("a", cache.get("a"));
    }
 
 }

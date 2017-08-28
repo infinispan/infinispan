@@ -18,7 +18,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests whether {@link DefaultEmbeddedCacheManagerProducer} sets custom Cache name to avoid JMX
+ * Tests whether {@link DefaultCacheManager} sets custom Cache name to avoid JMX
  * name collision.
  *
  * @author Sebastian Laskawiec
@@ -43,7 +43,7 @@ public class DuplicatedDomainsCdiIT {
    private AdvancedCache<Object, Object> greetingCache;
 
    /**
-    * Creates new {@link DefaultEmbeddedCacheManagerProducer} with default {@link org.infinispan.configuration.cache.Configuration}.
+    * Creates new {@link DefaultCacheManager} with default {@link org.infinispan.configuration.cache.Configuration}.
     * This test will fail if CDI Extension registers and won't set Cache Manager's name.
     */
    @Test

@@ -17,6 +17,7 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -28,6 +29,8 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class InfinispanCoreIT {
+
+   private EmbeddedCacheManager cm;
 
    @Deployment
    public static Archive<?> deployment() {
@@ -42,16 +45,20 @@ public class InfinispanCoreIT {
       return new StringAsset(manifest);
    }
 
+   @After
+   public void cleanUp() {
+      if (cm != null)
+         cm.stop();
+   }
+
    @Test
    public void testCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
       gcb.globalJmxStatistics().allowDuplicateDomains(true);
 
-      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), new ConfigurationBuilder().build());
+      cm = new DefaultCacheManager(gcb.build(), new ConfigurationBuilder().build());
       Cache<String, String> cache = cm.getCache();
       cache.put("a", "a");
       assertEquals("a", cache.get("a"));
-      cm.stop();
    }
-
 }

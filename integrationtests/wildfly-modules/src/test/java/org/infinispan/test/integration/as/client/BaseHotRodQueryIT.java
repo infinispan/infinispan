@@ -18,12 +18,15 @@ import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.junit.After;
 import org.junit.Test;
 
 /**
  * @since 9.0
  */
 public class BaseHotRodQueryIT {
+
+   private RemoteCacheManager rcm;
 
    private static RemoteCacheManager createCacheManager() {
       return new RemoteCacheManager(createConfiguration(), true);
@@ -36,9 +39,15 @@ public class BaseHotRodQueryIT {
       return config.build();
    }
 
+   @After
+   public void cleanUp() {
+      if (rcm != null)
+         rcm.stop();
+   }
+
    @Test
    public void testRemoteQuery() throws Exception {
-      RemoteCacheManager rcm = createCacheManager();
+      rcm = createCacheManager();
 
       SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(rcm);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
@@ -65,17 +74,16 @@ public class BaseHotRodQueryIT {
       assertEquals(1, list.size());
       assertEquals(Person.class, list.get(0).getClass());
       assertEquals("Adrian", list.get(0).name);
-
-      rcm.stop();
    }
 
    /**
     * Sorting on a field that does not contain DocValues so Hibernate Search is forced to uninvert it.
+    *
     * @see <a href="https://issues.jboss.org/browse/ISPN-5729">https://issues.jboss.org/browse/ISPN-5729</a>
     */
    @Test
    public void testUninverting() throws Exception {
-      RemoteCacheManager rcm = createCacheManager();
+      rcm = createCacheManager();
 
       SerializationContext serializationContext = ProtoStreamMarshaller.getSerializationContext(rcm);
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
@@ -96,7 +104,5 @@ public class BaseHotRodQueryIT {
             .orderBy("id")
             .build();
       assertEquals(0, query.list().size());
-
-      rcm.stop();
    }
 }
