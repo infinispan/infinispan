@@ -224,7 +224,7 @@ public class PutFromLoadValidator {
          chain.addInterceptor(nonTxPutFromLoadInterceptor, entryWrappingPosition);
 			validator.nonTxPutFromLoadInterceptor = nonTxPutFromLoadInterceptor;
 		}
-		log.debug("New interceptor chain is: " + cache.getInterceptorChain());
+		log.debug("New interceptor chain is: " + cache.getAsyncInterceptorChain());
 
 		CacheCommandInitializer cacheCommandInitializer = cache.getComponentRegistry().getComponent(CacheCommandInitializer.class);
 		cacheCommandInitializer.addPutFromLoadValidator(cache.getName(), validator);
@@ -587,7 +587,7 @@ public class PutFromLoadValidator {
 					}
 					long now = regionFactory.nextTimestamp();
                if (trace) {
-                  log.tracef("endInvalidatingKey(%s#%s, %s) remove invalidator from %s", cache.getName(), key, lockOwnerToString(lockOwner), pending);
+                  log.tracef("beginInvalidatingKey(%s#%s, %s) remove invalidator from %s", cache.getName(), key, lockOwnerToString(lockOwner), pending);
                }
 					pending.invalidate(now);
 					pending.addInvalidator(lockOwner, valueForPFER, now);

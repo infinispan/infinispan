@@ -10,6 +10,8 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -55,8 +57,11 @@ public class VersionedEntry {
 	}
 
 	private static class ExcludeEmptyFilter implements KeyValueFilter<Object, Object>, Converter<Object, Object, Object> {
+      private static final Log log = LogFactory.getLog(ExcludeEmptyFilter.class);
+
 		@Override
 		public boolean accept(Object key, Object value, Metadata metadata) {
+         log.tracef("Filter check for %s", value);
 			if (value instanceof VersionedEntry) {
 				return ((VersionedEntry) value).getValue() != null;
 			}

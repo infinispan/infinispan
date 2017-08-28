@@ -43,11 +43,15 @@ import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Static factory class used to provide marshallable terminal operations
  */
 final class TerminalFunctions {
+   private static final Log log = LogFactory.getLog(TerminalFunctions.class);
+
    private TerminalFunctions() { }
 
    public static <T> Function<Stream<T>, Boolean> allMatchFunction(Predicate<? super T> predicate) {
@@ -615,7 +619,9 @@ final class TerminalFunctions {
 
       @Override
       public Long apply(Stream<T> stream) {
-         return stream.count();
+         long count = stream.count();
+         log.tracef("Count value is %d", count);
+         return count;
       }
 
       public static final class CountFunctionExternalizer implements Externalizer<CountFunction> {

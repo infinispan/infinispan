@@ -72,7 +72,14 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
          }
          BitSet bitSet = new BitSet(hash.getNumSegments());
          segmentsToFilter.forEach(bitSet::set);
-         stream = stream.filter(k -> bitSet.get(hash.getSegment(k.getKey())));
+         stream = stream.filter(k -> {
+            K key = k.getKey();
+            int segment = hash.getSegment(key);
+            boolean isPresent = bitSet.get(segment);
+            if (trace)
+               log.tracef("Is key %s present in segment %d? %b", key, segment, isPresent);
+            return isPresent;
+         });
       }
       return stream;
    }

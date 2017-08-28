@@ -30,7 +30,6 @@ import static org.junit.Assert.assertNull;
  * @author Galder Zamarreño
  * @since 3.5
  */
-@Ignore("Randomly failing on CI - ISPN-8026")
 public class BulkOperationsTest extends SingleNodeTest {
 	@Override
 	public List<Object[]> getParameters() {
