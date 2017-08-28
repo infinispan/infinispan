@@ -38,6 +38,8 @@ public class InfinispanStoreRocksDBIT {
    private static String dataDir = tmpDirectory(InfinispanStoreRocksDBIT.class) + File.separator + "rocksdb-testcache";
    private static String expiredDir = tmpDirectory(InfinispanStoreRocksDBIT.class) + File.separator + "rocksdb-expiredtestcache";
 
+   private EmbeddedCacheManager cm;
+
    @Deployment
    public static Archive<?> deployment() {
       return ShrinkWrap.create(WebArchive.class, "rocksdb.war").addClass(InfinispanStoreRocksDBIT.class).add(manifest(), "META-INF/MANIFEST.MF");
@@ -54,6 +56,8 @@ public class InfinispanStoreRocksDBIT {
    public void removeDataFilesIfExists() {
       Util.recursiveFileRemove(dataDir);
       Util.recursiveFileRemove(expiredDir);
+      if (cm != null)
+         cm.stop();
    }
 
    /**
@@ -71,14 +75,13 @@ public class InfinispanStoreRocksDBIT {
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence()
-             .addStore(RocksDBStoreConfigurationBuilder.class)
-             .location(dataDir)
-             .expiredLocation(expiredDir);
+            .addStore(RocksDBStoreConfigurationBuilder.class)
+            .location(dataDir)
+            .expiredLocation(expiredDir);
 
-      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), builder.build());
+      cm = new DefaultCacheManager(gcb.build(), builder.build());
       Cache<String, String> cache = cm.getCache();
       cache.put("a", "a");
       assertEquals("a", cache.get("a"));
-      cm.stop();
    }
 }

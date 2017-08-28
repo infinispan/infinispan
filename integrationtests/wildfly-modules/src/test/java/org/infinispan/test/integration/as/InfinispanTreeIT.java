@@ -18,6 +18,7 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptors;
 import org.jboss.shrinkwrap.descriptor.api.spec.se.manifest.ManifestDescriptor;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,10 +31,18 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class InfinispanTreeIT {
 
+   private EmbeddedCacheManager cm;
+
    @Deployment
    public static Archive<?> deployment() {
       WebArchive archive = ShrinkWrap.create(WebArchive.class, "simple.war").addClass(InfinispanTreeIT.class).add(manifest(), "META-INF/MANIFEST.MF");
       return archive;
+   }
+
+   @After
+   public void cleanUp() {
+      if (cm != null)
+         cm.stop();
    }
 
    private static Asset manifest() {
@@ -46,14 +55,13 @@ public class InfinispanTreeIT {
    public void testCacheManager() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().invocationBatching().enable();
-      EmbeddedCacheManager cm = new DefaultCacheManager(builder.build());
+      cm = new DefaultCacheManager(builder.build());
       Cache<String, String> cache = cm.getCache();
       TreeCacheFactory tcf = new TreeCacheFactory();
       TreeCache<String, String> tree = tcf.createTreeCache(cache);
       Fqn leafFqn = Fqn.fromElements("branch", "leaf");
       Node<String, String> leaf = tree.getRoot().addChild(leafFqn);
       leaf.put("fruit", "orange");
-      cm.stop();
    }
 
 }
