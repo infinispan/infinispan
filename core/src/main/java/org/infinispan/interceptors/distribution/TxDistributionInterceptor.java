@@ -157,7 +157,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          throws Throwable {
       if (ctx.isOriginLocal()) {
          TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) ctx;
-         Collection<Address> affectedNodes = dm.getCacheTopology().getWriteOwners(command.getKeys());
+         Collection<Address> affectedNodes = checkTopologyId(command).getWriteOwners(command.getKeys());
          Collection<Address> recipients = isReplicated ? null : affectedNodes;
          localTxCtx.getCacheTransaction().locksAcquired(affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
@@ -265,8 +265,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
          TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) rCtx;
          LocalTransaction localTx = localTxCtx.getCacheTransaction();
-         LocalizedCacheTopology cacheTopology =
-               dm.getCacheTopology();
+         LocalizedCacheTopology cacheTopology = checkTopologyId(command);
          Collection<Address> writeOwners = cacheTopology.getWriteOwners(localTxCtx.getAffectedKeys());
          localTx.locksAcquired(writeOwners);Collection<Address> recipients = isReplicated ? null : localTx.getCommitNodes(writeOwners, cacheTopology);
          CompletableFuture<Object> remotePrepare =
@@ -301,7 +300,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private Object handleSecondPhaseCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         Collection<Address> recipients = getCommitNodes(ctx);
+         Collection<Address> recipients = getCommitNodes(ctx, command);
          CompletableFuture<Map<Address, Response>>
                remoteInvocation = rpcManager.invokeRemotelyAsync(recipients, command, createRpcOptions());
          return asyncValue(remoteInvocation.thenApply(responses -> {
@@ -313,9 +312,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return invokeNext(ctx, command);
    }
 
-   private Collection<Address> getCommitNodes(TxInvocationContext ctx) {
+   private Collection<Address> getCommitNodes(TxInvocationContext ctx, TopologyAffectedCommand command) {
       LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
-      LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       Collection<Address> affectedNodes =
             isReplicated ? null : cacheTopology.getWriteOwners(ctx.getAffectedKeys());
       return localTx.getCommitNodes(affectedNodes, cacheTopology);
@@ -377,7 +376,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private Object handleTxWriteCommand(InvocationContext ctx, AbstractDataWriteCommand command,
          Object key) throws Throwable {
       try {
-         if (!ctx.isOriginLocal() && !dm.getCacheTopology().isWriteOwner(command.getKey())) {
+         if (!ctx.isOriginLocal() && !checkTopologyId(command).isWriteOwner(command.getKey())) {
             return null;
          }
          CacheEntry entry = ctx.lookupEntry(command.getKey());
@@ -409,9 +408,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       boolean ignorePreviousValue = command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD;
       Map<K, V> filtered = new HashMap<>(entries.size());
       Collection<CompletableFuture<?>> remoteGets = null;
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       for (Map.Entry<K, V> e : entries.entrySet()) {
          K key = e.getKey();
-         if (ctx.isOriginLocal() || dm.getCacheTopology().isWriteOwner(key)) {
+         if (ctx.isOriginLocal() || cacheTopology.isWriteOwner(key)) {
             if (ctx.lookupEntry(key) == null) {
                if (ignorePreviousValue) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
@@ -433,8 +433,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       boolean ignorePreviousValue = command.hasAnyFlag(SKIP_REMOTE_FLAGS) || command.loadType() == VisitableCommand.LoadType.DONT_LOAD;
       List<K> filtered = new ArrayList<>(keys.size());
       List<CompletableFuture<?>> remoteGets = null;
+      LocalizedCacheTopology cacheTopology = checkTopologyId(command);
       for (K key : keys) {
-         if (ctx.isOriginLocal() || dm.getCacheTopology().isWriteOwner(key)) {
+         if (ctx.isOriginLocal() || cacheTopology.isWriteOwner(key)) {
             if (ctx.lookupEntry(key) == null) {
                if (ignorePreviousValue) {
                   entryFactory.wrapExternalEntry(ctx, key, null, false, true);
@@ -484,7 +485,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          // It's possible that this is not an owner, but the entry was loaded from L1 - let the command run
          return invokeNext(ctx, command);
       } else {
-         if (!dm.getCacheTopology().isWriteOwner(key)) {
+         if (!checkTopologyId(command).isWriteOwner(key)) {
             return null;
          }
          CacheEntry entry = ctx.lookupEntry(key);

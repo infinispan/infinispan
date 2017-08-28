@@ -938,7 +938,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          log.tracef("Skipping topology check for command %s", command);
          return cacheTopology;
       }
-      // TotalOrderStateTransferInterceptor does not set topologyId for write commands
       if (cmdTopology >= 0 && currentTopologyId != cmdTopology) {
          throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
             cmdTopology + ", got " + currentTopologyId);

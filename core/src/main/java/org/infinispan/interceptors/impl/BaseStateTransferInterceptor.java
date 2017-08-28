@@ -113,7 +113,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
                distributionManager.getCacheTopology().isWriteOwner(cmd.getGroupName());
       }
       if (shouldRetry) {
-         logRetry(cmd);
+         logRetry(currentTopologyId(), cmd);
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
          int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
@@ -126,10 +126,10 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    }
 
-   protected final void logRetry(VisitableCommand command) {
-      if (trace) {
-         getLog().tracef("Retrying command because of topology change: %s", command);
-      }
+   protected final void logRetry(int currentTopologyId, TopologyAffectedCommand cmd) {
+      if (trace)
+         getLog().tracef("Retrying command because of topology change, current topology is %d, command topology %d: %s",
+                         currentTopologyId, cmd.getTopologyId(), cmd);
    }
 
    protected final int currentTopologyId() {
@@ -216,9 +216,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
             throw new IllegalStateException("Command was not sent with SYNCHRONOUS_IGNORE_LEAVERS?");
          }
       } else if (ce instanceof OutdatedTopologyException) {
-         if (trace)
-            getLog().tracef("Retrying command because of topology change, current topology is %d, command topology %d: %s",
-                  currentTopologyId, cmd.getTopologyId(), cmd);
+         logRetry(currentTopologyId, cmd);
          // In scattered cache, when we have contacted the primary owner in current topology and this does respond
          // with UnsureResponse we don't know about any other read owners; we need to wait for the next topology
          if (cacheConfiguration.clustering().cacheMode().isScattered()) {

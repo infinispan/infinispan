@@ -71,4 +71,9 @@ public class SimpleAsyncInvocationStage extends InvocationStage {
       }
       return new QueueAsyncInvocationStage(ctx, command, future, function);
    }
+
+   @Override
+   public String toString() {
+      return "SimpleAsyncInvocationStage(" + future + ')';
+   }
 }

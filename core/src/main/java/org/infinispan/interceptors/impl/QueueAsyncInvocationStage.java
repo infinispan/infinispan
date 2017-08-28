@@ -240,4 +240,9 @@ public class QueueAsyncInvocationStage extends SimpleAsyncInvocationStage implem
          System.arraycopy(oldElements, 0, elements, oldCapacity - maskedHead, maskedTail);
       }
    }
+
+   @Override
+   public String toString() {
+      return "SimpleAsyncInvocationStage(" + queueSize() + "handlers, "+ future + ')';
+   }
 }
