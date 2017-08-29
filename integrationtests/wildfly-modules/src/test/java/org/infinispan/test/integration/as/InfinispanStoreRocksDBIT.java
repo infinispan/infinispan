@@ -35,8 +35,9 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 public class InfinispanStoreRocksDBIT {
-   private static String dataDir = tmpDirectory(InfinispanStoreRocksDBIT.class) + File.separator + "rocksdb-testcache";
-   private static String expiredDir = tmpDirectory(InfinispanStoreRocksDBIT.class) + File.separator + "rocksdb-expiredtestcache";
+   private static String baseDir = tmpDirectory(InfinispanStoreRocksDBIT.class);
+   private static String dataDir = baseDir + File.separator + "data";
+   private static String expiredDir = baseDir + File.separator + "expired";
 
    private EmbeddedCacheManager cm;
 
@@ -54,8 +55,7 @@ public class InfinispanStoreRocksDBIT {
    @Before
    @After
    public void removeDataFilesIfExists() {
-      Util.recursiveFileRemove(dataDir);
-      Util.recursiveFileRemove(expiredDir);
+      Util.recursiveFileRemove(baseDir);
       if (cm != null)
          cm.stop();
    }
