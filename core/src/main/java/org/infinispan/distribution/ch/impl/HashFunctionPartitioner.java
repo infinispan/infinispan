@@ -15,10 +15,13 @@ import org.infinispan.distribution.ch.KeyPartitioner;
  * @author Dan Berindei
  * @since 8.2
  */
-public class HashFunctionPartitioner implements KeyPartitioner {
+public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
    private Hash hashFunction;
    private int numSegments;
    private int segmentSize;
+
+
+   public HashFunctionPartitioner() {}
 
    @Override
    public void init(HashConfiguration configuration) {
@@ -60,12 +63,7 @@ public class HashFunctionPartitioner implements KeyPartitioner {
          return true;
       if (o == null || getClass() != o.getClass())
          return false;
-
-      HashFunctionPartitioner that = (HashFunctionPartitioner) o;
-
-      if (numSegments != that.numSegments)
-         return false;
-      return Objects.equals(hashFunction, that.hashFunction);
+      return true;
 
    }
 

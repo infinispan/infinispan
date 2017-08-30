@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -571,5 +572,9 @@ public class AbstractInfinispanTest {
             ref.interrupt();
          }
       }
+   }
+
+   protected Map<Class<?>, Object> amendGlobalComponents() {
+      return Collections.emptyMap();
    }
 }

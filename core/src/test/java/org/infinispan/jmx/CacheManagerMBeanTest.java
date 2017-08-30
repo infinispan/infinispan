@@ -118,7 +118,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, "Hibernate2LC", true, false);
       ObjectName otherName = getCacheManagerObjectName(otherJmxDomain, "Hibernate2LC");
       try {
-         assertEquals(0, server.getAttribute(otherName, "CreatedCacheCount"));
+         assertEquals("0", server.getAttribute(otherName, "CreatedCacheCount"));
       } finally {
          otherContainer.stop();
       }

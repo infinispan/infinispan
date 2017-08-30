@@ -15,13 +15,11 @@ public class GlobalStateConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable()
          .build();
    public static final AttributeDefinition<String> PERSISTENT_LOCATION = AttributeDefinition
-         .builder("persistentLocation", null, String.class).initializer(() -> {
-            return SecurityActions.getSystemProperty("user.dir");
-         }).immutable().build();
+         .builder("persistentLocation", null, String.class)
+            .initializer(() -> SecurityActions.getSystemProperty("user.dir")).immutable().build();
    public static final AttributeDefinition<String> TEMPORARY_LOCATION = AttributeDefinition
-         .builder("temporaryLocation", null, String.class).initializer(() -> {
-            return SecurityActions.getSystemProperty("java.io.tmpdir");
-         }).immutable().build();
+         .builder("temporaryLocation", null, String.class)
+            .initializer(() -> SecurityActions.getSystemProperty("java.io.tmpdir")).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalStateConfiguration.class, ENABLED, PERSISTENT_LOCATION, TEMPORARY_LOCATION);

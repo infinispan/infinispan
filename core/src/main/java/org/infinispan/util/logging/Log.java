@@ -34,6 +34,7 @@ import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.jmx.JmxDomainConflictException;
@@ -1554,7 +1555,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException configAlreadyDefined(String cacheName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke defineConfiguration first and then getCache. Cache name was %s", id = 454)
+   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke createCache first and then getCache. Cache name was %s", id = 454)
    void warnAttemptToOverrideExistingConfiguration(String cacheName);
 
    @LogMessage(level = ERROR)
@@ -1650,4 +1651,13 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot create remote transaction %s, already completed", id = 482)
    CacheException remoteTransactionAlreadyCompleted(GlobalTransaction gtx);
+
+   @Message(value = "The CacheManager is not clustered", id = 483)
+   IllegalStateException cacheManagerIsNotClustered();
+
+   @Message(value = "Could not serialize the configuration of cache '%s' (%s)", id = 484)
+   CacheConfigurationException configurationSerializationFailed(String cacheName, Configuration configuration, @Cause Exception e);
+
+   @Message(value = "Cannot create clustered configuration for cache '%s' because configuration %n%s%n is incompatible with the existing configuration %n%s", id = 485)
+   CacheConfigurationException incompatibleClusterConfiguration(String cacheName, Configuration configuration, Configuration existing);
 }

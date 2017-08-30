@@ -42,7 +42,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.InternalCacheFactory;
@@ -65,11 +64,7 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.impl.ClusterExecutors;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -80,7 +75,6 @@ import org.infinispan.security.impl.PrincipalRoleMapperContextImpl;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.impl.CacheContainerStatsImpl;
-import org.infinispan.util.ByteString;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.logging.Log;
@@ -121,7 +115,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  *    ConfigurationBuilder confBuilder = new ConfigurationBuilder();
  *    confBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
- *    manager.defineConfiguration("myReplicatedCache", confBuilder.build());
+ *    manager.createCache("myReplicatedCache", confBuilder.build());
  *    Cache&lt;String, String&gt; replicatedCache = manager.getCache("myReplicatedCache");
  * </code></pre>
  *
@@ -146,6 +140,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final String defaultCacheName;
 
    private final Lock lifecycleLock = new ReentrantLock();
+   private final DefaultClusterCacheManager clusterCacheManager;
    private volatile boolean stopping;
 
    /**
@@ -259,6 +254,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       this.stats = new CacheContainerStatsImpl(this);
       health = new HealthImpl(this);
       globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
+      this.clusterCacheManager = globalConfiguration.isClustered() ? new DefaultClusterCacheManager(this, authzHelper) : null;
       if (start)
          start();
    }
@@ -330,6 +326,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          stats = new CacheContainerStatsImpl(this);
          health = new HealthImpl(this);
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
+         clusterCacheManager = globalConfiguration.isClustered() ? new DefaultClusterCacheManager(this, authzHelper) : null;
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -337,6 +334,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
       if (start)
          start();
+
    }
 
    @Override
@@ -400,6 +398,12 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
          configurationManager.removeConfiguration(configurationName);
       }
+   }
+
+   @Override
+   public <K, V> Cache<K, V> createCache(String name, Configuration configuration) {
+      defineConfiguration(name, configuration);
+      return getCache(name);
    }
 
    /**
@@ -526,27 +530,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public void removeCache(String cacheName) {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
-      ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
-      if (cacheComponentRegistry != null) {
-         RemoveCacheCommand cmd = new RemoveCacheCommand(ByteString.fromString(cacheName), this);
-         Transport transport = getTransport();
-         try {
-            CompletableFuture<?> future;
-            if (transport != null) {
-               Configuration c = configurationManager.getConfiguration(cacheName, defaultCacheName);
-               // Use sync replication timeout
-               CompletableFuture<Map<Address, Response>> remoteFuture =
-                     transport.invokeRemotelyAsync(null, cmd, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-                           c.clustering().remoteTimeout(), null, DeliverOrder.NONE, false);
-               future = cmd.invokeAsync().thenCompose(o -> remoteFuture);
-            } else {
-               future = cmd.invokeAsync();
-            }
-
-            future.get();
-         } catch (Throwable t) {
-            throw new CacheException("Error removing cache", t);
-         }
+      if (clusterCacheManager != null)
+         clusterCacheManager.removeCache(cacheName);
+      else {
+         RemoveCacheCommand.removeCache(this, cacheName);
       }
    }
 
@@ -1016,6 +1003,15 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          return ClusterExecutors.allSubmissionExecutor(null, this, null,
                TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT.getDefaultValue(), TimeUnit.MILLISECONDS, ForkJoinPool.commonPool(),
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
+      }
+   }
+
+   @Override
+   public ClusterCacheManager cluster() {
+      if (clusterCacheManager != null) {
+         return clusterCacheManager;
+      } else {
+         throw log.cacheManagerIsNotClustered();
       }
    }
 }

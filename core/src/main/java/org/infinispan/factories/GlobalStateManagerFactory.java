@@ -12,7 +12,6 @@ import org.infinispan.globalstate.impl.GlobalStateManagerImpl;
  */
 @DefaultFactoryFor(classes = GlobalStateManager.class)
 public class GlobalStateManagerFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
-
    @Override
    public <T> T construct(Class<T> componentType) {
       if (globalConfiguration.globalState().enabled())

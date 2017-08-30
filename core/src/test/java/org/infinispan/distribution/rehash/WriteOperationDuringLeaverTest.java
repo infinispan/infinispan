@@ -16,16 +16,22 @@ import org.hamcrest.Description;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.InvocationMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.testng.annotations.Test;
@@ -67,6 +73,15 @@ public class WriteOperationDuringLeaverTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.clustering().hash().numOwners(2);
       createClusteredCaches(NUMBER_NODES, builder);
+   }
+
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder configuration) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false,
+            GlobalConfigurationBuilder.defaultClusteredBuilder(), configuration, new TransportFlags(), false);
+      TestingUtil.replaceComponent(cm, GlobalConfigurationManager.class, new NoOpGlobalConfigurationManager(), true);
+      cacheManagers.add(cm);
+      cm.start();
+      return cm;
    }
 
    private void doTest(Operation operation, boolean init) throws TimeoutException, InterruptedException {
