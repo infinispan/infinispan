@@ -173,9 +173,20 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(new ConfigurationBuilder(), flags);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false,
+            GlobalConfigurationBuilder.defaultClusteredBuilder(), new ConfigurationBuilder(), flags, false);
+      amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
+      cm.start();
       return cm;
+   }
+
+   /**
+    * Allows a test to manipulate a cache manager before it is started. Does nothing by default
+    * @param cm
+    */
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      // Do nothing
    }
 
    /**
@@ -201,20 +212,26 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder, flags);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(), builder, flags, false);
+      amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
+      cm.start();
       return cm;
    }
 
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilderHolder builderHolder) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builderHolder);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, builderHolder, false);
+      amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
+      cm.start();
       return cm;
    }
 
    protected EmbeddedCacheManager addClusterEnabledCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder, TransportFlags flags) {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalBuilder, builder, flags);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false, globalBuilder, builder, flags, false);
+      amendCacheManagerBeforeStart(cm);
       cacheManagers.add(cm);
+      cm.start();
       return cm;
    }
 

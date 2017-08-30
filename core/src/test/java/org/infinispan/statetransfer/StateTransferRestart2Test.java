@@ -12,6 +12,8 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
@@ -38,7 +40,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 5.2
  */
-@Test(groups = "functional", testName = "statetransfer.StateTransferRestartTest")
+@Test(groups = "functional", testName = "statetransfer.StateTransferRestart2Test")
 @CleanupAfterMethod
 public class StateTransferRestart2Test extends MultipleCacheManagersTest {
 
@@ -56,6 +58,11 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(gcb0, cfgBuilder, new TransportFlags().withFD(true));
       GlobalConfigurationBuilder gcb1 = new GlobalConfigurationBuilder().clusteredDefault();
       addClusterEnabledCacheManager(gcb1, cfgBuilder, new TransportFlags().withFD(true));
+   }
+
+   @Override
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      NoOpGlobalConfigurationManager.amendCacheManager(cm);
    }
 
    public void testStateTransferRestart() throws Throwable {

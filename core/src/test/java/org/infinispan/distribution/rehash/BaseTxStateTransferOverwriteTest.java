@@ -27,6 +27,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -60,6 +61,11 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
    protected boolean l1Enabled() {
       return cache(0).getCacheConfiguration().clustering().l1().enabled();
+   }
+
+   @Override
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      NoOpGlobalConfigurationManager.amendCacheManager(cm);
    }
 
    /**

@@ -12,7 +12,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 
 /**
- * A Listable that can also filter events based on key
+ * A Listenable that can also filter events based on key
  *
  * @author Manik Surtani
  * @since 6.0

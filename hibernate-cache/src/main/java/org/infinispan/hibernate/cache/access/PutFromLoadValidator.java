@@ -675,7 +675,7 @@ public class PutFromLoadValidator {
 	public void removePendingPutsCache() {
       String pendingPutsName = getPendingPutsName( cache );
       EmbeddedCacheManager cm = cache.getCacheManager();
-      cm.removeCache( pendingPutsName );
+      cm.administration().removeCache( pendingPutsName );
    }
 
 	/**

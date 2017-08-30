@@ -127,7 +127,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assertNotNull(cacheManager.getCache("test"));
       ObjectName cacheMBean = getCacheObjectName(JMX_DOMAIN, "test(local)");
       assertTrue(existsObject(cacheMBean));
-      cacheManager.removeCache("test");
+      cacheManager.administration().removeCache("test");
       assertFalse(existsObject(cacheMBean));
    }
 

@@ -30,7 +30,7 @@ public class CollectionRegionImplTest extends AbstractEntityCollectionRegionTest
 	protected void supportedAccessTypeTest(RegionFactory regionFactory, Properties properties) {
 		CollectionRegion region = regionFactory.buildCollectionRegion(CACHE_NAME, properties, MUTABLE_NON_VERSIONED);
 		assertNotNull(region.buildAccessStrategy(accessType));
-		((InfinispanRegionFactory) regionFactory).getCacheManager().removeCache(CACHE_NAME);
+		((InfinispanRegionFactory) regionFactory).getCacheManager().administration().removeCache(CACHE_NAME);
 	}
 
 	@Override

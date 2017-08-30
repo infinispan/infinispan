@@ -59,7 +59,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       if (flags.contains(Flag.GLOBAL) && globalConfiguration.isClustered()) {
          builder.clustering()
                .cacheMode(CacheMode.REPL_SYNC)
-               .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES)
+               .partitionHandling().whenSplit(PartitionHandling.ALLOW_READS)
                .sync().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
       }
       if (flags.contains(Flag.PERSISTENT) && globalConfiguration.globalState().enabled()) {

@@ -12,12 +12,8 @@ import org.infinispan.server.core.admin.AdminFlag;
 import org.infinispan.server.core.admin.AdminServerTask;
 
 /**
- * Admin operation to create a cache
- * Parameters:
- * <ul>
- *    <li><strong>name</strong> the name of the cache to remove</li>
- *    <li><strong>flags</strong> </li>
- * </ul>
+ * Admin operation to create a cache Parameters: <ul> <li><strong>name</strong> the name of the cache to remove</li>
+ * <li><strong>flags</strong> </li> </ul>
  *
  * @author Tristan Tarrant
  * @since 9.1
@@ -51,26 +47,19 @@ public class CacheCreateTask extends AdminServerTask<Void> {
       if (isPersistent(flags))
          throw new UnsupportedOperationException();
 
-      String name = requireParameter(parameters,"name");
+      String name = requireParameter(parameters, "name");
       String template = getParameter(parameters, "template");
-      cacheManager.executor().submitConsumer(localManager -> {
-         ConfigurationBuilder builder = new ConfigurationBuilder();
-         if (template != null) {
-            builder.read(localManager.getCacheConfiguration(template));
-         } else {
-            Configuration parent = localManager.getDefaultCacheConfiguration();
-            if (parent != null)
-               builder.read(parent);
-         }
-         builder.template(false);
-         localManager.defineConfiguration(name, builder.build());
-         localManager.getCache(name);
-         return null;
-      }, (address, value, throwable) -> {
-         if (throwable != null) {
-            log.fatal("Cache startup encountered exception on node " + address, throwable);
-         }
-      }).join();
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      if (template != null) {
+         builder.read(cacheManager.getCacheConfiguration(template));
+      } else {
+         Configuration parent = cacheManager.getDefaultCacheConfiguration();
+         if (parent != null)
+            builder.read(parent);
+      }
+      builder.template(false);
+      cacheManager.administration().createCache(name, builder.build());
 
       return null;
    }
