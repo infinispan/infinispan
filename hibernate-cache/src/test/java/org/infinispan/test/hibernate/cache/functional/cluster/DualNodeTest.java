@@ -19,7 +19,7 @@ import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
-import org.hibernate.resource.transaction.spi.TransactionCoordinatorBuilder;
+import org.hibernate.resource.transaction.TransactionCoordinatorBuilder;
 
 import org.infinispan.test.hibernate.cache.functional.AbstractFunctionalTest;
 import org.infinispan.test.hibernate.cache.util.InfinispanTestingSetup;

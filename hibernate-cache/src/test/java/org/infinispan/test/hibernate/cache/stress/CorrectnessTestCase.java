@@ -478,7 +478,7 @@ public abstract class CorrectnessTestCase {
       List<DelayedInvalidators> delayed = new LinkedList<>();
       for (int i = 0; i < sessionFactories.length; i++) {
          SessionFactoryImplementor sfi = (SessionFactoryImplementor) sessionFactories[i];
-         for (Object regionName : sfi.getCache().getSecondLevelCacheRegionNames()) {
+         for (Object regionName : sfi.getAllSecondLevelCacheRegions().keySet()) {
             PutFromLoadValidator validator = getPutFromLoadValidator(sfi, (String) regionName);
             if (validator == null) {
                log.warn("No validator for " + regionName);

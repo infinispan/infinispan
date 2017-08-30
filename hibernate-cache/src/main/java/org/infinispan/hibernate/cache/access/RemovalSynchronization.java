@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.hibernate.cache.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.util.InvocationAfterCompletion;
 import org.infinispan.hibernate.cache.util.VersionedEntry;
-import org.hibernate.resource.transaction.spi.TransactionCoordinator;
+import org.hibernate.resource.transaction.TransactionCoordinator;
 
 import org.infinispan.AdvancedCache;
 

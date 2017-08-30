@@ -15,7 +15,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.SharedSessionContract;
 import org.hibernate.Transaction;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -29,7 +31,7 @@ import org.hibernate.cache.spi.Region;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.hibernate.cache.util.CacheTestUtil;
@@ -130,8 +132,8 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 		withSessionFactoriesAndRegions(2, ((sessionFactories, regions) -> {
 			GeneralDataRegion localRegion = regions.get(0);
 			GeneralDataRegion remoteRegion = regions.get(1);
-			SharedSessionContractImplementor localSession = (SharedSessionContractImplementor) sessionFactories.get(0).openSession();
-			SharedSessionContractImplementor remoteSession = (SharedSessionContractImplementor) sessionFactories.get(1).openSession();
+			SessionImplementor localSession = (SessionImplementor) sessionFactories.get(0).openSession();
+			SessionImplementor remoteSession = (SessionImplementor) sessionFactories.get(1).openSession();
 			AdvancedCache localCache = ((BaseRegion) localRegion).getCache();
 			AdvancedCache remoteCache = ((BaseRegion) remoteRegion).getCache();
 			try {
@@ -144,7 +146,7 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 				ExpectingInterceptor.get(localCache).when((ctx, cmd) -> cmd instanceof PutKeyValueCommand).countDown(insertLatch);
 				ExpectingInterceptor.get(remoteCache).when((ctx, cmd) -> cmd instanceof PutKeyValueCommand).countDown(insertLatch);
 
-				Transaction tx = localSession.getTransaction();
+				Transaction tx = ( (SharedSessionContract) localSession ).getTransaction();
 				tx.begin();
 				try {
 					localRegion.put(localSession, KEY, VALUE1);
@@ -168,8 +170,8 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 				assertEquals(null, localRegion.get(localSession, KEY));
 				assertEquals(null, remoteRegion.get(remoteSession, KEY));
 			} finally {
-				localSession.close();
-				remoteSession.close();
+				( (Session) localSession ).close();
+				( (Session) remoteSession ).close();
 
 				ExpectingInterceptor.cleanup(localCache, remoteCache);
 			}
@@ -194,8 +196,8 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 			GeneralDataRegion remoteRegion = regions.get(1);
 			AdvancedCache localCache = ((BaseGeneralDataRegion) localRegion).getCache();
 			AdvancedCache remoteCache = ((BaseGeneralDataRegion) remoteRegion).getCache();
-			SharedSessionContractImplementor localSession = (SharedSessionContractImplementor) sessionFactories.get(0).openSession();
-			SharedSessionContractImplementor remoteSession = (SharedSessionContractImplementor) sessionFactories.get(1).openSession();
+			SessionImplementor localSession = (SessionImplementor) sessionFactories.get(0).openSession();
+			SessionImplementor remoteSession = (SessionImplementor) sessionFactories.get(1).openSession();
 
 			try {
 				Set localKeys = localCache.keySet();
@@ -230,8 +232,8 @@ public abstract class AbstractGeneralDataRegionTest extends AbstractRegionImplTe
 				assertEquals( "local is clean", null, localRegion.get(null, KEY ) );
 				assertEquals( "remote is clean", null, remoteRegion.get(null, KEY ) );
 			} finally {
-				localSession.close();
-				remoteSession.close();
+				( (Session) localSession ).close();
+				( (Session) remoteSession ).close();
 			}
 
 		});

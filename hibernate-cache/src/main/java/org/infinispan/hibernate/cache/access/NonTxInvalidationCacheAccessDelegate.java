@@ -9,7 +9,7 @@ package org.infinispan.hibernate.cache.access;
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.impl.BaseRegion;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 
 /**
  * Delegate for non-transactional caches
@@ -23,7 +23,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 
 	@Override
 	@SuppressWarnings("UnusedParameters")
-	public boolean insert(SharedSessionContractImplementor session, Object key, Object value, Object version) throws CacheException {
+	public boolean insert(SessionImplementor session, Object key, Object value, Object version) throws CacheException {
 		if ( !region.checkValid() ) {
 			return false;
 		}
@@ -45,7 +45,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 
 	@Override
 	@SuppressWarnings("UnusedParameters")
-	public boolean update(SharedSessionContractImplementor session, Object key, Object value, Object currentVersion, Object previousVersion)
+	public boolean update(SessionImplementor session, Object key, Object value, Object currentVersion, Object previousVersion)
 			throws CacheException {
 		// We update whether or not the region is valid. Other nodes
 		// may have already restored the region so they need to
@@ -67,13 +67,13 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 	}
 
 	@Override
-	public boolean afterInsert(SharedSessionContractImplementor session, Object key, Object value, Object version) {
+	public boolean afterInsert(SessionImplementor session, Object key, Object value, Object version) {
 		// endInvalidatingKeys is called from NonTxInvalidationInterceptor, from the synchronization callback
 		return false;
 	}
 
 	@Override
-	public boolean afterUpdate(SharedSessionContractImplementor session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
+	public boolean afterUpdate(SessionImplementor session, Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) {
 		// endInvalidatingKeys is called from NonTxInvalidationInterceptor, from the synchronization callback
 		return false;
 	}

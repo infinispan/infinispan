@@ -15,6 +15,7 @@
 
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+      <version.hibernate.core>5.1.10.Final</version.hibernate.core>
    </properties>
 
    <dependencies>
@@ -25,6 +26,7 @@
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-core</artifactId>
+         <version>${version.hibernate.core}</version>
       </dependency>
 
       <dependency>
@@ -36,6 +38,7 @@
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-testing</artifactId>
+         <version>${version.hibernate.core}</version>
          <scope>test</scope>
          <exclusions>
             <exclusion>
@@ -43,6 +46,12 @@
                <artifactId>log4j</artifactId>
             </exclusion>
          </exclusions>
+      </dependency>
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <version>${version.hibernate.core}</version>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.mockito</groupId>

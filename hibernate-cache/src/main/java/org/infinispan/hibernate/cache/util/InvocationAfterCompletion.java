@@ -14,7 +14,7 @@ import javax.transaction.Synchronization;
 import org.hibernate.HibernateException;
 import org.hibernate.jdbc.WorkExecutor;
 import org.hibernate.jdbc.WorkExecutorVisitable;
-import org.hibernate.resource.transaction.spi.TransactionCoordinator;
+import org.hibernate.resource.transaction.TransactionCoordinator;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
