@@ -26,6 +26,7 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -139,6 +140,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          getOrCreateComponent(ClusterTopologyManager.class);
          getOrCreateComponent(ClusterContainerStats.class);
          getOrCreateComponent(EncoderRegistry.class);
+         getOrCreateComponent(GlobalConfigurationManager.class);
 
          getOrCreateComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
       } catch (Exception e) {
@@ -277,10 +279,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private void warnAboutUberJarDuplicates() {
       UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
       scanner.isClasspathCorrectAsync()
-              .thenAcceptAsync(isClasspathCorrect -> {
-                 if(!isClasspathCorrect)
-                    log.warnAboutUberJarDuplicates();
-              });
+            .thenAcceptAsync(isClasspathCorrect -> {
+               if(!isClasspathCorrect)
+                  log.warnAboutUberJarDuplicates();
+            });
    }
 
    @Override

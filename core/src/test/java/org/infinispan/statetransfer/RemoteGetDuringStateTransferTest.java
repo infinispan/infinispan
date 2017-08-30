@@ -25,10 +25,13 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.CacheContainer;
@@ -40,6 +43,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
@@ -662,6 +667,15 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       createClusteredCaches(2, configuration());
    }
 
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder defaultConfig) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false,
+            GlobalConfigurationBuilder.defaultClusteredBuilder(), defaultConfig, new TransportFlags(), false);
+      TestingUtil.replaceComponent(cm, GlobalConfigurationManager.class, new NoOpGlobalConfigurationManager(), true);
+      cacheManagers.add(cm);
+      cm.start();
+      return cm;
+   }
+
    private Future<Object> remoteGet(Cache cache, Object key) {
       return fork(() -> cache.get(key));
    }
@@ -825,4 +839,5 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       Future<Void> joinerFuture;
       BlockingLocalTopologyManager localTopologyManager;
    }
+
 }

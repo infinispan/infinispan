@@ -13,7 +13,6 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 public interface GlobalStateManager {
-
    /**
     * Registers a state provider within this state manager
     *
