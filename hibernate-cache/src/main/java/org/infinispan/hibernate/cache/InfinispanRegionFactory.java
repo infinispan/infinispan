@@ -303,7 +303,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 	}
 
 	@Override
-	public CollectionRegion buildCollectionRegion(String regionName, Map<String, Object> configValues, CacheDataDescription metadata) {
+	public CollectionRegion buildCollectionRegion(String regionName, Properties properties, CacheDataDescription metadata) {
 		if ( log.isDebugEnabled() ) {
 			log.debug( "Building collection cache region [" + regionName + "]" );
 		}
@@ -314,16 +314,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public CollectionRegion buildCollectionRegion(
-			String regionName,
-			Properties properties,
-			CacheDataDescription metadata) throws CacheException {
-		return buildCollectionRegion( regionName, (Map) properties, metadata );
-	}
-
-	@Override
-	public EntityRegion buildEntityRegion(String regionName, Map<String, Object> configValues, CacheDataDescription metadata) {
+	public EntityRegion buildEntityRegion(String regionName, Properties properties, CacheDataDescription metadata) {
 		if ( log.isDebugEnabled() ) {
 			log.debugf(
 					"Building entity cache region [%s] (mutable=%s, versioned=%s)",
@@ -339,13 +330,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public EntityRegion buildEntityRegion(String regionName, Properties properties, CacheDataDescription metadata) {
-		return buildEntityRegion( regionName, (Map) properties, metadata );
-	}
-
-	@Override
-	public NaturalIdRegion buildNaturalIdRegion(String regionName, Map<String, Object> configValues, CacheDataDescription metadata) {
+	public NaturalIdRegion buildNaturalIdRegion(String regionName, Properties properties, CacheDataDescription metadata) {
 		if ( log.isDebugEnabled() ) {
 			log.debug("Building natural id cache region [" + regionName + "]");
 		}
@@ -356,13 +341,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public NaturalIdRegion buildNaturalIdRegion(String regionName, Properties properties, CacheDataDescription metadata) {
-		return buildNaturalIdRegion( regionName, (Map) properties, metadata );
-	}
-
-	@Override
-	public QueryResultsRegion buildQueryResultsRegion(String regionName, Map<String, Object> configValues) {
+	public QueryResultsRegion buildQueryResultsRegion(String regionName, Properties properties) {
 		if ( log.isDebugEnabled() ) {
 			log.debug( "Building query results cache region [" + regionName + "]" );
 		}
@@ -374,13 +353,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public QueryResultsRegion buildQueryResultsRegion(String regionName, Properties properties) {
-		return buildQueryResultsRegion( regionName, (Map) properties );
-	}
-
-	@Override
-	public TimestampsRegion buildTimestampsRegion(String regionName, Map<String, Object> configValues) {
+	public TimestampsRegion buildTimestampsRegion(String regionName, Properties properties) {
 		if ( log.isDebugEnabled() ) {
 			log.debug( "Building timestamps cache region [" + regionName + "]" );
 		}
@@ -388,12 +361,6 @@ public class InfinispanRegionFactory implements RegionFactory {
 		final TimestampsRegionImpl region = createTimestampsRegion( cache, regionName );
 		startRegion( region );
 		return region;
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public TimestampsRegion buildTimestampsRegion(String regionName, Properties properties) {
-		return buildTimestampsRegion( regionName, (Map) properties );
 	}
 
 	protected TimestampsRegionImpl createTimestampsRegion(

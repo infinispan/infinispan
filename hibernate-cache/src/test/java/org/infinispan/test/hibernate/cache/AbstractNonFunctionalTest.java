@@ -18,7 +18,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.infinispan.hibernate.cache.util.Caches;
 import org.hibernate.cache.spi.RegionFactory;
 import org.hibernate.cache.spi.access.AccessType;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.resource.transaction.spi.TransactionStatus;
 
@@ -140,7 +140,7 @@ public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.ju
 		return true;
 	}
 
-	protected <T> T withTx(NodeEnvironment environment, SharedSessionContractImplementor session, Callable<T> callable) throws Exception {
+	protected <T> T withTx(NodeEnvironment environment, SessionImplementor session, Callable<T> callable) throws Exception {
 		if (jtaPlatform != null) {
 			TransactionManager tm = environment.getServiceRegistry().getService(JtaPlatform.class).retrieveTransactionManager();
 			return Caches.withinTx(tm, callable);

@@ -13,7 +13,7 @@ import javax.transaction.Transaction;
 import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.util.Caches;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -63,7 +63,7 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object get(SharedSessionContractImplementor session, Object key) throws CacheException {
+	public Object get(SessionImplementor session, Object key) throws CacheException {
 		Object value = localCache.get( key );
 
 		if ( value == null && checkValid() ) {

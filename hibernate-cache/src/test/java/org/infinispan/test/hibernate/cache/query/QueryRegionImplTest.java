@@ -24,7 +24,7 @@ import org.hibernate.cache.internal.StandardQueryCache;
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.cache.spi.Region;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 
 import org.hibernate.testing.TestForIssue;
 import org.infinispan.test.hibernate.cache.AbstractGeneralDataRegionTest;
@@ -228,11 +228,11 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	}
 
 	protected interface SessionConsumer {
-		void accept(SharedSessionContractImplementor session) throws Exception;
+		void accept(SessionImplementor session) throws Exception;
 	}
 
 	protected interface SessionCallable<T> {
-		T call(SharedSessionContractImplementor session) throws Exception;
+		T call(SessionImplementor session) throws Exception;
 	}
 
 	protected <T> T callWithSession(SessionFactory sessionFactory, SessionCallable<T> callable) throws Exception {
@@ -240,7 +240,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 		Transaction tx = session.getTransaction();
 		tx.begin();
 		try {
-			T retval = callable.call((SharedSessionContractImplementor) session);
+			T retval = callable.call((SessionImplementor) session);
 			tx.commit();
 			return retval;
 		} catch (Exception e) {

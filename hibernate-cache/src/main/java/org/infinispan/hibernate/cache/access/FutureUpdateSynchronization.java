@@ -12,7 +12,7 @@ import org.infinispan.hibernate.cache.impl.BaseTransactionalDataRegion;
 import org.infinispan.hibernate.cache.util.FutureUpdate;
 import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.util.InvocationAfterCompletion;
-import org.hibernate.resource.transaction.spi.TransactionCoordinator;
+import org.hibernate.resource.transaction.TransactionCoordinator;
 
 import org.infinispan.AdvancedCache;
 

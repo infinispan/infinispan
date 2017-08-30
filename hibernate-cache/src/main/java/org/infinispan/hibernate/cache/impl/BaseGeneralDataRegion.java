@@ -10,7 +10,7 @@ import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.util.Caches;
 import org.hibernate.cache.spi.GeneralDataRegion;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.AdvancedCache;
 
@@ -50,13 +50,13 @@ public abstract class BaseGeneralDataRegion extends BaseRegion implements Genera
 	}
 
 	@Override
-	public Object get(SharedSessionContractImplementor session, Object key) throws CacheException {
+	public Object get(SessionImplementor session, Object key) throws CacheException {
 		return cache.get( key );
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void put(SharedSessionContractImplementor session, Object key, Object value) throws CacheException {
+	public void put(SessionImplementor session, Object key, Object value) throws CacheException {
 		putCache.put( key, value );
 	}
 

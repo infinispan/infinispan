@@ -151,8 +151,7 @@ public class InvalidationTest extends SingleNodeTest {
    }
 
    protected AdvancedCache getPendingPutsCache(Class<Item> entityClazz) {
-      EntityRegionImpl region = (EntityRegionImpl) sessionFactory().getCache()
-         .getEntityRegionAccess(entityClazz.getName()).getRegion();
+      EntityRegionImpl region = (EntityRegionImpl) sessionFactory().getSecondLevelCacheRegion( entityClazz.getName() );
       AdvancedCache entityCache = region.getCache();
       return (AdvancedCache) entityCache.getCacheManager().getCache(
             entityCache.getName() + "-" + InfinispanRegionFactory.DEF_PENDING_PUTS_RESOURCE).getAdvancedCache();
@@ -171,7 +170,7 @@ public class InvalidationTest extends SingleNodeTest {
          Item i = new Item("inserted", "bar");
          s.persist(i);
          s.flush();
-         s.getTransaction().setRollbackOnly();
+         s.getTransaction().markRollbackOnly();
       });
       assertNoInvalidators(pendingPutsCache);
    }
@@ -191,14 +190,14 @@ public class InvalidationTest extends SingleNodeTest {
          s.persist(item2);
          s.flush();
          s.flush(); // workaround for HHH-11312
-         s.getTransaction().setRollbackOnly();
+         s.getTransaction().markRollbackOnly();
       });
       assertNoInvalidators(pendingPutsCache);
 
       withTxSession(s -> {
          Item item3 = s.load(Item.class, item.getId());
          assertEquals("before-update", item3.getName());
-         s.remove(item3);
+         s.delete(item3);
       });
       assertNoInvalidators(pendingPutsCache);
    }
@@ -214,16 +213,16 @@ public class InvalidationTest extends SingleNodeTest {
       withTxSession(s -> {
          Item item2 = s.load(Item.class, item.getId());
          assertEquals("before-remove", item2.getName());
-         s.remove(item2);
+         s.delete(item2);
          s.flush();
-         s.getTransaction().setRollbackOnly();
+         s.getTransaction().markRollbackOnly();
       });
       assertNoInvalidators(pendingPutsCache);
 
       withTxSession(s -> {
          Item item3 = s.load(Item.class, item.getId());
          assertEquals("before-remove", item3.getName());
-         s.remove(item3);
+         s.delete(item3);
       });
       assertNoInvalidators(pendingPutsCache);
    }

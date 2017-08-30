@@ -6,6 +6,7 @@ import org.hibernate.cache.internal.SimpleCacheKeysFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.spi.CacheImplementor;
+import org.hibernate.jpa.AvailableSettings;
 import org.infinispan.test.hibernate.cache.functional.entities.Name;
 import org.infinispan.test.hibernate.cache.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.util.InfinispanTestingSetup;
@@ -30,7 +31,7 @@ public class CacheKeysFactoryTest extends BaseUnitTestCase {
          .setProperty(Environment.USE_SECOND_LEVEL_CACHE, "true")
          .setProperty(Environment.CACHE_REGION_FACTORY, TestInfinispanRegionFactory.class.getName())
          .setProperty(Environment.DEFAULT_CACHE_CONCURRENCY_STRATEGY, "transactional")
-         .setProperty(Environment.JPA_SHARED_CACHE_MODE, "ALL")
+         .setProperty(AvailableSettings.SHARED_CACHE_MODE, "ALL")
          .setProperty(Environment.HBM2DDL_AUTO, "create-drop");
       if (cacheKeysFactory != null) {
          configuration.setProperty(Environment.CACHE_KEYS_FACTORY, cacheKeysFactory);

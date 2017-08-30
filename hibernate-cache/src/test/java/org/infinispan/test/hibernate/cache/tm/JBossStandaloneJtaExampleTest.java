@@ -22,6 +22,7 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.resource.transaction.spi.TransactionStatus;
 import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.hibernate.cfg.Environment;
 import org.hibernate.engine.transaction.jta.platform.internal.JBossStandAloneJtaPlatform;
@@ -108,7 +109,7 @@ public class JBossStandaloneJtaExampleTest {
 			ut.begin();
 			try {
 				Session session = sessionFactory.openSession();
-				assertTrue(session.getTransaction().isActive());
+            assertEquals(TransactionStatus.ACTIVE, session.getTransaction().getStatus());
 				item = new Item("anItem", "An item owned by someone");
 				session.persist(item);
 				// IMO the flush should not be necessary, but session.close() does not flush
@@ -129,7 +130,7 @@ public class JBossStandaloneJtaExampleTest {
 			ut.begin();
 			try {
 				Session session = sessionFactory.openSession();
-				assertTrue(session.getTransaction().isActive());
+            assertEquals(TransactionStatus.ACTIVE, session.getTransaction().getStatus());
 				Item found = (Item) session.load(Item.class, item.getId());
 				Statistics stats = session.getSessionFactory().getStatistics();
 				log.info(stats.toString());
@@ -155,7 +156,7 @@ public class JBossStandaloneJtaExampleTest {
 			ut.begin();
 			try {
 				Session session = sessionFactory.openSession();
-				assertTrue(session.getTransaction().isActive());
+            assertEquals(TransactionStatus.ACTIVE, session.getTransaction().getStatus());
 				assertNull(session.get(Item.class, item.getId()));
 				session.close();
 			} catch(Exception e) {

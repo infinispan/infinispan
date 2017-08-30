@@ -4,7 +4,7 @@ import org.hibernate.cache.internal.CacheDataDescriptionImpl;
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.access.RegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.internal.util.compare.ComparableComparator;
 
 import org.infinispan.test.hibernate.cache.util.TestingKeyFactory;
@@ -25,7 +25,7 @@ public abstract class AbstractExtraAPITest<S extends RegionAccessStrategy> exten
 	public static final Object KEY = TestingKeyFactory.generateCollectionCacheKey( "KEY" );
 	public static final CacheDataDescription CACHE_DATA_DESCRIPTION
 			= new CacheDataDescriptionImpl(true, true, ComparableComparator.INSTANCE, null);
-	protected static final SharedSessionContractImplementor SESSION = mock(SharedSessionContractImplementor.class);
+	protected static final SessionImplementor SESSION = mock(SessionImplementor.class);
 
 	protected S accessStrategy;
 	protected NodeEnvironment environment;

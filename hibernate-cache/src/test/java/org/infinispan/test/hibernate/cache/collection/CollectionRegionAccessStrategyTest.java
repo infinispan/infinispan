@@ -19,7 +19,7 @@ import org.infinispan.hibernate.cache.access.TxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.collection.CollectionRegionImpl;
 import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.test.hibernate.cache.AbstractRegionAccessStrategyTest;
 import org.infinispan.test.hibernate.cache.NodeEnvironment;
@@ -109,14 +109,14 @@ public class CollectionRegionAccessStrategyTest extends
 
 		final String KEY = "k1";
 		Future<Void> pferFuture = executorService.submit(() -> {
-			SharedSessionContractImplementor session = mockedSession();
+			SessionImplementor session = mockedSession();
 			delegate.putFromLoad(session, KEY, "v1", session.getTimestamp(), null);
 			return null;
 		});
 
 		Future<Void> removeFuture = executorService.submit(() -> {
 			removeLatch.await();
-			SharedSessionContractImplementor session = mockedSession();
+			SessionImplementor session = mockedSession();
 			withTx(localEnvironment, session, () -> {
 				delegate.remove(session, KEY);
 				return null;
@@ -143,7 +143,7 @@ public class CollectionRegionAccessStrategyTest extends
 	}
 
 	@Override
-	protected void doUpdate(CollectionRegionAccessStrategy strategy, SharedSessionContractImplementor session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
+	protected void doUpdate(CollectionRegionAccessStrategy strategy, SessionImplementor session, Object key, Object value, Object version) throws javax.transaction.RollbackException, javax.transaction.SystemException {
 		SoftLock softLock = strategy.lockItem(session, key, version);
 		strategy.remove(session, key);
 		session.getTransactionCoordinator().getLocalSynchronizations().registerSynchronization(

@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PessimisticLockException;
+
+import org.hibernate.StaleStateException;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.infinispan.hibernate.cache.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.entity.EntityRegionImpl;
@@ -128,11 +130,11 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
                awaitOrThrow(preFlushLatch);
             }
             s.flush();
-         } catch (OptimisticLockException e) {
+         } catch (StaleStateException e) {
             log.info("Exception thrown: ", e);
             markRollbackOnly(s);
             return false;
-         } catch (PessimisticLockException e) {
+         } catch (PessimisticLockException | org.hibernate.PessimisticLockException e) {
             log.info("Exception thrown: ", e);
             markRollbackOnly(s);
             return false;
@@ -160,7 +162,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
                awaitOrThrow(preFlushLatch);
             }
             s.flush();
-         } catch (OptimisticLockException e) {
+         } catch (StaleStateException e) {
             log.info("Exception thrown: ", e);
             markRollbackOnly(s);
             return false;
