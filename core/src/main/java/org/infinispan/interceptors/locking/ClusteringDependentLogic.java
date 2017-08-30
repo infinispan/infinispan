@@ -493,6 +493,8 @@ public interface ClusteringDependentLogic {
                }
                isL1Write = true;
                doCommit = Commit.COMMIT_NON_LOCAL;
+            } else if (doCommit.isCommit() && entry.getMetadata() instanceof L1Metadata) {
+               throw new IllegalStateException("Local entries must not have L1 metadata");
             }
 
             if (doCommit.isCommit()) {
@@ -519,7 +521,7 @@ public interface ClusteringDependentLogic {
                   // don't overwrite non-L1 entry with L1 (e.g. when originator == backup
                   // and therefore we have two contexts on one node)
                } else {
-                  commitManager.commit(entry, trackFlag, l1Invalidation, ctx);
+                  commitManager.commit(entry, trackFlag, l1Invalidation || isL1Write, ctx);
                   if (doCommit.isLocal()) {
                      NotifyHelper.entryCommitted(notifier, functionalNotifier, created, removed, expired,
                            entry, ctx, command, previousValue, previousMetadata);
