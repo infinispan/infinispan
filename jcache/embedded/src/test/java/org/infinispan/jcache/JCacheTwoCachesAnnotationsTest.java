@@ -20,7 +20,8 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 /**
@@ -59,18 +60,24 @@ public class JCacheTwoCachesAnnotationsTest extends AbstractTwoCachesAnnotations
       return jCacheManager.getCache("annotation");
    }
 
-   @BeforeMethod
+   @BeforeTest
    public void initCacheManagers() {
       cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
       cacheManager1.defineConfiguration("annotation", getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build());
       cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
       cacheManager2.defineConfiguration("annotation", getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build());
+      TestingUtil.blockUntilViewsReceived(30000,
+            cacheManager1.getCache("annotation"),
+            cacheManager2.getCache("annotation"));
    }
 
    @AfterMethod
+   public void cleanCaches() {
+      TestingUtil.clearContent(cacheManager1, cacheManager2);
+   }
+
+   @AfterTest
    public void killCacheManagers() {
-      cacheManager1.getCache("annotation", false).clear();
-      cacheManager2.getCache("annotation", false).clear();
       TestingUtil.killCacheManagers(cacheManager1, cacheManager2);
    }
 }
