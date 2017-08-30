@@ -86,12 +86,12 @@ public class CommitManager {
     * @param ctx
     */
    public final void commit(final CacheEntry entry, final Flag operation,
-                            boolean l1Invalidation, InvocationContext ctx) {
+                            boolean l1Only, InvocationContext ctx) {
       if (trace) {
-         log.tracef("Trying to commit. Key=%s. Operation Flag=%s, L1 invalidation=%s", toStr(entry.getKey()),
-               operation, l1Invalidation);
+         log.tracef("Trying to commit. Key=%s. Operation Flag=%s, L1 write/invalidation=%s", toStr(entry.getKey()),
+               operation, l1Only);
       }
-      if (l1Invalidation || (operation == null && !trackStateTransfer && !trackXSiteStateTransfer)) {
+      if (l1Only || (operation == null && !trackStateTransfer && !trackXSiteStateTransfer)) {
          //track == null means that it is a normal put and the tracking is not enabled!
          //if it is a L1 invalidation, commit without track it.
          if (trace) {
@@ -119,7 +119,7 @@ public class CommitManager {
             return discardPolicy;
          }
          commitEntry(entry, ctx);
-         DiscardPolicy newDiscardPolicy = calculateDiscardPolicy();
+         DiscardPolicy newDiscardPolicy = calculateDiscardPolicy(operation);
          if (trace) {
             log.tracef("Committed key=%s. Old discard policy=%s. New discard policy=%s", toStr(entry.getKey()),
                        discardPolicy, newDiscardPolicy);
@@ -190,11 +190,13 @@ public class CommitManager {
             (track == Flag.PUT_FOR_X_SITE_STATE_TRANSFER && !trackXSiteStateTransfer);
    }
 
-   private DiscardPolicy calculateDiscardPolicy() {
-      if (!trackXSiteStateTransfer && !trackStateTransfer) {
+   private DiscardPolicy calculateDiscardPolicy(Flag operation) {
+      boolean discardStateTransfer = trackStateTransfer && operation != Flag.PUT_FOR_STATE_TRANSFER;
+      boolean discardXSiteStateTransfer = trackXSiteStateTransfer && operation != Flag.PUT_FOR_X_SITE_STATE_TRANSFER;
+      if (!discardStateTransfer && !discardXSiteStateTransfer) {
          return null;
       }
-      return new DiscardPolicy(trackStateTransfer, trackXSiteStateTransfer);
+      return new DiscardPolicy(discardStateTransfer, discardXSiteStateTransfer);
    }
 
    private static class DiscardPolicy {
