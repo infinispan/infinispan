@@ -11,6 +11,7 @@ import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -103,13 +104,20 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       Class<? extends Encoder> keyEncoderClass = IdentityEncoder.class;
       Class<? extends Encoder> valueEncoderClass = IdentityEncoder.class;
 
-      if (storageType == StorageType.BINARY) {
-         keyEncoderClass = BinaryEncoder.class;
-         valueEncoderClass = BinaryEncoder.class;
-      }
-      if (embeddedMode && storageType == StorageType.OFF_HEAP) {
-         keyEncoderClass = GlobalMarshallerEncoder.class;
-         valueEncoderClass = GlobalMarshallerEncoder.class;
+      boolean compatEnabled = configuration.compatibility().enabled();
+
+      if (compatEnabled && !embeddedMode) {
+         keyEncoderClass = CompatModeEncoder.class;
+         valueEncoderClass = CompatModeEncoder.class;
+      } else {
+         if (storageType == StorageType.BINARY) {
+            keyEncoderClass = BinaryEncoder.class;
+            valueEncoderClass = BinaryEncoder.class;
+         }
+         if (embeddedMode && storageType == StorageType.OFF_HEAP) {
+            keyEncoderClass = GlobalMarshallerEncoder.class;
+            valueEncoderClass = GlobalMarshallerEncoder.class;
+         }
       }
 
       DataConversion keyDataConversion = DataConversion.newKeyDataConversion(keyEncoderClass, ByteArrayWrapper.class, keyType);

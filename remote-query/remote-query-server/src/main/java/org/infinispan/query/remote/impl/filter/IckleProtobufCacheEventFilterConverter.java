@@ -12,13 +12,11 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.embedded.impl.IckleCacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.impl.ExternalizerIds;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
+import org.infinispan.query.remote.impl.RemoteQueryManager;
 
 /**
  * @author anistor@redhat.com
@@ -26,9 +24,7 @@ import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
  */
 public final class IckleProtobufCacheEventFilterConverter extends IckleCacheEventFilterConverter<Object, Object, Object> {
 
-   private SerializationContext serCtx;
-
-   private boolean isCompatMode;
+   private RemoteQueryManager remoteQueryManager;
 
    public IckleProtobufCacheEventFilterConverter(IckleFilterAndConverter<Object, Object> filterAndConverter) {
       super(filterAndConverter);
@@ -37,8 +33,7 @@ public final class IckleProtobufCacheEventFilterConverter extends IckleCacheEven
    @Inject
    @SuppressWarnings("unused")
    protected void injectDependencies(Cache cache) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
-      isCompatMode = cache.getCacheConfiguration().compatibility().enabled();
+      remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
    }
 
    @Override
@@ -46,14 +41,7 @@ public final class IckleProtobufCacheEventFilterConverter extends IckleCacheEven
       ObjectFilter.FilterResult filterResult = filterAndConverter.filterAndConvert(key, newValue, newMetadata);
       if (filterResult != null) {
          Object result = new FilterResult(filterResult.getInstance(), filterResult.getProjection(), filterResult.getSortProjection());
-         if (!isCompatMode) {
-            try {
-               result = ProtobufUtil.toWrappedByteArray(serCtx, result);
-            } catch (IOException e) {
-               throw new RuntimeException(e);
-            }
-         }
-         return result;
+         return remoteQueryManager.encodeFilterResult(result);
       }
       return null;
    }
