@@ -29,4 +29,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Field %s from type %s is not analyzed", id = 28005)
    IllegalArgumentException fieldIsNotAnalyzed(String fieldName, String fullyQualifiedTypeName);
+
+   @Message(value = "An exception has occurred during filter processing execution", id = 28006)
+   CacheException errorFiltering(@Cause Throwable cause);
 }

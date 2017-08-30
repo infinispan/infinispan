@@ -82,8 +82,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private SearchFactoryHandler searchFactoryHandler;
 
    private DataContainer dataContainer;
-   private DataConversion valueDataConversion;
-   private DataConversion keyDataConversion;
+   private final DataConversion valueDataConversion;
+   private final DataConversion keyDataConversion;
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    private DistributionManager distributionManager;
@@ -106,10 +106,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.cache = cache;
       this.valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
       this.keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
-   }
-
-   public void setValueDataConversion(DataConversion dataConversion) {
-      this.valueDataConversion = dataConversion;
    }
 
    @Inject

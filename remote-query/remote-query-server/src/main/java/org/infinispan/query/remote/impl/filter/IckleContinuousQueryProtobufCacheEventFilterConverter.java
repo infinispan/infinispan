@@ -9,21 +9,16 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.continuous.impl.IckleContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
-import org.infinispan.query.remote.impl.CompatibilityReflectionMatcher;
 import org.infinispan.query.remote.impl.ExternalizerIds;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
+import org.infinispan.query.remote.impl.RemoteQueryManager;
 
 /**
  * @author anistor@redhat.com
@@ -31,9 +26,7 @@ import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
  */
 public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends IckleContinuousQueryCacheEventFilterConverter<Object, Object, Object> {
 
-   private SerializationContext serCtx;
-
-   private boolean isCompatMode;
+   private RemoteQueryManager remoteQueryManager;
 
    public IckleContinuousQueryProtobufCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
       super(queryString, namedParameters, matcherImplClass);
@@ -41,12 +34,8 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
 
    @Override
    protected void injectDependencies(Cache cache) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
-      Configuration cfg = cache.getCacheConfiguration();
-      isCompatMode = cfg.compatibility().enabled();
-      if (isCompatMode) {
-         matcherImplClass = CompatibilityReflectionMatcher.class;
-      }
+      remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
+      matcherImplClass = remoteQueryManager.getMatcher().getClass();
       super.injectDependencies(cache);
    }
 
@@ -72,24 +61,12 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
    }
 
    protected Object makeFilterResult(ContinuousQueryResult.ResultType resultType, Object key, Object value, Object[] projection) {
-      try {
-         if (isCompatMode) {
-            key = ProtobufUtil.toWrappedByteArray(serCtx, key);
-            if (value != null) {
-               value = ProtobufUtil.toWrappedByteArray(serCtx, value);
-            }
-         }
-
-         Object result = new ContinuousQueryResult(resultType, (byte[]) key, (byte[]) value, projection);
-
-         if (!isCompatMode) {
-            result = ProtobufUtil.toWrappedByteArray(serCtx, result);
-         }
-
-         return result;
-      } catch (IOException e) {
-         throw new CacheException(e);
+      key = remoteQueryManager.getKeyEncoder().fromStorage(key);
+      if (value != null) {
+         value = remoteQueryManager.getValueEncoder().fromStorage(value);
       }
+      Object result = new ContinuousQueryResult(resultType, (byte[]) key, (byte[]) value, projection);
+      return remoteQueryManager.encodeFilterResult(result);
    }
 
    @Override
@@ -116,6 +93,7 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
       }
 
       @Override
+      @SuppressWarnings("unchecked")
       public IckleContinuousQueryProtobufCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String queryString = input.readUTF();
          int paramsSize = UnsignedNumeric.readUnsignedInt(input);

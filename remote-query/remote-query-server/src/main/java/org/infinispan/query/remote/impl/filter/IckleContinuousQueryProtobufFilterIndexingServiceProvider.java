@@ -1,17 +1,12 @@
 package org.infinispan.query.remote.impl.filter;
 
-import java.io.IOException;
-
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
-import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.continuous.impl.IckleContinuousQueryFilterIndexingServiceProvider;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
-import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
+import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.kohsuke.MetaInfServices;
 
 
@@ -23,18 +18,23 @@ import org.kohsuke.MetaInfServices;
 @SuppressWarnings("unused")
 public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider extends IckleContinuousQueryFilterIndexingServiceProvider {
 
-   private SerializationContext serCtx;
-
-   private boolean isCompatMode;
+   private RemoteQueryManager remoteQueryManager;
+   private Cache cache;
 
    public IckleContinuousQueryProtobufFilterIndexingServiceProvider() {
       super(ContinuousQueryResult.ResultType.JOINING, ContinuousQueryResult.ResultType.UPDATED, ContinuousQueryResult.ResultType.LEAVING);
    }
 
+   private RemoteQueryManager getRemoteQueryManager() {
+      if (remoteQueryManager == null) {
+         remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
+      }
+      return remoteQueryManager;
+   }
+
    @Inject
    protected void injectDependencies(Cache cache) {
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
-      isCompatMode = cache.getCacheConfiguration().compatibility().enabled();
+      this.cache = cache;
    }
 
    @Override
@@ -44,23 +44,13 @@ public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider ext
 
    @Override
    protected Object makeFilterResult(Object userContext, Object eventType, Object key, Object instance, Object[] projection, Comparable[] sortProjection) {
-      try {
-         if (isCompatMode) {
-            key = ProtobufUtil.toWrappedByteArray(serCtx, key);
-            if (instance != null) {
-               instance = ProtobufUtil.toWrappedByteArray(serCtx, instance);
-            }
-         }
+      key = getRemoteQueryManager().getKeyEncoder().fromStorage(key);
 
-         Object result = new ContinuousQueryResult((ContinuousQueryResult.ResultType) eventType, (byte[]) key, (byte[]) instance, projection);
-
-         if (!isCompatMode) {
-            result = ProtobufUtil.toWrappedByteArray(serCtx, result);
-         }
-
-         return result;
-      } catch (IOException e) {
-         throw new CacheException(e);
+      if (instance != null) {
+         instance = getRemoteQueryManager().getValueEncoder().fromStorage(instance);
       }
+
+      Object result = new ContinuousQueryResult((ContinuousQueryResult.ResultType) eventType, (byte[]) key, (byte[]) instance, projection);
+      return getRemoteQueryManager().encodeFilterResult(result);
    }
 }

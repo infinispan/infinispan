@@ -5,15 +5,11 @@ import java.util.Map;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.hibernate.search.spi.SearchIntegrator;
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
@@ -24,11 +20,8 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
-import org.infinispan.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
+import org.infinispan.objectfilter.Matcher;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
@@ -132,52 +125,25 @@ public final class LifecycleManager implements ModuleLifecycle {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {
          Configuration cfg = cr.getComponent(Configuration.class);
-         boolean isIndexed = cfg.indexing().index().isEnabled();
-         boolean isCompatMode = cfg.compatibility().enabled();
 
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
-         cr.registerComponent(new ProtobufMatcher(serCtx, ProtobufFieldIndexingMetadata::new), ProtobufMatcher.class);
-         QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
 
-         if (isCompatMode) {
-            EntityNameResolver entityNameResolver;
+         RemoteQueryManager remoteQueryManager;
+
+         if (!cfg.compatibility().enabled()) {
+            remoteQueryManager = new ProtobufRemoteQueryManager(serCtx, cr);
+         } else {
             if (cfg.compatibility().marshaller() instanceof BaseProtoStreamMarshaller) {
-               // we are running in compat mode and the remote side uses Protobuf
-               entityNameResolver = new ProtobufEntityNameResolver(serCtx);
+               remoteQueryManager = new ProtostreamCompatRemoteQueryManager(cr);
             } else {
-               // we're not using Protobuf, then use whatever marshaller is configured
-               serCtx = null;
-               ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
-               ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
-               if (queryInterceptor != null) {
-                  // If indexing is enabled, then use the known set of classes for lookup and the global classloder as a fallback.
-                  entityNameResolver = name -> queryInterceptor.getKnownClasses().stream()
-                        .filter(c -> c.getName().equals(name))
-                        .findFirst()
-                        .orElse(reflectionEntityNamesResolver.resolve(name));
-               } else {
-                  entityNameResolver = reflectionEntityNamesResolver;
-               }
+               remoteQueryManager = new GenericCompatRemoteQueryManager(cr);
             }
+         }
 
-            SearchIntegrator searchFactory = cr.getComponent(SearchIntegrator.class);
-            CompatibilityReflectionMatcher compatibilityReflectionMatcher;
-            if (searchFactory == null) {
-               compatibilityReflectionMatcher = new CompatibilityReflectionMatcher(entityNameResolver, serCtx);
-            } else {
-               compatibilityReflectionMatcher = new CompatibilityReflectionMatcher(entityNameResolver, serCtx, searchFactory);
-            }
-            cr.registerComponent(compatibilityReflectionMatcher, CompatibilityReflectionMatcher.class);
-         }
-         if(queryInterceptor != null) {
-            DataConversion dataConversion = DataConversion.DEFAULT.withWrapping(ProtostreamWrapper.class);
-            cr.wireDependencies(dataConversion);
-            queryInterceptor.setValueDataConversion(dataConversion);
-         }
-         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
-         BaseRemoteQueryEngine remoteQueryEngine = isCompatMode ? new CompatibilityQueryEngine(cache, isIndexed) : new RemoteQueryEngine(cache, isIndexed);
-         cr.registerComponent(remoteQueryEngine, BaseRemoteQueryEngine.class);
+         Matcher matcher = remoteQueryManager.getMatcher();
+         cr.registerComponent(matcher, matcher.getClass());
+         cr.registerComponent(remoteQueryManager, RemoteQueryManager.class);
       }
    }
 

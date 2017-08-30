@@ -11,13 +11,12 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.query.dsl.embedded.impl.IckleFilterAndConverter;
-import org.infinispan.query.remote.impl.CompatibilityReflectionMatcher;
 import org.infinispan.query.remote.impl.ExternalizerIds;
+import org.infinispan.query.remote.impl.RemoteQueryManager;
 
 /**
  * A subclass of JPAFilterAndConverter that is able to deal with binary values wrapped in a ProtobufValueWrapper.
@@ -27,19 +26,14 @@ import org.infinispan.query.remote.impl.ExternalizerIds;
  */
 public final class IckleProtobufFilterAndConverter extends IckleFilterAndConverter<Object, Object> {
 
-   private boolean isCompatMode;
-
    public IckleProtobufFilterAndConverter(String queryString, Map<String, Object> namedParameters) {
       super(queryString, namedParameters, ProtobufMatcher.class);
    }
 
    @Override
    protected void injectDependencies(Cache cache) {
-      Configuration cfg = cache.getCacheConfiguration();
-      isCompatMode = cfg.compatibility().enabled();
-      if (isCompatMode) {
-         matcherImplClass = CompatibilityReflectionMatcher.class;
-      }
+      RemoteQueryManager remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
+      matcherImplClass = remoteQueryManager.getMatcher().getClass();
       super.injectDependencies(cache);
    }
 
