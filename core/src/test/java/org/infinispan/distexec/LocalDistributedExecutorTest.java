@@ -31,6 +31,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestException;
+import org.infinispan.test.fwk.TestClassLocal;
+import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -43,9 +45,10 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "distexec.LocalDistributedExecutorTest")
 public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
-
    private DistributedExecutorService cleanupService;
    static final Map<String, AtomicInteger> counterMap = new ConcurrentHashMap<>();
+   protected TestClassLocal<ReclosableLatch> latchHolder =
+         new TestClassLocal<>("latch", this, ReclosableLatch::new, ReclosableLatch::open);
 
    public LocalDistributedExecutorTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -256,7 +259,7 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       List<Callable<Integer>> tasks = new ArrayList<>();
       tasks.add(new ExceptionThrowingCallable());
-      tasks.add(new SleepingSimpleCallable());
+      tasks.add(new SleepingSimpleCallable(latchHolder));
       Object result = des.invokeAny(tasks);
       assertEquals(1, result);
    }
@@ -264,8 +267,10 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    public void testInvokeAnyTimedSleepingTasks() throws Exception {
       DistributedExecutorService des = createDES(getCache());
       List<SleepingSimpleCallable> tasks = new ArrayList<>();
-      tasks.add(new SleepingSimpleCallable());
-      expectException(TimeoutException.class, () -> des.invokeAny(tasks, 1000, TimeUnit.MILLISECONDS));
+      tasks.add(new SleepingSimpleCallable(latchHolder));
+      latchHolder.get().close();
+      expectException(TimeoutException.class, () -> des.invokeAny(tasks, 100, TimeUnit.MILLISECONDS));
+      latchHolder.get().open();
    }
 
    public void testInvokeAll() throws Exception {
@@ -321,12 +326,13 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
    public void testSleepingCallableWithTimeoutOption() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      Future<Integer> future = des.submit(new SleepingSimpleCallable());
+      Future<Integer> future = des.submit(new SleepingSimpleCallable(latchHolder));
       Integer r = future.get(10, TimeUnit.SECONDS);
       assertEquals((Integer) 1, r);
 
       //the same using DistributedTask API
-      DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
+      DistributedTaskBuilder<Integer> taskBuilder =
+            des.createDistributedTaskBuilder(new SleepingSimpleCallable(latchHolder));
       DistributedTask<Integer> distributedTask = taskBuilder.build();
       future = des.submit(distributedTask);
       r = future.get(10, TimeUnit.SECONDS);
@@ -334,36 +340,46 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    }
 
    public void testSleepingCallableWithTimeoutExc() throws Exception {
+      latchHolder.get().close();
       DistributedExecutorService des = createDES(getCache());
-      Future<Integer> future = des.submit(new SleepingSimpleCallable());
+      Future<Integer> future = des.submit(new SleepingSimpleCallable(latchHolder));
       log.tracef("Sleeping task submitted");
-      expectException(TimeoutException.class, () -> future.get(1000, TimeUnit.MILLISECONDS));
+      expectException(TimeoutException.class, () -> future.get(100, TimeUnit.MILLISECONDS));
+      latchHolder.get().open();
    }
 
    public void testSleepingCallableWithTimeoutExcDistApi() throws Exception {
+      latchHolder.get().close();
       DistributedExecutorService des = createDES(getCache());
-      DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new SleepingSimpleCallable());
+      DistributedTaskBuilder<Integer> taskBuilder =
+            des.createDistributedTaskBuilder(new SleepingSimpleCallable(latchHolder));
       DistributedTask<Integer> distributedTask = taskBuilder.build();
       Future<Integer> future = des.submit(distributedTask);
       log.tracef("Sleeping task submitted");
-      expectException(TimeoutException.class, () -> future.get(1000, TimeUnit.MILLISECONDS));
+      expectException(TimeoutException.class, () -> future.get(100, TimeUnit.MILLISECONDS));
+      latchHolder.get().open();
    }
 
    public void testExceptionCallableWithTimedCall() throws Exception {
       DistributedExecutorService des = createDES(getCache());
-      Future<Integer> future = des.submit(new ExceptionThrowingCallable(true));
+      latchHolder.get().close();
+      Future<Integer> future = des.submit(new ExceptionThrowingCallable(latchHolder, true));
 
-      expectException(TimeoutException.class, () -> future.get(10, TimeUnit.MILLISECONDS));
+      expectException(TimeoutException.class, () -> future.get(100, TimeUnit.MILLISECONDS));
+      latchHolder.get().open();
    }
 
    public void testExceptionCallableWithTimedCallDistApi() throws Exception {
       DistributedExecutorService des = createDES(getCache());
 
-      DistributedTaskBuilder<Integer> taskBuilder = des.createDistributedTaskBuilder(new ExceptionThrowingCallable(true));
+      latchHolder.get().close();
+      DistributedTaskBuilder<Integer> taskBuilder =
+            des.createDistributedTaskBuilder(new ExceptionThrowingCallable(latchHolder, true));
       DistributedTask<Integer> distributedTask = taskBuilder.build();
       Future<Integer> future = des.submit(distributedTask);
 
       expectException(TimeoutException.class, () -> future.get(10, TimeUnit.MILLISECONDS));
+      latchHolder.get().open();
    }
 
    public void testBasicTargetDistributedCallableWithNullExecutionPolicy() throws Exception {
@@ -576,11 +592,16 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8589149500259272402L;
+      private final TestClassLocal<ReclosableLatch> latchHolder;
+
+      SleepingSimpleCallable(TestClassLocal<ReclosableLatch> latchHolder) {
+         this.latchHolder = latchHolder;
+      }
 
       @Override
       public Integer call() throws Exception {
-         log.tracef("Sleeping for 2 seconds");
-         Thread.sleep(2000);
+         log.tracef("Waiting on latch %s", latchHolder);
+         latchHolder.get().await(10, TimeUnit.SECONDS);
 
          return 1;
       }
@@ -602,20 +623,22 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -8682463816319507893L;
-      private boolean needToSleep;
+      private final boolean needToSleep;
+      private final TestClassLocal<ReclosableLatch> latchHolder;
 
       public ExceptionThrowingCallable() {
-         this.needToSleep = false;
+         this(null, false);
       }
 
-      public ExceptionThrowingCallable(boolean needToSleep) {
+      public ExceptionThrowingCallable(TestClassLocal<ReclosableLatch> latchHolder, boolean needToSleep) {
+         this.latchHolder = latchHolder;
          this.needToSleep = needToSleep;
       }
 
       @Override
       public Integer call() throws Exception {
          if(needToSleep) {
-            Thread.sleep(10000);
+            latchHolder.get().await(10, TimeUnit.SECONDS);
          }
 
          throw new TestException("Intentional Exception from ExceptionThrowingCallable");

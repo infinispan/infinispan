@@ -21,6 +21,8 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestClassLocal;
+import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -33,6 +35,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "distexec.BasicDistributedExecutorTest")
 public class BasicDistributedExecutorTest extends AbstractCacheTest {
+   private TestClassLocal<ReclosableLatch> latchHolder =
+         new TestClassLocal<>("latch", this, ReclosableLatch::new, ReclosableLatch::open);
 
    public BasicDistributedExecutorTest() {
    }
@@ -458,11 +462,14 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          des = new DefaultExecutorService(cache1);
          Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
 
+         latchHolder.get().close();
          DistributedTaskBuilder<Integer> builder = des
-               .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable());
+               .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable(latchHolder));
 
          Future<Integer> future = des.submit(target, builder.build());
 
+         Thread.sleep(100);
+         latchHolder.get().open();
          AssertJUnit.assertEquals((Integer) 1, future.get());
       } finally {
          if (des != null)
@@ -487,10 +494,14 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          des = new DefaultExecutorService(cache1);
          Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
 
+         latchHolder.get().close();
          DistributedTaskBuilder<Integer> builder = des
-               .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable());
+               .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable(latchHolder));
 
          Future<Integer> future = des.submit(target, builder.build());
+
+         Thread.sleep(100);
+         latchHolder.get().open();
 
          AssertJUnit.assertEquals((Integer) 1, future.get());
       } finally {
