@@ -569,9 +569,10 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		SessionImplementor s10 = mockedSession();
       log.infof("Call remote strategy get for key=%s", KEY);
 		assertEquals(VALUE1, remoteAccessStrategy.get(s10, KEY, s10.getTimestamp()));
+      // Wait for change to be applied in local, otherwise the count might not be correct
+      assertTrue(lastPutFromLoadLatch.await(1, TimeUnit.SECONDS));
 		assertEquals(1, remoteRegion.getCache().size());
 
-		assertTrue(lastPutFromLoadLatch.await(1, TimeUnit.SECONDS));
 
 		SessionImplementor s11 = mockedSession();
 		assertEquals((isUsingInvalidation() ? null : VALUE1), localAccessStrategy.get(s11, KEY, s11.getTimestamp()));
