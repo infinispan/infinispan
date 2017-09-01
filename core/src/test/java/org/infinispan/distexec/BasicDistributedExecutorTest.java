@@ -462,7 +462,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          des = new DefaultExecutorService(cache1);
          Address target = cache1.getAdvancedCache().getRpcManager().getAddress();
 
-         latchHolder.get().close();
          DistributedTaskBuilder<Integer> builder = des
                .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable(latchHolder));
 
@@ -494,7 +493,6 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
          des = new DefaultExecutorService(cache1);
          Address target = cache2.getAdvancedCache().getRpcManager().getAddress();
 
-         latchHolder.get().close();
          DistributedTaskBuilder<Integer> builder = des
                .createDistributedTaskBuilder(new DistributedExecutorTest.SleepingSimpleCallable(latchHolder));
 
