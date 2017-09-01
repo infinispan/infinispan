@@ -55,7 +55,7 @@ pipeline {
 
         stage('Clean') {
             steps {
-                sh 'git clean -fdx'
+                sh 'git clean -fdx || echo "git clean failed, exit code $?"'
             }
         }
     }
