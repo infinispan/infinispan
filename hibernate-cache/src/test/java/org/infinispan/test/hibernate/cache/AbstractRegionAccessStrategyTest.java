@@ -460,12 +460,12 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
 		SessionImplementor s7 = mockedSession();
 		assertNull(localAccessStrategy.get(s7, KEY, s7.getTimestamp()));
-		assertEquals(0, localRegion.getCache().size());
-		SessionImplementor s8 = mockedSession();
+      SessionImplementor s8 = mockedSession();
 		assertNull(remoteAccessStrategy.get(s8, KEY, s8.getTimestamp()));
-		assertEquals(0, remoteRegion.getCache().size());
 
       assertTrue(endInvalidationLatch.await(1, TimeUnit.SECONDS));
+      assertEquals(0, localRegion.getCache().size());
+		assertEquals(0, remoteRegion.getCache().size());
 	}
 
 	protected void doRemove(S strategy, SessionImplementor session, Object key) throws SystemException, RollbackException {
