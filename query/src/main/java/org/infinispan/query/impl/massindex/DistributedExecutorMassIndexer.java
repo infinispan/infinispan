@@ -17,6 +17,7 @@ import java.util.function.BiConsumer;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.AdvancedCache;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
@@ -82,7 +83,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       for (Object key : keys) {
          if (cache.containsKey(key)) {
             Class<?> indexedType = cache.get(key).getClass();
-            EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(indexedType);
+            EntityIndexBinding indexBinding = searchIntegrator.getIndexBindings().get(new PojoIndexedTypeIdentifier(indexedType));
             MassIndexStrategy strategy = calculateStrategy(indexBinding, cache.getCacheConfiguration());
             IndexingExecutionMode indexingStrategy = strategy.getIndexingStrategy();
             switch (indexingStrategy) {

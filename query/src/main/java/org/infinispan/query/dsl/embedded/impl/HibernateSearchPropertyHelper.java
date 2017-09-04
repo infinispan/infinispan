@@ -30,6 +30,7 @@ import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
@@ -63,7 +64,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
    @Override
    public List<?> mapPropertyNamePathToFieldIdPath(Class<?> entityType, String[] propertyPath) {
-      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(entityType);
+      EntityIndexBinding indexBinding = searchFactory.getIndexBindings().get(new PojoIndexedTypeIdentifier(entityType));
       if (indexBinding != null) {
          ResolvedProperty resolvedProperty = resolveProperty(indexBinding, propertyPath);
          if (resolvedProperty != null) {

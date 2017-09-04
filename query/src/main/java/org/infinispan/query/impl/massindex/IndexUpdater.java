@@ -8,6 +8,7 @@ import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.DefaultInstanceInitializer;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.backend.KeyTransformationHandler;
@@ -56,8 +57,7 @@ public class IndexUpdater {
    public void updateIndex(Object key, Object value) {
       if (value != null) {
          if (!Thread.currentThread().isInterrupted()) {
-            Class clazz = value.getClass();
-            EntityIndexBinding entityIndexBinding = searchIntegrator.getIndexBindings().get(clazz);
+            EntityIndexBinding entityIndexBinding = searchIntegrator.getIndexBindings().get(new PojoIndexedTypeIdentifier(value.getClass()));
             if (entityIndexBinding == null) {
                // it might be possible to receive not-indexes types
                return;
