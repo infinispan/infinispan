@@ -6,6 +6,8 @@
  */
 package org.infinispan.hibernate.cache.util;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
@@ -23,6 +25,8 @@ import java.util.UUID;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class Tombstone {
+   private static final Log log = LogFactory.getLog(Tombstone.class);
+
 	public static final ExcludeTombstonesFilter EXCLUDE_TOMBSTONES = new ExcludeTombstonesFilter();
 
 	// the format of data is repeated (timestamp, UUID.LSB, UUID.MSB)
@@ -191,7 +195,9 @@ public class Tombstone {
 
 		@Override
 		public boolean accept(Object key, Object value, Metadata metadata) {
-			return !(value instanceof Tombstone);
+         boolean b = !(value instanceof Tombstone);
+         log.tracef("Is value %s for key %s is tombstone? %b", value, key, b);
+         return b;
 		}
 	}
 
