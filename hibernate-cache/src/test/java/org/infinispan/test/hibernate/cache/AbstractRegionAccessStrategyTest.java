@@ -64,6 +64,7 @@ import org.infinispan.test.TestingUtil;
 import org.jboss.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -185,15 +186,17 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		final CountDownLatch writeLatch2 = new CountDownLatch(1);
 		final CountDownLatch completionLatch = new CountDownLatch(2);
 
+      CountDownLatch[] putFromLoadLatches = new CountDownLatch[2];
+
 		Thread node1 = new Thread(() -> {
-         final CountDownLatch remotePutFromLoadLatch = expectPutFromLoad(remoteRegion);
 				try {
-					SessionImplementor session = mockedSession();
-					withTx(localEnvironment, session, () -> {
+               SessionImplementor session = mockedSession();
+               putFromLoadLatches[0] = withTx(localEnvironment, session, () -> {
 						assertNull(localAccessStrategy.get(session, KEY, session.getTimestamp()));
 
 						writeLatch1.await();
 
+                  CountDownLatch latch = expectPutFromLoad(remoteRegion);
 						if (useMinimalAPI) {
 							localAccessStrategy.putFromLoad(session, KEY, VALUE1, session.getTimestamp(), 1, true);
 						} else {
@@ -201,7 +204,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 						}
 
 						doUpdate(localAccessStrategy, session, KEY, VALUE2, 2);
-						return null;
+						return latch;
 					});
 				} catch (Exception e) {
 					log.error("node1 caught exception", e);
@@ -209,21 +212,16 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 				} catch (AssertionFailedError e) {
 					node1Failure = e;
 				} finally {
-					// Let node2 write
+               // Let node2 write
 					writeLatch2.countDown();
-
-               if (!await(remotePutFromLoadLatch) && node1Failure == null)
-                  node1Failure = new AssertionFailedError("Put from load not completed remotely");
-
 					completionLatch.countDown();
             }
       }, putFromLoadTestThreadName("node1", useMinimalAPI, isRemoval));
 
 		Thread node2 = new Thread(() -> {
-            CountDownLatch localPutFromLoadLatch = expectPutFromLoad(localRegion);
 				try {
-					SessionImplementor session = mockedSession();
-					withTx(remoteEnvironment, session, () -> {
+               SessionImplementor session = mockedSession();
+               putFromLoadLatches[1] = withTx(remoteEnvironment, session, () -> {
 
 						assertNull(remoteAccessStrategy.get(session, KEY, session.getTimestamp()));
 
@@ -232,12 +230,13 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 						// Wait for node1 to finish
 						writeLatch2.await();
 
+                  CountDownLatch latch = expectPutFromLoad(localRegion);
 						if (useMinimalAPI) {
 							remoteAccessStrategy.putFromLoad(session, KEY, VALUE1, session.getTimestamp(), 1, true);
 						} else {
 							remoteAccessStrategy.putFromLoad(session, KEY, VALUE1, session.getTimestamp(), 1);
 						}
-						return null;
+						return latch;
 					});
 				} catch (Exception e) {
 					log.error("node2 caught exception", e);
@@ -245,9 +244,6 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 				} catch (AssertionFailedError e) {
 					node2Failure = e;
 				} finally {
-               if (!await(localPutFromLoadLatch) && node2Failure == null)
-                  node2Failure = new AssertionFailedError("Put from load not completed locally");
-
 					completionLatch.countDown();
 				}
       }, putFromLoadTestThreadName("node2", useMinimalAPI, isRemoval));
@@ -265,7 +261,10 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		assertThreadsRanCleanly();
 		assertTrue("Update was replicated", remoteUpdate.await(2, TimeUnit.SECONDS));
 
-		SessionImplementor s1 = mockedSession();
+      // At least one of the put from load latch should have completed
+      assertPutFromLoadLatches(putFromLoadLatches);
+
+      SessionImplementor s1 = mockedSession();
 		assertEquals( isRemoval ? null : VALUE2, localAccessStrategy.get(s1, KEY, s1.getTimestamp()));
 		SessionImplementor s2 = mockedSession();
 		Object remoteValue = remoteAccessStrategy.get(s2, KEY, s2.getTimestamp());
@@ -279,7 +278,15 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		}
 	}
 
+   protected void assertPutFromLoadLatches(CountDownLatch[] latches) {
+      if (!await(latches[0]) && !await(latches[1]))
+         throw new AssertionError(String.format(
+            "One of the latches in %s should have at least completed",
+            Arrays.toString(latches)));
+   }
+
    private boolean await(CountDownLatch latch) {
+      assertNotNull(latch);
       try {
          log.debugf("Await latch: %s", latch);
          boolean await = latch.await(1, TimeUnit.SECONDS);
@@ -645,4 +652,6 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		}
 		return putFromLoadLatch;
 	}
+
+
 }
