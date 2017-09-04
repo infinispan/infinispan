@@ -25,9 +25,7 @@ import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AnalyzerTestEntity;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.AnalyzerTestEntityMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -46,7 +44,6 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -65,28 +62,10 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
          "\toptional string notIndexedField = 1;\n" +
          "}\n";
 
-   private static final String CUSTOM_ANALYZER_PROTO_SCHEMA = "package sample_bank_account;\n" +
-         "/* @Indexed */\n" +
-         "message AnalyzerTestEntity {\n" +
-         "\t/* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"stemmer\")) */\n" +
-         "\toptional string f1 = 1;\n" +
-         "\t/* @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = \"-1\") */\n" +
-         "\toptional int32 f2 = 2;\n" +
-         "}\n";
-
    protected HotRodServer hotRodServer;
    protected RemoteCacheManager remoteCacheManager;
    protected RemoteCache<Object, Object> remoteCache;
    protected Cache<Object, Object> cache;
-
-   @BeforeClass
-   @Override
-   protected void populateCache() throws Exception {
-      super.populateCache();
-
-      getCacheForWrite().put("analyzed1", new AnalyzerTestEntity("testing 123", 3));
-      getCacheForWrite().put("analyzed2", new AnalyzerTestEntity("xyz", null));
-   }
 
    @Override
    protected QueryFactory getQueryFactory() {
@@ -129,16 +108,13 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
       metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
-      metadataCache.put("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       //initialize client-side serialization context
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
       MarshallerRegistration.registerMarshallers(serCtx);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA));
       serCtx.registerMarshaller(new NotIndexedMarshaller());
-      serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

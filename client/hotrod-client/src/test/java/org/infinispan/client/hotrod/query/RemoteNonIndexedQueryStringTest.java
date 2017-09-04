@@ -137,4 +137,9 @@ public class RemoteNonIndexedQueryStringTest extends RemoteQueryStringTest {
    public void testFullTextRegexp2() throws Exception {
       super.testFullTextRegexp2();
    }
+
+   @Test(enabled = false)
+   public void testCustomFieldAnalyzer() {
+      //not working with non-indexed caches
+   }
 }
