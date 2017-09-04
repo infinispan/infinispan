@@ -102,7 +102,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       //initialize server-side serialization context
       ProtobufMetadataManager protobufMetadataManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
+      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       protobufMetadataManager.registerProtofile("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
       assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
       assertNull(protobufMetadataManager.getFileErrors("not_indexed.proto"));

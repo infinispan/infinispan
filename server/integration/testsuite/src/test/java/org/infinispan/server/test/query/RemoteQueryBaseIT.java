@@ -2,8 +2,6 @@ package org.infinispan.server.test.query;
 
 import static org.junit.Assert.assertFalse;
 
-import java.io.IOException;
-
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -52,7 +50,7 @@ public abstract class RemoteQueryBaseIT {
 
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
+      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       //initialize client-side serialization context
@@ -68,9 +66,5 @@ public abstract class RemoteQueryBaseIT {
          rcmFactory.stopManagers();
       }
       rcmFactory = null;
-   }
-
-   private String read(String resourcePath) throws IOException {
-      return Util.read(getClass().getResourceAsStream(resourcePath));
    }
 }

@@ -96,14 +96,10 @@ public class TwoCachesSharedIndexTest extends MultiHotRodServersTest {
    @BeforeClass(alwaysRun = true)
    protected void registerSerCtx() throws Exception {
       ProtobufMetadataManager protobufMetadataManager = manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
+      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       for (RemoteCacheManager rcm : clients) {
          MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(rcm));
       }
-   }
-
-   private String read(String classPathResource) throws IOException {
-      return Util.read(getClass().getResourceAsStream(classPathResource));
    }
 
    @Test

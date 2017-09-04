@@ -4,7 +4,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -117,10 +117,10 @@ public class RemoteQueryStringTest extends QueryStringTest {
    protected void initProtoSchema(RemoteCacheManager remoteCacheManager) throws IOException {
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
+      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
       metadataCache.put("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      checkSchemaErrors(metadataCache);
 
       //initialize client-side serialization context
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
@@ -129,6 +129,23 @@ public class RemoteQueryStringTest extends QueryStringTest {
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("custom_analyzer.proto", CUSTOM_ANALYZER_PROTO_SCHEMA));
       serCtx.registerMarshaller(new NotIndexedMarshaller());
       serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
+   }
+
+
+   /**
+    * Logs the Protobuf schema errors (if any) and fails the test appropriately.
+    */
+   protected void checkSchemaErrors(RemoteCache<String, String> metadataCache) {
+      if (metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX)) {
+         // The existence of this key indicates there are errors in some files
+         String files = metadataCache.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
+         for (String fname : files.split("\n")) {
+            String errorKey = fname + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX;
+            log.errorf("Found errors in Protobuf schema file: %s\n%s\n", fname, metadataCache.get(errorKey));
+         }
+
+         fail("There are errors in the following Protobuf schema files:\n" + files);
+      }
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

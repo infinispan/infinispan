@@ -72,7 +72,7 @@ public class CacheAdminTest extends MultiHotRodServersTest {
    public void cacheReindexTest() throws IOException {
       //initialize server-side serialization
       RemoteCache<String, String> metadataCache = client(0).getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.read(getClass().getResourceAsStream("/sample_bank_account/bank.proto")));
+      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));

@@ -1,6 +1,5 @@
 package org.infinispan.server.test.query;
 
-import static org.infinispan.commons.util.Util.read;
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
 import static org.junit.Assert.assertEquals;
@@ -22,6 +21,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.Query;
@@ -65,7 +65,7 @@ public class RemoteQueryDescriptorIT {
 
    private void registerProtoOnServer1() throws Exception {
       String[] fileNames = {"sample_bank_account/bank.proto"};
-      String[] fileContents = {read(getClass().getResourceAsStream("/sample_bank_account/bank.proto"))};
+      String[] fileContents = {Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader())};
 
       invoke(getJmxConnection(server1), "registerProtofiles", fileNames, fileContents);
 

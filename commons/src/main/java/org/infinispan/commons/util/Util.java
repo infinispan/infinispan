@@ -197,6 +197,10 @@ public final class Util {
       return is;
    }
 
+   public static String getResourceAsString(String resourcePath, ClassLoader userClassLoader) throws IOException {
+      return read(getResourceAsStream(resourcePath, userClassLoader));
+   }
+
    private static Method getFactoryMethod(Class<?> c) {
       for (Method m : c.getMethods()) {
          if (m.getName().equals("getInstance") && m.getParameterTypes().length == 0 && Modifier.isStatic(m.getModifiers()))

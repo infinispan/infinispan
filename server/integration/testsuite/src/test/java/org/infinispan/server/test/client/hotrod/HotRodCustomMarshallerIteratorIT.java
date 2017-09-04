@@ -95,7 +95,7 @@ public class HotRodCustomMarshallerIteratorIT {
    }
 
    private static Archive<?> createFilterMarshallerArchive() throws IOException {
-      String protoFile = Util.read(HotRodCustomMarshallerIteratorIT.class.getResourceAsStream("/sample_bank_account/bank.proto"));
+      String protoFile = Util.getResourceAsString("/sample_bank_account/bank.proto", HotRodCustomMarshallerIteratorIT.class.getClassLoader());
 
       return ShrinkWrap.create(JavaArchive.class, "filter-marshaller.jar")
             // Add custom marshaller classes

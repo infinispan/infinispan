@@ -8,7 +8,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,7 +69,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    protected void populateCache() throws Exception {
       //initialize server-side serialization context
       ProtobufMetadataManager protobufMetadataManager = manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
+      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
       assertNull(protobufMetadataManager.getFilesWithErrors());
 
@@ -112,10 +111,6 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
       // this value should be ignored gracefully
       client(0).getCache().put("dummy", "a primitive value cannot be queried");
-   }
-
-   private String read(String classPathResource) throws IOException {
-      return Util.read(getClass().getResourceAsStream(classPathResource));
    }
 
    public void testAttributeQuery() throws Exception {
