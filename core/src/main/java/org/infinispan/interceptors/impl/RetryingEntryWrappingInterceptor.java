@@ -38,7 +38,7 @@ public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
       return invokeNextAndExceptionally(ctx, command, handleDataWriteReturn);
    }
 
-   private Object handleDataWriteReturn(InvocationContext ctx, VisitableCommand command, Throwable throwable) throws Throwable {
+   Object handleDataWriteReturn(InvocationContext ctx, VisitableCommand command, Throwable throwable) throws Throwable {
       if (throwable instanceof ConcurrentChangeException) {
          if (trace) {
             log.tracef(throwable, "Retrying %s after concurrent change", command);
@@ -56,7 +56,7 @@ public class RetryingEntryWrappingInterceptor extends EntryWrappingInterceptor {
       return invokeNextAndExceptionally(ctx, command, handleManyWriteReturn);
    }
 
-   private Object handleManyWriteReturn(InvocationContext ctx, VisitableCommand command, Throwable throwable) throws Throwable {
+   Object handleManyWriteReturn(InvocationContext ctx, VisitableCommand command, Throwable throwable) throws Throwable {
       if (throwable instanceof ConcurrentChangeException) {
          if (trace) {
             log.tracef(throwable, "Retrying %s after concurrent change", command);

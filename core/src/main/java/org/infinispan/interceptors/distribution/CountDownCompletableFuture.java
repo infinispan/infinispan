@@ -8,6 +8,7 @@ class CountDownCompletableFuture extends CompletableFuture<Object> {
 
    public CountDownCompletableFuture(int participants) {
       this.counter = new AtomicInteger(participants);
+      assert participants != 0;
    }
 
    public void countDown() {

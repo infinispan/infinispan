@@ -3,7 +3,9 @@ package org.infinispan.scattered;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.DistSyncFuncTest;
 import org.infinispan.distribution.MagicKey;
@@ -14,10 +16,25 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional")
 public class ScatteredSyncFuncTest extends DistSyncFuncTest {
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ScatteredSyncFuncTest().biasAcquisition(BiasAcquisition.NEVER),
+            new ScatteredSyncFuncTest().biasAcquisition(BiasAcquisition.ON_WRITE),
+      };
+   }
+
    public ScatteredSyncFuncTest() {
       cacheMode = CacheMode.SCATTERED_SYNC;
       numOwners = 1;
       l1CacheEnabled = false;
+   }
+
+   @Override
+   protected ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder builder = super.buildConfiguration();
+      builder.clustering().biasAcquisition(biasAcquisition);
+      return builder;
    }
 
    @Override

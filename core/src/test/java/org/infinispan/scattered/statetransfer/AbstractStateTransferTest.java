@@ -63,6 +63,7 @@ public abstract class AbstractStateTransferTest extends MultipleCacheManagersTes
    protected void createCacheManagers() throws Throwable {
       defaultConfig = getDefaultClusteredCacheConfig(CacheMode.SCATTERED_SYNC, false);
       defaultConfig.clustering().hash().numSegments(16);
+      defaultConfig.clustering().biasAcquisition(biasAcquisition);
       defaultConfig.clustering().stateTransfer().fetchInMemoryState(true).chunkSize(3);
       createClusteredCaches(3, defaultConfig, TRANSPORT_FLAGS, CACHE_NAME);
 

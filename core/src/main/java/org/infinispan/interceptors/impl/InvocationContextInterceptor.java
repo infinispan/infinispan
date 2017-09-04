@@ -49,19 +49,20 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private volatile boolean shuttingDown = false;
 
-   private final InvocationExceptionFunction suppressExceptionsHandler = new InvocationExceptionFunction() {
-      @Override
-      public Object apply(InvocationContext rCtx, VisitableCommand rCommand, Throwable throwable) throws Throwable {
-         if (throwable instanceof InvalidCacheUsageException || throwable instanceof InterruptedException) {
-            throw throwable;
-         } if (throwable instanceof UserRaisedFunctionalException) {
+   private final InvocationExceptionFunction suppressExceptionsHandler = (rCtx, rCommand, throwable) -> {
+      if (throwable instanceof InvalidCacheUsageException || throwable instanceof InterruptedException) {
+         throw throwable;
+      } if (throwable instanceof UserRaisedFunctionalException) {
+         if (rCtx.isOriginLocal()) {
             throw throwable.getCause();
          } else {
-            rethrowException(rCtx, rCommand, throwable);
+            throw throwable;
          }
-         // Ignore the exception
-         return rCommand instanceof LockControlCommand ? Boolean.FALSE : null;
+      } else {
+         rethrowException(rCtx, rCommand, throwable);
       }
+      // Ignore the exception
+      return rCommand instanceof LockControlCommand ? Boolean.FALSE : null;
    };
 
    @Start(priority = 1)

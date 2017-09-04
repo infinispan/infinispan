@@ -18,11 +18,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -40,17 +40,24 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(groups = "functional", testName = "api.ConditionalOperationsConcurrentTest")
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC, CacheMode.SCATTERED_SYNC})
 public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTest {
 
    private final Log log = LogFactory.getLog(getClass());
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ConditionalOperationsConcurrentTest().cacheMode(CacheMode.DIST_SYNC),
+            new ConditionalOperationsConcurrentTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
+            new ConditionalOperationsConcurrentTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE)
+      };
+   }
 
    public ConditionalOperationsConcurrentTest() {
       this(2, 10, 2);
    }
 
    public ConditionalOperationsConcurrentTest(int nodes, int operations, int threads) {
-      this.cacheMode = CacheMode.DIST_SYNC;
       this.nodes = nodes;
       this.operations = operations;
       this.threads = threads;
@@ -88,6 +95,9 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       dcc.transaction().lockingMode(lockingMode);
       if (writeSkewCheck) {
          dcc.transaction().locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
+      }
+      if (biasAcquisition != null) {
+         dcc.clustering().biasAcquisition(biasAcquisition);
       }
       createCluster(dcc, nodes);
       waitForClusterToForm();
@@ -306,7 +316,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
             log.tracef("Value seen by cache %s is %s", currentCache, v);
             boolean sameValue = v == null ? currentStored == null : v.equals(currentStored);
             if (!sameValue) {
-               fail("Not all the caches see the same value. first cache: " + currentStored + " cache " + currentCache +" saw " + v);
+               fail(Thread.currentThread().getName() + ": Not all the caches see the same value. first cache: " + currentStored + " cache " + currentCache +" saw " + v);
             }
          }
       }

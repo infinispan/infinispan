@@ -21,6 +21,9 @@ public abstract class BaseScatteredTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.SCATTERED_SYNC, false);
+      if (biasAcquisition != null) {
+         cfg.clustering().biasAcquisition(biasAcquisition);
+      }
       cfg.clustering().hash().numSegments(16);
       cfg.clustering().remoteTimeout(1, TimeUnit.DAYS); // for debugging
       cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfg);

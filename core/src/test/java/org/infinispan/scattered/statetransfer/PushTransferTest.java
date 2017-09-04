@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.responses.Response;
@@ -30,6 +31,14 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "scattered.statetransfer.PushTransferTest")
 public class PushTransferTest extends AbstractStateTransferTest {
+
+   @Override
+   public Object[] factory() {
+      return new Object[]{
+            new PushTransferTest().biasAcquisition(BiasAcquisition.NEVER),
+            new PushTransferTest().biasAcquisition(BiasAcquisition.ON_WRITE)
+      };
+   };
 
    public void testNodeJoin() throws Exception {
       List<MagicKey> keys = init();

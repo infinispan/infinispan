@@ -31,7 +31,6 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    private Collection<? extends K> keys;
    private Function<ReadWriteEntryView<K, V>, R> f;
 
-   private int topologyId = -1;
    boolean isForwarded = false;
 
    public ReadWriteManyCommand(Collection<? extends K> keys,
@@ -108,16 +107,6 @@ public final class ReadWriteManyCommand<K, V, R> extends AbstractWriteManyComman
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
    }
 
    @Override

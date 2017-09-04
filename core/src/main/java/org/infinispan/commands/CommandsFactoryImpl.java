@@ -43,6 +43,8 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commands.remote.RenewBiasCommand;
+import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -71,6 +73,7 @@ import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
+import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -108,7 +111,9 @@ import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateProvider;
@@ -189,6 +194,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private ComponentRegistry componentRegistry;
    private OrderedUpdatesManager orderedUpdatesManager;
    private StateTransferLock stateTransferLock;
+   private BiasManager biasManager;
+   private RpcManager rpcManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
    private StreamingMarshaller marshaller;
@@ -210,7 +217,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  StateReceiver stateReceiver,
                                  ComponentRegistry componentRegistry,
                                  OrderedUpdatesManager orderedUpdatesManager, StateTransferLock stateTransferLock,
-                                 IteratorHandler iteratorHandler) {
+                                 IteratorHandler iteratorHandler,
+                                 BiasManager biasManager, RpcManager rpcManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -242,6 +250,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.componentRegistry = componentRegistry;
       this.orderedUpdatesManager = orderedUpdatesManager;
       this.stateTransferLock = stateTransferLock;
+      this.biasManager = biasManager;
+      this.rpcManager = rpcManager;
    }
 
    @Start(priority = 1)
@@ -468,7 +478,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             lcc.markTransactionAsRemote(isRemote);
             break;
          case StateRequestCommand.COMMAND_ID:
-            ((StateRequestCommand) c).init(stateProvider);
+            ((StateRequestCommand) c).init(stateProvider, biasManager);
             break;
          case StateResponseCommand.COMMAND_ID:
             ((StateResponseCommand) c).init(stateConsumer, stateReceiver);
@@ -568,7 +578,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case InvalidateVersionsCommand.COMMAND_ID:
             InvalidateVersionsCommand invalidateVersionsCommand = (InvalidateVersionsCommand) c;
-            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager, stateTransferLock, stateTransferManager);
+            invalidateVersionsCommand.init(dataContainer, orderedUpdatesManager, stateTransferLock, stateTransferManager, biasManager);
             break;
 
          // === Functional commands ====
@@ -595,7 +605,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case WriteOnlyManyEntriesCommand.COMMAND_ID:
             ((AbstractWriteManyCommand) c).init(componentRegistry);
             break;
-
+         case PrimaryAckCommand.COMMAND_ID:
+            ((PrimaryAckCommand) c).setCommandAckCollector(commandAckCollector);
+            break;
+         case RevokeBiasCommand.COMMAND_ID:
+            ((RevokeBiasCommand) c).init(biasManager, this, rpcManager);
+            break;
+         case RenewBiasCommand.COMMAND_ID:
+            ((RenewBiasCommand) c).init(biasManager);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -835,6 +853,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
+   public PrimaryAckCommand buildPrimaryAckCommand(long id, boolean success, Object value, Address[] waitFor) {
+      return new PrimaryAckCommand(cacheName, id, success, value, waitFor);
+   }
+
+   @Override
    public ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId) {
       return new ExceptionAckCommand(cacheName, id, throwable, topologyId);
    }
@@ -861,5 +884,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
          return ValueMatcher.valueOf(((LambdaExternalizer) ext).valueMatcher(o).toString());
 
       return ValueMatcher.MATCH_ALWAYS;
+   }
+
+   @Override
+   public RevokeBiasCommand buildRevokeBiasCommand(Address ackTarget, long id, int topologyId, Collection<Object> keys) {
+      return new RevokeBiasCommand(cacheName, ackTarget, id, topologyId, keys);
+   }
+
+   @Override
+   public RenewBiasCommand buildRenewBiasCommand(Object[] keys) {
+      return new RenewBiasCommand(cacheName, keys);
    }
 }

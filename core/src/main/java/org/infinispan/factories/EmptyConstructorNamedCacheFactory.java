@@ -10,6 +10,7 @@ import org.infinispan.commands.CommandsFactoryImpl;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.NonTransactionalInvocationContextFactory;
@@ -37,7 +38,9 @@ import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.OrderedUpdatesManagerImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
+import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredVersionManager;
+import org.infinispan.scattered.impl.BiasManagerImpl;
 import org.infinispan.scattered.impl.ScatteredVersionManagerImpl;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -75,7 +78,8 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManagerImpl;
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
-                              OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class})
+                              OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
+                              BiasManager.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -154,17 +158,40 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else if (componentType.equals(FunctionalNotifier.class)) {
             return (T) new FunctionalNotifierImpl<>();
          } else if (componentType.equals(CommandAckCollector.class)) {
-            return componentType.cast(new CommandAckCollector());
+            if (configuration.clustering().cacheMode().isClustered()) {
+               return componentType.cast(new CommandAckCollector());
+            } else {
+               return null;
+            }
          } else if (componentType.equals(TriangleOrderManager.class)) {
-            return componentType.cast(new TriangleOrderManager(configuration.clustering().hash().numSegments()));
+            if (configuration.clustering().cacheMode().isClustered()) {
+               return componentType.cast(new TriangleOrderManager(configuration.clustering().hash().numSegments()));
+            } else {
+               return null;
+            }
          } else if (componentType.equals(OrderedUpdatesManager.class)) {
-            return componentType.cast(new OrderedUpdatesManagerImpl());
+            if (configuration.clustering().cacheMode().isScattered()) {
+               return componentType.cast(new OrderedUpdatesManagerImpl());
+            } else {
+               return null;
+            }
          } else if (componentType.equals(ScatteredVersionManager.class)) {
-            return componentType.cast(new ScatteredVersionManagerImpl());
+            if (configuration.clustering().cacheMode().isScattered()) {
+               return componentType.cast(new ScatteredVersionManagerImpl());
+            } else {
+               return null;
+            }
          } else if (componentType.equals(TransactionOriginatorChecker.class)) {
             return configuration.clustering().cacheMode() == CacheMode.LOCAL ?
                   componentType.cast(TransactionOriginatorChecker.LOCAL) :
                   componentType.cast(new ClusteredTransactionOriginatorChecker());
+         } else if (componentType.equals(BiasManager.class)) {
+            if (configuration.clustering().cacheMode().isScattered() &&
+                  configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER) {
+               return componentType.cast(new BiasManagerImpl());
+            } else {
+               return null;
+            }
          }
       }
 

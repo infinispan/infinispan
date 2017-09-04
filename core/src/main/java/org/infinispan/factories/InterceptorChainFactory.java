@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -15,6 +16,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.distribution.BiasedScatteredDistributionInterceptor;
 import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
@@ -26,6 +28,7 @@ import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.interceptors.impl.AsyncInterceptorChainImpl;
 import org.infinispan.interceptors.impl.BatchingInterceptor;
+import org.infinispan.interceptors.impl.BiasedEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
@@ -225,7 +228,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             interceptorChain.appendInterceptor(createInterceptor(new VersionedEntryWrappingInterceptor(), VersionedEntryWrappingInterceptor.class), false);
          }
       } else if (cacheMode.isScattered()) {
-         interceptorChain.appendInterceptor(createInterceptor(new RetryingEntryWrappingInterceptor(), RetryingEntryWrappingInterceptor.class), false);
+         if (configuration.clustering().biasAcquisition() == BiasAcquisition.NEVER) {
+            interceptorChain.appendInterceptor(createInterceptor(new RetryingEntryWrappingInterceptor(), RetryingEntryWrappingInterceptor.class), false);
+         } else {
+            interceptorChain.appendInterceptor(createInterceptor(new BiasedEntryWrappingInterceptor(), BiasedEntryWrappingInterceptor.class), false);
+         }
       } else {
          interceptorChain.appendInterceptor(createInterceptor(new EntryWrappingInterceptor(), EntryWrappingInterceptor.class), false);
       }
@@ -303,7 +310,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             }
             break;
          case SCATTERED_SYNC:
-            interceptorChain.appendInterceptor(createInterceptor(new ScatteredDistributionInterceptor(), ScatteredDistributionInterceptor.class), false);
+            if (configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER) {
+               interceptorChain.appendInterceptor(createInterceptor(new BiasedScatteredDistributionInterceptor(), BiasedScatteredDistributionInterceptor.class), false);
+            } else {
+               interceptorChain.appendInterceptor(createInterceptor(new ScatteredDistributionInterceptor(), ScatteredDistributionInterceptor.class), false);
+            }
             break;
          case LOCAL:
             //Nothing...

@@ -14,6 +14,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.scattered.BiasManager;
 import org.infinispan.scattered.ScatteredStateProvider;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.SmallIntSet;
@@ -54,6 +55,7 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
    private Set<Integer> segments;
 
    private StateProvider stateProvider;
+   private BiasManager biasManager;
 
    private StateRequestCommand() {
       super(null);  // for command id uniqueness test
@@ -71,8 +73,9 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
       this.segments = segments;
    }
 
-   public void init(StateProvider stateProvider) {
+   public void init(StateProvider stateProvider, BiasManager biasManager) {
       this.stateProvider = stateProvider;
+      this.biasManager = biasManager;
    }
 
    @Override
@@ -108,8 +111,13 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
                return CompletableFuture.completedFuture(listeners);
 
             case CONFIRM_REVOKED_SEGMENTS:
-               return ((ScatteredStateProvider) stateProvider)
-                     .confirmRevokedSegments(topologyId).thenApply(nil -> null);
+               return ((ScatteredStateProvider) stateProvider).confirmRevokedSegments(topologyId)
+                     .thenApply(nil -> {
+                        if (biasManager != null) {
+                           biasManager.revokeLocalBiasForSegments(segments);
+                        }
+                        return null;
+                     });
             default:
                throw new CacheException("Unknown state request command type: " + type);
          }
@@ -164,10 +172,10 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
          case GET_TRANSACTIONS:
          case CANCEL_STATE_TRANSFER:
             output.writeObject(getOrigin());
+         case CONFIRM_REVOKED_SEGMENTS:
             MarshallUtil.marshallCollection(segments, output);
             return;
          case GET_CACHE_LISTENERS:
-         case CONFIRM_REVOKED_SEGMENTS:
             return;
          default:
             throw new IllegalStateException("Unknown state request command type: " + type);
@@ -185,10 +193,10 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
          case GET_TRANSACTIONS:
          case CANCEL_STATE_TRANSFER:
             setOrigin((Address) input.readObject());
+         case CONFIRM_REVOKED_SEGMENTS:
             segments = MarshallUtil.unmarshallCollectionUnbounded(input, SmallIntSet::new);
             return;
          case GET_CACHE_LISTENERS:
-         case CONFIRM_REVOKED_SEGMENTS:
             return;
          default:
             throw new IllegalStateException("Unknown state request command type: " + type);

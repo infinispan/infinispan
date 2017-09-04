@@ -11,12 +11,20 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.CompletionException;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.scattered.Utils;
 import org.infinispan.test.TestException;
 import org.testng.annotations.Test;
 
 public class FunctionalScatteredInMemoryTest extends AbstractFunctionalOpTest {
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new FunctionalScatteredInMemoryTest().biasAcquisition(BiasAcquisition.NEVER),
+            new FunctionalScatteredInMemoryTest().biasAcquisition(BiasAcquisition.ON_WRITE)
+      };
+   }
 
    @Test(dataProvider = "owningModeAndWriteMethod")
    public void testWrite(boolean isOwner, WriteMethod method) {

@@ -22,9 +22,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
-import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.interceptors.impl.RetryingEntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -159,7 +158,8 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
             true, false, cacheMode.isScattered() ? t -> t instanceof PutKeyValueCommand || t instanceof RemoveCommand
             : t -> t.getClass().equals(op.getCommandClass()));
 
-      Class<? extends DDAsyncInterceptor> ewi = cacheMode.isScattered() ? RetryingEntryWrappingInterceptor.class : EntryWrappingInterceptor.class;
+      Class<? extends AsyncInterceptor> ewi = cache1.getAsyncInterceptorChain().getInterceptors().stream()
+            .filter(i -> i instanceof EntryWrappingInterceptor).findFirst().orElseThrow(IllegalStateException::new).getClass();
       assertTrue(cache1.getAsyncInterceptorChain().addInterceptorAfter(blockingInterceptor1, ewi));
 
       // Wait for cache0 to collect the state to send to cache1 (including our previous value).

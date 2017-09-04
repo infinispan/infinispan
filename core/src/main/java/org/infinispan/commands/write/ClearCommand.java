@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
@@ -101,6 +102,11 @@ public class ClearCommand extends AbstractTopologyAffectedCommand implements Wri
    @Override
    public void fail() {
       throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public CommandInvocationId getCommandInvocationId() {
+      return null;
    }
 
    @Override

@@ -1,5 +1,6 @@
 package org.infinispan.api;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
 
@@ -12,6 +13,7 @@ import org.testng.annotations.Test;
 public class ConditionalOperationsConcurrentPessimisticStressTest extends ConditionalOperationsConcurrentStressTest {
 
    public ConditionalOperationsConcurrentPessimisticStressTest() {
+      cacheMode = CacheMode.DIST_SYNC;
       transactional = true;
       lockingMode = LockingMode.PESSIMISTIC;
    }

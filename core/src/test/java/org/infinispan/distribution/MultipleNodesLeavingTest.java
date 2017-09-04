@@ -2,11 +2,12 @@ package org.infinispan.distribution;
 
 import java.util.List;
 
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -14,12 +15,23 @@ import org.testng.annotations.Test;
  * @since 5.0
  */
 @Test (groups = "functional", testName = "distribution.MultipleNodesLeavingTest")
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC})
 public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new MultipleNodesLeavingTest().cacheMode(CacheMode.DIST_SYNC),
+            new MultipleNodesLeavingTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
+            new MultipleNodesLeavingTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
+      };
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      createCluster(getDefaultClusteredCacheConfig(cacheMode, false), 4);
+      ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, false);
+      if (biasAcquisition != null) {
+         builder.clustering().biasAcquisition(biasAcquisition);
+      }
+      createCluster(builder, 4);
       waitForClusterToForm();
    }
 

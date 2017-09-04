@@ -1,6 +1,5 @@
 package org.infinispan.commands.write;
 
-import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.DataCommand;
 
 /**
@@ -10,12 +9,6 @@ import org.infinispan.commands.DataCommand;
  * @since 4.0
  */
 public interface DataWriteCommand extends WriteCommand, DataCommand {
-
-   /**
-    * @return the {@link CommandInvocationId} associated to the command.
-    */
-   CommandInvocationId getCommandInvocationId();
-
    /**
     * Initializes the {@link BackupWriteRpcCommand} to send the update to backup owner of a key.
     * <p>

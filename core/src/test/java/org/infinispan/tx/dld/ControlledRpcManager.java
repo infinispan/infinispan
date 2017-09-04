@@ -1,5 +1,7 @@
 package org.infinispan.tx.dld;
 
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,7 +69,7 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
 
    public void waitForCommandToBlock() throws InterruptedException {
       log.tracef("Waiting for at least one command to block");
-      blockingLatch.await(30, TimeUnit.SECONDS);
+      assertTrue(blockingLatch.await(30, TimeUnit.SECONDS));
    }
 
    public boolean waitForCommandToBlock(long time, TimeUnit unit) throws InterruptedException {
@@ -109,7 +111,7 @@ public class ControlledRpcManager extends AbstractControlledRpcManager {
          }
 
          log.debugf("Replication trigger called, waiting for latch to open.");
-         replicationLatch.await(30, TimeUnit.SECONDS);
+         assertTrue(replicationLatch.await(30, TimeUnit.SECONDS));
          log.trace("Replication latch opened, continuing.");
          return true;
       } catch (Exception e) {

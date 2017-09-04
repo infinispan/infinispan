@@ -38,6 +38,8 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commands.remote.RenewBiasCommand;
+import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -61,6 +63,7 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
+import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -544,6 +547,8 @@ public interface CommandsFactory {
 
    BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(long id, int segment, int topologyId);
 
+   PrimaryAckCommand buildPrimaryAckCommand(long id, boolean success, Object value, Address[] waitFor);
+
    ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId);
 
    BackupWriteRpcCommand buildBackupWriteRpcCommand(DataWriteCommand command);
@@ -551,4 +556,8 @@ public interface CommandsFactory {
    BackupPutMapRpcCommand buildBackupPutMapRpcCommand(PutMapCommand command);
 
    InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed);
+
+   RevokeBiasCommand buildRevokeBiasCommand(Address ackTarget, long id, int topologyId, Collection<Object> keys);
+
+   RenewBiasCommand buildRenewBiasCommand(Object[] keys);
 }

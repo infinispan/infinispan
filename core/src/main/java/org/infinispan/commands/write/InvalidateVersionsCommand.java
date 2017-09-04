@@ -6,6 +6,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.persistence.manager.OrderedUpdatesManager;
+import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.ByteString;
@@ -41,6 +42,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
    protected OrderedUpdatesManager orderedUpdatesManager;
    protected StateTransferLock stateTransferLock;
    protected StateTransferManager stateTransferManager;
+   protected BiasManager biasManager;
 
    public InvalidateVersionsCommand() {
       this(null);
@@ -60,11 +62,13 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
    }
 
    public void init(DataContainer dataContainer, OrderedUpdatesManager orderedUpdatesManager,
-                    StateTransferLock stateTransferLock, StateTransferManager stateTransferManager) {
+                    StateTransferLock stateTransferLock, StateTransferManager stateTransferManager,
+                    BiasManager biasManager) {
       this.dataContainer = dataContainer;
       this.orderedUpdatesManager = orderedUpdatesManager;
       this.stateTransferLock = stateTransferLock;
       this.stateTransferManager = stateTransferManager;
+      this.biasManager = biasManager;
    }
 
    @Override
@@ -92,6 +96,9 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
             Object key = keys[i];
             if (key == null) break;
             SimpleClusteredVersion version = new SimpleClusteredVersion(topologyIds[i], versions[i]);
+            if (biasManager != null) {
+               biasManager.revokeLocalBias(key);
+            }
             dataContainer.compute(key, (k, oldEntry, factory) -> {
                if (oldEntry == null) {
                   return null;
