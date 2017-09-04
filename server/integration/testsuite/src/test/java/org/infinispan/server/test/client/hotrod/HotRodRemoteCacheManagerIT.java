@@ -10,7 +10,7 @@ import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.HotRodClustered;
 import org.infinispan.server.test.category.HotRodSingleNode;
-import org.infinispan.server.test.category.Smoke;
+import org.infinispan.commons.test.categories.Smoke;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;

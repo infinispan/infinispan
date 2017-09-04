@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.hibernate.criterion.Restrictions;
 import org.infinispan.test.hibernate.cache.functional.entities.Citizen;
@@ -25,9 +26,9 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.jboss.util.collection.ConcurrentSet;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 
 import static org.junit.Assert.assertEquals;
@@ -39,6 +40,7 @@ import static org.junit.Assert.fail;
  *
  * @author Galder Zamarreño
  */
+@Category(Smoke.class)
 public class NaturalIdInvalidationTest extends DualNodeTest {
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NaturalIdInvalidationTest.class);

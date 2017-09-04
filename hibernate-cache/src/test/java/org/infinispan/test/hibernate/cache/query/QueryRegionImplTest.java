@@ -18,6 +18,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.query.QueryResultsRegionImpl;
 import org.hibernate.cache.internal.StandardQueryCache;
@@ -41,6 +42,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 import org.jboss.logging.Logger;
+import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -54,6 +56,7 @@ import static org.junit.Assert.assertTrue;
  * @author Galder Zamarreño
  * @since 3.5
  */
+@Category(Smoke.class)
 public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	private static final Logger log = Logger.getLogger( QueryRegionImplTest.class );
 

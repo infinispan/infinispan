@@ -1051,7 +1051,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
-                            <groups>org.infinispan.server.test.category.Smoke</groups>
+                            <groups>org.infinispan.commons.test.categories.Smoke</groups>
                             <excludedGroups>${groups.unstable}, org.infinispan.server.test.category.MemcachedClustered</excludedGroups>
                             <systemPropertyVariables>
                                 <arquillian.launch>suite-client-dist</arquillian.launch>
@@ -1174,7 +1174,7 @@
             <properties>
                 <suite.smoke.phase>integration-test</suite.smoke.phase>
                 <suite.manual.phase>none</suite.manual.phase>
-                <suite.manual.include.groups>org.infinispan.server.test.category.Smoke</suite.manual.include.groups>
+                <suite.manual.include.groups>org.infinispan.commons.test.categories.Smoke</suite.manual.include.groups>
                 <suite.queries.phase>none</suite.queries.phase>
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
