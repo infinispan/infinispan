@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.access.AccessDelegate;
 import org.infinispan.hibernate.cache.access.NonTxInvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.access.PutFromLoadValidator;
@@ -26,6 +27,7 @@ import org.infinispan.test.hibernate.cache.NodeEnvironment;
 import org.infinispan.test.hibernate.cache.util.TestSynchronization;
 import org.infinispan.test.hibernate.cache.util.TestingKeyFactory;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,6 +42,7 @@ import static org.mockito.Mockito.spy;
  * @author Galder Zamarreño
  * @since 3.5
  */
+@Category(Smoke.class)
 public class CollectionRegionAccessStrategyTest extends
 		AbstractRegionAccessStrategyTest<CollectionRegionImpl, CollectionRegionAccessStrategy> {
 	protected static int testCount;

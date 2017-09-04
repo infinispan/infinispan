@@ -10,6 +10,7 @@ import java.util.Properties;
 
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.InfinispanRegionFactory;
 import org.infinispan.hibernate.cache.timestamp.TimestampsRegionImpl;
 import org.hibernate.cache.spi.CacheDataDescription;
@@ -38,6 +39,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Tests of TimestampsRegionImpl.
@@ -45,6 +47,7 @@ import org.junit.Test;
  * @author Galder Zamarreño
  * @since 3.5
  */
+@Category(Smoke.class)
 public class TimestampsRegionImplTest extends AbstractGeneralDataRegionTest {
 
 	 @Override

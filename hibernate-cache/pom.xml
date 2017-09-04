@@ -20,6 +20,11 @@
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
       </dependency>
       <dependency>
@@ -98,7 +103,7 @@
             <dependencies>
                <dependency>
                   <groupId>org.apache.maven.surefire</groupId>
-                  <artifactId>surefire-junit4</artifactId>
+                  <artifactId>surefire-junit47</artifactId>
                   <version>${version.maven.surefire}</version>
                </dependency>
             </dependencies>
@@ -114,12 +119,9 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>default-test</id>
-                        <phase>none</phase>
-                     </execution>
-                  </executions>
+                  <configuration>
+                     <groups>org.infinispan.commons.test.categories.Smoke</groups>
+                  </configuration>
                </plugin>
             </plugins>
          </build>

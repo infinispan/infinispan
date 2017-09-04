@@ -9,6 +9,7 @@ package org.infinispan.test.hibernate.cache.entity;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.test.categories.Smoke;
 import org.infinispan.hibernate.cache.entity.EntityRegionImpl;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
@@ -22,6 +23,7 @@ import org.infinispan.test.hibernate.cache.util.TestingKeyFactory;
 import org.junit.Ignore;
 import org.junit.Test;
 import junit.framework.AssertionFailedError;
+import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -33,6 +35,7 @@ import static org.junit.Assert.assertTrue;
  * @author Galder Zamarreño
  * @since 3.5
  */
+@Category(Smoke.class)
 public class EntityRegionAccessStrategyTest extends
 		AbstractRegionAccessStrategyTest<EntityRegionImpl, EntityRegionAccessStrategy> {
 	protected static int testCount;
