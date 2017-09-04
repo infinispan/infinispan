@@ -109,7 +109,10 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
       }
 
       public Condition countDown(CountDownLatch latch) {
-         return run(() -> latch.countDown()).removeWhen(() -> latch.getCount() == 0);
+         return run(() -> {
+               log.debugf("Count down latch %s", latch);
+               latch.countDown();
+            }).removeWhen(() -> latch.getCount() == 0);
       }
 
       public Condition removeWhen(BooleanSupplier check) {
