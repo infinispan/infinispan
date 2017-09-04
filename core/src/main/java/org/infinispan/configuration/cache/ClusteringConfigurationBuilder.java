@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.ClusteringConfiguration.BIAS_ACQUISITION;
+import static org.infinispan.configuration.cache.ClusteringConfiguration.BIAS_LIFESPAN;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.INVALIDATION_BATCH_SIZE;
 
@@ -77,6 +79,24 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    /**
+    * Used in scattered cache. Acquired bias allows reading data on non-owner, but slows
+    * down further writes from other nodes.
+    */
+   public ClusteringConfigurationBuilder biasAcquisition(BiasAcquisition biasAcquisition) {
+      attributes.attribute(BIAS_ACQUISITION).set(biasAcquisition);
+      return this;
+   }
+
+   /**
+    * Used in scattered cache. Specifies how long can be the acquired bias held; while the reads
+    * will never be stale, tracking that information consumes memory on primary owner.
+    */
+   public ClusteringConfigurationBuilder biasLifespan(long l, TimeUnit unit) {
+      attributes.attribute(BIAS_LIFESPAN).set(unit.toMillis(l));
+      return this;
+   }
+
+   /**
     * Configure hash sub element
     */
    @Override
@@ -133,6 +153,11 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       }
       if (!cacheMode().isScattered() && attributes.attribute(INVALIDATION_BATCH_SIZE).isModified()) {
          throw log.invalidationBatchSizeAppliesOnNonScattered();
+      }
+      if (!cacheMode().isScattered() && (attributes.attribute(BIAS_ACQUISITION).isModified() || attributes.attribute(BIAS_LIFESPAN).isModified())) {
+         throw log.biasedReadsAppliesOnlyToScattered();
+      } else if (attributes.attribute(BIAS_ACQUISITION).get() == BiasAcquisition.ON_READ) {
+         throw new UnsupportedOperationException("Not implemented yet");
       }
    }
 

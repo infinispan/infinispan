@@ -52,6 +52,9 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
       if (!Boolean.TRUE.equals(transactional)) {
          ConfigurationBuilder scatteredBuilder = new ConfigurationBuilder();
          scatteredBuilder.clustering().cacheMode(CacheMode.SCATTERED_SYNC);
+         if (biasAcquisition != null) {
+            scatteredBuilder.clustering().biasAcquisition(biasAcquisition);
+         }
          configureCache(scatteredBuilder);
          cacheManagers.stream().forEach(cm -> cm.defineConfiguration(SCATTERED, scatteredBuilder.build()));
       }

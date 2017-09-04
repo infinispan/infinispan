@@ -33,7 +33,6 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    private Map<? extends K, ? extends V> entries;
    private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
 
-   private int topologyId = -1;
    boolean isForwarded = false;
 
    public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries,
@@ -116,16 +115,6 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public int getTopologyId() {
-      return topologyId;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      this.topologyId = topologyId;
    }
 
    @Override

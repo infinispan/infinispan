@@ -93,7 +93,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    private DataContainer<Object, Object> dataContainer;
    protected ClusteringDependentLogic cdl;
    private VersionGenerator versionGenerator;
-   private DistributionManager distributionManager;
+   protected DistributionManager distributionManager;
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private boolean isInvalidation;
    private boolean isSync;
@@ -178,7 +178,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return stateTransferManager == null || command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK);
    }
 
-   private boolean canRead(Object key) {
+   protected boolean canRead(Object key) {
       return distributionManager.getCacheTopology().isReadOwner(key);
    }
 

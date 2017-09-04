@@ -7,6 +7,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.InequalVersionComparisonResult;
@@ -28,6 +29,14 @@ public class APIScatteredTest extends BaseScatteredTest {
    private static final String VALUE1 = "VALUE1";
    private static final String VALUE2 = "VALUE2";
    private static final String VALUE3 = "VALUE3";
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new APIScatteredTest().biasAcquisition(BiasAcquisition.NEVER),
+            new APIScatteredTest().biasAcquisition(BiasAcquisition.ON_WRITE),
+      };
+   }
 
    public void testPut() {
       testPut(false);

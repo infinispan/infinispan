@@ -34,6 +34,7 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
 
    protected <K, V> AbstractWriteManyCommand(AbstractWriteManyCommand<K, V> command) {
       this.commandInvocationId = command.commandInvocationId;
+      this.topologyId = command.topologyId;
       this.params = command.params;
       this.flags = command.flags;
    }
@@ -110,6 +111,11 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
 
    @Override
    public Object getKeyLockOwner() {
+      return commandInvocationId;
+   }
+
+   @Override
+   public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
    }
 

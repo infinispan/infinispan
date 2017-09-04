@@ -19,9 +19,11 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
    public static final AttributeDefinition<Long> REMOTE_TIMEOUT =
          AttributeDefinition.builder("remoteTimeout", TimeUnit.SECONDS.toMillis(15)).build();
    public static final AttributeDefinition<Integer> INVALIDATION_BATCH_SIZE = AttributeDefinition.builder("invalidationBatchSize",  128).immutable().build();
+   public static final AttributeDefinition<BiasAcquisition> BIAS_ACQUISITION = AttributeDefinition.builder("biasAcquisition", BiasAcquisition.ON_WRITE).immutable().build();
+   public static final AttributeDefinition<Long> BIAS_LIFESPAN = AttributeDefinition.builder("biasLifespan", TimeUnit.MINUTES.toMillis(5)).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE, REMOTE_TIMEOUT, INVALIDATION_BATCH_SIZE);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE, REMOTE_TIMEOUT, INVALIDATION_BATCH_SIZE, BIAS_ACQUISITION, BIAS_LIFESPAN);
    }
 
    private final Attribute<CacheMode> cacheMode;
@@ -83,6 +85,20 @@ public class ClusteringConfiguration implements Matchable<ClusteringConfiguratio
     */
    public int invalidationBatchSize() {
       return attributes.attribute(INVALIDATION_BATCH_SIZE).get();
+   }
+
+   /**
+    * For scattered cache, specifies if the nodes is allowed to cache the entry, serving reads locally.
+    */
+   public BiasAcquisition biasAcquisition() {
+      return attributes.attribute(BIAS_ACQUISITION).get();
+   }
+
+   /**
+    * For scattered cache, specifies how long is the node allowed to read the cached entry locally.
+    */
+   public long biasLifespan() {
+      return attributes.attribute(BIAS_LIFESPAN).get();
    }
 
    /**

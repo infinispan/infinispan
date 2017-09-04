@@ -16,6 +16,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
@@ -24,6 +25,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.impl.BiasedEntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
@@ -63,7 +65,8 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
          new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
          new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
          new OperationsDuringStateTransferTest().cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
-         new OperationsDuringStateTransferTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false)
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
+         new OperationsDuringStateTransferTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
    }
 
@@ -78,6 +81,9 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
          if (lockingMode == LockingMode.OPTIMISTIC) {
             cacheConfigBuilder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
          }
+      }
+      if (biasAcquisition != null) {
+         cacheConfigBuilder.clustering().biasAcquisition(biasAcquisition);
       }
       cacheConfigBuilder.clustering().hash().numSegments(10)
             .l1().disable()
@@ -169,7 +175,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
    public Class<? extends DDAsyncInterceptor> ewi() {
       Class<? extends DDAsyncInterceptor> after;
       if (cacheMode.isScattered()) {
-         after = RetryingEntryWrappingInterceptor.class;
+         after = biasAcquisition == BiasAcquisition.NEVER ? RetryingEntryWrappingInterceptor.class : BiasedEntryWrappingInterceptor.class;
       } else if (Configurations.isTxVersioned(cache(0).getCacheConfiguration())) {
          after = VersionedEntryWrappingInterceptor.class;
       } else {

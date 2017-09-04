@@ -533,7 +533,7 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
          }
       });
       // remove the entries on self, too
-      removeCommand.init(dataContainer, orderedUpdatesManager, null, null);
+      removeCommand.init(dataContainer, orderedUpdatesManager, null, null, null);
       removeCommand.invokeAsync();
    }
 

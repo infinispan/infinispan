@@ -46,6 +46,8 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commands.remote.RenewBiasCommand;
+import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -68,6 +70,7 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateVersionsCommand;
+import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -492,6 +495,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
+   public PrimaryAckCommand buildPrimaryAckCommand(long id, boolean success, Object value, Address[] waitFor) {
+      return actual.buildPrimaryAckCommand(id, success, value, waitFor);
+   }
+
+   @Override
    public ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId) {
       return actual.buildExceptionAckCommand(id, throwable, topologyId);
    }
@@ -509,6 +517,16 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed) {
       return actual.buildInvalidateVersionsCommand(topologyId, keys, topologyIds, versions, removed);
+   }
+
+   @Override
+   public RevokeBiasCommand buildRevokeBiasCommand(Address ackTarget, long id, int topologyId, Collection<Object> keys) {
+      return actual.buildRevokeBiasCommand(ackTarget, id, topologyId, keys);
+   }
+
+   @Override
+   public RenewBiasCommand buildRenewBiasCommand(Object[] keys) {
+      return actual.buildRenewBiasCommand(keys);
    }
 
 }

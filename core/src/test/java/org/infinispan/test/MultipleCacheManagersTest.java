@@ -25,6 +25,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -98,6 +99,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected Boolean transactional;
    protected LockingMode lockingMode;
    protected Boolean totalOrder;
+   protected BiasAcquisition biasAcquisition;
    protected IsolationLevel isolationLevel;
    private boolean parametrizedInstance = false;
 
@@ -623,6 +625,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return this;
    }
 
+   public MultipleCacheManagersTest biasAcquisition(BiasAcquisition biasAcquisition) {
+      this.biasAcquisition = biasAcquisition;
+      return this;
+   }
+
    public TransactionMode transactionMode() {
       return transactional ? TransactionMode.TRANSACTIONAL : TransactionMode.NON_TRANSACTIONAL;
    }
@@ -657,11 +664,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected String[] parameterNames() {
-      return new String[]{ null, "tx", "locking", "TO", "isolation" };
+      return new String[]{ null, "tx", "locking", "TO", "isolation", "bias" };
    }
 
    protected Object[] parameterValues() {
-      return new Object[]{ cacheMode, transactional, lockingMode, totalOrder, isolationLevel };
+      return new Object[]{ cacheMode, transactional, lockingMode, totalOrder, isolationLevel, biasAcquisition };
    }
 
    protected static <T> T[] concat(T[] a1, T... a2) {

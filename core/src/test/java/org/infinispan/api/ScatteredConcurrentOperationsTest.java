@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -15,6 +16,14 @@ import java.util.List;
  */
 @Test(groups = "functional", testName = "api.ScatteredConcurrentOperationsTest")
 public class ScatteredConcurrentOperationsTest extends ConcurrentOperationsTest {
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ScatteredConcurrentOperationsTest().biasAcquisition(BiasAcquisition.NEVER),
+            new ScatteredConcurrentOperationsTest().biasAcquisition(BiasAcquisition.ON_WRITE)
+      };
+   }
+
    public ScatteredConcurrentOperationsTest() {
       super(CacheMode.SCATTERED_SYNC, 2, 2, 4);
    }

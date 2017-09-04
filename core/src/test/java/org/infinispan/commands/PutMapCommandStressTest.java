@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -35,9 +36,10 @@ public class PutMapCommandStressTest extends StressTest {
    @Override
    public Object[] factory() {
       return new Object[] {
-//         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
-//         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
-         new PutMapCommandStressTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
+         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
+         new PutMapCommandStressTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
+         new PutMapCommandStressTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
+         new PutMapCommandStressTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
    }
 
@@ -53,6 +55,9 @@ public class PutMapCommandStressTest extends StressTest {
       builderUsed.clustering().remoteTimeout(12000);
       if (transactional) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      }
+      if (biasAcquisition != null) {
+         builderUsed.clustering().biasAcquisition(biasAcquisition);
       }
       createClusteredCaches(CACHE_COUNT, CACHE_NAME, builderUsed);
    }

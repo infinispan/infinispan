@@ -1,5 +1,6 @@
 package org.infinispan.api;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -11,6 +12,7 @@ import org.testng.annotations.Test;
 public class ConditionalOperationsConcurrentWriteSkewStressTest extends ConditionalOperationsConcurrentStressTest {
 
    public ConditionalOperationsConcurrentWriteSkewStressTest() {
+      cacheMode = CacheMode.DIST_SYNC;
       transactional = true;
       writeSkewCheck = true;
    }

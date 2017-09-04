@@ -10,11 +10,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
@@ -27,7 +27,6 @@ import org.testng.annotations.Test;
 //unstable. test fails with DIST_SYNC and SCATTERED_SYNC (ISPN-3918)
 @Test(groups = {"functional", "unstable"}, testName = "distribution.rehash.NonTxPutIfAbsentDuringJoinStressTest")
 @CleanupAfterMethod
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_WRITERS = 4;
@@ -35,6 +34,15 @@ public class NonTxPutIfAbsentDuringJoinStressTest extends MultipleCacheManagersT
    private static final int NUM_KEYS = 100;
    private final ConcurrentMap<String, String> insertedValues = CollectionFactory.makeConcurrentMap();
    private volatile boolean stop = false;
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new NonTxPutIfAbsentDuringJoinStressTest().cacheMode(CacheMode.DIST_SYNC),
+            new NonTxPutIfAbsentDuringJoinStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
+            new NonTxPutIfAbsentDuringJoinStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
+      };
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {

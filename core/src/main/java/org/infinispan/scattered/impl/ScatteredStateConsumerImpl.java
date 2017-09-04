@@ -149,7 +149,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
 
       rpcManager.invokeRemotelyAsync(null, commandsFactory.buildStateRequestCommand(
             StateRequestCommand.Type.CONFIRM_REVOKED_SEGMENTS,
-            rpcManager.getAddress(), cacheTopology.getTopologyId(), null),
+            rpcManager.getAddress(), cacheTopology.getTopologyId(), addedSegments),
             synchronousIgnoreLeaversRpcOptions).whenComplete((responses, throwable) -> {
          if (throwable == null) {
             try {

@@ -23,6 +23,8 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commands.remote.RenewBiasCommand;
+import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -335,6 +337,12 @@ public class RemoteCommandsFactory {
                break;
             case InvalidateVersionsCommand.COMMAND_ID:
                command = new InvalidateVersionsCommand(cacheName);
+               break;
+            case RevokeBiasCommand.COMMAND_ID:
+               command = new RevokeBiasCommand(cacheName);
+               break;
+            case RenewBiasCommand.COMMAND_ID:
+               command = new RenewBiasCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

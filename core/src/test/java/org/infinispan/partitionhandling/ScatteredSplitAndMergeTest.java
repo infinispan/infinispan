@@ -1,5 +1,6 @@
 package org.infinispan.partitionhandling;
 
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.util.logging.Log;
@@ -19,6 +20,14 @@ public class ScatteredSplitAndMergeTest extends BasePartitionHandlingTest {
 
    {
       cacheMode = CacheMode.SCATTERED_SYNC;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ScatteredSplitAndMergeTest().biasAcquisition(BiasAcquisition.NEVER),
+            new ScatteredSplitAndMergeTest().biasAcquisition(BiasAcquisition.ON_WRITE)
+      };
    }
 
    public void testSplitAndMerge1() throws Exception {

@@ -2,6 +2,7 @@ package org.infinispan.commands.write;
 
 import java.util.Collection;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -73,4 +74,8 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
       return false;
    }
 
+   /**
+    * @return the {@link CommandInvocationId} associated to the command.
+    */
+   CommandInvocationId getCommandInvocationId();
 }

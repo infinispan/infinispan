@@ -194,7 +194,7 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
       if (sync) {
          Collector<Map<Object, Object>> collector = commandAckCollector
-               .createMultiKeyCollector(command.getCommandInvocationId().getId(), filter.primaries.keySet(),
+               .createSegmentBasedCollector(command.getCommandInvocationId().getId(), filter.primaries.keySet(),
                      filter.backups, command.getTopologyId());
          CompletableFuture<Map<Object, Object>> localResult = new CompletableFuture<>();
          final Map<Object, Object> localEntries = filter.primaries.remove(localAddress);

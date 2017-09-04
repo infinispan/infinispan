@@ -2,6 +2,7 @@ package org.infinispan.api;
 
 import java.util.List;
 
+import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -13,6 +14,7 @@ import org.testng.annotations.Test;
 public class ConditionalOperationsConcurrentOptimisticStressTest extends ConditionalOperationsConcurrentStressTest {
 
    public ConditionalOperationsConcurrentOptimisticStressTest() {
+      cacheMode = CacheMode.DIST_SYNC;
       transactional = true;
    }
 

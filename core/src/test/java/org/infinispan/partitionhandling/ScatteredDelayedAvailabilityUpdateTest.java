@@ -1,6 +1,7 @@
 package org.infinispan.partitionhandling;
 
 import org.infinispan.Cache;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -24,6 +25,14 @@ import static org.testng.AssertJUnit.assertFalse;
 public class ScatteredDelayedAvailabilityUpdateTest extends DelayedAvailabilityUpdateTest {
    {
       cacheMode = CacheMode.SCATTERED_SYNC;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new ScatteredDelayedAvailabilityUpdateTest().biasAcquisition(BiasAcquisition.NEVER),
+            new ScatteredDelayedAvailabilityUpdateTest().biasAcquisition(BiasAcquisition.ON_WRITE)
+      };
    }
 
    @Override
@@ -87,21 +96,32 @@ public class ScatteredDelayedAvailabilityUpdateTest extends DelayedAvailabilityU
       // with higher topology than the one on p0n0 (the availability & topology update is blocked) and
       // it will block on p0n0.
       checks.add(new Check("p0n1 k0Existing", fork(() -> assertKeyNotAvailableForRead(cache(p0.node(1)), k0Existing))));
-      // owner (p0.node(0)) has already become degraded so we get exception from it
-      assertKeyNotAvailableForRead(cache(p0.node(0)), k1Existing);
+      if (biasAcquisition == BiasAcquisition.NEVER) {
+         // owner (p0.node(1)) has already become degraded so we get exception from it
+         assertKeyNotAvailableForRead(cache(p0.node(0)), k1Existing);
+      } else {
+         // we have the bias and read the value from local (available) node
+         assertKeyAvailableForRead(cache(p0.node(0)), k1Existing, "v1");
+      }
       assertKeyNotAvailableForRead(cache(p0.node(1)), k1Existing);
 
       // We find out that the other partition is not reachable, but we don't know why
       // - that's why PartitionHandlingInterceptor waits for topology update or degraded mode.
       // However the update is blocked by the test
-      checks.add(new Check("p0n0 k2Existing", fork(() -> assertKeyNotAvailableForRead(cache(p0.node(0)), k2Existing))));
-      checks.add(new Check("p0n0 k3Existing", fork(() -> assertKeyNotAvailableForRead(cache(p0.node(0)), k3Existing))));
+      if (biasAcquisition == BiasAcquisition.NEVER) {
+         checks.add(new Check("p0n0 k2Existing", fork(() -> assertKeyNotAvailableForRead(cache(p0.node(0)), k2Existing))));
+         checks.add(new Check("p0n0 k3Existing", fork(() -> assertKeyNotAvailableForRead(cache(p0.node(0)), k3Existing))));
+      } else {
+         assertKeyAvailableForRead(cache(p0.node(0)), k2Existing, "v2");
+         assertKeyAvailableForRead(cache(p0.node(0)), k3Existing, "v3");
+      }
       assertKeyNotAvailableForRead(cache(p0.node(1)), k2Existing);
       assertKeyNotAvailableForRead(cache(p0.node(1)), k3Existing);
 
       assertKeyAvailableForRead(cache(p0.node(0)), k0Missing, null);
       // assertKeyNotAvailableForRead(cache(p0.node(1)), k0Missing);
       checks.add(new Check("p0n1 k0Missing", fork(() -> assertKeyNotAvailableForRead(cache(p0.node(1)), k0Missing))));
+      // with bias on write, we haven't written the missing key so the node does not have the bias and this will fail
       assertKeyNotAvailableForRead(cache(p0.node(0)), k1Missing);
       assertKeyNotAvailableForRead(cache(p0.node(1)), k1Missing);
 

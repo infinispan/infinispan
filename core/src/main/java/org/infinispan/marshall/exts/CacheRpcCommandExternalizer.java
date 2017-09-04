@@ -13,6 +13,8 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.RenewBiasCommand;
+import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
@@ -85,7 +87,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                StreamRequestCommand.class, StreamSegmentResponseCommand.class, StreamResponseCommand.class,
                BackupWriteRpcCommand.class, BackupPutMapRpcCommand.class,
                InvalidateVersionsCommand.class, StreamIteratorRequestCommand.class,
-               StreamIteratorNextCommand.class, StreamIteratorCloseCommand.class);
+               StreamIteratorNextCommand.class, StreamIteratorCloseCommand.class,
+               RevokeBiasCommand.class, RenewBiasCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

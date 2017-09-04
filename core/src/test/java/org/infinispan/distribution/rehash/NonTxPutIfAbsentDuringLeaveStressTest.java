@@ -10,12 +10,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.test.fwk.InCacheMode;
 import org.testng.annotations.Test;
 
 /**
@@ -26,12 +26,20 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "distribution.rehash.NonTxPutIfAbsentDuringLeaveStressTest")
 @CleanupAfterMethod
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagersTest {
 
    private static final int NUM_WRITERS = 4;
    private static final int NUM_ORIGINATORS = 2;
    private static final int NUM_KEYS = 100;
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new NonTxPutIfAbsentDuringLeaveStressTest().cacheMode(CacheMode.DIST_SYNC),
+            new NonTxPutIfAbsentDuringLeaveStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
+            new NonTxPutIfAbsentDuringLeaveStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
+      };
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
