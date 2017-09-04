@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -79,7 +78,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
       //initialize server-side serialization
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
+      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       //initialize client-side serialization context
@@ -94,10 +93,6 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("lucene_version", "LUCENE_CURRENT");
       return builder;
-   }
-
-   private String read(String classPathResource) throws IOException {
-      return Util.read(getClass().getResourceAsStream(classPathResource));
    }
 
    @AfterClass(alwaysRun = true)

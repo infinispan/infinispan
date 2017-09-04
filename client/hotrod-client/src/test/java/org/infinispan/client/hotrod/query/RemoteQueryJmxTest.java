@@ -8,7 +8,6 @@ import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -95,7 +94,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
 
       ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(mBeanServer, getProtobufMetadataManagerObjectName(), ProtobufMetadataManagerMBean.class);
-      String protofile = read("/sample_bank_account/bank.proto");
+      String protofile = Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader());
       protobufMetadataManagerMBean.registerProtofile("sample_bank_account/bank.proto", protofile);
       assertEquals(protofile, protobufMetadataManagerMBean.getProtofile("sample_bank_account/bank.proto"));
       assertNull(protobufMetadataManagerMBean.getFilesWithErrors());
@@ -105,10 +104,6 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
 
       return cacheManager;
-   }
-
-   private String read(String classPathResource) throws IOException {
-      return Util.read(getClass().getResourceAsStream(classPathResource));
    }
 
    @AfterClass(alwaysRun = true)
