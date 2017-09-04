@@ -194,19 +194,8 @@ public class TombstoneCallInterceptor extends DDAsyncInterceptor {
 			decoratedCache = decoratedCache.withFlags(flags.toArray(new Flag[flags.size()]));
 		}
 		// In non-transactional caches we don't care about context
-      CloseableIterator<CacheEntry<Object, Object>> it = Closeables.iterator(decoratedCache.cacheEntrySet().stream()
-            .filter(CacheFilters.predicate(Tombstone.EXCLUDE_TOMBSTONES)));
-		try {
-         while (it.hasNext()) {
-            CacheEntry<Object, Object> entry = it.next();
-				if (size++ == Integer.MAX_VALUE) {
-					return Integer.MAX_VALUE;
-				}
-			}
-		}
-		finally {
-         it.close();
-		}
-		return size;
+      return (int) decoratedCache.cacheEntrySet().stream()
+         .filter(CacheFilters.predicate(Tombstone.EXCLUDE_TOMBSTONES))
+         .count();
 	}
 }

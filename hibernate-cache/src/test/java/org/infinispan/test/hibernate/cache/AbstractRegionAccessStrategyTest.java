@@ -281,7 +281,10 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
    private boolean await(CountDownLatch latch) {
       try {
-         return latch.await(1, TimeUnit.SECONDS);
+         log.debugf("Await latch: %s", latch);
+         boolean await = latch.await(1, TimeUnit.SECONDS);
+         log.debugf("Finished waiting for latch, did latch reach zero? %b", await);
+         return await;
       } catch (InterruptedException e) {
          // ignore;
          return false;
@@ -289,7 +292,8 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
    }
 
    String putFromLoadTestThreadName(String node, boolean useMinimalAPI, boolean isRemoval) {
-      return String.format("putFromLoad,node=%s,minimal=%s,isRemove=%s", mode, useMinimalAPI, isRemoval);
+      return String.format("putFromLoad=%s,%s,%s,%s,minimal=%s,isRemove=%s",
+         node, mode, cacheMode, accessType, useMinimalAPI, isRemoval);
    }
 
 	protected CountDownLatch expectAfterUpdate() {
@@ -317,17 +321,19 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
       Predicate<Object> valuePredicate = accessType == AccessType.NONSTRICT_READ_WRITE
          ? value -> value instanceof VersionedEntry
          : value -> value instanceof TombstoneUpdate;
+      CountDownLatch latch;
       if (!isUsingInvalidation()) {
-         CountDownLatch latch = new CountDownLatch(1);
+         latch = new CountDownLatch(1);
          ExpectingInterceptor.get(region.getCache())
             .when((ctx, cmd) -> cmd instanceof PutKeyValueCommand
                   && valuePredicate.test(((PutKeyValueCommand) cmd).getValue()))
             .countDown(latch);
          cleanup.add(() -> ExpectingInterceptor.cleanup(region.getCache()));
-         return latch;
       } else {
-         return new CountDownLatch(0);
+         latch = new CountDownLatch(0);
       }
+      log.debugf("Create latch for putFromLoad: %s", latch);
+      return latch;
    }
 
 	protected abstract void doUpdate(S strategy, SessionImplementor session, Object key, Object value, Object version) throws RollbackException, SystemException;
