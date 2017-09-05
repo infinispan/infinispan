@@ -279,10 +279,9 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	}
 
    protected void assertPutFromLoadLatches(CountDownLatch[] latches) {
-      if (!await(latches[0]) && !await(latches[1]))
-         throw new AssertionError(String.format(
-            "One of the latches in %s should have at least completed",
-            Arrays.toString(latches)));
+      assertTrue(String.format(
+         "One of the latches in %s should have at least completed", Arrays.toString(latches)),
+         await(latches[0]) || await(latches[1]));
    }
 
    private boolean await(CountDownLatch latch) {
@@ -652,6 +651,4 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		}
 		return putFromLoadLatch;
 	}
-
-
 }

@@ -185,7 +185,7 @@ public class PutFromLoadValidator {
 	public static void addToCache(AdvancedCache cache, PutFromLoadValidator validator) {
       AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
       List<AsyncInterceptor> interceptors = chain.getInterceptors();
-      log.debug("Interceptor chain was: " + interceptors);
+      log.debugf("Interceptor chain was: ", interceptors);
       int position = 0;
 		// add interceptor before uses exact match, not instanceof match
 		int invalidationPosition = 0;
@@ -224,7 +224,7 @@ public class PutFromLoadValidator {
          chain.addInterceptor(nonTxPutFromLoadInterceptor, entryWrappingPosition);
 			validator.nonTxPutFromLoadInterceptor = nonTxPutFromLoadInterceptor;
 		}
-		log.debug("New interceptor chain is: " + cache.getAsyncInterceptorChain());
+		log.debugf("New interceptor chain is: ", cache.getAsyncInterceptorChain());
 
 		CacheCommandInitializer cacheCommandInitializer = cache.getComponentRegistry().getComponent(CacheCommandInitializer.class);
 		cacheCommandInitializer.addPutFromLoadValidator(cache.getName(), validator);

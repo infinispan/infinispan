@@ -194,8 +194,9 @@ public class TombstoneCallInterceptor extends DDAsyncInterceptor {
 			decoratedCache = decoratedCache.withFlags(flags.toArray(new Flag[flags.size()]));
 		}
 		// In non-transactional caches we don't care about context
-      return (int) decoratedCache.cacheEntrySet().stream()
-         .filter(CacheFilters.predicate(Tombstone.EXCLUDE_TOMBSTONES))
-         .count();
+      return Math.min(Integer.MAX_VALUE,
+         (int) decoratedCache.cacheEntrySet().stream()
+            .filter(CacheFilters.predicate(Tombstone.EXCLUDE_TOMBSTONES))
+            .count());
 	}
 }
