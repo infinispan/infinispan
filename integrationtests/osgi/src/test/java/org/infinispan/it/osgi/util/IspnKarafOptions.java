@@ -32,6 +32,7 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionConfigurationConsoleOption;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.AbstractUrlProvisionOption;
+import org.ops4j.pax.exam.options.MavenUrlReference;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.options.WrappedUrlProvisionOption;
 
@@ -320,6 +321,16 @@ public class IspnKarafOptions {
       return wrappedBundle(mavenBundle().groupId("org.ops4j.pax.exam").artifactId("pax-exam-spi").version(version));
    }
 
+   public static Option featurePaxUrlWrap() throws Exception {
+      MavenUrlReference karafStandardRepo = maven()
+            .groupId("org.apache.karaf.features")
+            .artifactId("standard")
+            .version(karafVersion())
+            .classifier("features")
+            .type("xml");
+      return features(karafStandardRepo, "(wrap)");
+   }
+
    public static Option commonOptions() throws Exception {
       return composite(karafContainer(),
                        vmOptions("-Djava.net.preferIPv4Stack=true", "-Djgroups.bind_addr=127.0.0.1"),
@@ -327,10 +338,13 @@ public class IspnKarafOptions {
                        runWithoutConsole(),
                        junitBundles(),
                        keepRuntimeFolder(),
-            /* Required for the @Category(Per{Suite,Class,Method}) annotations. */
-            bundlePaxExamSpi(),
-            bundleTestAnnotations(),
-            localRepoForPAXUrl());
+                       /* For the wrap: protocol used for non-OSGi dependencies */
+                       /* Infinispan features already that need it depend on it, but the test-dependencies feature doesn't have any dependencies */
+                       featurePaxUrlWrap(),
+                       /* Required for the @ExamReactorStrategy, @Category(Per{Suite,Class,Method}.class) annotations. */
+                       bundlePaxExamSpi(),
+                       bundleTestAnnotations(),
+                       localRepoForPAXUrl());
    }
 
    public static Option perSuiteOptions() throws Exception {

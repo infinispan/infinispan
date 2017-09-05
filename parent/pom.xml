@@ -210,7 +210,7 @@
         <version.metainf-services>1.7</version.metainf-services>
         <version.jacoco>0.7.5.201505241946</version.jacoco>
         <version.pax.url>2.5.2</version.pax.url>
-        <version.karaf>3.0.8</version.karaf>
+        <version.karaf>4.1.2</version.karaf>
         <version.pax.exam>4.11.0</version.pax.exam>
         <version.ant-contrib>1.0b3</version.ant-contrib>
         <dir.ispn>../</dir.ispn>
