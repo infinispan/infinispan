@@ -136,6 +136,7 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
 
       public ControllerThread(String controllerThreadName) {
          super(controllerThreadName);
+         this.setUncaughtExceptionHandler((t, e) -> log.errorf(e, "Exception in thread %s", t.getName()));
          semaphore = new Semaphore(0);
       }
 
@@ -167,7 +168,15 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
             ArrayDeque<BlockingRunnable> readyList = new ArrayDeque<>(size);
             for (Iterator<BlockingRunnable> iterator = blockedTasks.iterator(); iterator.hasNext(); ) {
                BlockingRunnable runnable = iterator.next();
-               if (runnable.isReady()) {
+               boolean ready;
+               try {
+                  ready = runnable.isReady();
+               } catch (Exception e) {
+                  log.debugf(e, "Failed to check ready state of %s, dropping.", runnable);
+                  iterator.remove();
+                  continue;
+               }
+               if (ready) {
                   iterator.remove();
                   readyList.addLast(runnable);
                }
@@ -201,6 +210,11 @@ public class BlockingTaskAwareExecutorServiceImpl extends AbstractExecutorServic
       @Override
       public void run() {
          runnable.run();
+      }
+
+      @Override
+      public String toString() {
+         return "RunnableWrapper(" + runnable + ")";
       }
    }
 }

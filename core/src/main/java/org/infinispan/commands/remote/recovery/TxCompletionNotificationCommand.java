@@ -99,12 +99,6 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
       if (remoteTx == null && gtx != null) {
          remoteTx = txTable.removeRemoteTransaction(gtx);
       }
-      boolean successful = remoteTx != null && !remoteTx.isMarkedForRollback();
-      if (gtx != null) {
-         txTable.markTransactionCompleted(gtx, successful);
-      } else if (remoteTx != null) {
-         txTable.markTransactionCompleted(remoteTx.getGlobalTransaction(), successful);
-      }
       if (remoteTx == null) return CompletableFutures.completedNull();
       forwardCommandRemotely(remoteTx);
 
