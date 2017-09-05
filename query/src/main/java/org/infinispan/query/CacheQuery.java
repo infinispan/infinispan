@@ -8,6 +8,7 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.Sort;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.query.engine.spi.FacetManager;
+import org.hibernate.search.spatial.Coordinates;
 
 /**
  * A cache-query is what will be returned when the getQuery() method is run on {@link org.infinispan.query.impl.SearchManagerImpl}. This object can
@@ -106,6 +107,27 @@ public interface CacheQuery<E> extends Iterable<E> {
     * @return {@code this} to allow for method chaining, but the type parameter now becomes {@code Object[]}
     */
    CacheQuery<Object[]> projection(String... fields);
+
+   /**
+    * Defines the center of the spatial search for this query to project distance in results.
+    *
+    * @param center the search center
+    * @param fieldName name of the spatial field
+    *
+    * @return {@code this} for method chaining
+    */
+   CacheQuery<E> setSpatialParameters(Coordinates center, String fieldName);
+
+   /**
+    * Defines the center of the spatial search for this query to project distance in results.
+    *
+    * @param latitude latitude of the search center
+    * @param longitude longitude of the search center
+    * @param fieldName name of the spatial field
+    *
+    * @return {@code this} for method chaining
+    */
+   CacheQuery<E> setSpatialParameters(double latitude, double longitude, String fieldName);
 
    /**
     * Enable a given filter by its name.

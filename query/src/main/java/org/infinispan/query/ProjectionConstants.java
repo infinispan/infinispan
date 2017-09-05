@@ -11,4 +11,5 @@ public interface ProjectionConstants {
 
    String VALUE = org.hibernate.search.engine.ProjectionConstants.THIS;
 
+   String SPATIAL_DISTANCE = org.hibernate.search.engine.ProjectionConstants.SPATIAL_DISTANCE;
 }

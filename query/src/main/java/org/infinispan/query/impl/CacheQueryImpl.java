@@ -14,6 +14,8 @@ import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
+import org.hibernate.search.spatial.Coordinates;
+import org.hibernate.search.spatial.impl.Point;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
@@ -208,9 +210,20 @@ public class CacheQueryImpl<E> implements CacheQuery<E> {
    }
 
    @Override
+   public CacheQuery<E> setSpatialParameters(Coordinates center, String fieldName) {
+      queryDefinition.getHsQuery().setSpatialParameters(center, fieldName);
+      return this;
+   }
+
+   @Override
+   public CacheQuery<E> setSpatialParameters(double latitude, double longitude, String fieldName) {
+      queryDefinition.getHsQuery().setSpatialParameters(Point.fromDegrees(latitude, longitude), fieldName);
+      return this;
+   }
+
+   @Override
    public CacheQuery<E> timeout(long timeout, TimeUnit timeUnit) {
       queryDefinition.getHsQuery().getTimeoutManager().setTimeout(timeout, timeUnit);
       return this;
    }
-
 }
