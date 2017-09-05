@@ -159,4 +159,13 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
    protected CompletableFuture<Response> beforeInvoke() {
       return null; //no-op by default
    }
+
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
+      sb.append("{command=").append(command);
+      sb.append(", sync=").append(sync);
+      sb.append('}');
+      return sb.toString();
+   }
 }

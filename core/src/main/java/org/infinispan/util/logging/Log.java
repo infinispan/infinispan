@@ -1641,6 +1641,12 @@ public interface Log extends BasicLogger {
    IllegalStateException unableToFindLocalTransactionFromRemoteSiteTransaction(GlobalTransaction globalTransaction);
 
    @LogMessage(level = WARN)
-   @Message(value = "Ignoring versions invalidation from topology %d, current topology is %d")
+   @Message(value = "Ignoring versions invalidation from topology %d, current topology is %d", id = 480)
    void ignoringInvalidateVersionsFromOldTopology(int invalidationTopology, int currentTopologyId);
+
+   @Message(value = "Cannot create remote transaction %s, the originator is not in the cluster view", id = 481)
+   CacheException remoteTransactionOriginatorNotInView(GlobalTransaction gtx);
+
+   @Message(value = "Cannot create remote transaction %s, already completed", id = 482)
+   CacheException remoteTransactionAlreadyCompleted(GlobalTransaction gtx);
 }

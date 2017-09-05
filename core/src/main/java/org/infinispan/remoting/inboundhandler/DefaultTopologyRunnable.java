@@ -67,4 +67,14 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
       return Math.max(commandTopologyId, 0);
    }
 
+   @Override
+   public String toString() {
+      final StringBuilder sb = new StringBuilder("DefaultTopologyRunnable{");
+      sb.append("topologyMode=").append(topologyMode);
+      sb.append(", commandTopologyId=").append(commandTopologyId);
+      sb.append(", command=").append(command);
+      sb.append(", sync=").append(sync);
+      sb.append('}');
+      return sb.toString();
+   }
 }

@@ -33,6 +33,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -354,6 +355,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     * Atomicity: this method supports concurrent invocations, guaranteeing that all threads will see the same
     * transaction object.
     */
+   // TODO: consider returning null instead of throwing exception when the transaction is already completed
    public RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
       return getOrCreateRemoteTransaction(globalTx, modifications, currentTopologyId);
    }
@@ -370,8 +372,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
 
       int viewId = rpcManager.getTransport().getViewId();
       if (!rpcManager.getTransport().getMembers().contains(globalTx.getAddress())) {
-         throw new IllegalStateException(
-               "Cannot create remote transaction " + globalTx + ", the originator is not in the cluster view");
+         throw log.remoteTransactionOriginatorNotInView(globalTx);
       }
 
       RemoteTransaction newTransaction = modifications == null ? txFactory.newRemoteTransaction(globalTx, topologyId)
@@ -383,7 +384,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             return existing;
          } else {
             if (isTransactionCompleted(gtx)) {
-               throw new IllegalStateException("Cannot create remote transaction " + gtx + ", already completed");
+               throw log.remoteTransactionAlreadyCompleted(gtx);
             }
             if (trace)
                log.tracef("Created and registered remote transaction %s", newTransaction);
@@ -471,10 +472,17 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    public final RemoteTransaction removeRemoteTransaction(GlobalTransaction txId) {
-      RemoteTransaction removed = remoteTransactions.remove(txId);
-      if (trace) log.tracef("Removed remote transaction %s ? %s", txId, removed);
-      releaseResources(removed);
-      return removed;
+      ByRef<RemoteTransaction> removed = new ByRef<>(null);
+      // we need to mark the transaction inside compute() even if it does not exist
+      remoteTransactions.compute(txId, (gtx, remoteTx) -> {
+         boolean successful = remoteTx != null && !remoteTx.isMarkedForRollback();
+         markTransactionCompleted(gtx, successful);
+         removed.set(remoteTx);
+         return null;
+      });
+      if (trace) log.tracef("Removed remote transaction %s ? %s", txId, removed.get());
+      releaseResources(removed.get());
+      return removed.get();
    }
 
    public int getRemoteTxCount() {
