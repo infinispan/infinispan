@@ -13,6 +13,8 @@ import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.spi.CustomTypeMetadata;
 import org.hibernate.search.spi.IndexedTypeIdentifier;
+import org.hibernate.search.spi.IndexedTypeMap;
+import org.hibernate.search.spi.impl.IndexedTypeMaps;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
@@ -75,17 +77,13 @@ final class RemoteQueryEngine extends BaseRemoteQueryEngine {
    protected CacheQuery<?> makeCacheQuery(IckleParsingResult<Descriptor> ickleParsingResult, Query luceneQuery) {
       CustomTypeMetadata customTypeMetadata = new CustomTypeMetadata() {
          @Override
-         public IndexedTypeIdentifier getEntityType() {
-            return ProtobufValueWrapper.INDEXING_TYPE;
-         }
-
-         @Override
          public Set<String> getSortableFields() {
             IndexingMetadata indexingMetadata = ickleParsingResult.getTargetEntityMetadata().getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
             return indexingMetadata != null ? indexingMetadata.getSortableFields() : Collections.emptySet();
          }
       };
-      HSQuery hSearchQuery = getSearchFactory().createHSQuery(luceneQuery, customTypeMetadata);
+      IndexedTypeMap<CustomTypeMetadata> queryMetadata = IndexedTypeMaps.singletonMapping(ProtobufValueWrapper.INDEXING_TYPE, customTypeMetadata);
+      HSQuery hSearchQuery = getSearchFactory().createHSQuery(luceneQuery, queryMetadata);
       return ((SearchManagerImpl) getSearchManager()).getQuery(hSearchQuery);
    }
 
