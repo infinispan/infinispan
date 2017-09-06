@@ -7,8 +7,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.equivalence.Equivalence;
-
 /**
  * Splits the requests into several subqueues according to request.key.hashCode(). If the request has no key,
  * inserts countdown into the request and puts it into all subqueues - the thread that retrieves such element
@@ -19,14 +17,12 @@ import org.infinispan.commons.equivalence.Equivalence;
 public class IndexQueue extends AbstractQueue<IndexRequest> implements BlockingQueue<IndexRequest> {
 
    private final ArrayBlockingQueue[] queues;
-   private final Equivalence<Object> keyEquivalence;
 
-   public IndexQueue(int segments, int capacity, Equivalence<Object> keyEquivalence) {
+   public IndexQueue(int segments, int capacity) {
       queues = new ArrayBlockingQueue[segments];
       for (int i = 0; i < segments; ++i) {
          queues[i] = new ArrayBlockingQueue(capacity);
       }
-      this.keyEquivalence = keyEquivalence;
    }
 
    @Override
@@ -42,7 +38,7 @@ public class IndexQueue extends AbstractQueue<IndexRequest> implements BlockingQ
    @Override
    public void put(IndexRequest indexRequest) throws InterruptedException {
       if (indexRequest.getKey() != null) {
-         queues[Math.abs(keyEquivalence.hashCode(indexRequest.getKey())) % queues.length].put(indexRequest);
+         queues[(indexRequest.getKey().hashCode() & Integer.MAX_VALUE) % queues.length].put(indexRequest);
       } else {
          indexRequest.setCountDown(queues.length);
          for (int i = 0; i < queues.length; ++i) {
@@ -54,7 +50,7 @@ public class IndexQueue extends AbstractQueue<IndexRequest> implements BlockingQ
    @Override
    public boolean offer(IndexRequest indexRequest, long timeout, TimeUnit unit) throws InterruptedException {
       if (indexRequest.getKey() != null) {
-         return queues[Math.abs(keyEquivalence.hashCode(indexRequest.getKey())) % queues.length].offer(indexRequest, timeout, unit);
+         return queues[(indexRequest.getKey().hashCode() & Integer.MAX_VALUE) % queues.length].offer(indexRequest, timeout, unit);
       } else {
          throw new UnsupportedOperationException();
       }
@@ -87,7 +83,7 @@ public class IndexQueue extends AbstractQueue<IndexRequest> implements BlockingQ
 
    @Override
    public boolean offer(IndexRequest indexRequest) {
-      return queues[Math.abs(keyEquivalence.hashCode(indexRequest.getKey())) % queues.length].offer(indexRequest);
+      return queues[(indexRequest.getKey().hashCode() & Integer.MAX_VALUE) % queues.length].offer(indexRequest);
    }
 
    @Override

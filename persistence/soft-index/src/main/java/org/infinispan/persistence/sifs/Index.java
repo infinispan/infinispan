@@ -16,7 +16,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -43,15 +42,13 @@ class Index {
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private final Segment[] segments;
    private final TimeService timeService;
-   private final Equivalence<Object> keyEquivalence;
 
    public Index(FileProvider fileProvider, String indexDir, int segments, int minNodeSize, int maxNodeSize,
                 IndexQueue indexQueue, TemporaryTable temporaryTable, Compactor compactor,
-                TimeService timeService, Equivalence<Object> keyEquivalence) throws IOException {
+                TimeService timeService) throws IOException {
       this.fileProvider = fileProvider;
       this.compactor = compactor;
       this.timeService = timeService;
-      this.keyEquivalence = keyEquivalence;
       this.indexDir = indexDir;
       this.minNodeSize = minNodeSize;
       this.maxNodeSize = maxNodeSize;
@@ -88,7 +85,7 @@ class Index {
     * @throws IOException
     */
    public EntryRecord getRecord(Object key, byte[] serializedKey) throws IOException {
-      int segment = Math.abs(keyEquivalence.hashCode(key)) % segments.length;
+      int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
       lock.readLock().lock();
       try {
          return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_RECORD);
@@ -106,7 +103,7 @@ class Index {
     * @throws IOException
     */
    public EntryPosition getPosition(Object key, byte[] serializedKey) throws IOException {
-      int segment = Math.abs(keyEquivalence.hashCode(key)) % segments.length;
+      int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
       lock.readLock().lock();
       try {
          return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_POSITION);
@@ -124,7 +121,7 @@ class Index {
     * @throws IOException
     */
    public EntryInfo getInfo(Object key, byte[] serializedKey) throws IOException {
-      int segment = Math.abs(keyEquivalence.hashCode(key)) % segments.length;
+      int segment = (key.hashCode() & Integer.MAX_VALUE) % segments.length;
       lock.readLock().lock();
       try {
          return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_INFO);
