@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -522,7 +523,8 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    }
 
    public void testWriteAndDeleteBatch() throws Exception {
-      int numberOfEntries = 100;
+      // Number of entries is randomized to even numbers between 80 and 120
+      int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(40, 61);
       assertIsEmpty();
       assertNull("should not be present in the store", cl.load(0));
       List<MarshalledEntry<?, ?>> entries = IntStream.range(0, numberOfEntries).boxed()

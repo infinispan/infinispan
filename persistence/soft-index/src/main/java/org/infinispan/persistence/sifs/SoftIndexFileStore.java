@@ -1,7 +1,6 @@
 package org.infinispan.persistence.sifs;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -10,6 +9,7 @@ import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.persistence.Store;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
@@ -201,7 +201,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          }
          if (entry == null) {
             if (trace) {
-               log.trace("Did not found position for " + key);
+               log.tracef("Did not found position for %s", key);
             }
             return false;
          } else {
@@ -389,6 +389,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                         return null;
                      }
                      serializedKey = EntryRecord.readKey(handle, header, entry.offset);
+                     if (serializedKey == null) {
+                        throw new IllegalStateException("Error reading key from "  + entry.file + ":" + entry.offset);
+                     }
                      if (header.metadataLength() > 0) {
                         serializedMetadata = EntryRecord.readMetadata(handle, header, entry.offset);
                      } else {
@@ -435,7 +438,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             entry = index.getPosition(key, marshaller.objectToByteBuffer(key));
             return "index: " + entry;
          } catch (Exception e) {
-            log.debug("Cannot debug key " + key, e);
+            log.debugf(e, "Cannot debug key %s", key);
             return "exception: " + e;
          }
       }
@@ -454,14 +457,13 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    }
 
    private void forEachOnDisk(boolean readMetadata, boolean readValues, EntryFunctor functor, FileFunctor fileFunctor) throws PersistenceException {
-      try {
-         Iterator<Integer> iterator = fileProvider.getFileIterator();
+      try (CloseableIterator<Integer> iterator = fileProvider.getFileIterator()) {
          while (iterator.hasNext()) {
             int file = iterator.next();
-            log.debug("Loading entries from file " + file);
+            log.debugf("Loading entries from file %d", file);
             FileProvider.Handle handle = fileProvider.getFile(file);
             if (handle == null) {
-               log.debug("File " + file + " was deleted during iteration");
+               log.debugf("File %d was deleted during iteration", file);
                fileFunctor.afterFile(file);
                continue;
             }
@@ -476,7 +478,6 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                      byte[] serializedKey = EntryRecord.readKey(handle, header, offset);
                      if (serializedKey == null) {
                         break; // we have read the file concurrently with writing there
-                        //throw new CacheLoaderException("File " + file + " appears corrupt when reading key from " + offset + ": header is " + header);
                      }
                      byte[] serializedMetadata = null;
                      if (readMetadata && header.metadataLength() > 0) {
@@ -505,6 +506,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                fileFunctor.afterFile(file);
             }
          }
+      } catch (PersistenceException e) {
+         throw e;
       } catch (Exception e) {
          throw new PersistenceException(e);
       }
@@ -541,7 +544,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                               serializedMetadata == null ? null : (InternalMetadata) marshaller.objectFromByteBuffer(serializedMetadata)),
                               context);
                      } catch (Exception e) {
-                        log.error("Failed to process task for key " + key, e);
+                        log.errorf(e, "Failed to process task for key %s", key);
                      } finally {
                         long finished = tasksFinished.incrementAndGet();
                         if (finished == tasksSubmitted.longValue()) {
