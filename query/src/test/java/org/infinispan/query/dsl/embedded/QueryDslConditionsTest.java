@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -232,17 +233,20 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    public void testIndexPresence() {
       SearchIntegrator searchIntegrator = Search.getSearchManager((Cache) getCacheForQuery()).unwrap(SearchIntegrator.class);
 
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getUserImplClass()));
-      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getUserImplClass().getName()));
+      verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());
+      verifyClassIsIndexed(searchIntegrator, getModelFactory().getAccountImplClass());
+      verifyClassIsIndexed(searchIntegrator, getModelFactory().getTransactionImplClass());
+      verifyClassIsNotIndexed(searchIntegrator, getModelFactory().getAddressImplClass());
+   }
 
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getAccountImplClass()));
-      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getAccountImplClass().getName()));
+   private void verifyClassIsNotIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
+      assertFalse(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
+      assertNull(searchIntegrator.getIndexManager(type.getName()));
+   }
 
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getTransactionImplClass()));
-      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
-
-      assertFalse(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getAddressImplClass()));
-      assertNull(searchIntegrator.getIndexManager(getModelFactory().getAddressImplClass().getName()));
+   private void verifyClassIsIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
+      assertTrue(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
+      assertNotNull(searchIntegrator.getIndexManager(type.getName()));
    }
 
    public void testQueryFactoryType() {

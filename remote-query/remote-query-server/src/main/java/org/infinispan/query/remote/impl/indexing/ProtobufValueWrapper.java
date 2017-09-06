@@ -23,7 +23,7 @@ import org.infinispan.query.remote.impl.ExternalizerIds;
  */
 public final class ProtobufValueWrapper {
 
-   public static final IndexedTypeIdentifier INDEXING_TYPE = new PojoIndexedTypeIdentifier(ProtobufValueWrapper.class);
+   public static final IndexedTypeIdentifier INDEXING_TYPE = PojoIndexedTypeIdentifier.convertFromLegacy(ProtobufValueWrapper.class);
 
    // The protobuf encoded payload
    private final byte[] binary;

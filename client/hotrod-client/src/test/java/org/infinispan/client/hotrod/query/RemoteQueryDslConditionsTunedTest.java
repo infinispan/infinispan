@@ -39,7 +39,7 @@ public class RemoteQueryDslConditionsTunedTest extends RemoteQueryDslConditionsF
    @Override
    public void testIndexPresence() {
       SearchIntegrator searchIntegrator = Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.class));
+      assertTrue(searchIntegrator.getIndexBindings().containsKey(ProtobufValueWrapper.INDEXING_TYPE));
       for (int shard = 0; shard < 6 ; shard++)
           assertNotNull(searchIntegrator.getIndexManager(ProtobufValueWrapper.class.getName() + "." + shard));
    }

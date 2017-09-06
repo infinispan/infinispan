@@ -10,6 +10,7 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -91,17 +92,20 @@ public class JBMARRemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    public void testIndexPresence() {
       SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
 
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getUserImplClass()));
-      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getUserImplClass().getName()));
+      verifyClassIsIndexed(searchIntegrator, getModelFactory().getUserImplClass());
+      verifyClassIsIndexed(searchIntegrator, getModelFactory().getAccountImplClass());
+      verifyClassIsIndexed(searchIntegrator, getModelFactory().getTransactionImplClass());
+      verifyClassIsNotIndexed(searchIntegrator, getModelFactory().getAddressImplClass());
+   }
 
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getAccountImplClass()));
-      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getAccountImplClass().getName()));
+   private void verifyClassIsNotIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
+      assertFalse(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
+      assertNull(searchIntegrator.getIndexManager(type.getName()));
+   }
 
-      assertTrue(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getTransactionImplClass()));
-      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
-
-      assertFalse(searchIntegrator.getIndexBindings().containsKey(getModelFactory().getAddressImplClass()));
-      assertNull(searchIntegrator.getIndexManager(getModelFactory().getAddressImplClass().getName()));
+   private void verifyClassIsIndexed(SearchIntegrator searchIntegrator, Class<?> type) {
+      assertTrue(searchIntegrator.getIndexBindings().containsKey(PojoIndexedTypeIdentifier.convertFromLegacy(type)));
+      assertNotNull(searchIntegrator.getIndexManager(type.getName()));
    }
 
    @Override
