@@ -43,6 +43,7 @@ import org.jboss.dmr.ModelType;
  * @author Tristan Tarrant
  * @deprecated Replaced by {@link MemoryObjectConfigurationResource}
  */
+@Deprecated
 public class EvictionConfigurationResource extends CacheConfigurationChildResource {
 
     public static final PathElement PATH = PathElement.pathElement(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME);
