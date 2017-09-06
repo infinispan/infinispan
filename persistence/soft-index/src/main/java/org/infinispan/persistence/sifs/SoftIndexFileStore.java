@@ -5,7 +5,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntConsumer;
 
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -118,7 +117,6 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    private ByteBufferFactory byteBufferFactory;
    private MarshalledEntryFactory marshalledEntryFactory;
    private TimeService timeService;
-   private Equivalence<Object> keyEquivalence;
    private int maxKeyLength;
 
    @Override
@@ -128,7 +126,6 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       marshalledEntryFactory = ctx.getMarshalledEntryFactory();
       byteBufferFactory = ctx.getByteBufferFactory();
       timeService = ctx.getTimeService();
-      keyEquivalence = ctx.getCache().getAdvancedCache().getCacheConfiguration().dataContainer().keyEquivalence();
       maxKeyLength = configuration.maxNodeSize() - IndexNode.RESERVED_SPACE;
    }
 
@@ -140,14 +137,14 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       started = true;
       temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
       storeQueue = new SyncProcessingQueue<>();
-      indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength(), keyEquivalence);
+      indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength());
       fileProvider = new FileProvider(configuration.dataLocation(), configuration.openFilesLimit());
       compactor = new Compactor(fileProvider, temporaryTable, indexQueue, marshaller, timeService, configuration.maxFileSize(), configuration.compactionThreshold());
       logAppender = new LogAppender(storeQueue, indexQueue, temporaryTable, compactor, fileProvider, configuration.syncWrites(), configuration.maxFileSize());
       try {
          index = new Index(fileProvider, configuration.indexLocation(), configuration.indexSegments(),
                configuration.minNodeSize(), configuration.maxNodeSize(),
-               indexQueue, temporaryTable, compactor, timeService, keyEquivalence);
+               indexQueue, temporaryTable, compactor, timeService);
       } catch (IOException e) {
          throw new PersistenceException("Cannot open index file in " + configuration.indexLocation(), e);
       }
