@@ -3,6 +3,7 @@ package org.infinispan.persistence.sifs;
 import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.IntConsumer;
 
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.io.ByteBuffer;
@@ -138,7 +139,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       }
       started = true;
       temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments());
-      storeQueue = new SyncProcessingQueue<LogRequest>();
+      storeQueue = new SyncProcessingQueue<>();
       indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength(), keyEquivalence);
       fileProvider = new FileProvider(configuration.dataLocation(), configuration.openFilesLimit());
       compactor = new Compactor(fileProvider, temporaryTable, indexQueue, marshaller, timeService, configuration.maxFileSize(), configuration.compactionThreshold());
@@ -159,36 +160,28 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          log.debug("Not building the index - purge will be executed");
       } else {
          log.debug("Building the index");
-         forEachOnDisk(false, false, new EntryFunctor() {
-            @Override
-            public boolean apply(int file, int offset, int size, byte[] serializedKey, byte[] serializedMetadata, byte[] serializedValue, long seqId, long expiration) throws IOException, ClassNotFoundException {
-               long prevSeqId;
-               while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
-               }
-               Object key = marshaller.objectFromByteBuffer(serializedKey);
-               if (trace) {
-                  log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
-               }
-               try {
-                  // We may check the seqId safely as we are the only thread writing to index
-                  if (isSeqIdOld(seqId, key, serializedKey)) {
-                     indexQueue.put(IndexRequest.foundOld(key, serializedKey, file, offset));
-                     return true;
-                  }
-                  temporaryTable.set(key, file, offset);
-                  indexQueue.put(IndexRequest.update(key, serializedKey, file, offset, size));
-               } catch (InterruptedException e) {
-                  log.error("Interrupted building of index, the index won't be built properly!", e);
-                  return false;
-               }
-               return true;
+         forEachOnDisk(false, false, (file, offset, size, serializedKey, serializedMetadata, serializedValue, seqId, expiration) -> {
+            long prevSeqId;
+            while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId)) {
             }
-         }, new FileFunctor() {
-            @Override
-            public void afterFile(int file) {
-               compactor.completeFile(file);
+            Object key = marshaller.objectFromByteBuffer(serializedKey);
+            if (trace) {
+               log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
             }
-         });
+            try {
+               // We may check the seqId safely as we are the only thread writing to index
+               if (isSeqIdOld(seqId, key, serializedKey)) {
+                  indexQueue.put(IndexRequest.foundOld(key, serializedKey, file, offset));
+                  return true;
+               }
+               temporaryTable.set(key, file, offset);
+               indexQueue.put(IndexRequest.update(key, serializedKey, file, offset, size));
+            } catch (InterruptedException e) {
+               log.error("Interrupted building of index, the index won't be built properly!", e);
+               return false;
+            }
+            return true;
+         }, file -> compactor.completeFile(file));
       }
       logAppender.setSeqId(maxSeqId.get() + 1);
    }
@@ -452,11 +445,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       boolean apply(int file, int offset, int size, byte[] serializedKey, byte[] serializedMetadata, byte[] serializedValue, long seqId, long expiration) throws Exception;
    }
 
-   private interface FileFunctor {
-      void afterFile(int file);
-   }
-
-   private void forEachOnDisk(boolean readMetadata, boolean readValues, EntryFunctor functor, FileFunctor fileFunctor) throws PersistenceException {
+   private void forEachOnDisk(boolean readMetadata, boolean readValues, EntryFunctor functor, IntConsumer fileFunctor) throws PersistenceException {
       try (CloseableIterator<Integer> iterator = fileProvider.getFileIterator()) {
          while (iterator.hasNext()) {
             int file = iterator.next();
@@ -464,7 +453,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             FileProvider.Handle handle = fileProvider.getFile(file);
             if (handle == null) {
                log.debugf("File %d was deleted during iteration", file);
-               fileFunctor.afterFile(file);
+               fileFunctor.accept(file);
                continue;
             }
             try {
@@ -503,7 +492,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                }
             } finally {
                handle.close();
-               fileFunctor.afterFile(file);
+               fileFunctor.accept(file);
             }
          }
       } catch (PersistenceException e) {
@@ -519,53 +508,40 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       final KeyFilter notNullFilter = PersistenceUtil.notNull(filter);
       final AtomicLong tasksSubmitted = new AtomicLong();
       final AtomicLong tasksFinished = new AtomicLong();
-      forEachOnDisk(fetchMetadata, fetchValue, new EntryFunctor() {
-         @Override
-         public boolean apply(int file, int offset, int size,
-                              final byte[] serializedKey, final byte[] serializedMetadata, final byte[] serializedValue,
-                              long seqId, long expiration) throws IOException, ClassNotFoundException {
-            if (context.isStopped()) {
-               return false;
-            }
-            final Object key = marshaller.objectFromByteBuffer(serializedKey);
-            if (!notNullFilter.accept(key)) {
-               return true;
-            }
-            if (isSeqIdOld(seqId, key, serializedKey)) {
-               return true;
-            }
-            if (serializedValue != null && (expiration < 0 || expiration > timeService.wallClockTime())) {
-               executor.execute(new Runnable() {
-                  @Override
-                  public void run() {
-                     try {
-                        task.processEntry(marshalledEntryFactory.newMarshalledEntry(key,
-                              serializedValue == null ? null : marshaller.objectFromByteBuffer(serializedValue),
-                              serializedMetadata == null ? null : (InternalMetadata) marshaller.objectFromByteBuffer(serializedMetadata)),
-                              context);
-                     } catch (Exception e) {
-                        log.errorf(e, "Failed to process task for key %s", key);
-                     } finally {
-                        long finished = tasksFinished.incrementAndGet();
-                        if (finished == tasksSubmitted.longValue()) {
-                           synchronized (context) {
-                              context.notifyAll();
-                           }
-                        }
-                     }
-                  }
-               });
-               tasksSubmitted.incrementAndGet();
-               return !context.isStopped();
-            }
+      forEachOnDisk(fetchMetadata, fetchValue, (file, offset, size, serializedKey, serializedMetadata, serializedValue, seqId, expiration) -> {
+         if (context.isStopped()) {
+            return false;
+         }
+         final Object key = marshaller.objectFromByteBuffer(serializedKey);
+         if (!notNullFilter.accept(key)) {
             return true;
          }
-      }, new FileFunctor() {
-         @Override
-         public void afterFile(int file) {
-            // noop
+         if (isSeqIdOld(seqId, key, serializedKey)) {
+            return true;
          }
-      });
+         if (serializedValue != null && (expiration < 0 || expiration > timeService.wallClockTime())) {
+            executor.execute(() -> {
+               try {
+                  task.processEntry(marshalledEntryFactory.newMarshalledEntry(key,
+                        serializedValue == null ? null : marshaller.objectFromByteBuffer(serializedValue),
+                        serializedMetadata == null ? null : (InternalMetadata) marshaller.objectFromByteBuffer(serializedMetadata)),
+                        context);
+               } catch (Exception e) {
+                  log.errorf(e, "Failed to process task for key %s", key);
+               } finally {
+                  long finished = tasksFinished.incrementAndGet();
+                  if (finished == tasksSubmitted.longValue()) {
+                     synchronized (context) {
+                        context.notifyAll();
+                     }
+                  }
+               }
+            });
+            tasksSubmitted.incrementAndGet();
+            return !context.isStopped();
+         }
+         return true;
+      }, file -> { /* noop */ });
       while (tasksSubmitted.longValue() > tasksFinished.longValue()) {
          synchronized (context) {
             try {
