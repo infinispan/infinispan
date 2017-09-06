@@ -295,22 +295,6 @@ An important aspect of getting the most of Infinispan is the use of per-invocati
 
 What Infinispan is doing here is effectively saying that when putting data read from external read, it will use an almost-zero lock acquisition time and that if the locks cannot be acquired, it will fail silently without throwing any exception related to lock acquisition. It also specifies that regardless of the cache mode, if the cache is clustered, it will replicate asynchronously and so won't wait for responses from other nodes. The combination of all these flags make this kind of operation very efficient, and the efficiency comes from the fact this type of _putForExternalRead_ calls are used with the knowledge that client can always head back to a persistent store of some sorts to retrieve the data that should be stored in memory. So, any attempt to store the data is just a best effort and if not possible, the client should try again if there's a cache miss.
 
-==== DecoratedCache
-Another approach would be to use the link:{javadocroot}/org/infinispan/DecoratedCache.html[DecoratedCache] wrapper.
-This allows you to reuse flags. For example:
-
-[source,java]
-----
-AdvancedCache cache = ...
-DecoratedCache strictlyLocal = new DecoratedCache(cache, Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STORE);
-strictlyLocal.put("local_1", "only");
-strictlyLocal.put("local_2", "only");
-strictlyLocal.put("local_3", "only");
-
-----
-
-This approach makes your code more readable.
-
 ==== Examples
 If you want to use these or any other flags available, which by the way are described in detail the link:{javadocroot}/org/infinispan/context/Flag.html[Flag enumeration] , you simply need to get hold of the advanced cache and add the flags you need via the link:{javadocroot}/org/infinispan/AdvancedCache.html#withFlags-org.infinispan.context.Flag...-[withFlags()] method call. For example:
 
