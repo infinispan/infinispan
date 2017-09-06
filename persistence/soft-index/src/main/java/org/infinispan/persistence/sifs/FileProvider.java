@@ -14,11 +14,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -37,6 +40,7 @@ class FileProvider {
    private final AtomicInteger currentOpenFiles = new AtomicInteger(0);
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private final Set<Integer> logFiles = new HashSet<Integer>();
+   private final Set<FileIterator> iterators = new ConcurrentHashSet<>();
 
    private int nextFileId = 0;
 
@@ -71,7 +75,7 @@ class FileProvider {
                      fileChannel = openChannel(fileId);
                   } catch (FileNotFoundException e) {
                      currentOpenFiles.decrementAndGet();
-                     log.debug("File " + fileId + " was not found", e);
+                     log.debugf(e, "File %d was not found", fileId);
                      return null;
                   }
                   Record newRecord = new Record(fileChannel, fileId);
@@ -170,6 +174,9 @@ class FileProvider {
                }
             } else {
                logFiles.add(nextFileId);
+               for (FileIterator it : iterators) {
+                  it.add(nextFileId);
+               }
                return new Log(nextFileId, new FileOutputStream(new File(dataDir, String.valueOf(nextFileId))).getChannel());
             }
          }
@@ -178,14 +185,21 @@ class FileProvider {
       }
    }
 
-   public Iterator<Integer> getFileIterator() {
-      Set<Integer> set = new HashSet<Integer>();
-      for (String file : dataDir.list()) {
-         if (file.matches("[0-9]*")) {
-            set.add(Integer.parseInt(file));
+   public CloseableIterator<Integer> getFileIterator() {
+      lock.readLock().lock();
+      try {
+         Set<Integer> set = new HashSet<>();
+         for (String file : dataDir.list()) {
+            if (file.matches("[0-9]*")) {
+               set.add(Integer.parseInt(file));
+            }
          }
+         FileIterator iterator = new FileIterator(set.iterator());
+         iterators.add(iterator);
+         return iterator;
+      } finally {
+         lock.readLock().unlock();
       }
-      return set.iterator();
    }
 
    public void clear() throws IOException {
@@ -376,6 +390,34 @@ class FileProvider {
             log.debug("Marking file " + fileId + " for deletion");
             deleteOnClose = true;
          }
+      }
+   }
+
+   private class FileIterator implements CloseableIterator {
+      private final Iterator<Integer> diskFiles;
+      private final ConcurrentLinkedQueue<Integer> addedFiles = new ConcurrentLinkedQueue<>();
+
+      private FileIterator(Iterator<Integer> diskFiles) {
+         this.diskFiles = diskFiles;
+      }
+
+      public void add(int file) {
+         addedFiles.add(file);
+      }
+
+      @Override
+      public void close() {
+         iterators.remove(this);
+      }
+
+      @Override
+      public boolean hasNext() {
+         return diskFiles.hasNext() || !addedFiles.isEmpty();
+      }
+
+      @Override
+      public Object next() {
+         return diskFiles.hasNext() ? diskFiles.next() : addedFiles.poll();
       }
    }
 }

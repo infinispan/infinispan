@@ -73,8 +73,7 @@ class EntryRecord {
    public static byte[] readKey(FileProvider.Handle handle, EntryHeader header, long offset) throws IOException {
       byte[] key = new byte[header.keyLength()];
       if (read(handle, ByteBuffer.wrap(key), offset + EntryHeader.HEADER_SIZE, header.keyLength()) < 0) {
-         throw new IllegalStateException("End of file reached when reading key on "
-               + handle.getFileId() + ":" + offset);
+         return null;
       }
       return key;
    }

@@ -167,6 +167,10 @@ class Compactor extends Thread {
                      break;
                   }
                   byte[] serializedKey = EntryRecord.readKey(handle, header, scheduledOffset);
+                  if (serializedKey == null) {
+                     throw new IllegalStateException("End of file reached when reading key on "
+                           + handle.getFileId() + ":" + scheduledOffset);
+                  }
                   Object key = marshaller.objectFromByteBuffer(serializedKey);
 
                   int indexedOffset = header.valueLength() > 0 ? scheduledOffset : ~scheduledOffset;

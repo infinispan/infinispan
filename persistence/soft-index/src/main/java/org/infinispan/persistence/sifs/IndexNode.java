@@ -967,7 +967,11 @@ class IndexNode {
                      if (header == null) {
                         throw new IllegalStateException("Error reading header from " + file + ":" + readOffset + " | " + handle.getFileSize());
                      }
-                     headerAndKey = new EntryRecord(header, EntryRecord.readKey(handle, header, readOffset), null, null);
+                     byte[] key = EntryRecord.readKey(handle, header, readOffset);
+                     if (key == null) {
+                        throw new IllegalStateException("Error reading key from " + file + ":" + readOffset);
+                     }
+                     headerAndKey = new EntryRecord(header, key, null, null);
                      keyReference = new SoftReference<>(headerAndKey);
                   } finally {
                      if (ownHandle) {
