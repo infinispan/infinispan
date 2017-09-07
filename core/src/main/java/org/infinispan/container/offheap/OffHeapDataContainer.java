@@ -182,6 +182,10 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
     */
    protected void performPut(long newAddress, WrappedBytes key) {
       long address = memoryLookup.getMemoryAddress(key);
+      performPut(address, newAddress, key);
+   }
+
+   protected void performPut(long address, long newAddress, WrappedBytes key) {
       boolean shouldCreate = false;
       // Have to start new linked node list
       if (address == 0) {
@@ -352,19 +356,12 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    public int size() {
       long time = timeService.wallClockTime();
       long count = entryStream().filter(e -> !e.isExpired(time)).count();
-      if (count > Integer.MAX_VALUE) {
-         return Integer.MAX_VALUE;
-      }
-      return (int) count;
+      return (int) Math.min(count, Integer.MAX_VALUE);
    }
 
    @Override
    public int sizeIncludingExpired() {
-      long currentSize = size.get();
-      if (currentSize > Integer.MAX_VALUE) {
-         return Integer.MAX_VALUE;
-      }
-      return (int) currentSize;
+      return (int) Math.min(size.get(), Integer.MAX_VALUE);
    }
 
    @Override
@@ -494,9 +491,15 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       lock.lock();
       try {
          checkDeallocation();
-         // TODO: this could be more efficient
-         passivator.passivate(get(key));
-         remove(key);
+         long address = memoryLookup.getMemoryAddress(key);
+         if (address != 0) {
+            // TODO: this could be more efficient
+            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = performGet(address, key);
+            if (ice != null) {
+               passivator.passivate(ice);
+               performRemove(address, key);
+            }
+         }
       } finally {
          lock.unlock();
       }
@@ -509,13 +512,16 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       lock.lock();
       try {
          checkDeallocation();
-         InternalCacheEntry<WrappedBytes, WrappedBytes> prev = get(key);
+         long address = memoryLookup.getMemoryAddress(key);
+         InternalCacheEntry<WrappedBytes, WrappedBytes> prev = address == 0 ? null : performGet(address, key);
          InternalCacheEntry<WrappedBytes, WrappedBytes> result = action.compute(key, prev, internalEntryFactory);
-         if (result != null) {
+         if (prev == result) {
+            // noop
+         } else if (result != null) {
             long newAddress = offHeapEntryFactory.create(key, result.getValue(), result.getMetadata());
-            performPut(newAddress, key);
+            performPut(address, newAddress, key);
          } else {
-            remove(key);
+            performRemove(address, key);
          }
          return result;
       } finally {
