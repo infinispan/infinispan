@@ -7,11 +7,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.util.EvictionListener;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,7 +17,10 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ControlledTimeService;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -31,6 +31,7 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
 
    private StorageType storageType;
    private EvictionListener evictionListener;
+   private ControlledTimeService timeService;
 
    protected EvictionFunctionalTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -54,6 +55,11 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
       };
    }
 
+   @Override
+   protected String parameters() {
+      return "[" + storageType + "]";
+   }
+
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       builder.memory().size(CACHE_SIZE).storageType(getStorageType())
@@ -64,6 +70,7 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
       cache = cm.getCache();
       evictionListener = new EvictionListener();
       cache.addListener(evictionListener);
+      TestingUtil.replaceComponent(cache, TimeService.class, timeService = new ControlledTimeService(), true);
       return cm;
    }
 
@@ -85,76 +92,12 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
    }
 
    public void testSimpleExpirationMaxIdle() throws Exception {
-
       for (int i = 0; i < CACHE_SIZE * 2; i++) {
          cache.put("key-" + (i + 1), "value-" + (i + 1), 1, TimeUnit.MILLISECONDS);
       }
-      Thread.sleep(1000); // sleep long enough to allow the thread to wake-up and purge all expired entries
+      timeService.advance(1000);
+      cache.getAdvancedCache().getExpirationManager().processExpiration();
       assert 0 == cache.size() : "cache size should be zero: " + cache.size();
-   }
-
-   public void testMultiThreaded() throws InterruptedException {
-      int NUM_THREADS = 20;
-      Writer[] w = new Writer[NUM_THREADS];
-      CountDownLatch startLatch = new CountDownLatch(1);
-
-      for (int i = 0; i < NUM_THREADS; i++) w[i] = new Writer(i, startLatch);
-      for (Writer writer : w) writer.start();
-
-      startLatch.countDown();
-
-      Thread.sleep(250);
-
-      // now stop writers
-      for (Writer writer : w) writer.running = false;
-      for (Writer writer : w) writer.join();
-
-      // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
-      long giveUpTime = System.currentTimeMillis() + (1000 * Writer.LIFESPAN);
-      while (cache.getAdvancedCache().getDataContainer().size() > 1 && System.currentTimeMillis() < giveUpTime) {
-         //System.out.println("Cache size is " + cache.size() + " and time diff is " + (giveUpTime - System.currentTimeMillis()));
-         Thread.sleep(100);
-      }
-
-      assertTrue(String.format("Cache was expected to be pruned to %d, but was %d", CACHE_SIZE, cache.size()),
-            cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE);
-   }
-
-   private class Writer extends Thread {
-      public static final int LIFESPAN = 10;
-      CountDownLatch startLatch;
-      volatile boolean running = true;
-      Random r = new Random();
-
-      public Writer(int n, CountDownLatch startLatch) {
-         super("Writer-" + n);
-         this.startLatch = startLatch;
-         setDaemon(true);
-      }
-
-      @Override
-      public void run() {
-         try {
-            startLatch.await();
-         } catch (InterruptedException e) {
-            // ignore
-         }
-
-         while (running) {
-            try {
-               sleep(r.nextInt(5) * 10);
-            } catch (InterruptedException e) {
-               // ignore
-            }
-
-            //mix mortal and immortal entries
-            if (Math.random() < 0.5) {
-               cache.put("key" + r.nextInt(), "value");
-            } else {
-               cache.put("key" + r.nextInt(), "value", LIFESPAN, TimeUnit.SECONDS);
-            }
-         }
-      }
    }
 
    @Listener
