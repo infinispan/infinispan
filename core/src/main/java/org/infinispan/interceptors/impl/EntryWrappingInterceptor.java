@@ -586,9 +586,9 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             // Can't perform the check during preload or if the cache isn't clustered
             boolean syncRpc = isSync && !command.hasAnyFlag(FlagBitSets.FORCE_ASYNCHRONOUS) ||
                   command.hasAnyFlag(FlagBitSets.FORCE_SYNCHRONOUS);
-            if (command.isSuccessful() && stateConsumer != null && stateConsumer.getCacheTopology() != null) {
+            if (command.isSuccessful() && distributionManager != null) {
                int commandTopologyId = command.getTopologyId();
-               int currentTopologyId = stateConsumer.getCacheTopology().getTopologyId();
+               int currentTopologyId = distributionManager.getCacheTopology().getTopologyId();
                // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
                if (syncRpc && currentTopologyId != commandTopologyId && commandTopologyId != -1) {
                   // If we were the originator of a data command which we didn't own the key at the time means it
