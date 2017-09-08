@@ -15,7 +15,6 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.infinispan.commons.test.categories.Smoke;
-import org.infinispan.commons.test.categories.Unstable;
 import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.hibernate.criterion.Restrictions;
 import org.infinispan.test.hibernate.cache.functional.entities.Citizen;
@@ -63,7 +62,6 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 	}
 
 	@Test
-	@Category(Unstable.class) // ISPN-8263
 	public void testAll() throws Exception {
       log.infof("*** %s", name.getMethodName());
 
