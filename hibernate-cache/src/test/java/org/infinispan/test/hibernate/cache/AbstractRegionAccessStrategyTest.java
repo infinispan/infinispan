@@ -401,11 +401,13 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	protected abstract S getAccessStrategy(R region);
 
 	@Test
+   @Ignore("Unstable ISPN-8263")
 	public void testRemove() throws Exception {
 		evictOrRemoveTest( false );
 	}
 
 	@Test
+   @Ignore("Unstable ISPN-8263")
 	public void testEvict() throws Exception {
 		evictOrRemoveTest( true );
 	}
@@ -488,11 +490,13 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	}
 
 	@Test
+   @Ignore("Unstable ISPN-8263")
    public void testRemoveAll() throws Exception {
 		evictOrRemoveAllTest(false);
 	}
 
 	@Test
+   @Ignore("Unstable ISPN-8263")
    public void testEvictAll() throws Exception {
 		evictOrRemoveAllTest(true);
 	}
