@@ -68,7 +68,7 @@ public interface AdvancedExternalizer<T> extends Externalizer<T> {
     * Implementers of this interface can use any positive integer as long as
     * it does not clash with any other identifier in the system.  You can find
     * information on the pre-assigned identifier ranges in
-    * <a href="http://community.jboss.org/docs/DOC-16198">here</a>.
+    * <a href="http://infinispan.org/docs/dev/user_guide/user_guide.html#preassigned_externalizer_id_ranges">here</a>.
     *
     * It's highly recommended that maintaining of these identifiers is done
     * in a centralized way and you can do so by making annotations reference

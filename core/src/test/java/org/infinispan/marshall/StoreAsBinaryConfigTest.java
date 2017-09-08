@@ -1,7 +1,10 @@
 package org.infinispan.marshall;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -20,49 +23,27 @@ public class StoreAsBinaryConfigTest extends AbstractInfinispanTest {
       ecm = null;
    }
 
-   public void testKeysOnly() {
+   public void testBackwardCompatibility() {
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.storeAsBinary().enable();
       ecm = TestCacheManagerFactory.createCacheManager(c);
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().enabled();
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeKeysAsBinary();
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
-   }
-
-   public void testValuesOnly() {
-      ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable();
-      ecm = TestCacheManagerFactory.createCacheManager(c);
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().enabled();
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeKeysAsBinary();
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
-   }
-
-   public void testBoth() {
-      ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable();
-      ecm = TestCacheManagerFactory.createCacheManager(c);
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().enabled();
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeKeysAsBinary();
-      assert ecm.getCache().getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
+      assertEquals(StorageType.BINARY, ecm.getCache().getCacheConfiguration().memory().storageType());
    }
 
    public void testConfigCloning() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable();
+      c.memory().storageType(StorageType.BINARY);
       ConfigurationBuilder builder = new ConfigurationBuilder().read(c.build());
       Configuration clone = builder.build();
-      assert clone.storeAsBinary().storeKeysAsBinary();
-      assert clone.storeAsBinary().storeValuesAsBinary();
+      assertEquals(StorageType.BINARY, clone.memory().storageType());
    }
 
    public void testConfigOverriding() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable();
+      c.memory().storageType(StorageType.BINARY);
       ecm = TestCacheManagerFactory.createCacheManager(c);
-      ecm.defineConfiguration("newCache", new ConfigurationBuilder().read(c.build()).storeAsBinary().storeValuesAsBinary(false).storeKeysAsBinary(true).build());
-      assert ecm.getCache("newCache").getCacheConfiguration().storeAsBinary().enabled();
-      assert ecm.getCache("newCache").getCacheConfiguration().storeAsBinary().storeKeysAsBinary();
-      assert ecm.getCache("newCache").getCacheConfiguration().storeAsBinary().storeValuesAsBinary();
+      ecm.defineConfiguration("newCache", new ConfigurationBuilder().read(c.build()).memory().storageType(StorageType.OBJECT).build());
+      assertEquals(StorageType.OBJECT, ecm.getCache("newCache").getCacheConfiguration().memory().storageType());
    }
+
 }

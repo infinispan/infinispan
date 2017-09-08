@@ -1,9 +1,8 @@
 package org.infinispan.marshall;
 
-import static org.testng.AssertJUnit.fail;
-
-import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -14,30 +13,21 @@ public class MarshalledValueSingleNodeTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      // start a single cache instance
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(true);
-      c.invocationBatching().enable().storeAsBinary().enable();
+      c.invocationBatching().enable().memory().storageType(StorageType.BINARY);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = cm.getCache();
       return cm;
    }
 
-   public void testNonSerializable() {
-      try {
-         cache.put("Hello", new Object());
-         fail("Should have failed");
-      }
-      catch (CacheException expected) {
-         log.trace("");
-      }
+   @Test(expectedExceptions = NotSerializableException.class)
+   public void testNonSerializableValue() {
+      cache.put("Hello", new Object());
+   }
 
-      try {
-         cache.put(new Object(), "Hello");
-         fail("Should have failed");
-      }
-      catch (CacheException expected) {
-
-      }
+   @Test(expectedExceptions = NotSerializableException.class)
+   public void testNonSerializableKey() {
+      cache.put(new Object(), "Hello");
    }
 
 }

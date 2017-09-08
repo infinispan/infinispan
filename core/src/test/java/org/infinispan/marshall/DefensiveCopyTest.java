@@ -7,6 +7,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.data.Key;
@@ -27,7 +28,7 @@ public class DefensiveCopyTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.storeAsBinary().enable();
+      builder.memory().storageType(StorageType.BINARY);
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 
@@ -50,7 +51,7 @@ public class DefensiveCopyTest extends SingleCacheManagerTest {
       Person cachedPerson = this.<Integer, Person>cache().get(k);
       assertEquals(person, cachedPerson);
       cachedPerson.setName("Mr Digweed");
-      assertEquals(new Person("Mr Coe"), cache.get(k));
+      assertEquals(person, cache.get(k));
    }
 
    public void testDiffClassloaders() throws Exception {
