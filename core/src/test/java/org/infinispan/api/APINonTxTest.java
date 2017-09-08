@@ -29,10 +29,10 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.LockedStream;
-import org.infinispan.functional.FunctionalMap;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.lifecycle.ComponentStatus;

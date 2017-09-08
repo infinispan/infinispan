@@ -30,7 +30,9 @@ Store as binary enables data to be stored in its serialized form. This can be us
 
 [source,xml]
 ----
-<store-as-binary />
+<memory>
+   <binary />
+</memory>
 ----
 
 
@@ -39,13 +41,13 @@ Store as binary enables data to be stored in its serialized form. This can be us
 [source,java]
 ----
 ConfigurationBuilder builder = ...
-builder.storeAsBinary().enable();
+builder.memory().storageType(StorageType.BINARY);
 
 ----
 
 ===== Equality Considerations
 
-When using lazy deserialization/storing as binary, keys and values are wrapped as link:{javadocroot}/org/infinispan/marshall/core/MarshalledValue[MarshalledValue]s.
+When using lazy deserialization/storing as binary, keys and values are wrapped as link:{javadocroot}/org/infinispan/commons/marshall/[WrappedBytes].
 It is this wrapper class that transparently takes care of serialization and deserialization on demand, and internally may have a reference to the object itself being wrapped, or the serialized, byte array representation of this object.
 
 This has a particular effect on the behavior of equality.
@@ -77,9 +79,10 @@ builder.storeAsBinary().enable().storeKeysAsBinary(true).storeValuesAsBinary(tru
 ----
 
 === Advanced Configuration
-Internally, Infinispan uses an implementation of link:{javadocroot}/org/infinispan/marshall/Marshaller.html[this Marshaller interface] in order to marshall/unmarshall Java objects so that they're sent other nodes in the grid, or so that they're stored in a cache store, or even so to transform them into byte arrays for lazy deserialization.
+Internally, Infinispan uses an implementation of link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[this Marshaller interface] in order to marshall/unmarshall Java objects so that they're sent other nodes in the grid, or so that they're stored in a cache store, or even so to transform them into byte arrays for lazy deserialization.
 
-By default, Infinispan uses the link:{javadocroot}/org/infinispan/marshall/VersionAwareMarshaller.html[VersionAwareMarshaller] which, as the name suggests, adds a version short to the start of any stream when writing, enabling similar VersionAwareMarshaller instances to read the version short and know which specific marshaller implementation to delegate the call to. Using a VersionAwareMarshaller helps achieve wire protocol compatibility between minor releases but still affords us the flexibility to tweak and improve the wire protocol between minor or micro releases. Optionally, Infinispan users to optionally provide their own marshaller, for example:
+By default, Infinispan uses the link:{javadocroot}/org/infinispan/marshall/core/GlobalMarshaller.html[GlobalMarshaller].
+Optionally, Infinispan users can provide their own marshaller, for example:
 
 
 *  Via XML at the CacheManager level, under `<cache-manager />` element:
@@ -114,7 +117,7 @@ at org.jboss.marshalling.AbstractMarshaller.writeObject(AbstractMarshaller.java:
 at org.infinispan.marshall.jboss.JBossMarshaller.objectToObjectStream(JBossMarshaller.java:167)
 at org.infinispan.marshall.VersionAwareMarshaller.objectToBuffer(VersionAwareMarshaller.java:92)
 at org.infinispan.marshall.VersionAwareMarshaller.objectToByteBuffer(VersionAwareMarshaller.java:170)
-at org.infinispan.marshall.VersionAwareMarshallerTest.testNestedNonSerializable(VersionAwareMarshallerTest.java:415)
+at org.infinispan.marshall.DefaultMarshallerTest.testNestedNonSerializable(VersionAwareMarshallerTest.java:415)
 Caused by: an exception which occurred:
 in object java.lang.Object@b40ec4
 in object org.infinispan.commands.write.PutKeyValueCommand@df661da7
@@ -141,7 +144,7 @@ With regards to unmarshalling exceptions, showing such level of information it's
 
 ----
 java.io.IOException: Injected failure!
-at org.infinispan.marshall.VersionAwareMarshallerTest$1.readExternal(VersionAwareMarshallerTest.java:426)
+at org.infinispan.marshall.DefaultMarshallerTest$1.readExternal(VersionAwareMarshallerTest.java:426)
 at org.jboss.marshalling.river.RiverUnmarshaller.doReadNewObject(RiverUnmarshaller.java:1172)
 at org.jboss.marshalling.river.RiverUnmarshaller.doReadObject(RiverUnmarshaller.java:273)
 at org.jboss.marshalling.river.RiverUnmarshaller.doReadObject(RiverUnmarshaller.java:210)
@@ -149,19 +152,19 @@ at org.jboss.marshalling.AbstractUnmarshaller.readObject(AbstractUnmarshaller.ja
 at org.infinispan.marshall.jboss.JBossMarshaller.objectFromObjectStream(JBossMarshaller.java:210)
 at org.infinispan.marshall.VersionAwareMarshaller.objectFromByteBuffer(VersionAwareMarshaller.java:104)
 at org.infinispan.marshall.VersionAwareMarshaller.objectFromByteBuffer(VersionAwareMarshaller.java:177)
-at org.infinispan.marshall.VersionAwareMarshallerTest.testErrorUnmarshalling(VersionAwareMarshallerTest.java:431)
+at org.infinispan.marshall.DefaultMarshallerTest.testErrorUnmarshalling(VersionAwareMarshallerTest.java:431)
 Caused by: an exception which occurred:
-in object of type org.infinispan.marshall.VersionAwareMarshallerTest$1
+in object of type org.infinispan.marshall.DefaultMarshallerTest$1
 ----
 
-In this example, an IOException was thrown when trying to unmarshall a instance of the inner class org.infinispan.marshall.VersionAwareMarshallerTest$1. In similar fashion to marshalling exceptions, when DEBUG or TRACE logging levels are enabled, classloader information of the class type is provided. For example:
+In this example, an IOException was thrown when trying to unmarshall a instance of the inner class org.infinispan.marshall.DefaultMarshallerTest$1. In similar fashion to marshalling exceptions, when DEBUG or TRACE logging levels are enabled, classloader information of the class type is provided. For example:
 
 
 ----
 java.io.IOException: Injected failure!
 ...
 Caused by: an exception which occurred:
-in object of type org.infinispan.marshall.VersionAwareMarshallerTest$1
+in object of type org.infinispan.marshall.DefaultMarshallerTest$1
 -> classloader hierarchy:
 -> type classloader = sun.misc.Launcher$AppClassLoader@198dfaf
 ->...file:/opt/eclipse/configuration/org.eclipse.osgi/bundles/285/1/.cp/eclipse-testng.jar
@@ -256,7 +259,7 @@ Even though this way of defining externalizers is very user friendly, it has som
 * Due to several constraints of the model, such as support for different versions of the same class or the need to marshall the Externalizer class, the payload sizes generated via this method are not the most efficient.
 
 
-* This model requires that the marshalled class be annotated with {@link SerializeWith} but a user might need to provide an Externalizer for a class for which source code is not available, or for any other constraints, it cannot be modified.
+* This model requires that the marshalled class be annotated with link:{javadocroot}/org/infinispan/commons/marshall/SerializeWith.html but a user might need to provide an Externalizer for a class for which source code is not available, or for any other constraints, it cannot be modified.
 
 
 * The use of annotations by this model might be limiting for framework developers or service providers that try to abstract lower level details, such as the marshalling layer, away from the user.
@@ -436,6 +439,7 @@ This is the list of Externalizer identifiers that are used by Infinispan based m
 |Infinispan Scripting Module:|1800 - 1849
 |Infinispan Server Event Logger Module:|1850 - 1899
 |Infinispan Remote Store:|1900 - 1999
+|Infinispan Counters:|2000 - 2049
 |===============
 
 

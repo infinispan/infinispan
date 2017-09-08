@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -20,7 +21,7 @@ public class MarshallerPickAfterCacheRestart extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.storeAsBinary().enable()
+      builder.memory().storageType(StorageType.BINARY)
             .clustering()
                .cacheMode(CacheMode.REPL_SYNC)
                .stateTransfer().fetchInMemoryState(false);
