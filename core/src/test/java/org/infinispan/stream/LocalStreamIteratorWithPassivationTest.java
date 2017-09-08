@@ -75,7 +75,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
+         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
@@ -101,7 +101,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
             results.put(entry.getKey(), entry.getValue());
             count++;
          }
-         assertEquals(count, 4);
+         assertEquals(4, count);
          assertEquals(originalValues, results);
 
          future.get(10, TimeUnit.SECONDS);
@@ -113,7 +113,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       }
    }
 
-   @Test
+   @Test(enabled = false, description = "This requires supporting concurrent activation in cache loader interceptor")
    public void testConcurrentActivationWithFilter() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<String, String> cache = cache(0, CACHE_NAME);
 
@@ -125,7 +125,13 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       final String loaderKey = cache.toString() + " in loader";
       final String loaderValue = "loader0";
 
+      final String filteredLoaderKey = cache.toString() + " in loader1";
+      final String filteredLoaderValue = "loader1";
+
       cache.putAll(originalValues);
+
+      // Put this in after the cache has been updated
+      originalValues.put(loaderKey, loaderValue);
 
       PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       DummyInMemoryStore store = persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
@@ -133,7 +139,8 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
+         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
+         store.write(new MarshalledEntryImpl<>(filteredLoaderKey, filteredLoaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
@@ -162,7 +169,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
             count++;
          }
          // We shouldn't have found the value in the loader
-         assertEquals(count, 3);
+         assertEquals(4, count);
          assertEquals(originalValues, results);
 
          future.get(10, TimeUnit.SECONDS);
@@ -197,7 +204,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
+         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
@@ -225,7 +232,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
             count++;
          }
          // We shouldn't have found the value in the loader
-         assertEquals(count, 4);
+         assertEquals(4, count);
          for (Map.Entry<String, String> entry : originalValues.entrySet()) {
             assertEquals(entry.getValue().substring(1, 4), results.get(entry.getKey()));
          }
