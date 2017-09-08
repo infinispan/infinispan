@@ -204,7 +204,8 @@
         <version.maven.buildhelper>1.8</version.maven.buildhelper>
         <version.maven.bundle>2.4.0</version.maven.bundle>
         <version.maven.shade>2.4.3</version.maven.shade>
-        <version.maven.source>3.0.0</version.maven.source>
+        <version.maven.source>3.0.1</version.maven.source>
+        <version.maven.jar>3.0.2</version.maven.jar>
         <version.maven.surefire>2.20</version.maven.surefire>
         <version.maven.invoker>1.8</version.maven.invoker>
         <version.metainf-services>1.7</version.metainf-services>
@@ -213,6 +214,8 @@
         <version.karaf>4.1.2</version.karaf>
         <version.pax.exam>4.11.0</version.pax.exam>
         <version.ant-contrib>1.0b3</version.ant-contrib>
+        <version.felix>3.2.2</version.felix>
+        <version.karaf-maven-plugin>4.1.2</version.karaf-maven-plugin>
         <dir.ispn>../</dir.ispn>
         <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
         <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
@@ -825,12 +828,24 @@
                 <scope>test</scope>
                 <exclusions>
                     <exclusion>
-                        <groupId>org.ops4j.pax.logging</groupId>
-                        <artifactId>pax-logging-api</artifactId>
+                        <!-- Do not use any dependency in the test classpath -->
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
+                </exclusions>
+            </dependency>
+            <!-- We need the Karaf framework as a dependency for karaf-maven-plugin -->
+            <dependency>
+                <groupId>org.apache.karaf.features</groupId>
+                <artifactId>framework</artifactId>
+                <version>${version.karaf}</version>
+                <type>kar</type>
+                <scope>provided</scope>
+                <exclusions>
                     <exclusion>
-                        <groupId>org.ops4j.pax.logging</groupId>
-                        <artifactId>pax-logging-service</artifactId>
+                        <!-- Do not use any dependency in the test classpath -->
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -1200,6 +1215,11 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${version.maven.jar}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${version.maven.surefire}</version>
                 </plugin>
@@ -1291,7 +1311,7 @@
                             <descriptor>mvn:org.apache.karaf.features/enterprise/${version.karaf}/xml/features</descriptor>
                         </descriptors>
                         <distribution>org.apache.karaf.features:framework</distribution>
-                        <javase>1.8</javase>
+                        <javase>${version.java}</javase>
                         <framework>
                             <feature>framework</feature>
                         </framework>

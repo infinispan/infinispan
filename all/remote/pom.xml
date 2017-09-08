@@ -77,13 +77,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-api</artifactId>
-         <optional>${uberjar.deps.optional}</optional>
-         <scope>compile</scope>
-      </dependency>
-
-      <dependency>
         <groupId>org.apache.karaf.features</groupId>
         <artifactId>framework</artifactId>
         <type>kar</type>
@@ -349,8 +342,9 @@
             </executions>
          </plugin>
          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>2.3</version>
+            <version>${version.maven.source}</version>
             <executions>
                <execution>
                   <id>attach-sources</id>
@@ -359,8 +353,9 @@
             </executions>
          </plugin>
          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.4</version>
+            <version>${version.maven.jar}</version>
             <executions>
                <execution>
                   <id>build-test-jar</id>
