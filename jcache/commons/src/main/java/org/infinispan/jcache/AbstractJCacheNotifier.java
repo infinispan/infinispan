@@ -1,6 +1,7 @@
 package org.infinispan.jcache;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -245,7 +246,9 @@ public abstract class AbstractJCacheNotifier<K, V> {
    }
 
    private void removeListener(CacheEntryListenerConfiguration<K, V> listenerCfg) {
-      for (Map.Entry<CacheEntryListener<? super K, ? super V>, CacheEntryListenerConfiguration<K, V>> entry : listenerCfgs.entrySet()) {
+      Iterator<Map.Entry<CacheEntryListener<? super K, ? super V>, CacheEntryListenerConfiguration<K, V>>> it;
+      for (it = listenerCfgs.entrySet().iterator(); it.hasNext(); ) {
+         Map.Entry<CacheEntryListener<? super K, ? super V>, CacheEntryListenerConfiguration<K, V>> entry = it.next();
          CacheEntryListenerConfiguration<K, V> cfg = entry.getValue();
          if (cfg.equals(listenerCfg)) {
             CacheEntryListener<? super K, ? super V> listener = entry.getKey();
@@ -260,6 +263,8 @@ public abstract class AbstractJCacheNotifier<K, V> {
 
             if (listener instanceof CacheEntryExpiredListener)
                expiredListeners.remove(listener);
+
+            it.remove();
          }
       }
    }
