@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<features name="infinispan-cachestore-rocksdb-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+<features name="infinispan-cachestore-rocksdb-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
+   <repository>mvn:org.infinispan/infinispan-core/${project.version}/xml/features</repository>
+
    <feature name="infinispan-cachestore-rocksdb" version="${project.version}">
+      <feature>transaction</feature>
+      <feature version="${project.version}">infinispan-core</feature>
+
       <bundle>mvn:org.infinispan/infinispan-cachestore-rocksdb/${project.version}</bundle>
       <bundle>wrap:mvn:org.rocksdb/rocksdbjni/${version.rocksdb}</bundle>
    </feature>

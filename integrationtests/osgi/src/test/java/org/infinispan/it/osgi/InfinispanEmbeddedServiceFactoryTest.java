@@ -12,6 +12,7 @@ import java.util.Hashtable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.it.osgi.util.IspnKarafOptions;
 import org.infinispan.it.osgi.util.OSGiTestUtils;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -21,7 +22,6 @@ import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
@@ -32,7 +32,7 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
-@RunWith(PaxExam.class)
+@RunWith(CustomPaxExamRunner.class)
 @ExamReactorStrategy(PerMethod.class)
 @Category(PerMethod.class)
 public class InfinispanEmbeddedServiceFactoryTest {
