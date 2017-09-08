@@ -9,9 +9,9 @@ import java.util.Properties;
 import org.apache.karaf.features.FeaturesService;
 import org.infinispan.commons.test.skip.SkipOnOs;
 import org.infinispan.commons.test.skip.SkipOnOsRule;
+import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.it.osgi.util.MavenUtils;
 import org.infinispan.it.osgi.util.PaxExamUtils;
-import org.infinispan.it.osgi.util.SuiteCategory;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,7 +21,6 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -33,9 +32,9 @@ import org.osgi.framework.ServiceReference;
 /**
  * Tests features.xml definitions for OSGi bundles.
  */
-@RunWith(PaxExam.class)
+@RunWith(CustomPaxExamRunner.class)
 @ExamReactorStrategy(PerClass.class)
-@Category(SuiteCategory.FeaturesSuite.class)
+@Category(PerClass.class)
 public class OSGiKarafFeaturesTest {
 
    @Rule

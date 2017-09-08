@@ -5,7 +5,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.it.osgi.persistence.jdbc.UnitTestDatabaseManager;
-import org.infinispan.it.osgi.util.SuiteCategory;
+import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.test.fwk.TestResourceTracker;
@@ -16,7 +16,6 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerSuite;
 
@@ -25,9 +24,9 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  *
  * @author mgencur
  */
-@RunWith(PaxExam.class)
+@RunWith(CustomPaxExamRunner.class)
 @ExamReactorStrategy(PerSuite.class)
-@Category(SuiteCategory.PersistenceSuite.class)
+@Category(PerSuite.class)
 public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest {
    @Configuration
    public Option[] config() throws Exception {

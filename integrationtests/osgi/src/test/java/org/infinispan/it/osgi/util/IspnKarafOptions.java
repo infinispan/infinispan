@@ -63,11 +63,11 @@ public class IspnKarafOptions {
    }
 
    public static Option verboseKaraf() {
-      Option result = null;
-      if (Boolean.parseBoolean(System.getProperty(PROP_VERBOSE_KARAF))) {
-         result = logLevel(LogLevel.TRACE);
-      }
-      return result;
+      LogLevel logLevel = Boolean.getBoolean(PROP_VERBOSE_KARAF) ? LogLevel.TRACE : LogLevel.INFO;
+
+      return composite(logLevel(logLevel),
+                       vmOptions("-Dorg.ops4j.pax.logging.DefaultServiceLog.level=" + logLevel,
+                                 "-Dorg.apache.logging.log4j.level=" + logLevel));
    }
 
    public static Option runWithoutConsole() {
@@ -168,9 +168,7 @@ public class IspnKarafOptions {
    }
 
    public static Option bundleH2Database() {
-      return composite(
-            mavenBundle().groupId("com.h2database").artifactId("h2").versionAsInProject(),
-            mavenBundle().groupId("org.osgi").artifactId("org.osgi.enterprise").version("4.2.0"));
+      return mavenBundle().groupId("com.h2database").artifactId("h2").versionAsInProject();
    }
 
    public static Option mvnFeature(String groupId, String artifactId, String feature) {
@@ -334,6 +332,7 @@ public class IspnKarafOptions {
    public static Option commonOptions() throws Exception {
       return composite(karafContainer(),
                        vmOptions("-Djava.net.preferIPv4Stack=true", "-Djgroups.bind_addr=127.0.0.1"),
+//                       vmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000"),
                        verboseKaraf(),
                        runWithoutConsole(),
                        junitBundles(),

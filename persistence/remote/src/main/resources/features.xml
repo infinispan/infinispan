@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<features name="infinispan-cachestore-remote-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+<features name="infinispan-cachestore-remote-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
    <repository>mvn:org.infinispan/infinispan-commons/${project.version}/xml/features</repository>
    <repository>mvn:org.infinispan/infinispan-core/${project.version}/xml/features</repository>
    <repository>mvn:org.infinispan/infinispan-client-hotrod/${project.version}/xml/features</repository>

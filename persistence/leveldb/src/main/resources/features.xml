@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<features name="infinispan-cachestore-leveldb-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+<features name="infinispan-cachestore-leveldb-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
    <feature name="infinispan-cachestore-leveldb" version="${project.version}">
       <bundle>mvn:org.infinispan/infinispan-cachestore-leveldb/${project.version}</bundle>
    </feature>

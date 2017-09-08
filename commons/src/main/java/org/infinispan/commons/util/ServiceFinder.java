@@ -10,7 +10,7 @@ import java.util.ServiceLoader;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleReference;
+import org.osgi.framework.FrameworkUtil;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
@@ -77,26 +77,23 @@ public class ServiceFinder {
       if (!Util.isOSGiContext()) {
           return;
       }
-      ClassLoader loader = ServiceFinder.class.getClassLoader();
-      if ((loader != null) && (loader instanceof org.osgi.framework.BundleReference)) {
-         final BundleContext bundleContext = ((BundleReference) loader).getBundle().getBundleContext();
-         final ServiceTracker<T, T> serviceTracker = new ServiceTracker<T, T>(bundleContext, contract.getName(),
-               null);
-         serviceTracker.open();
-         try {
-            final Object[] osgiServices = serviceTracker.getServices();
-            if (osgiServices != null) {
-               for (Object osgiService : osgiServices) {
-                  if (services.putIfAbsent(osgiService.getClass().getName(), (T) osgiService) == null) {
-                     LOG.debugf("Loading service impl: %s", osgiService.getClass().getSimpleName());
-                  } else {
-                     LOG.debugf("Ignoring already loaded service: %s", osgiService.getClass().getSimpleName());
-                  }
+      final BundleContext bundleContext = FrameworkUtil.getBundle(ServiceFinder.class).getBundleContext();
+      final ServiceTracker<T, T> serviceTracker = new ServiceTracker<T, T>(bundleContext, contract.getName(),
+            null);
+      serviceTracker.open();
+      try {
+         final Object[] osgiServices = serviceTracker.getServices();
+         if (osgiServices != null) {
+            for (Object osgiService : osgiServices) {
+               if (services.putIfAbsent(osgiService.getClass().getName(), (T) osgiService) == null) {
+                  LOG.debugf("Loading service impl: %s", osgiService.getClass().getSimpleName());
+               } else {
+                  LOG.debugf("Ignoring already loaded service: %s", osgiService.getClass().getSimpleName());
                }
             }
-         } catch (Exception e) {
-            // ignore
          }
+      } catch (Exception e) {
+         // ignore
       }
    }
 }

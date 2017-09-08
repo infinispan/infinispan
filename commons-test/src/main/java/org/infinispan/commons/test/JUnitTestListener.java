@@ -39,6 +39,7 @@ public class JUnitTestListener extends RunListener {
    }
 
    private String testName(Description description) {
-      return description.getTestClass().getSimpleName() + "." + description.getMethodName();
+      String className = description.isSuite() ? "suite" : description.getTestClass().getSimpleName();
+      return className + "." + description.getMethodName();
    }
 }

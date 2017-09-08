@@ -132,7 +132,7 @@ public class JpaStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       } catch (Exception e) {
          throw new JpaStoreException("Exceptions occurred while stopping store", e);
       } finally {
-         log.info("JPA Store stopped, stats: " + stats);
+         log.debug("JPA Store stopped, stats: " + stats);
       }
    }
 
