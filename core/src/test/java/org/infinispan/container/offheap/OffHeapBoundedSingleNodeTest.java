@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "container.offheap.OffHeapBoundedSingleNodeTest")
 public class OffHeapBoundedSingleNodeTest extends OffHeapSingleNodeTest {
 
-   private static final int COUNT = 100;
+   private static final int COUNT = 51;
 
    @Override
    protected void createCacheManagers() throws Throwable {
