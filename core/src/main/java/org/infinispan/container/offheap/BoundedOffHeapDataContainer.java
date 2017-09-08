@@ -14,8 +14,10 @@ import org.infinispan.metadata.Metadata;
  * Data Container implementation that stores entries in native memory (off-heap) that is also bounded.  This
  * implementation uses a simple LRU doubly linked list off-heap guarded by a single lock.
  * <p>
- * The link list consists of 28 bytes (3 longs and 1 int).  The first long is the actual entry address, the second is the
- * previous pointer, the third is the next pointer and lastly the int is the hashCode of the key to retrieve the lock.
+ * The link list is represented by firstAddress as the had of the list and lastAddress as the tail of the list. Each
+ * entry in the list consists of 28 bytes (3 longs and 1 int), the first long is the actual entry address, the second is
+ * a pointer to the previous element in the list, the third is the next pointer and lastly the int is the hashCode of
+ * the key to retrieve the lock. The hashCode is required to know which lock to use when trying to read the entry.
  * @author wburns
  * @since 9.0
  */
@@ -190,34 +192,66 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       super.performClear();
    }
 
+   /**
+    * This method repeatedly removes the head of the LRU list until there the current size is less than or equal to `maxSize`.
+    *
+    * We need to hold the LRU lock in order to check the current size and to read the head entry,
+    * and then we need to hold the head entry's write lock in order to remove it.
+    * The problem is that the correct acquisition order is entry write lock first, LRU lock second,
+    * and we need to hold the LRU lock so that we know which entry write lock to acquire.
+    *
+    * To work around it, we first try to acquire the entry write lock without blocking.
+    * If that fails, we release the LRU lock and we acquire the locks in the correct order, hoping that
+    * the LRU head doesn't change while we wait. Because the entry write locks are striped, we actually
+    * tolerate a LRU head change as long as the new head entry is in the same lock stripe.
+    * If the LRU list head changes, we release both locks and try again.
+    */
    private void ensureSize() {
+
       while (true) {
          long addressToRemove;
          Lock entryWriteLock;
          lruLock.lock();
          try {
-            if (currentSize > maxSize) {
-               // Retrieve the hashCode so we can lock it to verify the address is still present
-               int hashCode = UNSAFE.getInt(firstAddress + 24);
-               entryWriteLock = locks.getLockFromHashCode(hashCode).writeLock();
-               if (!entryWriteLock.tryLock()) {
-                  // Attempts to release the lru lock and reacquire the write lock are problematic as underlying allocator
-                  // may return same memory address between points, so there is no way to verify we have same object
-                  // in an efficient way - just force loop back around to allow other threads to get lruLock
-                  addressToRemove = 0;
-               } else {
-                  addressToRemove = UNSAFE.getLong(firstAddress);
-               }
-            } else {
-               // This is the only way to break out of loop
+            if (currentSize <= maxSize) {
                break;
+            }
+            int hashCode = UNSAFE.getInt(firstAddress + 24);
+            entryWriteLock = locks.getLockFromHashCode(hashCode).writeLock();
+            if (!entryWriteLock.tryLock()) {
+               addressToRemove = 0;
+            } else {
+               addressToRemove = UNSAFE.getLong(firstAddress);
             }
          } finally {
             lruLock.unlock();
          }
 
-         // We can proceed with removal if it is non zero.  It would be 0 if the firstAddress changed
-         // It is assumed we own the entryWriteLock lock as well so we can read the keys.
+         if (addressToRemove == 0) {
+            entryWriteLock.lock();
+            try {
+               lruLock.lock();
+               try {
+                  if (currentSize <= maxSize) {
+                     break;
+                  }
+                  int hashCode = UNSAFE.getInt(firstAddress + 24);
+                  Lock innerLock = locks.getLockFromHashCode(hashCode).writeLock();
+                  if (innerLock == entryWriteLock) {
+                     addressToRemove = UNSAFE.getLong(firstAddress);
+                  } else {
+                     addressToRemove = 0;
+                  }
+               } finally {
+                  lruLock.unlock();
+               }
+            } finally {
+               if (addressToRemove == 0) {
+                  entryWriteLock.unlock();
+               }
+            }
+         }
+
          if (addressToRemove != 0) {
             if (trace) {
                log.tracef("Removing entry: %d due to eviction due to size %d being larger than maximum of %d",
@@ -230,9 +264,6 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
             } finally {
                entryWriteLock.unlock();
             }
-         } else {
-            // Just to let another thread possibly continue and release its lock
-            Thread.yield();
          }
       }
    }
