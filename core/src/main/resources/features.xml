@@ -3,9 +3,11 @@
    <repository>mvn:org.infinispan/infinispan-commons/${project.version}/xml/features</repository>
 
    <feature name="infinispan-core" version="${project.version}">
-      <feature version="${project.version}">infinispan-commons</feature>
-      <bundle>mvn:org.infinispan/infinispan-core/${project.version}</bundle>
       <feature>transaction</feature>
+      <feature>aries-blueprint</feature>
+      <feature version="${project.version}">infinispan-commons</feature>
+
+      <bundle>mvn:org.infinispan/infinispan-core/${project.version}</bundle>
       <bundle>mvn:org.jgroups/jgroups/${version.jgroups}</bundle>
    </feature>
 </features>
