@@ -91,8 +91,6 @@
       <version.hibernate_dep.hibernate-commons-annotations>5.0.1.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.hibernate_dep.jandex>2.0.0.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javassist>3.20.0-GA</version.hibernate_dep.javassist>
-      <version.felix>3.2.2</version.felix>
-      <version.karaf-maven-plugin>4.0.4</version.karaf-maven-plugin>
 
       <uberjar.deps.optional>true</uberjar.deps.optional>
    </properties>
@@ -519,20 +517,6 @@
             <groupId>org.jboss.slf4j</groupId>
             <artifactId>slf4j-jboss-logging</artifactId>
             <version>${version.slf4j-jboss-logging}</version>
-         </dependency>
-
-         <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.framework</artifactId>
-            <version>${version.felix}</version>
-         </dependency>
-
-         <dependency>
-           <groupId>org.apache.karaf.features</groupId>
-           <artifactId>framework</artifactId>
-           <version>${version.karaf}</version>
-           <type>kar</type>
-           <scope>provided</scope>
          </dependency>
       </dependencies>
    </dependencyManagement>

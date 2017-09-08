@@ -226,33 +226,33 @@
                         <additionalDependency>
                            <groupId>javax.enterprise</groupId>
                            <artifactId>cdi-api</artifactId>
-                           <version>1.0-SP4</version>
+                           <version>${version.cdi}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>javax.cache</groupId>
                            <artifactId>cache-api</artifactId>
-                           <version>1.0.0</version>
+                           <version>${version.javax.cache}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>javax.servlet</groupId>
                            <artifactId>servlet-api</artifactId>
-                           <version>2.5</version>
+                           <version>${version.javax.servlet}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.kohsuke.metainf-services</groupId>
                            <artifactId>metainf-services</artifactId>
-                           <version>1.5</version>
+                           <version>${version.metainf-services}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.osgi</groupId>
                            <artifactId>org.osgi.core</artifactId>
-                           <version>4.3.1</version>
+                           <version>${version.osgi}</version>
                            <scope>provided</scope>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.osgi</groupId>
                            <artifactId>org.osgi.compendium</artifactId>
-                           <version>4.3.1</version>
+                           <version>${version.osgi}</version>
                            <scope>provided</scope>
                         </additionalDependency>
                         <additionalDependency>
@@ -263,7 +263,7 @@
                         <additionalDependency>
                            <groupId>com.mchange</groupId>
                            <artifactId>c3p0</artifactId>
-                           <version>0.9.5-pre8</version>
+                           <version>${version.c3p0}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>com.zaxxer</groupId>
