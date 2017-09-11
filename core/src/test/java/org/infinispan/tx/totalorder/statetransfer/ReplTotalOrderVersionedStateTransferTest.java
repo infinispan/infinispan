@@ -16,4 +16,10 @@ public class ReplTotalOrderVersionedStateTransferTest extends VersionedReplState
    protected void amendConfig(ConfigurationBuilder dcc) {
       dcc.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER).recovery().disable();
    }
+
+   @Test(groups = "unstable")
+   @Override
+   public void testStateTransfer() throws Exception {
+      super.testStateTransfer();
+   }
 }
