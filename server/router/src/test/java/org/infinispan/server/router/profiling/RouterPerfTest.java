@@ -6,7 +6,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.commons.test.annotations.Profiling;
+import org.infinispan.commons.test.categories.Profiling;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.router.MultiTenantRouter;
 import org.infinispan.server.router.routes.Route;

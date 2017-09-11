@@ -56,7 +56,7 @@
    </dependencies>
 
    <properties>
-      <suite.exclude.groups>org.infinispan.commons.test.annotations.Profiling</suite.exclude.groups>
+      <suite.exclude.groups>org.infinispan.commons.test.categories.Profiling</suite.exclude.groups>
       <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>
       <intermediary_jar_path>${project.build.directory}/${intermediary_jar_name}.jar</intermediary_jar_path>
    </properties>
