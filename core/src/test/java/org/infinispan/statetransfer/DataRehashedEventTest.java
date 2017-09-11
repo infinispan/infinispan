@@ -119,6 +119,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
 
       if (cacheMode.isScattered()) {
          // cache 0 has to become owner of the segments owned by the leaving node, so there will be a rebalance
+         rehashListener.waitForEvents(2);
          events = rehashListener.removeEvents();
          assertEquals(events.size(), 2);
       } else {
@@ -133,7 +134,6 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       rehashListener = new DataRehashedListenerPostOnly();
       c1.addListener(rehashListener);
 
-      ConsistentHash ch1Node = advancedCache(0).getDistributionManager().getReadConsistentHash();
       assertEquals(rehashListener.removeEvents().size(), 0);
 
       // start a second node and wait for the rebalance to end

@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -80,6 +81,11 @@ public class BackupForStateTransferTest extends AbstractTwoSitesTest {
    @Override
    protected ConfigurationBuilder getLonActiveConfig() {
       return getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+   }
+
+   @Override
+   protected void adaptLONConfiguration(BackupConfigurationBuilder builder) {
+      builder.site(NYC).stateTransfer().chunkSize(10);
    }
 
    private void startStateTransfer(String fromSite, String toSite) {

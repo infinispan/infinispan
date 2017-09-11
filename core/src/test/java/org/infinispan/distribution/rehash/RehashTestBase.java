@@ -20,6 +20,7 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -60,9 +61,8 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
       assertEquals(caches.size(), keys.size(), "Received caches" + caches);
 
       int i = 0;
-      for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v" + i);
+      for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v0");
 
-      i = 0;
       for (MagicKey key : keys) assertOwnershipAndNonOwnership(key, false);
 
       log.infof("Initialized with keys %s", keys);
@@ -82,8 +82,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
       waitForRehashCompletion();
       log.info("Rehash complete");
 
-      int i = 0;
-      for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
+      for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v0");
    }
 
 
@@ -146,17 +145,18 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
 
          // checking the values will bring the keys to L1, so we want to do it after checking ownership
          assertOnAllCaches(keys.get(0), "transactionally_replaced");
-         assertOnAllCaches(keys.get(1), "v" + 2);
-         assertOnAllCaches(keys.get(2), "v" + 3);
-         assertOnAllCaches(keys.get(3), "v" + 4);
+         assertOnAllCaches(keys.get(1), "v0");
+         assertOnAllCaches(keys.get(2), "v0");
+         assertOnAllCaches(keys.get(3), "v0");
       }
    }
 
    /**
     * A stress test.  One node is constantly modified while a rehash occurs.
     */
-   @Test(groups = "stress", timeOut = 15*60*1000)
+   @Test(groups = "stress", timeOut = 15*60*1000, invocationCount = 100)
    public void testNonTransactionalStress() throws Throwable {
+      TestResourceTracker.testThreadStarted(this);
       stressTest(false);
    }
 
@@ -165,6 +165,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
     */
    @Test(groups = "stress", timeOut = 15*60*1000)
    public void testTransactionalStress() throws Throwable {
+      TestResourceTracker.testThreadStarted(this);
       stressTest(true);
    }
 
