@@ -57,6 +57,8 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.BaseStoreTest")
 public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
+   protected static final int WRITE_DELETE_BATCH_MIN_ENTRIES = 80;
+   protected static final int WRITE_DELETE_BATCH_MAX_ENTRIES = 120;
    private TestObjectStreamMarshaller marshaller;
    protected abstract AdvancedLoadWriteStore createStore() throws Exception;
 
@@ -524,7 +526,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
    public void testWriteAndDeleteBatch() throws Exception {
       // Number of entries is randomized to even numbers between 80 and 120
-      int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(40, 61);
+      int numberOfEntries = 2 * ThreadLocalRandom.current().nextInt(WRITE_DELETE_BATCH_MIN_ENTRIES / 2, WRITE_DELETE_BATCH_MAX_ENTRIES / 2 + 1);
       assertIsEmpty();
       assertNull("should not be present in the store", cl.load(0));
       List<MarshalledEntry<?, ?>> entries = IntStream.range(0, numberOfEntries).boxed()
