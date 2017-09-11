@@ -124,7 +124,7 @@ public class NonIndexedQueryStringTest extends QueryStringTest {
       super.testFullTextRegexp();
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable in non-indexed mode")
    public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
       // this test does not make sense in non-indexed mode
    }

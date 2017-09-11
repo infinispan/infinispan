@@ -37,8 +37,6 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
     private static Log log = LogFactory.getLog(AtomicObjectFactory.class);
 
-
-    @Test(enabled = true)
     public void basicUsageTest() throws Exception {
         Cache<?, ?> cache = cache(0);
         AtomicObjectFactory factory = new AtomicObjectFactory(cache);
@@ -61,7 +59,6 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
     }
 
-    @Test(enabled = true)
     public void basicPerformanceTest() throws Exception {
         Cache<?, ?> cache = cache(0);
         AtomicObjectFactory factory = new AtomicObjectFactory(cache);
@@ -80,7 +77,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
     }
 
-    @Test(enabled = false, description = "To be fixed by ISPN-5530")
+    @Test(groups = "unstable", description = "ISPN-5530")
     public void distributedCacheTest() throws Exception {
 
         List<HashSet<Integer>> sets = new ArrayList<>();
@@ -107,7 +104,6 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
     }
 
-    @Test(enabled = true)
     public void distributedPersistenceTest() throws Exception {
 
         Iterator<EmbeddedCacheManager> it = cacheManagers.iterator();
