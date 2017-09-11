@@ -23,7 +23,7 @@
             <artifactId>hibernate-search-engine</artifactId>
         </dependency>
 
-        
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -45,6 +45,10 @@
                 <exclusion>
                     <groupId>org.jboss.byteman</groupId>
                     <artifactId>byteman-bmunit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -120,7 +124,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration combine.self="override">
                     <argLine>-javaagent:${project.build.directory}/agents/byteman.jar=port:9091,boot:${project.build.directory}/agents/byteman.jar ${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
-                    <excludedGroups>${suite.exclude.groups}</excludedGroups>
+                    <groups combine.self="override">${defaultJUnitGroups}</groups>
+                    <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                     <systemPropertyVariables>
                         <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <build.directory>${project.build.directory}</build.directory>
@@ -131,7 +136,7 @@
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit4</artifactId>
+                        <artifactId>surefire-junit47</artifactId>
                         <version>${version.maven.surefire}</version>
                     </dependency>
                 </dependencies>

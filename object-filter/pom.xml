@@ -56,7 +56,6 @@
    </dependencies>
 
    <properties>
-      <suite.exclude.groups>org.infinispan.commons.test.categories.Profiling</suite.exclude.groups>
       <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>
       <intermediary_jar_path>${project.build.directory}/${intermediary_jar_name}.jar</intermediary_jar_path>
    </properties>
@@ -67,7 +66,8 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration combine.self="override">
-               <excludedGroups>${suite.exclude.groups}</excludedGroups>
+               <groups combine.self="override">${defaultJUnitGroups}</groups>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <systemPropertyVariables>
                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
@@ -78,7 +78,7 @@
             <dependencies>
                <dependency>
                   <groupId>org.apache.maven.surefire</groupId>
-                  <artifactId>surefire-junit4</artifactId>
+                  <artifactId>surefire-junit47</artifactId>
                   <version>${version.maven.surefire}</version>
                </dependency>
             </dependencies>
