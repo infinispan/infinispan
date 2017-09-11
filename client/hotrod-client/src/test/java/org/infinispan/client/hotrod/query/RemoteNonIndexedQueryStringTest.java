@@ -121,7 +121,7 @@ public class RemoteNonIndexedQueryStringTest extends RemoteQueryStringTest {
       super.testFullTextRegexp();
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable to non-indexed caches")
    public void testExactMatchOnAnalyzedFieldNotAllowed() throws Exception {
       // this test does not make sense in non-indexed mode
    }
@@ -138,7 +138,7 @@ public class RemoteNonIndexedQueryStringTest extends RemoteQueryStringTest {
       super.testFullTextRegexp2();
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable to non-indexed caches")
    public void testCustomFieldAnalyzer() {
       //not working with non-indexed caches
    }

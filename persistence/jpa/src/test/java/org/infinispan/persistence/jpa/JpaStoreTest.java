@@ -54,9 +54,9 @@ public class JpaStoreTest extends BaseStoreTest {
       return ((KeyValueEntity) wrapper).getValue();
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testLoadAndStoreBytesValues() throws PersistenceException, IOException, InterruptedException {
-      super.testLoadAndStoreBytesValues();
+      // byte values make no sense for this store
    }
 }

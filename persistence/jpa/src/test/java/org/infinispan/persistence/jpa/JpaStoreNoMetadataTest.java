@@ -25,32 +25,32 @@ public class JpaStoreNoMetadataTest extends JpaStoreTest {
       return "org.infinispan.persistence.jpa.no_metadata";
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testLoadAndStoreWithLifespan() throws Exception {
       // no metadata => cannot test lifespan
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testLoadAndStoreWithIdle() throws Exception {
       // no metadata => cannot test idle
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
       // no metadata => cannot test lifespan or idle
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testLoadAndStoreWithLifespanAndIdle2() throws Exception {
       // no metadata => cannot test lifespan or idle
    }
 
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testReplaceExpiredEntry() throws Exception {
       // no metadata => cannot test lifespan
