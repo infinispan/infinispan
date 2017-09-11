@@ -31,7 +31,6 @@ public class ShardedTreeMapTest extends MultipleCacheManagersTest {
     private static int NCACHES = 3;
     private static List<Cache> caches = new ArrayList<Cache>();
 
-    @Test(enabled = true)
     public void basicUsageTest() throws  Exception{
         EmbeddedCacheManager cacheManager = cacheManagers.iterator().next();
         Cache cache = cacheManager.getCache();

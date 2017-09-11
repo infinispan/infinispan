@@ -16,12 +16,13 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.IndexedTypeSet;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.hibernate.search.test.util.FullTextSessionBuilder;
+import org.infinispan.commons.test.categories.Unstable;
 import org.infinispan.hibernate.search.ClusterTestHelper.ExclusiveIndexUse;
 import org.infinispan.hibernate.search.ClusterTestHelper.IndexingFlushMode;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * In this test we initially start a master node which will stay alive for the full test duration and constantly
@@ -49,7 +50,7 @@ public class LiveRunningTest {
    private int storedEmailsCount = 0;
 
    @Test
-   @Ignore("ISPN-8075")
+   @Category(Unstable.class) // ISPN-8075
    public void liveRun() {
       try {
          for (int i = 0; i < TEST_RUNS; i++) {
