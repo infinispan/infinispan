@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
 
-import org.infinispan.commons.test.annotations.Profiling;
+import org.infinispan.commons.test.categories.Profiling;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;

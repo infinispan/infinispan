@@ -15,7 +15,7 @@
 
     <properties>
         <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-        <suite.exclude.groups>org.infinispan.commons.test.annotations.Profiling</suite.exclude.groups>
+        <suite.exclude.groups>org.infinispan.commons.test.categories.Profiling</suite.exclude.groups>
         <certificate.dname>CN=HotRod_1,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW</certificate.dname>
     </properties>
 

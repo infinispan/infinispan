@@ -1,4 +1,4 @@
-package org.infinispan.commons.test.annotations;
+package org.infinispan.commons.test.categories;
 
 /**
  * JUnit category for profiling tests.

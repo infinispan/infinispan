@@ -1,6 +1,6 @@
 package org.infinispan.objectfilter.test.perf;
 
-import org.infinispan.commons.test.annotations.Profiling;
+import org.infinispan.commons.test.categories.Profiling;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.test.model.MarshallerRegistration;
