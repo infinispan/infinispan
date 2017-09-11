@@ -4,7 +4,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -47,6 +46,7 @@ public class NonTxPrimaryOwnerLeavingTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
+   @Test(groups = "unstable")
    public void testPrimaryOwnerLeavingDuringPut() throws Exception {
       doTest(TestWriteOperation.PUT_CREATE, false);
    }
@@ -76,12 +76,7 @@ public class NonTxPrimaryOwnerLeavingTest extends MultipleCacheManagersTest {
 
       // Try to put a key/value from cache0 with cache1 the primary owner
       final MagicKey key = new MagicKey(cache1);
-      Future<Object> future = fork(new Callable<Object>() {
-         @Override
-         public Object call() throws Exception {
-            return operation.perform(cache0, key);
-         }
-      });
+      Future<Object> future = fork(() -> operation.perform(cache0, key));
 
       // After the put command was sent, kill cache1
       crm.waitForCommandToBlock();
