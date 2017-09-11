@@ -34,7 +34,7 @@ public class JpaStoreFunctionalTest extends BaseStoreFunctionalTest {
       return ((KeyValueEntity) wrapper).getValue();
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testTwoCachesSameCacheStore() {
       // With JPA, we must use different persistence configurations for each cache
@@ -42,24 +42,24 @@ public class JpaStoreFunctionalTest extends BaseStoreFunctionalTest {
       // in the entity class.
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    public void testPreloadStoredAsBinary() {
       // byte arrays are not entities (no need to test how we can wrap them)
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testStoreByteArrays(Method m) throws PersistenceException {
       // byte arrays are not entities  (no need to test how we can wrap them)
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testRestoreAtomicMap(Method m) {
       // Atomic maps are not entities
    }
 
-   @Test(enabled = false)
+   @Test(enabled = false, description = "Not applicable")
    @Override
    public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
       // Atomic maps are not entities
