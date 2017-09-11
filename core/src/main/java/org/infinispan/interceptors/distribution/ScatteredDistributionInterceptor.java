@@ -156,7 +156,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
 
       DistributionInfo info = cacheTopology.getDistribution(command.getKey());
       if (info.primary() == null) {
-         throw OutdatedTopologyException.INSTANCE;
+         throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
       }
 
       if (isLocalModeForced(command)) {
@@ -580,7 +580,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          }
          return invokeNext(ctx, command);
       } else if (info.primary() == null) {
-         throw OutdatedTopologyException.INSTANCE;
+         throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
       } else if (ctx.isOriginLocal()) {
          if (isLocalModeForced(command) || command.hasAnyFlag(FlagBitSets.SKIP_REMOTE_LOOKUP)) {
             if (ctx.lookupEntry(command.getKey()) == null) {
@@ -712,7 +712,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
             localEntries.put(key, new MetadataImmortalCacheValue(entry.getValue(), metadata));
             commitSingleEntryIfNewer(ctxEntry, ctx, command);
          } else if (info.primary() == null) {
-            throw OutdatedTopologyException.INSTANCE;
+            throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
          } else {
             Map<Object, Object> currentEntries = remoteEntries.computeIfAbsent(info.primary(), k -> new HashMap<>());
             currentEntries.put(key, entry.getValue());
@@ -859,7 +859,7 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
          for (Object key : command.getKeys()) {
             DistributionInfo info = cacheTopology.getDistribution(key);
             if (info.primary() == null) {
-               throw OutdatedTopologyException.INSTANCE;
+               throw new OutdatedTopologyException(cacheTopology.getTopologyId() + 1);
             } else if (!info.isPrimary()) {
                remoteKeys.computeIfAbsent(info.primary(), k -> new ArrayList<>()).add(key);
             }

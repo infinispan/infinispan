@@ -226,7 +226,9 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
             if (ote.requestedTopologyId >= 0) {
                requestedTopologyId = Math.max(currentTopologyId, ote.requestedTopologyId);
             } else {
-               requestedTopologyId = nextTopology(cmd, currentTopologyId);
+               // OTEs without requested topology are a result of UnsureResponse/CNFR as OTE based on old command
+               // topology would be prone to race between SDI and STI
+               requestedTopologyId = Math.max(currentTopologyId, cmd.getTopologyId() + 1);
             }
          }
       } else if (ce instanceof AllOwnersLostException) {
@@ -238,7 +240,7 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
          // In other cache modes, during partition the exception is already handled in PartitionHandlingInterceptor,
          // and if the handling is not enabled, we can't but return null.
          if (cacheConfiguration.clustering().cacheMode().isScattered()) {
-            requestedTopologyId = nextTopology(cmd, currentTopologyId);
+            requestedTopologyId = Math.max(currentTopologyId, cmd.getTopologyId() + 1);
          } else {
             return rCommand.acceptVisitor(rCtx, LostDataVisitor.INSTANCE);
          }
@@ -259,16 +261,6 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       } else {
          return makeStage(asyncInvokeNext(rCtx, rCommand, stateTransferLock.transactionDataFuture(requestedTopologyId)))
                .andHandle(rCtx, rCommand, handleReadCommandReturn);
-      }
-   }
-
-   private int nextTopology(TopologyAffectedCommand cmd, int currentTopologyId) {
-      if (cmd.getTopologyId() == currentTopologyId) {
-         return currentTopologyId + 1;
-      } else if (cmd.getTopologyId() > currentTopologyId) {
-         return cmd.getTopologyId();
-      } else {
-         return currentTopologyId;
       }
    }
 
