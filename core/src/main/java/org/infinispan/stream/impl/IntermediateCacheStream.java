@@ -342,6 +342,11 @@ public class IntermediateCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
+   public <R1, A> R1 collect(SerializableSupplier<Collector<? super R, A, R1>> supplier) {
+      return localStream.collect(supplier);
+   }
+
+   @Override
    public <R1> R1 collect(Supplier<R1> supplier, BiConsumer<R1, ? super R> accumulator, BiConsumer<R1, R1> combiner) {
       return localStream.collect(supplier, accumulator, combiner);
    }

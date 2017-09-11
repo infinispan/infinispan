@@ -361,6 +361,11 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
    }
 
    @Override
+   public <R1, A> R1 collect(SerializableSupplier<Collector<? super R, A, R1>> supplier) {
+      return createStream().collect(supplier.get());
+   }
+
+   @Override
    public Optional<R> min(Comparator<? super R> comparator) {
       return createStream().min(comparator);
    }

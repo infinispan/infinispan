@@ -73,6 +73,7 @@ import org.infinispan.stream.impl.intops.object.PeekOperation;
 import org.infinispan.stream.impl.termop.object.ForEachBiOperation;
 import org.infinispan.stream.impl.termop.object.ForEachOperation;
 import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
+import org.infinispan.util.AbstractDelegatingCacheStream;
 import org.infinispan.util.CloseableSuppliedIterator;
 import org.infinispan.util.RangeSet;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -454,6 +455,11 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                  new IdentifyFinishCollector<>(collector)), true, collector.combiner(), null);
          return collector.finisher().apply(intermediateResult);
       }
+   }
+
+   @Override
+   public <R1, A> R1 collect(SerializableSupplier<Collector<? super R, A, R1>> supplier) {
+      return collect(new AbstractDelegatingCacheStream.CollectorSupplier2<>(supplier));
    }
 
    @Override

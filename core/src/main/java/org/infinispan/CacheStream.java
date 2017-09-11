@@ -318,6 +318,8 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
    @Override
    <R1, A> R1 collect(Collector<? super R, A, R1> collector);
 
+   <R1, A> R1 collect(SerializableSupplier<Collector<? super R, A, R1>> supplier);
+
    /**
     * Same as {@link CacheStream#collect(Supplier, BiConsumer, BiConsumer)} except that the various arguments must
     * also implement <code>Serializable</code>

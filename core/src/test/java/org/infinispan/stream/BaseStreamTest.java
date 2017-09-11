@@ -155,8 +155,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
-      assertEquals(4.5, createStream(entrySet).collect(CacheCollectors.serializableCollector(
-            () -> Collectors.averagingInt(Map.Entry::getKey))));
+      assertEquals(4.5, createStream(entrySet).collect(
+            () -> Collectors.averagingInt(Map.Entry::getKey)));
    }
 
    public void testObjCollectorIntStatistics() {
@@ -168,8 +168,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       assertEquals(range, cache.size());
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
-      IntSummaryStatistics stats = createStream(entrySet).collect(CacheCollectors.serializableCollector(
-            () -> Collectors.summarizingInt(Map.Entry::getKey)));
+      IntSummaryStatistics stats = createStream(entrySet).collect(
+            () -> Collectors.summarizingInt(Map.Entry::getKey));
       assertEquals(10, stats.getCount());
       assertEquals(4.5, stats.getAverage());
       assertEquals(0, stats.getMin());
@@ -187,8 +187,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       ConcurrentMap<Boolean, List<Map.Entry<Integer, String>>> grouped = createStream(entrySet).collect(
-            CacheCollectors.serializableCollector(
-                  () -> Collectors.groupingByConcurrent(k -> k.getKey() % 2 == 0)));
+                  () -> Collectors.groupingByConcurrent(k -> k.getKey() % 2 == 0));
       grouped.get(true).parallelStream().forEach(e -> assertTrue(e.getKey() % 2 == 0));
       grouped.get(false).parallelStream().forEach(e -> assertTrue(e.getKey() % 2 == 1));
    }
@@ -219,7 +218,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       List<Map.Entry<Integer, String>> list = createStream(entrySet).sorted(
             (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).collect(
-            CacheCollectors.serializableCollector(Collectors::toList));
+            () -> Collectors.toList());
       assertEquals(cache.size(), list.size());
       AtomicInteger i = new AtomicInteger();
       list.forEach(e -> {
