@@ -81,9 +81,10 @@
         <buildDirectory>target</buildDirectory>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <defaultTestGroup>functional,unit,xsite,arquillian</defaultTestGroup>
-
-        <defaultExcludedTestGroup>unstable,stress</defaultExcludedTestGroup>
+        <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
+        <defaultJUnitGroups></defaultJUnitGroups>
+        <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
+        <defaultExcludedJUnitGroups>org.infinispan.commons.test.categories.Unstable,org.infinispan.commons.test.categories.Stress,org.infinispan.commons.test.categories.Profiling</defaultExcludedJUnitGroups>
         <forkJvmArgs>-Xmx2G</forkJvmArgs>
         <jigsawForkJvmArgs></jigsawForkJvmArgs>
         <testNGListeners>
@@ -1531,8 +1532,8 @@
                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
-                    <groups>${defaultTestGroup}</groups>
-                    <excludedGroups>${defaultExcludedTestGroup}</excludedGroups>
+                    <groups>${defaultTestNGGroups}</groups>
+                    <excludedGroups>${defaultExcludedTestNGGroups}</excludedGroups>
                     <disableXmlReport>true</disableXmlReport>
                     <useFile>false</useFile>
                     <systemPropertyVariables>
@@ -1775,38 +1776,42 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <defaultTestGroup>functional,unit,xsite,arquillian</defaultTestGroup>
+                <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
                 <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
             </properties>
         </profile>
         <profile>
             <id>test-functional</id>
             <properties>
-                <defaultTestGroup>functional</defaultTestGroup>
+                <defaultTestNGGroups>functional</defaultTestNGGroups>
                 <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
             </properties>
         </profile>
         <profile>
             <id>smoke</id>
             <properties>
-                <defaultTestGroup>smoke</defaultTestGroup>
+                <defaultTestNGGroups>smoke</defaultTestNGGroups>
+                <defaultJUnitGroups>org.infinispan.commons.test.categories.Smoke</defaultJUnitGroups>
                 <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
             </properties>
         </profile>
         <profile>
             <id>test-unstable</id>
             <properties>
-                <defaultTestGroup>unstable</defaultTestGroup>
-
-                <defaultExcludedTestGroup/>
+                <defaultTestNGGroups>unstable</defaultTestNGGroups>
+                <defaultJUnitGroups>org.infinispan.commons.test.categories.Unstable</defaultJUnitGroups>
+                <defaultExcludedTestNGGroups/>
+                <defaultExcludedJUnitGroups/>
                 <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
             </properties>
         </profile>
         <profile>
             <id>test-stress</id>
             <properties>
-                <defaultTestGroup>stress</defaultTestGroup>
-                <defaultExcludedTestGroup/>
+                <defaultTestNGGroups>stress</defaultTestNGGroups>
+                <defaultJUnitGroups>org.infinispan.commons.test.categories.Stress</defaultJUnitGroups>
+                <defaultExcludedTestNGGroups/>
+                <defaultExcludedJUnitGroups/>
                 <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
                 <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
             </properties>
@@ -1814,19 +1819,19 @@
         <profile>
             <id>test-unit</id>
             <properties>
-                <defaultTestGroup>unit</defaultTestGroup>
+                <defaultTestNGGroups>unit</defaultTestNGGroups>
             </properties>
         </profile>
         <profile>
             <id>test-jgroups</id>
             <properties>
-                <defaultTestGroup>jgroups</defaultTestGroup>
+                <defaultTestNGGroups>jgroups</defaultTestNGGroups>
             </properties>
         </profile>
         <profile>
             <id>test-transaction</id>
             <properties>
-                <defaultTestGroup>transaction</defaultTestGroup>
+                <defaultTestNGGroups>transaction</defaultTestNGGroups>
             </properties>
         </profile>
         <profile>

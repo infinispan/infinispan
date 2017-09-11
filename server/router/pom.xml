@@ -15,7 +15,6 @@
 
     <properties>
         <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
-        <suite.exclude.groups>org.infinispan.commons.test.categories.Profiling</suite.exclude.groups>
         <certificate.dname>CN=HotRod_1,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW</certificate.dname>
     </properties>
 
@@ -192,7 +191,8 @@
                     <trimStackTrace>false</trimStackTrace>
                     <parallel>suitesAndClasses</parallel>
                     <threadCount>${infinispan.test.parallel.threads}</threadCount>
-                    <excludedGroups>${suite.exclude.groups}</excludedGroups>
+                    <groups combine.self="override">${defaultJUnitGroups}</groups>
+                    <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                     <systemPropertyVariables>
                         <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <build.directory>${project.build.directory}</build.directory>

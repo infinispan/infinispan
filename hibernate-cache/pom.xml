@@ -98,7 +98,8 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration combine.self="override">
-               <excludedGroups>${suite.exclude.groups}</excludedGroups>
+               <groups combine.self="override">${defaultJUnitGroups}</groups>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <trimStackTrace>false</trimStackTrace>
                <systemPropertyVariables>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
