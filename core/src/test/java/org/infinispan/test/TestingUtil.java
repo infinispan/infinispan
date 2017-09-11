@@ -70,6 +70,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -333,11 +334,11 @@ public class TestingUtil {
          if (c instanceof SecureCacheImpl) {
             c = (Cache) extractField(SecureCacheImpl.class, c, "delegate");
          }
-         StateTransferManager stateTransferManager = extractComponent(c, StateTransferManager.class);
+         DistributionManager distributionManager = c.getAdvancedCache().getDistributionManager();
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          CacheTopology cacheTopology;
          while (true) {
-            cacheTopology = stateTransferManager.getCacheTopology();
+            cacheTopology = distributionManager.getCacheTopology();
             boolean rebalanceInProgress;
             boolean chContainsAllMembers;
             boolean currentChIsBalanced;
