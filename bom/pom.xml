@@ -78,7 +78,7 @@
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
       <version.jgroups>4.0.4.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
-      <version.netty>4.1.9.Final</version.netty>
+      <version.netty>4.1.14.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.rocksdb>5.6.1</version.rocksdb>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
