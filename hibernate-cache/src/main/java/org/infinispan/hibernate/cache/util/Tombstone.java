@@ -195,9 +195,9 @@ public class Tombstone {
 
 		@Override
 		public boolean accept(Object key, Object value, Metadata metadata) {
-         boolean b = !(value instanceof Tombstone);
-         log.tracef("Is value %s for key %s is tombstone? %b", value, key, b);
-         return b;
+         boolean isTombstone = value instanceof Tombstone;
+         log.tracef("Is {key=%s,value=%s} tombstone? %b", key, value, isTombstone);
+         return !isTombstone;
 		}
 	}
 
