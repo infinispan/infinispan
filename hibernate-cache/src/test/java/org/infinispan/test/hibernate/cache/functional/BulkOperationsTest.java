@@ -53,6 +53,7 @@ public class BulkOperationsTest extends SingleNodeTest {
 	}
 
 	@Test
+   @Ignore("Unstable ISPN-8263")
 	public void testBulkOperations() throws Throwable {
 		boolean cleanedUp = false;
 		try {
