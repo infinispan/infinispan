@@ -15,6 +15,7 @@ import javax.transaction.SystemException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.infinispan.commons.test.categories.Unstable;
 import org.infinispan.hibernate.cache.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.impl.BaseRegion;
 import org.infinispan.hibernate.cache.util.Caches;
@@ -62,6 +63,7 @@ import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
 
 import org.jboss.logging.Logger;
+import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -401,11 +403,13 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	protected abstract S getAccessStrategy(R region);
 
 	@Test
+	@Category(Unstable.class) // ISPN-8263
 	public void testRemove() throws Exception {
 		evictOrRemoveTest( false );
 	}
 
 	@Test
+	@Category(Unstable.class) // ISPN-8263
 	public void testEvict() throws Exception {
 		evictOrRemoveTest( true );
 	}
@@ -488,11 +492,13 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	}
 
 	@Test
+	@Category(Unstable.class) // ISPN-8263
    public void testRemoveAll() throws Exception {
 		evictOrRemoveAllTest(false);
 	}
 
 	@Test
+	@Category(Unstable.class) // ISPN-8263
    public void testEvictAll() throws Exception {
 		evictOrRemoveAllTest(true);
 	}
