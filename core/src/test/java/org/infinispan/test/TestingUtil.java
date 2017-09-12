@@ -1171,6 +1171,29 @@ public class TestingUtil {
       return old;
    }
 
+   /**
+    * Same as {@link TestingUtil#replaceComponent(CacheContainer, Class, Object, boolean)} except that you can provide
+    * an optional name, to replace specifically named components.
+    *
+    * @param cacheContainer       cache in which to replace component
+    * @param componentType        component type of which to replace
+    * @param name                 name of the component
+    * @param replacementComponent new instance
+    * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
+    *
+    * @return the original component that was replaced
+    */
+   public static <T> T replaceComponent(CacheContainer cacheContainer, Class<T> componentType, String name, T replacementComponent, boolean rewire) {
+      GlobalComponentRegistry cr = extractGlobalComponentRegistry(cacheContainer);
+      T old = cr.getComponent(componentType, name);
+      cr.registerComponent(replacementComponent, name);
+      if (rewire) {
+         cr.rewire();
+         cr.rewireNamedRegistries();
+      }
+      return old;
+   }
+
    public static <K, V> CacheLoader<K, V> getCacheLoader(Cache<K, V> cache) {
       if (cache.getCacheConfiguration().persistence().usingStores()) {
          return TestingUtil.getFirstLoader(cache);
