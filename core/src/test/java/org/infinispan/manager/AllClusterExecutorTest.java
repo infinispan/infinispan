@@ -10,16 +10,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
@@ -28,6 +32,8 @@ import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.function.SerializableSupplier;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 /**
@@ -380,13 +386,30 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
 
+            ScheduledExecutorService stpe = Mockito.mock(ScheduledExecutorService.class);
+
+            for (EmbeddedCacheManager cm : cms) {
+               TestingUtil.replaceComponent(cm, ScheduledExecutorService.class,
+                     KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, stpe, true);
+            }
+
             CompletableFuture<Void> future =
                   executor(cm1).timeout(10, TimeUnit.MILLISECONDS).submitConsumer(m -> {
-                     TestingUtil.sleepThread(100);
+                     ArgumentCaptor<Callable> argument = ArgumentCaptor.forClass(Callable.class);
+                     // This will be a mock as we replaced them all above
+                     ScheduledExecutorService innerStpe = m.getGlobalComponentRegistry().getComponent(
+                           ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
+
+                     Mockito.verify(innerStpe, Mockito.timeout(TimeUnit.SECONDS.toMillis(10)).atLeastOnce()).schedule(argument.capture(),
+                           Mockito.anyLong(), Mockito.any());
+                     // We run the timeout ourselves, which should cause the timeout exception to occur.
+                     try {
+                        argument.getValue().call();
+                     } catch (Exception e) {
+                        throw new CacheException(e);
+                     }
                      return null;
-                  }, (a, i, t) -> {
-                     log.tracef("Consumer invoked with %s, %s, %s", a, i, t);
-                  });
+                  }, (a, i, t) -> log.tracef("Consumer invoked with %s, %s, %s", a, i, t));
             Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, future);
          }
       });
