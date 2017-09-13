@@ -1,0 +1,2 @@
+<socket-binding name="jgroups-diagnostics" port="0"
+                multicast-address="224.0.75.75" multicast-port="7500"/>

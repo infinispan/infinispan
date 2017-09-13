@@ -320,7 +320,7 @@
         <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
-
+        <partition.handling.lib.filename>partition_handling.jar</partition.handling.lib.filename>
 
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <node0.ip>127.0.0.1</node0.ip>
@@ -808,6 +808,25 @@
                                 <java classname="org.h2.tools.Server" classpath="${driver.dir}/${driver.jar}">
                                     <arg line="-tcpShutdown ${h2.server.address} -tcpShutdownForce" />
                                 </java>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>add-protocol-to-jgroups</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <echo message="Creating JAR with additional JGroups classes for partition handling and placing it in the server"/>
+                                <jar destfile="${server1.dist}/modules/system/layers/base/org/jgroups/main/${partition.handling.lib.filename}"
+                                     basedir="${basedir}/target/test-classes" includes="org/jgroups/**"/>
+                                <jar destfile="${server2.dist}/modules/system/layers/base/org/jgroups/main/${partition.handling.lib.filename}"
+                                     basedir="${basedir}/target/test-classes" includes="org/jgroups/**"/>
+                                <jar destfile="${server3.dist}/modules/system/layers/base/org/jgroups/main/${partition.handling.lib.filename}"
+                                     basedir="${basedir}/target/test-classes" includes="org/jgroups/**"/>
                             </target>
                         </configuration>
                     </execution>
