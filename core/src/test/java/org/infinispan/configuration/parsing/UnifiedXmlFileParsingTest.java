@@ -29,15 +29,16 @@ import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.conflict.MergePolicies;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -122,6 +123,19 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
       assertEquals(4, globalConfiguration.transport().initialClusterSize());
       assertEquals(30000, globalConfiguration.transport().initialClusterTimeout());
+
+      MemoryConfiguration mc = cm.getCacheConfiguration("off-heap-memory").memory();
+      assertEquals(StorageType.OFF_HEAP, mc.storageType());
+      assertEquals(10000000, mc.size());
+      assertEquals(4, mc.addressCount());
+      assertEquals(EvictionType.MEMORY, mc.evictionType());
+
+      mc = cm.getCacheConfiguration("binary-memory").memory();
+      assertEquals(StorageType.BINARY, mc.storageType());
+      assertEquals(1, mc.size());
+
+      mc = cm.getCacheConfiguration("object-memory").memory();
+      assertEquals(StorageType.OBJECT, mc.storageType());
    }
 
    private static void configurationCheck82(EmbeddedCacheManager cm) {
@@ -144,7 +158,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       Configuration c = cm.getDefaultCacheConfiguration();
       assertFalse(c.memory().evictionType() == EvictionType.MEMORY);
       c = cm.getCacheConfiguration("invalid");
-      assertTrue(c.memory().evictionType() == EvictionType.MEMORY);
+      assertTrue(c.memory().evictionType() == EvictionType.COUNT);
 
       DefaultThreadFactory threadFactory;
       BlockingThreadPoolExecutorFactory threadPool;
@@ -400,7 +414,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
+      assertEquals(StorageType.OBJECT, c.memory().storageType());
       assertEquals(-1, c.memory().size());
       fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
@@ -411,7 +425,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
+      assertEquals(StorageType.OBJECT, c.memory().storageType());
       assertEquals(-1, c.memory().size());
       DummyInMemoryStoreConfiguration dummyStore = getStoreConfiguration(c, DummyInMemoryStoreConfiguration.class);
       assertFalse(dummyStore.preload());
@@ -422,7 +436,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
+      assertEquals(StorageType.OBJECT, c.memory().storageType());
       assertEquals(-1, c.memory().size());
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
 
@@ -431,7 +445,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
+      assertEquals(StorageType.OBJECT, c.memory().storageType());
       assertEquals(-1, c.memory().size());
       fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
@@ -443,7 +457,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
       assertTrue(c.transaction().useSynchronization()); // Non XA
       assertFalse(c.transaction().recovery().enabled()); // Non XA
-      assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
+      assertEquals(StorageType.OBJECT, c.memory().storageType());
       assertEquals(-1, c.memory().size());
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
       fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
@@ -525,9 +539,8 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.dataContainer().<byte[]>valueEquivalence() instanceof AnyEquivalence);
 
       c = cm.getCacheConfiguration("store-as-binary");
-      assertTrue(c.storeAsBinary().enabled());
-      assertTrue(c.storeAsBinary().storeKeysAsBinary());
-      assertTrue(c.storeAsBinary().storeValuesAsBinary());
+      if (c != null)
+         assertTrue(c.memory().storageType() == StorageType.BINARY);
    }
 
    private static void assertTemplateConfiguration(EmbeddedCacheManager cm, String name) {

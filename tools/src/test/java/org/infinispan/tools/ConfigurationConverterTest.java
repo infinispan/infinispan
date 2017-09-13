@@ -23,8 +23,10 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -77,7 +79,6 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
             assertTransactionConverted(cm);
             assertLockingConverted(cm);
             assertCompatibilityConverted(cm);
-            assertVersioningConverted(cm);
             assertBackupsConverted(cm);
             assertExpirationEvictionConverted(cm);
             assertCustomInterceptorsConverted(cm);
@@ -320,13 +321,6 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertFalse(config.compatibility().enabled());
    }
 
-   private void assertVersioningConverted(EmbeddedCacheManager cm) {
-      Configuration config = cm.getCacheConfiguration("lockingOverriding");
-      assertFalse(config.clustering().cacheMode().isClustered());
-      assertTrue(config.versioning().enabled());
-      assertEquals("SIMPLE", config.versioning().scheme().name());
-   }
-
    private void assertBackupsConverted(EmbeddedCacheManager cm) {
       Configuration config = cm.getCacheConfiguration("withSitesEnabled");
       assertFalse(config.clustering().cacheMode().isClustered());
@@ -395,9 +389,8 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
       assertEquals(60000, config.expiration().lifespan());
       assertTrue(config.expiration().reaperEnabled());
 
-      assertEquals("LRU", config.eviction().strategy().name());
-      assertEquals("PIGGYBACK", config.eviction().threadPolicy().name());
-      assertEquals(5000, config.eviction().maxEntries());
+      assertEquals(EvictionType.COUNT, config.memory().evictionType());
+      assertEquals(StorageType.OBJECT, config.memory().storageType());
 
       config = cm.getCacheConfiguration("expirationCacheWithEnabledReaper");
       assertFalse(config.clustering().cacheMode().isClustered());
@@ -464,32 +457,23 @@ public class ConfigurationConverterTest extends AbstractInfinispanTest {
    private void assertStoreAsBinaryConverted(EmbeddedCacheManager cm) {
       Configuration config = cm.getCacheConfiguration("lockingWithStoreAsBinary");
       assertFalse(config.clustering().cacheMode().isClustered());
-      assertTrue(config.storeAsBinary().enabled());
-      assertTrue(config.storeAsBinary().storeKeysAsBinary());
-      assertTrue(config.storeAsBinary().storeValuesAsBinary());
-      assertTrue(config.storeAsBinary().defensive());
+      assertEquals(StorageType.BINARY, config.memory().storageType());
 
       config = cm.getCacheConfiguration("lockingWithStoreAsBinaryDisabled");
       assertFalse(config.clustering().cacheMode().isClustered());
-      assertFalse(config.storeAsBinary().enabled());
+      assertEquals(StorageType.OBJECT, config.memory().storageType());
 
       config = cm.getCacheConfiguration("withoutStoreAsBinary");
       assertFalse(config.clustering().cacheMode().isClustered());
-      assertFalse(config.storeAsBinary().enabled());
+      assertEquals(StorageType.OBJECT, config.memory().storageType());
 
       config = cm.getCacheConfiguration("storeKeyValueBinary");
       assertFalse(config.clustering().cacheMode().isClustered());
-      assertTrue(config.storeAsBinary().enabled());
-      assertTrue(config.storeAsBinary().storeKeysAsBinary());
-      assertTrue(config.storeAsBinary().storeValuesAsBinary());
-      assertTrue(config.storeAsBinary().defensive());
+      assertEquals(StorageType.BINARY, config.memory().storageType());
 
       config = cm.getCacheConfiguration("lazyDeserializationCache");
       assertFalse(config.clustering().cacheMode().isClustered());
-      assertTrue(config.storeAsBinary().enabled());
-      assertTrue(config.storeAsBinary().storeKeysAsBinary());
-      assertTrue(config.storeAsBinary().storeValuesAsBinary());
-      assertTrue(config.storeAsBinary().defensive());
+      assertEquals(StorageType.BINARY, config.memory().storageType());
    }
 
    private void assertClusteringConverted(EmbeddedCacheManager cm) {

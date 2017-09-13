@@ -59,16 +59,14 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
 
             compareAttributeSets(name, configurationBefore.clustering().attributes(), configurationAfter.clustering().attributes());
             compareAttributeSets(name, configurationBefore.compatibility().attributes(), configurationAfter.compatibility().attributes(), "marshaller");
-            compareAttributeSets(name, configurationBefore.eviction().attributes(), configurationAfter.eviction().attributes());
+            compareAttributeSets(name, configurationBefore.memory().attributes(), configurationAfter.memory().attributes());
             compareAttributeSets(name, configurationBefore.expiration().attributes(), configurationAfter.expiration().attributes());
             compareAttributeSets(name, configurationBefore.indexing().attributes(), configurationAfter.indexing().attributes());
             compareAttributeSets(name, configurationBefore.locking().attributes(), configurationAfter.locking().attributes());
             compareAttributeSets(name, configurationBefore.persistence().attributes(), configurationAfter.persistence().attributes());
             compareStores(name, configurationBefore.persistence().stores(), configurationAfter.persistence().stores());
             compareAttributeSets(name, configurationBefore.security().authorization().attributes(), configurationAfter.security().authorization().attributes());
-            compareAttributeSets(name, configurationBefore.storeAsBinary().attributes(), configurationAfter.storeAsBinary().attributes());
             compareAttributeSets(name, configurationBefore.transaction().attributes(), configurationAfter.transaction().attributes(), "transaction-manager-lookup");
-            compareAttributeSets(name, configurationBefore.versioning().attributes(), configurationAfter.versioning().attributes());
 
             compareExtraConfiguration(name, configurationBefore, configurationAfter);
          }

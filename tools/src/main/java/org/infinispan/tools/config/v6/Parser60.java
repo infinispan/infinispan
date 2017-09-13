@@ -37,6 +37,7 @@ import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.RecoveryConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -506,26 +507,31 @@ public class Parser60 implements ConfigurationParser {
 
    private void parseStoreAsBinary(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      Boolean binaryKeys = null;
+      Boolean binaryValues = null;
+      builder.memory().storageType(StorageType.BINARY);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ENABLED:
-               builder.storeAsBinary().enabled(Boolean.parseBoolean(value));
+               if (!Boolean.parseBoolean(value))
+                  builder.memory().storageType(StorageType.OBJECT);
                break;
             case STORE_KEYS_AS_BINARY:
-               builder.storeAsBinary().storeKeysAsBinary(Boolean.parseBoolean(value));
+               binaryKeys = Boolean.parseBoolean(value);
                break;
             case STORE_VALUES_AS_BINARY:
-               builder.storeAsBinary().storeValuesAsBinary(Boolean.parseBoolean(value));
+               binaryValues = Boolean.parseBoolean(value);
                break;
             case DEFENSIVE:
-               builder.storeAsBinary().defensive(Boolean.parseBoolean(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
+         if (binaryKeys != null && !binaryKeys && binaryValues != null && !binaryValues)
+            builder.memory().storageType(StorageType.OBJECT); // explicitly disable
       }
 
       ParseUtils.requireNoContent(reader);
@@ -975,21 +981,12 @@ public class Parser60 implements ConfigurationParser {
    }
 
    private void parseDeadlockDetection(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case ENABLED:
-               if (Boolean.parseBoolean(value)) {
-                  builder.deadlockDetection().enable();
-               } else {
-                  builder.deadlockDetection().disable();
-               }
-               break;
             case SPIN_DURATION:
-               builder.deadlockDetection().spinDuration(Long.parseLong(value));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
