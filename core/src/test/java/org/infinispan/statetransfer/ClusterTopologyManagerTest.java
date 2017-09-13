@@ -63,11 +63,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       c2 = cache(1, CACHE_NAME);
       c3 = cache(2, CACHE_NAME);
       d1 = TestingUtil.getDiscardForCache(c1);
-      d1.setExcludeItself(true);
       d2 = TestingUtil.getDiscardForCache(c2);
-      d2.setExcludeItself(true);
       d3 = TestingUtil.getDiscardForCache(c3);
-      d3.setExcludeItself(true);
    }
 
    public void testNodeAbruptLeave() throws Exception {

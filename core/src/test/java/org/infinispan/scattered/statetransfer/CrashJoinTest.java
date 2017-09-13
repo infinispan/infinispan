@@ -26,11 +26,8 @@ public class CrashJoinTest extends AbstractStateTransferTest {
       super.createCacheManagers();
 
       d1 = TestingUtil.getDiscardForCache(c1);
-      d1.setExcludeItself(true);
       d2 = TestingUtil.getDiscardForCache(c2);
-      d2.setExcludeItself(true);
       d3 = TestingUtil.getDiscardForCache(c3);
-      d3.setExcludeItself(true);
    }
 
    public void testNodeCrash() {

@@ -1259,6 +1259,7 @@ public class TestingUtil {
       JChannel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DISCARD discard = new DISCARD();
+      discard.setExcludeItself(false);
       ps.insertProtocol(discard, ProtocolStack.Position.ABOVE, TP.class);
       return discard;
    }
