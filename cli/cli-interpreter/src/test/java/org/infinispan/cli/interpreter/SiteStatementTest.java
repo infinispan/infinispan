@@ -65,6 +65,7 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
 
    }
 
+   @Test(groups = "unstable", description = "ISPN-8202")
    public void testSiteStateTransfer() throws Exception {
       Interpreter lonInterpreter = interpreter("LON", 0);
       String lonCache = cache("LON", 0).getName();

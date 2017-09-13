@@ -24,10 +24,12 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
+import org.infinispan.server.test.category.Unstable;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
@@ -105,6 +107,7 @@ public class JmxManagementIT {
     }
 
     @Test
+    @Category(Unstable.class) // ISPN-8291
     public void testHotRodConnectionCount() throws Exception {
 
         // get number of current local/global connections
@@ -128,6 +131,7 @@ public class JmxManagementIT {
     }
 
     @Test
+    @Category(Unstable.class) // ISPN-8291
     public void testMemCachedConnectionCount() throws Exception {
         int initialLocal = getNumberOfLocalConnections(provider, memCachedServerMBean);
         int initialGlobal = getNumberOfGlobalConnections(provider, memCachedServerMBean);
