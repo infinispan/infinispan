@@ -90,7 +90,6 @@ public class StateTransferRestart2Test extends MultipleCacheManagersTest {
                   ((StateRequestCommand) command).getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
                   recipients.contains(address(1))) {
                d1.setDiscardAll(true);
-               d1.setExcludeItself(true);
 
                fork((Callable<Void>) () -> {
                   log.info("KILLING the c1 cache");
