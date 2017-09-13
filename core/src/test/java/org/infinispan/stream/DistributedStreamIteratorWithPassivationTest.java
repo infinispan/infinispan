@@ -87,7 +87,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
+         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
@@ -125,7 +125,8 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       }
    }
 
-   @Test
+   @Test(enabled = false, description = "This requires supporting concurrent activation in cache loader interceptor")
+   // TODO: this test needs to be redone to take into account filtering as well, after we support activated entries
    public void testConcurrentActivationWithFilter() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
       Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
@@ -147,7 +148,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
+         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
@@ -213,7 +214,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
       PersistenceManager pm = null;
       try {
-         store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
+         store.write(new MarshalledEntryImpl<>(loaderKey, loaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
          pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
