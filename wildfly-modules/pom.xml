@@ -185,7 +185,7 @@
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-modules</artifactId>
          <version>${version.hibernate.search}</version>
-         <classifier>wildfly-10-dist</classifier>
+         <classifier>wildfly-11-dist</classifier>
          <type>zip</type>
       </dependency>
 

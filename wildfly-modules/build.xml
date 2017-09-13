@@ -25,7 +25,7 @@
     </target>
 
     <target name="prepare-hibernate-search-module">
-        <external-module-zip group="org.hibernate" artifact="hibernate-search-modules" classifier="wildfly-10-dist"
+        <external-module-zip group="org.hibernate" artifact="hibernate-search-modules" classifier="wildfly-11-dist"
                              dest="${hibernate-search-modules.dir}"
                              source-slot="${version.hibernate.search}" target-slot="${infinispan.slot}" >
             <exclusions>
