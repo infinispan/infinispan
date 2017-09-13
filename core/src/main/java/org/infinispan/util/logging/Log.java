@@ -34,6 +34,7 @@ import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.partitionhandling.AvailabilityException;
@@ -1467,8 +1468,8 @@ public interface Log extends BasicLogger {
    TimeoutException timeoutWaitingForAcks(String timeout, long id);
 
    @LogMessage(level = WARN)
-   @Message(value = "The eviction element has been deprecated. Please use the memory element instead", id = 428)
-   void evictionDeprecated();
+   @Message(value = "The '%s' element has been deprecated. Please use the '%s' element instead", id = 428)
+   void elementDeprecatedUseOther(Element element, Element other);
 
    @Message(value = "On key %s previous read version (%s) is different from currently read version (%s)", id = 429)
    WriteSkewException writeSkewOnRead(@Param Object key, Object key2, EntryVersion lastVersion, EntryVersion remoteVersion);

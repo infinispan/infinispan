@@ -61,8 +61,6 @@ import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicies;
-import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -1668,10 +1666,10 @@ public class Parser implements ConfigurationParser {
    }
 
    private void parseStoreAsBinary(final XMLExtendedStreamReader reader, final ConfigurationBuilderHolder holder) throws XMLStreamException {
+      log.elementDeprecatedUseOther(Element.STORE_AS_BINARY, Element.MEMORY);
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       Boolean binaryKeys = null;
       Boolean binaryValues = null;
-      builder.storeAsBinary().enable();
       builder.memory().storageType(StorageType.BINARY);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
@@ -1680,11 +1678,9 @@ public class Parser implements ConfigurationParser {
          switch (attribute) {
             case STORE_KEYS_AS_BINARY:
                binaryKeys = Boolean.parseBoolean(value);
-               builder.storeAsBinary().storeKeysAsBinary(binaryKeys);
                break;
             case STORE_VALUES_AS_BINARY:
                binaryValues = Boolean.parseBoolean(value);
-               builder.storeAsBinary().storeValuesAsBinary(binaryValues);
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1692,10 +1688,9 @@ public class Parser implements ConfigurationParser {
       }
 
       if (binaryKeys != null && !binaryKeys && binaryValues != null && !binaryValues)
-         builder.storeAsBinary().disable(); // explicitly disable
+         builder.memory().storageType(StorageType.OBJECT); // explicitly disable
 
       ParseUtils.requireNoContent(reader);
-
    }
 
    private void parseCompatibility(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -1870,33 +1865,22 @@ public class Parser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   protected void parseEviction(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
-      log.evictionDeprecated();
+   private void parseEviction(XMLExtendedStreamReader reader, ConfigurationBuilder builder) throws XMLStreamException {
+      log.elementDeprecatedUseOther(Element.EVICTION, Element.MEMORY);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
-            case STRATEGY: {
-               builder.eviction().strategy(EvictionStrategy.valueOf(value));
+            case STRATEGY:
+            case THREAD_POLICY:
+            case TYPE:
+               log.ignoreXmlElement(attribute);
                break;
-            }
-            case MAX_ENTRIES: {
+            case MAX_ENTRIES:
                log.evictionMaxEntriesDeprecated();
-               builder.eviction().maxEntries(Long.parseLong(value));
+            case SIZE:
+               builder.memory().size(Long.parseLong(value));
                break;
-            }
-            case THREAD_POLICY: {
-               builder.eviction().threadPolicy(EvictionThreadPolicy.valueOf(value));
-               break;
-            }
-            case TYPE: {
-               builder.eviction().type(EvictionType.valueOf(value));
-               break;
-            }
-            case SIZE: {
-               builder.eviction().size(Long.parseLong(value));
-               break;
-            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }

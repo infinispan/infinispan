@@ -60,7 +60,7 @@
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <expiration interval="10500" lifespan="11" max-idle="11"/>
          <memory>
-            <binary size="20500" eviction="MEMORY"/>
+            <binary size="20500"/>
          </memory>
       </invalidation-cache>
       <replicated-cache name="repl" mode="SYNC" start="EAGER" statistics="true">
@@ -198,13 +198,25 @@
             <property name="foo">bar</property>
          </data-container>
       </local-cache>
-      <local-cache name="store-as-binary">
-         <store-as-binary keys="true" values="false"/>
-      </local-cache>
       <local-cache name="simple-cache" simple-cache="true">
          <transaction mode="NONE"/>
          <persistence>
          </persistence>
+      </local-cache>
+      <local-cache name="off-heap-memory">
+         <memory>
+            <off-heap size="10000000" eviction="MEMORY" address-count="4"/>
+         </memory>
+      </local-cache>
+      <local-cache name="binary-memory">
+         <memory>
+            <binary size="1"/>
+         </memory>
+      </local-cache>
+      <local-cache name="object-memory">
+         <memory>
+            <object/>
+         </memory>
       </local-cache>
 
       <!-- template configurations -->
