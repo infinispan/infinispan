@@ -236,7 +236,7 @@ public abstract class AbstractFunctionalTest extends BaseNonConfigCoreFunctional
 	}
 
 	protected CountDownLatch expectPutWithValue(AdvancedCache cache, Predicate<Object> valuePredicate, int numUpdates) {
-		if (!cacheMode.isInvalidation() && accessType != AccessType.NONSTRICT_READ_WRITE) {
+		if (!cacheMode.isInvalidation()) {
 			CountDownLatch latch = new CountDownLatch(numUpdates);
 			ExpectingInterceptor.get(cache)
 				.when((ctx, cmd) -> cmd instanceof PutKeyValueCommand && valuePredicate.test(((PutKeyValueCommand) cmd).getValue()))

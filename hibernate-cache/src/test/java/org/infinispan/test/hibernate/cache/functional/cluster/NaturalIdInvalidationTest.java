@@ -32,6 +32,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -88,7 +89,7 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 			CountDownLatch remoteUpdateLatch = getRemoteUpdateLatch(remoteNaturalIdCache);
 			saveSomeCitizens(localFactory);
 
-			assertTrue(remoteUpdateLatch.await(2, TimeUnit.SECONDS));
+			assertTrue(await(remoteUpdateLatch));
 
 			assertTrue(remoteListener.isEmpty());
 			assertTrue(localListener.isEmpty());
@@ -147,14 +148,31 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 		}
 	}
 
+   private boolean await(CountDownLatch latch) {
+      assertNotNull(latch);
+      try {
+         log.debugf("Await latch: %s", latch);
+         boolean await = latch.await(2, TimeUnit.SECONDS);
+         log.debugf("Finished waiting for latch, did latch reach zero? %b", await);
+         return await;
+      } catch (InterruptedException e) {
+         // ignore;
+         return false;
+      }
+   }
+
    public CountDownLatch getRemoteUpdateLatch(Cache remoteNaturalIdCache) {
+      CountDownLatch latch;
       if (cacheMode.isInvalidation()) {
-         return useTransactionalCache
+         latch= useTransactionalCache
             ? expectAfterEndInvalidation(remoteNaturalIdCache.getAdvancedCache(), 1)
             : expectAfterEndInvalidation(remoteNaturalIdCache.getAdvancedCache(), 2);
+      } else {
+         latch = expectAfterUpdate(remoteNaturalIdCache.getAdvancedCache(), 2);
       }
 
-      return expectAfterUpdate(remoteNaturalIdCache.getAdvancedCache(), 2);
+      log.tracef("Created latch: %s", latch);
+      return latch;
    }
 
 	private void assertLoadedFromCache(MyListener localListener, String id) {
