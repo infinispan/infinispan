@@ -27,7 +27,7 @@ import org.infinispan.eviction.EvictionStrategy;
  */
 public class TypeOverrides implements Serializable {
 
-	private final Set<String> overridden = new HashSet<String>();
+	private final Set<String> overridden = new HashSet<>();
 
 	private String cacheName;
 
@@ -51,6 +51,7 @@ public class TypeOverrides implements Serializable {
 		this.cacheName = cacheName;
 	}
 
+	@Deprecated
 	public EvictionStrategy getEvictionStrategy() {
 		return evictionStrategy;
 	}
@@ -60,6 +61,7 @@ public class TypeOverrides implements Serializable {
     *
     * @param evictionStrategy String defining eviction strategy allowed.
     *                         Possible values are defined in {@link EvictionStrategy}
+    * @deprecated
     */
 	public void setEvictionStrategy(String evictionStrategy) {
 		markAsOverriden( "evictionStrategy" );
@@ -157,9 +159,6 @@ public class TypeOverrides implements Serializable {
     *                configuration overrides
     */
 	public void applyTo(ConfigurationBuilder builder) {
-		if ( overridden.contains( "evictionStrategy" ) ) {
-			builder.eviction().strategy( evictionStrategy );
-		}
 		if ( overridden.contains( "evictionWakeUpInterval" ) ) {
 			builder.expiration().wakeUpInterval( evictionWakeUpInterval );
 		}

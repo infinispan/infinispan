@@ -131,4 +131,12 @@ public interface InfinispanMessageLogger extends BasicLogger {
 
 	@Message(value = "Timestamp cache cannot be configured with invalidation", id = 25027)
 	CacheException timestampsMustNotUseInvalidation();
+
+	@LogMessage(level = WARN)
+	@Message(value = "Ignoring deprecated property '%s'", id = 25028)
+	void ignoringDeprecatedProperty(String deprecated);
+
+	@LogMessage(level = WARN)
+	@Message(value = "Property '%s' is deprecated, please use '%s' instead", id = 25029)
+	void deprecatedProperty(String deprecated, String alternative);
 }

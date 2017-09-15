@@ -16,7 +16,7 @@ public class MemoryConfiguration {
    public static final AttributeDefinition<Integer> ADDRESS_COUNT = AttributeDefinition.builder("address-count", 1_048_576).build();
    public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition
          .builder("storage", StorageType.OBJECT).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Long> SIZE  = AttributeDefinition.builder("size", -1l).build();
+   public static final AttributeDefinition<Long> SIZE  = AttributeDefinition.builder("size", -1L).build();
    public static final AttributeDefinition<EvictionType> EVICTION_TYPE  = AttributeDefinition.builder("type", EvictionType.COUNT).build();
 
    static public AttributeSet attributeDefinitionSet() {
@@ -64,6 +64,10 @@ public class MemoryConfiguration {
     */
    public EvictionType evictionType() {
       return evictionType.get();
+   }
+
+   public boolean isEvictionEnabled() {
+      return size.get() > 0;
    }
 
    /**
