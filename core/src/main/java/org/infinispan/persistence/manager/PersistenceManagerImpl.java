@@ -218,7 +218,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          }
       };
       nonTxWriters.forEach(stopWriters);
+      nonTxWriters.clear();
       txWriters.forEach(stopWriters);
+      txWriters.clear();
 
       for (CacheLoader l : loaders) {
          if (!undelegated.contains(l))
@@ -230,6 +232,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             }
          }
       }
+      loaders.clear();
       preloaded = false;
    }
 

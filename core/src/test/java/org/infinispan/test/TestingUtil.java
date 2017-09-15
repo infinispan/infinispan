@@ -60,6 +60,7 @@ import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -1148,6 +1149,25 @@ public class TestingUtil {
       cr.registerComponent(replacementComponent, componentType);
       if (rewire) cr.rewire();
       return old;
+   }
+
+   /**
+    * Replaces a component in a running cache. This can also optionally stop the component before rewiring, which can be
+    * important due to rewiring starts a component (you wouldn't want the component to be started twice).
+    *
+    * @param cache                cache in which to replace component
+    * @param componentType        component type of which to replace
+    * @param replacementComponent new instance
+    * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
+    * @param stopBeforeWire       stops the lifecycle component before rewiring (this will cause it to be started
+    * @return the original component that was replaced
+    */
+   public static <T extends Lifecycle> T replaceComponent(Cache<?, ?> cache, Class<T> componentType, T replacementComponent, boolean rewire,
+         boolean stopBeforeWire) {
+      if (stopBeforeWire) {
+         replacementComponent.stop();
+      }
+      return replaceComponent(cache, componentType, replacementComponent, rewire);
    }
 
    /**
