@@ -82,7 +82,7 @@ public class DistributedStreamRehashStressTest extends StressTest {
          Map<Integer, Integer> results = cache.entrySet().stream().filter(
                  (Serializable & Predicate<Map.Entry<Integer, Integer>>)
                          e -> (e.getKey() & 1) == 1).collect(
-                 CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                 () -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
          assertEquals(CACHE_ENTRY_COUNT / 2, results.size());
          for (Map.Entry<Integer, Integer> entry : results.entrySet()) {
             assertEquals(entry.getKey(), entry.getValue());

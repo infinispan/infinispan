@@ -58,6 +58,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.CacheCollectors;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
 import org.infinispan.stream.impl.intops.object.FilterOperation;
 import org.infinispan.stream.impl.intops.object.FlatMapOperation;
@@ -73,7 +74,6 @@ import org.infinispan.stream.impl.intops.object.PeekOperation;
 import org.infinispan.stream.impl.termop.object.ForEachBiOperation;
 import org.infinispan.stream.impl.termop.object.ForEachOperation;
 import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
-import org.infinispan.util.AbstractDelegatingCacheStream;
 import org.infinispan.util.CloseableSuppliedIterator;
 import org.infinispan.util.RangeSet;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -90,6 +90,9 @@ import org.infinispan.util.function.SerializableSupplier;
 import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
+
+import static org.infinispan.util.Casting.toSerialSupplierCollect;
+import static org.infinispan.util.Casting.toSupplierCollect;
 
 /**
  * Implementation of {@link CacheStream} that provides support for lazily distributing stream methods to appropriate
@@ -458,8 +461,13 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public <R1, A> R1 collect(SerializableSupplier<Collector<? super R, A, R1>> supplier) {
-      return collect(new AbstractDelegatingCacheStream.CollectorSupplier2<>(supplier));
+   public <R1> R1 collect(SerializableSupplier<Collector<? super R, ?, R1>> supplier) {
+      return collect(CacheCollectors.serializableCollector(toSerialSupplierCollect(supplier)));
+   }
+
+   @Override
+   public <R1> R1 collect(Supplier<Collector<? super R, ?, R1>> supplier) {
+      return collect(CacheCollectors.collector(toSupplierCollect(supplier)));
    }
 
    @Override

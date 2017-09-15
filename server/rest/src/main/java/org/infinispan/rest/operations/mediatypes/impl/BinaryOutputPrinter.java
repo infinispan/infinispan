@@ -21,7 +21,7 @@ public class BinaryOutputPrinter implements OutputPrinter {
    public byte[] print(String cacheName, CacheSet<?> keys, Charset charset) {
       return keys.stream()
             .map(b -> b.toString())
-            .collect(CacheCollectors.serializableCollector(() -> Collectors.joining(",", "[", "]")))
+            .collect(() -> Collectors.joining(",", "[", "]"))
             .getBytes(charset.getJavaCharset());
    }
 

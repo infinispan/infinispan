@@ -30,7 +30,7 @@ public class XMLOutputPrinter implements OutputPrinter {
       return keys.stream()
             .map(b -> Escaper.escapeXml(b.toString()))
             .map(s -> "<key>" + s + "</key>")
-            .collect(CacheCollectors.serializableCollector(() -> Collectors.joining("", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys>", "</keys>")))
+            .collect(() -> Collectors.joining("", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys>", "</keys>"))
             .getBytes(charset.getJavaCharset());
    }
 

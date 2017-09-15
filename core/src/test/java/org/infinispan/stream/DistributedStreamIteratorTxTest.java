@@ -17,6 +17,7 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
@@ -77,7 +78,7 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
          values.put(key, value);
          cache.put(key, "converted-value");
 
-         try (Stream<CacheEntry<Object, String>> stream = cache.getAdvancedCache().cacheEntrySet().stream().
+         try (CacheStream<CacheEntry<Object, String>> stream = cache.getAdvancedCache().cacheEntrySet().stream().
                  filter(CacheFilters.predicate(AcceptAllKeyValueFilter.getInstance())).
                  map(CacheFilters.function(new StringTruncator(2, 5)))) {
             Map<Object, String> results = mapFromStream(stream);
@@ -122,7 +123,7 @@ public class DistributedStreamIteratorTxTest extends DistributedStreamIteratorTe
                new CompositeKeyValueFilterConverter<>(
                      new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(acceptedKeys, true)),
                      new StringTruncator(2, 5));
-         try (Stream<CacheEntry<Object, String>> stream = CacheFilters.filterAndConvert(
+         try (CacheStream<CacheEntry<Object, String>> stream = CacheFilters.filterAndConvert(
                  cache.getAdvancedCache().cacheEntrySet().stream(), filterConverter)) {
             Map<Object, String> results = mapFromStream(stream);
             assertEquals(values.size(), results.size());

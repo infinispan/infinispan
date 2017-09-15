@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.infinispan.CacheStream;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
@@ -72,6 +73,12 @@ public final class CacheFilters {
            KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
       return stream.map(new FilterConverterAsCacheEntryFunction(filterConverter)).filter(
               StreamMarshalling.nonNullPredicate());
+   }
+
+   public static <K, V, C> CacheStream<CacheEntry<K, C>> filterAndConvert(CacheStream<CacheEntry<K, V>> stream,
+            KeyValueFilterConverter<? super K, ? super V, C> filterConverter) {
+      return stream.map(new FilterConverterAsCacheEntryFunction(filterConverter)).filter(
+         StreamMarshalling.nonNullPredicate());
    }
 
    private static class KeyValueFilterAsPredicate<K, V> implements Predicate<CacheEntry<K, V>> {

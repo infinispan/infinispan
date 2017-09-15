@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheStream;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
@@ -133,7 +134,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
       KeyValueFilterConverter<MagicKey, String, String> filterConverter = new CompositeKeyValueFilterConverter<>(
             new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(excludedEntry.getKey()))),
             new StringTruncator(2, 5));
-      try (Stream<CacheEntry<MagicKey, String>> stream = CacheFilters.filterAndConvert(
+      try (CacheStream<CacheEntry<MagicKey, String>> stream = CacheFilters.filterAndConvert(
               cache.getAdvancedCache().cacheEntrySet().stream(), filterConverter)) {
          Map<MagicKey, String> results = mapFromStream(stream);
 

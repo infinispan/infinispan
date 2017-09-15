@@ -1,8 +1,5 @@
 package org.infinispan.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Optional;
@@ -31,8 +28,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableBinaryOperator;
@@ -45,6 +41,9 @@ import org.infinispan.util.function.SerializableSupplier;
 import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
+
+import static org.infinispan.util.Casting.toSerialSupplierCollect;
+import static org.infinispan.util.Casting.toSupplierCollect;
 
 /**
  * Delegate that forwards all the of the method calls to the underlying cache stream.  It is assumed that a CacheStream
@@ -323,8 +322,13 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public <R1, A> R1 collect(SerializableSupplier<Collector<? super R, A, R1>> supplier) {
-      return collect(new CollectorSupplier2<>(supplier));
+   public <R1> R1 collect(SerializableSupplier<Collector<? super R, ?, R1>> supplier) {
+      return collect(CacheCollectors.serializableCollector(toSerialSupplierCollect(supplier)));
+   }
+
+   @Override
+   public <R1> R1 collect(Supplier<Collector<? super R, ?, R1>> supplier) {
+      return collect(CacheCollectors.collector(toSupplierCollect(supplier)));
    }
 
    @Override
@@ -450,67 +454,6 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    @Override
    public DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
       return flatMapToDouble((Function<? super R, ? extends DoubleStream>) mapper);
-   }
-
-//   public static <T, R> Collector<T, ?, R> serializableCollector(SerializableSupplier<Collector<T, ?, R>> supplier) {
-//      return null;
-////      return new CacheCollectors.CollectorSupplier<>(supplier);
-//   }
-
-   @SerializeWith(value = CollectorSupplier2.CollectorSupplierExternalizer.class)
-   public static final class CollectorSupplier2<T, A, R> implements Collector<T, A, R> {
-      private final Supplier<Collector<? super T, A, R>> supplier;
-      private transient Collector<T, A, R> collector;
-
-      private Collector<T, A, R> getCollector() {
-         if (collector == null) {
-            collector = (Collector<T, A, R>) supplier.get();
-         }
-         return collector;
-      }
-
-      public CollectorSupplier2(Supplier<Collector<? super T, A, R>> supplier) {
-         this.supplier = supplier;
-      }
-
-      @Override
-      public Supplier<A> supplier() {
-         return getCollector().supplier();
-      }
-
-      @Override
-      public BiConsumer<A, T> accumulator() {
-         return getCollector().accumulator();
-      }
-
-      @Override
-      public BinaryOperator<A> combiner() {
-         return getCollector().combiner();
-      }
-
-      @Override
-      public Function<A, R> finisher() {
-         return getCollector().finisher();
-      }
-
-      @Override
-      public Set<Characteristics> characteristics() {
-         return getCollector().characteristics();
-      }
-
-      public static final class CollectorSupplierExternalizer
-            implements Externalizer<CollectorSupplier2<?, ?, ?>> {
-
-         @Override
-         public void writeObject(ObjectOutput output, CollectorSupplier2 object) throws IOException {
-            output.writeObject(object.supplier);
-         }
-
-         @Override
-         public CollectorSupplier2 readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new CollectorSupplier2((Supplier<Collector>) input.readObject());
-         }
-      }
    }
 
 }
