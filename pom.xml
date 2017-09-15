@@ -162,10 +162,10 @@
       <bnd.consumer.policy>$&lt;range;[==,+)&gt;</bnd.consumer.policy>
       <bnd.provider.policy>$&lt;range;[==,=+)&gt;</bnd.provider.policy>
       <buildDirectory>target</buildDirectory>
-      <defaultExcludedJUnitGroups>org.infinispan.commons.test.categories.Unstable,org.infinispan.commons.test.categories.Stress,org.infinispan.commons.test.categories.Profiling</defaultExcludedJUnitGroups>
+      <defaultExcludedJUnitGroups>org.infinispan.commons.test.categories.Stress,org.infinispan.commons.test.categories.Profiling</defaultExcludedJUnitGroups>
       <!-- unstable and stress because we can have them inside a functional class, for example -->
-      <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
-      <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
+      <defaultExcludedTestNGGroups>stress</defaultExcludedTestNGGroups>
+      <defaultTestNGGroups>functional,unit,xsite,arquillian,unstable</defaultTestNGGroups>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
