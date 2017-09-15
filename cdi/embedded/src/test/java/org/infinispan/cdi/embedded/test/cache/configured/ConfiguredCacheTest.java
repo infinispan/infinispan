@@ -39,11 +39,11 @@ public class ConfiguredCacheTest extends Arquillian {
 
    public void testTinyCache() {
       // Check that we have the correctly configured cache
-      assertEquals(tinyCache.getCacheConfiguration().eviction().maxEntries(), 1);
+      assertEquals(tinyCache.getCacheConfiguration().memory().size(), 1);
    }
 
    public void testSmallCache() {
       // Check that we have the correctly configured cache
-      assertEquals(smallCache.getCacheConfiguration().eviction().maxEntries(), 10);
+      assertEquals(smallCache.getCacheConfiguration().memory().size(), 10);
    }
 }

@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
@@ -237,7 +236,7 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
    private ConfigurationBuilder asyncStoreWithEvictionBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       // Emulate eviction with direct data container eviction
-      builder.eviction().strategy(EvictionStrategy.LRU).maxEntries(1L)
+      builder.memory().size(1L)
             .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .async().enabled(true);

@@ -44,7 +44,6 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
@@ -337,7 +336,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(configuration.topologyReplTimeout())
             .locking().lockAcquisitionTimeout(configuration.topologyLockTimeout())
-            .eviction().strategy(EvictionStrategy.NONE)
             .expiration().lifespan(-1).maxIdle(-1);
 
       if (configuration.topologyStateTransfer()) {

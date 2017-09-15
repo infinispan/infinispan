@@ -2,7 +2,6 @@ package org.infinispan.lucene.readlocks;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -22,10 +21,7 @@ public class ConfigurationCheckTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder configurationBuilder = CacheTestSupport.createLocalCacheConfiguration();
       configurationBuilder
-         .eviction()
-            .strategy(EvictionStrategy.LRU)
-            .maxEntries(10l)
-            ;
+         .memory().size(10L);
       return TestCacheManagerFactory.createCacheManager(configurationBuilder);
    }
 

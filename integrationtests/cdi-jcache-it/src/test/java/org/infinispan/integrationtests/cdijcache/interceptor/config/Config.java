@@ -51,7 +51,7 @@ public class Config {
    @SuppressWarnings("unused")
    EmbeddedCacheManager smallCacheManager() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.eviction().maxEntries(4);
+      builder.memory().size(4);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
       log.tracef("Create small cache manager %s", cm);
       return cm;

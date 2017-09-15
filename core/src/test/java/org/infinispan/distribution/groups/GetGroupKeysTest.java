@@ -237,7 +237,7 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
    private ConfigurationBuilder createConfigurationBuilderWithPersistence(boolean transactional, boolean passivation) {
       ConfigurationBuilder builder = createConfigurationBuilder(transactional);
       if (passivation) {
-         builder.eviction().maxEntries(2);
+         builder.memory().size(2);
       }
       builder.persistence().passivation(passivation)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)

@@ -7,7 +7,6 @@ import javax.enterprise.inject.Produces;
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -30,7 +29,7 @@ public class Config {
    public Configuration largeConfiguration(@Large EmbeddedCacheManager cacheManager) {
       return new ConfigurationBuilder()
             .read(cacheManager.getDefaultCacheConfiguration())
-            .eviction().maxEntries(2000)
+            .memory().size(2000)
             .build();
    }
 
@@ -47,7 +46,7 @@ public class Config {
    public Configuration smallConfiguration(@Small EmbeddedCacheManager cacheManager) {
       return new ConfigurationBuilder()
             .read(cacheManager.getDefaultCacheConfiguration())
-            .eviction().maxEntries(20)
+            .memory().size(20)
             .build();
    }
 
@@ -61,7 +60,7 @@ public class Config {
    @SuppressWarnings("unused")
    public EmbeddedCacheManager specificCacheManager() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.eviction().maxEntries(4000).strategy(EvictionStrategy.LIRS);
+      builder.memory().size(4000);
       return new DefaultCacheManager(builder.build());
    }
 

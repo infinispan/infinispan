@@ -260,7 +260,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
 
       builder = defaultConfigurationBuilder();
       builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      builder.eviction().maxEntries(MAX_ENTRIES);
+      builder.memory().size(MAX_ENTRIES);
       decorate(builder);
       defineConfigurationOnAllManagers(PASSIVATION_CACHE, builder);
       waitForClusterToForm(PASSIVATION_CACHE);

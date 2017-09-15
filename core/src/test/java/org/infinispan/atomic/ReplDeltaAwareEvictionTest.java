@@ -2,7 +2,6 @@ package org.infinispan.atomic;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
@@ -28,7 +27,7 @@ public class ReplDeltaAwareEvictionTest extends LocalDeltaAwareEvictionTest {
       builder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new JBossStandaloneJTAManagerLookup())
-            .eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
+            .memory().size(1)
             .clustering().hash().groups().enabled()
             .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)

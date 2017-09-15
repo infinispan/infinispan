@@ -35,7 +35,7 @@ public class Config {
    @SuppressWarnings("unused")
    public Configuration largeConfiguration() {
       return new ConfigurationBuilder()
-            .eviction().maxEntries(1024)
+            .memory().size(1024)
             .build();
    }
 
@@ -50,7 +50,7 @@ public class Config {
    @SuppressWarnings("unused")
    public Configuration veryLargeConfiguration() {
       return new ConfigurationBuilder()
-            .eviction().maxEntries(4096)
+            .memory().size(4096)
             .build();
    }
 

@@ -2,7 +2,6 @@ package org.infinispan.lucene.configuration;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -29,7 +28,7 @@ public class MetadataCacheValidationTest extends AbstractInfinispanTest {
                "' can not use Metadata Cache '" + CACHE_NAME + "': eviction enabled on the Cache configuration!")
    public void testFailOnEviction() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.eviction().strategy(EvictionStrategy.LIRS).maxEntries(1l);
+      builder.memory().size(1L);
       doConfigurationTest(builder);
    }
 
@@ -46,7 +45,6 @@ public class MetadataCacheValidationTest extends AbstractInfinispanTest {
    public void testSuccessfullConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true);
-      builder.eviction().strategy(EvictionStrategy.NONE).maxEntries(-1l);
       doConfigurationTest(builder);
    }
 

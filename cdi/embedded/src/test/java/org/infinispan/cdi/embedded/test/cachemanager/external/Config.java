@@ -47,7 +47,7 @@ public class Config {
 
       // define large configuration
       externalCacheContainerManager.defineConfiguration("large", new ConfigurationBuilder()
-            .eviction().maxEntries(100)
+            .memory().size(100)
             .build());
 
       // define quick configuration

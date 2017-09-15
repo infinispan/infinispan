@@ -13,7 +13,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.configuration.AbstractJdbcStoreConfigurationChildBuilder;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
@@ -89,7 +88,7 @@ public class NonStringKeyPreloadTest extends AbstractInfinispanTest {
    public void testPreloadWithTwoWayKey2StringMapperAndBoundedCache() throws Exception {
       String mapperName = TwoWayPersonKey2StringMapper.class.getName();
       ConfigurationBuilder config = createCacheStoreConfig(mapperName, true, true);
-      config.eviction().strategy(EvictionStrategy.LRU).maxEntries(3);
+      config.memory().size(3);
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(config)) {
          @Override

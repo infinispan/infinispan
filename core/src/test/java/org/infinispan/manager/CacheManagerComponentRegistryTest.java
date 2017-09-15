@@ -6,7 +6,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionManager;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.BatchingInterceptor;
 import org.infinispan.remoting.transport.Transport;
@@ -68,9 +67,7 @@ public class CacheManagerComponentRegistryTest extends AbstractCacheTest {
       defaultCfg
          .clustering()
             .stateTransfer()
-               .fetchInMemoryState(false)
-            .eviction()
-               .strategy(EvictionStrategy.NONE);
+               .fetchInMemoryState(false);
       // cache manager with default configuration
       cm = TestCacheManagerFactory.createClusteredCacheManager(defaultCfg);
 

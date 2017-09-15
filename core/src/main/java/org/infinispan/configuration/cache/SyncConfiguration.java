@@ -38,7 +38,7 @@ public class SyncConfiguration {
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
     *
-    * @deprecated Since 9.0, please use {@link ClusteringConfiguration#replTimeout()} instead.
+    * @deprecated Since 9.0, please use {@link ClusteringConfiguration#remoteTimeout()} instead.
     */
    @Deprecated
    public long replTimeout() {

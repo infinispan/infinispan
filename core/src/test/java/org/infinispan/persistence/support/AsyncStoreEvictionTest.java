@@ -13,7 +13,6 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
@@ -33,7 +32,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
    private static ConfigurationBuilder config(boolean passivation, int threads) {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.expiration().wakeUpInterval(100);
-      config.eviction().maxEntries(1).strategy(EvictionStrategy.LRU);
+      config.memory().size(1);
       config.persistence()
          .passivation(passivation)
          .addStore(LockableStoreConfigurationBuilder.class)
@@ -215,7 +214,7 @@ public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
 
    public void testLIRS() throws Exception {
       ConfigurationBuilder config = config(false, 1);
-      config.eviction().strategy(EvictionStrategy.LIRS).maxEntries(1);
+      config.memory().size(1);
       TestingUtil.withCacheManager(new CacheCallable(config) {
          @Override
          public void call() {

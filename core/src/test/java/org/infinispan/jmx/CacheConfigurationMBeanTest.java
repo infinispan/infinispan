@@ -10,7 +10,6 @@ import javax.management.ObjectName;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DefaultDataContainer;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -33,7 +32,7 @@ public class CacheConfigurationMBeanTest extends SingleCacheManagerTest {
       gcb.globalJmxStatistics().jmxDomain(JMX_DOMAIN).mBeanServerLookup(new PerThreadMBeanServerLookup()).enable();
       ConfigurationBuilder dcc = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       dcc.transaction().autoCommit(false);
-      dcc.eviction().type(EvictionType.COUNT).size(1000);
+      dcc.memory().size(1000);
       dcc.jmxStatistics().enable();
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return new DefaultCacheManager(gcb.build(), dcc.build());
@@ -41,13 +40,13 @@ public class CacheConfigurationMBeanTest extends SingleCacheManagerTest {
 
    public void testEvictionSize() throws Exception {
       ObjectName defaultOn = getCacheObjectName(JMX_DOMAIN, "___defaultcache(local)", "Configuration");
-      assertEquals(1000l, (long) server.getAttribute(defaultOn, "evictionSize"));
-      assertEquals(1000, cache().getCacheConfiguration().eviction().size());
+      assertEquals(1000L, (long) server.getAttribute(defaultOn, "evictionSize"));
+      assertEquals(1000, cache().getCacheConfiguration().memory().size());
       DefaultDataContainer<Object, Object> dataContainer = (DefaultDataContainer<Object, Object>) cache()
             .getAdvancedCache().getDataContainer();
       assertEquals(1000, dataContainer.capacity());
-      server.setAttribute(defaultOn, new Attribute("evictionSize", Long.valueOf(2000)));
-      assertEquals(2000, cache().getCacheConfiguration().eviction().size());
+      server.setAttribute(defaultOn, new Attribute("evictionSize", 2000L));
+      assertEquals(2000, cache().getCacheConfiguration().memory().size());
       assertEquals(2000, dataContainer.capacity());
    }
 }

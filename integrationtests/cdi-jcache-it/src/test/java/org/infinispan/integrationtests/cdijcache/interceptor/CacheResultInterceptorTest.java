@@ -165,7 +165,7 @@ public class CacheResultInterceptorTest extends Arquillian {
 
       assertEquals(service.getNbCall(), 1);
       assertEquals(smallCache.size(), 1);
-      assertEquals(smallCache.getCacheConfiguration().eviction().maxEntries(), 4);
+      assertEquals(smallCache.getCacheConfiguration().memory().size(), 4);
    }
 
    @Test

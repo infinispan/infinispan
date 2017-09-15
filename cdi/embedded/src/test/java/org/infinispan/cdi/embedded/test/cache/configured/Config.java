@@ -21,7 +21,7 @@ public class Config {
    @Produces
    public Configuration tinyConfiguration() {
       return new ConfigurationBuilder()
-            .eviction().maxEntries(1)
+            .memory().size(1)
             .build();
    }
 
@@ -36,7 +36,7 @@ public class Config {
    @Produces
    public Configuration smallConfiguration() {
       return new ConfigurationBuilder()
-            .eviction().maxEntries(10)
+            .memory().size(10)
             .build();
    }
 }

@@ -12,7 +12,6 @@ import java.util.Locale;
 import java.util.Set;
 
 import org.hibernate.cache.CacheException;
-
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
@@ -163,7 +162,7 @@ public class TypeOverrides implements Serializable {
 			builder.expiration().wakeUpInterval( evictionWakeUpInterval );
 		}
 		if ( overridden.contains( "evictionMaxEntries" ) ) {
-			builder.eviction().maxEntries( evictionMaxEntries );
+			builder.memory().size( evictionMaxEntries );
 		}
 		if ( overridden.contains( "expirationLifespan" ) ) {
 			builder.expiration().lifespan( expirationLifespan );

@@ -25,13 +25,11 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
@@ -57,11 +55,11 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    }
 
    @Test
-   public void testEvictionMaxEntries() {
+   public void testEvictionSize() {
       Configuration configuration = new ConfigurationBuilder()
-         .eviction().maxEntries(20)
+         .memory().size(20)
          .build();
-      Assert.assertEquals(configuration.eviction().maxEntries(), 20);
+      Assert.assertEquals(configuration.memory().size(), 20);
    }
 
    @Test
@@ -177,19 +175,6 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
    }
 
-   public void testEvictionWithoutStrategy() {
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.eviction().maxEntries(76767);
-      withCacheManager(new CacheManagerCallable(createCacheManager(cb)) {
-         @Override
-         public void call() {
-            Configuration cfg = cm.getCache().getCacheConfiguration();
-            assert cfg.eviction().maxEntries() == 76767;
-            assert cfg.eviction().strategy() != EvictionStrategy.NONE;
-         }
-      });
-   }
-
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testNumOwners() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -284,19 +269,6 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       return cm;
    }
 
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testEvictionOnButWithoutMaxEntries() {
-      EmbeddedCacheManager ecm = null;
-      try {
-         ConfigurationBuilder c = new ConfigurationBuilder();
-         c.eviction().strategy(EvictionStrategy.LRU);
-         ecm = TestCacheManagerFactory.createClusteredCacheManager(c);
-         ecm.getCache();
-      } finally {
-         TestingUtil.killCacheManagers(ecm);
-      }
-   }
-
    @Test(expectedExceptions = CacheConfigurationException.class,
          expectedExceptionsMessageRegExp = "ISPN(\\d)*: Indexing can not be enabled on caches in Invalidation mode")
    public void testIndexingOnInvalidationCache() {
@@ -379,7 +351,6 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
    public void testMultipleValidationErrors() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.eviction().strategy(EvictionStrategy.LRU).size(0);
       builder.transaction().reaperWakeUpInterval(-1);
       builder.modules().add(new NonValidatingBuilder());
       try {
@@ -387,10 +358,9 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          fail("Expected CacheConfigurationException");
       } catch (CacheConfigurationException e) {
          assertTrue(e.getMessage().startsWith("ISPN000919"));
-         assertEquals(e.getSuppressed().length, 3);
-         assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000424"));
-         assertTrue(e.getSuppressed()[1].getMessage().startsWith("ISPN000344"));
-         assertEquals("MODULE ERROR", e.getSuppressed()[2].getMessage());
+         assertEquals(e.getSuppressed().length, 2);
+         assertTrue(e.getSuppressed()[0].getMessage().startsWith("ISPN000344"));
+         assertEquals("MODULE ERROR", e.getSuppressed()[1].getMessage());
       }
 
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();

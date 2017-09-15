@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import javax.inject.Inject;
 
 import org.infinispan.Version;
-import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;
@@ -58,8 +58,8 @@ public class GreetingCacheManagerIT {
       assertEquals("greeting-cache", greetingCacheManager.getCacheName());
 
       // Eviction
-      assertEquals(128, greetingCacheManager.getEvictionMaxEntries());
-      assertEquals(EvictionStrategy.LRU, greetingCacheManager.getEvictionStrategy());
+      assertEquals(128, greetingCacheManager.getMemorySize());
+      assertEquals(EvictionType.COUNT, greetingCacheManager.getEvictionType());
 
       // Lifespan
       assertEquals(-1, greetingCacheManager.getExpirationLifespan());

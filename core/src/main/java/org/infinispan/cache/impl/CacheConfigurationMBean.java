@@ -1,6 +1,5 @@
 package org.infinispan.cache.impl;
 
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -17,12 +16,10 @@ import org.infinispan.jmx.annotations.Units;
 @MBean(objectName = "Configuration", description = "Runtime cache configuration attributes")
 public class CacheConfigurationMBean {
 
-   private Cache<?, ?> cache;
    private Configuration configuration;
 
    @Inject
-   public void injectDependencies(Cache<?, ?> cache, Configuration configuration) {
-      this.cache = cache;
+   public void injectDependencies(Configuration configuration) {
       this.configuration = configuration;
    }
 
@@ -31,10 +28,10 @@ public class CacheConfigurationMBean {
          units = Units.NONE,
          displayType = DisplayType.DETAIL, writable = true)
    public long getEvictionSize() {
-      return configuration.eviction().size();
+      return configuration.memory().size();
    }
 
    public void setEvictionSize(long newSize) {
-      configuration.eviction().size(newSize);
+      configuration.memory().size(newSize);
    }
 }

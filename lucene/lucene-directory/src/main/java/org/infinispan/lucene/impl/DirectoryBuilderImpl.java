@@ -145,7 +145,7 @@ public class DirectoryBuilderImpl implements BuildContext {
 
    private static void validateMetadataCache(Cache<?, ?> cache, String indexName) {
       Configuration configuration = cache.getCacheConfiguration();
-      if (configuration.eviction().strategy().isEnabled()) {
+      if (configuration.memory().isEvictionEnabled()) {
          throw log.evictionNotAllowedInMetadataCache(indexName, cache.getName());
       }
       if (configuration.persistence().usingStores() && !configuration.persistence().preload()) {

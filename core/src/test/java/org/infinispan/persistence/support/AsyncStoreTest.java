@@ -554,7 +554,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
       private static ConfigurationBuilder config(boolean passivation) {
          ConfigurationBuilder config = new ConfigurationBuilder();
-         config.eviction().maxEntries(1).persistence().passivation(passivation).addStore(LockableStoreConfigurationBuilder.class).async().enable();
+         config.memory().size(1).persistence().passivation(passivation).addStore(LockableStoreConfigurationBuilder.class).async().enable();
          return config;
       }
 

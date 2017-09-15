@@ -52,8 +52,6 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.group.Grouper;
-import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
@@ -963,14 +961,11 @@ public class Parser60 implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case MAX_ENTRIES:
-               builder.eviction().maxEntries(Integer.parseInt(value));
+               builder.memory().size(Integer.parseInt(value));
                break;
             case STRATEGY:
-               builder.eviction().strategy(EvictionStrategy.valueOf(value));
-               break;
             case THREAD_POLICY:
-               builder.eviction().threadPolicy(EvictionThreadPolicy.valueOf(value));
-               break;
+               break; // ignore
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

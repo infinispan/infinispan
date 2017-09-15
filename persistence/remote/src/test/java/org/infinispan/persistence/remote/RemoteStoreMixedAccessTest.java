@@ -12,7 +12,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -38,7 +37,7 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
    @BeforeClass
    public void setup() throws Exception {
       ConfigurationBuilder serverBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      serverBuilder.eviction().maxEntries(100).strategy(EvictionStrategy.UNORDERED)
+      serverBuilder.memory().size(100)
             .expiration().wakeUpInterval(10L);
       serverCacheManager = TestCacheManagerFactory.createCacheManager(
             hotRodCacheConfiguration(serverBuilder));

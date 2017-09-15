@@ -16,7 +16,6 @@ import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -83,7 +82,7 @@ public class MapStressTest extends SingleCacheManagerTest {
    private Cache<String, Integer> configureAndBuildCache(int capacity) {
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
-         .eviction().maxEntries(capacity).strategy(EvictionStrategy.LRU)
+         .memory().size(capacity)
          .expiration().wakeUpInterval(5000L).maxIdle(120000L);
       String cacheName = "cache" + capacity;
       cacheManager.defineConfiguration(cacheName, config.build());
