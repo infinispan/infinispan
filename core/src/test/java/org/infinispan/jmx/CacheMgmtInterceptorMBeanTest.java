@@ -17,7 +17,6 @@ import javax.management.ObjectName;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -46,7 +45,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
 
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(false);
-      configuration.eviction().strategy(EvictionStrategy.LRU).size(1)
+      configuration.memory().size(1)
               .persistence()
               .passivation(true)
               .addStore(DummyInMemoryStoreConfigurationBuilder.class);

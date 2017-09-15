@@ -20,7 +20,7 @@ public class HotRodAsyncReplicationTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
             getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false));
-      builder.eviction().maxEntries(3);
+      builder.memory().size(3);
 
       createHotRodServers(2, builder);
    }

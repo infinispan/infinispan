@@ -29,7 +29,7 @@ public class ClusteredAtomicMapPassivationTest extends MultipleCacheManagersTest
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(
             CacheMode.REPL_SYNC, true);
-      builder.eviction().maxEntries(1024)
+      builder.memory().size(1024)
             .persistence().passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class);
       createClusteredCaches(2, "atomic", builder);

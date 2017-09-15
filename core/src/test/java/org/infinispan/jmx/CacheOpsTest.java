@@ -9,7 +9,6 @@ import javax.management.ObjectName;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -32,7 +31,7 @@ public class CacheOpsTest extends SingleCacheManagerTest {
       gcb.globalJmxStatistics().jmxDomain(JMX_DOMAIN).mBeanServerLookup(new PerThreadMBeanServerLookup()).enable();
       ConfigurationBuilder dcc = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       dcc.transaction().autoCommit(false);
-      dcc.eviction().type(EvictionType.COUNT).size(1000);
+      dcc.memory().size(1000);
       dcc.jmxStatistics().enable();
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return new DefaultCacheManager(gcb.build(), dcc.build());

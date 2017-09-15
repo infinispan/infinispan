@@ -219,7 +219,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    }
 
    private static void verifyCacheHasNoEviction(AdvancedCache<?, ?> cache) {
-      if (cache.getCacheConfiguration().eviction().strategy().isEnabled())
+      if (cache.getCacheConfiguration().memory().isEvictionEnabled())
          throw new IllegalArgumentException("DistributedSegmentReadLocker is not reliable when using a cache with eviction enabled, disable eviction on this cache instance");
    }
 

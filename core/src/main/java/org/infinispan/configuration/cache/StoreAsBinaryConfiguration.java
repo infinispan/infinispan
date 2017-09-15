@@ -40,11 +40,14 @@ public class StoreAsBinaryConfiguration {
 
    /**
     * Enables storing both keys and values as binary.
+    * @deprecated use {@link MemoryConfiguration#storageType()} instead
     */
+   @Deprecated
    public boolean enabled() {
       return enabled.get();
    }
 
+   @Deprecated
    public StoreAsBinaryConfiguration enabled(boolean enabled) {
       this.enabled.set(enabled);
       return this;

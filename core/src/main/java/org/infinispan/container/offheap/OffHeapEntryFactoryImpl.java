@@ -54,7 +54,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       this.allocator = allocator;
       this.timeService = timeService;
       this.internalEntryFactory = internalEntryFactory;
-      this.evictionEnabled = configuration.memory().size() > 0;
+      this.evictionEnabled = configuration.memory().isEvictionEnabled();
    }
 
    /**

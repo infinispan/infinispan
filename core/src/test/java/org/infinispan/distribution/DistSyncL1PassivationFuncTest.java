@@ -41,8 +41,8 @@ public class DistSyncL1PassivationFuncTest extends BaseDistFunctionalTest {
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder builder = super.buildConfiguration();
       builder
-            .eviction()
-               .maxEntries(MAX_ENTRIES)
+            .memory()
+               .size(MAX_ENTRIES)
             .persistence()
                .passivation(true)
                .addStore(DummyInMemoryStoreConfigurationBuilder.class);

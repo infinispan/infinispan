@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -64,7 +63,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       dimcs.fetchPersistentState(false).purgeOnStartup(false).shared(sharedCacheLoader.get()).preload(true);
       configurationBuilder.persistence().passivation(false).addStore(dimcs).fetchPersistentState(fetchPersistentState.get());
       // Want to enable eviction, but don't actually evict anything
-      configurationBuilder.eviction().strategy(EvictionStrategy.LIRS).maxEntries(INSERTION_COUNT * 10);
+      configurationBuilder.memory().size(INSERTION_COUNT * 10);
 
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(configurationBuilder, new TransportFlags().withMerge(true));
       cm.defineConfiguration(cacheName, configurationBuilder.build());

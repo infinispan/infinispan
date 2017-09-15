@@ -10,7 +10,6 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
@@ -117,7 +116,7 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
 
    private void enablePassivation(ConfigurationBuilder builder) {
       builder.persistence().passivation(true);
-      builder.eviction().strategy(EvictionStrategy.LIRS).maxEntries(1);
+      builder.memory().size(1);
    }
 
    private void disableWithConfiguration(ConfigurationBuilder builder) {

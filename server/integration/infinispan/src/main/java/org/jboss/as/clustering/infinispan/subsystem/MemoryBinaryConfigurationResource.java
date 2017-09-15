@@ -76,7 +76,7 @@ public class MemoryBinaryConfigurationResource extends CacheConfigurationChildRe
 
         resourceRegistration.registerReadWriteAttribute(EVICTION, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
         resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE, new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> {
-            configuration.eviction().size(newSize.asLong());
+            configuration.memory().size(newSize.asLong());
         }));
     }
 }

@@ -7,7 +7,7 @@ import javax.enterprise.inject.Produces;
 import org.infinispan.cdi.embedded.ConfigureCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.DefaultCacheManager;
 
 /**
@@ -35,7 +35,7 @@ public class Config {
    @Produces
    public Configuration greetingCache() {
       return new ConfigurationBuilder()
-            .eviction().strategy(EvictionStrategy.LRU).maxEntries(128)
+            .memory().storageType(StorageType.OBJECT).size(128)
             .build();
    }
 

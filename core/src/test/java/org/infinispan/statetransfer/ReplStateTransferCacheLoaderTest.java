@@ -7,7 +7,6 @@ import java.io.File;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -46,7 +45,7 @@ public class ReplStateTransferCacheLoaderTest extends MultipleCacheManagersTest 
       builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
-            .eviction().maxEntries(1000).strategy(EvictionStrategy.LIRS)
+            .memory().size(1000)
             .locking().lockAcquisitionTimeout(20000)
             .concurrencyLevel(5000) // lowering this to 50 makes the test pass also on 5.2 but it's just a temporary workaround
             .useLockStriping(false).isolationLevel(IsolationLevel.READ_COMMITTED)

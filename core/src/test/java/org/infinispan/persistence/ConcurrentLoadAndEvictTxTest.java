@@ -10,7 +10,6 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -26,7 +25,7 @@ public class ConcurrentLoadAndEvictTxTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder config = getDefaultStandaloneCacheConfig(true);
       config
-         .eviction().strategy(EvictionStrategy.LRU).maxEntries(10)
+         .memory().size(10)
          .expiration().wakeUpInterval(10L)
          .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .build();

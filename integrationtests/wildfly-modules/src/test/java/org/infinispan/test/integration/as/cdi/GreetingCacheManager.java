@@ -10,7 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import org.infinispan.Cache;
-import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 
 /**
  * <p>The greeting cache manager.</p>
@@ -36,12 +36,12 @@ public class GreetingCacheManager {
       return cache.size();
    }
 
-   public EvictionStrategy getEvictionStrategy() {
-      return cache.getCacheConfiguration().eviction().strategy();
+   public EvictionType getEvictionType() {
+      return cache.getCacheConfiguration().memory().evictionType();
    }
 
-   public long getEvictionMaxEntries() {
-      return cache.getCacheConfiguration().eviction().maxEntries();
+   public long getMemorySize() {
+      return cache.getCacheConfiguration().memory().size();
    }
 
    public long getExpirationLifespan() {

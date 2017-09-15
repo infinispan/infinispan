@@ -50,7 +50,7 @@ public class DistStorePreloadTest extends BaseDistStoreTest<Object, String> {
       DataContainer dc1 = c1.getAdvancedCache().getDataContainer();
       assert dc1.size() == NUM_KEYS;
 
-      DummyInMemoryStore cs = (DummyInMemoryStore) TestingUtil.getFirstLoader(c1);
+      DummyInMemoryStore cs = TestingUtil.getFirstLoader(c1);
       assert PersistenceUtil.count(cs, null) == NUM_KEYS;
 
       addClusterEnabledCacheManager();

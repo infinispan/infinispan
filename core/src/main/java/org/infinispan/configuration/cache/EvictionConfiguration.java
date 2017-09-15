@@ -42,14 +42,18 @@ public class EvictionConfiguration {
    /**
     * Eviction strategy. Available options are 'UNORDERED', 'LRU', 'LIRS' and 'NONE' (to disable
     * eviction).
+    * @deprecated use {@link MemoryConfiguration#evictionType()} instead
     */
+   @Deprecated
    public EvictionStrategy strategy() {
       return strategy.get();
    }
 
    /**
     * Threading policy for eviction.
+    * @deprecated
     */
+   @Deprecated
    public EvictionThreadPolicy threadPolicy() {
       return threadPolicy.get();
    }
@@ -59,7 +63,10 @@ public class EvictionConfiguration {
     * limit specified by max entries. However, due to the nature of eviction it is unlikely to ever
     * be exactly maximum number of entries specified here. Only makes sense when using the
     * COUNT type.
+    *
+    * @deprecated use {@link MemoryConfiguration#size()} instead
     */
+   @Deprecated
    public long maxEntries() {
       if (type.get() != EvictionType.COUNT) {
          throw new IllegalStateException();
@@ -67,14 +74,23 @@ public class EvictionConfiguration {
       return size();
    }
 
+   /**
+    * @deprecated use {@link MemoryConfiguration#size()} instead
+    */
+   @Deprecated
    public long size() {
       return size.get();
    }
 
+   @Deprecated
    public void size(long newSize) {
       size.set(newSize);
    }
 
+   /**
+    * @deprecated use {@link MemoryConfiguration#evictionType()} instead
+    */
+   @Deprecated
    public EvictionType type() {
       return type.get();
    }

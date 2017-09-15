@@ -61,7 +61,7 @@ public class Config {
    @SuppressWarnings("unused")
    public EmbeddedCacheManager defaultCacheManager() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.eviction().maxEntries(7);
+      builder.memory().size(7);
       return TestCacheManagerFactory.createCacheManager(builder);
    }
 

@@ -19,7 +19,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalJmxStatisticsConfigurationBuilder;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -61,7 +60,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
    public void testCheckThreadLocalLeaks() throws Exception {
       final ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
-            .eviction().strategy(EvictionStrategy.LRU).maxEntries(4096)
+            .memory().size(4096)
             .locking().concurrencyLevel(2048)
             .persistence().passivation(false)
                .addSingleFileStore().location(tmpDirectory).shared(false).preload(true);

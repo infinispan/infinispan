@@ -157,6 +157,10 @@ public class Configuration {
       return moduleConfiguration;
    }
 
+   /**
+    * @deprecated please use {@link Configuration#memory()}
+    */
+   @Deprecated
    public StoreAsBinaryConfiguration storeAsBinary() {
       return storeAsBinaryConfiguration;
    }

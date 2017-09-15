@@ -12,7 +12,6 @@ import org.infinispan.atomic.impl.AtomicMapProxyImpl;
 import org.infinispan.atomic.impl.FineGrainedAtomicMapProxyImpl;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
@@ -39,7 +38,7 @@ public class LocalDeltaAwareEvictionTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      configBuilder.eviction().maxEntries(1).strategy(EvictionStrategy.LRU)
+      configBuilder.memory().size(1)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
       configBuilder.clustering().hash().groups().enabled();
       addClusterEnabledCacheManager(configBuilder);

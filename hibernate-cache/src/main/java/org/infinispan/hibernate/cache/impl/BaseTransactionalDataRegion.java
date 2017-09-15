@@ -184,7 +184,7 @@ public abstract class BaseTransactionalDataRegion
 			return;
 		}
 		Configuration configuration = cache.getCacheConfiguration();
-		if (configuration.eviction().maxEntries() >= 0) {
+		if (configuration.memory().isEvictionEnabled()) {
 			log.evictionWithTombstones();
 		}
 
