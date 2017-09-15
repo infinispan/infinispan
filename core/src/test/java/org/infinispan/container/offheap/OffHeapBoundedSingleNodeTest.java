@@ -30,7 +30,7 @@ public class OffHeapBoundedSingleNodeTest extends OffHeapSingleNodeTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       dcc.memory().storageType(StorageType.OFF_HEAP).size(COUNT).evictionType(EvictionType.COUNT);
       dcc.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       // Only start up the 1 cache
