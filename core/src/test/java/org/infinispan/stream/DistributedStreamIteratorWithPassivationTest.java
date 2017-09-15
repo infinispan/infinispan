@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -59,7 +60,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
    @Override
    protected void enhanceConfiguration(ConfigurationBuilder builder) {
       builder.clustering().hash().numOwners(1);
-      builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(CACHE_NAME);
+      builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(getTestName());
    }
 
    @Test(enabled = false, description = "This requires supporting concurrent activation in cache loader interceptor")
@@ -119,7 +120,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true, true);
          }
          sm.stop();
       }
@@ -183,7 +184,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true, true);
          }
          sm.stop();
       }
@@ -250,7 +251,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true, true);
          }
          sm.stop();
       }
@@ -277,7 +278,6 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
     * This test is to verify that if a concurrent passivation occurs while switching between data container and loader(s)
     * that we don't return the same key/value twice
     */
-   @Test
    public void testConcurrentPassivation() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
       Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
@@ -304,7 +304,7 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
 
          Future<Void> future = fork(() -> {
             // Wait until loader is invoked
-            checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 1000, TimeUnit.SECONDS);
+            checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 10, TimeUnit.SECONDS);
 
             // Now force the entry to be moved to loader
             TestingUtil.extractComponent(cache0, PassivationManager.class).passivate(new ImmortalCacheEntry(loaderKey, loaderValue));
@@ -316,21 +316,18 @@ public class DistributedStreamIteratorWithPassivationTest extends BaseSetupStrea
          Iterator<Map.Entry<MagicKey, String>> iterator = cache1.entrySet().stream().iterator();
 
          // we need this count since the map will replace same key'd value
-         int count = 0;
          Map<MagicKey, String> results = new HashMap<>();
          while (iterator.hasNext()) {
             Map.Entry<MagicKey, String> entry = iterator.next();
-            results.put(entry.getKey(), entry.getValue());
-            System.out.println("Found " + entry);
-            count++;
+            String prev = results.put(entry.getKey(), entry.getValue());
+            assertNull("Entry " + entry + " replaced an existing value of " + prev, prev);
          }
-         assertEquals(originalValues.size(), count);
          assertEquals(originalValues, results);
 
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true, true);
          }
       }
    }

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -107,7 +108,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true, true);
          }
          sm.stop();
       }
@@ -175,7 +176,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true, true);
          }
          sm.stop();
       }
@@ -240,7 +241,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true, true);
          }
          sm.stop();
       }
@@ -255,7 +256,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          // Wait for main thread to sync up
          checkPoint.trigger("pre_process_on_all_stores_invoked");
          // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_process_on_all_stores_released", 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict("pre_process_on_all_stores_released", 100, TimeUnit.SECONDS);
 
          return forwardedAnswer.answer(invocation);
       }).when(mockManager).processOnAllStores(any(Executor.class), any(KeyFilter.class), any(AdvancedCacheLoader.CacheLoaderTask.class),
@@ -268,7 +269,6 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
     * This test is to verify that if a concurrent passivation occurs while switching between data container and loader(s)
     * that we don't return the same key/value twice
     */
-   @Test
    public void testConcurrentPassivation() throws InterruptedException, ExecutionException, TimeoutException {
       final Cache<String, String> cache = cache(0, CACHE_NAME);
 
@@ -293,7 +293,7 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
 
          Future<Void> future = fork(() -> {
             // Wait until loader is invoked
-            checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 1000, TimeUnit.SECONDS);
+            checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 10, TimeUnit.SECONDS);
 
             // Now force the entry to be moved to loader
             TestingUtil.extractComponent(cache, PassivationManager.class).passivate(new ImmortalCacheEntry(loaderKey, loaderValue));
@@ -305,20 +305,18 @@ public class LocalStreamIteratorWithPassivationTest extends DistributedStreamIte
          Iterator<Map.Entry<String, String>> iterator = cache.entrySet().stream().iterator();
 
          // we need this count since the map will replace same key'd value
-         int count = 0;
          Map<String, String> results = new HashMap<>();
          while (iterator.hasNext()) {
             Map.Entry<String, String> entry = iterator.next();
-            results.put(entry.getKey(), entry.getValue());
-            count++;
+            String prev = results.put(entry.getKey(), entry.getValue());
+            assertNull("Entry " + entry + " replaced an existing value of " + prev, prev);
          }
-         assertEquals(4, count);
          assertEquals(originalValues, results);
 
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true, true);
          }
       }
    }
