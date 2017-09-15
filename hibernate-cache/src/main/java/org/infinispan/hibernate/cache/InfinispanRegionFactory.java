@@ -16,21 +16,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
 
+import javax.transaction.TransactionManager;
+
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 import org.hibernate.boot.registry.selector.spi.StrategySelector;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
-import org.infinispan.hibernate.cache.collection.CollectionRegionImpl;
-import org.infinispan.hibernate.cache.entity.EntityRegionImpl;
-import org.infinispan.hibernate.cache.impl.BaseRegion;
-import org.infinispan.hibernate.cache.naturalid.NaturalIdRegionImpl;
-import org.infinispan.hibernate.cache.query.QueryResultsRegionImpl;
-import org.infinispan.hibernate.cache.timestamp.ClusteredTimestampsRegionImpl;
-import org.infinispan.hibernate.cache.timestamp.TimestampsRegionImpl;
-import org.infinispan.hibernate.cache.tm.HibernateTransactionManagerLookup;
-import org.infinispan.hibernate.cache.util.CacheCommandFactory;
-import org.infinispan.hibernate.cache.util.Caches;
-import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.hibernate.cache.internal.DefaultCacheKeysFactory;
 import org.hibernate.cache.internal.SimpleCacheKeysFactory;
 import org.hibernate.cache.spi.CacheDataDescription;
@@ -45,7 +36,6 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commons.util.FileLookup;
@@ -53,16 +43,26 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.TransactionConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.hibernate.cache.collection.CollectionRegionImpl;
+import org.infinispan.hibernate.cache.entity.EntityRegionImpl;
+import org.infinispan.hibernate.cache.impl.BaseRegion;
+import org.infinispan.hibernate.cache.naturalid.NaturalIdRegionImpl;
+import org.infinispan.hibernate.cache.query.QueryResultsRegionImpl;
+import org.infinispan.hibernate.cache.timestamp.ClusteredTimestampsRegionImpl;
+import org.infinispan.hibernate.cache.timestamp.TimestampsRegionImpl;
+import org.infinispan.hibernate.cache.tm.HibernateTransactionManagerLookup;
+import org.infinispan.hibernate.cache.util.CacheCommandFactory;
+import org.infinispan.hibernate.cache.util.Caches;
+import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
-
-import javax.transaction.TransactionManager;
 
 /**
  * A {@link RegionFactory} for <a href="http://www.jboss.org/infinispan">Infinispan</a>-backed cache
@@ -79,13 +79,15 @@ public class InfinispanRegionFactory implements RegionFactory {
 
 	private static final String CONFIG_SUFFIX = ".cfg";
 
-	private static final String STRATEGY_SUFFIX = ".eviction.strategy";
+	private static final String DEPRECATED_STRATEGY_SUFFIX = ".eviction.strategy";
+
+	private static final String SIZE_SUFFIX = ".memory.size";
 
 	// The attribute was incorrectly named; in fact this sets expiration check interval
 	// (eviction is triggered by writes, expiration is time-based)
 	private static final String DEPRECATED_WAKE_UP_INTERVAL_SUFFIX = ".eviction.wake_up_interval";
 
-	private static final String MAX_ENTRIES_SUFFIX = ".eviction.max_entries";
+	private static final String DEPRECATED_MAX_ENTRIES_SUFFIX = ".eviction.max_entries";
 
 	private static final String WAKE_UP_INTERVAL_SUFFIX = ".expiration.wake_up_interval";
 
@@ -131,7 +133,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 			if ( c.clustering().cacheMode().isInvalidation() ) {
 				throw log.timestampsMustNotUseInvalidation();
 			}
-			if (c.eviction().strategy().isEnabled()) {
+			if (c.memory().isEvictionEnabled()) {
 				throw log.timestampsMustNotUseEviction();
 			}
 		}),
@@ -573,18 +575,22 @@ public class InfinispanRegionFactory implements RegionFactory {
 			String regionName = key.substring( prefixLoc + PREFIX.length(), suffixLoc );
 			baseConfigurations.put(regionName, value);
 		}
-		else if ( (suffixLoc = key.indexOf( STRATEGY_SUFFIX )) != -1 ) {
-			builder = getOrCreateConfig( prefixLoc, key, suffixLoc );
-			builder.eviction().strategy( EvictionStrategy.valueOf(value) );
+		else if (key.contains(DEPRECATED_STRATEGY_SUFFIX)) {
+			log.ignoringDeprecatedProperty(DEPRECATED_STRATEGY_SUFFIX);
 		}
 		else if ( (suffixLoc = key.indexOf( WAKE_UP_INTERVAL_SUFFIX )) != -1
 				|| (suffixLoc = key.indexOf(DEPRECATED_WAKE_UP_INTERVAL_SUFFIX)) != -1 ) {
 			builder = getOrCreateConfig( prefixLoc, key, suffixLoc );
 			builder.expiration().wakeUpInterval( Long.parseLong(value) );
 		}
-		else if ( (suffixLoc = key.indexOf( MAX_ENTRIES_SUFFIX )) != -1 ) {
+		else if ( (suffixLoc = key.indexOf(SIZE_SUFFIX)) != -1 ) {
 			builder = getOrCreateConfig( prefixLoc, key, suffixLoc );
-			builder.eviction().size( Long.parseLong(value) );
+			builder.memory().size( Long.parseLong(value) );
+		}
+		else if ( (suffixLoc = key.indexOf(DEPRECATED_MAX_ENTRIES_SUFFIX)) != -1 ) {
+			log.deprecatedProperty(DEPRECATED_MAX_ENTRIES_SUFFIX, SIZE_SUFFIX);
+			builder = getOrCreateConfig( prefixLoc, key, suffixLoc );
+			builder.memory().size( Long.parseLong(value) );
 		}
 		else if ( (suffixLoc = key.indexOf( LIFESPAN_SUFFIX )) != -1 ) {
 			builder = getOrCreateConfig( prefixLoc, key, suffixLoc );
@@ -604,12 +610,7 @@ public class InfinispanRegionFactory implements RegionFactory {
 
 	private ConfigurationBuilder getOrCreateConfig(int prefixLoc, String key, int suffixLoc) {
 		final String name = key.substring( prefixLoc + PREFIX.length(), suffixLoc );
-		ConfigurationBuilder builder = configOverrides.get( name );
-		if ( builder == null ) {
-			builder = new ConfigurationBuilder();
-			configOverrides.put( name, builder );
-		}
-		return builder;
+		return configOverrides.computeIfAbsent(name, Void -> new ConfigurationBuilder());
 	}
 
 	private void defineDataTypeCacheConfigurations() {
