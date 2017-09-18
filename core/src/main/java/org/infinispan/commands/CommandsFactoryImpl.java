@@ -83,6 +83,7 @@ import org.infinispan.commons.marshall.LambdaExternalizer;
 import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.container.DataContainer;
@@ -116,10 +117,15 @@ import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stream.impl.ClusterStreamManager;
+import org.infinispan.stream.impl.IteratorHandler;
 import org.infinispan.stream.impl.LocalStreamManager;
+import org.infinispan.stream.impl.StreamIteratorCloseCommand;
+import org.infinispan.stream.impl.StreamIteratorNextCommand;
+import org.infinispan.stream.impl.StreamIteratorRequestCommand;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.stream.impl.StreamSegmentResponseCommand;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
@@ -175,6 +181,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private XSiteStateTransferManager xSiteStateTransferManager;
    private GroupManager groupManager;
    private LocalStreamManager localStreamManager;
+   private IteratorHandler iteratorHandler;
    private ClusterStreamManager clusterStreamManager;
    private ClusteringDependentLogic clusteringDependentLogic;
    private CommandAckCollector commandAckCollector;
@@ -202,7 +209,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  CommandAckCollector commandAckCollector,
                                  StateReceiver stateReceiver,
                                  ComponentRegistry componentRegistry,
-                                 OrderedUpdatesManager orderedUpdatesManager, StateTransferLock stateTransferLock) {
+                                 OrderedUpdatesManager orderedUpdatesManager,
+                                 IteratorHandler iteratorHandler) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -225,6 +233,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.xSiteStateTransferManager = xSiteStateTransferManager;
       this.groupManager = groupManager;
       this.localStreamManager = localStreamManager;
+      this.iteratorHandler = iteratorHandler;
       this.clusterStreamManager = clusterStreamManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.marshaller = marshaller;
@@ -524,6 +533,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
             StreamSegmentResponseCommand streamSegmentResponseCommand = (StreamSegmentResponseCommand) c;
             streamSegmentResponseCommand.inject(clusterStreamManager);
             break;
+         case StreamIteratorRequestCommand.COMMAND_ID:
+            StreamIteratorRequestCommand streamIteratorRequestCommand = (StreamIteratorRequestCommand) c;
+            streamIteratorRequestCommand.inject(localStreamManager);
+            break;
+         case StreamIteratorNextCommand.COMMAND_ID:
+            StreamIteratorNextCommand streamIteratorNextCommand = (StreamIteratorNextCommand) c;
+            streamIteratorNextCommand.inject(localStreamManager);
+            break;
+         case StreamIteratorCloseCommand.COMMAND_ID:
+            StreamIteratorCloseCommand streamIteratorCloseCommand = (StreamIteratorCloseCommand) c;
+            streamIteratorCloseCommand.inject(iteratorHandler);
+            break;
          case RemoveExpiredCommand.COMMAND_ID:
             RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
             removeExpiredCommand.init(notifier);
@@ -705,6 +726,24 @@ public class CommandsFactoryImpl implements CommandsFactory {
          return new StreamSegmentResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier,
                  complete, response, lostSegments);
       }
+   }
+
+   @Override
+   public <K> StreamIteratorRequestCommand<K> buildStreamIteratorRequestCommand(Object id, boolean parallelStream,
+         IntSet segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader,
+         Iterable<IntermediateOperation> intOps, long batchSize) {
+      return new StreamIteratorRequestCommand<>(cacheName, cache.getCacheManager().getAddress(), id, parallelStream,
+            segments, keys, excludedKeys, includeLoader, intOps, batchSize);
+   }
+
+   @Override
+   public StreamIteratorNextCommand buildStreamIteratorNextCommand(Object id, long batchSize) {
+      return new StreamIteratorNextCommand(cacheName, id, batchSize);
+   }
+
+   @Override
+   public StreamIteratorCloseCommand buildStreamIteratorCloseCommand(Object id) {
+      return new StreamIteratorCloseCommand(cacheName, cache.getCacheManager().getAddress(), id);
    }
 
    @Override

@@ -4,18 +4,23 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.MappingOperation;
+import org.infinispan.util.function.SerializableFunction;
 
 /**
  * Performs map to operation on a regular {@link Stream}
  * @param <I> the type of the input stream
  * @param <O> the type of the output stream
  */
-public class MapOperation<I, O> implements IntermediateOperation<I, Stream<I>, O, Stream<O>> {
+public class MapOperation<I, O> implements MappingOperation<I, Stream<I>, O, Stream<O>> {
    private final Function<? super I, ? extends O> function;
 
    public MapOperation(Function<? super I, ? extends O> function) {
       this.function = function;
+   }
+
+   public MapOperation(SerializableFunction<? super I, ? extends O> function) {
+      this((Function<? super I, ? extends O>) function);
    }
 
    @Override

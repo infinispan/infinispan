@@ -4,6 +4,7 @@ import net.jcip.annotations.Immutable;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
@@ -112,7 +113,7 @@ public class ScatteredConsistentHash extends AbstractConsistentHash {
          throw new IllegalArgumentException("Node " + owner + " is not a member");
       }
 
-      Set<Integer> segments = new HashSet<>();
+      SmallIntSet segments = new SmallIntSet();
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          if (Objects.equals(segmentOwners[segment], owner)) {
             segments.add(segment);

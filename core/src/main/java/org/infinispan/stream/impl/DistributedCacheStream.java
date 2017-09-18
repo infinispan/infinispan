@@ -3,28 +3,27 @@ package org.infinispan.stream.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -36,28 +35,36 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
+import java.util.stream.BaseStream;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.AbstractIterator;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.commons.util.RangeSet;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
 import org.infinispan.stream.impl.intops.object.FilterOperation;
 import org.infinispan.stream.impl.intops.object.FlatMapOperation;
@@ -72,11 +79,11 @@ import org.infinispan.stream.impl.intops.object.MapToLongOperation;
 import org.infinispan.stream.impl.intops.object.PeekOperation;
 import org.infinispan.stream.impl.termop.object.ForEachBiOperation;
 import org.infinispan.stream.impl.termop.object.ForEachOperation;
-import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
-import org.infinispan.util.CloseableSuppliedIterator;
-import org.infinispan.util.RangeSet;
-import org.infinispan.util.concurrent.TimeoutException;
-import org.infinispan.util.function.CloseableSupplier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
 
 /**
  * Implementation of {@link CacheStream} that provides support for lazily distributing stream methods to appropriate
@@ -85,6 +92,8 @@ import org.infinispan.util.function.CloseableSupplier;
  */
 public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>, CacheStream<R>>
         implements CacheStream<R> {
+
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    // This is a hack to allow for cast to work properly, since Java doesn't work as well with nested generics
    protected static Supplier<CacheStream<CacheEntry>> supplierStreamCast(Supplier supplier) {
@@ -140,6 +149,11 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
     */
    protected DistributedCacheStream(AbstractCacheStream other) {
       super(other);
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 
    @Override
@@ -438,390 +452,414 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public Iterator<R> iterator() {
-      return remoteIterator();
+      log.tracef("Distributed iterator invoked with rehash: %s", rehashAware);
+      if (!rehashAware) {
+         // Non rehash doesn't care about lost segments or completed ones
+         CloseableIterator<R> closeableIterator = nonRehashRemoteIterator(segmentsToFilter, null,
+               IdentityPublisherDecorator.getInstance(), intermediateOperations);
+         onClose(closeableIterator::close);
+         return closeableIterator;
+      } else {
+         Iterable<IntermediateOperation> ops = iteratorOperation.prepareForIteration(intermediateOperations);
+         CloseableIterator<R> closeableIterator;
+         if (segmentCompletionListener != null && iteratorOperation != IteratorOperation.FLAT_MAP) {
+            closeableIterator = new CompletionListenerRehashIterator<R>(ops, segmentCompletionListener);
+         } else {
+            closeableIterator = new RehashIterator<>(ops);
+         }
+         onClose(closeableIterator::close);
+         // This cast messes up generic checking, but that is okay
+         Function<R, R> function = iteratorOperation.getFunction();
+         if (function != null) {
+            return new IteratorMapper<>(closeableIterator, function);
+         } else {
+            return closeableIterator;
+         }
+      }
    }
 
-   Iterator<R> remoteIterator() {
-      BlockingQueue<R> queue = new ArrayBlockingQueue<>(distributedBatchSize);
+   interface PublisherDecorator<S> {
+      Publisher<S> decorateRemote(ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher);
+      Publisher<S> decorateLocal(ConsistentHash beginningCh, boolean onlyLocal, IntSet segmentsToFilter,
+            Publisher<S> localPublisher);
+   }
 
-      final AtomicBoolean complete = new AtomicBoolean();
+   private static class IdentityPublisherDecorator<S, R> implements PublisherDecorator<S> {
+      private static final IdentityPublisherDecorator decorator = new IdentityPublisherDecorator();
+      private IdentityPublisherDecorator() { }
 
-      Lock nextLock = new ReentrantLock();
-      Condition nextCondition = nextLock.newCondition();
-
-      Consumer<R> consumer = new HandOffConsumer<>(queue, complete, nextLock, nextCondition);
-
-      IteratorSupplier<R> supplier = new IteratorSupplier<>(queue, complete, nextLock, nextCondition, csm);
-
-      boolean iteratorParallelDistribute = parallelDistribution == null ? false : parallelDistribution;
-
-      if (rehashAware) {
-         rehashAwareIteration(complete, consumer, supplier, iteratorParallelDistribute);
-      } else {
-         ignoreRehashIteration(consumer, supplier, iteratorParallelDistribute);
+      static <S, R> IdentityPublisherDecorator<S, R> getInstance() {
+         return decorator;
       }
 
-      CloseableIterator<R> closeableIterator = new CloseableSuppliedIterator<>(supplier);
-      onClose(supplier::close);
-      return closeableIterator;
+      @Override
+      public Publisher<S> decorateRemote(ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher) {
+         return remotePublisher;
+      }
+
+      @Override
+      public Publisher<S> decorateLocal(ConsistentHash beginningCh, boolean onlyLocal, IntSet segmentsToFilter,
+            Publisher<S> localPublisher) {
+         return localPublisher;
+      }
    }
 
-   private void ignoreRehashIteration(Consumer<R> consumer, IteratorSupplier<R> supplier, boolean iteratorParallelDistribute) {
-      CollectionConsumer<R> remoteResults = new CollectionConsumer<>(consumer);
-      ConsistentHash ch = dm.getWriteConsistentHash();
+   private class RehashPublisherDecorator<S> implements PublisherDecorator<S> {
+      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments;
+      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments;
+      private final Consumer<Object> keyConsumer;
 
-      boolean runLocal = ch.getMembers().contains(localAddress);
-      boolean stayLocal = runLocal && segmentsToFilter != null
-              && ch.getSegmentsForOwner(localAddress).containsAll(segmentsToFilter);
+      RehashPublisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
+         this.completedSegments = completedSegments;
+         this.lostSegments = lostSegments;
+         this.keyConsumer = keyConsumer;
+      }
 
-      NoMapIteratorOperation<?, R> op = new NoMapIteratorOperation<>(intermediateOperations, supplierForSegments(ch,
-              segmentsToFilter, null, !stayLocal), distributedBatchSize);
+      @Override
+      public Publisher<S> decorateRemote(ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher) {
+         Publisher<S> convertedPublisher = s -> remotePublisher.subscribe(s, completedSegments, lostSegments);
+         return decorateBeforeReturn(convertedPublisher);
+      }
 
-      Thread thread = Thread.currentThread();
-      executor.execute(() -> {
-         try {
-            log.tracef("Thread %s submitted iterator request for stream", thread);
-
-            if (!stayLocal) {
-               Object id = csm.remoteStreamOperation(iteratorParallelDistribute, parallel, ch, segmentsToFilter,
-                       keysToFilter, Collections.<Object, Set<R>>emptyMap(), includeLoader, op, remoteResults);
-               // Make sure to run this after we submit to the manager so it can process the other nodes
-               // asynchronously with the local operation
-               Collection<R> localValue = op.performOperation(remoteResults);
-               remoteResults.onCompletion(null, Collections.emptySet(), localValue);
-               if (id != null) {
-                  supplier.pending = id;
-                  try {
-                     try {
-                        if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
-                           throw new TimeoutException();
-                        }
-                     } catch (InterruptedException e) {
-                        throw new CacheException(e);
-                     }
-
-                  } finally {
-                     csm.forgetOperation(id);
-                  }
-               }
+      @Override
+      public Publisher<S> decorateLocal(ConsistentHash beginningCh, boolean onlyLocal, IntSet segmentsToFilter,
+            Publisher<S> localPublisher) {
+         Publisher<S> convertedPublisher = Flowable.fromPublisher(localPublisher).doOnComplete(() -> {
+            IntSet ourSegments;
+            if (onlyLocal) {
+               ourSegments = SmallIntSet.from(beginningCh.getSegmentsForOwner(localAddress));
             } else {
-               Collection<R> localValue = op.performOperation(remoteResults);
-               remoteResults.onCompletion(null, Collections.emptySet(), localValue);
+               ourSegments = SmallIntSet.from(beginningCh.getPrimarySegmentsForOwner(localAddress));
             }
-            supplier.close();
-         } catch (CacheException e) {
-            log.trace("Encountered local cache exception for stream", e);
-            supplier.close(e);
-         } catch (Throwable t) {
-            log.trace("Encountered local throwable for stream", t);
-            supplier.close(new CacheException(t));
-         }
-      });
+            ourSegments.retainAll(segmentsToFilter);
+            // This will notify both completed and suspect of segments that may not even exist or were completed before
+            // on a rehash
+            if (dm.getReadConsistentHash().equals(beginningCh)) {
+               log.tracef("Local iterator has completed segments %s", ourSegments);
+               completedSegments.accept((Supplier<PrimitiveIterator.OfInt>) ourSegments::iterator);
+            } else {
+               log.tracef("Local iterator segments %s are all suspect as consistent hash has changed", ourSegments);
+               lostSegments.accept((Supplier<PrimitiveIterator.OfInt>) ourSegments::iterator);
+            }
+         });
+         return decorateBeforeReturn(convertedPublisher);
+      }
+
+      protected Publisher<S> decorateBeforeReturn(Publisher<S> publisher) {
+         return iteratorOperation.handlePublisher(publisher, keyConsumer);
+      }
    }
 
-   private void rehashAwareIteration(AtomicBoolean complete, Consumer<R> consumer, IteratorSupplier<R> supplier, boolean iteratorParallelDistribute) {
-      ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
-      SegmentListenerNotifier<R> listenerNotifier;
-      if (segmentCompletionListener != null) {
-         listenerNotifier = new SegmentListenerNotifier<>(
-                 segmentCompletionListener);
-         supplier.setConsumer(listenerNotifier);
-      } else {
-         listenerNotifier = null;
-      }
-      KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(keyPartitioner,
-            segmentInfoCH.getNumSegments(), iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
-                                                                         listenerNotifier);
-      Thread thread = Thread.currentThread();
-      executor.execute(() -> {
-         try {
-            log.tracef("Thread %s submitted iterator request for stream", thread);
-            Set<Integer> segmentsToProcess = segmentsToFilter == null ?
-                                             new RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
-            do {
-               LocalizedCacheTopology cacheTopology = dm.getCacheTopology();
-               ConsistentHash ch = cacheTopology.getReadConsistentHash();
-               boolean runLocal = ch.getMembers().contains(localAddress);
-               Set<Integer> segments;
-               Set<Object> excludedKeys;
-               boolean stayLocal = false;
-               if (runLocal) {
-                  Set<Integer> segmentsForOwner = ch.getSegmentsForOwner(localAddress);
-                  // If we own all of the segments locally, even as backup, we don't want the iterator to go remotely
-                  stayLocal = segmentsForOwner.containsAll(segmentsToProcess);
-                  if (stayLocal) {
-                     segments = segmentsToProcess;
-                  } else {
-                     segments = ch.getPrimarySegmentsForOwner(localAddress).stream()
-                             .filter(segmentsToProcess::contains).collect(Collectors.toSet());
-                  }
+   private class RehashIterator<S> extends AbstractIterator<S> implements CloseableIterator<S> {
+      private final AtomicReferenceArray<Set<Object>> receivedKeys;
+      private final Iterable<IntermediateOperation> intermediateOperations;
+      private final IntSet segmentsToUse;
+      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedHandler;
 
-                  excludedKeys = segments.stream().flatMap(s -> results.referenceArray.get(s).stream())
-                          .collect(Collectors.toSet());
-               } else {
-                  segments = null;
-                  excludedKeys = Collections.emptySet();
+      private CloseableIterator<S> currentIterator;
+
+      private RehashIterator(Iterable<IntermediateOperation> intermediateOperations) {
+         this.intermediateOperations = intermediateOperations;
+         int maxSegment = dm.getCacheTopology().getCurrentCH().getNumSegments();
+         if (segmentsToFilter == null) {
+            // We can't use RangeSet as we have to modify this IntSet
+            segmentsToUse = new SmallIntSet(maxSegment);
+            for (int i = 0; i < maxSegment; ++i) {
+               segmentsToUse.set(i);
+            }
+         } else {
+            // Need to make copy as we will modify this below
+            segmentsToUse = new SmallIntSet(segmentsToFilter);
+         }
+
+         // TODO: we could optimize this array (make smaller) if we don't require all segments
+         receivedKeys = new AtomicReferenceArray<>(maxSegment);
+         for (int i = 0; i < receivedKeys.length(); ++i) {
+            // Only 1 thread would be adding to a given set a time (a thread will only touch a subset of segments)
+            receivedKeys.set(i, new HashSet<>());
+         }
+
+         completedHandler = completed -> {
+            IntSet intSet;
+            if (log.isTraceEnabled()) {
+               intSet = new SmallIntSet();
+            } else {
+               intSet = null;
+            }
+            // For each completed segment we remove that segment and decrement our counter
+            completed.get().forEachRemaining((int i) -> {
+               // This way keys are able to be GC'd
+               receivedKeys.set(i, null);
+               if (intSet != null) {
+                  intSet.set(i);
                }
-               KeyTrackingTerminalOperation<Object, R, Object> op = iteratorOperation.getOperation(
-                       intermediateOperations, supplierForSegments(ch, segmentsToProcess, excludedKeys, !stayLocal),
-                       distributedBatchSize);
-               if (!stayLocal) {
-                  Object id = csm.remoteStreamOperationRehashAware(iteratorParallelDistribute, parallel, ch,
-                          segmentsToProcess, keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray),
-                          includeLoader, op, results);
-                  if (id != null) {
-                     supplier.pending = id;
-                  }
-                  try {
-                     if (runLocal) {
-                        performLocalRehashAwareOperation(results, segmentsToProcess, ch, segments, op,
-                                () -> ch.getPrimarySegmentsForOwner(localAddress), id);
-                     }
-                     if (id != null) {
-                        try {
-                           if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
-                              throw new TimeoutException();
-                           }
-                        } catch (InterruptedException e) {
-                           throw new CacheException(e);
+               // in case if multiple responses occur (IntSet impl are not concurrent)
+               synchronized (segmentsToUse) {
+                  segmentsToUse.remove(i);
+               }
+            });
+
+            if (intSet != null) {
+               log.tracef("Remote rehash iterator completed segments %s", intSet);
+            }
+         };
+      }
+
+      @Override
+      protected S getNext() {
+         do {
+            if (currentIterator == null) {
+               log.tracef("Creating rehash iterator for segments %s", segmentsToUse);
+               currentIterator = nonRehashRemoteIterator(segmentsToUse, receivedKeys::get,
+                     publisherDecorator(completedHandler, lostSegments -> {
+                     }, k -> {
+                        // Every time a key is retrieved from iterator we add it to the keys received
+                        // Then when we retry we exclude those keys to keep out duplicates
+                        Set<Object> set = receivedKeys.get(keyPartitioner.getSegment(k));
+                        if (set != null) {
+                           set.add(k);
                         }
-                     }
-                     segmentsToProcess = segmentsToProcess(supplier, results, segmentsToProcess, id, cacheTopology.getTopologyId());
-                  } finally {
-                     csm.forgetOperation(id);
-                  }
-               } else {
-                  performLocalRehashAwareOperation(results, segmentsToProcess, ch, segments, op,
-                          () -> ch.getSegmentsForOwner(localAddress), null);
-                  segmentsToProcess = segmentsToProcess(supplier, results, segmentsToProcess, null, cacheTopology.getTopologyId());
-               }
-            } while (!complete.get());
-         } catch (CacheException e) {
-            log.trace("Encountered local cache exception for stream", e);
-            supplier.close(e);
-         } catch (Throwable t) {
-            log.trace("Encountered local throwable for stream", t);
-            supplier.close(new CacheException(t));
-         }
-      });
-   }
+                     }), intermediateOperations);
 
-   private Set<Integer> segmentsToProcess(IteratorSupplier<R> supplier, KeyTrackingConsumer<Object, R> results,
-                                          Set<Integer> segmentsToProcess, Object id, int topologyId) {
-      String strId = id == null ? "local" : id.toString();
-      if (!results.lostSegments.isEmpty()) {
-         segmentsToProcess = new HashSet<>(results.lostSegments);
-         results.lostSegments.clear();
-         log.tracef("Found %s lost segments for %s", segmentsToProcess, strId);
-         if (results.requiresNextTopology) {
-            try {
-               stateTransferLock.waitForTopology(topologyId + 1, timeout, timeoutUnit);
-            } catch (InterruptedException | java.util.concurrent.TimeoutException e) {
-               throw new CacheException(e);
             }
-         }
-      } else {
-         supplier.close();
-         log.tracef("Finished rehash aware operation for %s", strId);
-      }
-      return segmentsToProcess;
-   }
-
-   private void performLocalRehashAwareOperation(KeyTrackingConsumer<Object, R> results,
-                                                 Set<Integer> segmentsToProcess,
-                                                 ConsistentHash ch,
-                                                 Set<Integer> segments,
-                                                 KeyTrackingTerminalOperation<Object, R, Object> op,
-                                                 Supplier<Set<Integer>> ownedSegmentsSupplier,
-                                                 Object id) {
-      Collection<CacheEntry<Object, Object>> localValue = op.performOperationRehashAware(results);
-      // TODO: we can do this more efficiently - this hampers performance during rehash
-      if (dm.getReadConsistentHash().equals(ch)) {
-         log.tracef("Found local values %s for id %s", localValue.size(), id);
-         results.onCompletion(null, segments, localValue);
-      } else {
-         Set<Integer> ourSegments = ownedSegmentsSupplier.get();
-         Set<Integer> lostSegments = ourSegments.stream().filter(segmentsToProcess::contains).collect(Collectors.toSet());
-         log.tracef("CH changed - making %s segments suspect for identifier %s", lostSegments, id);
-         results.onSegmentsLost(lostSegments);
-      }
-   }
-
-   static class HandOffConsumer<R> implements Consumer<R> {
-      private final BlockingQueue<R> queue;
-      private final AtomicBoolean completed;
-      private final Lock nextLock;
-      private final Condition nextCondition;
-
-      HandOffConsumer(BlockingQueue<R> queue, AtomicBoolean completed, Lock nextLock, Condition nextCondition) {
-         this.queue = queue;
-         this.completed = completed;
-         this.nextLock = nextLock;
-         this.nextCondition = nextCondition;
-      }
-
-      @Override
-      public void accept(R rs) {
-         // TODO: we don't awake people if they are waiting until we fill up the queue or process retrieves all values
-         // is this the reason for slowdown?
-         if (!queue.offer(rs)) {
-            if (!completed.get()) {
-               // Signal anyone waiting for values to consume from the queue
-               nextLock.lock();
-               try {
-                  nextCondition.signalAll();
-               } finally {
-                  nextLock.unlock();
-               }
-               while (!completed.get()) {
-                  // We keep trying to offer the value until it takes it.  In this case we check the completed after
-                  // each time to make sure the iterator wasn't closed early
-                  try {
-                     if (queue.offer(rs, 100, TimeUnit.MILLISECONDS)) {
-                        break;
-                     }
-                  } catch (InterruptedException e) {
-                     throw new CacheException(e);
-                  }
-               }
+            if (currentIterator.hasNext()) {
+               return currentIterator.next();
+            } else {
+               // Force new iterator once we have exhausted this one (if we have segments left)
+               currentIterator = null;
             }
-         }
-      }
-   }
+         } while (!segmentsToUse.isEmpty());
 
-   static class SegmentListenerNotifier<T> implements Consumer<T> {
-      private final SegmentCompletionListener listener;
-      // we know the objects will always be ==
-      private final Map<T, Set<Integer>> segmentsByObject = new IdentityHashMap<>();
-
-      SegmentListenerNotifier(SegmentCompletionListener listener) {
-         this.listener = listener;
+         return null;
       }
 
-      @Override
-      public void accept(T t) {
-         Set<Integer> segments = segmentsByObject.remove(t);
-         if (segments != null) {
-            listener.segmentCompleted(segments);
-         }
-      }
-
-      public void addSegmentsForObject(T object, Set<Integer> segments) {
-         segmentsByObject.put(object, segments);
-      }
-
-      public void completeSegmentsNoResults(Set<Integer> segments) {
-         listener.segmentCompleted(segments);
-      }
-   }
-
-   static class IteratorSupplier<R> implements CloseableSupplier<R> {
-      private final BlockingQueue<R> queue;
-      private final AtomicBoolean completed;
-      private final Lock nextLock;
-      private final Condition nextCondition;
-      private final ClusterStreamManager<?> clusterStreamManager;
-
-      CacheException exception;
-      volatile Object pending;
-
-      private Consumer<R> consumer;
-
-      IteratorSupplier(BlockingQueue<R> queue, AtomicBoolean completed, Lock nextLock, Condition nextCondition,
-              ClusterStreamManager<?> clusterStreamManager) {
-         this.queue = queue;
-         this.completed = completed;
-         this.nextLock = nextLock;
-         this.nextCondition = nextCondition;
-         this.clusterStreamManager = clusterStreamManager;
+      PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
+         return new RehashPublisherDecorator<>(completedSegments, lostSegments, keyConsumer);
       }
 
       @Override
       public void close() {
-         close(null);
-      }
-
-      public void close(CacheException e) {
-         nextLock.lock();
-         try {
-            if (!completed.getAndSet(true)) {
-               if (e != null) {
-                  exception = e;
-               }
-            }
-            if (pending != null) {
-               clusterStreamManager.forgetOperation(pending);
-               pending = null;
-            }
-            nextCondition.signalAll();
-         } finally {
-            nextLock.unlock();
+         if (currentIterator != null) {
+            currentIterator.close();
          }
+      }
+   }
+
+   /**
+    * Rehash Iterator which also has a completion listener. We cannot allow a segment to complete
+    * until we are now releasing the last entry for a given set of segments
+    * @param <S>
+    */
+   private class CompletionListenerRehashIterator<S> extends RehashIterator<S> {
+      private final KeyWatchingCompletionListener completionListener;
+
+      private CompletionListenerRehashIterator(Iterable<IntermediateOperation> intermediateOperations,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> completionListener) {
+         super(intermediateOperations);
+         this.completionListener = new KeyWatchingCompletionListener(completionListener);
       }
 
       @Override
-      public R get() {
-         R entry = queue.poll();
-         if (entry == null) {
-            if (completed.get()) {
-               if (exception != null) {
-                  throw exception;
-               } else if ((entry = queue.poll()) != null) {
-                  // We check the queue one last time to make sure we didn't have a concurrent queue addition and
-                  // completed iterator
-                  if (consumer != null) {
-                     consumer.accept(entry);
-                  }
-                  return entry;
-               }
-               return null;
-            }
-            nextLock.lock();
-            try {
-               boolean interrupted = false;
-               while (!completed.get()) {
-                  // We should check to make sure nothing was added to the queue as well before sleeping
-                  if ((entry = queue.poll()) != null) {
-                     break;
-                  }
-                  try {
-                     nextCondition.await(100, TimeUnit.MILLISECONDS);
-                  } catch (InterruptedException e) {
-                     // If interrupted, we just loop back around
-                     interrupted = true;
-                  }
-               }
-               if (entry == null) {
-                  // If there is no entry and we are completed check one last time if there are entries in the queue
-                  // It is possible for entries to be added to the queue and the iterator completed at the same time.
-                  // Completed is a sign of either 3 things: all entries have been retrieved (what this case is for),
-                  // an exception has been found in processing, or the user has manually closed the iterator.  In the
-                  // latter 2 cases no additional entries are added to the queue since processing is stopped, therefore
-                  // we can just process the rest of the elements in the queue with no worry.
-                  entry = queue.poll();
-                  if (entry == null) {
-                     if (exception != null) {
-                        throw exception;
-                     }
-                     return null;
-                  }
-               } else if (interrupted) {
-                  // Now reset the interrupt state before returning
-                  Thread.currentThread().interrupt();
-               }
-            } finally {
-               nextLock.unlock();
-            }
+      protected S getNext() {
+         S next = super.getNext();
+         if (next != null) {
+            completionListener.valueIterated(next);
+         } else {
+            completionListener.completed();
          }
-         if (consumer != null) {
-            consumer.accept(entry);
-         }
-         return entry;
+         return next;
       }
 
-      public void setConsumer(Consumer<R> consumer) {
-         this.consumer = consumer;
+      @Override
+      PublisherDecorator<S> publisherDecorator(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments, Consumer<Object> keyConsumer) {
+         Consumer<? super Supplier<PrimitiveIterator.OfInt>> ourCompleted = i -> {
+            completionListener.segmentsEncountered(i);
+            completedSegments.accept(i);
+         };
+         return new RehashPublisherDecorator<S>(ourCompleted, lostSegments, keyConsumer) {
+            @Override
+            protected Publisher<S> decorateBeforeReturn(Publisher<S> publisher) {
+               return Flowable.fromPublisher(super.decorateBeforeReturn(publisher)).doOnNext(
+                     completionListener::valueAdded);
+            }
+         };
       }
+   }
+
+   /**
+    * Only notifies a completion listener when the last key for a segment has been found. The last key for a segment
+    * is assumed to be the last key seen {@link KeyWatchingCompletionListener#valueAdded(Object)} before segments
+    * are encountered {@link KeyWatchingCompletionListener#segmentsEncountered(Supplier)}.
+    */
+   private class KeyWatchingCompletionListener {
+      private final AtomicReference<Object> currentKey = new AtomicReference<>();
+      private final Map<Object, Supplier<PrimitiveIterator.OfInt>> pendingSegments = new ConcurrentHashMap<>();
+      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> completionListener;
+      // The next 2 variables are possible assuming that the iterator is not used concurrently. This way we don't
+      // have to allocate them on every entry iterated
+      private final ByRef<Supplier<PrimitiveIterator.OfInt>> ref = new ByRef<>(null);
+      private final BiFunction<Object, Supplier<PrimitiveIterator.OfInt>, Supplier<PrimitiveIterator.OfInt>> iteratorMapping;
+
+      private KeyWatchingCompletionListener(Consumer<? super Supplier<PrimitiveIterator.OfInt>> completionListener) {
+         this.completionListener = completionListener;
+         this.iteratorMapping = (k, v) -> {
+            if (v != null) {
+               ref.set(v);
+            }
+            currentKey.compareAndSet(k, null);
+            return null;
+         };
+      }
+
+      public void valueAdded(Object key) {
+         currentKey.set(key);
+      }
+
+      public void valueIterated(Object key) {
+         pendingSegments.compute(key, iteratorMapping);
+         if (ref.get() != null) {
+            completionListener.accept(ref.get());
+         }
+      }
+
+      private IntStream toStream(PrimitiveIterator.OfInt iter) {
+         return StreamSupport.intStream(Spliterators.spliteratorUnknownSize(iter,
+               Spliterator.DISTINCT | Spliterator.NONNULL), false);
+      }
+
+      public void segmentsEncountered(Supplier<PrimitiveIterator.OfInt> segments) {
+         // This code assumes that valueAdded and segmentsEncountered are not invoked concurrently and that all values
+         // added for a response before the segments are completed.
+         // The valueIterated method can be invoked at any point however.
+         // See ClusterStreamManagerImpl$ClusterStreamSubscription.sendRequest where the added and segments are called into
+         AtomicBoolean shouldNotify = new AtomicBoolean(true);
+         Object key = currentKey.get();
+         if (key != null) {
+            pendingSegments.compute(key, (k, v) -> {
+               // This check is if iterator caught up to us
+               if (currentKey.get() == null) {
+                  return null;
+               }
+               shouldNotify.set(false);
+               if (v == null) {
+                  return segments;
+               } else {
+                  // This is ugly, but we shouldn't hit this often (need a response with no entries and completed
+                  // segments and iterator that hasn't caught up)
+                  return () -> Stream.of(segments, v).flatMapToInt(s -> toStream(s.get())).iterator();
+               }
+            });
+         }
+         if (shouldNotify.get()) {
+            completionListener.accept(segments);
+         }
+      }
+
+      public void completed() {
+         pendingSegments.forEach((k, v) -> completionListener.accept(v));
+      }
+   }
+
+   <S> Publisher<S> localPublisher(IntSet segmentsToFilter, ConsistentHash ch, Set<Object> excludedKeys,
+         Iterable<IntermediateOperation> intermediateOperations, boolean stayLocal) {
+      Supplier<Stream<CacheEntry>> supplier = supplierForSegments(ch, segmentsToFilter, excludedKeys, stayLocal);
+      BaseStream stream = supplier.get();
+      for (IntermediateOperation intermediateOperation : intermediateOperations) {
+         stream = intermediateOperation.perform(stream);
+      }
+      BaseStream innerStream = stream;
+      return Flowable.fromIterable(() -> innerStream.iterator());
+   }
+
+   <S> CloseableIterator<S> nonRehashRemoteIterator(IntSet segmentsToFilter, IntFunction<Set<Object>> keysToExclude,
+         PublisherDecorator<S> publisherFunction, Iterable<IntermediateOperation> intermediateOperations) {
+      ConsistentHash ch = dm.getReadConsistentHash();
+
+      boolean stayLocal;
+
+      Publisher<S> localPublisher;
+
+      if (ch.getMembers().contains(localAddress)) {
+         Set<Integer> ownedSegments = ch.getSegmentsForOwner(localAddress);
+         if (segmentsToFilter == null) {
+            stayLocal = ownedSegments.size() == ch.getNumSegments();
+         } else {
+            stayLocal = ownedSegments.containsAll(segmentsToFilter);
+         }
+
+         Publisher<S> innerPublisher = localPublisher(segmentsToFilter, ch,
+               keysToExclude == null ? Collections.emptySet() :
+                     (segmentsToFilter == null ? IntStream.range(0, ch.getNumSegments()) : segmentsToFilter.intStream())
+                           .mapToObj(i -> keysToExclude.apply(i).stream()).flatMap(Function.identity()).collect(Collectors.toSet()),
+               intermediateOperations, !stayLocal);
+
+         localPublisher = publisherFunction.decorateLocal(ch, stayLocal, segmentsToFilter, innerPublisher);
+      } else {
+         stayLocal = false;
+         localPublisher = Flowable.empty();
+      }
+
+      if (stayLocal) {
+         return Closeables.iterator(Flowable.fromPublisher(localPublisher).blockingIterable().iterator());
+      } else {
+         Map<Address, IntSet> targets = determineTargets(ch, segmentsToFilter);
+         Iterator<Map.Entry<Address, IntSet>> targetIter = targets.entrySet().iterator();
+
+         // Parallel distribution is enabled by default, so it is only false if explicitly disabled
+         if (parallelDistribution == Boolean.FALSE) {
+            Supplier<Map.Entry<Address, IntSet>> supplier = () -> targetIter.hasNext() ? targetIter.next() : null;
+            ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher = csm.remoteIterationPublisher(false,
+                  supplier, keysToFilter, keysToExclude, includeLoader, intermediateOperations);
+            Publisher<S> publisher = publisherFunction.decorateRemote(remotePublisher);
+
+            // Local publisher is always last
+            return PriorityMergingProcessor.build(publisher, distributedBatchSize, localPublisher, 64).iterator();
+         } else {
+            // Have to synchronize supplier retrieval as it could be called from 2 threads at once
+            Supplier<Map.Entry<Address, IntSet>> supplier = () -> {
+               synchronized (this) {
+                  return targetIter.hasNext() ? targetIter.next() : null;
+               }
+            };
+            PriorityMergingProcessor.Builder<S> builder = PriorityMergingProcessor.builder();
+            // TODO: do we want to cap number of parallel distributions like this?
+            for (int i = 0; i < 4 && i < targets.size(); ++i) {
+               ClusterStreamManager.RemoteIteratorPublisher<S> remotePublisher = csm.remoteIterationPublisher(false,
+                     supplier, keysToFilter, keysToExclude, includeLoader, intermediateOperations);
+               Publisher<S> publisher = publisherFunction.decorateRemote(remotePublisher);
+
+               builder.addPublisher(publisher, distributedBatchSize);
+            }
+
+            // Local publisher is always last
+            return builder.addPublisher(localPublisher, 64).build().iterator();
+         }
+      }
+   }
+
+   private Map<Address, IntSet> determineTargets(ConsistentHash ch, IntSet segments) {
+      if (segments == null) {
+         segments = new RangeSet(ch.getNumSegments());
+      }
+      Map<Address, IntSet> targets = new HashMap<>();
+      PrimitiveIterator.OfInt segmentIterator = segments.iterator();
+      while (segmentIterator.hasNext()) {
+         int segment = segmentIterator.nextInt();
+         Address owner = ch.locatePrimaryOwnerForSegment(segment);
+         if (owner == null || owner.equals(localAddress)) {
+            continue;
+         }
+         IntSet targetSegments = targets.get(owner);
+         if (targetSegments == null) {
+            targetSegments = new SmallIntSet();
+            targets.put(owner, targetSegments);
+         }
+         targetSegments.set(segment);
+      }
+      return targets;
    }
 
    @Override
@@ -892,7 +930,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public CacheStream<R> filterKeySegments(Set<Integer> segments) {
-      segmentsToFilter = segments;
+      segmentsToFilter = SmallIntSet.from(segments);
       return this;
    }
 

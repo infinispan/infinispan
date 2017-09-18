@@ -2,12 +2,16 @@ package org.infinispan;
 
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.BaseStream;
+
+import org.infinispan.commons.util.SmallIntSet;
 
 /**
  * Interface that defines the base methods of all streams returned from a {@link Cache}.  This interface
@@ -78,6 +82,8 @@ public interface BaseCacheStream<T, S extends BaseStream<T, S>> extends BaseStre
     * is not specified.  Please see {@link CacheStream#iterator()} for more information.</p>
     * <p>Multiple listeners may be registered upon multiple invocations of this method.  The ordering of notified
     * listeners is not specified.</p>
+    * <p>This is only used if this stream did not invoke {@link BaseCacheStream#disableRehashAware()} and has no
+    * flat map based operations. If this is done no segments will be notified.</p>
     * @param listener The listener that will be called back as segments are completed.
     * @return a stream with the listener registered.
     */
@@ -113,11 +119,22 @@ public interface BaseCacheStream<T, S extends BaseStream<T, S>> extends BaseStre
     * @since 9.0
     */
    @FunctionalInterface
-   interface SegmentCompletionListener {
+   interface SegmentCompletionListener extends Consumer<Supplier<PrimitiveIterator.OfInt>> {
       /**
        * Method invoked when the segment has been found to be consumed properly by the terminal operation.
        * @param segments The segments that were completed
+       * @deprecated This method requires boxing for each segment. Please use {@link SegmentCompletionListener#accept(Supplier)} instead
        */
+      @Deprecated
       void segmentCompleted(Set<Integer> segments);
+
+      /**
+       * Invoked each time a given number of segments have completed and the terminal opearation has consumed all
+       * entries in the given segment
+       * @param segments The segments that were completed
+       */
+      default void accept(Supplier<PrimitiveIterator.OfInt> segments) {
+         segmentCompleted(SmallIntSet.of(segments.get()));
+      }
    }
 }

@@ -13,6 +13,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
+import org.infinispan.stream.impl.IteratorHandler;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.util.DefaultTimeService;
@@ -33,7 +34,7 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
 @DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, EventLogManager.class,
                               InboundInvocationHandler.class, PersistentUUIDManager.class,
                               RemoteCommandsFactory.class, TimeService.class, OffHeapEntryFactory.class,
-                              OffHeapMemoryAllocator.class})
+                              OffHeapMemoryAllocator.class, IteratorHandler.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
@@ -58,6 +59,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return componentType.cast(new OffHeapEntryFactoryImpl());
       else if (componentType.equals(OffHeapMemoryAllocator.class))
          return componentType.cast(new UnpooledOffHeapMemoryAllocator());
+      else if (componentType.equals(IteratorHandler.class))
+         return componentType.cast(new IteratorHandler());
 
       throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
    }

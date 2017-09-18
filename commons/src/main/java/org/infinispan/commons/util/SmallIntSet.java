@@ -5,8 +5,11 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
 import java.util.Set;
+import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 
@@ -19,7 +22,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
  * @author Dan Berindei
  * @since 9.0
  */
-public class SmallIntSet implements Set<Integer> {
+public class SmallIntSet implements IntSet {
    private final BitSet bitSet;
 
    public static SmallIntSet of(int i1) {
@@ -51,6 +54,25 @@ public class SmallIntSet implements Set<Integer> {
       return set;
    }
 
+   public static SmallIntSet of(PrimitiveIterator.OfInt iterator) {
+      SmallIntSet set = new SmallIntSet();
+      iterator.forEachRemaining((IntConsumer) set::set);
+      return set;
+   }
+
+   /**
+    * Either converts the given set to an IntSet if it is one or creates a new IntSet and copies the contents
+    * @param set
+    * @return
+    */
+   public static SmallIntSet from(Set<Integer> set) {
+      if (set instanceof SmallIntSet) {
+         return (SmallIntSet) set;
+      } else {
+         return new SmallIntSet(set);
+      }
+   }
+
    public SmallIntSet() {
       bitSet = new BitSet();
    }
@@ -70,6 +92,17 @@ public class SmallIntSet implements Set<Integer> {
    public SmallIntSet(Set<Integer> set) {
       bitSet = new BitSet();
       set.forEach(bitSet::set);
+   }
+
+   public SmallIntSet(IntSet set) {
+      if (set instanceof SmallIntSet) {
+         BitSet bitSet = ((SmallIntSet) set).bitSet;
+         this.bitSet = new BitSet(bitSet.size());
+         this.bitSet.or(bitSet);
+      } else {
+         this.bitSet = new BitSet();
+         set.iterator().forEachRemaining((IntConsumer) bitSet::set);
+      }
    }
 
    @Override
@@ -104,7 +137,43 @@ public class SmallIntSet implements Set<Integer> {
 
    @Override
    public PrimitiveIterator.OfInt iterator() {
-      return bitSet.stream().iterator();
+      return new BitSetIntIterator(bitSet);
+   }
+
+   static class BitSetIntIterator implements PrimitiveIterator.OfInt {
+      private final BitSet bitSet;
+      private int offset;
+      private int prev;
+
+      BitSetIntIterator(BitSet bitSet) {
+         this.bitSet = bitSet;
+         this.offset = bitSet.nextSetBit(0);
+         this.prev = -1;
+      }
+
+      @Override
+      public int nextInt() {
+         if (offset < 0) {
+            throw new NoSuchElementException();
+         }
+         prev = offset;
+         offset = bitSet.nextSetBit(offset + 1);
+         return prev;
+      }
+
+      @Override
+      public boolean hasNext() {
+         return offset >= 0;
+      }
+
+      @Override
+      public void remove() {
+         if (prev < 0) {
+            throw new IllegalStateException();
+         }
+         bitSet.clear(prev);
+         prev = -1;
+      }
    }
 
    @Override
@@ -191,16 +260,79 @@ public class SmallIntSet implements Set<Integer> {
    }
 
    @Override
+   public boolean containsAll(IntSet set) {
+      if (set instanceof SmallIntSet) {
+         BitSet bs = ((SmallIntSet) set).bitSet;
+         for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i+1)) {
+            if (!bitSet.get(i)) {
+               return false;
+            }
+         }
+         return true;
+      }
+      PrimitiveIterator.OfInt iter = set.iterator();
+      while (iter.hasNext()) {
+         if (!bitSet.get(iter.nextInt())) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   @Override
+   public boolean addAll(IntSet set) {
+      boolean modified = false;
+      if (set instanceof SmallIntSet) {
+         int countBefore = bitSet.cardinality();
+         bitSet.or(((SmallIntSet) set).bitSet);
+         modified = countBefore != bitSet.cardinality();
+
+      } else {
+         PrimitiveIterator.OfInt iter = set.iterator();
+         while (iter.hasNext()) {
+            modified |= add(iter.nextInt());
+         }
+      }
+
+      return modified;
+   }
+
+   @Override
    public boolean addAll(Collection<? extends Integer> c) {
       boolean modified = false;
-      for (Integer integer : c) {
-         modified |= add(integer);
+      if (c instanceof IntSet) {
+         return addAll((IntSet) c);
+      } else {
+         for (Integer integer : c) {
+            modified |= add(integer);
+         }
       }
       return modified;
    }
 
    @Override
+   public boolean removeAll(IntSet set) {
+      boolean modified = false;
+      if (set instanceof SmallIntSet) {
+         int countBefore = bitSet.cardinality();
+         bitSet.andNot(((SmallIntSet) set).bitSet);
+         modified = countBefore != bitSet.cardinality();
+
+      } else {
+         PrimitiveIterator.OfInt iter = set.iterator();
+         while (iter.hasNext()) {
+            modified |= remove(iter.nextInt());
+         }
+      }
+
+      return modified;
+   }
+
+   @Override
    public boolean removeAll(Collection<?> c) {
+      if (c instanceof IntSet) {
+         return removeAll((IntSet) c);
+      }
       boolean modified = false;
       for (Object integer : c) {
          modified |= remove(integer);
@@ -210,6 +342,21 @@ public class SmallIntSet implements Set<Integer> {
 
    @Override
    public boolean retainAll(Collection<?> c) {
+      if (c instanceof IntSet) {
+         return retainAll((IntSet) c);
+      }
+      boolean modified = false;
+      for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+         if (!c.contains(i)) {
+            bitSet.clear(i);
+            modified = true;
+         }
+      }
+      return modified;
+   }
+
+   @Override
+   public boolean retainAll(IntSet c) {
       boolean modified = false;
       for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
          if (!c.contains(i)) {
@@ -223,6 +370,11 @@ public class SmallIntSet implements Set<Integer> {
    @Override
    public void clear() {
       bitSet.clear();
+   }
+
+   @Override
+   public IntStream intStream() {
+      return bitSet.stream();
    }
 
    @Override

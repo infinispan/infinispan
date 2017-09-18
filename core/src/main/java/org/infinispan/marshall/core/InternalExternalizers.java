@@ -99,6 +99,9 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.stream.StreamMarshalling;
+import org.infinispan.stream.impl.AbstractCacheStream;
+import org.infinispan.stream.impl.EndIterator;
+import org.infinispan.stream.impl.IteratorResponses;
 import org.infinispan.stream.impl.intops.IntermediateOperationExternalizer;
 import org.infinispan.stream.impl.termop.TerminalOperationExternalizer;
 import org.infinispan.topology.CacheJoinInfo;
@@ -112,6 +115,7 @@ import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareDldGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareGlobalTransaction;
 import org.infinispan.transaction.xa.recovery.SerializableXid;
+import org.infinispan.util.IntSetExternalizer;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
@@ -244,10 +248,14 @@ final class InternalExternalizers {
       addInternalExternalizer(new WrappedByteArray.Externalizer(), exts);
       addInternalExternalizer(new XSiteState.XSiteStateExternalizer(), exts);
       addInternalExternalizer(new TriangleAckExternalizer(), exts);
+      addInternalExternalizer(new IteratorResponses.IteratorResponsesExternalizer(), exts);
+      addInternalExternalizer(new EndIterator.EndIteratorExternalizer(), exts);
       addInternalExternalizer(XidImpl.EXTERNALIZER, exts);
       addInternalExternalizer(new EncoderKeyMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderValueMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderEntryMapper.Externalizer(), exts);
+      addInternalExternalizer(new IntSetExternalizer(), exts);
+      addInternalExternalizer(new AbstractCacheStream.MapOpsExternalizer(), exts);
       addInternalExternalizer(new DataConversion.Externalizer(), exts);
 
       return exts;

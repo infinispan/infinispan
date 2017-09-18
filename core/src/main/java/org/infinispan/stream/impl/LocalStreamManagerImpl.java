@@ -17,7 +17,9 @@ import org.infinispan.CacheSet;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
@@ -34,6 +36,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
@@ -56,6 +59,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private RpcManager rpc;
    private CommandsFactory factory;
    private boolean hasLoader;
+   private IteratorHandler iteratorHandler;
 
    private Address localAddress;
    private CacheMode cacheMode;
@@ -71,7 +75,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       SegmentListener(Set<Integer> segments, SegmentAwareOperation op) {
          this.segments = new HashSet<>(segments);
          this.op = op;
-         this.segmentsLost = new HashSet<>();
+         this.segmentsLost = Collections.synchronizedSet(new HashSet<>());
       }
 
       public void localSegments(Set<Integer> localSegments) {
@@ -106,7 +110,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    @Inject
    public void inject(Cache<K, V> cache, ComponentRegistry registry, StateTransferManager stm, RpcManager rpc,
-           Configuration configuration, CommandsFactory factory) {
+           Configuration configuration, CommandsFactory factory, IteratorHandler iterationHandler) {
       // We need to unwrap the cache as a local stream should only deal with BOXED values and obviously only
       // with local entries.  Any mappings will be provided by the originator node in their intermediate operation
       // stack in the operation itself.
@@ -117,6 +121,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       this.rpc = rpc;
       this.factory = factory;
       this.hasLoader = configuration.persistence().usingStores();
+      this.iteratorHandler = iterationHandler;
    }
 
    @Start
@@ -188,6 +193,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          stream = stream.filter(entry -> entry.getValue() != null);
       }
       if (!keysToExclude.isEmpty()) {
+         log.warn("Added exclude filter");
          return stream.filter(e -> !keysToExclude.contains(e.getKey()));
       }
       return stream;
@@ -382,6 +388,47 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
             factory.buildStreamResponseCommand(requestId, true, listener.segmentsLost, results), rpc.getDefaultRpcOptions(true));
       handleResponseError(completableFuture, requestId, origin);
+   }
+
+   @Override
+   public IteratorResponse startIterator(Object requestId, Address origin, IntSet segments, Set<K> keysToInclude,
+         Set<K> keysToExclude, boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations, long batchSize) {
+      if (trace) {
+         log.tracef("Received rehash aware operation request to start iterator for id %s from %s for segments %s",
+               requestId, origin, segments);
+      }
+      CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
+      SegmentListener listener = new SegmentListener(segments, i -> true);
+
+      if (changeListener.putIfAbsent(requestId, listener) != null) {
+         throw new IllegalStateException("Iterator was already created for id " + requestId);
+      }
+
+      if (trace) {
+         log.tracef("Registered change listener for %s", requestId);
+      }
+      IteratorHandler.OnCloseIterator<Object> iterator = iteratorHandler.start(origin, () -> getRehashStream(cacheEntrySet,
+            requestId, listener, false, segments,
+            keysToInclude, keysToExclude), intermediateOperations, requestId);
+      // Have to clear out our change listener when the iterator is closed
+      iterator.onClose(() -> {
+         changeListener.remove(requestId);
+         // If the cache is no longer running, all segments have to be suspect
+         if (cache.getStatus() != ComponentStatus.RUNNING) {
+            if (trace) {
+               log.tracef("Cache status is no longer running after completing iterator, all segments are now suspect for %s", requestId);
+            }
+            listener.segmentsLost.addAll(segments);
+         }
+      });
+
+      return new IteratorResponses.RemoteResponse(iterator, listener.segmentsLost, batchSize);
+   }
+
+   @Override
+   public IteratorResponse continueIterator(Object requestId, long batchSize) {
+      CloseableIterator<Object> iterator = iteratorHandler.getIterator(requestId);
+      return new IteratorResponses.RemoteResponse(iterator, changeListener.get(requestId).segmentsLost, batchSize);
    }
 
    class NonRehashIntermediateCollector<R> implements KeyTrackingTerminalOperation.IntermediateCollector<R> {

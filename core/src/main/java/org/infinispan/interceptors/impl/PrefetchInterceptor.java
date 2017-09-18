@@ -569,13 +569,13 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, dm.getReadConsistentHash(),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, dm.getCacheTopology()::getSegment,
             () -> super.stream()), false, cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, dm.getReadConsistentHash(),
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, dm.getCacheTopology()::getSegment,
             () -> super.stream()), true, cache.getAdvancedCache().getComponentRegistry());
       }
    }
@@ -763,14 +763,14 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
 
       @Override
       public CacheStream<K> stream() {
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm.getReadConsistentHash(),
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm.getCacheTopology()::getSegment,
             () -> StreamSupport.stream(spliterator(), false)), false,
             cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
       public CacheStream<K> parallelStream() {
-         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm.getReadConsistentHash(),
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm.getCacheTopology()::getSegment,
             () -> StreamSupport.stream(spliterator(), false)), true,
             cache.getAdvancedCache().getComponentRegistry());
       }

@@ -1,18 +1,18 @@
 package org.infinispan.stream.impl.local;
 
-import java.util.BitSet;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.RemovableCloseableIterator;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -25,12 +25,12 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
    private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
-   private final ConsistentHash hash;
+   private final ToIntFunction<Object> toIntFunction;
    private final Supplier<Stream<K>> supplier;
 
-   public KeyStreamSupplier(Cache<K, V> cache, ConsistentHash hash, Supplier<Stream<K>> supplier) {
+   public KeyStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> toIntFunction, Supplier<Stream<K>> supplier) {
       this.cache = cache;
-      this.hash = hash;
+      this.toIntFunction = toIntFunction;
       this.supplier = supplier;
    }
 
@@ -48,14 +48,12 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
       } else {
          stream = supplier.get();
       }
-      if (segmentsToFilter != null && hash != null) {
+      if (segmentsToFilter != null && toIntFunction != null) {
          if (trace) {
             log.tracef("Applying segment filter %s", segmentsToFilter);
          }
-         BitSet bitSet = new BitSet(hash.getNumSegments());
-         segmentsToFilter.forEach(bitSet::set);
-         KeyPartitioner partitioner = cache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
-         stream = stream.filter(k -> bitSet.get(partitioner.getSegment(k)));
+         IntSet intSet = SmallIntSet.from(segmentsToFilter);
+         stream = stream.filter(k -> intSet.contains(toIntFunction.applyAsInt(k)));
       }
       return stream;
    }

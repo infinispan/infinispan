@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.PrimitiveIterator;
 import java.util.UUID;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,6 +29,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
@@ -693,13 +694,16 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
                                                        withSettings().defaultAnswer(listenerAnswer));
 
             doAnswer(i -> {
-               Set<Integer> segments = i.getArgument(0);
-               log.tracef("Completed segments %s", segments);
-               if (segments.contains(segment)) {
-                  wasLastSegment.set(true);
+               Supplier<PrimitiveIterator.OfInt> segments = i.getArgument(0);
+               log.tracef("Completed segments %s", segments.get());
+               PrimitiveIterator.OfInt iter = segments.get();
+               while (iter.hasNext()) {
+                  if (iter.nextInt() == segment) {
+                     wasLastSegment.set(true);
+                  }
                }
                return listenerAnswer.answer(i);
-            }).when(mockListener).segmentCompleted(Mockito.anySet());
+            }).when(mockListener).accept(Mockito.any(Supplier.class));
 
             doAnswer(i -> {
                Object k = i.getArgument(0);
