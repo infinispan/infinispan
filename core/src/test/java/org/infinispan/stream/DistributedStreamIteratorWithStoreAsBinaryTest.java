@@ -14,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.CacheFilters;
@@ -22,7 +23,6 @@ import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.transaction.TransactionMode;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
@@ -36,18 +36,13 @@ import org.testng.annotations.Test;
 @InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
 public class DistributedStreamIteratorWithStoreAsBinaryTest extends MultipleCacheManagersTest {
    protected final static String CACHE_NAME = "DistributedStreamIteratorWithStoreAsBinaryTest";
-   protected ConfigurationBuilder builderUsed;
-   protected final boolean tx = false;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      builderUsed = new ConfigurationBuilder();
+      ConfigurationBuilder builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode);
       builderUsed.clustering().hash().numOwners(1);
-      builderUsed.dataContainer().storeAsBinary().enabled(true).storeKeysAsBinary(true).storeValuesAsBinary(true);
-      if (tx) {
-         builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      }
+      builderUsed.memory().storageType(StorageType.BINARY);
       createClusteredCaches(3, CACHE_NAME, builderUsed);
    }
 

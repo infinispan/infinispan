@@ -29,6 +29,7 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -61,7 +62,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder replSync = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      replSync.dataContainer().storeAsBinary().enable();
+      replSync.dataContainer().memory().storageType(StorageType.BINARY);
 
       createClusteredCaches(2, "replSync", replSync);
    }
@@ -502,7 +503,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
     */
    public void testStores() {
       ConfigurationBuilder cacheCofig = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      cacheCofig.dataContainer().storeAsBinary().enable();
+      cacheCofig.dataContainer().memory().storageType(StorageType.BINARY);
       DummyInMemoryStoreConfigurationBuilder dimcs = new DummyInMemoryStoreConfigurationBuilder(cacheCofig.persistence());
       dimcs.storeName(getClass().getSimpleName());
       cacheCofig.persistence().addStore(dimcs);

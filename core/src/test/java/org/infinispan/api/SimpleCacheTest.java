@@ -11,6 +11,7 @@ import org.infinispan.configuration.CustomInterceptorConfigTest;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -68,7 +69,7 @@ public class SimpleCacheTest extends APINonTxTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class)
    public void testStoreAsBinary() {
-      new ConfigurationBuilder().simpleCache(true).storeAsBinary().enabled(true).build();
+      new ConfigurationBuilder().simpleCache(true).memory().storageType(StorageType.BINARY).build();
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

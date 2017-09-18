@@ -2,6 +2,7 @@ package org.infinispan.lucene.configuration;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -26,23 +27,21 @@ public class NotStoreAsBinaryValidationTest extends AbstractInfinispanTest {
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ERROR_MESSAGE_EXP)
    public void failOnStoreKeysAsBinary() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.storeAsBinary().enable().storeKeysAsBinary(true);
+      builder.memory().storageType(StorageType.BINARY);
       failIfStoreAsBinaryEnabled(builder);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ERROR_MESSAGE_EXP)
    public void failOnStoreValuesAsBinary() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.storeAsBinary().enable().storeValuesAsBinary(true);
+      builder.memory().storageType(StorageType.BINARY);
       failIfStoreAsBinaryEnabled(builder);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ERROR_MESSAGE_EXP)
    public void failOnStoreKeysAndValuesAsBinary() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.storeAsBinary().enable()
-            .storeValuesAsBinary(true)
-            .storeKeysAsBinary(true);
+      builder.memory().storageType(StorageType.BINARY);
       failIfStoreAsBinaryEnabled(builder);
    }
 

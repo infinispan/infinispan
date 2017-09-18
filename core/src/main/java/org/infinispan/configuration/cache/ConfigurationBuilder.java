@@ -245,7 +245,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             || !persistence.stores().isEmpty()
             || invocationBatching.isEnabled()
             || indexing.enabled()
-            || storeAsBinary.create().enabled()
+            || memory.create().storageType() == StorageType.BINARY
             || compatibility.create().enabled()) {
          throw log.notSupportedInSimpleCache();
       }

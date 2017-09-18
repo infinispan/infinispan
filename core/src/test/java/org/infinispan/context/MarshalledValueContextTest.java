@@ -10,6 +10,7 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
@@ -35,8 +36,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      c
-         .storeAsBinary().enable()
+      c.memory().storageType(StorageType.BINARY)
          .transaction().lockingMode(LockingMode.PESSIMISTIC);
       return TestCacheManagerFactory.createCacheManager(c);
    }

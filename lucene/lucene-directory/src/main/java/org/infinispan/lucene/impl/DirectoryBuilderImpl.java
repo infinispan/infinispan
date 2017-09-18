@@ -7,6 +7,7 @@ import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.lucene.directory.BuildContext;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
@@ -130,7 +131,7 @@ public class DirectoryBuilderImpl implements BuildContext {
       if (configuration.expiration().lifespan() != -1) {
          throw log.luceneStorageHavingLifespanSet(indexName, cache.getName());
       }
-      if (configuration.storeAsBinary().enabled()) {
+      if (configuration.memory().storageType() == StorageType.BINARY) {
          throw log.luceneStorageAsBinaryEnabled(indexName, cache.getName());
       }
       if (!Configurations.noDataLossOnJoiner(configuration)) {
