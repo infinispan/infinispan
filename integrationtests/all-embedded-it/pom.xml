@@ -23,6 +23,7 @@
          <artifactId>cache-api</artifactId>
          <scope>provided</scope>
       </dependency>
+      <!-- JPA test dependencies -->
       <dependency>
          <groupId>org.hibernate.javax.persistence</groupId>
          <artifactId>hibernate-jpa-2.1-api</artifactId>
@@ -32,7 +33,7 @@
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-core</artifactId>
       </dependency>
-
+      <!-- JDBC test dependecies -->
        <dependency>
            <groupId>com.mchange</groupId>
            <artifactId>c3p0</artifactId>

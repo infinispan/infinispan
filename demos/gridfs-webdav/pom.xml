@@ -21,7 +21,7 @@
          <groupId>net.sf.webdav-servlet</groupId>
          <artifactId>webdav-servlet</artifactId>
       </dependency>
-
+      <!-- required by Webdav-Servlet -->
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>

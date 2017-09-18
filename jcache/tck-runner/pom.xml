@@ -20,7 +20,7 @@
       <tck.mbean.builder>org.infinispan.jcache.tck.TckMbeanServerBuilder</tck.mbean.builder>
       <tck.mbean.server>TckMbeanServer</tck.mbean.server>
 
-
+      <!-- TODO: do they need to be different? -->
       <embedded.CacheManagerImpl>org.infinispan.jcache.embedded.JCacheManager</embedded.CacheManagerImpl>
       <embedded.CacheImpl>org.infinispan.jcache.embedded.JCache</embedded.CacheImpl>
       <embedded.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</embedded.CacheEntryImpl>

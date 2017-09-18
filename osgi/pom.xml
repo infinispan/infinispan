@@ -81,11 +81,11 @@
                   <Export-Package>
                      ${project.groupId}.osgi.*;version=${project.version};-split-package:=error
                   </Export-Package>
-                  <Import-Package>
+                  <Import-Package><![CDATA[
                   *
-
+                  ]]>
                   </Import-Package>
-
+                  <!-- Required for loading configuration files exported by other bundles. -->
                   <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>
             </configuration>

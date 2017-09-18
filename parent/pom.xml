@@ -83,6 +83,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
         <defaultJUnitGroups></defaultJUnitGroups>
+        <!-- unstable and stress because we can have them inside a functional class, for example -->
         <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
         <defaultExcludedJUnitGroups>org.infinispan.commons.test.categories.Unstable,org.infinispan.commons.test.categories.Stress,org.infinispan.commons.test.categories.Profiling</defaultExcludedJUnitGroups>
         <forkJvmArgs>-Xmx2G</forkJvmArgs>
@@ -102,7 +103,7 @@
         <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
         <module.skipTestComponentMetaDataProcessing>true</module.skipTestComponentMetaDataProcessing>
         <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
-
+        <!-- Versions for dependencies -->
         <version.ant>1.10.1</version.ant>
         <version.antlr>3.4</version.antlr>
         <version.maven.antlr3>3.5.2</version.maven.antlr3>
@@ -223,6 +224,7 @@
         <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
         <m2e.apt.activation>jdt_apt</m2e.apt.activation>
 
+        <!-- Semantic versioning defaults. -->
         <bnd.consumer.policy>$&lt;range;[==,+)&gt;</bnd.consumer.policy>
         <bnd.provider.policy>$&lt;range;[==,=+)&gt;</bnd.provider.policy>
     </properties>
@@ -1196,6 +1198,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
+                    <!-- See also reporting plugins -->
                     <version>3.8</version>
                     <configuration>
                         <minimumTokens>100</minimumTokens>
@@ -1268,6 +1271,7 @@
                         </dependency>
                     </dependencies>
                     <configuration>
+                        <!-- Location is relative to the classpath -->
                         <configLocation>checkstyle.xml</configLocation>
                         <consoleOutput>true</consoleOutput>
                         <failsOnError>true</failsOnError>
@@ -1417,6 +1421,7 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- IntelliJ project file generation -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-idea-plugin</artifactId>
@@ -1437,6 +1442,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
+                        <!-- Scan module for components and persist these into a data file, for use at runtime -->
                         <id>serialize_component_metadata</id>
                         <phase>process-classes</phase>
                         <goals>
@@ -1544,12 +1550,13 @@
                         <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                         <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <build.directory>${project.build.directory}</build.directory>
-
+                        <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
                         <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                     </systemPropertyVariables>
                     <trimStackTrace>false</trimStackTrace>
                     <properties>
                         <property>
+                            <!-- Deactivate the default listeners which may cause OOME. TeamCity uses the surefire generated XML file. -->
                             <name>usedefaultlisteners</name>
                             <value>false</value>
                         </property>
@@ -1558,7 +1565,7 @@
                             <value>${testNGListeners}</value>
                         </property>
                     </properties>
-
+                    <!-- -Dsun.nio.ch.bugLevel needed because of http://bugs.sun.com/view_bug.do?bug_id=6427854 -->
                     <argLine>${forkJvmArgs} ${jigsawForkJvmArgs} -Dsun.nio.ch.bugLevel</argLine>
                 </configuration>
             </plugin>
@@ -1749,6 +1756,7 @@
             </activation>
             <build>
                 <plugins>
+                    <!-- Make sure we generate src jars too -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
@@ -1767,6 +1775,7 @@
                 </plugins>
             </build>
             <properties>
+                <!-- By default create OSGI bundles -->
                 <packaging>bundle</packaging>
             </properties>
         </profile>
@@ -1800,6 +1809,7 @@
             <properties>
                 <defaultTestNGGroups>unstable</defaultTestNGGroups>
                 <defaultJUnitGroups>org.infinispan.commons.test.categories.Unstable</defaultJUnitGroups>
+                <!-- empty since we are not going to exclude any group -->
                 <defaultExcludedTestNGGroups/>
                 <defaultExcludedJUnitGroups/>
                 <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
@@ -1917,7 +1927,8 @@
             </activation>
             <build>
                 <plugins>
-
+                    <!-- Redefine surefire plugin to avoid external log4j settings
+                         not being discovered when passed as command line arguments -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -1950,6 +1961,7 @@
                         <artifactId>properties-maven-plugin</artifactId>
                         <version>1.0.0</version>
                         <executions>
+                            <!-- Copy the ant tasks jar. Needed for ts.jacoco.report-ant . -->
                             <execution>
                                 <goals>
                                     <goal>set-system-properties</goal>
@@ -1966,6 +1978,7 @@
                         </executions>
                     </plugin>
 
+                    <!-- Starting jacoco agent for recording code coverage. -->
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
@@ -1986,6 +1999,7 @@
                             </excludes>
                         </configuration>
                     </plugin>
+                    <!-- Overriding surefire configuration, for attaching jacoco agent to command line. -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>

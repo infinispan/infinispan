@@ -12,7 +12,7 @@
    <name>Infinispan Remote Query Server</name>
    <description>Infinispan Remote Query Server module</description>
 
-
+   <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>

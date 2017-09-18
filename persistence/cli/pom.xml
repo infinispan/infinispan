@@ -94,6 +94,10 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <!-- Remote JMX properties will only be properly applied when
+               passed via argLine. If passed via systemPropertyVariables,
+               they're applied too late for them to have an effect on the JVM
+               -->
                <argLine>
                   -Dcom.sun.management.jmxremote=true
                   -Djava.rmi.server.hostname=localhost

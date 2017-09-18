@@ -58,8 +58,10 @@
       <version.java>1.8</version.java>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+      <!-- Versions for plugins -->
       <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
 
+      <!-- Versions for dependencies -->
       <version.caffeine>2.4.0</version.caffeine>
       <version.protostream>4.1.0.Final</version.protostream>
       <version.aesh>0.66.13</version.aesh>
@@ -110,7 +112,7 @@
 
    <dependencyManagement>
       <dependencies>
-
+         <!-- Infinispan module versions -->
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
@@ -338,7 +340,7 @@
             <version>${project.version}</version>
          </dependency>
 
-
+         <!-- Infinispan aggregate jars -->
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-embedded</artifactId>
@@ -354,6 +356,8 @@
             <artifactId>infinispan-remote</artifactId>
             <version>${project.version}</version>
          </dependency>
+
+         <!-- Infinispan core modules dependencies -->
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cli</artifactId>
@@ -437,7 +441,7 @@
             <artifactId>hibernate-search-elasticsearch</artifactId>
             <version>${version.hibernate.search}</version>
          </dependency>
-
+         <!-- Infinispan Remote Query module dependencies -->
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
@@ -455,7 +459,7 @@
             <artifactId>sample-domain-implementation</artifactId>
             <version>${version.protostream}</version>
          </dependency>
-
+         <!-- Infinispan CDI module dependencies -->
          <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
@@ -467,13 +471,13 @@
                </exclusion>
             </exclusions>
          </dependency>
-
+         <!-- Infinispan JCache module dependencies -->
          <dependency>
             <groupId>javax.cache</groupId>
             <artifactId>cache-api</artifactId>
             <version>${version.javax.cache}</version>
          </dependency>
-
+         <!-- Infinispan Protocols module dependencies -->
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
@@ -494,7 +498,7 @@
             <artifactId>commons-pool</artifactId>
             <version>${version.commons.pool}</version>
          </dependency>
-
+         <!-- Other dependencies -->
          <dependency>
            <groupId>com.github.ben-manes.caffeine</groupId>
            <artifactId>caffeine</artifactId>
@@ -551,14 +555,15 @@
          </activation>
 
          <properties>
-
+            <!-- Eclipse doesn't handle well the dependency on uberjars for the modules which use them (e.g. demos).
+                 Mark the dependencies of the uberjar modules as not-optional when inside Eclipse. -->
             <uberjar.deps.optional>false</uberjar.deps.optional>
          </properties>
 
          <build>
             <pluginManagement>
                <plugins>
-
+                  <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
                   <plugin>
                      <groupId>org.eclipse.m2e</groupId>
                      <artifactId>lifecycle-mapping</artifactId>

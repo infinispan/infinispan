@@ -193,7 +193,7 @@
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
       </dependency>
-
+      <!-- Deps for the lucene module, will eventually be replaced by https://github.com/hibernate/lucene-modules -->
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-queryparser</artifactId>

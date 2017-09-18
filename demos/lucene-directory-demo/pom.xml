@@ -43,7 +43,7 @@
    <build>
       <plugins>
 
-
+         <!-- Creates executable scripts -->
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>appassembler-maven-plugin</artifactId>
@@ -59,7 +59,7 @@
             </configuration>
          </plugin>
 
-
+         <!-- Testing Configuration -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

@@ -106,7 +106,6 @@
          <version>${project.version}</version>
          <classifier>javadoc</classifier>
       </dependency>
-
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-javadoc-all</artifactId>
@@ -233,6 +232,7 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
                <execution>
+                  <!-- Build the Schema documentation -->
                   <id>xsdocgen</id>
                   <phase>package</phase>
                   <goals>
@@ -244,6 +244,7 @@
                         <echo message="Base dir: ${basedir}" />
                         <path id="xsd.fileset.path">
                            <fileset casesensitive="yes" dir="${basedir}/..">
+                              <!-- make sure core comes first -->
                               <include name="core/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                               <include name="persistence/*/target/classes/schema/*-${infinispan.core.schema.version}.xsd" />
                               <include name="spring/spring/src/main/resources/org/infinispan/spring/config/*-${infinispan.core.schema.version}.xsd" />
@@ -334,7 +335,7 @@
                <outputDirectory>${buildDirectory}/distribution</outputDirectory>
                <workDirectory>${buildDirectory}/assembly/work</workDirectory>
 
-
+               <!-- Do not attach ZIP files to the Maven repository -->
                <attach>false</attach>
             </configuration>
          </plugin>

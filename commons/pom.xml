@@ -89,11 +89,13 @@
          </resource>
       </resources>
       <plugins>
+         <!-- compiler to use -XDignore.symbol.file to suppress warnings regarding the use of sun.misc.Unsafe -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
                <compilerArgument combine.children="append">-XDignore.symbol.file</compilerArgument>
+               <!-- Forking is necessary to allow for the compiler args to be picked up. -->
                <fork combine.children="append">true</fork>
                <source>1.8</source>
                <target>1.8</target>
@@ -107,10 +109,14 @@
                   <Export-Package>
                      ${project.groupId}.commons.*;version=${project.version};-split-package:=error
                   </Export-Package>
-                  <Import-Package>
+                  <!-- Relax the versioning rule for osgi packages as a specific version is provided by the container and
+                       it might not match the one used to build. -->
+                  <Import-Package><![CDATA[
                   !sun.misc,
                   *
+                  ]]>
                   </Import-Package>
+                  <!-- Required for loading client classes. -->
                   <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>
             </configuration>
