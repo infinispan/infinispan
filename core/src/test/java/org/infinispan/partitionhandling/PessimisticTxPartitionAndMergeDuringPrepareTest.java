@@ -71,13 +71,18 @@ public class PessimisticTxPartitionAndMergeDuringPrepareTest extends BasePessimi
 
    @Override
    protected void checkLocksDuringPartition(SplitMode splitMode, KeyInfo keyInfo, boolean discard) {
-      //always locked: locks acquired in runtime
-      assertLocked(cache(1, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey1());
-      if (discard) {
-         //locks are acquired during runtime
-         assertLocked(cache(2, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey2());
+      if (splitMode == SplitMode.PRIMARY_OWNER_ISOLATED) {
+         //the majority partition, all the nodes involved prepare (i.e. one-phase-commit) the transaction
+         //the locks should be released (async) in all the nodes
+         assertEventuallyNotLocked(cache(0, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey1());
+         assertEventuallyNotLocked(cache(0, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey2());
+         assertEventuallyNotLocked(cache(1, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey1());
+         assertEventuallyNotLocked(cache(1, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey2());
+         assertEventuallyNotLocked(cache(3, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey1());
+         assertEventuallyNotLocked(cache(3, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey2());
       } else {
-         //prepare will succeed, but the locks are not released (the TxCompletionNotificationCommand will do it)
+         //on both caches, the key is locked and it is unlocked after the merge
+         assertLocked(cache(1, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey1());
          assertLocked(cache(2, PESSIMISTIC_TX_CACHE_NAME), keyInfo.getKey2());
       }
    }
