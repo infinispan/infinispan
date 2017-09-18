@@ -30,4 +30,10 @@ public class SingleJoinTest extends RehashTestBase {
       cacheManagers.add(joinerManager);
       caches.add(joiner);
    }
+
+   @Test(groups = "unstable", description = "ISPN-8276")
+   @Override
+   public void testNonTransactional() throws Throwable {
+      super.testNonTransactionalStress();
+   }
 }

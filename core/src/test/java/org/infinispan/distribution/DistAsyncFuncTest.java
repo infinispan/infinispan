@@ -139,4 +139,10 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
 
       waitForInvalidations();
    }
+
+   @Test(groups = "unstable", description = "ISPN-8298")
+   @Override
+   public void testLockedStreamSetValue() {
+      super.testLockedStreamSetValue();
+   }
 }
