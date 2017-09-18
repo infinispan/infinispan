@@ -29,10 +29,12 @@ public class OptimisticTxPartitionAndMergeDuringCommitTest extends BaseOptimisti
       doTest(SplitMode.BOTH_DEGRADED, false, false);
    }
 
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-8232")
    public void testOriginatorIsolatedPartitionWithDiscard() throws Exception {
       doTest(SplitMode.ORIGINATOR_ISOLATED, false, true);
    }
 
+   @Test(groups = "unstable", description = "https://issues.jboss.org/browse/ISPN-8232")
    public void testOriginatorIsolatedPartition() throws Exception {
       doTest(SplitMode.ORIGINATOR_ISOLATED, false, false);
    }
