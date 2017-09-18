@@ -1568,8 +1568,7 @@
                             <value>${testNGListeners}</value>
                         </property>
                     </properties>
-                    <!-- -Dsun.nio.ch.bugLevel needed because of http://bugs.sun.com/view_bug.do?bug_id=6427854 -->
-                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs} -Dsun.nio.ch.bugLevel</argLine>
+                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                 </configuration>
             </plugin>
 
@@ -1953,9 +1952,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <argLine combine.self="override">${forkJvmArgs} -Dsun.nio.ch.bugLevel
-                                ${jacoco.agent.argLine}
-                            </argLine>
+                            <argLine combine.self="override">${forkJvmArgs} ${jacoco.agent.argLine}</argLine>
                         </configuration>
                     </plugin>
 
