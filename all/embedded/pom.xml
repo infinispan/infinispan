@@ -98,6 +98,7 @@
          <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
+      <!-- These dependencies will be left in the rewritten pom -->
       <dependency>
          <groupId>org.jboss.spec.javax.transaction</groupId>
          <artifactId>jboss-transaction-api_1.1_spec</artifactId>
@@ -317,11 +318,13 @@
                   </goals>
                   <configuration>
                      <instructions>
+                        <!-- Inline the jar created by the maven-shade-plugin.  -->
                         <Include-Resource>
                            @${intermediary_jar_path},
                            /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml,
                            /features.xml=${project.basedir}/target/classes/features.xml
                         </Include-Resource>
+                        <!-- Define packages from dependencies, exported further by current bundle -->
                         <_exportcontents>
                            org.infinispan.*,
                            org.jboss.marshalling.*;version=${version.jboss.marshalling},

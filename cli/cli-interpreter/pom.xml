@@ -13,7 +13,7 @@
    <name>Infinispan CLI Interpreter</name>
    <description>Infinispan CLI Interpreter module</description>
 
-
+   <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
    </properties>

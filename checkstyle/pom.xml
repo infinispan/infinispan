@@ -23,6 +23,7 @@
          <version>8.1</version>
          <exclusions>
             <exclusion>
+               <!-- Excluding com.sun:tools since it causes errors when importing this module into an IDE on Windows (HSEARCH-1374) -->
                <groupId>com.sun</groupId>
                <artifactId>tools</artifactId>
             </exclusion>

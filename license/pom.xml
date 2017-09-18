@@ -48,7 +48,7 @@
       </plugins>
       <pluginManagement>
          <plugins>
-
+            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
             <plugin>
                <groupId>org.eclipse.m2e</groupId>
                <artifactId>lifecycle-mapping</artifactId>
@@ -81,8 +81,7 @@
       </pluginManagement>
    </build>
 
-
-
+   <!-- SCM and Distribution Management -->
    <scm>
       <connection>scm:git:git://github.com/infinispan/infinispan.git</connection>
       <developerConnection>scm:git:git://github.com/infinispan/infinispan.git</developerConnection>

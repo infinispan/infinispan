@@ -241,7 +241,8 @@
          </testResource>
       </testResources>
       <plugins>
-
+         <!-- IMPORTANT: generates META-INF/maven/dependencies.properties
+              required by PAX-EXAM framework -->
          <plugin>
             <groupId>org.apache.servicemix.tooling</groupId>
             <artifactId>depends-maven-plugin</artifactId>
@@ -329,6 +330,13 @@
                <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
             </configuration>
             <executions>
+               <!--
+               Make sure two containers are not started at the same time by separating the
+               PerSuite reactor tests from PerClass/PerMethod(default).
+
+               Note: @Category(PerSuite.class) needs to be specified in addition to the
+               @PaxExamReactor(PerSuite.class) annotation.
+               -->
                <execution>
                   <id>default-test</id>
                   <phase>test</phase>

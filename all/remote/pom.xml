@@ -264,10 +264,12 @@
                   </goals>
                   <configuration>
                      <instructions>
+                        <!-- Inline the jar created by the maven-shade-plugin. -->
                         <Include-Resource>
                            @${intermediary_jar_path},
                            /features.xml=${project.basedir}/target/classes/features.xml
                         </Include-Resource>
+                        <!-- Define packages from dependencies, exported further by current bundle -->
                         <_exportcontents>
                            org.infinispan.client.hotrod.*,
                            org.infinispan.commons.*,
