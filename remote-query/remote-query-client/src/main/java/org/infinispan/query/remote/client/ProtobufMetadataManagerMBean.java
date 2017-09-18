@@ -53,7 +53,7 @@ public interface ProtobufMetadataManagerMBean extends ProtobufMetadataManagerCon
    /**
     * Get the full names of all registered schema files.
     *
-    * @return the array of all registered schema file names, never null
+    * @return the array of all registered schema file names or an empty array if there are no files (never null)
     */
    String[] getProtofileNames();
 
@@ -66,9 +66,9 @@ public interface ProtobufMetadataManagerMBean extends ProtobufMetadataManagerCon
    String getProtofile(String fileName);
 
    /**
-    * Get the full names of all registered schema files.
+    * Get the full names of all files with errors.
     *
-    * @return the array of all registered schema file names, never null
+    * @return the array of all file names with errors or an empty array if there are no files with errors (never null)
     */
    String[] getFilesWithErrors();
 
