@@ -45,6 +45,7 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
       waitForClusterToForm();
    }
 
+   @Test(groups = "unstable", description = "ISPN-7682")
    public void testNodeLeavingDuringPutIfAbsent() throws Exception {
       ConcurrentMap<String, String> insertedValues = CollectionFactory.makeConcurrentMap();
       AtomicBoolean stop = new AtomicBoolean(false);

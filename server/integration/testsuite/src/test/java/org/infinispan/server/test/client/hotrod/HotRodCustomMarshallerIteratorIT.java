@@ -33,6 +33,7 @@ import org.infinispan.protostream.sampledomain.marshallers.GenderMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.UserMarshaller;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.server.test.category.HotRodSingleNode;
+import org.infinispan.server.test.category.Unstable;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -43,7 +44,6 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -55,8 +55,7 @@ import org.junit.runner.RunWith;
  * @since 8.0
  */
 @RunWith(Arquillian.class)
-@Category(HotRodSingleNode.class)
-@Ignore("ISPN-8001")
+@Category({HotRodSingleNode.class, Unstable.class}) // ISPN-8001
 public class HotRodCustomMarshallerIteratorIT {
 
    private static final String TO_STRING_FILTER_CONVERTER_FACTORY_NAME = "to-string-filter-converter";
