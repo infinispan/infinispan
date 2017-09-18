@@ -25,7 +25,7 @@ public class StoreAsBinaryConfigTest extends AbstractInfinispanTest {
 
    public void testBackwardCompatibility() {
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.storeAsBinary().enable();
+      c.memory().storageType(StorageType.BINARY);
       ecm = TestCacheManagerFactory.createCacheManager(c);
       assertEquals(StorageType.BINARY, ecm.getCache().getCacheConfiguration().memory().storageType());
    }

@@ -83,6 +83,7 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   @Deprecated
    public StoreAsBinaryConfigurationBuilder storeAsBinary() {
       return builder.storeAsBinary();
    }

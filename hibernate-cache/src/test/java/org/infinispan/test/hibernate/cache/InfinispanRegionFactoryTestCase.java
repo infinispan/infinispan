@@ -39,6 +39,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionType;
@@ -363,7 +364,7 @@ public class InfinispanRegionFactoryTestCase  {
 			AdvancedCache cache = region.getCache();
 			Configuration cacheCfg = cache.getCacheConfiguration();
 			assertEquals(CacheMode.REPL_SYNC, cacheCfg.clustering().cacheMode());
-			assertFalse( cacheCfg.storeAsBinary().enabled() );
+			assertTrue(cacheCfg.memory().storageType() != StorageType.BINARY);
 			assertFalse(cacheCfg.jmxStatistics().enabled());
 		} finally {
 			factory.stop();

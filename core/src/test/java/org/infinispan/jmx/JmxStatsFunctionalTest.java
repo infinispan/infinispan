@@ -13,6 +13,7 @@ import javax.management.ObjectName;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -298,9 +299,9 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       String jmxDomain = cm.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
       ConfigurationBuilder localCache = config();
-      localCache.storeAsBinary().enable();
+      localCache.memory().storageType(StorageType.BINARY);
       cm.defineConfiguration("local_cache1", localCache.build());
-      localCache.storeAsBinary().disable();
+      localCache.memory().storageType(StorageType.OBJECT);
       cm.defineConfiguration("local_cache2", localCache.build());
 
       cm.getCache("local_cache1");
@@ -310,8 +311,8 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       Properties props1 = (Properties) mBeanServer.getAttribute(getCacheObjectName(jmxDomain, "local_cache1(local)", "Cache"), "configurationAsProperties");
       Properties props2 = (Properties) mBeanServer.getAttribute(getCacheObjectName(jmxDomain, "local_cache2(local)", "Cache"), "configurationAsProperties");
       Properties propsGlobal = (Properties) mBeanServer.getAttribute(getCacheManagerObjectName(jmxDomain), "globalConfigurationAsProperties");
-      assert "true".equals(props1.getProperty("storeAsBinary.enabled"));
-      assert "false".equals(props2.getProperty("storeAsBinary.enabled"));
+      assert "BINARY".equals(props1.getProperty("memory.storageType"));
+      assert "OBJECT".equals(props2.getProperty("memory.storageType"));
       log.tracef("propsGlobal=%s", propsGlobal);
       assert "TESTVALUE1".equals(propsGlobal.getProperty("transport.siteId"));
       assert "TESTVALUE2".equals(propsGlobal.getProperty("transport.rackId"));

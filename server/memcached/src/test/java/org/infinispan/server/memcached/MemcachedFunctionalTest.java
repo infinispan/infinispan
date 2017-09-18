@@ -31,6 +31,7 @@ import org.infinispan.Version;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
@@ -560,15 +561,15 @@ public class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    public void testStoreAsBinaryOverride() {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.storeAsBinary().enable();
+      builder.memory().storageType(StorageType.BINARY);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
       Configuration cfg = builder.build();
       cm.defineConfiguration(new MemcachedServerConfigurationBuilder().build().defaultCacheName(), cfg);
-      assertTrue(cfg.storeAsBinary().enabled());
+      assertEquals(StorageType.BINARY, cfg.memory().storageType());
       MemcachedServer testServer = startMemcachedTextServer(cm, server.getPort() + 33);
       try {
          Cache memcachedCache = cm.getCache(testServer.getConfiguration().defaultCacheName());
-         assertFalse(memcachedCache.getCacheConfiguration().storeAsBinary().enabled());
+         assertEquals(StorageType.BINARY, memcachedCache.getCacheConfiguration().memory().storageType());
       } finally {
          cm.stop();
          testServer.stop();

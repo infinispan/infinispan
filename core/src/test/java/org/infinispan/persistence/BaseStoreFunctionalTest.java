@@ -23,6 +23,7 @@ import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -124,13 +125,13 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    public void testPreloadStoredAsBinary() {
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      createCacheStoreConfig(cb.persistence(), true).storeAsBinary().enable();
+      createCacheStoreConfig(cb.persistence(), true).memory().storageType(StorageType.BINARY);
       cacheManager.defineConfiguration("testPreloadStoredAsBinary", cb.build());
       Cache<String, Pojo> cache = cacheManager.getCache("testPreloadStoredAsBinary");
       cache.start();
 
       assert cache.getCacheConfiguration().persistence().preload();
-      assert cache.getCacheConfiguration().storeAsBinary().enabled();
+      assertEquals(StorageType.BINARY, cache.getCacheConfiguration().memory().storageType());
 
       cache.put("k1", new Pojo(1));
       cache.put("k2", new Pojo(2), 111111, TimeUnit.MILLISECONDS);
