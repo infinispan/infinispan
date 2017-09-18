@@ -36,7 +36,7 @@ public class InDoubtTxInfoImpl implements RecoveryManager.InDoubtTxInfo {
    public InDoubtTxInfoImpl(Xid xid, long internalId, Set<Integer> status) {
       this.xid = xid;
       this.internalId = internalId;
-      this.status = new SmallIntSet(status);
+      this.status = SmallIntSet.from(status);
    }
 
    public InDoubtTxInfoImpl(Xid xid, long internalId) {

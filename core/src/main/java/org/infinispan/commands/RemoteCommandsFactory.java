@@ -62,6 +62,9 @@ import org.infinispan.manager.impl.ReplicableCommandManagerFunction;
 import org.infinispan.manager.impl.ReplicableCommandRunnable;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.stream.impl.StreamIteratorCloseCommand;
+import org.infinispan.stream.impl.StreamIteratorNextCommand;
+import org.infinispan.stream.impl.StreamIteratorRequestCommand;
 import org.infinispan.stream.impl.StreamRequestCommand;
 import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.stream.impl.StreamSegmentResponseCommand;
@@ -314,6 +317,15 @@ public class RemoteCommandsFactory {
                break;
             case StreamResponseCommand.COMMAND_ID:
                command = new StreamResponseCommand(cacheName);
+               break;
+            case StreamIteratorRequestCommand.COMMAND_ID:
+               command = new StreamIteratorRequestCommand<>(cacheName);
+               break;
+            case StreamIteratorNextCommand.COMMAND_ID:
+               command = new StreamIteratorNextCommand(cacheName);
+               break;
+            case StreamIteratorCloseCommand.COMMAND_ID:
+               command = new StreamIteratorCloseCommand(cacheName);
                break;
             case BackupWriteRpcCommand.COMMAND_ID:
                command = new BackupWriteRpcCommand(cacheName);

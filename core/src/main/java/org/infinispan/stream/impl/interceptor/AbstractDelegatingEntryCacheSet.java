@@ -45,7 +45,7 @@ public abstract class AbstractDelegatingEntryCacheSet<K, V> extends AbstractDele
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = spliterator();
       CacheStream<CacheEntry<K, V>> stream = new LocalCacheStream<>(new EntryStreamSupplier<>(cache, dm != null ?
-              dm.getWriteConsistentHash() : null, () -> StreamSupport.stream(closeableSpliterator, false)), parallel,
+              dm.getCacheTopology()::getSegment : null, () -> StreamSupport.stream(closeableSpliterator, false)), parallel,
               cache.getAdvancedCache().getComponentRegistry());
       // We rely on the fact that on close returns the same instance
       stream.onClose(closeableSpliterator::close);

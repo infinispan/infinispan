@@ -4,9 +4,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
@@ -17,6 +20,8 @@ import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEv
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Cluster stream manager that also pays attention to partition status and properly closes iterators and throws
@@ -106,6 +111,14 @@ public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerI
       checkPartitionStatus();
       return super.remoteStreamOperationRehashAware(parallelDistribution, parallelStream, ch, segments, keysToInclude,
               keysToExclude, includeLoader, operation, callback);
+   }
+
+   @Override
+   public <E> RemoteIteratorPublisher<E> remoteIterationPublisher(boolean parallelStream,
+         Supplier<Map.Entry<Address, IntSet>> targets, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
+         boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations) {
+      checkPartitionStatus();
+      return super.remoteIterationPublisher(parallelStream, targets, keysToInclude, keysToExclude, includeLoader, intermediateOperations);
    }
 
    private void checkPartitionStatus() {

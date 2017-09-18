@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.CacheStream;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -60,7 +61,7 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
    }
 
    @Override
-   protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, Set<Integer> targetSegments,
+   protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, IntSet targetSegments,
            Set<Object> excludedKeys, boolean primaryOnly) {
       return () -> {
          Supplier<Stream<CacheEntry>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);

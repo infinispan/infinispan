@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.IntSummaryStatistics;
 import java.util.Iterator;
@@ -29,6 +30,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.stream.impl.intops.primitive.i.AsDoubleIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.AsLongIntOperation;
@@ -46,6 +48,18 @@ import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjIntOperation;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableIntBinaryOperator;
+import org.infinispan.util.function.SerializableIntConsumer;
+import org.infinispan.util.function.SerializableIntFunction;
+import org.infinispan.util.function.SerializableIntPredicate;
+import org.infinispan.util.function.SerializableIntToDoubleFunction;
+import org.infinispan.util.function.SerializableIntToLongFunction;
+import org.infinispan.util.function.SerializableIntUnaryOperator;
+import org.infinispan.util.function.SerializableObjIntConsumer;
+import org.infinispan.util.function.SerializableSupplier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Implementation of {@link IntStream} that utilizes a lazily evaluated distributed back end execution.  Note this
@@ -54,6 +68,9 @@ import org.infinispan.stream.impl.termop.primitive.ForEachObjIntOperation;
  */
 public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntStream, IntCacheStream>
         implements IntCacheStream {
+
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
    /**
     * This constructor is to be used only when a user calls a map or flat map method changing to an IntStream
     * from a CacheStream, Stream, DoubleStream, LongStream etc.
@@ -61,6 +78,11 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
     */
    protected DistributedIntCacheStream(AbstractCacheStream other) {
       super(other);
+   }
+
+   @Override
+   protected Log getLog() {
+      return log;
    }
 
    @Override
@@ -74,9 +96,19 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    }
 
    @Override
+   public IntCacheStream filter(SerializableIntPredicate predicate) {
+      return filter((IntPredicate) predicate);
+   }
+
+   @Override
    public IntCacheStream map(IntUnaryOperator mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
       return addIntermediateOperation(new MapIntOperation(mapper));
+   }
+
+   @Override
+   public IntCacheStream map(SerializableIntUnaryOperator mapper) {
+      return map((IntUnaryOperator) mapper);
    }
 
    @Override
@@ -87,10 +119,20 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    }
 
    @Override
+   public <U> CacheStream<U> mapToObj(SerializableIntFunction<? extends U> mapper) {
+      return mapToObj((IntFunction<? extends U>) mapper);
+   }
+
+   @Override
    public LongCacheStream mapToLong(IntToLongFunction mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
       addIntermediateOperationMap(new MapToLongIntOperation(mapper));
       return longCacheStream();
+   }
+
+   @Override
+   public LongCacheStream mapToLong(SerializableIntToLongFunction mapper) {
+      return mapToLong((IntToLongFunction) mapper);
    }
 
    @Override
@@ -101,9 +143,19 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    }
 
    @Override
+   public DoubleCacheStream mapToDouble(SerializableIntToDoubleFunction mapper) {
+      return mapToDouble((IntToDoubleFunction) mapper);
+   }
+
+   @Override
    public IntCacheStream flatMap(IntFunction<? extends IntStream> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
       return addIntermediateOperation(new FlatMapIntOperation(mapper));
+   }
+
+   @Override
+   public IntCacheStream flatMap(SerializableIntFunction<? extends IntStream> mapper) {
+      return flatMap((IntFunction<? extends IntStream>) mapper);
    }
 
    @Override
@@ -121,6 +173,11 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    @Override
    public IntCacheStream peek(IntConsumer action) {
       return addIntermediateOperation(new PeekIntOperation(action));
+   }
+
+   @Override
+   public IntCacheStream peek(SerializableIntConsumer action) {
+      return peek((IntConsumer) action);
    }
 
    @Override
@@ -166,12 +223,22 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    }
 
    @Override
+   public void forEach(SerializableIntConsumer action) {
+      forEach((IntConsumer) action);
+   }
+
+   @Override
    public <K, V> void forEach(ObjIntConsumer<Cache<K, V>> action) {
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
          performRehashKeyTrackingOperation(s -> getForEach(action, s));
       }
+   }
+
+   @Override
+   public <K, V> void forEach(SerializableObjIntConsumer<Cache<K, V>> action) {
+      forEach((ObjIntConsumer<Cache<K, V>>) action);
    }
 
    KeyTrackingTerminalOperation<Object, Integer, Object> getForEach(IntConsumer consumer,
@@ -214,6 +281,11 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    }
 
    @Override
+   public int reduce(int identity, SerializableIntBinaryOperator op) {
+      return reduce(identity, (IntBinaryOperator) op);
+   }
+
+   @Override
    public OptionalInt reduce(IntBinaryOperator op) {
       Integer result = performOperation(TerminalFunctions.reduceFunction(op), true,
               (i1, i2) -> {
@@ -233,12 +305,23 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    }
 
    @Override
+   public OptionalInt reduce(SerializableIntBinaryOperator op) {
+      return reduce((IntBinaryOperator) op);
+   }
+
+   @Override
    public <R> R collect(Supplier<R> supplier, ObjIntConsumer<R> accumulator, BiConsumer<R, R> combiner) {
       return performOperation(TerminalFunctions.collectFunction(supplier, accumulator, combiner), true,
               (e1, e2) -> {
                  combiner.accept(e1, e2);
                  return e1;
               }, null);
+   }
+
+   @Override
+   public <R> R collect(SerializableSupplier<R> supplier, SerializableObjIntConsumer<R> accumulator,
+           SerializableBiConsumer<R, R> combiner) {
+      return collect((Supplier<R>) supplier, accumulator, combiner);
    }
 
    @Override
@@ -313,13 +396,28 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    }
 
    @Override
+   public boolean anyMatch(SerializableIntPredicate predicate) {
+      return anyMatch((IntPredicate) predicate);
+   }
+
+   @Override
    public boolean allMatch(IntPredicate predicate) {
       return performOperation(TerminalFunctions.allMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
    }
 
    @Override
+   public boolean allMatch(SerializableIntPredicate predicate) {
+      return allMatch((IntPredicate) predicate);
+   }
+
+   @Override
    public boolean noneMatch(IntPredicate predicate) {
       return performOperation(TerminalFunctions.noneMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
+   }
+
+   @Override
+   public boolean noneMatch(SerializableIntPredicate predicate) {
+      return noneMatch((IntPredicate) predicate);
    }
 
    @Override
@@ -355,7 +453,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
       // Since this is a remote iterator we have to add it to the remote intermediate operations queue
       intermediateOperations.add(BoxedIntOperation.getInstance());
       DistributedCacheStream<Integer> stream = new DistributedCacheStream<>(this);
-      Iterator<Integer> iterator = stream.remoteIterator();
+      Iterator<Integer> iterator = stream.iterator();
       return new IntegerIteratorToPrimitiveInteger(iterator);
    }
 
@@ -404,7 +502,7 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
    @Override
    public IntCacheStream
    filterKeySegments(Set<Integer> segments) {
-      segmentsToFilter = segments;
+      segmentsToFilter = SmallIntSet.from(segments);
       return this;
    }
 

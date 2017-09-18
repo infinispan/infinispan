@@ -307,6 +307,31 @@ public final class Util {
       }
    }
 
+   /**
+    * Given two Runnables, return a Runnable that executes both in sequence,
+    * even if the first throws an exception, and if both throw exceptions, add
+    * any exceptions thrown by the second as suppressed exceptions of the first.
+    */
+   public static Runnable composeWithExceptions(Runnable a, Runnable b) {
+      return () -> {
+         try {
+            a.run();
+         }
+         catch (Throwable e1) {
+            try {
+               b.run();
+            }
+            catch (Throwable e2) {
+               try {
+                  e1.addSuppressed(e2);
+               } catch (Throwable ignore) {}
+            }
+            throw e1;
+         }
+         b.run();
+      };
+   }
+
 
    /**
     * Prevent instantiation

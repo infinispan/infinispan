@@ -2,14 +2,21 @@ package org.infinispan.stream.impl;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.infinispan.CacheStream;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
 
 /**
  * Manages distribution of various stream operations that are sent to remote nodes.  Note usage of any operations
@@ -166,4 +173,50 @@ public interface ClusterStreamManager<K> {
     * @return Whether or not the operation should continue operating, only valid if complete was false
     */
    <R1> boolean receiveResponse(Object id, Address origin, boolean complete, Set<Integer> segments, R1 response);
+
+   /**
+    *
+    * @param parallelStream
+    * @param segments
+    * @param keysToInclude
+    * @param keysToExclude
+    * @param includeLoader
+    * @param intermediateOperations
+    * @param <E>
+    * @return
+    */
+   <E> RemoteIteratorPublisher<E> remoteIterationPublisher(boolean parallelStream,
+         Supplier<Map.Entry<Address, IntSet>> segments, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
+         boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations);
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * This producer is used to allow for it to provide additional signals to the subscribing caller. Callers may want
+    * to use the producer as a standard producer but also listen for the additional lost segment signal. This can
+    * be accomplished by doing the following:
+    * <pre>{@code Publisher<K> publisher = s -> remoteIteratorPublisher.subscribe(s, segments -> { // Do something};}</pre>
+    */
+   interface RemoteIteratorPublisher<K> extends Publisher<K> {
+      /**
+       * Essentially the same as {@link Publisher#subscribe(Subscriber)} except that a {@link Consumer} is provided
+       * that will be invoked when a segment for a given request has been lost. This is to notify the subscribing
+       * code that they may have to rerequest such data.
+       * <p>
+       * This publisher guarantees it will call the {@link Consumer}s before {@link Subscriber#onComplete()} and it will
+       * not call them concurrently. The provided segments will always be non null, however it could be empty. However
+       * it is possible that a key returned could be mapped to a segment that was found to be suspected or completed.
+       * @see Publisher#subscribe(Subscriber)
+       * @param s the subscriber to subscribe
+       * @param lostSegments the consumer to be notified of lost segments
+       * @param completedSegments the consumer to  be notified of completed segments
+       */
+      void subscribe(Subscriber<? super K> s, Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments);
+
+      @Override
+      default void subscribe(Subscriber<? super K> s) {
+         subscribe(s, lostSegments -> { }, completedSegments -> { });
+      }
+   }
 }

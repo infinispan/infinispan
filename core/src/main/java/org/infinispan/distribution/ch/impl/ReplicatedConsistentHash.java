@@ -15,6 +15,7 @@ import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.util.RangeSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -22,7 +23,6 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.commons.util.SmallIntSet;
-import org.infinispan.util.RangeSet;
 
 /**
  * Special implementation of {@link org.infinispan.distribution.ch.ConsistentHash} for replicated caches.

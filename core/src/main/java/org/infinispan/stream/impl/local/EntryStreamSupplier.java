@@ -1,20 +1,20 @@
 package org.infinispan.stream.impl.local;
 
-import java.util.BitSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.RemovableCloseableIterator;
+import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -27,12 +27,12 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
    private static final boolean trace = log.isTraceEnabled();
 
    private final Cache<K, V> cache;
-   private final ConsistentHash hash;
+   private final ToIntFunction<Object> toIntFunction;
    private final Supplier<Stream<CacheEntry<K, V>>> supplier;
 
-   public EntryStreamSupplier(Cache<K, V> cache, ConsistentHash hash, Supplier<Stream<CacheEntry<K, V>>> supplier) {
+   public EntryStreamSupplier(Cache<K, V> cache, ToIntFunction<Object> toIntFunction, Supplier<Stream<CacheEntry<K, V>>> supplier) {
       this.cache = cache;
-      this.hash = hash;
+      this.toIntFunction = toIntFunction;
       this.supplier = supplier;
    }
 
@@ -52,17 +52,15 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
       } else {
          stream = supplier.get();
       }
-      if (segmentsToFilter != null && hash != null) {
+      if (segmentsToFilter != null && toIntFunction != null) {
          if (trace) {
             log.tracef("Applying segment filter %s", segmentsToFilter);
          }
-         BitSet bitSet = new BitSet(hash.getNumSegments());
-         segmentsToFilter.forEach(bitSet::set);
-         KeyPartitioner partitioner = cache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
+         IntSet intSet = SmallIntSet.from(segmentsToFilter);
          stream = stream.filter(k -> {
             K key = k.getKey();
-            int segment = partitioner.getSegment(key);
-            boolean isPresent = bitSet.get(segment);
+            int segment = toIntFunction.applyAsInt(key);
+            boolean isPresent = intSet.contains(segment);
             if (trace)
                log.tracef("Is key %s present in segment %d? %b", key, segment, isPresent);
             return isPresent;

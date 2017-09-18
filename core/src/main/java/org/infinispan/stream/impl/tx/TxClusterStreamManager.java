@@ -6,15 +6,19 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
 import org.infinispan.stream.impl.TerminalOperation;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.AbstractDelegatingMap;
 
 /**
@@ -26,12 +30,14 @@ import org.infinispan.util.AbstractDelegatingMap;
 public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
    private final ClusterStreamManager<K> manager;
    private final LocalTxInvocationContext ctx;
+   private final int maxSegments;
    private final ToIntFunction<Object> intFunction;
 
-   public TxClusterStreamManager(ClusterStreamManager<K> manager, LocalTxInvocationContext ctx,
+   public TxClusterStreamManager(ClusterStreamManager<K> manager, LocalTxInvocationContext ctx, int maxSegments,
          ToIntFunction<Object> intFunction) {
       this.manager = manager;
       this.ctx = ctx;
+      this.maxSegments = maxSegments;
       this.intFunction = intFunction;
    }
 
@@ -90,6 +96,47 @@ public class TxClusterStreamManager<K> implements ClusterStreamManager<K> {
    @Override
    public <R1> boolean receiveResponse(Object id, Address origin, boolean complete, Set<Integer> segments, R1 response) {
       return manager.receiveResponse(id, origin, complete, segments, response);
+   }
+
+   @Override
+   public <E> RemoteIteratorPublisher<E> remoteIterationPublisher(boolean parallelStream,
+         Supplier<Map.Entry<Address, IntSet>> segments, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
+         boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations) {
+
+      if (ctx.getLookedUpEntries().isEmpty()) {
+         return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, keysToExclude, includeLoader,
+               intermediateOperations);
+      } else {
+         Set<K>[] contextSet = generateContextSet(ctx);
+         if (keysToExclude == null) {
+            return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, i -> contextSet[i], includeLoader,
+                  intermediateOperations);
+         } else {
+            return manager.remoteIterationPublisher(parallelStream, segments, keysToInclude, i -> {
+               Set<K> set = contextSet[i];
+               if (set != null) {
+                  set.addAll(keysToExclude.apply(i));
+                  return set;
+               } else {
+                  return keysToExclude.apply(i);
+               }
+            }, includeLoader, intermediateOperations);
+         }
+      }
+   }
+
+   Set<K>[] generateContextSet(LocalTxInvocationContext ctx) {
+      Set<K>[] set = new Set[maxSegments];
+      ctx.getLookedUpEntries().forEach((k, v) -> {
+         int segment = intFunction.applyAsInt(k);
+         Set<K> innerSet = set[segment];
+         if (innerSet == null) {
+            innerSet = new HashSet<>();
+            set[segment] = innerSet;
+         }
+         innerSet.add((K) k);
+      });
+      return set;
    }
 
    private static class TxExcludedKeys<K> extends AbstractDelegatingMap<Integer, Set<K>> {

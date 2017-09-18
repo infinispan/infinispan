@@ -2,13 +2,14 @@ package org.infinispan.stream.impl.intops.primitive.l;
 
 import java.util.function.LongFunction;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.FlatMappingOperation;
 
 /**
  * Performs flat map operation on a {@link LongStream}
  */
-public class FlatMapLongOperation implements IntermediateOperation<Long, LongStream, Long, LongStream> {
+public class FlatMapLongOperation implements FlatMappingOperation<Long, LongStream, Long, LongStream> {
    private final LongFunction<? extends LongStream> function;
 
    public FlatMapLongOperation(LongFunction<? extends LongStream> function) {
@@ -22,5 +23,10 @@ public class FlatMapLongOperation implements IntermediateOperation<Long, LongStr
 
    public LongFunction<? extends LongStream> getFunction() {
       return function;
+   }
+
+   @Override
+   public Stream<LongStream> map(LongStream longStream) {
+      return longStream.mapToObj(function);
    }
 }

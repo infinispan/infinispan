@@ -158,9 +158,10 @@ public interface Ids {
 
    int IMMUTABLE_SET = 110;
 
-   int CONVERTER_KEY_MAPPER = 111;
-   int CONVERTER_VALUE_MAPPER = 112;
-   int CONVERTER_ENTRY_MAPPER = 113;
+   int STREAM_ITERATOR_RESPONSE = 111;
+   int END_ITERATOR = 112;
+
+   int STREAM_MAP_OPS = 113;
 
    int TRIANGLE_ACK_EXTERNALIZER = 114;
 
@@ -190,6 +191,7 @@ public interface Ids {
 
    int DATA_CONVERSION = 131;
 
+   int INT_SET = 132;
 
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter

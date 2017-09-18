@@ -4,13 +4,13 @@ import java.util.function.ToLongFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import org.infinispan.stream.impl.intops.IntermediateOperation;
+import org.infinispan.stream.impl.intops.MappingOperation;
 
 /**
  * Performs map to long operation on a regular {@link Stream}
  * @param <I> the type of the input stream
  */
-public class MapToLongOperation<I> implements IntermediateOperation<I, Stream<I>, Long, LongStream> {
+public class MapToLongOperation<I> implements MappingOperation<I, Stream<I>, Long, LongStream> {
    private final ToLongFunction<? super I> function;
 
    public MapToLongOperation(ToLongFunction<? super I> function) {

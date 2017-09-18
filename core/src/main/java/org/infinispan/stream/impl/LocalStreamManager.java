@@ -2,7 +2,9 @@ package org.infinispan.stream.impl;
 
 import java.util.Set;
 
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 /**
  * Stream manager that is invoked on a local node.  This is normally called due to a {@link ClusterStreamManager} from
@@ -71,4 +73,28 @@ public interface LocalStreamManager<K> {
    <R2> void streamOperationRehashAware(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, ?, R2> operation);
+
+   /**
+    * Signals that a new iterator is created using the given arguments. Returns a response which only returns the given
+    * <b>batchSize</b> worth of elements.
+    * @param requestId the originating request id
+    * @param origin the node this request came from
+    * @param segments the segments to include in this operation
+    * @param keysToInclude which keys to include
+    * @param keysToExclude which keys to exclude
+    * @param includeLoader whether or not a cache loader should be utilized
+    * @param intermediateOperations the operations to apply to the underlying data
+    * @param batchSize how many elements to return
+    * @return the response containing iterator
+    */
+   IteratorResponse startIterator(Object requestId, Address origin, IntSet segments, Set<K> keysToInclude,
+         Set<K> keysToExclude, boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations, long batchSize);
+
+   /**
+    * Continues an existing iterator by retrieving the next <b>batchSize</b> of elements
+    * @param requestId the originating request id
+    * @param batchSize how many elements to return
+    * @return the response containing iterator
+    */
+   IteratorResponse continueIterator(Object requestId, long batchSize);
 }

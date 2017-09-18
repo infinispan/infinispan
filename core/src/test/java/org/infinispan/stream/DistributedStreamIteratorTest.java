@@ -1,8 +1,5 @@
 package org.infinispan.stream;
 
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyLong;
@@ -42,11 +39,10 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcOptions;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.ClusterStreamManager;
-import org.infinispan.stream.impl.StreamResponseCommand;
+import org.infinispan.stream.impl.IteratorHandler;
+import org.infinispan.stream.impl.LocalStreamManager;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.mockito.AdditionalAnswers;
@@ -83,7 +79,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
 
       CheckPoint checkPoint = new CheckPoint();
-      checkPoint.triggerForever("post_send_response_released");
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
       waitUntilSendingResponse(cache1, checkPoint);
 
       final BlockingQueue<String> returnQueue = new ArrayBlockingQueue<>(10);
@@ -97,12 +93,12 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       });
 
       // Make sure the thread is waiting for the response
-      checkPoint.awaitStrict("pre_send_response_invoked", 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
 
       // Now kill the cache - we should recover
       killMember(1, CACHE_NAME);
 
-      checkPoint.trigger("pre_send_response_released");
+      checkPoint.trigger(Mocks.BEFORE_RELEASE);
 
       future.get(10, TimeUnit.SECONDS);
 
@@ -130,7 +126,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       CheckPoint checkPoint = new CheckPoint();
       // Let the first request come through fine
-      checkPoint.trigger("pre_send_response_released");
+      checkPoint.trigger(Mocks.BEFORE_RELEASE);
       waitUntilSendingResponse(cache1, checkPoint);
 
       final BlockingQueue<Map.Entry<Object, String>> returnQueue = new LinkedBlockingQueue<>();
@@ -144,7 +140,8 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       });
 
       // Now wait for them to send back first results
-      checkPoint.awaitStrict("post_send_response_invoked", 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
+      checkPoint.trigger(Mocks.AFTER_RELEASE);
 
       // We should get a value now, note all values are currently residing on cache1 as primary
       Map.Entry<Object, String> value = returnQueue.poll(10, TimeUnit.SECONDS);
@@ -172,8 +169,10 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       }
 
       CheckPoint checkPoint = new CheckPoint();
-      checkPoint.triggerForever("post_receive_response_released");
-      waitUntilStartOfProcessingResult(cache0, checkPoint);
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+
+      Mocks.blockingMock(checkPoint, ClusterStreamManager.class, cache0,
+            (stub, m) -> stub.when(m).remoteIterationPublisher(anyBoolean(), any(), any(), any(), anyBoolean(), any()));
 
       final BlockingQueue<Map.Entry<Object, String>> returnQueue = new LinkedBlockingQueue<>();
       Future<Void> future = fork(() -> {
@@ -186,10 +185,10 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       });
 
       // Now wait for them to send back first results but don't let them process
-      checkPoint.awaitStrict("pre_receive_response_invoked", 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
 
       // Now let them process the results
-      checkPoint.triggerForever("pre_receive_response_released");
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
       // Now kill the cache - we should recover and get appropriate values
       killMember(1, CACHE_NAME);
@@ -320,6 +319,54 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       assertEquals(values.size(), count);
    }
 
+   public void testIteratorClosedProperlyOnClose() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(2, CACHE_NAME);
+
+      // We insert 2 values into caches where we aren't the owner (they have to be in same node or else iterator
+      // will finish early)
+      cache0.put(magicKey(cache1, cache2), "not-local");
+      cache0.put(magicKey(cache1, cache2), "not-local");
+      cache0.put(magicKey(cache1, cache2), "not-local");
+
+      IteratorHandler handler = TestingUtil.extractComponent(cache1, IteratorHandler.class);
+      assertEquals(0, handler.openIterators());
+
+      try (CacheStream<Map.Entry<Object, String>> stream = cache0.entrySet().stream()) {
+         Iterator<Map.Entry<Object, String>> iter = stream.distributedBatchSize(1).iterator();
+         assertTrue(iter.hasNext());
+         assertEquals(1, handler.openIterators());
+      }
+
+      // The close is done asynchronously
+      eventually(() -> 0 == handler.openIterators());
+   }
+
+   public void testIteratorClosedWhenIteratedFully() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(2, CACHE_NAME);
+
+      // We insert 2 values into caches where we aren't the owner (they have to be in same node or else iterator
+      // will finish early)
+      cache0.put(magicKey(cache1, cache2), "not-local");
+      cache0.put(magicKey(cache1, cache2), "not-local");
+      cache0.put(magicKey(cache1, cache2), "not-local");
+
+      IteratorHandler handler = TestingUtil.extractComponent(cache1, IteratorHandler.class);
+      assertEquals(0, handler.openIterators());
+
+      Iterator<Map.Entry<Object, String>> iter = cache0.entrySet().stream().distributedBatchSize(1).iterator();
+      assertTrue(iter.hasNext());
+      assertEquals(1, handler.openIterators());
+
+      iter.forEachRemaining(ignore -> {});
+
+      // The close is done asynchronously
+      eventually(() -> 0 == handler.openIterators());
+   }
+
    protected MagicKey magicKey(Cache<Object, String> cache1, Cache<Object, String> cache2) {
       if (cache1.getCacheConfiguration().clustering().hash().numOwners() < 2) {
          return new MagicKey(cache1);
@@ -380,54 +427,12 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       return returnMap;
    }
 
-   protected RpcManager waitUntilSendingResponse(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      RpcManager rpc = TestingUtil.extractComponent(cache, RpcManager.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(rpc);
-      RpcManager mockManager = mock(RpcManager.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(invocation -> {
-         // Wait for main thread to sync up
-         checkPoint.trigger("pre_send_response_invoked");
-         // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_send_response_released", 10, TimeUnit.SECONDS);
-
-         try {
-            return forwardedAnswer.answer(invocation);
-         } finally {
-            // Wait for main thread to sync up
-            checkPoint.trigger("post_send_response_invoked");
-            // Now wait until main thread lets us through
-            checkPoint.awaitStrict("post_send_response_released", 10, TimeUnit.SECONDS);
-         }
-      }).when(mockManager).invokeRemotelyAsync(anyCollection(), any(StreamResponseCommand.class), nullable(RpcOptions.class));
-      TestingUtil.replaceComponent(cache, RpcManager.class, mockManager, true);
-      return rpc;
+   protected <K> void waitUntilSendingResponse(final Cache<?, ?> cache, final CheckPoint checkPoint) {
+      Mocks.blockingMock(checkPoint, LocalStreamManager.class, cache,
+            (stub, m) -> stub.when(m).startIterator(any(), any(), any(), any(), any(), anyBoolean(), any(), anyLong()));
    }
 
-   protected ClusterStreamManager waitUntilStartOfProcessingResult(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      ClusterStreamManager rpc = TestingUtil.extractComponent(cache, ClusterStreamManager.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(rpc);
-      ClusterStreamManager mockRetriever = mock(ClusterStreamManager.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(invocation -> {
-         // Wait for main thread to sync up
-         checkPoint.trigger("pre_receive_response_invoked");
-         // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_receive_response_released", 10, TimeUnit.SECONDS);
-
-         try {
-            return forwardedAnswer.answer(invocation);
-         } finally {
-            // Wait for main thread to sync up
-            checkPoint.trigger("post_receive_response_invoked");
-            // Now wait until main thread lets us through
-            checkPoint.awaitStrict("post_receive_response_released", 10, TimeUnit.SECONDS);
-         }
-      }).when(mockRetriever).receiveResponse(any(String.class), any(Address.class), anyBoolean(), anySet(),
-              any());
-      TestingUtil.replaceComponent(cache, ClusterStreamManager.class, mockRetriever, true);
-      return rpc;
-   }
-
-   protected DataContainer waitUntilDataContainerWillBeIteratedOn(final Cache<?, ?> cache, final CheckPoint checkPoint) {
+   protected void waitUntilDataContainerWillBeIteratedOn(final Cache<?, ?> cache, final CheckPoint checkPoint) {
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(dataContainer);
       DataContainer mocaContainer = mock(DataContainer.class, withSettings().defaultAnswer(forwardedAnswer));
@@ -455,6 +460,5 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
          }
       }).when(mocaContainer).iterator();
       TestingUtil.replaceComponent(cache, DataContainer.class, mocaContainer, true);
-      return dataContainer;
    }
 }

@@ -2,32 +2,53 @@ package org.infinispan.stream.impl;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.RangeSet;
 import org.infinispan.commons.util.SmallIntSet;
+import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.util.RangeSet;
+import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+
+import io.reactivex.internal.subscriptions.EmptySubscription;
 
 /**
  * Cluster stream manager that sends all requests using the {@link RpcManager} to do the underlying communications.
@@ -35,13 +56,17 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    protected final Map<String, RequestTracker> currentlyRunning = new ConcurrentHashMap<>();
+   protected final Set<Subscriber> iteratorsRunning = new ConcurrentHashSet<>();
    protected final AtomicInteger requestId = new AtomicInteger();
    protected RpcManager rpc;
    protected CommandsFactory factory;
 
+   protected RpcOptions rpcOptions;
+
    protected Address localAddress;
 
    protected final static Log log = LogFactory.getLog(ClusterStreamManagerImpl.class);
+   protected final static boolean trace = log.isTraceEnabled();
 
    @Inject
    public void inject(RpcManager rpc, CommandsFactory factory) {
@@ -52,6 +77,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    @Start
    public void start() {
       localAddress = rpc.getAddress();
+      rpcOptions = rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS).timeout(Long.MAX_VALUE, TimeUnit.DAYS).build();
    }
 
    @Override
@@ -252,6 +278,22 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       }).collect(Collectors.toSet());
    }
 
+   // TODO: we could have this method return a Stream etc. so it doesn't have to iterate upon keys multiple times (helps rehash and tx)
+   private Set<K> determineExcludedKeys(IntFunction<Set<K>> keysToExclude, IntSet segmentsToUse) {
+      if (keysToExclude == null) {
+         return Collections.emptySet();
+      }
+
+      // Special map only supports get operations
+      return segmentsToUse.intStream().mapToObj(s -> {
+         Set<K> keysForSegment = keysToExclude.apply(s);
+         if (keysForSegment != null) {
+            return keysForSegment.stream();
+         }
+         return null;
+      }).flatMap(Function.identity()).collect(Collectors.toSet());
+   }
+
    private Map<Address, Set<Integer>> determineTargets(ConsistentHash ch, Set<Integer> segments, ResultsCallback<?> callback) {
       if (segments == null) {
          segments = new RangeSet(ch.getNumSegments());
@@ -378,6 +420,244 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       } else {
          log.tracef("Ignoring response as we already received a completed response for %s from %s", id, origin);
          return false;
+      }
+   }
+
+   @Override
+   public <E> RemoteIteratorPublisher<E> remoteIterationPublisher(boolean parallelStream,
+         Supplier<Map.Entry<Address, IntSet>> targets, Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude,
+         boolean includeLoader, Iterable<IntermediateOperation> intermediateOperations) {
+
+      return new RemoteIteratorPublisherImpl<>(parallelStream, targets, keysToInclude, keysToExclude, includeLoader,
+            intermediateOperations);
+   }
+
+   private class RemoteIteratorPublisherImpl<V> implements RemoteIteratorPublisher<V> {
+      private final boolean parallelStream;
+      private final Supplier<Map.Entry<Address, IntSet>> targets;
+      private final Set<K> keysToInclude;
+      private final IntFunction<Set<K>> keysToExclude;
+      private final boolean includeLoader;
+      private final Iterable<IntermediateOperation> intermediateOperations;
+
+      RemoteIteratorPublisherImpl(boolean parallelStream, Supplier<Map.Entry<Address, IntSet>> targets,
+            Set<K> keysToInclude, IntFunction<Set<K>> keysToExclude, boolean includeLoader,
+            Iterable<IntermediateOperation> intermediateOperations) {
+         this.parallelStream = parallelStream;
+         this.targets = targets;
+         this.keysToInclude = keysToInclude;
+         this.keysToExclude = keysToExclude;
+         this.includeLoader = includeLoader;
+         this.intermediateOperations = intermediateOperations;
+      }
+
+      @Override
+      public void subscribe(Subscriber<? super V> s, Consumer<? super Supplier<PrimitiveIterator.OfInt>> onLostSegments,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> onSegmentsComplete) {
+         Map.Entry<Address, IntSet> target = targets.get();
+         if (target == null) {
+            EmptySubscription.complete(s);
+         } else {
+            String id = localAddress.toString() + "-" + requestId.getAndIncrement();
+            if (trace) {
+               log.tracef("Starting request: %s", id);
+            }
+            iteratorsRunning.add(s);
+            s.onSubscribe(new ClusterStreamSubscription<V>(s, this, onLostSegments, onSegmentsComplete, id, target));
+         }
+      }
+   }
+
+   private class ClusterStreamSubscription<V> implements Subscription {
+
+      private final Subscriber<? super V> s;
+      private final RemoteIteratorPublisherImpl<V> publisher;
+      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> onSegmentsComplete;
+      private final Consumer<? super Supplier<PrimitiveIterator.OfInt>> onSegmentsLost;
+      private final String id;
+
+      private final AtomicLong requestedAmount = new AtomicLong();
+      private final AtomicBoolean pendingRequest = new AtomicBoolean();
+
+      private volatile AtomicReference<Map.Entry<Address, IntSet>> currentTarget;
+      private volatile boolean alreadyCreated;
+
+      ClusterStreamSubscription(Subscriber<? super V> s, RemoteIteratorPublisherImpl<V> publisher,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> onSegmentsComplete,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> onSegmentsLost,
+            String id, Map.Entry<Address, IntSet> currentTarget) {
+         this.s = s;
+         this.publisher = publisher;
+         this.onSegmentsComplete = onSegmentsComplete;
+         this.onSegmentsLost = onSegmentsLost;
+         this.id = id;
+         // We assume the map has at least one otherwise this subscription wouldn't be created
+         this.currentTarget = new AtomicReference<>(currentTarget);
+      }
+
+      @Override
+      public void request(long n) {
+         // If current target is null it means we completed
+         if (currentTarget == null) {
+            return;
+         }
+         if (n <= 0) {
+            throw new IllegalArgumentException("request amount must be greater than 0");
+         }
+         long batchAmount = requestedAmount.addAndGet(n);
+         // If there is no pending request we can submit a new one
+         if (!pendingRequest.getAndSet(true)) {
+            sendRequest(batchAmount);
+         }
+      }
+
+      ReplicableCommand getCommand(IntSet segments, long batchAmount) {
+         if (alreadyCreated) {
+            return factory.buildStreamIteratorNextCommand(id, batchAmount);
+         } else {
+            alreadyCreated = true;
+            return factory.buildStreamIteratorRequestCommand(id,
+                  publisher.parallelStream, segments, publisher.keysToInclude,
+                  determineExcludedKeys(publisher.keysToExclude, segments), publisher.includeLoader,
+                  publisher.intermediateOperations, batchAmount);
+         }
+      }
+
+      private void sendRequest(long batchAmount) {
+         // Copy the variable in case if we are closed concurrently - also this double check works for resubmission
+         Map.Entry<Address, IntSet> target = currentTarget.get();
+         if (target != null) {
+            IntSet segments = target.getValue();
+            if (trace) {
+               log.tracef("Request: %s is requesting %d more entries from %s in segments %s", id, batchAmount, target, segments);
+            }
+            Address sendee = target.getKey();
+            CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(
+                  Collections.singleton(sendee), getCommand(segments, batchAmount), rpcOptions);
+            completableFuture.whenComplete((r, t) -> {
+               if (t != null) {
+                  handleThrowable(t, target);
+               } else {
+                  try {
+                     Response response = r.values().iterator().next();
+                     if (response instanceof SuccessfulResponse) {
+                        IteratorResponse<V> iteratorResponse = (IteratorResponse) ((SuccessfulResponse) response).getResponseValue();
+                        if (trace) {
+                           log.tracef("Received valid response %s for id %s from node %s", iteratorResponse, id, target.getKey());
+                        }
+                        long returnedAmount = 0;
+                        Iterator<V> iter = iteratorResponse.getIterator();
+                        while (iter.hasNext()) {
+                           returnedAmount++;
+                           s.onNext(iter.next());
+                        }
+                        log.tracef("Received %d entries for id %s from %s", returnedAmount, id, sendee);
+
+                        if (iteratorResponse.isComplete()) {
+                           Set<Integer> lostSegments = iteratorResponse.getSuspectedSegments();
+                           if (lostSegments.isEmpty()) {
+                              onSegmentsComplete.accept((Supplier<PrimitiveIterator.OfInt>) segments::iterator);
+                           } else {
+                              onSegmentsLost.accept((Supplier<PrimitiveIterator.OfInt>)
+                                    () -> lostSegments.stream().mapToInt(Integer::intValue).iterator());
+
+                              if (lostSegments.size() != segments.size()) {
+                                 // TODO: need to convert response to return IntSet
+                                 onSegmentsComplete.accept((Supplier<PrimitiveIterator.OfInt>)
+                                       () -> segments.intStream()
+                                             .filter(s -> !lostSegments.contains(s))
+                                             .iterator());
+                              }
+                           }
+
+                           Map.Entry<Address, IntSet> nextTarget = publisher.targets.get();
+
+                           if (nextTarget != null) {
+                              alreadyCreated = false;
+                              // Only set if target is still the same
+                              // No other thread can be here (see pendingRequest)
+                              // so if it fails it means it must be closed (ie. null)
+                              currentTarget.compareAndSet(target, nextTarget);
+                           } else {
+                              currentTarget.set(null);
+                              // No more targets means this subscription is done
+                              completed();
+                              return;
+                           }
+                        }
+
+                        long remaining = requestedAmount.addAndGet(-returnedAmount);
+                        if (remaining > 0) {
+                           // Either more was requested while we were processing or we didn't return enough, so
+                           // try again
+                           sendRequest(remaining);
+                        } else {
+                           pendingRequest.set(false);
+                           // We have to recheck just in case if there was another thread that added to request amount
+                           // but was unable to acquire pending request (otherwise no pending request will be sent)
+                           remaining = requestedAmount.get();
+                           if (remaining > 0 && !pendingRequest.getAndSet(true)) {
+                              sendRequest(remaining);
+                           }
+                        }
+                     } else if (response instanceof ExceptionResponse) {
+                        handleThrowable(((ExceptionResponse) response).getException(), target);
+                     } else {
+                        handleThrowable(new IllegalArgumentException("Unsupported response received: " + response), target);
+                     }
+                  } catch (Throwable throwable) {
+                     // This block is for general programming issues to notify directly to user thread
+                     cancel();
+                     s.onError(throwable);
+                  }
+               }
+            });
+         }
+      }
+
+      private void handleThrowable(Throwable t, Map.Entry<Address, IntSet> target) {
+         cancel();
+         // Most likely SuspectException will be wrapped in CompletionException
+         if (t instanceof SuspectException || t.getCause() instanceof SuspectException) {
+            if (trace) {
+               log.tracef("Received suspect exception for id %s from node %s when requesting segments %s", id,
+                     target.getKey(), target.getValue());
+            }
+            onSegmentsLost.accept((Supplier<PrimitiveIterator.OfInt>) () -> target.getValue().iterator());
+            // We then have to tell the subscriber we completed - even though we lost segments
+            s.onComplete();
+         } else {
+            if (trace) {
+               log.tracef(t, "Received exception for id %s from node %s when requesting segments %s", id, target.getKey(),
+                     target.getValue());
+            }
+            s.onError(t);
+         }
+      }
+
+      @Override
+      public void cancel() {
+         Map.Entry<Address, IntSet> target = currentTarget.getAndSet(null);
+         if (target != null && alreadyCreated) {
+            Address targetNode = target.getKey();
+            rpc.invokeRemotelyAsync(Collections.singleton(targetNode),
+                  factory.buildStreamIteratorCloseCommand(id), rpcOptions).whenComplete((v, t) -> {
+               if (t != null) {
+                  if (trace) {
+                     log.tracef(t, "Unable to close iterator on %s for requestId %s", targetNode, requestId);
+                  }
+               }
+            });
+         }
+         iteratorsRunning.remove(s);
+      }
+
+      private void completed() {
+         if (trace) {
+            log.tracef("Processor completed for request: %s", id);
+         }
+         cancel();
+         s.onComplete();
       }
    }
 
