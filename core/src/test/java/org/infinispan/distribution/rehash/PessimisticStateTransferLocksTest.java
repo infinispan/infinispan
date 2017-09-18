@@ -85,7 +85,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
 
       startTxWithPut();
       startRebalance();
-      checkLocksBeforeCommit(false);
+      checkLocksBeforeCommit();
       waitRebalanceEnd();
       endTx();
       checkLocksAfterCommit();
@@ -101,7 +101,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
 
       startTxWithLock();
       startRebalance();
-      checkLocksBeforeCommit(false);
+      checkLocksBeforeCommit();
       waitRebalanceEnd();
       endTx();
       checkLocksAfterCommit();
@@ -118,7 +118,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
 
       startRebalance();
       startTxWithPut();
-      checkLocksBeforeCommit(true);
+      checkLocksBeforeCommit();
       waitRebalanceEnd();
       endTx();
       checkLocksAfterCommit();
@@ -134,7 +134,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
 
       startRebalance();
       startTxWithLock();
-      checkLocksBeforeCommit(true);
+      checkLocksBeforeCommit();
       waitRebalanceEnd();
       endTx();
       checkLocksAfterCommit();
@@ -177,7 +177,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       tm(0).commit();
    }
 
-   private void checkLocksBeforeCommit(boolean backupLockOnCache1) throws Exception {
+   private void checkLocksBeforeCommit() throws Exception {
       sequencer.enter("tx:check_locks");
       assertFalse(getTransactionTable(cache(0)).getLocalTransactions().isEmpty());
       assertTrue(getTransactionTable(cache(0)).getRemoteTransactions().isEmpty());
@@ -186,7 +186,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       assertEquals(Collections.emptySet(), localTx.getBackupLockedKeys());
 
       assertTrue(getTransactionTable(cache(1)).getLocalTransactions().isEmpty());
-      assertEquals(backupLockOnCache1, !getTransactionTable(cache(1)).getRemoteTransactions().isEmpty());
+      assertFalse(getTransactionTable(cache(1)).getRemoteTransactions().isEmpty()); //backup locks always acquired
 
       assertTrue(getTransactionTable(cache(2)).getLocalTransactions().isEmpty());
       assertFalse(getTransactionTable(cache(2)).getRemoteTransactions().isEmpty());
@@ -200,12 +200,7 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       for (Cache<Object, Object> c : caches()) {
          final TransactionTable txTable = getTransactionTable(c);
          assertTrue(txTable.getLocalTransactions().isEmpty());
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() throws Exception {
-               return txTable.getRemoteTransactions().isEmpty();
-            }
-         });
+         eventually(() -> txTable.getRemoteTransactions().isEmpty());
       }
    }
 

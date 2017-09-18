@@ -81,8 +81,8 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
       EmbeddedTransaction dtm = (EmbeddedTransaction) tm(0).suspend();
 
       assert checkTxCount(0, 1, 0);
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 0);
+      assert checkTxCount(1, 0, 1);
+      assert checkTxCount(2, 0, 1);
 
       tm(0).begin();
       try {
@@ -92,7 +92,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
+      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1));
 
 
       tm(1).begin();
@@ -103,7 +103,7 @@ public class BasicSingleLockRepPessimisticTest extends AbstractNoCrashTest {
          tm(0).rollback();
       }
 
-      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
+      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 1) && checkTxCount(2, 0, 1));
 
 
       tm(0).resume(dtm);

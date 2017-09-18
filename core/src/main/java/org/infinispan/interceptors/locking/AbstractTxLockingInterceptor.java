@@ -47,7 +47,8 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) throws Throwable {
+   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys,
+         int topologyId) throws Throwable {
       if (ctx.isInTxScope())
          return invokeNext(ctx, command);
 

@@ -186,7 +186,8 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return handleWriteManyCommand(ctx, command, command.getMap().keySet(), command.isForwarded());
+      return handleWriteManyCommand(ctx, command, command.getMap().keySet(), command.isForwarded(),
+            command.getTopologyId());
    }
 
    @Override
@@ -216,37 +217,42 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
-      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded(), command.getTopologyId());
    }
 
    @Override
    public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
-      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded(),
+            command.getTopologyId());
    }
 
    @Override
    public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
-      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded(),
+            command.getTopologyId());
    }
 
    @Override
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
-      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded());
+      return handleWriteManyCommand(ctx, command, command.getAffectedKeys(), command.isForwarded(),
+            command.getTopologyId());
    }
 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      return handleReadManyCommand(ctx, command, command.getKeys());
+      return handleReadManyCommand(ctx, command, command.getKeys(), command.getTopologyId());
    }
 
    @Override
    public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
-      return handleReadManyCommand(ctx, command, command.getKeys());
+      return handleReadManyCommand(ctx, command, command.getKeys(), command.getTopologyId());
    }
 
-   protected abstract Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) throws Throwable;
+   protected abstract Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command,
+         Collection<?> keys, int topologyId) throws Throwable;
 
-   protected abstract <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable;
+   protected abstract <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command,
+         Collection<K> keys, boolean forwarded, int topologyId) throws Throwable;
 
    protected final long getLockTimeoutMillis(FlagAffectedCommand command) {
       return command.hasAnyFlag(FlagBitSets.ZERO_LOCK_ACQUISITION_TIMEOUT) ? 0 :

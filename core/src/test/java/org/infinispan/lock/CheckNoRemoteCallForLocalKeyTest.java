@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 @Test (groups = "functional", testName = "lock.CheckNoRemoteCallForLocalKeyTest")
 public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest {
 
-   protected CheckRemoteLockAcquiredOnlyOnceTest.ControlInterceptor controlInterceptor;
+   private CheckRemoteLockAcquiredOnlyOnceTest.ControlInterceptor controlInterceptor;
    protected CacheMode mode = CacheMode.REPL_SYNC;
    protected Object key;
 
@@ -30,46 +30,27 @@ public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest 
       waitForClusterToForm();
       key = new MagicKey(cache(0));
       controlInterceptor = new CheckRemoteLockAcquiredOnlyOnceTest.ControlInterceptor();
-      cache(1).getAdvancedCache().addInterceptor(controlInterceptor, 1);
+      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(controlInterceptor, 1);
    }
 
    public void testLocalPut() throws Exception {
-      testLocalOperation(new CheckRemoteLockAcquiredOnlyOnceTest.CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).put(key, "v");
-         }
-      });
+      testLocalOperation(() -> cache(0).put(key, "v"));
    }
 
    public void testLocalRemove() throws Exception {
-      testLocalOperation(new CheckRemoteLockAcquiredOnlyOnceTest.CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).remove(key);
-         }
-      });
+      testLocalOperation(() -> cache(0).remove(key));
    }
 
    public void testLocalReplace() throws Exception {
-      testLocalOperation(new CheckRemoteLockAcquiredOnlyOnceTest.CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).replace(key, "", "");
-         }
-      });
+      testLocalOperation(() -> cache(0).replace(key, "", ""));
    }
 
    public void testLocalLock() throws Exception {
-      testLocalOperation(new CheckRemoteLockAcquiredOnlyOnceTest.CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).getAdvancedCache().lock(key);
-         }
-      });
+      testLocalOperation(() -> cache(0).getAdvancedCache().lock(key));
    }
 
    private void testLocalOperation(CheckRemoteLockAcquiredOnlyOnceTest.CacheOperation o) throws Exception {
+      controlInterceptor.remoteInvocations = 0;
       assert !advancedCache(1).getRpcManager().getTransport().isCoordinator();
       assert advancedCache(0).getRpcManager().getTransport().isCoordinator();
 
@@ -80,7 +61,7 @@ public class CheckNoRemoteCallForLocalKeyTest extends MultipleCacheManagersTest 
       assert lockManager(0).isLocked(key);
       assert !lockManager(1).isLocked(key);
 
-      assertEquals(controlInterceptor.remoteInvocations, 0);
+      assertEquals(controlInterceptor.remoteInvocations, 1);
       tm(0).rollback();
    }
 }

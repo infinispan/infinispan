@@ -1,6 +1,8 @@
 package org.infinispan.lock.singlelock.pessimistic;
 
-import static org.testng.Assert.assertEquals;
+import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import static org.infinispan.distribution.DistributionTestHelper.isOwner;
+import static org.testng.Assert.assertTrue;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
@@ -45,7 +47,7 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
       final Object k1 = getKeyForCache(1);
       final Object k2 = getKeyForCache(2);
 
-      assertEquals(advancedCache(0).getDistributionManager().locate(k1).get(0), address(1));
+      assertTrue(isFirstOwner(cache(1), k1));
       log.tracef("k1=%s, k2=%s", k1, k2);
 
       tm(0).begin();
@@ -77,8 +79,8 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
       tm(0).suspend();
 
       assert checkTxCount(0, 1, 0);
-      assert checkTxCount(1, 0, 0);
-      assert checkTxCount(2, 0, 0);
+      assert checkTxCount(1, 0, isOwner(cache(1), k) ? 1 : 0);
+      assert checkTxCount(2, 0, isOwner(cache(2), k) ? 1 : 0);
 
       tm(0).begin();
       cache(0).put(k1, "some");
@@ -91,7 +93,9 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
       }
 
       assertNotLocked(k1);
-      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(2, 0, 0));
+      eventually(() -> checkTxCount(0, 1, 0) &&
+                       checkTxCount(1, 0, isOwner(cache(1), k) ? 1 : 0) &&
+                       checkTxCount(2, 0, isOwner(cache(2), k) ? 1 : 0));
 
 
       log.info("Before second failure");
@@ -107,7 +111,9 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
       }
       assertNotLocked(k1);
 
-      eventually(() -> checkTxCount(0, 1, 0) && checkTxCount(1, 0, 0) && checkTxCount(1, 0, 0));
+      eventually(() -> checkTxCount(0, 1, 0) &&
+                       checkTxCount(1, 0, isOwner(cache(1), k) ? 1 : 0) &&
+                       checkTxCount(2, 0, isOwner(cache(2), k) ? 1 : 0));
 
 
       log.trace("about to commit transaction.");
