@@ -1546,6 +1546,9 @@
                         <build.directory>${project.build.directory}</build.directory>
 
                         <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
+                        <!-- Log the correct thread name after we call Thread.setName(),
+                             see https://issues.apache.org/jira/browse/LOG4J2-2052 -->
+                        <AsyncLogger.ThreadNameStrategy>UNCACHED</AsyncLogger.ThreadNameStrategy>
                     </systemPropertyVariables>
                     <trimStackTrace>false</trimStackTrace>
                     <properties>
