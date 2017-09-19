@@ -11,6 +11,7 @@ public class AddressPB implements Address {
    private String street;
    private String postCode;
    private int number;
+   private boolean isCommercial;
 
    @Override
    public String getStreet() {
@@ -42,12 +43,20 @@ public class AddressPB implements Address {
       this.number = number;
    }
 
+   public boolean isCommercial() {
+      return isCommercial;
+   }
+
+   public void setCommercial(boolean commercial) {
+      isCommercial = commercial;
+   }
    @Override
    public String toString() {
       return "AddressPB{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
             ", number='" + number + '\'' +
+            ", isCommercial=" + isCommercial +
             '}';
    }
 }
