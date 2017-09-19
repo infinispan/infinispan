@@ -11,6 +11,7 @@ import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 
 /**
  * @author anistor@redhat.com
@@ -36,7 +37,7 @@ final class WrappedMessageTagHandler implements TagHandler {
    }
 
    @Override
-   public void onStart() {
+   public void onStart(GenericDescriptor descriptor) {
    }
 
    @Override

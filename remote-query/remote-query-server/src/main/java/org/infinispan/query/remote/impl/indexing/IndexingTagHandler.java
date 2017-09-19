@@ -14,6 +14,7 @@ import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.QueryFacadeImpl;
@@ -50,7 +51,7 @@ final class IndexingTagHandler implements TagHandler {
    }
 
    @Override
-   public void onStart() {
+   public void onStart(GenericDescriptor descriptor) {
       // add the type discriminator field
       NOT_STORED_NOT_ANALYZED.addFieldToDocument(QueryFacadeImpl.TYPE_FIELD_NAME, messageContext.getMessageDescriptor().getFullName(), document);
    }
