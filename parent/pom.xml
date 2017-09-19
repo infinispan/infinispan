@@ -1324,7 +1324,7 @@
                     <executions>
                         <execution>
                             <id>validate</id>
-                            <phase>process-resources</phase>
+                            <phase>install</phase>
                             <goals>
                                 <goal>verify</goal>
                             </goals>

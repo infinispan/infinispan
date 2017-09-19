@@ -3,6 +3,8 @@
    <repository>mvn:org.infinispan/infinispan-core/${project.version}/xml/features</repository>
 
    <feature name="infinispan-cachestore-jdbc" version="${project.version}">
+      <feature version="${project.version}">infinispan-core</feature>
+
       <bundle>mvn:org.infinispan/infinispan-cachestore-jdbc/${project.version}</bundle>
 
       <bundle>wrap:mvn:com.mchange/c3p0/${version.c3p0}$DynamicImport-Package=*</bundle>
