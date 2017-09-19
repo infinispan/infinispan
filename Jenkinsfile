@@ -48,8 +48,8 @@ pipeline {
                         testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
                         healthScaleFactor: 100
 
-                sh 'find . -name \'*.log\' -exec xz {} \\;'
-                archiveArtifacts allowEmptyArchive: true, artifacts: '**/*log.xz'
+                sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" \\) -exec xz {} \\;'
+                archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz'
             }
         }
 
