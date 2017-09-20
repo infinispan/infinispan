@@ -12,6 +12,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.kohsuke.MetaInfServices;
 
 /**
  * MyParserExtension. This is a simple extension parser which parses modules in the "urn:infinispan:config:mymodule" namespace
@@ -23,6 +24,7 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
    @Namespace(uri = "urn:infinispan:config:mymodule", root = "sample-element"),
    @Namespace(root = "sample-element")
 })
+@MetaInfServices
 public class MyParserExtension implements ConfigurationParser {
 
    @Override

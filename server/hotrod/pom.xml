@@ -60,6 +60,11 @@
          <artifactId>testng</artifactId>
          <scope>test</scope>
       </dependency>
+       <dependency>
+           <groupId>org.kohsuke.metainf-services</groupId>
+           <artifactId>metainf-services</artifactId>
+           <optional>true</optional>
+       </dependency>
    </dependencies>
 
    <build>
