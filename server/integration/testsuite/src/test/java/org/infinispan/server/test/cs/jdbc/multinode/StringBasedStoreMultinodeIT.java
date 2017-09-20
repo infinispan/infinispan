@@ -13,9 +13,9 @@ import java.util.List;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.server.test.category.CacheStore;
+import org.infinispan.server.test.category.Unstable;
 import org.infinispan.server.test.cs.jdbc.AbstractJdbcStoreMultinodeIT;
 import org.infinispan.server.test.util.ITestUtils.Condition;
-import org.infinispan.server.test.util.jdbc.DBServer;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -45,6 +45,7 @@ public class StringBasedStoreMultinodeIT extends AbstractJdbcStoreMultinodeIT {
      * attribute.
      */
     @Test
+    @Category(Unstable.class)
     @WithRunningServer({@RunningServer(name = CONTAINER1, config = CONFIG_FETCH_STATE_1)})
     public void testFetchState() throws Exception {
         try {

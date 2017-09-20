@@ -131,6 +131,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
       hitCountInterceptor(cacheIndex).reset();
    }
 
+   @Test(groups = "unstable", description = "ISPN-6901")
    public void testCorrectBalancingOfKeysAfterNodeKill() {
       //final AtomicInteger clientTopologyId = TestingUtil.extractField(remoteCacheManager, "defaultCacheTopologyId");
       TcpTransportFactory transportFactory = TestingUtil.extractField(remoteCacheManager, "transportFactory");
