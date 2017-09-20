@@ -53,7 +53,8 @@
    />
 
     <!-- At this place we can react on DISCONNECTs immediatelly -->
-    <org.infinispan.test.hibernate.cache.util.TestDisconnectHandler />
+    <!-- It deadlocks with JGroups 4.0.6, enable only after making sure it works -->
+    <!--<org.infinispan.test.hibernate.cache.util.TestDisconnectHandler />-->
 
    <MFC max_credits="2M"
         min_threshold="0.40"
