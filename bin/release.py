@@ -9,35 +9,11 @@ import tempfile
 from datetime import *
 from multiprocessing import Process
 from utils import *
-from xml.etree.ElementTree import *
-
-
-# TreeBuilder that preserves comments
-class CommentedTreeBuilder(TreeBuilder):
-  def __init__(self, *args, **kwargs):
-    TreeBuilder.__init__(self, *args, **kwargs)
-
-  def comment(self, data):
-    self.start(Comment, {})
-    self.data(data)
-    self.end(Comment)
 
 
 modules = []
 uploader = None
 git = None
-
-def get_modules(directory):
-    '''Analyses the pom.xml file and extracts declared modules'''
-    tree = ElementTree()
-    f = directory + "/pom.xml"
-    if settings['verbose']:
-      print "Parsing %s to get a list of modules in project" % f
-    parser = XMLParser(target=CommentedTreeBuilder())
-    tree.parse(f, parser=parser)
-    mods = tree.findall(".//{%s}module" % maven_pom_xml_namespace)
-    for m in mods:
-        modules.append(m.text)
 
 def help_and_exit():
     prettyprint('''
@@ -58,7 +34,7 @@ def help_and_exit():
     ''' % (Colors.yellow(), Colors.end_color(), Colors.yellow(), Colors.end_color(), Colors.green(), Colors.end_color(), Colors.green(), Colors.end_color(), Colors.green(), Colors.end_color()), Levels.INFO)
     sys.exit(0)
 
-def validate_version(version):  
+def validate_version(version):
   version_pattern = get_version_pattern()
   if version_pattern.match(version):
     return version.strip()
@@ -66,7 +42,7 @@ def validate_version(version):
     prettyprint("Invalid version '"+version+"'!\n", Levels.FATAL)
     help_and_exit()
 
-def tag_release(version, branch):
+def switch_to_tag_branch(branch):
   if git.remote_branch_exists():
     git.switch_to_branch()
     git.create_tag_branch()
@@ -74,102 +50,21 @@ def tag_release(version, branch):
     prettyprint("Branch %s cannot be found on upstream repository.  Aborting!" % branch, Levels.FATAL)
     sys.exit(100)
 
-def get_project_version_tag(tree):
-  return tree.find("./{%s}version" % (maven_pom_xml_namespace))
-
-def get_parent_version_tag(tree):
-  return tree.find("./{%s}parent/{%s}version" % (maven_pom_xml_namespace, maven_pom_xml_namespace))
-
-def get_properties_version_tag(tree):
-  return tree.find("./{%s}properties/{%s}project-version" % (maven_pom_xml_namespace, maven_pom_xml_namespace))
-
-def write_pom(tree, pom_file):
-  tree.write("tmp.xml", 'UTF-8')
-  in_f = open("tmp.xml")
-  out_f = open(pom_file, "w")
-  try:
-    for l in in_f:
-      newstr = l.replace("ns0:", "").replace(":ns0", "").replace("ns1", "xsi")
-      out_f.write(newstr)
-  finally:
-    in_f.close()
-    out_f.close()
-    os.remove("tmp.xml")    
-  if settings['verbose']:
-    prettyprint(" ... updated %s" % pom_file, Levels.INFO)
-
-def patch(pom_file, version):
-  '''Updates the version in a POM file.  We need to locate //project/parent/version, //project/version and 
-  //project/properties/project-version and replace the contents of these with the new version'''
-  if settings['verbose']:
-    prettyprint("Patching %s" % pom_file, Levels.DEBUG)
-  tree = ElementTree()
-  parser = XMLParser(target=CommentedTreeBuilder())
-  tree.parse(pom_file, parser=parser)
-  need_to_write = False
-  
-  tags = []
-  tags.append(get_parent_version_tag(tree))
-  tags.append(get_project_version_tag(tree))
-  tags.append(get_properties_version_tag(tree))
-  
-  for tag in tags:
-    if tag != None and "-SNAPSHOT" in tag.text:
-      if settings['verbose']:
-        prettyprint("%s is %s.  Setting to %s" % (str(tag), tag.text, version), Levels.DEBUG)
-      tag.text=version
-      need_to_write = True
-    
-  if need_to_write:
-    # write to file again!
-    write_pom(tree, pom_file)
-    return True
-  else:
-    if settings['verbose']:
-      prettyprint("File doesn't need updating; nothing replaced!", Levels.DEBUG)
-    return False
-
-def get_poms_to_patch(working_dir):
-  get_modules(working_dir)
-  if settings['verbose']:
-    prettyprint('Available modules are ' + str(modules), Levels.DEBUG)
-  poms_to_patch = [working_dir + "/pom.xml"]
-  for m in modules:
-    poms_to_patch.append(working_dir + "/" + m + "/pom.xml")
-    # Look for additional POMs that are not directly referenced!
-  for additionalPom in GlobDirectoryWalker(working_dir, 'pom.xml'):
-    if additionalPom not in poms_to_patch:
-      poms_to_patch.append(additionalPom)
-      
-  return poms_to_patch
-
 def update_versions(base_dir, version):
   os.chdir(base_dir)
-  poms_to_patch = get_poms_to_patch(".")
-  
-  modified_files = []
-  for pom in poms_to_patch:
-    if patch(pom, version):
-      modified_files.append(pom)
-  pieces = re.compile('[\.\-]').split(version)
-  snapshot = pieces[3]=='SNAPSHOT'
-  final = pieces[3]=='Final'
-  
+  subprocess.check_call(["bin/reversion.sh", "--new-revision", version, "--pom-location", "parent/pom.xml"])
+
   # Now make sure this goes back into the repository.
-  git.commit(modified_files, "'Release Script: update versions for %s'" % version)
-  
+  git.commit_modified("'Release Script: update versions for %s'" % version)
+
   # And return the next version
+  pieces = re.compile('[\.\-]').split(version)
+  snapshot = pieces[3] == 'SNAPSHOT'
+  final = pieces[3] == 'Final'
   if final:
     return pieces[0] + '.' + pieces[1] + '.' + str(int(pieces[2])+ 1) + '-SNAPSHOT'
   else:
     return None
-
-def get_module_name(pom_file):
-  tree = ElementTree()
-  parser = XMLParser(target=CommentedTreeBuilder())
-  tree.parse(pom_file, parser=parser)
-  return tree.findtext("./{%s}artifactId" % maven_pom_xml_namespace)
-
 
 def upload_artifacts(dist_dir, version):
   """Artifacts gets rsync'ed to filemgmt.jboss.org, in the downloads_htdocs/infinispan directory"""
@@ -202,11 +97,11 @@ def prepare_docs(base_dir, version):
 def upload_docs(base_dir, version):
   """Javadocs and PDFs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
   version_short = get_version_major_minor(version)
-  
+
   os.mkdir(version_short)
   os.rename("api", "%s/apidocs" % version_short)
   os.rename("pdf", "%s/pdf" % version_short)
-  
+
   ## rsync this stuff to filemgmt.jboss.org
   uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
   os.chdir(base_dir)
@@ -214,12 +109,12 @@ def upload_docs(base_dir, version):
 def upload_schema(base_dir, version):
   """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas and schema_htdoc/infinispan directories"""
   os.chdir("%s/distribution/target/distribution/infinispan-%s-all/schema" % (base_dir, version))
-  
+
   ## rsync this stuff to filemgmt.jboss.org, we put it in the orginal location (docs/infinispan/schemas) and the new location (schema/infinispan)
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas")
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/schema_htdocs/infinispan/")
 
-  
+
   ## now the schema docs
   version_short = get_version_major_minor(version)
   os.chdir("%s/distribution/target/site" % base_dir)
@@ -241,11 +136,11 @@ def release():
   global git
   assert_python_minimum_version(2, 5)
   require_settings_file()
-    
+
   # We start by determining whether the version passed in is a valid one
   if len(sys.argv) < 2:
     help_and_exit()
-  
+
   base_dir = os.getcwd()
   version = validate_version(sys.argv[1])
   branch = "master"
@@ -270,7 +165,7 @@ def release():
     prettyprint("... User Abort!", Levels.WARNING)
     sys.exit(1)
   prettyprint("OK, releasing! Please stand by ...", Levels.INFO)
-  
+
   ## Set up network interactive tools
   if settings['dry_run']:
     # Use stubs
@@ -279,7 +174,7 @@ def release():
     uploader = DryRunUploader()
   else:
     uploader = Uploader()
-  
+
   git = Git(branch, version)
   if not git.is_upstream_clone():
     proceed = input_with_default('This is not a clone of an %supstream%s Infinispan repository! Are you sure you want to proceed?' % (Colors.UNDERLINE, Colors.END), 'N')
@@ -292,18 +187,18 @@ def release():
   prettyprint("Step 1: Cleaning up working directory (un-tracked and modified files)", Levels.INFO)
   git.clean_release_directory()
   prettyprint("Step 1: Complete", Levels.INFO)
-      
+
   ## Release order:
-  # Step 1: Tag in Git
-  prettyprint("Step 2: Tagging %s in git as %s" % (branch, version), Levels.INFO)
-  tag_release(version, branch)
+  # Step 1: Switch to a temporary branch in Git
+  prettyprint("Step 2: Creating temporary branch %s" % (branch), Levels.INFO)
+  switch_to_tag_branch(branch)
   prettyprint("Step 2: Complete", Levels.INFO)
-  
+
   # Step 2: Update version in tagged files
   prettyprint("Step 3: Updating version number in source files", Levels.INFO)
   version_next = update_versions(base_dir, version)
   prettyprint("Step 3: Complete", Levels.INFO)
-  
+
   # Step 3: Build and test
   prettyprint("Step 4: Build and test", Levels.INFO)
   maven_build_distribution(version)
@@ -349,10 +244,10 @@ def release():
   step_no=9
   if mvn_only:
     step_no=5
-  
+
   # Switch back to the branch being released
   git.switch_to_branch()
-  
+
   # Update to next version
   if version_next is not None:
     prettyprint("Step %s: Updating version number for next release" % step_no, Levels.INFO)
@@ -366,7 +261,7 @@ def release():
     git.cleanup()
   else:
     prettyprint("In dry-run mode.  Not pushing tag to remote origin and not removing temp release branch %s." % git.working_branch, Levels.DEBUG)
-  
+
   prettyprint("\n\n\nDone!  Now all you need to do is the remaining post-release tasks as outlined in https://mojo.redhat.com/docs/DOC-60994", Levels.INFO)
 
 if __name__ == "__main__":
