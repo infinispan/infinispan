@@ -44,7 +44,6 @@
       <version.org.jboss.marshalling.jboss-marshalling>2.0.0.Beta3</version.org.jboss.marshalling.jboss-marshalling>
       <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
       <version.junit>4.11</version.junit>
-      <version.org.infinispan>${project.version}</version.org.infinispan>
       <version.org.infinispan.infinispan-management-console>9.1.1.Final</version.org.infinispan.infinispan-management-console>
       <version.org.infinispan.arquillian.container>1.2.0.Beta2</version.org.infinispan.arquillian.container>
       <version.org.infinispan.server-build.old>8.2.7.Final</version.org.infinispan.server-build.old>
@@ -329,107 +328,107 @@
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
             <classifier>javadoc</classifier>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core</artifactId>
             <type>test-jar</type>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-parent</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
             <type>pom</type>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-remote</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-rest</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cachestore-leveldb</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-client-hotrod</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-client-hotrod</artifactId>
             <classifier>javadoc</classifier>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-core</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-hotrod</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-router</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-memcached</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-rest</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-server-websocket</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cli-interpreter</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
@@ -441,13 +440,13 @@
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cli-client</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-tasks</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
          </dependency>
 
          <dependency>
@@ -535,13 +534,13 @@
          <dependency>
              <groupId>org.infinispan</groupId>
              <artifactId>infinispan-query-dsl</artifactId>
-             <version>${version.org.infinispan}</version>
+             <version>${project.version}</version>
          </dependency>
 
          <dependency>
              <groupId>org.infinispan</groupId>
              <artifactId>infinispan-remote-query-client</artifactId>
-             <version>${version.org.infinispan}</version>
+             <version>${project.version}</version>
          </dependency>
 
          <dependency>
@@ -616,7 +615,7 @@
          <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-security-integrationtests</artifactId>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
          </dependency>
@@ -625,7 +624,7 @@
             <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-build</artifactId>
             <type>pom</type>
-            <version>${version.org.infinispan}</version>
+            <version>${project.version}</version>
             <scope>test</scope>
          </dependency>
 
@@ -633,7 +632,7 @@
             <groupId>org.infinispan.server</groupId>
             <artifactId>infinispan-server-build</artifactId>
             <type>zip</type>
-            <version>${version.org.infinispan.server-build.old}</version>
+            <version>${project.version}</version>
             <scope>test</scope>
          </dependency>
 
