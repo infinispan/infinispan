@@ -59,4 +59,7 @@ public class JniLevelDBStoreFunctionalTest extends LevelDBStoreFunctionalTest {
    public void testRemoveCacheWithPassivation() {
       super.testRemoveCacheWithPassivation();
    }
+
+   @Override
+   public void testPutAllBatch() throws Exception { super.testPutAllBatch(); }
 }
