@@ -300,7 +300,11 @@ class Git(object):
       self.run_git("add %s" % f)
     
     self.run_git(["commit", "-m", message])
-  
+
+  def commit_modified(self, message):
+    '''Commits all the files that were modified in working copy to the current branch with a generated commit message.'''
+    self.run_git(["commit", "-a", "-m", message])
+
   def tag_for_release(self):
     '''Tags the current branch for release using the tag name.'''
     self.run_git(["tag", "-a", "-m", "'Release Script: tag %s'" % self.tag, self.tag])
