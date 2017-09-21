@@ -18,6 +18,7 @@ import org.kohsuke.MetaInfServices;
  * @since 5.3
  */
 @MetaInfServices
+@SuppressWarnings("unused")
 public class TestModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override

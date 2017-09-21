@@ -25,6 +25,7 @@ import org.kohsuke.MetaInfServices;
    @Namespace(root = "sample-element")
 })
 @MetaInfServices
+@SuppressWarnings("unused")
 public class MyParserExtension implements ConfigurationParser {
 
    @Override

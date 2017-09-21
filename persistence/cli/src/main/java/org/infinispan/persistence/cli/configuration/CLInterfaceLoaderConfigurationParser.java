@@ -33,6 +33,7 @@ import org.kohsuke.MetaInfServices;
    @Namespace(uri = "urn:infinispan:config:store:cli:7.0", root = "cli-loader"),
 
 })
+@SuppressWarnings("unused")
 public class CLInterfaceLoaderConfigurationParser implements ConfigurationParser {
 
    @Override

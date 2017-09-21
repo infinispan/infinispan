@@ -1,7 +1,6 @@
 package org.infinispan.persistence.jdbc.configuration;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-import static org.infinispan.persistence.jdbc.configuration.Element.MIXED_KEYED_JDBC_STORE;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;

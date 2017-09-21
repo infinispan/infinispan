@@ -13,6 +13,7 @@ import org.kohsuke.MetaInfServices;
  * @since 5.2
  */
 @MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
+@SuppressWarnings("unused")
 public class HotRodCodec extends AbstractCodec {
    public static final Log log = LogFactory.getLog(HotRodCodec.class, Log.class);
    Marshaller marshaller = new GenericJBossMarshaller(); // FIXME: assumes that clients will marshall using this

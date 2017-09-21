@@ -15,6 +15,7 @@ import org.kohsuke.MetaInfServices;
  * @since 5.2
  */
 @MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
+@SuppressWarnings("unused")
 public class MemcachedCodec extends AbstractCodec {
    private static final Log log = LogFactory.getLog(Interpreter.class, Log.class);
    private Charset UTF8 = Charset.forName("UTF-8");

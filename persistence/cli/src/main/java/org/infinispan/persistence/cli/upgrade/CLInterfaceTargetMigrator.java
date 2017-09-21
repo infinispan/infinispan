@@ -29,6 +29,7 @@ import org.kohsuke.MetaInfServices;
  * @since // TODO
  */
 @MetaInfServices
+@SuppressWarnings("unused")
 public class CLInterfaceTargetMigrator implements TargetMigrator {
 
    private static final Log log = LogFactory.getLog(CLInterfaceTargetMigrator.class);

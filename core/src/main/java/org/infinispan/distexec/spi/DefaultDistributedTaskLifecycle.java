@@ -7,6 +7,7 @@ import org.infinispan.Cache;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
+@SuppressWarnings("unused")
 public class DefaultDistributedTaskLifecycle implements DistributedTaskLifecycle {
 
    @Override
