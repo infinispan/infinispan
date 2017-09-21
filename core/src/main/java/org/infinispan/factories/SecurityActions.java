@@ -6,6 +6,7 @@ import java.security.PrivilegedAction;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.infinispan.security.Security;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,6 +58,20 @@ final class SecurityActions {
    static void applyProperties(Object o, Properties p) {
       for(Entry<Object, Object> entry : p.entrySet()) {
          setValue(o, (String) entry.getKey(), entry.getValue());
+      }
+   }
+
+   static void run(Runnable runnable) {
+      if (System.getSecurityManager() != null) {
+         AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            runnable.run();
+            return null;
+         });
+      } else {
+         Security.doPrivileged((PrivilegedAction<Void>) () -> {
+            runnable.run();
+            return null;
+         });
       }
    }
 }

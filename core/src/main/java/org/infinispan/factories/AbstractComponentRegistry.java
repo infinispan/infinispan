@@ -629,21 +629,24 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       }
 
       // fire all START methods according to priority
+
       invokePrioritizedMethods(methods);
       addShutdownHook();
 
       state = ComponentStatus.RUNNING;
    }
 
-   private void invokePrioritizedMethods(List<PrioritizedMethod> methods) {
-      boolean traceEnabled = getLog().isTraceEnabled();
-      // sort the methods by priority
-      Collections.sort(methods);
-      for (PrioritizedMethod em : methods) {
-         if (traceEnabled)
-            getLog().tracef("Invoking method %s on component %s", em.metadata, em.component.getName());
-         em.invoke();
-      }
+   private void invokePrioritizedMethods(List<PrioritizedMethod> startMethods) {
+      SecurityActions.run(() -> {
+         boolean traceEnabled = getLog().isTraceEnabled();
+         // sort the methods by priority
+         Collections.sort(startMethods);
+         for (PrioritizedMethod em : startMethods) {
+            if (traceEnabled)
+               getLog().tracef("Invoking start method %s on component %s", em.metadata, em.component.getName());
+            em.invoke();
+         }
+      });
    }
 
    protected void addShutdownHook() {
