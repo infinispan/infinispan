@@ -3,14 +3,17 @@ package org.infinispan.stream.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.BaseCacheStream;
@@ -18,11 +21,12 @@ import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.util.EntryWrapper;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -97,6 +101,15 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    @Override
    public void forEach(BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> biConsumer) {
       realStream.forEach(new CacheEntryConsumer<>(biConsumer, predicate));
+   }
+
+   @Override
+   public <R> Map<K, R> invokeAll(BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction) {
+      Map<K, R> map = new HashMap<>();
+      Iterator<KeyValuePair<K, R>> iterator = realStream.map(new CacheEntryFunction<>(biFunction, predicate))
+            .filter(StreamMarshalling.nonNullPredicate()).iterator();
+      iterator.forEachRemaining(e -> map.put(e.getKey(), e.getValue()));
+      return map;
    }
 
    @Override
@@ -180,33 +193,30 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       realStream.close();
    }
 
-   @SerializeWith(value = CacheEntryConsumer.CacheEntryConsumerExternalizer.class)
-   private static class CacheEntryConsumer<K, V> implements BiConsumer<Cache<K, V>, CacheEntry<K, V>>, Serializable {
-      private final BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer;
-      private final Predicate<? super CacheEntry<K, V>> predicate;
-      private transient LockManager lockManager;
+   private static abstract class LockHelper<K, V, R> {
+      protected final Predicate<? super CacheEntry<K, V>> predicate;
+      protected transient LockManager lockManager;
 
-      private CacheEntryConsumer(BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer,
-            Predicate<? super CacheEntry<K, V>> predicate) {
-         this.realConsumer = realConsumer;
+      protected LockHelper(Predicate<? super CacheEntry<K, V>> predicate) {
          this.predicate = predicate;
       }
 
-      @Override
-      public void accept(Cache<K, V> cache, CacheEntry<K, V> entry) {
+      R perform(Cache<K, V> cache, CacheEntry<K, V> entry) {
          K key = entry.getKey();
          lock(key);
          try {
             CacheEntry<K, V> rereadEntry = cache.getAdvancedCache().getCacheEntry(key);
             if (rereadEntry != null && (predicate == null || predicate.test(rereadEntry))) {
                Cache<K, V> cacheToUse = cache.getAdvancedCache().lockAs(key);
-               // Pass the Cache with the owner set to our key so they can write and also it won't unlock that key
-               realConsumer.accept(cacheToUse, new EntryWrapper<>(cacheToUse, entry));
+               return actualPerform(cacheToUse, rereadEntry);
             }
+            return null;
          } finally {
             lockManager.unlock(key, key);
          }
       }
+
+      protected abstract R actualPerform(Cache<K, V> cache, CacheEntry<K, V> entry);
 
       private void lock(K key) {
          KeyAwareLockPromise kalp = lockManager.lock(key, key, 10, TimeUnit.SECONDS);
@@ -233,11 +243,73 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       }
 
       @Inject
-      public void inject(LockManager manager) {
+      public void injectLockManager(LockManager manager) {
          this.lockManager = manager;
       }
+   }
 
-      public static final class CacheEntryConsumerExternalizer implements Externalizer<CacheEntryConsumer> {
+   @SerializeWith(value = CacheEntryFunction.Externalizer.class)
+   private static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, KeyValuePair<K, R>> {
+      private final BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction;
+      protected transient Cache<K, V> cache;
+
+      protected CacheEntryFunction(BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction,
+            Predicate<? super CacheEntry<K, V>> predicate) {
+         super(predicate);
+         this.biFunction = biFunction;
+      }
+
+      @Override
+      public KeyValuePair<K, R> apply(CacheEntry<K, V> kvCacheEntry) {
+         return perform(cache, kvCacheEntry);
+      }
+
+      @Override
+      protected KeyValuePair<K, R> actualPerform(Cache<K, V> cache, CacheEntry<K, V> entry) {
+         return new KeyValuePair<>(entry.getKey(), biFunction.apply(cache, entry));
+      }
+
+      @Inject
+      public void injectCache(Cache<K, V> cache) {
+         this.cache = cache;
+      }
+
+      public static final class Externalizer implements org.infinispan.commons.marshall.Externalizer<CacheEntryFunction> {
+         @Override
+         public void writeObject(ObjectOutput output, CacheEntryFunction object) throws IOException {
+            output.writeObject(object.biFunction);
+            output.writeObject(object.predicate);
+         }
+
+         @Override
+         public CacheEntryFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return new CacheEntryFunction((BiFunction) input.readObject(), (Predicate) input.readObject());
+         }
+      }
+   }
+
+   @SerializeWith(value = CacheEntryConsumer.Externalizer.class)
+   private static class CacheEntryConsumer<K, V> extends LockHelper<K, V, Void> implements BiConsumer<Cache<K, V>, CacheEntry<K, V>> {
+      private final BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer;
+
+      private CacheEntryConsumer(BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer,
+            Predicate<? super CacheEntry<K, V>> predicate) {
+         super(predicate);
+         this.realConsumer = realConsumer;
+      }
+
+      @Override
+      public void accept(Cache<K, V> kvCache, CacheEntry<K, V> kvCacheEntry) {
+         perform(kvCache, kvCacheEntry);
+      }
+
+      @Override
+      protected Void actualPerform(Cache<K, V> cache, CacheEntry<K, V> entry) {
+         realConsumer.accept(cache, new EntryWrapper<>(cache, entry));
+         return null;
+      }
+
+      public static final class Externalizer implements org.infinispan.commons.marshall.Externalizer<CacheEntryConsumer> {
          @Override
          public void writeObject(ObjectOutput output, CacheEntryConsumer object) throws IOException {
             output.writeObject(object.realConsumer);

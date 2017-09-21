@@ -1,8 +1,10 @@
 package org.infinispan.stream.impl;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import javax.transaction.SystemException;
@@ -39,6 +41,17 @@ public class TxLockedStreamImpl<K, V> extends LockedStreamImpl<K, V> {
       try {
          ongoingTransaction = suspendOngoingTransactionIfExists();
          super.forEach(biConsumer);
+      } finally {
+         resumePreviousOngoingTransaction(ongoingTransaction);
+      }
+   }
+
+   @Override
+   public <R> Map<K, R> invokeAll(BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction) {
+      Transaction ongoingTransaction = null;
+      try {
+         ongoingTransaction = suspendOngoingTransactionIfExists();
+         return super.invokeAll(biFunction);
       } finally {
          resumePreviousOngoingTransaction(ongoingTransaction);
       }
