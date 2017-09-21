@@ -10,6 +10,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.LockedStream;
@@ -43,6 +45,9 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
+import org.infinispan.util.function.SerializableBiConsumer;
+import org.infinispan.util.function.SerializableBiFunction;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -711,7 +716,48 @@ public class APINonTxTest extends SingleCacheManagerTest {
       }
    }
 
-   void assertLockStream(BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>> consumer) throws Throwable {
+   @DataProvider(name = "lockedStreamActuallyLocks")
+   public Object[][] lockStreamActuallyLocks() {
+      return Arrays.stream(new BiConsumer[] {
+            // Put
+            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> assertEquals("value" + e.getKey(), c.put(e.getKey(), String.valueOf(e.getValue() + "-other"))),
+            // Functional Command
+            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> {
+               FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(c.getAdvancedCache()));
+               try {
+                  assertEquals("value" + e.getKey(), rwMap.eval(e.getKey(), view -> {
+                     Object prev = view.get();
+                     view.set(prev + "-other");
+                     return prev;
+                  }).get());
+               } catch (InterruptedException | ExecutionException e1) {
+                  throw new AssertionError(e1);
+               }
+            },
+            // Put all
+            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> c.putAll(Collections.singletonMap(e.getKey(), e.getValue() + "-other")),
+            // Put Async
+            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> {
+               try {
+                  c.putAsync(e.getKey(), e.getValue() + "-other").get(10, TimeUnit.SECONDS);
+               } catch (InterruptedException | ExecutionException | TimeoutException e1) {
+                  throw new AssertionError(e1);
+               }
+            },
+            // Compute
+            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> c.compute(e.getKey(), (k, v) -> v + "-other"),
+            // Compute if present
+            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> c.computeIfPresent(e.getKey(), (k, v) -> v + "-other"),
+            // Merge
+            (BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>>) (c, e) -> c.merge(e.getKey(), "-other", (v1, v2) -> "" + v1 + v2)
+      }).flatMap(consumer ->
+         Stream.of(Boolean.TRUE, Boolean.FALSE).map(bool -> new Object[] { consumer, bool })
+      ).toArray(Object[][]::new);
+   }
+
+   @Test(dataProvider = "lockedStreamActuallyLocks")
+   public void testLockedStreamActuallyLocks(BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>> consumer,
+         boolean forEachOrInvokeAll) throws Throwable {
       for (int i = 0; i < 10; i++) {
          cache.put(i, "value" + i);
       }
@@ -721,7 +767,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       int key = 4;
 
       LockedStream<Object, Object> stream = cache.getAdvancedCache().lockedStream();
-      Future<?> forEachFuture = fork(() -> stream.forEach((c, e) -> {
+      SerializableBiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>> serConsumer = (c, e) -> {
          Object innerKey = e.getKey();
          if (innerKey.equals(key)) {
             try {
@@ -737,7 +783,17 @@ public class APINonTxTest extends SingleCacheManagerTest {
                throw new RuntimeException(e1);
             }
          }
-      }));
+      };
+      Future<?> forEachFuture = fork(() -> {
+         if (forEachOrInvokeAll) {
+            stream.forEach(serConsumer);
+         } else {
+            stream.invokeAll((c, e) -> {
+               serConsumer.accept(c, e);
+               return null;
+            });
+         }
+      });
 
       barrier.await(10, TimeUnit.SECONDS);
 
@@ -761,51 +817,6 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertEquals(0, lockManager.getNumberOfLocksHeld());
    }
 
-   public void testLockedStream() throws Throwable {
-      assertLockStream((c, e) -> assertEquals("value" + e.getKey(), c.put(e.getKey(), String.valueOf(e.getValue() + "-other"))));
-   }
-
-   public void testLockedStreamFunctionalCommand() throws Throwable {
-      assertLockStream((c, e) -> {
-         FunctionalMap.ReadWriteMap<Object, Object> rwMap = ReadWriteMapImpl.create(FunctionalMapImpl.create(c.getAdvancedCache()));
-         try {
-            assertEquals("value" + e.getKey(), rwMap.eval(e.getKey(), view -> {
-               Object prev = view.get();
-               view.set(prev + "-other");
-               return prev;
-            }).get());
-         } catch (InterruptedException | ExecutionException e1) {
-            throw new AssertionError(e1);
-         }
-      });
-   }
-
-   public void testLockedStreamPutAll() throws Throwable {
-      assertLockStream((c, e) -> c.putAll(Collections.singletonMap(e.getKey(), e.getValue() + "-other")));
-   }
-
-   public void testLockedStreamPutAsync() throws Throwable {
-      assertLockStream((c, e) -> {
-         try {
-            c.putAsync(e.getKey(), e.getValue() + "-other").get(10, TimeUnit.SECONDS);
-         } catch (InterruptedException | ExecutionException | TimeoutException e1) {
-            throw new AssertionError(e1);
-         }
-      });
-   }
-
-   public void testLockedStreamCompute() throws Throwable {
-      assertLockStream((c, e) -> c.compute(e.getKey(), (k, v) -> v + "-other"));
-   }
-
-   public void testLockedStreamComputeIfPresent() throws Throwable {
-      assertLockStream((c, e) -> c.computeIfPresent(e.getKey(), (k, v) -> v + "-other"));
-   }
-
-   public void testLockedStreamMerge() throws Throwable {
-      assertLockStream((c, e) -> c.merge(e.getKey(), "-other", (v1, v2) -> "" + v1 + v2));
-   }
-
    public void testLockedStreamSetValue() {
       for (int i = 0; i < 5; i++) {
          cache.put(i, "value" + i);
@@ -822,5 +833,47 @@ public class APINonTxTest extends SingleCacheManagerTest {
    public void testLockedStreamWithinLockedStream() {
       cache.put("key", "value");
       cache.getAdvancedCache().lockedStream().forEach((c, e) -> c.getAdvancedCache().lockedStream());
+   }
+
+   <R> void assertLockStreamInvokeAll(LockedStream<Object, Object> lockedStream,
+         SerializableBiFunction<Cache<Object, Object>, CacheEntry<Object, Object>, R> biFunction,
+         Map<Object, R> expectedResults) {
+      Map<Object, R> results = lockedStream.invokeAll(biFunction);
+      assertEquals(expectedResults, results);
+   }
+
+   public void testLockedStreamInvokeAllPut() {
+      Map<Object, Object> original = new HashMap<>();
+      int insertedAmount = 5;
+      for (int i = 0; i < insertedAmount; i++) {
+         original.put("key-" + i, "value-" + i);
+      }
+      cache.putAll(original);
+
+      assertLockStreamInvokeAll(cache.getAdvancedCache().lockedStream(),
+            (c, e) -> c.put(e.getKey(), e.getValue() + "-updated"), original);
+      // Verify contents were updated
+      for(int i = 0; i < insertedAmount; i++) {
+         assertEquals("value-" + i + "-updated", cache.get("key-" + i));
+      }
+   }
+
+   public void testLockedStreamInvokeAllFilteredSet() {
+      Map<Object, Object> original = new HashMap<>();
+      int insertedAmount = 5;
+      for (int i = 0; i < insertedAmount; i++) {
+         original.put("key-" + i, "value-" + i);
+      }
+      cache.putAll(original);
+
+
+
+      // We only update the key with numbers 3
+      assertLockStreamInvokeAll(cache.getAdvancedCache().lockedStream().filter(e -> e.getKey().toString().contains("3")),
+            (c, e) -> c.put(e.getKey(), e.getValue() + "-updated"), Collections.singletonMap("key-" + 3, "value-" + 3));
+      // Verify contents were updated
+      for(int i = 0; i < insertedAmount; i++) {
+         assertEquals("value-" + i + (i == 3 ? "-updated" : ""), cache.get("key-" + i));
+      }
    }
 }

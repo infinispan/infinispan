@@ -3,6 +3,8 @@ package org.infinispan.api;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.function.BiConsumer;
+
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
@@ -12,6 +14,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -77,10 +80,11 @@ public class SimpleCacheTest extends APINonTxTest {
       new ConfigurationBuilder().simpleCache(true).compatibility().enabled(true).build();
    }
 
-   @Test(expectedExceptions = UnsupportedOperationException.class)
+   @Test(dataProvider = "lockedStreamActuallyLocks", expectedExceptions = UnsupportedOperationException.class)
    @Override
-   public void testLockedStream() throws Throwable {
-      super.testLockedStream();
+   public void testLockedStreamActuallyLocks(BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>> consumer,
+         boolean forEachOrInvokeAll) throws Throwable {
+      super.testLockedStreamActuallyLocks(consumer, forEachOrInvokeAll);
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
@@ -97,38 +101,14 @@ public class SimpleCacheTest extends APINonTxTest {
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
    @Override
-   public void testLockedStreamFunctionalCommand() throws Throwable {
-      super.testLockedStreamFunctionalCommand();
+   public void testLockedStreamInvokeAllFilteredSet() {
+      super.testLockedStreamInvokeAllFilteredSet();
    }
 
    @Test(expectedExceptions = UnsupportedOperationException.class)
    @Override
-   public void testLockedStreamPutAll() throws Throwable {
-      super.testLockedStreamPutAll();
-   }
-
-   @Test(expectedExceptions = UnsupportedOperationException.class)
-   @Override
-   public void testLockedStreamPutAsync() throws Throwable {
-      super.testLockedStreamPutAsync();
-   }
-
-   @Test(expectedExceptions = UnsupportedOperationException.class)
-   @Override
-   public void testLockedStreamCompute() throws Throwable {
-      super.testLockedStreamCompute();
-   }
-
-   @Test(expectedExceptions = UnsupportedOperationException.class)
-   @Override
-   public void testLockedStreamComputeIfPresent() throws Throwable {
-      super.testLockedStreamComputeIfPresent();
-   }
-
-   @Test(expectedExceptions = UnsupportedOperationException.class)
-   @Override
-   public void testLockedStreamMerge() throws Throwable {
-      super.testLockedStreamMerge();
+   public void testLockedStreamInvokeAllPut() {
+      super.testLockedStreamInvokeAllPut();
    }
 
    public void testStatistics() {
