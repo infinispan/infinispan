@@ -30,11 +30,11 @@ import java.util.function.Supplier;
 @MBean(description = "Enables custom partition handling.")
 public class PARTITION_HANDLING extends Protocol {
 
-   protected static final short PROTOCOL_ID = (short) 0x51A7;
-   protected static Log log = LogFactory.getLog(PARTITION_HANDLING.class);
+   private static final short PROTOCOL_ID = (short) 0x51A7;
+   private static Log log = LogFactory.getLog(PARTITION_HANDLING.class);
 
-   protected int nodeIndex = -1;
-   protected Set<Integer> allowedNodes;
+   private int nodeIndex = -1;
+   private Set<Integer> allowedNodes;
 
    private static final String EXECUTED_SUCCESSFULLY = "Executed successfully.";
    private static final String IGNORING_SELFCALL = "Ignoring self-call.";
