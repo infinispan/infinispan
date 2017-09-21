@@ -13,13 +13,11 @@ import java.util.Set;
 import org.hibernate.FlushMode;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 
-import org.infinispan.commons.test.categories.Unstable;
 import org.infinispan.test.hibernate.cache.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.functional.entities.Customer;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -54,7 +52,6 @@ public class BulkOperationsTest extends SingleNodeTest {
 	}
 
 	@Test
-   @Category(Unstable.class) // ISPN-8318
 	public void testBulkOperations() throws Throwable {
 		boolean cleanedUp = false;
 		try {
