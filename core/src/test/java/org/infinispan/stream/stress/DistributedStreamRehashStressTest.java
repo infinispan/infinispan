@@ -27,7 +27,6 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.stream.CacheCollectors;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;

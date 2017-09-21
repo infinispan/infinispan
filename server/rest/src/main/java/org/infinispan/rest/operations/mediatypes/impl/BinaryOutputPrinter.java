@@ -8,7 +8,6 @@ import org.infinispan.CacheSet;
 import org.infinispan.rest.operations.exceptions.ServerInternalException;
 import org.infinispan.rest.operations.mediatypes.Charset;
 import org.infinispan.rest.operations.mediatypes.OutputPrinter;
-import org.infinispan.stream.CacheCollectors;
 
 /**
  * {@link OutputPrinter} for binary values.
