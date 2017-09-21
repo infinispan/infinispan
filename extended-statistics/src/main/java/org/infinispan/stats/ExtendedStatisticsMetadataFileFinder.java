@@ -9,6 +9,7 @@ import org.kohsuke.MetaInfServices;
  */
 
 @MetaInfServices
+@SuppressWarnings("unused")
 public class ExtendedStatisticsMetadataFileFinder implements ModuleMetadataFileFinder {
    @Override
    public String getMetadataFilename() {

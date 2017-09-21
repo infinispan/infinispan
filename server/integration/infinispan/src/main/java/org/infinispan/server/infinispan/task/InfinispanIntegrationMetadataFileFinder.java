@@ -10,6 +10,7 @@ import org.kohsuke.MetaInfServices;
  * Time: 2:21 PM
  */
 @MetaInfServices
+@SuppressWarnings("unused")
 public class InfinispanIntegrationMetadataFileFinder implements ModuleMetadataFileFinder {
 
    @Override

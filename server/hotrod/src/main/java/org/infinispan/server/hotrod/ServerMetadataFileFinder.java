@@ -9,6 +9,7 @@ import org.kohsuke.MetaInfServices;
  * @since 8.0
  */
 @MetaInfServices(ModuleLifecycle.class)
+@SuppressWarnings("unused")
 public final class ServerMetadataFileFinder implements ModuleMetadataFileFinder {
    @Override
    public String getMetadataFilename() {

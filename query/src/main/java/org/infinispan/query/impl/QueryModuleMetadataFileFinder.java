@@ -4,6 +4,7 @@ import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.kohsuke.MetaInfServices;
 
 @MetaInfServices
+@SuppressWarnings("unused")
 public class QueryModuleMetadataFileFinder implements ModuleMetadataFileFinder {
 
    @Override

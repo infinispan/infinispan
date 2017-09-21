@@ -8,6 +8,7 @@ import org.kohsuke.MetaInfServices;
  * @since 7.2
  */
 @MetaInfServices
+@SuppressWarnings("unused")
 public class CoreTestMetadataFileFinder implements ModuleMetadataFileFinder {
 
    @Override

@@ -10,6 +10,7 @@ import org.kohsuke.MetaInfServices;
  * @since 8.1
  */
 @MetaInfServices
+@SuppressWarnings("unused")
 public class TasksMetadataFileFinder implements ModuleMetadataFileFinder {
    @Override
    public String getMetadataFilename() {
