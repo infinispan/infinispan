@@ -218,7 +218,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
       List<Map.Entry<Integer, String>> list = createStream(entrySet).sorted(
             (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).collect(
-            () -> Collectors.toList());
+            Collectors::<Map.Entry<Integer, String>>toList);
       assertEquals(cache.size(), list.size());
       AtomicInteger i = new AtomicInteger();
       list.forEach(e -> {
