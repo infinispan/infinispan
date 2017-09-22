@@ -3,6 +3,7 @@ package org.infinispan.server.core.test;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.infinispan.commons.logging.Log;
@@ -19,7 +20,7 @@ import io.netty.channel.unix.Errors;
  */
 public class ServerTestingUtil {
 
-   private static final int DEFAULT_PORT = 15232;
+   private static final AtomicInteger defaultUniquePort = new AtomicInteger(15232);
 
    private static Log LOG = LogFactory.getLog(ServerTestingUtil.class);
 
@@ -47,9 +48,10 @@ public class ServerTestingUtil {
             return socket.getLocalPort();
          }
       } catch (IOException e) {
-         LOG.debug("Error finding free port, using default of " + DEFAULT_PORT);
+         LOG.debugf("Error finding free port, falling back to auto-generated port. Error message: ",
+             e.getMessage());
       }
-      return DEFAULT_PORT;
+      return defaultUniquePort.incrementAndGet();
    }
 
    public static <S extends AbstractProtocolServer<?>> S startProtocolServer(int initialPort, Function<Integer, S> serverStarter) {
