@@ -22,6 +22,7 @@ import javax.management.ServiceNotFoundException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -51,18 +52,18 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testJmxOperations() throws Exception {
-      assert server.getAttribute(name, "CreatedCacheCount").equals("1");
-      assert server.getAttribute(name, "DefinedCacheCount").equals("0") : "Was " + server.getAttribute(name, "DefinedCacheCount");
-      assert server.getAttribute(name, "DefinedCacheNames").equals("[]");
-      assert server.getAttribute(name, "RunningCacheCount").equals("1");
+      assertEquals("1", server.getAttribute(name, "CreatedCacheCount"));
+      assertEquals("0", server.getAttribute(name, "DefinedCacheCount"));
+      assertEquals("[]", server.getAttribute(name, "DefinedCacheNames"));
+      assertEquals("1", server.getAttribute(name, "RunningCacheCount"));
 
       //now define some new caches
       cacheManager.defineConfiguration("a", new ConfigurationBuilder().build());
       cacheManager.defineConfiguration("b", new ConfigurationBuilder().build());
       cacheManager.defineConfiguration("c", new ConfigurationBuilder().build());
-      assert server.getAttribute(name, "CreatedCacheCount").equals("1");
-      assert server.getAttribute(name, "DefinedCacheCount").equals("3");
-      assert server.getAttribute(name, "RunningCacheCount").equals("1");
+      assertEquals("1", server.getAttribute(name, "CreatedCacheCount"));
+      assertEquals("3", server.getAttribute(name, "DefinedCacheCount"));
+      assertEquals("1", server.getAttribute(name, "RunningCacheCount"));
       String attribute = (String) server.getAttribute(name, "DefinedCacheConfigurationNames");
       String names[] = attribute.substring(1, attribute.length()-1).split(",");
       assertTrue(Arrays.binarySearch(names, "a") >= 0);
@@ -86,13 +87,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    }
 
    public void testInvokeJmxOperationNotExposed() throws Exception {
-      try {
-         server.invoke(name, "stop", new Object[]{}, new String[]{});
-         assert false : "Method not exposed, invocation should have failed";
-      } catch (MBeanException mbe) {
-         assert mbe.getCause() instanceof ServiceNotFoundException;
-      }
-
+      Exceptions.expectException(MBeanException.class, ServiceNotFoundException.class, () -> server.invoke(name, "stop", new Object[]{}, new String[]{}));
    }
 
    public void testJmxRegistrationAtStartupAndStop(Method m) throws Exception {
@@ -100,16 +95,12 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, true, false);
       ObjectName otherName = getCacheManagerObjectName(otherJmxDomain);
       try {
-         assert server.getAttribute(otherName, "CreatedCacheCount").equals("0");
+         assertEquals("0", server.getAttribute(otherName, "CreatedCacheCount"));
       } finally {
          otherContainer.stop();
       }
 
-      try {
-         server.getAttribute(otherName, "CreatedCacheCount").equals("0");
-         assert false : "Failure expected, " + otherName + " shouldn't be registered in mbean server";
-      } catch (InstanceNotFoundException e) {
-      }
+      Exceptions.expectException(InstanceNotFoundException.class, () -> server.getAttribute(otherName, "CreatedCacheCount"));
    }
 
    public void testCustomCacheManagerName(Method m) throws Exception {
@@ -117,17 +108,17 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, "Hibernate2LC", true, false);
       ObjectName otherName = getCacheManagerObjectName(otherJmxDomain, "Hibernate2LC");
       try {
-         assert server.getAttribute(otherName, "CreatedCacheCount").equals("0");
+         assertEquals("0", server.getAttribute(otherName, "CreatedCacheCount"));
       } finally {
          otherContainer.stop();
       }
    }
 
    public void testAddressInformation() throws Exception {
-      assert server.getAttribute(name, "NodeAddress").equals("local");
-      assert server.getAttribute(name, "ClusterMembers").equals("local");
-      assert server.getAttribute(name, "PhysicalAddresses").equals("local");
-      assert server.getAttribute(name, "ClusterSize").equals(1);
+      assertEquals("local", server.getAttribute(name, "NodeAddress"));
+      assertEquals("local", server.getAttribute(name, "ClusterMembers"));
+      assertEquals("local", server.getAttribute(name, "PhysicalAddresses"));
+      assertEquals(1, server.getAttribute(name, "ClusterSize"));
    }
 
    @Test(dependsOnMethods="testJmxOperations")
