@@ -42,6 +42,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.InternalCacheFactory;
@@ -64,6 +65,7 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.impl.ClusterExecutors;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
@@ -876,17 +878,20 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @ManagedAttribute(description = "The total number of defined cache configurations.", displayName = "Number of caches defined", displayType = DisplayType.SUMMARY)
    public String getDefinedCacheCount() {
-      return String.valueOf(configurationManager.getDefinedCaches().size());
+      return String.valueOf(getCacheConfigurationNames().size());
    }
 
    @ManagedAttribute(description = "The total number of created caches, including the default cache.", displayName = "Number of caches created", displayType = DisplayType.SUMMARY)
    public String getCreatedCacheCount() {
-      return String.valueOf(this.caches.keySet().size());
+      InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      long created = caches.keySet().stream().filter(c -> !internalCacheRegistry.isInternalCache(c)).count();
+      return String.valueOf(created);
    }
 
    @ManagedAttribute(description = "The total number of running caches, including the default cache.", displayName = "Number of running caches", displayType = DisplayType.SUMMARY)
    public String getRunningCacheCount() {
-      long running = caches.keySet().stream().filter(this::isRunning).count();
+      InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      long running = caches.keySet().stream().filter(c -> isRunning(c) && !internalCacheRegistry.isInternalCache(c)).count();
       return String.valueOf(running);
    }
 
