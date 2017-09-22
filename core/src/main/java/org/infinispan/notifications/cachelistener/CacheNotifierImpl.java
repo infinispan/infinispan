@@ -33,7 +33,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.transaction.Status;
@@ -506,9 +505,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (isNotificationAllowed(command, cacheEntriesEvictedListeners)) {
             EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
             for (CacheEntryListenerInvocation<K, V> listener : cacheEntriesEvictedListeners) {
-               Map<K, V> evictedKeysAndValues = entries.stream().collect(Collectors.toMap(
-                     entry -> convertKey(listener.getKeyEncoder(), listener.getKeyWrapper(), entry.getKey()),
-                     entry -> convertValue(listener.getValueEncoder(), listener.getValueWrapper(), entry.getValue())));
+               Map<K, V> evictedKeysAndValues = new HashMap<>();
+               for (Map.Entry<? extends K, ? extends V> entry : entries) {
+                  evictedKeysAndValues.put(convertKey(listener.getKeyEncoder(), listener.getKeyWrapper(), entry.getKey()),
+                        convertValue(listener.getValueEncoder(), listener.getValueWrapper(), entry.getValue()));
+               }
                e.setEntries(evictedKeysAndValues);
                listener.invoke(e);
             }

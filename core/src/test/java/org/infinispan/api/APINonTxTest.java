@@ -144,6 +144,9 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assertFalse(cache.keySet().contains(key2));
       assertFalse(cache.values().contains(value));
       assertCacheIsEmpty();
+
+      // We should be fine if we evict a non existent key
+      cache.evict(key1);
    }
 
 

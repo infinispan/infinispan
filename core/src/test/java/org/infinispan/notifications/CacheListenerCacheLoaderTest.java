@@ -134,6 +134,9 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
       assert l.loaded.contains("k");
       assert l.activated.contains("k");
       assert l.passivated.contains("k");
+
+      // We should be fine if we evict a non existent key
+      c.evict("k");
    }
 
 
