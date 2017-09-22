@@ -259,6 +259,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
             }
             try {
                InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
+               passivator.passivate(ice);
                performRemove(addressToRemove, offHeapEntryFactory.getKey(addressToRemove));
                evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
             } finally {
