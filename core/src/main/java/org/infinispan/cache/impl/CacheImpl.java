@@ -121,6 +121,7 @@ import org.infinispan.stream.impl.TxLockedStreamImpl;
 import org.infinispan.stream.impl.local.ValueCacheCollection;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.XaTransactionTable;
@@ -324,13 +325,19 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent, Metadata metadata, long flags, InvocationContext ctx) {
-      assertKeyNotNull(key);
-      assertFunctionNotNull(remappingFunction);
-      ComputeCommand command = commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent, metadata, flags);
-      if (ctx.getLockOwner() == null) {
-         ctx.setLockOwner(command.getKeyLockOwner());
+      try {
+         assertKeyNotNull(key);
+         assertFunctionNotNull(remappingFunction);
+         ComputeCommand command =
+               commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent, metadata, flags);
+         if (ctx.getLockOwner() == null) {
+            ctx.setLockOwner(command.getKeyLockOwner());
+         }
+         return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
       }
-      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    @Override
@@ -345,13 +352,19 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata, long flags, InvocationContext ctx) {
-      assertKeyNotNull(key);
-      assertFunctionNotNull(mappingFunction);
-      ComputeIfAbsentCommand command = commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction, metadata, flags);
-      if (ctx.getLockOwner() == null) {
-         ctx.setLockOwner(command.getKeyLockOwner());
+      try {
+         assertKeyNotNull(key);
+         assertFunctionNotNull(mappingFunction);
+         ComputeIfAbsentCommand command =
+               commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction, metadata, flags);
+         if (ctx.getLockOwner() == null) {
+            ctx.setLockOwner(command.getKeyLockOwner());
+         }
+         return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
       }
-      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    @Override
@@ -369,14 +382,21 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata, long flags, InvocationContext ctx) {
-      assertKeyNotNull(key);
-      assertValueNotNull(value);
-      assertFunctionNotNull(remappingFunction);
-      ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key, new MergeFunction(value, remappingFunction, metadata), Params.fromFlagsBitSet(flags), getKeyDataConversion(), getValueDataConversion());
-      if (ctx.getLockOwner() == null) {
-         ctx.setLockOwner(command.getKeyLockOwner());
+      try {
+         assertKeyNotNull(key);
+         assertValueNotNull(value);
+         assertFunctionNotNull(remappingFunction);
+         ReadWriteKeyCommand<K, V, V> command =
+               commandsFactory.buildReadWriteKeyCommand(key, new MergeFunction(value, remappingFunction, metadata),
+                                                        Params.fromFlagsBitSet(flags), getKeyDataConversion(), getValueDataConversion());
+         if (ctx.getLockOwner() == null) {
+            ctx.setLockOwner(command.getKeyLockOwner());
+         }
+         return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
       }
-      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
 
@@ -441,9 +461,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final boolean remove(Object key, Object value, long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      RemoveCommand command = createRemoveConditionalCommand(key, value, explicitFlags, ctx);
-      return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
+      try {
+         assertKeyValueNotNull(key, value);
+         RemoveCommand command = createRemoveConditionalCommand(key, value, explicitFlags, ctx);
+         return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    private RemoveCommand createRemoveConditionalCommand(Object key, Object value, long explicitFlags, InvocationContext ctx) {
@@ -618,7 +643,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          assertKeyNotNull(key);
          InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
          RemoveCommand command = createRemoveCommand(key, removeFlags, ctx);
-         executeCommandAndCommitIfNeeded(ctx, command);
+         invoker.invoke(ctx, command);
       }
    }
 
@@ -628,9 +653,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final V remove(Object key, long explicitFlags, InvocationContext ctx) {
-      assertKeyNotNull(key);
-      RemoveCommand command = createRemoveCommand(key, explicitFlags, ctx);
-      return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      try {
+         assertKeyNotNull(key);
+         RemoveCommand command = createRemoveCommand(key, explicitFlags, ctx);
+         return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -646,12 +676,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public void removeExpired(K key, V value, Long lifespan) {
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, 1);
-      RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, lifespan);
-      if (ctx.getLockOwner() == null) {
-         ctx.setLockOwner(command.getKeyLockOwner());
+      try {
+         RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, lifespan);
+         if (ctx.getLockOwner() == null) {
+            ctx.setLockOwner(command.getKeyLockOwner());
+         }
+         // Send an expired remove command to everyone
+         executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
       }
-      // Send an expired remove command to everyone
-      executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    @Override
@@ -1295,18 +1330,23 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    final V put(K key, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      DataWriteCommand command;
-      // CACHE_MODE_LOCAL is used for example when preloading - the entry has empty changeset (unless it's better
-      // defined) and that wouldn't store the value properly.
-      if (value instanceof Delta) {
-         command = createApplyDelta(key, (Delta) value, explicitFlags, ctx);
-      } else if (value instanceof DeltaAware && (explicitFlags & FlagBitSets.CACHE_MODE_LOCAL) == 0) {
-         command = createApplyDelta(key, ((DeltaAware) value).delta(), explicitFlags, ctx);
-      } else {
-         command = createPutCommand(key, value, metadata, explicitFlags, ctx);
+      try {
+         assertKeyValueNotNull(key, value);
+         DataWriteCommand command;
+         // CACHE_MODE_LOCAL is used for example when preloading - the entry has empty changeset (unless it's better
+         // defined) and that wouldn't store the value properly.
+         if (value instanceof Delta) {
+            command = createApplyDelta(key, (Delta) value, explicitFlags, ctx);
+         } else if (value instanceof DeltaAware && (explicitFlags & FlagBitSets.CACHE_MODE_LOCAL) == 0) {
+            command = createApplyDelta(key, ((DeltaAware) value).delta(), explicitFlags, ctx);
+         } else {
+            command = createPutCommand(key, value, metadata, explicitFlags, ctx);
+         }
+         return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
       }
-      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    @SuppressWarnings("unchecked")
@@ -1344,16 +1384,21 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    final V putIfAbsent(K key, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      DataWriteCommand command;
-      if (value instanceof Delta) {
-         command = createApplyDelta(key, (Delta) value, explicitFlags, ctx);
-      } else if (value instanceof DeltaAware && (explicitFlags & FlagBitSets.CACHE_MODE_LOCAL) == 0) {
-         command = createApplyDelta(key, ((DeltaAware) value).delta(), explicitFlags, ctx);
-      } else {
-         command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, ctx);
+      try {
+         assertKeyValueNotNull(key, value);
+         DataWriteCommand command;
+         if (value instanceof Delta) {
+            command = createApplyDelta(key, (Delta) value, explicitFlags, ctx);
+         } else if (value instanceof DeltaAware && (explicitFlags & FlagBitSets.CACHE_MODE_LOCAL) == 0) {
+            command = createApplyDelta(key, ((DeltaAware) value).delta(), explicitFlags, ctx);
+         } else {
+            command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, ctx);
+         }
+         return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
       }
-      return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
    @SuppressWarnings("unchecked")
@@ -1379,12 +1424,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final void putAll(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags, InvocationContext ctx) {
-      // Vanilla PutMapCommand returns previous values; add IGNORE_RETURN_VALUES as the API will drop the return value.
-      // Interceptors are free to clear this flag if appropriate (since interceptors are the only consumers of the
-      // return value).
-      explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
-      PutMapCommand command = createPutAllCommand(map, metadata, explicitFlags, ctx);
-      executeCommandAndCommitIfNeeded(ctx, command);
+      try {
+         // Vanilla PutMapCommand returns previous values; add IGNORE_RETURN_VALUES as the API will drop the return value.
+         // Interceptors are free to clear this flag if appropriate (since interceptors are the only consumers of the
+         // return value).
+         explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
+         PutMapCommand command = createPutAllCommand(map, metadata, explicitFlags, ctx);
+         executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    public final Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map) {
@@ -1392,8 +1442,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags, InvocationContext ctx) {
-      PutMapCommand command = createPutAllCommand(map, metadata, explicitFlags, ctx);
-      return dropNullEntries((Map<K, V>) executeCommandAndCommitIfNeeded(ctx, command));
+      try {
+         PutMapCommand command = createPutAllCommand(map, metadata, explicitFlags, ctx);
+         return dropNullEntries((Map<K, V>) executeCommandAndCommitIfNeeded(ctx, command));
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    private PutMapCommand createPutAllCommand(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags, InvocationContext ctx) {
@@ -1416,9 +1471,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    final V replace(K key, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, ctx);
-      return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      try {
+         assertKeyValueNotNull(key, value);
+         ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, ctx);
+         return (V) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -1441,10 +1501,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final boolean replace(K key, V oldValue, V value, Metadata metadata, long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      assertValueNotNull(oldValue);
-      ReplaceCommand command = createReplaceConditionalCommand(key, oldValue, value, metadata, explicitFlags, ctx);
-      return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
+      try {
+         assertKeyValueNotNull(key, value);
+         assertValueNotNull(oldValue);
+         ReplaceCommand command = createReplaceConditionalCommand(key, oldValue, value, metadata, explicitFlags, ctx);
+         return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    private ReplaceCommand createReplaceConditionalCommand(K key, V oldValue, V value, Metadata metadata,
@@ -1487,9 +1552,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<V> putAsync(final K key, final V value, final Metadata metadata, final long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = createPutCommand(key, value, metadata, explicitFlags, ctx);
-      return executeCommandAndCommitIfNeededAsync(ctx, command);
+      try {
+         assertKeyValueNotNull(key, value);
+         PutKeyValueCommand command = createPutCommand(key, value, metadata, explicitFlags, ctx);
+         return executeCommandAndCommitIfNeededAsync(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @Override
@@ -1506,9 +1576,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata,
                                              long explicitFlags, InvocationContext ctx) {
-      explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
-      PutMapCommand command = createPutAllCommand(data, metadata, explicitFlags, ctx);
-      return executeCommandAndCommitIfNeededAsync(ctx, command);
+      try {
+         explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
+         PutMapCommand command = createPutAllCommand(data, metadata, explicitFlags, ctx);
+         return executeCommandAndCommitIfNeededAsync(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @Override
@@ -1536,9 +1611,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
                                                final long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, ctx);
-      return executeCommandAndCommitIfNeededAsync(ctx, command);
+      try {
+         assertKeyValueNotNull(key, value);
+         PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags, ctx);
+         return executeCommandAndCommitIfNeededAsync(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @Override
@@ -1547,9 +1627,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<V> removeAsync(final Object key, final long explicitFlags, InvocationContext ctx) {
-      assertKeyNotNull(key);
-      RemoveCommand command = createRemoveCommand(key, explicitFlags, ctx);
-      return executeCommandAndCommitIfNeededAsync(ctx, command);
+      try {
+         assertKeyNotNull(key);
+         RemoveCommand command = createRemoveCommand(key, explicitFlags, ctx);
+         return executeCommandAndCommitIfNeededAsync(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @Override
@@ -1559,9 +1644,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final long explicitFlags,
                                                 InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      RemoveCommand command = createRemoveConditionalCommand(key, value, explicitFlags, ctx);
-      return executeCommandAndCommitIfNeededAsync(ctx, command);
+      try {
+         assertKeyValueNotNull(key, value);
+         RemoveCommand command = createRemoveConditionalCommand(key, value, explicitFlags, ctx);
+         return executeCommandAndCommitIfNeededAsync(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @Override
@@ -1578,9 +1668,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
                                            final long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, ctx);
-      return executeCommandAndCommitIfNeededAsync(ctx, command);
+      try {
+         assertKeyValueNotNull(key, value);
+         ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags, ctx);
+         return executeCommandAndCommitIfNeededAsync(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @Override
@@ -1598,10 +1693,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
                                                  final Metadata metadata, final long explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, newValue);
-      assertValueNotNull(oldValue);
-      ReplaceCommand command = createReplaceConditionalCommand(key, oldValue, newValue, metadata, explicitFlags, ctx);
-      return executeCommandAndCommitIfNeededAsync(ctx, command);
+      try {
+         assertKeyValueNotNull(key, newValue);
+         assertValueNotNull(oldValue);
+         ReplaceCommand command = createReplaceConditionalCommand(key, oldValue, newValue, metadata, explicitFlags, ctx);
+         return executeCommandAndCommitIfNeededAsync(ctx, command);
+      } catch (Throwable t) {
+         tryRollbackInjected(ctx);
+         throw t;
+      }
    }
 
    @Override
@@ -1660,7 +1760,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       try {
          result = invoker.invoke(ctx, command);
       } catch (Throwable e) {
-         if (txInjected) tryRollback();
+         if (txInjected) tryRollbackInjected(ctx);
          throw e;
       }
 
@@ -1687,7 +1787,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       } catch (SystemException e) {
          throw new CacheException("Cannot suspend implicit transaction", e);
       } catch (Throwable e) {
-         if (txInjected) tryRollback();
+         if (txInjected) tryRollbackInjected(ctx);
          throw e;
       }
       if (txInjected) {
@@ -1734,6 +1834,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          throw e;
       } catch (Exception e) {
          throw new CacheException("Unable to begin implicit transaction.", e);
+      }
+   }
+
+   private void tryRollbackInjected(InvocationContext ctx) {
+      if (ctx.isInTxScope()) {
+         TxInvocationContext<LocalTransaction> txCtx = (TxInvocationContext<LocalTransaction>) ctx;
+         if (txCtx.isImplicitTransaction()) {
+            tryRollback();
+            // In some cases the cache transaction is not registered with the JTA transaction (e.g. if the key is null)
+            txTable.removeLocalTransaction(txCtx.getCacheTransaction());
+         }
       }
    }
 

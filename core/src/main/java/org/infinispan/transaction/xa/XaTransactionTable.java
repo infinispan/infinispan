@@ -99,11 +99,6 @@ public class XaTransactionTable extends TransactionTable {
       }
    }
 
-   @Override
-   public int getLocalTxCount() {
-      return xid2LocalTx.size();
-   }
-
    public int prepare(Xid externalXid) throws XAException {
       Xid xid = convertXid(externalXid);
       LocalXaTransaction localTransaction = getLocalTransactionAndValidate(xid);
