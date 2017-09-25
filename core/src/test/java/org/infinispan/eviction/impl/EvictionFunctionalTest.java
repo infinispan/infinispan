@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
@@ -98,6 +99,17 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
       timeService.advance(1000);
       cache.getAdvancedCache().getExpirationManager().processExpiration();
       assert 0 == cache.size() : "cache size should be zero: " + cache.size();
+   }
+
+   public void testEvictionNotificationSkipped() {
+      String key = "key";
+      String value = "value";
+
+      cache.put(key, value);
+
+      cache.getAdvancedCache().withFlags(Flag.SKIP_LISTENER_NOTIFICATION).evict(key);
+
+      assertEquals(0, evictionListener.getEvictedEvents().size());
    }
 
    @Listener
