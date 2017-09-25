@@ -14,14 +14,14 @@ import org.infinispan.jmx.annotations.Parameter;
  * @author Manik Surtani
  * @since 5.1
  */
-public class JmxOperationMetadata implements Serializable {
+public final class JmxOperationMetadata implements Serializable {
    private final String methodName;
    private final String operationName;
    private final JmxOperationParameter[] methodParameters;
    private final String description;
    private final String returnType;
 
-   public JmxOperationMetadata(Method m) {
+   JmxOperationMetadata(Method m) {
       methodName = m.getName();
       returnType = m.getReturnType().getName();
       Class<?>[] params = m.getParameterTypes();

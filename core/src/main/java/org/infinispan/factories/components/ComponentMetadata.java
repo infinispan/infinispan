@@ -39,8 +39,8 @@ import org.infinispan.factories.scopes.Scope;
  * @see ComponentMetadataRepo
  */
 public class ComponentMetadata implements Serializable {
-   public static final InjectMetadata[] EMPTY_INJECT_METHODS = {};
-   public static final PrioritizedMethodMetadata[] EMPTY_PRIORITIZED_METHODS = {};
+   private static final InjectMetadata[] EMPTY_INJECT_METHODS = {};
+   private static final PrioritizedMethodMetadata[] EMPTY_PRIORITIZED_METHODS = {};
 
    private String name;
    private transient Map<String, String> dependencies;
@@ -57,9 +57,9 @@ public class ComponentMetadata implements Serializable {
       survivesRestarts = true;
    }
 
-   public ComponentMetadata(Class<?> component, List<Method> injectMethods, List<Method> startMethods,
-                            List<Method> postStartMethods, List<Method> stopMethods, boolean global,
-                            boolean survivesRestarts) {
+   ComponentMetadata(Class<?> component, List<Method> injectMethods, List<Method> startMethods,
+                     List<Method> postStartMethods, List<Method> stopMethods, boolean global,
+                     boolean survivesRestarts) {
       clazz = component;
       name = component.getName();
       globalScope = global;
@@ -94,7 +94,7 @@ public class ComponentMetadata implements Serializable {
 
       if (injectMethods != null && !injectMethods.isEmpty()) {
          this.injectMetadata = new InjectMetadata[injectMethods.size()];
-         this.dependencies = new HashMap<String, String>(injectMethods.size() * 2);
+         this.dependencies = new HashMap<>(injectMethods.size() * 2);
          int j=0;
          for (Method m : injectMethods) {
 
@@ -210,7 +210,7 @@ public class ComponentMetadata implements Serializable {
       transient Method method;
       int priority;
 
-      public PrioritizedMethodMetadata(String methodName, int priority) {
+      PrioritizedMethodMetadata(String methodName, int priority) {
          this.methodName = methodName;
          this.priority = priority;
       }

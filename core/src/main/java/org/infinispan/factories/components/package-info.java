@@ -1,4 +1,4 @@
 /**
- * Internal annotations to control the lifecycle of cache components.
+ * Internal component metadata representation and persistence.
  */
-package org.infinispan.factories.annotations;
+package org.infinispan.factories.components;

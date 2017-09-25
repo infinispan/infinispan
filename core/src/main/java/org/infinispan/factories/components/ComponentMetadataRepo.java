@@ -25,8 +25,8 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ComponentMetadataRepo {
    private static final Log log = LogFactory.getLog(ComponentMetadataRepo.class);
-   final Map<String, ComponentMetadata> componentMetadataMap = new HashMap<String, ComponentMetadata>(128);
-   final Map<String, String> factories = new HashMap<String, String>(16);
+   final Map<String, ComponentMetadata> componentMetadataMap = new HashMap<>(128);
+   final Map<String, String> factories = new HashMap<>(16);
    private final ComponentMetadata dependencyFreeComponent = new ComponentMetadata();
 
    @SuppressWarnings("unchecked")
