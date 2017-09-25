@@ -394,7 +394,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      command.setFlagsBitSet(EVICT_FLAGS_BITSET); //to force the wrapping
+      command.setFlagsBitSet(command.getFlagsBitSet() | EVICT_FLAGS_BITSET); //to force the wrapping
       return visitRemoveCommand(ctx, command);
    }
 
