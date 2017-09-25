@@ -66,6 +66,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -195,7 +196,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
 						writeLatch1.await();
 
-                  CountDownLatch latch = expectPutFromLoad(remoteRegion);
+                  CountDownLatch latch = expectPutFromLoad(remoteRegion, KEY);
 						if (useMinimalAPI) {
 							localAccessStrategy.putFromLoad(session, KEY, VALUE1, session.getTimestamp(), 1, true);
 						} else {
@@ -229,7 +230,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 						// Wait for node1 to finish
 						writeLatch2.await();
 
-                  CountDownLatch latch = expectPutFromLoad(localRegion);
+                  CountDownLatch latch = expectPutFromLoad(localRegion, KEY);
 						if (useMinimalAPI) {
 							remoteAccessStrategy.putFromLoad(session, KEY, VALUE1, session.getTimestamp(), 1, true);
 						} else {
@@ -326,26 +327,32 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		return expectPutWithValue(value -> value instanceof TombstoneUpdate);
 	}
 
-   protected CountDownLatch expectPutFromLoad(R region) {
+   protected CountDownLatch expectPutFromLoad(R region, Object key) {
       Predicate<Object> valuePredicate = accessType == AccessType.NONSTRICT_READ_WRITE
          ? value -> value instanceof VersionedEntry
          : value -> value instanceof TombstoneUpdate;
       CountDownLatch latch;
+      latch = new CountDownLatch(1);
       if (!isUsingInvalidation()) {
          latch = new CountDownLatch(1);
          ExpectingInterceptor.get(region.getCache())
             .when((ctx, cmd) -> cmd instanceof PutKeyValueCommand
+                  && ((PutKeyValueCommand) cmd).getKey().equals(key)
                   && valuePredicate.test(((PutKeyValueCommand) cmd).getValue()))
             .countDown(latch);
          cleanup.add(() -> ExpectingInterceptor.cleanup(region.getCache()));
       } else {
-         latch = new CountDownLatch(0);
+         if (transactional) {
+            expectPutFromLoadEndInvalidating(region, key, latch);
+         } else {
+            expectInvalidateCommand(region, latch);
+         }
       }
       log.debugf("Create latch for putFromLoad: %s", latch);
       return latch;
    }
 
-	protected abstract void doUpdate(S strategy, SessionImplementor session, Object key, Object value, Object version) throws RollbackException, SystemException;
+   protected abstract void doUpdate(S strategy, SessionImplementor session, Object key, Object value, Object version) throws RollbackException, SystemException;
 
 	private interface SessionMock extends Session, SessionImplementor {
 	}
@@ -460,7 +467,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		SessionImplementor s6 = mockedSession();
 		assertEquals(VALUE1, remoteAccessStrategy.get(s6, KEY, s6.getTimestamp()));
 
-      CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict);
+      CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict, KEY);
 
       SessionImplementor session = mockedSession();
 		withTx(localEnvironment, session, () -> {
@@ -551,7 +558,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		assertEquals(VALUE1, localAccessStrategy.get(s4, KEY, s4.getTimestamp()));
 		assertEquals(VALUE1, remoteAccessStrategy.get(s6, KEY, s6.getTimestamp()));
 
-      CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict);
+      CountDownLatch endInvalidationLatch = createEndInvalidationLatch(evict, KEY);
 
 		withTx(localEnvironment, mockedSession(), () -> {
 			if (evict) {
@@ -595,7 +602,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 		assertEquals(VALUE1, remoteAccessStrategy.get(s12, KEY, s12.getTimestamp()));
 	}
 
-   private CountDownLatch createEndInvalidationLatch(boolean evict) {
+   private CountDownLatch createEndInvalidationLatch(boolean evict, Object key) {
       CountDownLatch endInvalidationLatch;
       if (invalidation && !evict) {
          // removeAll causes transactional remove commands which trigger EndInvalidationCommands on the remote side
@@ -603,31 +610,41 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
          // current session nor register tx synchronization, so it falls back to simple InvalidationCommand.
          endInvalidationLatch = new CountDownLatch(1);
          if (transactional) {
-            PutFromLoadValidator originalValidator = PutFromLoadValidator.removeFromCache(remoteRegion.getCache());
-            assertEquals(PutFromLoadValidator.class, originalValidator.getClass());
-            PutFromLoadValidator mockValidator = spy(originalValidator);
-            doAnswer(invocation -> {
-               try {
-                  return invocation.callRealMethod();
-               } finally {
-                  endInvalidationLatch.countDown();
-               }
-            }).when(mockValidator).endInvalidatingKey(any(), any());
-            PutFromLoadValidator.addToCache(remoteRegion.getCache(), mockValidator);
-            cleanup.add(() -> {
-               PutFromLoadValidator.removeFromCache(remoteRegion.getCache());
-               PutFromLoadValidator.addToCache(remoteRegion.getCache(), originalValidator);
-            });
+            expectPutFromLoadEndInvalidating(remoteRegion, key, endInvalidationLatch);
          } else {
-            ExpectingInterceptor.get(remoteRegion.getCache())
-               .when((ctx, cmd) -> cmd instanceof InvalidateCommand)
-               .countDown(endInvalidationLatch);
-            cleanup.add(() -> ExpectingInterceptor.cleanup(remoteRegion.getCache()));
+            expectInvalidateCommand(remoteRegion, endInvalidationLatch);
          }
       } else {
          endInvalidationLatch = new CountDownLatch(0);
       }
+      log.debugf("Create end invalidation latch: %s", endInvalidationLatch);
       return endInvalidationLatch;
+   }
+
+   private void expectPutFromLoadEndInvalidating(R region, Object key, CountDownLatch endInvalidationLatch) {
+      PutFromLoadValidator originalValidator = PutFromLoadValidator.removeFromCache(region.getCache());
+      assertEquals(PutFromLoadValidator.class, originalValidator.getClass());
+      PutFromLoadValidator mockValidator = spy(originalValidator);
+      doAnswer(invocation -> {
+         try {
+            return invocation.callRealMethod();
+         } finally {
+            log.debugf("Count down latch after calling endInvalidatingKey %s", endInvalidationLatch);
+            endInvalidationLatch.countDown();
+         }
+      }).when(mockValidator).endInvalidatingKey(any(), eq(key));
+      PutFromLoadValidator.addToCache(region.getCache(), mockValidator);
+      cleanup.add(() -> {
+         PutFromLoadValidator.removeFromCache(region.getCache());
+         PutFromLoadValidator.addToCache(region.getCache(), originalValidator);
+      });
+   }
+
+   private void expectInvalidateCommand(R region, CountDownLatch latch) {
+      ExpectingInterceptor.get(region.getCache())
+         .when((ctx, cmd) -> cmd instanceof InvalidateCommand)
+         .countDown(latch);
+      cleanup.add(() -> ExpectingInterceptor.cleanup(region.getCache()));
    }
 
    private CountDownLatch expectRemotePutFromLoad(AdvancedCache localCache, AdvancedCache remoteCache) {
