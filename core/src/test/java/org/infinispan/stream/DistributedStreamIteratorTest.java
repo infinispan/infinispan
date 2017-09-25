@@ -398,7 +398,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
             // Now wait until main thread lets us through
             checkPoint.awaitStrict("post_send_response_released", 10, TimeUnit.SECONDS);
          }
-      }).when(mockManager).invokeRemotely(anyCollection(), any(StreamResponseCommand.class), nullable(RpcOptions.class));
+      }).when(mockManager).invokeRemotelyAsync(anyCollection(), any(StreamResponseCommand.class), nullable(RpcOptions.class));
       TestingUtil.replaceComponent(cache, RpcManager.class, mockManager, true);
       return rpc;
    }
