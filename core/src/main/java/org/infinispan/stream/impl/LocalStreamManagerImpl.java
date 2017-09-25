@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
@@ -29,6 +30,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
@@ -237,6 +239,24 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       return getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude);
    }
 
+   private void handleResponseError(CompletableFuture<Map<Address, Response>> completableFuture, Object requestId,
+         Address origin) {
+      if (trace) {
+         completableFuture.whenComplete((v, e) -> {
+            if (v != null) {
+               Response response = v.values().iterator().next();
+               if (!response.isSuccessful()) {
+                  log.tracef("Unsuccessful response for %s sending response to %s", requestId, origin);
+               }
+            } else if (e != null) {
+               log.tracef(e, "Encounted exception for %s sending response to %s", requestId, origin);
+            } else {
+               log.tracef("Response successfully sent for %s", requestId);
+            }
+         });
+      }
+   }
+
    @Override
    public <R> void streamOperation(Object requestId, Address origin, boolean parallelStream, Set<Integer> segments,
            Set<K> keysToInclude, Set<K> keysToExclude, boolean includeLoader, TerminalOperation<R> operation) {
@@ -247,8 +267,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       operation.setSupplier(() -> getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude));
       operation.handleInjection(registry);
       R value = operation.performOperation();
-      rpc.invokeRemotely(Collections.singleton(origin), factory.buildStreamResponseCommand(requestId, true,
-              Collections.emptySet(), value), rpc.getDefaultRpcOptions(true));
+      CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
+            factory.buildStreamResponseCommand(requestId, true, Collections.emptySet(), value), rpc.getDefaultRpcOptions(true));
+      handleResponseError(completableFuture, requestId, origin);
    }
 
    @Override
@@ -294,11 +315,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       if (trace) {
          log.tracef("Sending response for %s", requestId);
       }
-      rpc.invokeRemotely(Collections.singleton(origin), factory.buildStreamResponseCommand(requestId, true,
-              listener.segmentsLost, value), rpc.getDefaultRpcOptions(true));
-      if (trace) {
-         log.tracef("Sent response for %s", requestId);
-      }
+      CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
+            factory.buildStreamResponseCommand(requestId, true, listener.segmentsLost, value), rpc.getDefaultRpcOptions(true));
+      handleResponseError(completableFuture, requestId, origin);
    }
 
    @Override
@@ -314,8 +333,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       operation.handleInjection(registry);
       Collection<R> value = operation.performOperation(new NonRehashIntermediateCollector<>(origin, requestId,
               parallelStream));
-      rpc.invokeRemotely(Collections.singleton(origin), factory.buildStreamResponseCommand(requestId, true,
-              Collections.emptySet(), value), rpc.getDefaultRpcOptions(true));
+      CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
+            factory.buildStreamResponseCommand(requestId, true, Collections.emptySet(), value), rpc.getDefaultRpcOptions(true));
+      handleResponseError(completableFuture, requestId, origin);
    }
 
    @Override
@@ -359,8 +379,9 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
          results = null;
       }
 
-      rpc.invokeRemotely(Collections.singleton(origin), factory.buildStreamResponseCommand(requestId, true,
-              listener.segmentsLost, results), rpc.getDefaultRpcOptions(true));
+      CompletableFuture<Map<Address, Response>> completableFuture = rpc.invokeRemotelyAsync(Collections.singleton(origin),
+            factory.buildStreamResponseCommand(requestId, true, listener.segmentsLost, results), rpc.getDefaultRpcOptions(true));
+      handleResponseError(completableFuture, requestId, origin);
    }
 
    class NonRehashIntermediateCollector<R> implements KeyTrackingTerminalOperation.IntermediateCollector<R> {
