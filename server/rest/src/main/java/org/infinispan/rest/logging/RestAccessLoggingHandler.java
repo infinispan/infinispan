@@ -19,6 +19,7 @@ public class RestAccessLoggingHandler {
    private final static Log log = LogFactory.getLog(RestAccessLoggingHandler.class, Log.class);
 
    private final static String NANO_TIME = "NanoTime";
+   private final static String X_FORWARDED_FOR = "X-Forwarded-For";
 
    private boolean isEnabled() {
       return log.isTraceEnabled();
@@ -27,7 +28,9 @@ public class RestAccessLoggingHandler {
    public void log(ChannelHandlerContext ctx, FullHttpRequest request, FullHttpResponse response) {
       if (isEnabled()) {
          // IP
-         String remoteAddress = ctx.channel().remoteAddress().toString();
+         String remoteAddress = request.headers().getAsString(X_FORWARDED_FOR);
+         if (remoteAddress == null)
+            remoteAddress = ctx.channel().remoteAddress().toString();
          // Date
          String timeString = request.headers().getAsString(NANO_TIME);
          long startNano;
