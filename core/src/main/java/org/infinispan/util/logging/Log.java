@@ -1650,4 +1650,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot create remote transaction %s, already completed", id = 482)
    CacheException remoteTransactionAlreadyCompleted(GlobalTransaction gtx);
+
+   @Message(value = "AdvancedCache.lock() with SKIP_LOCKING flag is not allowed.", id = 483)
+   IllegalArgumentException lockCommandWithSkipLocking();
+
+   @Message(value = "FORCE_WRITE_LOCK and SKIP_LOCKING can't be used together.", id = 484)
+   IllegalArgumentException invalidForceWriteLockAndSkipLockingFlags();
 }

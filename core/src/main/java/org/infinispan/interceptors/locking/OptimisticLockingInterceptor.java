@@ -58,13 +58,14 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) {
+   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys,
+         int topologyId) {
       return invokeNext(ctx, command);
    }
 
    @Override
    protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command,
-                                               Collection<K> keys, boolean forwarded) throws Throwable {
+         Collection<K> keys, boolean forwarded, int topologyId) throws Throwable {
       // TODO: can locks be acquired here with optimistic locking at all? Shouldn't we unlock only when exception is thrown?
       return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
    }

@@ -39,13 +39,15 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
-   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys) {
+   protected Object handleReadManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<?> keys,
+         int topologyId) {
       assertNonTransactional(ctx);
       return invokeNext(ctx, command);
    }
 
    @Override
-   protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys, boolean forwarded) throws Throwable {
+   protected <K> Object handleWriteManyCommand(InvocationContext ctx, FlagAffectedCommand command, Collection<K> keys,
+         boolean forwarded, int topologyId) throws Throwable {
       assertNonTransactional(ctx);
       if (forwarded || hasSkipLocking(command)) {
          return invokeNext(ctx, command);
