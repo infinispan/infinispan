@@ -95,8 +95,8 @@ public class ComponentMetadataPersister {
       }
       writeMetadata(repo, outputFile);
 
-      System.out.printf(" [ComponentMetadataPersister] %s components and %s factories analyzed and persisted in %s.%n%n",
-            repo.componentMetadataMap.size(), repo.factories.size(), 0);
+      System.out.printf(" [ComponentMetadataPersister] %s components and %s factories.%n%n",
+            repo.componentMetadataMap.size(), repo.factories.size());
    }
 
    private static void process(ComponentMetadataRepo repo, String path, File f) throws ClassNotFoundException {
