@@ -21,6 +21,7 @@ import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
@@ -44,7 +45,7 @@ public class ConfigurationTest extends AbstractCacheTest {
       AssertJUnit.assertEquals(CacheMode.DIST_SYNC, cacheConfig.clustering().cacheMode());
       AssertJUnit.assertEquals(config.numOwners(), cacheConfig.clustering().hash().numOwners());
       AssertJUnit.assertEquals(config.reliability() == Reliability.CONSISTENT,
-            cacheConfig.clustering().partitionHandling().enabled());
+            cacheConfig.clustering().partitionHandling().whenSplit() == PartitionHandling.DENY_READ_WRITES);
       AssertJUnit.assertFalse(cacheConfig.clustering().l1().enabled());
       AssertJUnit.assertEquals(TransactionMode.NON_TRANSACTIONAL, cacheConfig.transaction().transactionMode());
    }

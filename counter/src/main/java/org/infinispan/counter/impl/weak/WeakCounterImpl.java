@@ -2,6 +2,7 @@ package org.infinispan.counter.impl.weak;
 
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -26,7 +27,7 @@ import org.infinispan.counter.impl.listener.CounterFilterAndConvert;
 import org.infinispan.counter.impl.listener.NotificationManager;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.counter.util.Utils;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -35,7 +36,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 
 /**
@@ -61,8 +61,8 @@ import org.infinispan.util.ByteString;
 public class WeakCounterImpl implements WeakCounter {
 
    private static final Log log = LogFactory.getLog(WeakCounterImpl.class, Log.class);
-   private static final AtomicReferenceFieldUpdater<Entry, CounterValue> L1_UPDATER =
-         newUpdater(Entry.class, CounterValue.class, "snapshot");
+   private static final AtomicReferenceFieldUpdater<Entry, Long> L1_UPDATER =
+         newUpdater(Entry.class, Long.class, "snapshot");
 
    private final Entry[] entries;
    private final AdvancedCache<WeakCounterKey, CounterValue> cache;
@@ -110,14 +110,14 @@ public class WeakCounterImpl implements WeakCounter {
       for (int i = 1; i < entries.length; ++i) {
          initEntry(i, zeroConfig);
       }
-      selector.updatePreferredKeys(cache.getDistributionManager().getWriteConsistentHash());
+      selector.updatePreferredKeys();
    }
 
    private void initEntry(int index, CounterConfiguration configuration) {
       try {
          CounterValue existing = readWriteMap.eval(entries[index].key, new InitializeCounterFunction<>(configuration))
                .get();
-         entries[index].init(existing);
+         entries[index].init(existing.getValue());
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CounterException(e);
@@ -166,9 +166,9 @@ public class WeakCounterImpl implements WeakCounter {
    public void updateState(CacheEntryEvent<WeakCounterKey, CounterValue> event) {
       int index = event.getKey().getIndex();
       long base = getCachedValue(index);
-      CounterValue snapshot = event.getValue();
-      CounterValue old = updateCounterState(index, snapshot);
-      notificationManager.notify(CounterEventImpl.create(base + old.getValue(), base + snapshot.getValue()));
+      long newValue = event.getValue().getValue();
+      long oldValue = updateCounterState(index, newValue);
+      notificationManager.notify(CounterEventImpl.create(base + oldValue, base + newValue));
    }
 
 
@@ -192,29 +192,50 @@ public class WeakCounterImpl implements WeakCounter {
 
    private long getCachedValue() {
       long value = 0;
-      for (Entry e : entries) {
-         long toAdd = e.snapshot.getValue();
-         try {
-            value = Math.addExact(value, toAdd);
-         } catch (ArithmeticException ex) {
-            return toAdd > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
+      int index = 0;
+      try {
+         for (; index < entries.length; ++index) {
+            value = Math.addExact(value, entries[index].snapshot);
          }
+      } catch (ArithmeticException e) {
+         return getCachedValue0(index, value, -1);
       }
       return value;
    }
 
    private long getCachedValue(int skipIndex) {
       long value = 0;
-      for (int i = 0; i < entries.length; ++i) {
-         if (i != skipIndex) {
-            value += entries[i].snapshot.getValue();
+      int index = 0;
+      try {
+         for (; index < entries.length; ++index) {
+            if (index == skipIndex) {
+               continue;
+            }
+            value = Math.addExact(value, entries[index].snapshot);
          }
+      } catch (ArithmeticException e) {
+         return getCachedValue0(index, value, skipIndex);
       }
       return value;
    }
 
-   private CounterValue updateCounterState(int index, CounterValue entry) {
-      return entries[index].update(entry);
+   private long getCachedValue0(int index, long value, int skipIndex) {
+      BigInteger currentValue = BigInteger.valueOf(value);
+      do {
+         currentValue = currentValue.add(BigInteger.valueOf(entries[index++].snapshot));
+         if (index == skipIndex) {
+            index++;
+         }
+      } while (index < entries.length);
+      try {
+         return currentValue.longValue();
+      } catch (ArithmeticException e) {
+         return currentValue.signum() > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
+      }
+   }
+
+   private long updateCounterState(int index, long newValue) {
+      return entries[index].update(newValue);
    }
 
    private Void handleAddResult(CounterValue counterValue) {
@@ -236,25 +257,25 @@ public class WeakCounterImpl implements WeakCounter {
 
    @Override
    public String toString() {
-      return "UnboundedStrongCounter{" +
+      return "WeakCounter{" +
             "counterName=" + entries[0].key.getCounterName() +
             '}';
    }
 
    private static class Entry {
-      public final WeakCounterKey key;
-      volatile CounterValue snapshot = null;
+      final WeakCounterKey key;
+      volatile Long snapshot;
 
       private Entry(WeakCounterKey key) {
          this.key = key;
       }
 
-      private void init(CounterValue entry) {
-         L1_UPDATER.compareAndSet(this, null, entry);
+      private void init(long initialValue) {
+         L1_UPDATER.compareAndSet(this, null, initialValue);
       }
 
-      private CounterValue update(CounterValue entry) {
-         return L1_UPDATER.getAndSet(this, entry);
+      private long update(long value) {
+         return L1_UPDATER.getAndSet(this, value);
       }
    }
 
@@ -278,11 +299,11 @@ public class WeakCounterImpl implements WeakCounter {
          }
       }
 
-      private void updatePreferredKeys(ConsistentHash consistentHash) {
+      private void updatePreferredKeys() {
          ArrayList<WeakCounterKey> preferredKeys = new ArrayList<>(entries.length);
-         Address localNode = cache.getRpcManager().getAddress();
+         LocalizedCacheTopology topology = cache.getDistributionManager().getCacheTopology();
          for (Entry entry : entries) {
-            if (localNode.equals(consistentHash.locatePrimaryOwner(entry.key))) {
+            if (topology.getDistribution(entry.key).isPrimary()) {
                preferredKeys.add(entry.key);
             }
          }
@@ -293,7 +314,7 @@ public class WeakCounterImpl implements WeakCounter {
 
       @TopologyChanged
       public void topologyChanged(TopologyChangedEvent<WeakCounterKey, CounterValue> event) {
-         updatePreferredKeys(event.getWriteConsistentHashAtEnd());
+         updatePreferredKeys();
       }
 
    }
