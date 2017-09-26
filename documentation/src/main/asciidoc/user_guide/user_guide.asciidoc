@@ -10,7 +10,6 @@ The Infinispan community
 include::{defaults}[]
 
 include::introduction.adoc[]
-include::configuration.adoc[]
 include::cache_manager.adoc[]
 include::cache_api.adoc[]
 include::eviction.adoc[]

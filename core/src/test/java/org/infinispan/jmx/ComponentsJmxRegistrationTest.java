@@ -48,13 +48,6 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
       cacheContainers.clear();
    }
 
-   public void testStopStartCM() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
-      cacheContainers.add(cm);
-      cm.stop();
-      cm.start();
-   }
-
    public void testRegisterLocalCache() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       cacheContainers.add(cm);

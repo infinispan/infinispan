@@ -24,9 +24,12 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -36,6 +39,8 @@ import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.tx.dld.ControlledRpcManager;
 import org.mockito.AdditionalAnswers;
@@ -60,6 +65,15 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
 
    protected boolean l1Enabled() {
       return cache(0).getCacheConfiguration().clustering().l1().enabled();
+   }
+
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false,
+            GlobalConfigurationBuilder.defaultClusteredBuilder(), buildConfiguration(), flags, false);
+      TestingUtil.replaceComponent(cm, GlobalConfigurationManager.class, new NoOpGlobalConfigurationManager(), true);
+      cacheManagers.add(cm);
+      cm.start();
+      return cm;
    }
 
    /**

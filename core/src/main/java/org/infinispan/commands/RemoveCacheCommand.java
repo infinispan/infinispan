@@ -27,6 +27,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
  * @author Galder Zamarreño
  * @since 5.0
  */
+@Deprecated // TODO remove in 10.0
 public class RemoveCacheCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 18;
@@ -44,25 +45,28 @@ public class RemoveCacheCommand extends BaseRpcCommand {
 
    @Override
    public CompletableFuture<Object> invokeAsync() throws Throwable {
+      removeCache(cacheManager, cacheName.toString());
+      return CompletableFutures.completedNull();
+   }
+
+   public static void removeCache(EmbeddedCacheManager cacheManager, String cacheName) {
       GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
       ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
-      String name = cacheName.toString();
       if (cacheComponentRegistry != null) {
          cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
          cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
          cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
-         Cache<?, ?> cache = cacheManager.getCache(name, false);
+         Cache<?, ?> cache = cacheManager.getCache(cacheName, false);
          if (cache != null) {
             cache.stop();
          }
       }
-      globalComponentRegistry.removeCache(name);
+      globalComponentRegistry.removeCache(cacheName);
       // Remove cache configuration and remove it from the computed cache name list
-      globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(name);
+      globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(cacheName);
       // Remove cache from dependency graph
       //noinspection unchecked
       globalComponentRegistry.getComponent(DependencyGraph.class, CACHE_DEPENDENCY_GRAPH).remove(cacheName);
-      return CompletableFutures.completedNull();
    }
 
    @Override

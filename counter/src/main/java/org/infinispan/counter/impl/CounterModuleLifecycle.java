@@ -35,7 +35,6 @@ import org.infinispan.counter.impl.strong.StrongCounterKey;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -50,7 +49,7 @@ import org.kohsuke.MetaInfServices;
  * @since 9.0
  */
 @MetaInfServices(value = ModuleLifecycle.class)
-public class CounterModuleLifecycle extends AbstractModuleLifecycle {
+public class CounterModuleLifecycle implements ModuleLifecycle {
 
    public static final String COUNTER_CACHE_NAME = "___counters";
    public static final String COUNTER_CONFIGURATION_CACHE_NAME = "___counter_configuration";

@@ -8,7 +8,6 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -24,7 +23,7 @@ import org.kohsuke.MetaInfServices;
  * @since 8.2
  */
 @MetaInfServices(ModuleLifecycle.class)
-public class LifecycleCallbacks extends AbstractModuleLifecycle {
+public class LifecycleCallbacks implements ModuleLifecycle {
 
    private EventLogger oldEventLogger;
 

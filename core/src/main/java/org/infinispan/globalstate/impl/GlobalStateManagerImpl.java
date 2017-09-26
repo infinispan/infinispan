@@ -21,14 +21,13 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.GlobalStateProvider;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * GlobalStateManagerImpl. This global component manages persistent state across restarts. The
- * information is stored in a Properties file. On a graceful shutdown it persists the following
+ * GlobalStateManagerImpl. This global component manages persistent state across restarts as well as global configurations.
+ * The information is stored in a Properties file. On a graceful shutdown it persists the following
  * information:
  *
  * version = full version (e.g. major.minor.micro.qualifier) timestamp = timestamp using ISO-8601
@@ -46,16 +45,30 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    private GlobalConfiguration globalConfiguration;
    private List<GlobalStateProvider> stateProviders = new ArrayList<>();
    private TimeService timeService;
+   private boolean persistentState;
 
    @Inject
-   public void inject(GlobalConfiguration globalConfiguration, TimeService timeService,
-         EmbeddedCacheManager cacheManager) {
+   public void inject(GlobalConfiguration globalConfiguration, TimeService timeService) {
       this.globalConfiguration = globalConfiguration;
       this.timeService = timeService;
+      this.persistentState = globalConfiguration.globalState().enabled();
    }
 
    @Start(priority = 1) // Must start before everything else
    public void start() {
+      if (persistentState) {
+         loadGlobalState();
+      }
+   }
+
+   @Stop(priority = 1)
+   public void stop() {
+      if (persistentState) {
+         writeGlobalState();
+      }
+   }
+
+   private void loadGlobalState() {
       File stateFile = getStateFile(GLOBAL_SCOPE);
       Optional<ScopedPersistentState> globalState = readScopedState(GLOBAL_SCOPE);
       if (globalState.isPresent()) {
@@ -77,11 +90,6 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
             throw log.nonWritableStateFile(stateFile);
          }
       }
-   }
-
-   @Stop(priority = 1)
-   public void stop() {
-      writeGlobalState();
    }
 
    @Override

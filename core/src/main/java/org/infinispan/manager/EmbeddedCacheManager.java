@@ -205,6 +205,19 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    boolean cacheExists(String cacheName);
 
    /**
+    * Creates a cache on the local node using the supplied configuration. The cache may be clustered, but this
+    * method (or an equivalent combinatio of {@link #defineConfiguration(String, Configuration)} and
+    * {@link #getCache(String, boolean)}) needs to be invoked on all nodes.
+    *
+    * @param name the name of the cache
+    * @param configuration the configuration to use.
+    * @param <K> the generic type of the key
+    * @param <V> the generic type of the value
+    * @return the cache
+    */
+   <K, V> Cache<K, V> createCache(String name, Configuration configuration);
+
+   /**
     * Retrieves a named cache from the system in the same way that {@link
     * #getCache(String)} does except that if offers the possibility for the
     * named cache not to be retrieved if it has not yet been started, or if
@@ -324,4 +337,14 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @return Health API for this {@link EmbeddedCacheManager}.
      */
    Health getHealth();
+
+   /**
+    * Provides an {@link EmbeddedCacheManager} whose methods affect the entire cluster as opposed to a single node.
+    *
+    * @since 9.1
+    * @return a cluster-aware {@link EmbeddedCacheManager}
+    */
+   default ClusterCacheManager cluster() {
+      throw new UnsupportedOperationException();
+   }
 }

@@ -232,6 +232,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
       super.start();
 
+      super.postStart();
+
       if (needToNotify && state == ComponentStatus.RUNNING) {
          cacheManagerNotifier.notifyCacheStarted(cacheName);
       }
@@ -249,12 +251,18 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
          for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Invoking %s.cacheStopping()", l);
+            }
             l.cacheStopping(this, cacheName);
          }
       }
       super.stop();
       if (state == ComponentStatus.TERMINATED && needToNotify) {
          for (ModuleLifecycle l : globalComponents.moduleLifecycles) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Invoking %s.cacheStopped()", l);
+            }
             l.cacheStopped(this, cacheName);
          }
          cacheManagerNotifier.notifyCacheStopped(cacheName);

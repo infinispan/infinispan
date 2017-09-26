@@ -1,9 +1,9 @@
 == The Cache API
 
 === The Cache interface
-Infinispan exposes a simple, link:http://jcp.org/en/jsr/detail?id=107[JSR-107] compliant link:{javadocroot}/org/infinispan/Cache.html[Cache] interface.
+Infinispan's Caches are manipulated through the link:{javadocroot}/org/infinispan/Cache.html[Cache] interface.
 
-The Cache interface exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
+A Cache exposes simple methods for adding, retrieving and removing entries, including atomic mechanisms exposed by the JDK's ConcurrentMap interface.  Based on the cache mode used, invoking these methods will trigger a number of things to happen, potentially even including replicating an entry to a remote node or looking up an entry from a remote node, or potentially a cache store.
 
 NOTE: For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to Infinispan's Cache should be trivial.
 

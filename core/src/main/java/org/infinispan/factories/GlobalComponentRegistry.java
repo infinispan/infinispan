@@ -26,6 +26,7 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
@@ -139,6 +140,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          getOrCreateComponent(ClusterContainerStats.class);
 
          getOrCreateComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
+
+         getOrCreateComponent(GlobalConfigurationManager.class);
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
       }
@@ -224,26 +227,37 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    }
 
    @Override
-   public synchronized void start() {
+   public void start() {
       try {
-         // Do nothing if the global components are already running
-         if (!state.startAllowed())
-            return;
+         boolean needToNotify;
+         synchronized (this) {
+            // Do nothing if the global components are already running
+            if (!state.startAllowed())
+               return;
 
-         boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
-         if (needToNotify) {
-            for (ModuleLifecycle l : moduleLifecycles) {
-               l.cacheManagerStarting(this, globalConfiguration);
+            needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
+            if (needToNotify) {
+               for (ModuleLifecycle l : moduleLifecycles) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Invoking %s.cacheManagerStarting()", l);
+                  }
+                  l.cacheManagerStarting(this, globalConfiguration);
+               }
             }
+            super.start();
          }
-         super.start();
 
          if (versionLogged.compareAndSet(false, true)) {
             log.version(Version.printVersion());
          }
 
+         super.postStart();
+
          if (needToNotify && state == ComponentStatus.RUNNING) {
             for (ModuleLifecycle l : moduleLifecycles) {
+               if (log.isTraceEnabled()) {
+                  log.tracef("Invoking %s.cacheManagerStarted()", l);
+               }
                l.cacheManagerStarted(this);
             }
          }
@@ -264,10 +278,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    private void warnAboutUberJarDuplicates() {
       UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
       scanner.isClasspathCorrectAsync()
-              .thenAcceptAsync(isClasspathCorrect -> {
-                 if(!isClasspathCorrect)
-                    log.warnAboutUberJarDuplicates();
-              });
+            .thenAcceptAsync(isClasspathCorrect -> {
+               if(!isClasspathCorrect)
+                  log.warnAboutUberJarDuplicates();
+            });
    }
 
    @Override
@@ -275,6 +289,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Invoking %s.cacheManagerStopping()", l);
+            }
             l.cacheManagerStopping(this);
          }
       }
@@ -283,6 +300,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
       if (state == ComponentStatus.TERMINATED && needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Invoking %s.cacheManagerStopped()", l);
+            }
             l.cacheManagerStopped(this);
          }
       }
@@ -291,6 +311,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public void notifyCacheStarted(String cacheName) {
       ComponentRegistry cr = getNamedComponentRegistry(cacheName);
       for (ModuleLifecycle l : moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.cacheStarted()", l);
+         }
          l.cacheStarted(cr, cacheName);
       }
    }

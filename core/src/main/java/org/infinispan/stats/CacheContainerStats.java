@@ -12,7 +12,7 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 public interface CacheContainerStats extends Stats {
-   public static final String OBJECT_NAME = "CacheContainerStats";
+   String OBJECT_NAME = "CacheContainerStats";
 
    double getHitRatio();
 
