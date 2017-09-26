@@ -12,6 +12,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This is a repository of component metadata, which is populated when the Infinispan core jar is loaded up.  Actual
@@ -22,6 +24,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
  * @see ComponentMetadata
  */
 public class ComponentMetadataRepo {
+   private static final Log log = LogFactory.getLog(ComponentMetadataRepo.class);
    final Map<String, ComponentMetadata> componentMetadataMap = new HashMap<String, ComponentMetadata>(128);
    final Map<String, String> factories = new HashMap<String, String>(16);
    private final ComponentMetadata dependencyFreeComponent = new ComponentMetadata();
@@ -41,6 +44,9 @@ public class ComponentMetadataRepo {
 
       componentMetadataMap.putAll(comp);
       factories.putAll(fact);
+      if (log.isTraceEnabled()) {
+         log.tracef("Loaded metadata from '%s': %d components, %d factories", metadataFile, comp.size(), fact.size());
+      }
    }
 
    /**
