@@ -16,12 +16,6 @@ import org.infinispan.util.tx.lookup.GeronimoTransactionManagerLookup;
  */
 public class TransactionSetup {
 
-   static {
-      // make the log in-memory to make tests run faster. Note that the config is frozen at system initialization time,
-      // so you need to set this before classloading the transaction system and can't change it within the same vm.
-      JBossTransactionsUtils.setVolatileStores();
-   }
-
    private interface Operations {
       UserTransaction getUserTransaction();
 
