@@ -17,8 +17,8 @@ import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -38,20 +38,20 @@ public class WeakCounterKeyDistributionTest extends BaseCounterTest {
    private static void assertKeyDistribution(Cache<?, ?> cache, String counterName) {
       WeakCounterImpl counter = getCounter(cache.getCacheManager(), counterName);
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
-      Address cacheAddress = cache.getAdvancedCache().getRpcManager().getAddress();
+      LocalizedCacheTopology topology = distributionManager.getCacheTopology();
 
       Set<WeakCounterKey> preferredKeys = new HashSet<>();
       WeakCounterKey[] keys = counter.getPreferredKeys();
       if (keys != null) {
          for (WeakCounterKey key : keys) {
-            AssertJUnit.assertTrue(distributionManager.getPrimaryLocation(key).equals(cacheAddress));
+            AssertJUnit.assertTrue(topology.getDistribution(key).isPrimary());
             AssertJUnit.assertTrue(preferredKeys.add(key));
          }
       }
 
       for (WeakCounterKey key : counter.getKeys()) {
          if (!preferredKeys.remove(key)) {
-            AssertJUnit.assertFalse(distributionManager.getPrimaryLocation(key).equals(cacheAddress));
+            AssertJUnit.assertFalse(topology.getDistribution(key).isPrimary());
          }
       }
       AssertJUnit.assertTrue(preferredKeys.isEmpty());

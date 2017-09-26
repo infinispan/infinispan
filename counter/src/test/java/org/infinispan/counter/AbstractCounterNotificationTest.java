@@ -154,7 +154,7 @@ public abstract class AbstractCounterNotificationTest extends BaseCounterTest {
       log.tracef("Queue is " + queue);
    }
 
-   protected static class ListenerQueue implements CounterListener {
+   static class ListenerQueue implements CounterListener {
 
       final BlockingQueue<CounterEvent> queue;
 

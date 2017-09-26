@@ -127,7 +127,7 @@ public class StrongCounterTest extends AbstractCounterTest<StrongTestCounter> {
                } else {
                   previousValue = counter.getValue();
                }
-               retValues.set(threadIndex, ret == true ? 1 : 0);
+               retValues.set(threadIndex, ret ? 1 : 0);
                barrier.await();
                assertUnique(retValues, iteration);
                ++iteration;
