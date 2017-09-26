@@ -12,30 +12,35 @@ import org.junit.runner.notification.RunListener;
  */
 public class JUnitTestListener extends RunListener {
 
+   private final TestSuiteProgress progressLogger;
+
+   public JUnitTestListener() {
+      progressLogger = new TestSuiteProgress();
+   }
+
    @Override
    public void testStarted(Description description) throws Exception {
-      org.infinispan.commons.test.TestSuiteProgress.testStarted(testName(description));
+      progressLogger.testStarted(testName(description));
    }
 
    @Override
    public void testFinished(Description description) throws Exception {
-      org.infinispan.commons.test.TestSuiteProgress.testFinished(testName(description));
+      progressLogger.testFinished(testName(description));
    }
 
    @Override
    public void testFailure(Failure failure) throws Exception {
-      org.infinispan.commons.test.TestSuiteProgress.testFailed(testName(failure.getDescription()), failure.getException());
+      progressLogger.testFailed(testName(failure.getDescription()), failure.getException());
    }
 
    @Override
    public void testIgnored(Description description) throws Exception {
-      org.infinispan.commons.test.TestSuiteProgress.testIgnored(testName(description));
+      progressLogger.testIgnored(testName(description));
    }
 
    @Override
    public void testAssumptionFailure(Failure failure) {
-      org.infinispan.commons.test.TestSuiteProgress
-            .testAssumptionFailed(testName(failure.getDescription()), failure.getException());
+      progressLogger.testAssumptionFailed(testName(failure.getDescription()), failure.getException());
    }
 
    private String testName(Description description) {
