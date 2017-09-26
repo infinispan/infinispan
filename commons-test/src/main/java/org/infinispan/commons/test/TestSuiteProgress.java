@@ -1,8 +1,14 @@
 package org.infinispan.commons.test;
 
 
+import static org.fusesource.jansi.Ansi.ansi;
+
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.fusesource.jansi.Ansi;
 import org.jboss.logging.Logger;
 
 
@@ -16,63 +22,82 @@ public class TestSuiteProgress {
 
    private static final Logger log = Logger.getLogger(TestSuiteProgress.class);
 
-   private static AtomicInteger failed = new AtomicInteger(0);
-   private static AtomicInteger succeeded = new AtomicInteger(0);
-   private static AtomicInteger skipped = new AtomicInteger(0);
+   private AtomicInteger failed = new AtomicInteger(0);
+   private AtomicInteger succeeded = new AtomicInteger(0);
+   private AtomicInteger skipped = new AtomicInteger(0);
+   private final PrintStream out;
+   private final boolean useColor;
+   private final String prefix;;
 
-   static void testStarted(String name) {
+   public TestSuiteProgress() {
+      // Use a system property to avoid color
+      useColor = !Boolean.getBoolean("jansi.strip");
+      // Prefix console lines only when our output has been captured (e.g. by surefire's fork runner)
+      prefix = System.out.getClass().equals(PrintStream.class) ? "" : "H  ,";
+      // Grab the low-level output descriptor as System.out might already have been redirected
+      out = new PrintStream(new FileOutputStream(FileDescriptor.out));
+   }
+
+   void testStarted(String name) {
       String message = "Test starting: " + name;
       consoleLog(message);
       log.info(message);
    }
 
-   static void testFinished(String name) {
+   void testFinished(String name) {
       String message = "Test succeeded: " + name;
-      consoleLog(message);
+      consoleLog(message, Ansi.Color.GREEN);
       log.info(message);
       succeeded.incrementAndGet();
       printStatus();
    }
 
-   static void testFailed(String name, Throwable exception) {
+   void testFailed(String name, Throwable exception) {
       String message = "Test failed: " + name;
-      consoleLog(message);
+      consoleLog(message, Ansi.Color.RED);
       log.error(message, exception);
       failed.incrementAndGet();
       printStatus();
    }
 
-   static void testIgnored(String name) {
+   void testIgnored(String name) {
       String message = "Test ignored: " + name;
-      consoleLog(message);
+      consoleLog(message, Ansi.Color.CYAN);
       log.info(message);
       skipped.incrementAndGet();
       printStatus();
    }
 
-   static void testAssumptionFailed(String name, Throwable exception) {
+   void testAssumptionFailed(String name, Throwable exception) {
       String message = "Test assumption failed: " + name;
-      consoleLog(message);
+      consoleLog(message, Ansi.Color.RED);
       log.info(message, exception);
       skipped.incrementAndGet();
       printStatus();
    }
 
-   static void setupFailed(String name, Throwable exception) {
+   void setupFailed(String name, Throwable exception) {
       String message = "Test setup failed: " + name;
-      consoleLog(message);
+      consoleLog(message, Ansi.Color.RED);
       log.error(message, exception);
       failed.incrementAndGet();
       printStatus();
    }
 
-   private static void printStatus() {
+   void printStatus() {
       String message = "Tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " +
             skipped.get();
       consoleLog(message);
    }
 
-   private static void consoleLog(String message) {
-      System.out.println("[" + TestSuiteProgress.class.getSimpleName() + "] " + message);
+   void consoleLog(String message) {
+      out.printf("%s%s\n", prefix, message);
+   }
+
+   void consoleLog(String message, Ansi.Color color) {
+      if (useColor)
+         out.print(prefix + ansi().fg(color).a(message).reset().newline());
+      else
+         consoleLog(message);
    }
 }
