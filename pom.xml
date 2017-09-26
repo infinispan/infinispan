@@ -269,7 +269,7 @@
       <version.maven.plugin>3.5</version.maven.plugin>
       <version.maven.source>3.0.1</version.maven.source>
       <version.maven.shade>2.4.3</version.maven.shade>
-      <version.maven.surefire>2.20</version.maven.surefire>
+      <version.maven.surefire>2.20.1</version.maven.surefire>
       <version.mc4j>1.2.6</version.mc4j>
       <version.metainf-services>1.7</version.metainf-services>
       <version.mockito>2.7.21</version.mockito>

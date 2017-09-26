@@ -1,6 +1,6 @@
 package org.infinispan.commons.test;
 
-
+import java.io.PrintStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jboss.logging.Logger;
@@ -13,66 +13,75 @@ import org.jboss.logging.Logger;
  * @since 9.0
  */
 public class TestSuiteProgress {
-
    private static final Logger log = Logger.getLogger(TestSuiteProgress.class);
+   private static final String RED = "\u001b[31m";
+   private static final String GREEN = "\u001b[32m";
+   private static final String YELLOW = "\u001b[33m";
+   private static final String RESET = "\u001b[0m";
 
-   private static AtomicInteger failed = new AtomicInteger(0);
-   private static AtomicInteger succeeded = new AtomicInteger(0);
-   private static AtomicInteger skipped = new AtomicInteger(0);
+   private AtomicInteger failed = new AtomicInteger(0);
+   private AtomicInteger succeeded = new AtomicInteger(0);
+   private AtomicInteger skipped = new AtomicInteger(0);
+   private final PrintStream out;
+   private final boolean useColor;
 
-   static void testStarted(String name) {
+   public TestSuiteProgress() {
+      // Use a system property to avoid color
+      useColor = !Boolean.getBoolean("ansi.strip");
+      out = System.out;
+   }
+
+   void testStarted(String name) {
       String message = "Test starting: " + name;
-      consoleLog(message);
+      progress(message);
       log.info(message);
    }
 
-   static void testFinished(String name) {
-      String message = "Test succeeded: " + name;
-      consoleLog(message);
-      log.info(message);
+   void testFinished(String name) {
       succeeded.incrementAndGet();
-      printStatus();
-   }
-
-   static void testFailed(String name, Throwable exception) {
-      String message = "Test failed: " + name;
-      consoleLog(message);
-      log.error(message, exception);
-      failed.incrementAndGet();
-      printStatus();
-   }
-
-   static void testIgnored(String name) {
-      String message = "Test ignored: " + name;
-      consoleLog(message);
+      String message = "Test succeeded: " + name;
+      progress(message, GREEN);
       log.info(message);
-      skipped.incrementAndGet();
-      printStatus();
+
    }
 
-   static void testAssumptionFailed(String name, Throwable exception) {
-      String message = "Test assumption failed: " + name;
-      consoleLog(message);
-      log.info(message, exception);
-      skipped.incrementAndGet();
-      printStatus();
-   }
-
-   static void setupFailed(String name, Throwable exception) {
-      String message = "Test setup failed: " + name;
-      consoleLog(message);
-      log.error(message, exception);
+   void testFailed(String name, Throwable exception) {
       failed.incrementAndGet();
-      printStatus();
+      String message = "Test failed: " + name;
+      progress(message, RED);
+      log.error(message, exception);
    }
 
-   private static void printStatus() {
-      String message = "Tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " +
-            skipped.get();
-      consoleLog(message);
+   void testIgnored(String name) {
+      skipped.incrementAndGet();
+      String message = "Test ignored: " + name;
+      progress(message, YELLOW);
+      log.info(message);
    }
 
-   private static void consoleLog(String message) {
-      System.out.println("[" + TestSuiteProgress.class.getSimpleName() + "] " + message);
+   void testAssumptionFailed(String name, Throwable exception) {
+      skipped.incrementAndGet();
+      String message = "Test assumption failed: " + name;
+      progress(message, YELLOW);
+      log.info(message, exception);
+   }
+
+   void setupFailed(String name, Throwable exception) {
+      failed.incrementAndGet();
+      String message = "Test setup failed: " + name;
+      progress(message, RED);
+      log.error(message, exception);
+   }
+
+   synchronized void progress(CharSequence message) {
+      out.printf("[OK: %5s, KO: %5s, SKIP: %5s] %s%n", succeeded.get(), failed.get(), skipped.get(), message);
+   }
+
+   void progress(String message, String color) {
+      if (useColor) {
+         progress(color + message + RESET);
+      } else {
+         progress(message);
+      }
    }
 }
