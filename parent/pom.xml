@@ -1550,6 +1550,8 @@
                         <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                         <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <build.directory>${project.build.directory}</build.directory>
+                        <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
+
                         <!-- this is picked up in the log4j xml which prepends it to each module's log file-->
                         <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                         <!-- Log the correct thread name after we call Thread.setName(),

@@ -128,11 +128,7 @@ public class TestCacheManagerFactory {
       } else {
          builder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL);
-         //Skip this step in OSGi. This operation requires internal packages of Arjuna. These are not exported from the Arjuna
-         //bundle in OSGi
          if (!Util.isOSGiContext()) {
-            // Set volatile stores just in case...
-            JBossTransactionsUtils.setVolatileStores();
             //automatically change default TM lookup to the desired one but only outside OSGi. In OSGi we need to use GenericTransactionManagerLookup
             builder.transaction().transactionManagerLookup(Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
          }
