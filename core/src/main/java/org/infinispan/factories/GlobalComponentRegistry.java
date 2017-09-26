@@ -238,6 +238,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
             needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
             if (needToNotify) {
                for (ModuleLifecycle l : moduleLifecycles) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Invoking %s.cacheManagerStarting()", l);
+                  }
                   l.cacheManagerStarting(this, globalConfiguration);
                }
             }
@@ -252,6 +255,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
          if (needToNotify && state == ComponentStatus.RUNNING) {
             for (ModuleLifecycle l : moduleLifecycles) {
+               if (log.isTraceEnabled()) {
+                  log.tracef("Invoking %s.cacheManagerStarted()", l);
+               }
                l.cacheManagerStarted(this);
             }
          }
@@ -283,6 +289,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
       if (needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Invoking %s.cacheManagerStopping()", l);
+            }
             l.cacheManagerStopping(this);
          }
       }
@@ -291,6 +300,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
       if (state == ComponentStatus.TERMINATED && needToNotify) {
          for (ModuleLifecycle l : moduleLifecycles) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Invoking %s.cacheManagerStopped()", l);
+            }
             l.cacheManagerStopped(this);
          }
       }
@@ -299,6 +311,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public void notifyCacheStarted(String cacheName) {
       ComponentRegistry cr = getNamedComponentRegistry(cacheName);
       for (ModuleLifecycle l : moduleLifecycles) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Invoking %s.cacheStarted()", l);
+         }
          l.cacheStarted(cr, cacheName);
       }
    }
