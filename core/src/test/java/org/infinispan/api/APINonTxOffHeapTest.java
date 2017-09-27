@@ -17,27 +17,35 @@ import java.util.function.BiFunction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalPojo;
-import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.APINonTxOffHeapTest")
-public class APINonTxOffHeapTest extends SingleCacheManagerTest {
+public class APINonTxOffHeapTest extends APINonTxTest {
 
-   @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
-      c.memory().storageType(StorageType.OFF_HEAP);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
-      cm.defineConfiguration("test", c.build());
-      cache = cm.getCache("test");
-      return cm;
+   private StorageType storageType;
+
+   public APINonTxOffHeapTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
    }
 
-   @Test(enabled = false) //ISPN-8348
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new APINonTxOffHeapTest().storageType(StorageType.BINARY),
+            new APINonTxOffHeapTest().storageType(StorageType.OFF_HEAP)
+      };
+   }
+
+   @Override
+   protected void configure(ConfigurationBuilder builder) {
+      builder.memory().storageType(storageType);
+   }
+
+   @Test
    public void testRemoveMethodOfKeyValueEntryCollections() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
       Map<String, String> m = new HashMap<>();
@@ -132,7 +140,7 @@ public class APINonTxOffHeapTest extends SingleCacheManagerTest {
       expectException(RuntimeException.class, "hi there", () -> cache.compute("es", mappingToException));
    }
 
-   @Test(enabled = false) //ISPN-8348
+   @Test
    public void testReplaceAll() {
       BiFunction<Object, Object, Object> mappingFunction = (k, v) -> "hello_" + k + ":" + v;
       cache.put("es", "hola");
@@ -157,11 +165,58 @@ public class APINonTxOffHeapTest extends SingleCacheManagerTest {
       assertEquals("blah", cache.get(ck));
    }
 
-   @Test(enabled = false) //ISPN-8348
-   public void testFalseEqualsKey() {
-      assertNull(cache.get(new APINonTxOffHeapTest.FalseEqualsKey("boo", 1)));
-      cache.put(new APINonTxOffHeapTest.FalseEqualsKey("boo", 1), "blah");
-      assertNull(cache.get(new APINonTxOffHeapTest.FalseEqualsKey("boo", 1)));
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStream() throws Throwable {
+      super.testLockedStream();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamSetValue() {
+      super.testLockedStreamSetValue();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamWithinLockedStream() {
+      super.testLockedStreamWithinLockedStream();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamFunctionalCommand() throws Throwable {
+      super.testLockedStreamFunctionalCommand();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamPutAll() throws Throwable {
+      super.testLockedStreamPutAll();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamPutAsync() throws Throwable {
+      super.testLockedStreamPutAsync();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamCompute() throws Throwable {
+      super.testLockedStreamCompute();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamComputeIfPresent() throws Throwable {
+      super.testLockedStreamComputeIfPresent();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamMerge() throws Throwable {
+      super.testLockedStreamMerge();
    }
 
    private void assertCacheSize(int expectedSize) {

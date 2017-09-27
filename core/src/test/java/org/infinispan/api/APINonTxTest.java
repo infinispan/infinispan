@@ -52,10 +52,15 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "api.APINonTxTest")
 public class APINonTxTest extends SingleCacheManagerTest {
 
+   protected void configure(ConfigurationBuilder builder) {
+
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       ConfigurationBuilder c = getDefaultStandaloneCacheConfig(false);
+      configure(c);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
       cm.defineConfiguration("test", c.build());
       cache = cm.getCache("test");
@@ -378,7 +383,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       cache.putAll(m);
 
       Set<Map.Entry<Object, Object>> entries = cache.entrySet();
-      Object newObj = new Object();
+      String newObj = "something-else";
 
       for (Map.Entry<Object, Object> entry : entries) {
          entry.setValue(newObj);
@@ -684,12 +689,6 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       assertEquals("hello_es:hola", cache.get("es"));
       assertEquals("hello_cz:ahoj", cache.get("cz"));
-   }
-
-   public void testFalseEqualsKey() {
-      assertNull(cache.get(new FalseEqualsKey("boo", 1)));
-      cache.put(new FalseEqualsKey("boo", 1), "blah");
-      assertNull(cache.get(new FalseEqualsKey("boo", 1)));
    }
 
    static class FalseEqualsKey {
