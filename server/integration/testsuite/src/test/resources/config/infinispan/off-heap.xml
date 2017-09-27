@@ -1,0 +1,14 @@
+        <subsystem xmlns="urn:infinispan:server:core:9.0">
+            <cache-container name="local" default-cache="off-heap-default">
+                <local-cache name="off-heap-default" >
+                    <memory>
+                        <off-heap/>
+                    </memory>
+                </local-cache>
+                <local-cache name="off-heap-bounded" >
+                    <memory>
+                        <off-heap size="3"/>
+                    </memory>
+                </local-cache>
+            </cache-container>
+        </subsystem>

@@ -59,7 +59,7 @@ public class EvictionIT {
 
    @Test
    public void testPutAllAsyncEviction() {
-      RemoteCache<String, String> rc = remoteCacheManager.getCache("object");
+      RemoteCache<String, String> rc = remoteCacheManager.getCache("binary");
       rc.clear();
       Map<String, String> entries = new HashMap<>();
       entries.put("keyA", "A");
@@ -73,8 +73,8 @@ public class EvictionIT {
 
    @Test
    public void testMultipleClients() {
-      RemoteCache<String, String> rc1 = remoteCacheManager.getCache("binary");
-      RemoteCache<String, String> rc2 = remoteCacheManager.getCache("binary");
+      RemoteCache<String, String> rc1 = remoteCacheManager.getCache("off-heap");
+      RemoteCache<String, String> rc2 = remoteCacheManager.getCache("off-heap");
       rc1.clear();
 
       for (int i = 0; i < 1000; i++) {

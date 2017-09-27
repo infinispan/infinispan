@@ -237,6 +237,7 @@
         <transform in="standalone.xml" out="testsuite/standalone-customcs.xml" modifyInfinispan="${infinispan.parts}/customcs.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-customtask.xml" modifyInfinispan="${infinispan.parts}/customtask.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-custom-compat-marshaller.xml" modifyInfinispan="${infinispan.parts}/custom-compat-marshaller.xml" filtering="true"/>
+        <transform in="standalone.xml" out="testsuite/standalone-off-heap.xml" modifyInfinispan="${infinispan.parts}/off-heap.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-expiration.xml" modifyInfinispan="${infinispan.parts}/expiration.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-cachecontainer.xml"
                    modifyInfinispan="${infinispan.parts}/cachecontainer.xml"
