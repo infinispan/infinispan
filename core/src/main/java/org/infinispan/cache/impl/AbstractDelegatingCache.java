@@ -493,9 +493,9 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
     * @param <V>
     * @return
     */
-   public static <K, V> Cache unwrapCache(Cache<K, V> cache) {
+   public static <K, V> Cache<K, V> unwrapCache(Cache<K, V> cache) {
       if (cache instanceof AbstractDelegatingCache) {
-         return unwrapCache(((AbstractDelegatingCache) cache).getDelegate());
+         return unwrapCache(((AbstractDelegatingCache<K, V>) cache).getDelegate());
       }
       return cache;
    }

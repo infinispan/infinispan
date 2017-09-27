@@ -14,7 +14,6 @@ import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -43,17 +42,12 @@ public class EntryStreamSupplier<K, V> implements AbstractLocalCacheStream.Strea
          if (trace) {
             log.tracef("Applying key filtering %s", keysToFilter);
          }
-         DataConversion keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
          // Make sure we aren't going remote to retrieve these
          AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
                .withFlags(Flag.CACHE_MODE_LOCAL);
-         // We do type converter before getting CacheEntry, otherwise wrapper classes would have to both box and
-         // unbox, this way we avoid multiple calls and just do the one.
          stream = keysToFilter.stream()
-               .filter(Objects::nonNull)
-               .map(keyDataConversion::toStorage)
                .map(advancedCache::getCacheEntry)
-               .filter(e -> e != null);
+               .filter(Objects::nonNull);
       } else {
          stream = supplier.get();
       }

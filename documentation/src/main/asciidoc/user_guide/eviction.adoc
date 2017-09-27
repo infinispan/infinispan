@@ -76,6 +76,9 @@ Stores the keys and values in native memory outside of the
 Java heap as bytes.  The configured marshaller will be used if the cache has one.
 Both `COUNT` and `MEMORY` eviction types are supported.
 
+WARNING: Both `BINARY` and `OFF-HEAP` violate equality in that equality is dictated
+by equivalence of the resulting byte[] they generate instead of the object instance.
+
 ==== More defaults
 
 By default when no `<memory />` element is specified, no eviction takes place and

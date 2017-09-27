@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
-import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.RemovableCloseableIterator;
 import org.infinispan.context.Flag;
@@ -44,11 +43,7 @@ public class KeyStreamSupplier<K, V> implements AbstractLocalCacheStream.StreamS
          // Make sure we aren't going remote to retrieve these
          AdvancedCache<K, V> advancedCache = AbstractDelegatingCache.unwrapCache(cache).getAdvancedCache()
                .withFlags(Flag.CACHE_MODE_LOCAL);
-         EncoderCache cache1 = (EncoderCache) cache;
-         // Need to box the key to get the correct segment
-         stream = (Stream<K>) keysToFilter.stream()
-               .map(k -> cache1.keyToStorage(k))
-               .filter(advancedCache::containsKey);
+         stream = (Stream<K>) keysToFilter.stream().filter(advancedCache::containsKey);
       } else {
          stream = supplier.get();
       }
