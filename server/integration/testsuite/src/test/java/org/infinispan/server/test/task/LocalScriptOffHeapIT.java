@@ -60,7 +60,6 @@ public class LocalScriptOffHeapIT {
       assertEquals(3, result);
    }
 
-   @Ignore //ISPN-8350
    @Test
    public void testStreamingScript() throws IOException {
       addScripts("stream.js");
