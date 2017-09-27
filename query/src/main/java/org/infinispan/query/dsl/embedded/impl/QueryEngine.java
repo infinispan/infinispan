@@ -519,9 +519,7 @@ public class QueryEngine<TypeMetadata> {
          return new EmptyResultQuery(queryFactory, cache, queryString, namedParameters, startOffset, maxResults);
       }
 
-      // if cache is indexed but there is no actual 'where' filter clause and we do have sorting or projections we should still use the index, otherwise just go for a non-indexed fetch-all
-      if (!isIndexed || (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE) && parsingResult.getProjections() == null && parsingResult.getSortFields() == null) {
-         // fully non-indexed execution because the filter matches everything or there is no indexing at all
+      if (!isIndexed) {
          return new EmbeddedQuery(this, queryFactory, cache, queryString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
