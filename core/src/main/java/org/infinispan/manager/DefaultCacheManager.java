@@ -1016,4 +1016,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
                globalComponentRegistry.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR));
       }
    }
+
+   @Override
+   public void close() throws IOException {
+      stop();
+   }
 }

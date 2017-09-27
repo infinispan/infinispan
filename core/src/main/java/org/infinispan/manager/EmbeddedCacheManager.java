@@ -1,5 +1,6 @@
 package org.infinispan.manager;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +44,7 @@ import org.infinispan.stats.CacheContainerStats;
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public interface EmbeddedCacheManager extends CacheContainer, Listenable {
+public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closeable {
 
    /**
     * Defines a named cache's configuration by using the provided configuration
