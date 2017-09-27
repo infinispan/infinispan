@@ -21,6 +21,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
@@ -45,10 +46,24 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    Cache<String, Person> cacheAMachine1, cacheAMachine2;
    CacheQuery<Person> cacheQuery;
+   protected StorageType storageType;
 
    public ClusteredQueryTest() {
       // BasicConfigurator.configure();
       cleanup = CleanupPhase.AFTER_METHOD;
+   }
+
+   public Object[] factory() {
+      return new Object[]{
+            new ClusteredQueryTest().storageType(StorageType.OFF_HEAP),
+            new ClusteredQueryTest().storageType(StorageType.BINARY),
+            new ClusteredQueryTest().storageType(StorageType.OBJECT),
+      };
+   }
+
+   ClusteredQueryTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
    }
 
    protected void enhanceConfig(ConfigurationBuilder cacheCfg) {
@@ -65,6 +80,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
             .addProperty("default.directory_provider", "local-heap")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("lucene_version", "LUCENE_CURRENT");
+      cacheCfg.memory()
+            .storageType(storageType);
       enhanceConfig(cacheCfg);
       List<Cache<String, Person>> caches = createClusteredCaches(2, cacheCfg);
       cacheAMachine1 = caches.get(0);

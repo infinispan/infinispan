@@ -1087,6 +1087,22 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
+        <container qualifier="off-heap" mode="manual">
+            <configuration>
+                <property name="javaHome">${server.jvm}</property>
+                <property name="jbossHome">${server1.dist}</property>
+                <property name="managementAddress">${node0.ip}</property>
+                <property name="serverConfig">testsuite/standalone-off-heap.xml</property>
+                <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
+                    -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
+                    -Djgroups.join_timeout=2000
+                </property>
+                <property name="managementPort">9990</property>
+                <property name="waitForPorts">11222 8080</property>
+                <property name="jmxDomain">${server.jmx.domain}</property>
+            </configuration>
+        </container>
+        <!-- Rolling upgrade configs -->
         <!-- No dist case, just target: node0 and source: node1 -->
         <container qualifier="hotrod-rolling-upgrade-1" mode="manual">
             <configuration>

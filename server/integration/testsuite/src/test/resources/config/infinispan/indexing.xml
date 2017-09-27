@@ -37,6 +37,16 @@
 
                 <local-cache name="localnotindexed"  />
 
+                <local-cache name="localtestOffHeap">
+                    <indexing index="ALL">
+                        <property name="default.directory_provider">local-heap</property>
+                        <property name="lucene_version">LUCENE_CURRENT</property>
+                    </indexing>
+                    <memory>
+                        <off-heap />
+                    </memory>
+                </local-cache>
+
                 <!-- Keep REST and Memcached services happy by providing the needed caches -->
                 <replicated-cache name="rest" />
                 <replicated-cache name="memcachedCache" />
