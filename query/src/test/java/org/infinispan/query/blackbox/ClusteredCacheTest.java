@@ -62,6 +62,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    protected Cache<Object, Person> cache1;
    protected Cache<Object, Person> cache2;
+   protected StorageType storageType;
    private Person person1;
    private Person person2;
    private Person person3;
@@ -76,8 +77,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    public ClusteredCacheTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
-
-   StorageType storageType;
 
    public Object[] factory() {
       return new Object[]{
