@@ -1,6 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -16,8 +17,8 @@ import org.hibernate.search.exception.SearchException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParser;
+import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.impl.model.TheEntity;
@@ -254,6 +255,7 @@ public class EmbeddedQueryEngineTest extends MultipleCacheManagersTest {
 
    public void testNoGroupingOrAggregation() {
       Query q = buildQuery("from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS");
+      assertTrue(q instanceof EmbeddedLuceneQuery);
       List<User> list = q.list();
       assertEquals(3, list.size());
    }
