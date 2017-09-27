@@ -1,5 +1,6 @@
 package org.infinispan.manager.impl;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -207,5 +208,10 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public CacheContainerStats getStats() {
       return cm.getStats();
+   }
+
+   @Override
+   public void close() throws IOException {
+      cm.close();
    }
 }

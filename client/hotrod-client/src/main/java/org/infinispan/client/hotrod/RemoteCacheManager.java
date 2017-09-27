@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -52,7 +53,7 @@ import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager implements RemoteCacheContainer {
+public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
    private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
@@ -344,6 +345,11 @@ public class RemoteCacheManager implements RemoteCacheContainer {
    public RemoteCacheManagerAdmin administration() {
       OperationsFactory operationsFactory = new OperationsFactory(transportFactory, codec, asyncExecutorService, configuration);
       return new RemoteCacheManagerAdminImpl(operationsFactory);
+   }
+
+   @Override
+   public void close() throws IOException {
+      stop();
    }
 
    private static class RemoteCacheKey {
