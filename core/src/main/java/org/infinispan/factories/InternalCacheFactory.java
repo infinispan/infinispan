@@ -89,7 +89,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       if (storageType == StorageType.BINARY) {
          return BinaryEncoder.class;
       }
-      if (storageType == StorageType.OFF_HEAP) {
+      if (embeddedMode && storageType == StorageType.OFF_HEAP) {
          return GlobalMarshallerEncoder.class;
       }
 
