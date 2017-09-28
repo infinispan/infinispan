@@ -311,6 +311,8 @@
             <configuration>
                <threadCount>1</threadCount>
                <parallel>classes</parallel>
+               <groups combine.self="override"></groups>
+               <excludedGroups combine.self="override"></excludedGroups>
                <systemPropertyVariables>
                   <java.io.tmpdir>${target.tmp.dir}</java.io.tmpdir>
                   <verbose.karaf>${verbose.karaf}</verbose.karaf>
@@ -329,6 +331,13 @@
                </properties>
                <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
             </configuration>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.maven.surefire</groupId>
+                  <artifactId>surefire-junit47</artifactId>
+                  <version>${version.maven.surefire}</version>
+               </dependency>
+            </dependencies>
             <executions>
                <!--
                Make sure two containers are not started at the same time by separating the
