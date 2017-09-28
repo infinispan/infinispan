@@ -25,16 +25,6 @@ import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.stream.impl.local.LocalDoubleCacheStream;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableDoubleBinaryOperator;
-import org.infinispan.util.function.SerializableDoubleConsumer;
-import org.infinispan.util.function.SerializableDoubleFunction;
-import org.infinispan.util.function.SerializableDoublePredicate;
-import org.infinispan.util.function.SerializableDoubleToIntFunction;
-import org.infinispan.util.function.SerializableDoubleToLongFunction;
-import org.infinispan.util.function.SerializableDoubleUnaryOperator;
-import org.infinispan.util.function.SerializableObjDoubleConsumer;
-import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * An intermediate double cache stream used when an intermediate operation that requires both a remote and local portion
@@ -139,11 +129,6 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public DoubleCacheStream peek(SerializableDoubleConsumer action) {
-      return peek((DoubleConsumer) action);
-   }
-
-   @Override
    public DoubleCacheStream distinct() {
       localDoubleStream = localDoubleStream.distinct();
       return this;
@@ -156,19 +141,9 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public DoubleCacheStream filter(SerializableDoublePredicate predicate) {
-      return filter((DoublePredicate) predicate);
-   }
-
-   @Override
    public DoubleCacheStream map(DoubleUnaryOperator mapper) {
       localDoubleStream.map(mapper);
       return this;
-   }
-
-   @Override
-   public DoubleCacheStream map(SerializableDoubleUnaryOperator mapper) {
-      return map((DoubleUnaryOperator) mapper);
    }
 
    @Override
@@ -177,18 +152,8 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public <U> CacheStream<U> mapToObj(SerializableDoubleFunction<? extends U> mapper) {
-      return mapToObj((DoubleFunction<? extends U>) mapper);
-   }
-
-   @Override
    public IntCacheStream mapToInt(DoubleToIntFunction mapper) {
       return new IntermediateIntCacheStream(remoteStream, type, localDoubleStream.mapToInt(mapper), supplier);
-   }
-
-   @Override
-   public IntCacheStream mapToInt(SerializableDoubleToIntFunction mapper) {
-      return mapToInt((DoubleToIntFunction) mapper);
    }
 
    @Override
@@ -197,19 +162,9 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public LongCacheStream mapToLong(SerializableDoubleToLongFunction mapper) {
-      return mapToLong((DoubleToLongFunction) mapper);
-   }
-
-   @Override
    public DoubleCacheStream flatMap(DoubleFunction<? extends DoubleStream> mapper) {
       localDoubleStream.flatMap(mapper);
       return this;
-   }
-
-   @Override
-   public DoubleCacheStream flatMap(SerializableDoubleFunction<? extends DoubleStream> mapper) {
-      return flatMap((DoubleFunction<? extends DoubleStream>) mapper);
    }
 
    @Override
@@ -248,18 +203,8 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public void forEach(SerializableDoubleConsumer action) {
-      forEach((DoubleConsumer) action);
-   }
-
-   @Override
    public <K, V> void forEach(ObjDoubleConsumer<Cache<K, V>> action) {
       localDoubleStream.forEach(action);
-   }
-
-   @Override
-   public <K, V> void forEach(SerializableObjDoubleConsumer<Cache<K, V>> action) {
-      forEach((ObjDoubleConsumer<Cache<K, V>>) action);
    }
 
    @Override
@@ -278,29 +223,13 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public double reduce(double identity, SerializableDoubleBinaryOperator op) {
-      return reduce(identity, (DoubleBinaryOperator) op);
-   }
-
-   @Override
    public OptionalDouble reduce(DoubleBinaryOperator op) {
       return localDoubleStream.reduce(op);
    }
 
    @Override
-   public OptionalDouble reduce(SerializableDoubleBinaryOperator op) {
-      return reduce((DoubleBinaryOperator) op);
-   }
-
-   @Override
    public <R> R collect(Supplier<R> supplier, ObjDoubleConsumer<R> accumulator, BiConsumer<R, R> combiner) {
       return localDoubleStream.collect(supplier, accumulator, combiner);
-   }
-
-   @Override
-   public <R> R collect(SerializableSupplier<R> supplier, SerializableObjDoubleConsumer<R> accumulator,
-           SerializableBiConsumer<R, R> combiner) {
-      return collect((Supplier<R>) supplier, accumulator, combiner);
    }
 
    @Override
@@ -339,28 +268,13 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public boolean anyMatch(SerializableDoublePredicate predicate) {
-      return anyMatch((DoublePredicate) predicate);
-   }
-
-   @Override
    public boolean allMatch(DoublePredicate predicate) {
       return localDoubleStream.allMatch(predicate);
    }
 
    @Override
-   public boolean allMatch(SerializableDoublePredicate predicate) {
-      return allMatch((DoublePredicate) predicate);
-   }
-
-   @Override
    public boolean noneMatch(DoublePredicate predicate) {
       return localDoubleStream.noneMatch(predicate);
-   }
-
-   @Override
-   public boolean noneMatch(SerializableDoublePredicate predicate) {
-      return noneMatch((DoublePredicate) predicate);
    }
 
    @Override

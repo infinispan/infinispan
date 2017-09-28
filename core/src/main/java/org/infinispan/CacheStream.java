@@ -159,7 +159,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
     * @param action consumer to be ran for each element in the stream
     */
-   void forEach(SerializableConsumer<? super R> action);
+   default void forEach(SerializableConsumer<? super R> action) {
+      forEach((Consumer<? super R>) action);
+   }
 
    /**
     * Same as {@link CacheStream#forEach(Consumer)} except that it takes a {@link BiConsumer} that provides access
@@ -180,7 +182,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * @param <K> key type of the cache
     * @param <V> value type of the cache
     */
-   <K, V> void forEach(SerializableBiConsumer<Cache<K, V>, ? super R> action);
+   default <K, V> void forEach(SerializableBiConsumer<Cache<K, V>, ? super R> action) {
+      forEach((BiConsumer<Cache<K, V>, ? super R>) action);
+   }
 
    /**
     * {@inheritDoc}
@@ -241,7 +245,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                   {@code Comparator} to be used to compare stream elements
     * @return the new stream
     */
-   CacheStream<R> sorted(SerializableComparator<? super R> comparator);
+   default CacheStream<R> sorted(SerializableComparator<? super R> comparator) {
+      return sorted((Comparator<? super R>) comparator);
+   }
 
    /**
     * {@inheritDoc}
@@ -287,7 +293,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                 they are consumed from the stream
     * @return the new stream
     */
-   CacheStream<R> peek(SerializableConsumer<? super R> action);
+   default CacheStream<R> peek(SerializableConsumer<? super R> action) {
+      return peek((Consumer<? super R>) action);
+   }
 
    /**
     * {@inheritDoc}
@@ -336,8 +344,10 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                    compatible with the accumulator function and serializable
     * @return the result of the reduction
     */
-   <R1> R1 collect(SerializableSupplier<R1> supplier, SerializableBiConsumer<R1, ? super R> accumulator,
-           SerializableBiConsumer<R1, R1> combiner);
+   default <R1> R1 collect(SerializableSupplier<R1> supplier, SerializableBiConsumer<R1, ? super R> accumulator,
+           SerializableBiConsumer<R1, R1> combiner) {
+      return collect((Supplier<R1>) supplier, accumulator, combiner);
+   }
 
    /**
     * Same as {@link CacheStream#allMatch(Predicate)} except that the Predicate must also
@@ -349,7 +359,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * @return {@code true} if either all elements of the stream match the
     * provided predicate or the stream is empty, otherwise {@code false}
     */
-   boolean allMatch(SerializablePredicate<? super R> predicate);
+   default boolean allMatch(SerializablePredicate<? super R> predicate) {
+      return allMatch((Predicate<? super R>) predicate);
+   }
 
    /**
     * Same as {@link CacheStream#noneMatch(Predicate)} except that the Predicate must also
@@ -361,7 +373,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * @return {@code true} if either no elements of the stream match the
     * provided predicate or the stream is empty, otherwise {@code false}
     */
-   boolean noneMatch(SerializablePredicate<? super R> predicate);
+   default boolean noneMatch(SerializablePredicate<? super R> predicate) {
+      return noneMatch((Predicate<? super R>) predicate);
+   }
 
    /**
     * Same as {@link CacheStream#anyMatch(Predicate)} except that the Predicate must also
@@ -373,7 +387,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * @return {@code true} if any elements of the stream match the provided
     * predicate, otherwise {@code false}
     */
-   boolean anyMatch(SerializablePredicate<? super R> predicate);
+   default boolean anyMatch(SerializablePredicate<? super R> predicate) {
+      return anyMatch((Predicate<? super R>) predicate);
+   }
 
    /**
     * Same as {@link CacheStream#max(Comparator)} except that the Comparator must also
@@ -385,7 +401,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * @return an {@code Optional} describing the maximum element of this stream,
     * or an empty {@code Optional} if the stream is empty
     */
-   Optional<R> max(SerializableComparator<? super R> comparator);
+   default Optional<R> max(SerializableComparator<? super R> comparator) {
+      return max((Comparator<? super R>) comparator);
+   }
 
    /**
     * Same as {@link CacheStream#min(Comparator)} except that the Comparator must also
@@ -397,7 +415,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * @return an {@code Optional} describing the minimum element of this stream,
     * or an empty {@code Optional} if the stream is empty
     */
-   Optional<R> min(SerializableComparator<? super R> comparator);
+   default Optional<R> min(SerializableComparator<? super R> comparator) {
+      return min((Comparator<? super R>) comparator);
+   }
 
    /**
     * Same as {@link CacheStream#reduce(BinaryOperator)} except that the BinaryOperator must also
@@ -408,7 +428,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                    function for combining two values that is also serializable
     * @return an {@link Optional} describing the result of the reduction
     */
-   Optional<R> reduce(SerializableBinaryOperator<R> accumulator);
+   default Optional<R> reduce(SerializableBinaryOperator<R> accumulator) {
+      return reduce((BinaryOperator<R>) accumulator);
+   }
 
    /**
     * Same as {@link CacheStream#reduce(Object, BinaryOperator)}  except that the BinaryOperator must also
@@ -420,7 +442,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                    function for combining two values that is also serializable
     * @return the result of the reduction
     */
-   R reduce(R identity, SerializableBinaryOperator<R> accumulator);
+   default R reduce(R identity, SerializableBinaryOperator<R> accumulator) {
+      return reduce(identity, (BinaryOperator<R>) accumulator);
+   }
 
    /**
     * Same as {@link CacheStream#reduce(Object, BiFunction, BinaryOperator)} except that the BinaryOperator must also
@@ -436,7 +460,10 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                    compatible with the accumulator function that is also serializable
     * @return the result of the reduction
     */
-   <U> U reduce(U identity, SerializableBiFunction<U, ? super R, U> accumulator, SerializableBinaryOperator<U> combiner);
+   default <U> U reduce(U identity, SerializableBiFunction<U, ? super R, U> accumulator,
+         SerializableBinaryOperator<U> combiner) {
+      return reduce(identity, (BiFunction<U, ? super R, U>) accumulator, combiner);
+   }
 
    /**
     * Same as {@link CacheStream#toArray(IntFunction)} except that the BinaryOperator must also
@@ -448,7 +475,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                  type and the provided length that is also serializable
     * @return an array containing the elements in this stream
     */
-   <A> A[] toArray(SerializableIntFunction<A[]> generator);
+   default <A> A[] toArray(SerializableIntFunction<A[]> generator) {
+      return toArray((IntFunction<A[]>) generator);
+   }
 
    /**
     * {@inheritDoc}
@@ -467,7 +496,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *                  should be included
     * @return the new cache stream
     */
-   CacheStream<R> filter(SerializablePredicate<? super R> predicate);
+   default CacheStream<R> filter(SerializablePredicate<? super R> predicate) {
+      return filter((Predicate<? super R>) predicate);
+   }
 
    /**
     * {@inheritDoc}
@@ -486,7 +517,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *               function to apply to each element
     * @return the new cache stream
     */
-   <R1> CacheStream<R1> map(SerializableFunction<? super R, ? extends R1> mapper);
+   default <R1> CacheStream<R1> map(SerializableFunction<? super R, ? extends R1> mapper) {
+      return map((Function<? super R, ? extends R1>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -506,7 +539,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *               function to apply to each element
     * @return the new stream
     */
-   DoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper);
+   default DoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
+      return mapToDouble((ToDoubleFunction<? super R>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -526,7 +561,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *               function to apply to each element
     * @return the new stream
     */
-   IntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper);
+   default IntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper) {
+      return mapToInt((ToIntFunction<? super R>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -546,7 +583,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *               function to apply to each element
     * @return the new stream
     */
-   LongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper);
+   default LongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper) {
+      return mapToLong((ToLongFunction<? super R>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -566,7 +605,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *               of new values
     * @return the new cache stream
     */
-   <R1> CacheStream<R1> flatMap(SerializableFunction<? super R, ? extends Stream<? extends R1>> mapper);
+   default <R1> CacheStream<R1> flatMap(SerializableFunction<? super R, ? extends Stream<? extends R1>> mapper) {
+      return flatMap((Function<? super R, ? extends Stream<? extends R1>>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -585,7 +626,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *               of new values
     * @return the new stream
     */
-   DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper);
+   default DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
+      return flatMapToDouble((Function<? super R, ? extends DoubleStream>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -604,7 +647,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *               of new values
     * @return the new stream
     */
-   IntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper);
+   default IntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
+      return flatMapToInt((Function<? super R, ? extends IntStream>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -623,7 +668,9 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     *               of new values
     * @return the new stream
     */
-   LongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper);
+   default LongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
+      return flatMapToLong((Function<? super R, ? extends LongStream>) mapper);
+   }
 
    /**
     * {@inheritDoc}

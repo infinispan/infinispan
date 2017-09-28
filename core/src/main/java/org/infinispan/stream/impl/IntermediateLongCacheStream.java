@@ -26,16 +26,6 @@ import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.stream.impl.local.LocalLongCacheStream;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableLongBinaryOperator;
-import org.infinispan.util.function.SerializableLongConsumer;
-import org.infinispan.util.function.SerializableLongFunction;
-import org.infinispan.util.function.SerializableLongPredicate;
-import org.infinispan.util.function.SerializableLongToDoubleFunction;
-import org.infinispan.util.function.SerializableLongToIntFunction;
-import org.infinispan.util.function.SerializableLongUnaryOperator;
-import org.infinispan.util.function.SerializableObjLongConsumer;
-import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * An intermediate long cache stream used when an intermediate operation that requires both a remote and local portion
@@ -140,11 +130,6 @@ public class IntermediateLongCacheStream implements LongCacheStream {
    }
 
    @Override
-   public LongCacheStream peek(SerializableLongConsumer action) {
-      return peek((LongConsumer) action);
-   }
-
-   @Override
    public LongCacheStream distinct() {
       localLongStream = localLongStream.distinct();
       return this;
@@ -157,19 +142,9 @@ public class IntermediateLongCacheStream implements LongCacheStream {
    }
 
    @Override
-   public LongCacheStream filter(SerializableLongPredicate predicate) {
-      return filter((LongPredicate) predicate);
-   }
-
-   @Override
    public LongCacheStream map(LongUnaryOperator mapper) {
       localLongStream.map(mapper);
       return this;
-   }
-
-   @Override
-   public LongCacheStream map(SerializableLongUnaryOperator mapper) {
-      return map((LongUnaryOperator) mapper);
    }
 
    @Override
@@ -178,18 +153,8 @@ public class IntermediateLongCacheStream implements LongCacheStream {
    }
 
    @Override
-   public <U> CacheStream<U> mapToObj(SerializableLongFunction<? extends U> mapper) {
-      return mapToObj((LongFunction<? extends U>) mapper);
-   }
-
-   @Override
    public IntCacheStream mapToInt(LongToIntFunction mapper) {
       return new IntermediateIntCacheStream(remoteStream, type, localLongStream.mapToInt(mapper), supplier);
-   }
-
-   @Override
-   public IntCacheStream mapToInt(SerializableLongToIntFunction mapper) {
-      return mapToInt((LongToIntFunction) mapper);
    }
 
    @Override
@@ -198,19 +163,9 @@ public class IntermediateLongCacheStream implements LongCacheStream {
    }
 
    @Override
-   public DoubleCacheStream mapToDouble(SerializableLongToDoubleFunction mapper) {
-      return mapToDouble((LongToDoubleFunction) mapper);
-   }
-
-   @Override
    public LongCacheStream flatMap(LongFunction<? extends LongStream> mapper) {
       localLongStream.flatMap(mapper);
       return this;
-   }
-
-   @Override
-   public LongCacheStream flatMap(SerializableLongFunction<? extends LongStream> mapper) {
-      return flatMap((LongFunction<? extends LongStream>) mapper);
    }
 
    @Override
@@ -249,18 +204,8 @@ public class IntermediateLongCacheStream implements LongCacheStream {
    }
 
    @Override
-   public void forEach(SerializableLongConsumer action) {
-      forEach((LongConsumer) action);
-   }
-
-   @Override
    public <K, V> void forEach(ObjLongConsumer<Cache<K, V>> action) {
       localLongStream.forEach(action);
-   }
-
-   @Override
-   public <K, V> void forEach(SerializableObjLongConsumer<Cache<K, V>> action) {
-      forEach((ObjLongConsumer<Cache<K, V>>) action);
    }
 
    @Override
@@ -279,29 +224,13 @@ public class IntermediateLongCacheStream implements LongCacheStream {
    }
 
    @Override
-   public long reduce(long identity, SerializableLongBinaryOperator op) {
-      return reduce(identity, (LongBinaryOperator) op);
-   }
-
-   @Override
    public OptionalLong reduce(LongBinaryOperator op) {
       return localLongStream.reduce(op);
    }
 
    @Override
-   public OptionalLong reduce(SerializableLongBinaryOperator op) {
-      return reduce((LongBinaryOperator) op);
-   }
-
-   @Override
    public <R> R collect(Supplier<R> supplier, ObjLongConsumer<R> accumulator, BiConsumer<R, R> combiner) {
       return localLongStream.collect(supplier, accumulator, combiner);
-   }
-
-   @Override
-   public <R> R collect(SerializableSupplier<R> supplier, SerializableObjLongConsumer<R> accumulator,
-           SerializableBiConsumer<R, R> combiner) {
-      return collect((Supplier<R>) supplier, accumulator, combiner);
    }
 
    @Override
@@ -340,28 +269,13 @@ public class IntermediateLongCacheStream implements LongCacheStream {
    }
 
    @Override
-   public boolean anyMatch(SerializableLongPredicate predicate) {
-      return anyMatch((LongPredicate) predicate);
-   }
-
-   @Override
    public boolean allMatch(LongPredicate predicate) {
       return localLongStream.allMatch(predicate);
    }
 
    @Override
-   public boolean allMatch(SerializableLongPredicate predicate) {
-      return allMatch((LongPredicate) predicate);
-   }
-
-   @Override
    public boolean noneMatch(LongPredicate predicate) {
       return localLongStream.noneMatch(predicate);
-   }
-
-   @Override
-   public boolean noneMatch(SerializableLongPredicate predicate) {
-      return noneMatch((LongPredicate) predicate);
    }
 
    @Override

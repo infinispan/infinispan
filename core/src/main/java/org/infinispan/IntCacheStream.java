@@ -100,7 +100,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *                  should be included
     * @return the new cache int stream
     */
-   IntCacheStream filter(SerializableIntPredicate predicate);
+   default IntCacheStream filter(SerializableIntPredicate predicate) {
+      return filter((IntPredicate) predicate);
+   }
 
    /**
     * {@inheritDoc}
@@ -118,7 +120,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *               function to apply to each element
     * @return the new cache int stream
     */
-   IntCacheStream map(SerializableIntUnaryOperator mapper);
+   default IntCacheStream map(SerializableIntUnaryOperator mapper) {
+      return map((IntUnaryOperator) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -137,7 +141,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *               function to apply to each element
     * @return the new cache stream
     */
-   <U> CacheStream<U> mapToObj(SerializableIntFunction<? extends U> mapper);
+   default <U> CacheStream<U> mapToObj(SerializableIntFunction<? extends U> mapper) {
+      return mapToObj((IntFunction<? extends U>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -155,7 +161,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *               function to apply to each element
     * @return the new cache double stream
     */
-   DoubleCacheStream mapToDouble(SerializableIntToDoubleFunction mapper);
+   default DoubleCacheStream mapToDouble(SerializableIntToDoubleFunction mapper) {
+      return mapToDouble((IntToDoubleFunction) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -173,7 +181,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *               function to apply to each element
     * @return the new cache long stream
     */
-   LongCacheStream mapToLong(SerializableIntToLongFunction mapper);
+   default LongCacheStream mapToLong(SerializableIntToLongFunction mapper) {
+      return mapToLong((IntToLongFunction) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -192,7 +202,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *               {@code IntStream} of new values
     * @return the new cache int stream
     */
-   IntCacheStream flatMap(SerializableIntFunction<? extends IntStream> mapper);
+   default IntCacheStream flatMap(SerializableIntFunction<? extends IntStream> mapper) {
+      return flatMap((IntFunction<? extends IntStream>) mapper);
+   }
 
    /**
     * {@inheritDoc}
@@ -224,7 +236,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *               they are consumed from the stream
     * @return the new cache int stream
     */
-   IntCacheStream peek(SerializableIntConsumer action);
+   default IntCacheStream peek(SerializableIntConsumer action) {
+      return peek((IntConsumer) action);
+   }
 
    /**
     * {@inheritDoc}
@@ -247,7 +261,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
     * @param action a non-interfering action to perform on the elements
     */
-   void forEach(SerializableIntConsumer action);
+   default void forEach(SerializableIntConsumer action) {
+      forEach((IntConsumer) action);
+   }
 
    /**
     * Same as {@link IntCacheStream#forEach(IntConsumer)} except that it takes an {@link ObjIntConsumer} that
@@ -268,7 +284,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     * @param <K> key type of the cache
     * @param <V> value type of the cache
     */
-   <K, V> void forEach(SerializableObjIntConsumer<Cache<K, V>> action);
+   default <K, V> void forEach(SerializableObjIntConsumer<Cache<K, V>> action) {
+      forEach((ObjIntConsumer<Cache<K, V>>) action);
+   }
 
    /**
     * Same as {@link IntCacheStream#reduce(int, IntBinaryOperator)} except that the IntBinaryOperator
@@ -280,7 +298,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *           function for combining two values
     * @return the result of the reduction
     */
-   int reduce(int identity, SerializableIntBinaryOperator op);
+   default int reduce(int identity, SerializableIntBinaryOperator op) {
+      return reduce(identity, (IntBinaryOperator) op);
+   }
 
    /**
     * Same as {@link IntCacheStream#reduce(IntBinaryOperator)} except that the IntBinaryOperator must
@@ -291,7 +311,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *           function for combining two values
     * @return the result of the reduction
     */
-   OptionalInt reduce(SerializableIntBinaryOperator op);
+   default OptionalInt reduce(SerializableIntBinaryOperator op) {
+      return reduce((IntBinaryOperator) op);
+   }
 
    /**
     * Same as {@link IntCacheStream#collect(Supplier, ObjIntConsumer, BiConsumer)} except that the arguments must also
@@ -309,8 +331,10 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     *                    compatible with the accumulator function
     * @return the result of the reduction
     */
-   <R> R collect(SerializableSupplier<R> supplier, SerializableObjIntConsumer<R> accumulator,
-           SerializableBiConsumer<R, R> combiner);
+   default <R> R collect(SerializableSupplier<R> supplier, SerializableObjIntConsumer<R> accumulator,
+           SerializableBiConsumer<R, R> combiner) {
+      return collect((Supplier<R>) supplier, accumulator, combiner);
+   }
 
    /**
     * Same as {@link IntCacheStream#anyMatch(IntPredicate)} except that the IntPredicate must
@@ -322,7 +346,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     * @return {@code true} if any elements of the stream match the provided
     * predicate, otherwise {@code false}
     */
-   boolean anyMatch(SerializableIntPredicate predicate);
+   default boolean anyMatch(SerializableIntPredicate predicate) {
+      return anyMatch((IntPredicate) predicate);
+   }
 
    /**
     * Same as {@link IntCacheStream#allMatch(IntPredicate)} except that the IntPredicate must
@@ -334,7 +360,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     * @return {@code true} if either all elements of the stream match the
     * provided predicate or the stream is empty, otherwise {@code false}
     */
-   boolean allMatch(SerializableIntPredicate predicate);
+   default boolean allMatch(SerializableIntPredicate predicate) {
+      return allMatch((IntPredicate) predicate);
+   }
 
    /**
     * Same as {@link IntCacheStream#noneMatch(IntPredicate)} except that the IntPredicate must
@@ -346,7 +374,9 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
     * @return {@code true} if either no elements of the stream match the
     * provided predicate or the stream is empty, otherwise {@code false}
     */
-   boolean noneMatch(SerializableIntPredicate predicate);
+   default boolean noneMatch(SerializableIntPredicate predicate) {
+      return noneMatch((IntPredicate) predicate);
+   }
 
    /**
     * {@inheritDoc}
