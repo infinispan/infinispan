@@ -6,7 +6,7 @@
       xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
    <id>all</id>
 
-   <baseDirectory>infinispan-${project.version}-all</baseDirectory>
+   <baseDirectory>infinispan-embedded-${project.version}-all</baseDirectory>
 
    <formats>
       <format>zip</format>
@@ -14,7 +14,7 @@
 
    <fileSets>
       <fileSet>
-         <directory>target/distribution/infinispan-${project.version}-all</directory>
+         <directory>target/distribution/infinispan-embedded-${project.version}-all</directory>
          <outputDirectory/>
          <includes>
             <include>**</include>
