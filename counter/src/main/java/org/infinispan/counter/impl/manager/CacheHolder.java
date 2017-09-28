@@ -13,6 +13,7 @@ import org.infinispan.counter.configuration.StrongCounterConfiguration;
 import org.infinispan.counter.configuration.WeakCounterConfiguration;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
+import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 
 /**
  * It holds the caches used by {@link EmbeddedCounterManager}.
@@ -31,6 +32,18 @@ public class CacheHolder {
       this.configurationCache = configurationCache;
       this.counterCache = counterCache;
       this.defaultCounters = defaultCounters;
+   }
+
+   /**
+    * Registers the {@link CounterManagerNotificationManager}'s listeners to the cache hold by this instance.
+    * <p>
+    * It invokes {@link CounterManagerNotificationManager#listenOn(Cache)} method and it should protect itself to avoid
+    * registering multiple times.
+    *
+    * @param notificationManager the {@link CounterManagerNotificationManager} with the listeners to register
+    */
+   void registerNotificationManager(CounterManagerNotificationManager notificationManager) {
+      notificationManager.listenOn(counterCache);
    }
 
    boolean addConfiguration(String name, CounterConfiguration configuration) {

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -13,11 +14,15 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
+import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 import org.infinispan.counter.impl.strong.BoundedStrongCounter;
 import org.infinispan.counter.impl.strong.UnboundedStrongCounter;
 import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.counter.util.Utils;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 
 /**
  * A {@link CounterManager} implementation for embedded cache manager.
@@ -32,11 +37,18 @@ public class EmbeddedCounterManager implements CounterManager {
    private final Map<String, Object> counters;
    private final CompletableFuture<CacheHolder> future;
    private final boolean allowPersistence;
+   private final CounterManagerNotificationManager notificationManager;
 
    public EmbeddedCounterManager(CompletableFuture<CacheHolder> future, boolean allowPersistence) {
       this.allowPersistence = allowPersistence;
       this.counters = new ConcurrentHashMap<>();
       this.future = future;
+      this.notificationManager = new CounterManagerNotificationManager();
+   }
+
+   @Inject
+   public void injectExecutor(@ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) Executor executor) {
+      notificationManager.useExecutor(executor);
    }
 
    private static <T> T validateCounter(Class<T> tClass, Object retVal) {
@@ -61,24 +73,25 @@ public class EmbeddedCounterManager implements CounterManager {
    }
 
    private static WeakCounter createWeakCounter(String counterName, CounterConfiguration configuration,
-         CacheHolder holder) {
-      WeakCounterImpl counter = new WeakCounterImpl(counterName, holder.getCounterCache(configuration), configuration);
+         CacheHolder holder, CounterManagerNotificationManager notificationManager) {
+      WeakCounterImpl counter = new WeakCounterImpl(counterName, holder.getCounterCache(configuration), configuration,
+            notificationManager);
       counter.init();
       return counter;
    }
 
    private static StrongCounter createBoundedStrongCounter(String counterName, CounterConfiguration configuration,
-         CacheHolder holder) {
+         CacheHolder holder, CounterManagerNotificationManager notificationManager) {
       BoundedStrongCounter counter = new BoundedStrongCounter(counterName, holder.getCounterCache(configuration),
-            configuration);
+            configuration, notificationManager);
       counter.init();
       return counter;
    }
 
    private static StrongCounter createUnboundedStrongCounter(String counterName, CounterConfiguration configuration,
-         CacheHolder holder) {
+         CacheHolder holder, CounterManagerNotificationManager notificationManager) {
       UnboundedStrongCounter counter = new UnboundedStrongCounter(counterName, holder.getCounterCache(configuration),
-            configuration);
+            configuration, notificationManager);
       counter.init();
       return counter;
    }
@@ -124,13 +137,14 @@ public class EmbeddedCounterManager implements CounterManager {
       if (configuration == null) {
          throw log.undefinedCounter(counterName);
       }
+      holder.registerNotificationManager(notificationManager);
       switch (configuration.type()) {
          case WEAK:
-            return createWeakCounter(counterName, configuration, holder);
+            return createWeakCounter(counterName, configuration, holder, notificationManager);
          case BOUNDED_STRONG:
-            return createBoundedStrongCounter(counterName, configuration, holder);
+            return createBoundedStrongCounter(counterName, configuration, holder, notificationManager);
          case UNBOUNDED_STRONG:
-            return createUnboundedStrongCounter(counterName, configuration, holder);
+            return createUnboundedStrongCounter(counterName, configuration, holder, notificationManager);
          default:
             throw new IllegalStateException("[should never happen] unknown counter type: " + configuration.type());
       }
