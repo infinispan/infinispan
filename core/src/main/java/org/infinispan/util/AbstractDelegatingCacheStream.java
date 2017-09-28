@@ -28,18 +28,6 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableBiFunction;
-import org.infinispan.util.function.SerializableBinaryOperator;
-import org.infinispan.util.function.SerializableComparator;
-import org.infinispan.util.function.SerializableConsumer;
-import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.function.SerializableIntFunction;
-import org.infinispan.util.function.SerializablePredicate;
-import org.infinispan.util.function.SerializableSupplier;
-import org.infinispan.util.function.SerializableToDoubleFunction;
-import org.infinispan.util.function.SerializableToIntFunction;
-import org.infinispan.util.function.SerializableToLongFunction;
 
 /**
  * Delegate that forwards all the of the method calls to the underlying cache stream.  It is assumed that a CacheStream
@@ -110,17 +98,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public void forEach(SerializableConsumer<? super R> action) {
-      castStream(underlyingStream).forEach(action);
-   }
-
-   @Override
    public <K, V> void forEach(BiConsumer<Cache<K, V>, ? super R> action) {
-      castStream(underlyingStream).forEach(action);
-   }
-
-   @Override
-   public <K, V> void forEach(SerializableBiConsumer<Cache<K, V>, ? super R> action) {
       castStream(underlyingStream).forEach(action);
    }
 
@@ -140,17 +118,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public <A> A[] toArray(SerializableIntFunction<A[]> generator) {
-      return underlyingStream.toArray(generator);
-   }
-
-   @Override
    public R reduce(R identity, BinaryOperator<R> accumulator) {
-      return castStream(underlyingStream).reduce(identity, accumulator);
-   }
-
-   @Override
-   public R reduce(R identity, SerializableBinaryOperator<R> accumulator) {
       return castStream(underlyingStream).reduce(identity, accumulator);
    }
 
@@ -160,27 +128,12 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public Optional<R> reduce(SerializableBinaryOperator<R> accumulator) {
-      return castStream(underlyingStream).reduce(accumulator);
-   }
-
-   @Override
    public <U> U reduce(U identity, BiFunction<U, ? super R, U> accumulator, BinaryOperator<U> combiner) {
       return castStream(underlyingStream).reduce(identity, accumulator, combiner);
    }
 
    @Override
-   public <U> U reduce(U identity, SerializableBiFunction<U, ? super R, U> accumulator, SerializableBinaryOperator<U> combiner) {
-      return castStream(underlyingStream).reduce(identity, accumulator, combiner);
-   }
-
-   @Override
    public <R1> R1 collect(Supplier<R1> supplier, BiConsumer<R1, ? super R> accumulator, BiConsumer<R1, R1> combiner) {
-      return castStream(underlyingStream).collect(supplier, accumulator, combiner);
-   }
-
-   @Override
-   public <R1> R1 collect(SerializableSupplier<R1> supplier, SerializableBiConsumer<R1, ? super R> accumulator, SerializableBiConsumer<R1, R1> combiner) {
       return castStream(underlyingStream).collect(supplier, accumulator, combiner);
    }
 
@@ -241,19 +194,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public CacheStream<R> sorted(SerializableComparator<? super R> comparator) {
-      underlyingStream = castStream(underlyingStream).sorted(comparator);
-      return this;
-   }
-
-   @Override
    public CacheStream<R> peek(Consumer<? super R> action) {
-      underlyingStream = castStream(underlyingStream).peek(action);
-      return this;
-   }
-
-   @Override
-   public CacheStream<R> peek(SerializableConsumer<? super R> action) {
       underlyingStream = castStream(underlyingStream).peek(action);
       return this;
    }
@@ -277,31 +218,13 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public CacheStream<R> filter(SerializablePredicate<? super R> predicate) {
-      underlyingStream = castStream(underlyingStream).filter(predicate);
-      return this;
-   }
-
-   @Override
    public <R1> CacheStream<R1> map(Function<? super R, ? extends R1> mapper) {
       underlyingStream = castStream(underlyingStream).map(mapper);
       return (CacheStream<R1>) this;
    }
 
    @Override
-   public <R1> CacheStream<R1> map(SerializableFunction<? super R, ? extends R1> mapper) {
-      underlyingStream = castStream(underlyingStream).map(mapper);
-      return (CacheStream<R1>) this;
-   }
-
-   @Override
    public <R1> CacheStream<R1> flatMap(Function<? super R, ? extends Stream<? extends R1>> mapper) {
-      underlyingStream = castStream(underlyingStream).flatMap(mapper);
-      return (CacheStream<R1>) this;
-   }
-
-   @Override
-   public <R1> CacheStream<R1> flatMap(SerializableFunction<? super R, ? extends Stream<? extends R1>> mapper) {
       underlyingStream = castStream(underlyingStream).flatMap(mapper);
       return (CacheStream<R1>) this;
    }
@@ -323,17 +246,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public Optional<R> min(SerializableComparator<? super R> comparator) {
-      return castStream(underlyingStream).min(comparator);
-   }
-
-   @Override
    public Optional<R> max(Comparator<? super R> comparator) {
-      return castStream(underlyingStream).max(comparator);
-   }
-
-   @Override
-   public Optional<R> max(SerializableComparator<? super R> comparator) {
       return castStream(underlyingStream).max(comparator);
    }
 
@@ -348,27 +261,12 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public boolean anyMatch(SerializablePredicate<? super R> predicate) {
-      return castStream(underlyingStream).anyMatch(predicate);
-   }
-
-   @Override
    public boolean allMatch(Predicate<? super R> predicate) {
       return castStream(underlyingStream).allMatch(predicate);
    }
 
    @Override
-   public boolean allMatch(SerializablePredicate<? super R> predicate) {
-      return castStream(underlyingStream).allMatch(predicate);
-   }
-
-   @Override
    public boolean noneMatch(Predicate<? super R> predicate) {
-      return castStream(underlyingStream).noneMatch(predicate);
-   }
-
-   @Override
-   public boolean noneMatch(SerializablePredicate<? super R> predicate) {
       return castStream(underlyingStream).noneMatch(predicate);
    }
 
@@ -388,18 +286,8 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public IntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper) {
-      return mapToInt((ToIntFunction<? super R>) mapper);
-   }
-
-   @Override
    public LongCacheStream mapToLong(ToLongFunction<? super R> mapper) {
       throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
-   }
-
-   @Override
-   public LongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper) {
-      return mapToLong((ToLongFunction<? super R>) mapper);
    }
 
    @Override
@@ -408,18 +296,8 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public DoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
-      return mapToDouble((ToDoubleFunction<? super R>) mapper);
-   }
-
-   @Override
    public IntCacheStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
       throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
-   }
-
-   @Override
-   public IntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
-      return flatMapToInt((Function<? super R, ? extends IntStream>) mapper);
    }
 
    @Override
@@ -428,17 +306,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public LongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
-      return flatMapToLong((Function<? super R, ? extends LongStream>) mapper);
-   }
-
-   @Override
    public DoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
       throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
-   }
-
-   @Override
-   public DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
-      return flatMapToDouble((Function<? super R, ? extends DoubleStream>) mapper);
    }
 }
