@@ -16,10 +16,13 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
+import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -33,7 +36,9 @@ import org.infinispan.stream.impl.local.ValueCacheCollection;
  * In addition to cleaner and more readable code, this approach offers a performance benefit to using
  * {@link AdvancedCache#withFlags(org.infinispan.context.Flag...)} API, thanks to
  * internal optimizations that can be made when the {@link Flag} set is unchanging.
- *
+ * <p/>
+ * Note that {@link DecoratedCache} must be the closest Delegate to the actual Cache implementation. All others
+ * must delegate to this DecoratedCache.
  * @author Manik Surtani
  * @author Sanne Grinovero
  * @author Tristan Tarrant
@@ -96,6 +101,31 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
             return new DecoratedCache<>(this.cacheImplementation, lockOwner, EnumUtil.mergeBitSets(this.flags, newFlags));
          }
       }
+   }
+
+   @Override
+   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withEncoding(encoderClass),
+            DataConversion.DEFAULT.withEncoding(encoderClass));
+   }
+
+
+   @Override
+   public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withEncoding(keyEncoderClass),
+            DataConversion.DEFAULT.withEncoding(valueEncoderClass));
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withWrapping(wrapperClass),
+            DataConversion.DEFAULT.withWrapping(wrapperClass));
+   }
+
+   @Override
+   public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+      return new EncoderCache<>(this, DataConversion.DEFAULT.withWrapping(keyWrapperClass),
+            DataConversion.DEFAULT.withWrapping(valueWrapperClass));
    }
 
    @Override
