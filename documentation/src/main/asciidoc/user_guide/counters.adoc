@@ -135,7 +135,7 @@ NOTE: If neither the `lower-bound` or `upper-bound` are configured, the strong c
 WARN: the `initial-value` must be between `lower-bound` and `upper-bound` inclusive.
 
 * `concurrency-level` [weak]: Sets the number of concurrent updates.
-Its value *must be positive* and the default value is `64`.
+Its value *must be positive* and the default value is `16`.
 
 === The `CounterManager` interface.
 

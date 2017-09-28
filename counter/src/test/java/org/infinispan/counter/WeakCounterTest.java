@@ -56,7 +56,7 @@ public class WeakCounterTest extends AbstractCounterTest<WeakTestCounter> {
    @Override
    protected WeakTestCounter createCounter(CounterManager counterManager, String counterName, long initialValue) {
       counterManager.defineCounter(counterName,
-            CounterConfiguration.builder(CounterType.WEAK).initialValue(initialValue).concurrencyLevel(16).build());
+            CounterConfiguration.builder(CounterType.WEAK).initialValue(initialValue).concurrencyLevel(4).build());
       return new WeakTestCounter(counterManager.getWeakCounter(counterName));
    }
 }

@@ -15,7 +15,7 @@ public class WeakCounterConfiguration extends AbstractCounterConfiguration {
 
    private static final Log log = LogFactory.getLog(WeakCounterConfiguration.class, Log.class);
    static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition
-         .builder("concurrencyLevel", 64)
+         .builder("concurrencyLevel", 16)
          .xmlName("concurrency-level")
          .validator(value -> {
             if (value < 1) {
