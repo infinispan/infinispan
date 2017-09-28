@@ -43,16 +43,6 @@ import org.infinispan.stream.impl.termop.primitive.ForEachDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapObjDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachObjDoubleOperation;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableDoubleBinaryOperator;
-import org.infinispan.util.function.SerializableDoubleConsumer;
-import org.infinispan.util.function.SerializableDoubleFunction;
-import org.infinispan.util.function.SerializableDoublePredicate;
-import org.infinispan.util.function.SerializableDoubleToIntFunction;
-import org.infinispan.util.function.SerializableDoubleToLongFunction;
-import org.infinispan.util.function.SerializableDoubleUnaryOperator;
-import org.infinispan.util.function.SerializableObjDoubleConsumer;
-import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * Implementation of {@link DoubleStream} that utilizes a lazily evaluated distributed back end execution.  Note this
@@ -81,19 +71,9 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    }
 
    @Override
-   public DoubleCacheStream filter(SerializableDoublePredicate predicate) {
-      return filter((DoublePredicate) predicate);
-   }
-
-   @Override
    public DoubleCacheStream map(DoubleUnaryOperator mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
       return addIntermediateOperation(new MapDoubleOperation(mapper));
-   }
-
-   @Override
-   public DoubleCacheStream map(SerializableDoubleUnaryOperator mapper) {
-      return map((DoubleUnaryOperator) mapper);
    }
 
    @Override
@@ -104,20 +84,10 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    }
 
    @Override
-   public <U> CacheStream<U> mapToObj(SerializableDoubleFunction<? extends U> mapper) {
-      return mapToObj((DoubleFunction<? extends U>) mapper);
-   }
-
-   @Override
    public IntCacheStream mapToInt(DoubleToIntFunction mapper) {
       // Don't need to update iterator operation as we already are guaranteed to be at least MAP
       addIntermediateOperationMap(new MapToIntDoubleOperation(mapper));
       return intCacheStream();
-   }
-
-   @Override
-   public IntCacheStream mapToInt(SerializableDoubleToIntFunction mapper) {
-      return mapToInt((DoubleToIntFunction) mapper);
    }
 
    @Override
@@ -128,19 +98,9 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    }
 
    @Override
-   public LongCacheStream mapToLong(SerializableDoubleToLongFunction mapper) {
-      return mapToLong((DoubleToLongFunction) mapper);
-   }
-
-   @Override
    public DoubleCacheStream flatMap(DoubleFunction<? extends DoubleStream> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
       return addIntermediateOperation(new FlatMapDoubleOperation(mapper));
-   }
-
-   @Override
-   public DoubleCacheStream flatMap(SerializableDoubleFunction<? extends DoubleStream> mapper) {
-      return flatMap((DoubleFunction<? extends DoubleStream>) mapper);
    }
 
    @Override
@@ -158,11 +118,6 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    @Override
    public DoubleCacheStream peek(DoubleConsumer action) {
       return addIntermediateOperation(new PeekDoubleOperation(action));
-   }
-
-   @Override
-   public DoubleCacheStream peek(SerializableDoubleConsumer action) {
-      return peek((DoubleConsumer) action);
    }
 
    @Override
@@ -195,22 +150,12 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    }
 
    @Override
-   public void forEach(SerializableDoubleConsumer action) {
-      forEach((DoubleConsumer) action);
-   }
-
-   @Override
    public <K, V> void forEach(ObjDoubleConsumer<Cache<K, V>> action) {
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
       } else {
          performRehashKeyTrackingOperation(s -> getForEach(action, s));
       }
-   }
-
-   @Override
-   public <K, V> void forEach(SerializableObjDoubleConsumer<Cache<K, V>> action) {
-      forEach((ObjDoubleConsumer<Cache<K, V>>) action);
    }
 
    KeyTrackingTerminalOperation<Object, Double, Object> getForEach(DoubleConsumer consumer,
@@ -253,11 +198,6 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    }
 
    @Override
-   public double reduce(double identity, SerializableDoubleBinaryOperator op) {
-      return reduce(identity, (DoubleBinaryOperator) op);
-   }
-
-   @Override
    public OptionalDouble reduce(DoubleBinaryOperator op) {
       Double result = performOperation(TerminalFunctions.reduceFunction(op), true,
               (i1, i2) -> {
@@ -277,23 +217,12 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    }
 
    @Override
-   public OptionalDouble reduce(SerializableDoubleBinaryOperator op) {
-      return reduce((DoubleBinaryOperator) op);
-   }
-
-   @Override
    public <R> R collect(Supplier<R> supplier, ObjDoubleConsumer<R> accumulator, BiConsumer<R, R> combiner) {
       return performOperation(TerminalFunctions.collectFunction(supplier, accumulator, combiner), true,
               (e1, e2) -> {
                  combiner.accept(e1, e2);
                  return e1;
               }, null);
-   }
-
-   @Override
-   public <R> R collect(SerializableSupplier<R> supplier, SerializableObjDoubleConsumer<R> accumulator,
-           SerializableBiConsumer<R, R> combiner) {
-      return collect((Supplier<R>) supplier, accumulator, combiner);
    }
 
    @Override
@@ -368,28 +297,13 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
    }
 
    @Override
-   public boolean anyMatch(SerializableDoublePredicate predicate) {
-      return anyMatch((DoublePredicate) predicate);
-   }
-
-   @Override
    public boolean allMatch(DoublePredicate predicate) {
       return performOperation(TerminalFunctions.allMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
    }
 
    @Override
-   public boolean allMatch(SerializableDoublePredicate predicate) {
-      return allMatch((DoublePredicate) predicate);
-   }
-
-   @Override
    public boolean noneMatch(DoublePredicate predicate) {
       return performOperation(TerminalFunctions.noneMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
-   }
-
-   @Override
-   public boolean noneMatch(SerializableDoublePredicate predicate) {
-      return noneMatch((DoublePredicate) predicate);
    }
 
    @Override
