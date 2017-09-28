@@ -77,18 +77,6 @@ import org.infinispan.util.CloseableSuppliedIterator;
 import org.infinispan.util.RangeSet;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.CloseableSupplier;
-import org.infinispan.util.function.SerializableBiConsumer;
-import org.infinispan.util.function.SerializableBiFunction;
-import org.infinispan.util.function.SerializableBinaryOperator;
-import org.infinispan.util.function.SerializableComparator;
-import org.infinispan.util.function.SerializableConsumer;
-import org.infinispan.util.function.SerializableFunction;
-import org.infinispan.util.function.SerializableIntFunction;
-import org.infinispan.util.function.SerializablePredicate;
-import org.infinispan.util.function.SerializableSupplier;
-import org.infinispan.util.function.SerializableToDoubleFunction;
-import org.infinispan.util.function.SerializableToIntFunction;
-import org.infinispan.util.function.SerializableToLongFunction;
 
 /**
  * Implementation of {@link CacheStream} that provides support for lazily distributing stream methods to appropriate
@@ -167,22 +155,12 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public CacheStream<R> filter(SerializablePredicate<? super R> predicate) {
-      return filter((Predicate<? super R>) predicate);
-   }
-
-   @Override
    public <R1> CacheStream<R1> map(Function<? super R, ? extends R1> mapper) {
       if (iteratorOperation != IteratorOperation.FLAT_MAP) {
          iteratorOperation = IteratorOperation.MAP;
       }
       addIntermediateOperationMap(new MapOperation<>(mapper));
       return (CacheStream<R1>) this;
-   }
-
-   @Override
-   public <R1> CacheStream<R1> map(SerializableFunction<? super R, ? extends R1> mapper) {
-      return map((Function<? super R, ? extends R1>) mapper);
    }
 
    @Override
@@ -195,22 +173,12 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public IntCacheStream mapToInt(SerializableToIntFunction<? super R> mapper) {
-      return mapToInt((ToIntFunction<? super R>) mapper);
-   }
-
-   @Override
    public LongCacheStream mapToLong(ToLongFunction<? super R> mapper) {
       if (iteratorOperation != IteratorOperation.FLAT_MAP) {
          iteratorOperation = IteratorOperation.MAP;
       }
       addIntermediateOperationMap(new MapToLongOperation<>(mapper));
       return longCacheStream();
-   }
-
-   @Override
-   public LongCacheStream mapToLong(SerializableToLongFunction<? super R> mapper) {
-      return mapToLong((ToLongFunction<? super R>) mapper);
    }
 
    @Override
@@ -223,20 +191,10 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public DoubleCacheStream mapToDouble(SerializableToDoubleFunction<? super R> mapper) {
-      return mapToDouble((ToDoubleFunction<? super R>) mapper);
-   }
-
-   @Override
    public <R1> CacheStream<R1> flatMap(Function<? super R, ? extends Stream<? extends R1>> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
       addIntermediateOperationMap(new FlatMapOperation<R, R1>(mapper));
       return (CacheStream<R1>) this;
-   }
-
-   @Override
-   public <R1> CacheStream<R1> flatMap(SerializableFunction<? super R, ? extends Stream<? extends R1>> mapper) {
-      return flatMap((Function<? super R, ? extends Stream<? extends R1>>) mapper);
    }
 
    @Override
@@ -247,11 +205,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public IntCacheStream flatMapToInt(SerializableFunction<? super R, ? extends IntStream> mapper) {
-      return flatMapToInt((Function<? super R, ? extends IntStream>) mapper);
-   }
-
-   @Override
    public LongCacheStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
       addIntermediateOperationMap(new FlatMapToLongOperation<>(mapper));
@@ -259,20 +212,10 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public LongCacheStream flatMapToLong(SerializableFunction<? super R, ? extends LongStream> mapper) {
-      return flatMapToLong((Function<? super R, ? extends LongStream>) mapper);
-   }
-
-   @Override
    public DoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
       iteratorOperation = IteratorOperation.FLAT_MAP;
       addIntermediateOperationMap(new FlatMapToDoubleOperation<>(mapper));
       return doubleCacheStream();
-   }
-
-   @Override
-   public DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
-      return flatMapToDouble((Function<? super R, ? extends DoubleStream>) mapper);
    }
 
    @Override
@@ -293,18 +236,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public CacheStream<R> sorted(SerializableComparator<? super R> comparator) {
-      return sorted((Comparator<? super R>) comparator);
-   }
-
-   @Override
    public CacheStream<R> peek(Consumer<? super R> action) {
       return addIntermediateOperation(new PeekOperation<>(action));
-   }
-
-   @Override
-   public CacheStream<R> peek(SerializableConsumer<? super R> action) {
-      return peek((Consumer<? super R>) action);
    }
 
    @Override
@@ -327,11 +260,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public R reduce(R identity, SerializableBinaryOperator<R> accumulator) {
-      return reduce(identity, (BinaryOperator<R>) accumulator);
-   }
-
-   @Override
    public Optional<R> reduce(BinaryOperator<R> accumulator) {
       R value = performOperation(TerminalFunctions.reduceFunction(accumulator), true,
               (e1, e2) -> {
@@ -347,18 +275,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public Optional<R> reduce(SerializableBinaryOperator<R> accumulator) {
-      return reduce((BinaryOperator<R>) accumulator);
-   }
-
-   @Override
    public <U> U reduce(U identity, BiFunction<U, ? super R, U> accumulator, BinaryOperator<U> combiner) {
       return performOperation(TerminalFunctions.reduceFunction(identity, accumulator, combiner), true, combiner, null);
-   }
-
-   @Override
-   public <U> U reduce(U identity, SerializableBiFunction<U, ? super R, U> accumulator, SerializableBinaryOperator<U> combiner) {
-      return reduce(identity, (BiFunction<U, ? super R, U>) accumulator, combiner);
    }
 
    /**
@@ -380,12 +298,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                  combiner.accept(e1, e2);
                  return e1;
               }, null);
-   }
-
-   @Override
-   public <R1> R1 collect(SerializableSupplier<R1> supplier, SerializableBiConsumer<R1, ? super R> accumulator,
-           SerializableBiConsumer<R1, R1> combiner) {
-      return collect((Supplier<R1>) supplier, accumulator, combiner);
    }
 
    @SerializeWith(value = IdentifyFinishCollector.IdentityFinishCollectorExternalizer.class)
@@ -473,11 +385,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public Optional<R> min(SerializableComparator<? super R> comparator) {
-      return min((Comparator<? super R>) comparator);
-   }
-
-   @Override
    public Optional<R> max(Comparator<? super R> comparator) {
       R value = performOperation(TerminalFunctions.maxFunction(comparator), false,
               (e1, e2) -> {
@@ -494,18 +401,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public Optional<R> max(SerializableComparator<? super R> comparator) {
-      return max((Comparator<? super R>) comparator);
-   }
-
-   @Override
    public boolean anyMatch(Predicate<? super R> predicate) {
       return performOperation(TerminalFunctions.anyMatchFunction(predicate), false, Boolean::logicalOr, b -> b);
-   }
-
-   @Override
-   public boolean anyMatch(SerializablePredicate<? super R> predicate) {
-      return anyMatch((Predicate<? super R>) predicate);
    }
 
    @Override
@@ -514,18 +411,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public boolean allMatch(SerializablePredicate<? super R> predicate) {
-      return allMatch((Predicate<? super R>) predicate);
-   }
-
-   @Override
    public boolean noneMatch(Predicate<? super R> predicate) {
       return performOperation(TerminalFunctions.noneMatchFunction(predicate), false, Boolean::logicalAnd, b -> !b);
-   }
-
-   @Override
-   public boolean noneMatch(SerializablePredicate<? super R> predicate) {
-      return noneMatch((Predicate<? super R>) predicate);
    }
 
    @Override
@@ -953,11 +840,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public void forEach(SerializableConsumer<? super R> action) {
-      forEach((Consumer<? super R>) action);
-   }
-
-   @Override
    public <K, V> void forEach(BiConsumer<Cache<K, V>, ? super R> action) {
       if (!rehashAware) {
          performOperation(TerminalFunctions.forEachFunction(action), false, (v1, v2) -> null, null);
@@ -965,11 +847,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
          performRehashKeyTrackingOperation(s -> new ForEachBiOperation(intermediateOperations, s,
                  distributedBatchSize, action));
       }
-   }
-
-   @Override
-   public <K, V> void forEach(SerializableBiConsumer<Cache<K, V>, ? super R> action) {
-      forEach((BiConsumer<Cache<K, V>, ? super R>) action);
    }
 
    @Override
@@ -999,11 +876,6 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
               }, null);
    }
 
-   @Override
-   public <A> A[] toArray(SerializableIntFunction<A[]> generator) {
-      return toArray((IntFunction<A[]>) generator);
-   }
-
    // These are the custom added methods for cache streams
 
    @Override
@@ -1019,8 +891,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    }
 
    @Override
-   public CacheStream<R>
-   filterKeySegments(Set<Integer> segments) {
+   public CacheStream<R> filterKeySegments(Set<Integer> segments) {
       segmentsToFilter = segments;
       return this;
    }
