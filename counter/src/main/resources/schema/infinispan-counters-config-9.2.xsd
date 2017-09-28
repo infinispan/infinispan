@@ -78,7 +78,7 @@
     <xs:complexType name="weak-counter">
         <xs:complexContent>
             <xs:extension base="tns:counter">
-                <xs:attribute name="concurrency-level" type="xs:positiveInteger" default="64">
+                <xs:attribute name="concurrency-level" type="xs:positiveInteger" default="16">
                     <xs:annotation>
                         <xs:documentation>
                             Sets the weak consistent counter's concurrency level. The concurrency level configures the

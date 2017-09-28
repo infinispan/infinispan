@@ -37,7 +37,7 @@ public class WeakCounterConfigurationBuilder extends
     * It sets the number of concurrent updates in the counter. A higher value will support a higher number of updates
     * but it increases the read of the counter's value.
     * <p>
-    * Default value is 64.
+    * Default value is 16.
     *
     * @param level the new concurrency level.
     */

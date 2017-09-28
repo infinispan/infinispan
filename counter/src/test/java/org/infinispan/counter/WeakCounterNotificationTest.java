@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 public class WeakCounterNotificationTest extends AbstractCounterNotificationTest {
 
    protected TestCounter createCounter(CounterManager counterManager, String counterName) {
-      counterManager.defineCounter(counterName, CounterConfiguration.builder(CounterType.WEAK).concurrencyLevel(16).build());
+      counterManager.defineCounter(counterName, CounterConfiguration.builder(CounterType.WEAK).concurrencyLevel(4).build());
       return new WeakTestCounter(counterManager.getWeakCounter(counterName));
    }
 }
