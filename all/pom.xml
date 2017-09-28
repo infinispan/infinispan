@@ -10,7 +10,7 @@
    <artifactId>infinispan-all-parent</artifactId>
    <name>Parent pom for uberjar modules</name>
    <packaging>pom</packaging>
-   
+
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <createSourcesJar>false</createSourcesJar>
@@ -38,6 +38,12 @@
                </execution>
             </executions>
             <inherited>true</inherited>
+         </plugin>
+         <plugin>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <configuration>
+               <skip>true</skip>
+            </configuration>
          </plugin>
       </plugins>
    </build>
