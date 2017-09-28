@@ -51,6 +51,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    private final long flags;
    private final Object lockOwner;
    private final CacheImpl<K, V> cacheImplementation;
+   private Function<CacheImpl, InvocationContext> contextCreatorLockedSingleKey = c -> writeContext(1);
 
    public DecoratedCache(AdvancedCache<K, V> delegate) {
       this(delegate, EMPTY_FLAGS);
@@ -358,7 +359,20 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata) {
-      return cacheImplementation.putAllAsync(data, metadata, flags, writeContext(data.size()));
+      return cacheImplementation.putAllAsync(data, metadata, flags, writeContextCreator(data.size()));
+   }
+
+   private Function<CacheImpl, InvocationContext> writeContextCreator(int size) {
+      if (size == 1) {
+         if (lockOwner == null) {
+            return CacheImpl.CONTEXT_CREATOR_SINGLE_KEY;
+         } else {
+            return contextCreatorLockedSingleKey;
+         }
+      } else {
+         // TODO Dan: Should we also cache UNBOUNDED?
+         return c -> writeContext(size);
+      }
    }
 
    @Override
@@ -392,17 +406,17 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata) {
-      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, writeContext(1));
+      return cacheImplementation.putIfAbsentAsync(key, value, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
-      return cacheImplementation.removeAsync(key, flags, writeContext(1));
+      return cacheImplementation.removeAsync(key, flags, writeContextCreator(1));
    }
 
    @Override
    public CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      return cacheImplementation.removeAsync(key, value, flags, writeContext(1));
+      return cacheImplementation.removeAsync(key, value, flags, writeContextCreator(1));
    }
 
    @Override
@@ -431,7 +445,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata) {
-      return cacheImplementation.replaceAsync(key, value, metadata, flags, writeContext(1));
+      return cacheImplementation.replaceAsync(key, value, metadata, flags, writeContextCreator(1));
    }
 
    @Override
@@ -461,7 +475,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
          final Metadata metadata) {
-      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, writeContext(1));
+      return cacheImplementation.replaceAsync(key, oldValue, newValue, metadata, flags, writeContextCreator(1));
    }
 
    @Override
@@ -512,12 +526,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V remove(Object key) {
-      return cacheImplementation.remove(key, flags, writeContext(1));
+      return cacheImplementation.remove(key, flags, writeContextCreator(1));
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
-      cacheImplementation.putAll(map, metadata, flags, writeContext(map.size()));
+      cacheImplementation.putAll(map, metadata, flags, writeContextCreator(map.size()));
    }
 
    @Override
@@ -568,7 +582,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public boolean remove(Object key, Object value) {
-      return cacheImplementation.remove(key, value, flags, writeContext(1));
+      return cacheImplementation.remove(key, value, flags, writeContextCreator(1));
    }
 
    @Override
@@ -618,47 +632,47 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public V put(K key, V value, Metadata metadata) {
-      return cacheImplementation.put(key, value, metadata, flags, writeContext(1));
+      return cacheImplementation.put(key, value, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return cacheImplementation.putAsync(key, value, metadata, flags, writeContext(1));
+      return cacheImplementation.putAsync(key, value, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
-      return cacheImplementation.putIfAbsent(key, value, metadata, flags, writeContext(1));
+      return cacheImplementation.putIfAbsent(key, value, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      return cacheImplementation.replace(key, oldValue, value, metadata, flags, writeContext(1));
+      return cacheImplementation.replace(key, oldValue, value, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
-      return cacheImplementation.replace(key, value, metadata, flags, writeContext(1));
+      return cacheImplementation.replace(key, value, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
-      return cacheImplementation.computeInternal(key, remappingFunction, false, metadata, flags, writeContext(1));
+      return cacheImplementation.computeInternal(key, remappingFunction, false, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
-      return cacheImplementation.computeInternal(key, remappingFunction, true, metadata, flags, writeContext(1));
+      return cacheImplementation.computeInternal(key, remappingFunction, true, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
-      return cacheImplementation.computeIfAbsentInternal(key, mappingFunction, metadata, flags, writeContext(1));
+      return cacheImplementation.computeIfAbsentInternal(key, mappingFunction, metadata, flags, writeContextCreator(1));
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
-      return cacheImplementation.mergeInternal(key, value, remappingFunction, metadata, flags, writeContext(1));
+      return cacheImplementation.mergeInternal(key, value, remappingFunction, metadata, flags, writeContextCreator(1));
    }
 
    @Override
