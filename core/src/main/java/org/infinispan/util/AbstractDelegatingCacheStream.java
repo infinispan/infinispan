@@ -28,6 +28,7 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
+import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableBinaryOperator;
@@ -40,6 +41,9 @@ import org.infinispan.util.function.SerializableSupplier;
 import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
+
+import static org.infinispan.util.Casting.toSerialSupplierCollect;
+import static org.infinispan.util.Casting.toSupplierCollect;
 
 /**
  * Delegate that forwards all the of the method calls to the underlying cache stream.  It is assumed that a CacheStream
@@ -318,6 +322,16 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
+   public <R1> R1 collect(SerializableSupplier<Collector<? super R, ?, R1>> supplier) {
+      return collect(CacheCollectors.serializableCollector(toSerialSupplierCollect(supplier)));
+   }
+
+   @Override
+   public <R1> R1 collect(Supplier<Collector<? super R, ?, R1>> supplier) {
+      return collect(CacheCollectors.collector(toSupplierCollect(supplier)));
+   }
+
+   @Override
    public Optional<R> min(Comparator<? super R> comparator) {
       return castStream(underlyingStream).min(comparator);
    }
@@ -441,4 +455,5 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    public DoubleCacheStream flatMapToDouble(SerializableFunction<? super R, ? extends DoubleStream> mapper) {
       return flatMapToDouble((Function<? super R, ? extends DoubleStream>) mapper);
    }
+
 }

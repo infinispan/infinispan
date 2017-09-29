@@ -1,5 +1,6 @@
 package org.infinispan;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Optional;
@@ -308,7 +309,8 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * prevents the usage of {@link java.util.stream.Collectors} class.  However you can use the
     * {@link org.infinispan.stream.CacheCollectors} static factory methods to create a serializable wrapper, which then
     * creates the actual collector lazily after being deserialized.  This is useful to use any method from the
-    * {@link java.util.stream.Collectors} class as you would normally.</p>
+    * {@link java.util.stream.Collectors} class as you would normally.
+    * Alternatively, you can call {@link #collect(SerializableSupplier)} too.</p>
     * @param collector
     * @param <R1> collected type
     * @param <A> intermediate collected type if applicable
@@ -317,6 +319,59 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     */
    @Override
    <R1, A> R1 collect(Collector<? super R, A, R1> collector);
+
+   /**
+    * Performs a <a href="package-summary.html#MutableReduction">mutable
+    * reduction</a> operation on the elements of this stream using a
+    * {@code Collector} that is lazily created from the {@code SerializableSupplier}
+    * provided.
+    *
+    * This method behaves exactly the same as {@link #collect(Collector)} with
+    * the enhanced capability of working even when the mutable reduction
+    * operation has to run in a remote node and the operation is not
+    * {@link Serializable} or otherwise marshallable.
+    *
+    * So, this method is specially designed for situations when the user
+    * wants to use a {@link Collector} instance that has been created by
+    * {@link java.util.stream.Collectors} static factory methods.
+    *
+    * In this particular case, the function that instantiates the
+    * {@link Collector} will be marshalled according to the
+    * {@link Serializable} rules.
+    *
+    * @param supplier The supplier to create the collector that is specifically serializable
+    * @param <R1> The resulting type of the collector
+    * @return the collected value
+    * @since 9.2
+    */
+   <R1> R1 collect(SerializableSupplier<Collector<? super R, ?, R1>> supplier);
+
+   /**
+    * Performs a <a href="package-summary.html#MutableReduction">mutable
+    * reduction</a> operation on the elements of this stream using a
+    * {@code Collector} that is lazily created from the {@code Supplier}
+    * provided.
+    *
+    * This method behaves exactly the same as {@link #collect(Collector)} with
+    * the enhanced capability of working even when the mutable reduction
+    * operation has to run in a remote node and the operation is not
+    * {@link Serializable} or otherwise marshallable.
+    *
+    * So, this method is specially designed for situations when the user
+    * wants to use a {@link Collector} instance that has been created by
+    * {@link java.util.stream.Collectors} static factory methods.
+    *
+    * In this particular case, the function that instantiates the
+    * {@link Collector} will be marshalled using Infinispan
+    * {@link org.infinispan.commons.marshall.Externalizer} class or one of its
+    * subtypes.
+    *
+    * @param supplier The supplier to create the collector
+    * @param <R1> The resulting type of the collector
+    * @return the collected value
+    * @since 9.2
+    */
+   <R1> R1 collect(Supplier<Collector<? super R, ?, R1>> supplier);
 
    /**
     * Same as {@link CacheStream#collect(Supplier, BiConsumer, BiConsumer)} except that the various arguments must

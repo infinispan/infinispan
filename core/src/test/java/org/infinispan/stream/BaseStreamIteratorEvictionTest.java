@@ -5,9 +5,9 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.testng.annotations.Test;
@@ -43,7 +43,7 @@ public abstract class BaseStreamIteratorEvictionTest extends BaseSetupStreamIter
       Thread.sleep(TimeUnit.SECONDS.toMillis(expectedTime) + 50);
 
       Map<Object, String> results;
-      try (Stream<CacheEntry<Object, String>> stream = cache.getAdvancedCache().cacheEntrySet().stream()) {
+      try (CacheStream<CacheEntry<Object, String>> stream = cache.getAdvancedCache().cacheEntrySet().stream()) {
          results = mapFromStream(stream);
       }
 

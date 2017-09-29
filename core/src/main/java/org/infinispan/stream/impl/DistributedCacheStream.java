@@ -58,6 +58,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.CacheCollectors;
 import org.infinispan.stream.impl.intops.object.DistinctOperation;
 import org.infinispan.stream.impl.intops.object.FilterOperation;
 import org.infinispan.stream.impl.intops.object.FlatMapOperation;
@@ -89,6 +90,9 @@ import org.infinispan.util.function.SerializableSupplier;
 import org.infinispan.util.function.SerializableToDoubleFunction;
 import org.infinispan.util.function.SerializableToIntFunction;
 import org.infinispan.util.function.SerializableToLongFunction;
+
+import static org.infinispan.util.Casting.toSerialSupplierCollect;
+import static org.infinispan.util.Casting.toSupplierCollect;
 
 /**
  * Implementation of {@link CacheStream} that provides support for lazily distributing stream methods to appropriate
@@ -454,6 +458,16 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                  new IdentifyFinishCollector<>(collector)), true, collector.combiner(), null);
          return collector.finisher().apply(intermediateResult);
       }
+   }
+
+   @Override
+   public <R1> R1 collect(SerializableSupplier<Collector<? super R, ?, R1>> supplier) {
+      return collect(CacheCollectors.serializableCollector(toSerialSupplierCollect(supplier)));
+   }
+
+   @Override
+   public <R1> R1 collect(Supplier<Collector<? super R, ?, R1>> supplier) {
+      return collect(CacheCollectors.collector(toSupplierCollect(supplier)));
    }
 
    @Override
