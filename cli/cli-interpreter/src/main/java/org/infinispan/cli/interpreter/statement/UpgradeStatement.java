@@ -27,7 +27,7 @@ public class UpgradeStatement implements Statement {
 
    private enum Options {
       ALL, DUMPKEYS, SYNCHRONIZE, DISCONNECTSOURCE
-   };
+   }
 
    final String cacheName;
    final private List<Option> options;
@@ -49,10 +49,6 @@ public class UpgradeStatement implements Statement {
             all = true;
             break;
          }
-         case DUMPKEYS: {
-            mode = UpgradeMode.DUMPKEYS;
-            break;
-         }
          case SYNCHRONIZE: {
             mode = UpgradeMode.SYNCHRONIZE;
             migratorName = opt.getParameter();
@@ -72,15 +68,6 @@ public class UpgradeStatement implements Statement {
       }
       StringBuilder sb = new StringBuilder();
       switch (mode) {
-      case DUMPKEYS: {
-         for (Cache<?, ?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
-            RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
-            upgradeManager.recordKnownGlobalKeyset();
-            sb.append(MSG.dumpedKeys(cache.getName()));
-            sb.append("\n");
-         }
-         break;
-      }
       case SYNCHRONIZE: {
          for (Cache<?, ?> cache : all ? getAllCaches(session) : Collections.singletonList(session.getCache(cacheName))) {
             RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
@@ -115,7 +102,7 @@ public class UpgradeStatement implements Statement {
    }
 
    private List<Cache<?, ?>> getAllCaches(Session session) {
-      List<Cache<?, ?>> caches = new ArrayList<Cache<?, ?>>();
+      List<Cache<?, ?>> caches = new ArrayList<>();
       EmbeddedCacheManager container = session.getCacheManager();
       for (String cacheName : container.getCacheNames()) {
          if (container.isRunning(cacheName)) {
@@ -128,6 +115,6 @@ public class UpgradeStatement implements Statement {
    }
 
    private enum UpgradeMode {
-      NONE, DUMPKEYS, SYNCHRONIZE, DISCONNECTSOURCE
+      NONE, SYNCHRONIZE, DISCONNECTSOURCE
    }
 }

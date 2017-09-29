@@ -76,8 +76,6 @@ public class RestUpgradeSynchronizerTest extends AbstractInfinispanTest {
       assertEquals(HttpStatus.SC_OK, client.executeMethod(get));
       assertEquals("A", get.getResponseBodyAsString());
 
-      RollingUpgradeManager sourceUpgradeManager = sourceServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
-      sourceUpgradeManager.recordKnownGlobalKeyset();
       RollingUpgradeManager targetUpgradeManager = targetServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
       targetUpgradeManager.synchronizeData("rest");
       assertEquals(sourceServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size(), targetServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size());
