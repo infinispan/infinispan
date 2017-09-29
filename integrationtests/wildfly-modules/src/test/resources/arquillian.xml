@@ -21,6 +21,7 @@
                     <!-- -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000-->
                 <!--</property>-->
                 <property name="managementPort">10090</property>
+                <property name="serverConfig">standalone-test.xml</property>
             </configuration>
         </container>
         <container qualifier="container.active-2">
@@ -32,6 +33,7 @@
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>
+                <property name="serverConfig">standalone-test.xml</property>
             </configuration>
         </container>
     </group>

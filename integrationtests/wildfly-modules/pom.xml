@@ -141,6 +141,13 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan.server</groupId>
+         <artifactId>infinispan-server-infinispan</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>org.elasticsearch</groupId>
          <artifactId>elasticsearch</artifactId>
          <scope>test</scope>
