@@ -918,7 +918,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    //HACK!
    public EncoderCache<K, V> withCache(AdvancedCache<K, V> otherCache) {
-      EncoderCache<K, V> cache = new EncoderCache<>(otherCache, keyEncoderClass, valueEncoderClass, keyWrapperClass, valueWrapperClass);
+      EncoderCache<K, V> cache = new EncoderCache<>(otherCache, keyDataConversion, valueDataConversion);
       initState(cache, this);
       return cache;
    }
