@@ -46,8 +46,7 @@ public class RestRollingUpgradesDistIT {
         final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
         final int managementPortServer2 = 10090;
-        // Source node
-        int managementPortServer3 = 10199;
+
         MBeanServerConnectionProvider provider3;
 
         RESTHelper rest = new RESTHelper();
@@ -56,7 +55,6 @@ public class RestRollingUpgradesDistIT {
             // start it by Arquillian
             controller.start("rest-rolling-upgrade-3-old-dist");
             controller.start("rest-rolling-upgrade-4-old-dist");
-            managementPortServer3 = 10190;
         }
 
         try {
@@ -96,13 +94,6 @@ public class RestRollingUpgradesDistIT {
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
-
-            provider3 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer3);
-
-            final ObjectName rollMan3 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
-                    + "manager=\"clustered\"," + "component=RollingUpgradeManager");
-
-            invokeOperation(provider3, rollMan3.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
             final ObjectName rollMan1 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered-new\"," + "component=RollingUpgradeManager");

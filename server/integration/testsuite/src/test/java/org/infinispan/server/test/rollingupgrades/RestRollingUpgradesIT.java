@@ -43,9 +43,6 @@ public class RestRollingUpgradesIT {
         // target node
         final int managementPortServer1 = 9990;
         MBeanServerConnectionProvider provider1;
-        // Source node
-        int managementPortServer2 = 10099;
-        MBeanServerConnectionProvider provider2;
 
         RESTHelper rest = new RESTHelper();
 
@@ -54,7 +51,6 @@ public class RestRollingUpgradesIT {
             if (!Boolean.parseBoolean(System.getProperty("start.jboss.as.manually"))) {
                 // start it by Arquillian
                 controller.start("rest-rolling-upgrade-2-old");
-                managementPortServer2 = 10090;
             }
 
             rest.addServer("127.0.0.1", "/rest");
@@ -76,12 +72,8 @@ public class RestRollingUpgradesIT {
             provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
 
-            provider2 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer2);
-
             final ObjectName rollMan = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(local)\","
                     + "manager=\"local\"," + "component=RollingUpgradeManager");
-
-            invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
             invokeOperation(provider1, rollMan.toString(), "synchronizeData", new Object[]{"rest"},
                     new String[]{"java.lang.String"});

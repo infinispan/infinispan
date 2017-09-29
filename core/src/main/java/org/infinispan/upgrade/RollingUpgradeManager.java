@@ -42,15 +42,6 @@ public class RollingUpgradeManager {
    }
 
    @ManagedOperation(
-         description = "Dumps the global known keyset to a well-known key for retrieval by the upgrade process",
-         displayName = "Dumps the global known keyset"
-   )
-   public void recordKnownGlobalKeyset() {
-      for (SourceMigrator m : sourceMigrators)
-         m.recordKnownGlobalKeyset();
-   }
-
-   @ManagedOperation(
          description = "Synchronizes data from the old cluster to this using the specified migrator",
          displayName = "Synchronizes data from the old cluster to this using the specified migrator"
    )

@@ -345,20 +345,6 @@ public abstract class CacheCommands implements OperationStepHandler {
         }
     }
 
-    public static class RecordGlobalKeySetCommand extends CacheCommands {
-        public static final RecordGlobalKeySetCommand INSTANCE = new RecordGlobalKeySetCommand();
-
-        @Override
-        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation, OperationContext context) throws Exception {
-            ComponentRegistry registry = SecurityActions.getComponentRegistry(cache.getAdvancedCache());
-            RollingUpgradeManager manager = registry.getComponent(RollingUpgradeManager.class);
-            if (manager != null) {
-                manager.recordKnownGlobalKeyset();
-            }
-            return null;
-        }
-    }
-
     public static class DisconnectSourceCommand extends CacheCommands {
         public static final DisconnectSourceCommand INSTANCE = new DisconnectSourceCommand();
 

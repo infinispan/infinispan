@@ -54,22 +54,6 @@ all requests will be handled by the _Target Cluster_ rather than the
 _Source Cluster_ . The _Target Cluster_ will lazily load data from the
 _Source Cluster_ on demand via the Command-Line Interface cache loader.
 
-
-.  Once all connections have switched to using the _Target Cluster_ the
-keyset on the _Source Cluster_ must be dumped. This can be achieved either
-via a JMX operation or via the CLI:
-
-
-.  JMX: invoke the _recordKnownGlobalKeyset_ operation on the
-_RollingUpgradeManager_ MBean on the _Source Cluster_ for all of the caches
-that need to be migrated
-
-
-.  CLI: invoke the _upgrade --dumpkeys_ command on the _Source Cluster_ for
-all of the caches that need to be migrated (additionally the _--all_ switch
-can be used to dump all caches in the cluster)
-
-
 .  At this point the _Target Cluster_ needs to fetch all remaining data from
 the _Source Cluster_ :
 
