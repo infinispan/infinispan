@@ -79,6 +79,9 @@
                      <dependencySourceIncludes>
                         <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
                      </dependencySourceIncludes>
+                     <dependencySourceExcludes>
+                        <dependencySourceExclude>org.infinispan:infinispan-license</dependencySourceExclude>
+                     </dependencySourceExcludes>
                      <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
                      <links>
                         <link>http://docs.oracle.com/javase/8/docs/api/</link>
@@ -94,6 +97,12 @@
                   </configuration>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skip>true</skip>
+            </configuration>
          </plugin>
       </plugins>
    </build>

@@ -99,6 +99,11 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-clustered-counter</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-core</artifactId>
       </dependency>
 
@@ -194,6 +199,10 @@
                            <packages>org.infinispan.query*:org.infinispan.objectfilter*</packages>
                         </group>
                         <group>
+                           <title>Clustered Counter API</title>
+                           <packages>org.infinispan.counter*</packages>
+                        </group>
+                        <group>
                            <title>Distributed Executors (deprecated)</title>
                            <packages>org.infinispan.distexec*</packages>
                         </group>
@@ -215,6 +224,9 @@
                      <dependencySourceIncludes>
                         <dependencySourceInclude>org.infinispan:*</dependencySourceInclude>
                      </dependencySourceIncludes>
+                     <dependencySourceExcludes>
+                        <dependencySourceExclude>org.infinispan:infinispan-license</dependencySourceExclude>
+                     </dependencySourceExcludes>
                      <javadocDirectory>${basedir}/src/main/javadoc</javadocDirectory>
                      <links>
                         <link>http://docs.oracle.com/javase/8/docs/api/</link>
@@ -283,6 +295,12 @@
                   </configuration>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skip>true</skip>
+            </configuration>
          </plugin>
       </plugins>
    </build>
