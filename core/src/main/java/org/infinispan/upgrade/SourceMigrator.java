@@ -8,10 +8,6 @@ package org.infinispan.upgrade;
  * @since 5.2
  */
 public interface SourceMigrator {
-   /**
-    * Records all known keys and stores them under a well-known key which can be used for retrieval.
-    */
-   void recordKnownGlobalKeyset();
 
    String getCacheName();
 }

@@ -131,8 +131,6 @@ public class ExampleConfigsIT {
         final ObjectName rollMan = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(local)\","
                 + "manager=\"local\"," + "component=RollingUpgradeManager");
 
-        invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
-
         invokeOperation(provider1, rollMan.toString(), "synchronizeData", new Object[]{"hotrod"},
                 new String[]{"java.lang.String"});
 
@@ -184,13 +182,9 @@ public class ExampleConfigsIT {
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
                                                           SERVER1_MGMT_PORT);
-            provider2 = new MBeanServerConnectionProvider(s2.server.getRESTEndpoint().getInetAddress().getHostName(),
-                                                          SERVER2_MGMT_PORT);
 
             final ObjectName rollMan = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(local)\","
                                                             + "manager=\"local\"," + "component=RollingUpgradeManager");
-
-            invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
             invokeOperation(provider1, rollMan.toString(), "synchronizeData", new Object[]{"rest"},
                             new String[]{"java.lang.String"});

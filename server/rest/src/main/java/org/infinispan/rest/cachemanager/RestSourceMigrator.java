@@ -22,8 +22,4 @@ class RestSourceMigrator<V> implements SourceMigrator {
       return cache.getName();
    }
 
-   @Override
-   public void recordKnownGlobalKeyset() {
-      // Nothing to do, the REST server already properly allows retrieving the full keyset
-   }
 }

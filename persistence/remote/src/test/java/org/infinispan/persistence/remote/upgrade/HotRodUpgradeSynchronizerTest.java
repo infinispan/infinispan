@@ -55,25 +55,6 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testSynchronizationViaKeyRecording() throws Exception {
-      // Fill the old cluster with data
-      fillCluster(sourceCluster, OLD_CACHE);
-      // Verify access to some of the data from the new cluster
-      assertEquals("A", targetCluster.getRemoteCache(OLD_CACHE).get("A"));
-
-      sourceCluster.getRollingUpgradeManager(OLD_CACHE).recordKnownGlobalKeyset();
-
-      RollingUpgradeManager targetUpgradeManager = targetCluster.getRollingUpgradeManager(OLD_CACHE);
-      targetUpgradeManager.synchronizeData("hotrod");
-      targetUpgradeManager.disconnectSource("hotrod");
-
-      assertEquals(sourceCluster.getRemoteCache(OLD_CACHE).size() - 1, targetCluster.getRemoteCache(OLD_CACHE).size());
-
-      MetadataValue<String> metadataValue = targetCluster.getRemoteCache(OLD_CACHE).getWithMetadata("A");
-      assertEquals(20, metadataValue.getLifespan());
-      assertEquals(30, metadataValue.getMaxIdle());
-   }
-
    public void testSynchronization() throws Exception {
       RemoteCache<String, String> sourceRemoteCache = sourceCluster.getRemoteCache(TEST_CACHE);
       RemoteCache<String, String> targetRemoteCache = targetCluster.getRemoteCache(TEST_CACHE);

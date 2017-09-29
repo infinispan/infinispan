@@ -68,12 +68,9 @@ public class HotRodRollingUpgradesIT extends AbstractHotRodRollingUpgradesIT {
 
             assertEquals("Can't access entries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
 
-            provider2 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer2);
-
             final ObjectName rollMan = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(local)\","
                     + "manager=\"local\"," + "component=RollingUpgradeManager");
 
-            invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getHotrodEndpoint().getInetAddress().getHostName(),
                     managementPortServer1);
