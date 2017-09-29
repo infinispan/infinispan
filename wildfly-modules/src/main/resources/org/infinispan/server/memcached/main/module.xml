@@ -18,7 +18,6 @@
       <module name="org.infinispan.server.hotrod" slot="${slot}"/>
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" slot="${slot}" services="import"/>
-      <module name="io.netty" />
       <module name="org.jgroups" slot="${slot}"/>
    </dependencies>
 </module>

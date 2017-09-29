@@ -14,6 +14,12 @@
 
    <dependencies>
       <dependency>
+         <groupId>io.netty</groupId>
+         <artifactId>netty-all</artifactId>
+         <version>${version.netty}</version>
+      </dependency>
+
+      <dependency>
          <groupId>org.apache.ant</groupId>
          <artifactId>ant</artifactId>
          <version>${version.ant}</version>
