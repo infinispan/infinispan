@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.transaction.Status;
@@ -96,7 +95,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private TransactionFactory txFactory;
    protected RpcManager rpcManager;
    protected CommandsFactory commandsFactory;
-   private ClusteringDependentLogic clusteringLogic;
+   protected ClusteringDependentLogic clusteringLogic;
    private CacheNotifier notifier;
    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    private CompletedTransactionsInfo completedTransactionsInfo;
@@ -115,7 +114,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private Lock minTopologyRecalculationLock;
    protected boolean clustered = false;
    protected volatile boolean running = false;
-   private TransactionOriginatorChecker transactionOriginatorChecker;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration, CacheNotifier notifier,
@@ -124,8 +122,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
                           CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic,
                           Cache cache, TimeService timeService, CacheManagerNotifier cacheManagerNotifier,
                           PartitionHandlingManager partitionHandlingManager,
-                          @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-                          TransactionOriginatorChecker transactionOriginatorChecker) {
+                          @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.notifier = notifier;
@@ -139,7 +136,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       this.timeService = timeService;
       this.partitionHandlingManager = partitionHandlingManager;
       this.timeoutExecutor = timeoutExecutor;
-      this.transactionOriginatorChecker = transactionOriginatorChecker;
 
       this.clustered = configuration.clustering().cacheMode().isClustered();
    }
@@ -210,6 +206,13 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       shutDownGracefully();
    }
 
+   public Set<Object> getLockedKeysForRemoteTransaction(GlobalTransaction gtx) {
+      RemoteTransaction transaction = remoteTransactions.get(gtx);
+      if (transaction == null) return Collections.emptySet();
+      return transaction.getLockedKeys();
+   }
+
+
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
       //do nothing
    }
@@ -250,6 +253,15 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
    }
 
+   /**
+    * Returns true if the given transaction is already registered with the transaction table.
+    *
+    * @param tx if null false is returned
+    */
+   public boolean containsLocalTx(Transaction tx) {
+      return tx != null && localTransactions.containsKey(tx);
+   }
+
    public int getMinTopologyId() {
       return minTxTopologyId;
    }
@@ -266,7 +278,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       for (Map.Entry<GlobalTransaction, RemoteTransaction> e : remoteTransactions.entrySet()) {
          GlobalTransaction gt = e.getKey();
          if (trace) log.tracef("Checking transaction %s", gt);
-         if (transactionOriginatorChecker.isOriginatorMissing(gt, membersSet)) {
+         if (!membersSet.contains(gt.getAddress())) {
             toKill.add(gt);
          }
       }
@@ -359,7 +371,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
 
       int viewId = rpcManager.getTransport().getViewId();
-      if (transactionOriginatorChecker.isOriginatorMissing(globalTx, rpcManager.getTransport().getMembers())) {
+      if (!rpcManager.getTransport().getMembers().contains(globalTx.getAddress())) {
          throw log.remoteTransactionOriginatorNotInView(globalTx);
       }
 
@@ -386,7 +398,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       });
 
       if (rpcManager.getTransport().getViewId() != viewId &&
-            transactionOriginatorChecker.isOriginatorMissing(globalTx, rpcManager.getTransport().getMembers())) {
+            !rpcManager.getTransport().getMembers().contains(globalTx.getAddress())) {
          // Either cleanupLeaverTransactions didn't run for this view yet, or it missed the transaction we just created.
          // Kill the transaction here if necessary, but return normally, as if the cleanup task did it.
          if (partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(globalTx)) {
@@ -404,20 +416,14 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     * If none exists, will be created first.
     */
    public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, boolean implicitTransaction) {
-      return getOrCreateLocalTransaction(transaction, implicitTransaction, this::newGlobalTransaction);
-   }
-
-   /**
-    * Similar to {@link #getOrCreateLocalTransaction(Transaction, boolean)} but with a custom global transaction factory.
-    */
-   public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, boolean implicitTransaction, Supplier<GlobalTransaction> gtxFactory) {
       LocalTransaction current = localTransactions.get(transaction);
       if (current == null) {
          if (!running) {
             // Assume that we wouldn't get this far if the cache was already stopped
             throw log.cacheIsStopping(cacheName);
          }
-         GlobalTransaction tx = gtxFactory.get();
+         Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
+         GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
          current = txFactory.newLocalTransaction(transaction, tx, implicitTransaction, currentTopologyId);
          if (trace) log.tracef("Created a new local transaction: %s", current);
          localTransactions.put(transaction, current);
@@ -433,11 +439,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     */
    public boolean removeLocalTransaction(LocalTransaction localTransaction) {
       return localTransaction != null && (removeLocalTransactionInternal(localTransaction.getTransaction()) != null);
-   }
-
-   private GlobalTransaction newGlobalTransaction() {
-      Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
-      return txFactory.newGlobalTransaction(localAddress, false);
    }
 
    private LocalTransaction removeLocalTransactionInternal(Transaction tx) {
@@ -626,7 +627,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             for (RemoteTransaction tx : remoteTransactions.values()) {
                // By synchronizing on the transaction we are waiting for in-progress commands affecting
                // this transaction (and synchronizing on it in TransactionSynchronizerInterceptor).
-               //noinspection SynchronizationOnLocalVariableOrMethodParameter
                synchronized (tx) {
                   // Don't actually roll back the transaction, it would just delay the shutdown
                   tx.markForRollback(true);
@@ -704,7 +704,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       // The highest transaction id previously cleared, with any originator
       volatile long globalMaxPrunedTxId;
 
-      CompletedTransactionsInfo() {
+      public CompletedTransactionsInfo() {
          nodeMaxPrunedTxIds = new ConcurrentHashMap<>();
          completedTransactions = new ConcurrentHashMap<>();
          globalMaxPrunedTxId = -1;
@@ -716,7 +716,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
        * on a remote node. This might cause leaks, e.g. if the transaction is prepared, committed and prepared again.
        * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
        */
-      void markTransactionCompleted(GlobalTransaction globalTx, boolean successful) {
+      public void markTransactionCompleted(GlobalTransaction globalTx, boolean successful) {
          if (trace) log.tracef("Marking transaction %s as completed", globalTx);
          completedTransactions.put(globalTx, new CompletedTransactionInfo(timeService.time(), successful));
       }
@@ -724,7 +724,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       /**
        * @see #markTransactionCompleted(GlobalTransaction, boolean)
        */
-      boolean isTransactionCompleted(GlobalTransaction gtx) {
+      public boolean isTransactionCompleted(GlobalTransaction gtx) {
          if (completedTransactions.containsKey(gtx))
             return true;
 
@@ -739,7 +739,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          return nodeMaxPrunedTxId != null && gtx.getId() <= nodeMaxPrunedTxId;
       }
 
-      CompletedTransactionStatus getTransactionStatus(GlobalTransaction gtx) {
+      public CompletedTransactionStatus getTransactionStatus(GlobalTransaction gtx) {
          CompletedTransactionInfo completedTx = completedTransactions.get(gtx);
          if (completedTx != null) {
             return completedTx.successful ? CompletedTransactionStatus.COMMITTED : CompletedTransactionStatus.ABORTED;
@@ -765,7 +765,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          }
       }
 
-      void cleanupCompletedTransactions() {
+      public void cleanupCompletedTransactions() {
          if (completedTransactions.isEmpty())
             return;
 
