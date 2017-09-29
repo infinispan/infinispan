@@ -22,6 +22,7 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.RemoteTransaction;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -177,6 +178,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
    protected ConfigurationBuilder createCacheConfig() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       builder.transaction().lockingMode(lockingMode);
       switch (transactionMode) {
          case NON_XA:
