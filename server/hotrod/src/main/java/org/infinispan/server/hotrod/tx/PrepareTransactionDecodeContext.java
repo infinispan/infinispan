@@ -15,8 +15,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.TransactionFactory;
 
 /**
  * A decode context to handle prepare request from a client.
@@ -26,12 +24,10 @@ import org.infinispan.transaction.xa.TransactionFactory;
  */
 public class PrepareTransactionDecodeContext extends TransactionDecodeContext {
 
-   private final TransactionFactory transactionFactory;
    private EmbeddedTransaction tx;
 
    public PrepareTransactionDecodeContext(AdvancedCache<byte[], byte[]> cache, XidImpl xid) {
       super(cache, xid);
-      transactionFactory = cache.getComponentRegistry().getComponent(TransactionFactory.class);
    }
 
    /**
@@ -47,8 +43,7 @@ public class PrepareTransactionDecodeContext extends TransactionDecodeContext {
       }
       EmbeddedTransaction tx = tm.getTransaction();
       tx.setXid(xid);
-      LocalTransaction localTransaction = transactionTable
-            .getOrCreateLocalTransaction(tx, false, this::newGlobalTransaction);
+      LocalTransaction localTransaction = transactionTable.getOrCreateLocalTransaction(tx, false);
       TxState txState = new TxState(localTransaction.getGlobalTransaction());
       if (!serverTransactionTable.addGlobalState(xid, txState)) {
          transactionTable.removeLocalTransaction(localTransaction);
@@ -88,8 +83,7 @@ public class PrepareTransactionDecodeContext extends TransactionDecodeContext {
     * Prepares the transaction.
     *
     * @param onePhaseCommit {@code true} if one phase commit.
-    * @return the {@link javax.transaction.xa.XAResource#XA_OK} if successful prepared, otherwise one of the {@link
-    * javax.transaction.xa.XAException} error codes.
+    * @return the {@link javax.transaction.xa.XAResource#XA_OK} if successful prepared, otherwise one of the {@link javax.transaction.xa.XAException} error codes.
     */
    public int prepare(boolean onePhaseCommit) {
       if (tx.runPrepare()) {
@@ -127,9 +121,5 @@ public class PrepareTransactionDecodeContext extends TransactionDecodeContext {
    private void prepared() {
       List<WriteCommand> modifications = transactionTable.getLocalTransaction(tx).getModifications();
       advance(txState.prepare(modifications));
-   }
-
-   private GlobalTransaction newGlobalTransaction() {
-      return transactionFactory.newGlobalTransaction(serverTransactionTable.getClientAddress(), false);
    }
 }
