@@ -13,29 +13,27 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterConfiguration;
+import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.exception.CounterException;
+import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.function.AddFunction;
 import org.infinispan.counter.impl.function.InitializeCounterFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
+import org.infinispan.counter.impl.listener.CounterEventGenerator;
 import org.infinispan.counter.impl.listener.CounterEventImpl;
-import org.infinispan.counter.impl.listener.CounterFilterAndConvert;
-import org.infinispan.counter.impl.listener.NotificationManager;
+import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
+import org.infinispan.counter.impl.listener.TopologyChangeListener;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.counter.util.Utils;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.util.ByteString;
 
 /**
@@ -57,8 +55,7 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.0
  */
-@Listener(clustered = true, observation = Listener.Observation.POST, sync = true)
-public class WeakCounterImpl implements WeakCounter {
+public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, TopologyChangeListener {
 
    private static final Log log = LogFactory.getLog(WeakCounterImpl.class, Log.class);
    private static final AtomicReferenceFieldUpdater<Entry, Long> L1_UPDATER =
@@ -67,19 +64,19 @@ public class WeakCounterImpl implements WeakCounter {
    private final Entry[] entries;
    private final AdvancedCache<WeakCounterKey, CounterValue> cache;
    private final FunctionalMap.ReadWriteMap<WeakCounterKey, CounterValue> readWriteMap;
-   private final NotificationManager notificationManager;
+   private final CounterManagerNotificationManager notificationManager;
    private final CounterConfiguration configuration;
    private final KeySelector selector;
 
    public WeakCounterImpl(String counterName, AdvancedCache<WeakCounterKey, CounterValue> cache,
-         CounterConfiguration configuration) {
+         CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
       this.cache = cache;
+      this.notificationManager = notificationManager;
       FunctionalMapImpl<WeakCounterKey, CounterValue> functionalMap = FunctionalMapImpl.create(cache)
             .withParams(Utils.getPersistenceMode(configuration.storage()));
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
       this.entries = initKeys(counterName, configuration.concurrencyLevel());
       this.selector = new KeySelector(entries);
-      this.notificationManager = new NotificationManager();
       this.configuration = configuration;
    }
 
@@ -129,7 +126,7 @@ public class WeakCounterImpl implements WeakCounter {
 
    @Override
    public String getName() {
-      return entries[0].key.getCounterName().toString();
+      return counterName().toString();
    }
 
    @Override
@@ -154,7 +151,7 @@ public class WeakCounterImpl implements WeakCounter {
 
    @Override
    public <T extends CounterListener> Handle<T> addListener(T listener) {
-      return notificationManager.addListener(listener);
+      return notificationManager.registerUserListener(counterName(), listener);
    }
 
    @Override
@@ -162,15 +159,20 @@ public class WeakCounterImpl implements WeakCounter {
       return configuration;
    }
 
-   @CacheEntryModified
-   public void updateState(CacheEntryEvent<WeakCounterKey, CounterValue> event) {
-      int index = event.getKey().getIndex();
+   @Override
+   public CounterEvent generate(CounterKey key, CounterValue value) {
+      assert key instanceof WeakCounterKey;
+      int index = ((WeakCounterKey) key).getIndex();
       long base = getCachedValue(index);
-      long newValue = event.getValue().getValue();
+      long newValue = value.getValue();
       long oldValue = updateCounterState(index, newValue);
-      notificationManager.notify(CounterEventImpl.create(base + oldValue, base + newValue));
+      return CounterEventImpl.create(base + oldValue, base + newValue);
    }
 
+   @Override
+   public void topologyChanged() {
+      selector.updatePreferredKeys();
+   }
 
    /**
     * Debug only!
@@ -246,9 +248,7 @@ public class WeakCounterImpl implements WeakCounter {
    }
 
    private void registerListener() {
-      CounterFilterAndConvert<WeakCounterKey> filter = new CounterFilterAndConvert<>(entries[0].key.getCounterName());
-      cache.addListener(this, filter, filter);
-      cache.addListener(selector);
+      notificationManager.registerCounter(counterName(), this, this);
    }
 
    private WeakCounterKey findKey() {
@@ -258,12 +258,17 @@ public class WeakCounterImpl implements WeakCounter {
    @Override
    public String toString() {
       return "WeakCounter{" +
-            "counterName=" + entries[0].key.getCounterName() +
+            "counterName=" + counterName() +
             '}';
+   }
+
+   private ByteString counterName() {
+      return entries[0].key.getCounterName();
    }
 
    private static class Entry {
       final WeakCounterKey key;
+      @SuppressWarnings("unused")
       volatile Long snapshot;
 
       private Entry(WeakCounterKey key) {
@@ -279,7 +284,6 @@ public class WeakCounterImpl implements WeakCounter {
       }
    }
 
-   @Listener(sync = false)
    private class KeySelector {
       private final Entry[] entries;
       private volatile WeakCounterKey[] preferredKeys; //null when no keys available
@@ -311,11 +315,5 @@ public class WeakCounterImpl implements WeakCounter {
                null :
                preferredKeys.toArray(new WeakCounterKey[preferredKeys.size()]);
       }
-
-      @TopologyChanged
-      public void topologyChanged(TopologyChangedEvent<WeakCounterKey, CounterValue> event) {
-         updatePreferredKeys();
-      }
-
    }
 }

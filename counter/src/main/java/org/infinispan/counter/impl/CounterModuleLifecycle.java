@@ -27,7 +27,7 @@ import org.infinispan.counter.impl.function.ReadFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.interceptor.CounterConfigurationInterceptor;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
-import org.infinispan.counter.impl.listener.CounterFilterAndConvert;
+import org.infinispan.counter.impl.listener.CounterKeyFilter;
 import org.infinispan.counter.impl.manager.CacheHolder;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
@@ -136,7 +136,7 @@ public class CounterModuleLifecycle extends AbstractModuleLifecycle {
             .advancedExternalizers();
 
       addAdvancedExternalizer(externalizerMap, ResetFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CounterFilterAndConvert.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, CounterKeyFilter.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, StrongCounterKey.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, WeakCounterKey.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, ReadFunction.EXTERNALIZER);
