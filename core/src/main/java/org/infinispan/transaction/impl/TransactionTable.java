@@ -359,7 +359,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
 
       int viewId = rpcManager.getTransport().getViewId();
-      if (transactionOriginatorChecker.isOriginatorMissing(globalTx, rpcManager.getTransport().getMembers())) {
+      if (transactionOriginatorChecker.isOriginatorMissing(globalTx)) {
          throw log.remoteTransactionOriginatorNotInView(globalTx);
       }
 
@@ -386,7 +386,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       });
 
       if (rpcManager.getTransport().getViewId() != viewId &&
-            transactionOriginatorChecker.isOriginatorMissing(globalTx, rpcManager.getTransport().getMembers())) {
+            transactionOriginatorChecker.isOriginatorMissing(globalTx)) {
          // Either cleanupLeaverTransactions didn't run for this view yet, or it missed the transaction we just created.
          // Kill the transaction here if necessary, but return normally, as if the cleanup task did it.
          if (partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(globalTx)) {
