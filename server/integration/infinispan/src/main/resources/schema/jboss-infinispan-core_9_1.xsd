@@ -153,7 +153,7 @@
             <xs:annotation>
                 <xs:documentation>
                     The jndi name to which to bind this cache container.
-                    If undefined, the cache will be bound to: java:jboss/infinispan/container/container-name
+                    If undefined, the cache will be bound to: java:jboss/datagrid-infinispan/container/container-name
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
@@ -556,7 +556,7 @@
             <xs:annotation>
                 <xs:documentation>
                     The jndi name to which to bind this cache.
-                    If undefined, the cache will be bound to: java:jboss/infinispan/cache/container-name/cache-name
+                    If undefined, the cache will be bound to: java:jboss/datagrid-infinispan/cache/container-name/cache-name
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>

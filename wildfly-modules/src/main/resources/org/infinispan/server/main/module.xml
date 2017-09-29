@@ -14,9 +14,11 @@
       <module name="javax.transaction.api" />
       <module name="org.apache.xerces" services="import" />
       <module name="org.infinispan" slot="${slot}"/>
+      <module name="org.infinispan.tasks" slot="${slot}" />
+      <module name="org.infinispan.tasks.api" slot="${slot}" />
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" slot="${slot}" services="import"/>
-      <module name="io.netty" />
+      <module name="io.netty" export="true" slot="${slot}"/>
       <module name="org.jgroups" slot="${slot}"/>
    </dependencies>
 </module>

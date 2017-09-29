@@ -8,7 +8,6 @@
    <dependencies>
       <module name="javax.api" />
       <module name="javax.servlet.api" />
-      <module name="io.netty" />
       <module name="org.apache.xerces" services="import" />
       <module name="org.hibernate.validator" services="import" />
       <module name="org.infinispan"  slot="${slot}"/>

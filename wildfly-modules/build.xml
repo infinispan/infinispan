@@ -70,6 +70,10 @@
             <filter token="lucene.slot" value="${lucene.slot}" />
         </filterset>
 
+        <module-def name="io.netty" slot="${infinispan.slot}">
+            <maven-resource group="io.netty" artifact="netty-all" />
+        </module-def>
+
         <module-def name="com.github.ben-manes.caffeine" slot="${infinispan.slot}">
             <maven-resource group="com.github.ben-manes.caffeine" artifact="caffeine" />
         </module-def>
