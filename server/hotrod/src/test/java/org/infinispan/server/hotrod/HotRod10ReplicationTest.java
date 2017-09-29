@@ -154,7 +154,8 @@ public class HotRod10ReplicationTest extends HotRodMultiNodeTest {
                .forEach(addr -> assertTrue(topoResp1.members.contains(addr)));
       assertSuccess(clients().get(1).get(k(m), 0), v(m, "v5-"));
 
-      HotRodServer crashingServer = startClusteredServer(servers().get(1).getPort() + 25);
+      HotRodServer crashingServer = startClusteredServer(
+            servers().get(1).getPort() + 25, true);
       try {
          resp = clients().get(0).put(k(m), 0, 0, v(m, "v6-"), INTELLIGENCE_TOPOLOGY_AWARE,
                                      ClusterCacheStatus.INITIAL_TOPOLOGY_ID + 2 * nodeCount() + 4);

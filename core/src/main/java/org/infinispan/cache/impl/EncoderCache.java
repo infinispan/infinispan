@@ -915,11 +915,4 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
          super.addFilteredListener(listener, filter, converter, filterAnnotations);
       }
    }
-
-   //HACK!
-   public EncoderCache<K, V> withCache(AdvancedCache<K, V> otherCache) {
-      EncoderCache<K, V> cache = new EncoderCache<>(otherCache, keyDataConversion, valueDataConversion);
-      initState(cache, this);
-      return cache;
-   }
 }
