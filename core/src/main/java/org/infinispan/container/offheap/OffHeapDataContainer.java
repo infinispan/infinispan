@@ -143,14 +143,14 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    protected InternalCacheEntry<WrappedBytes, WrappedBytes> performGet(long address, Object k) {
       WrappedBytes wrappedKey = toWrapper(k);
+      InternalCacheEntry<WrappedBytes, WrappedBytes> ice = null;
       while (address != 0) {
-         long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
-         InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
+         ice = offHeapEntryFactory.fromMemory(address);
          if (wrappedKey.equalsWrappedBytes(ice.getKey())) {
             entryRetrieved(address);
             return ice;
          } else {
-            address = nextAddress;
+            address = offHeapEntryFactory.getNextLinkedPointerAddress(address);
          }
       }
       return null;
@@ -489,19 +489,21 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    public void evict(WrappedBytes key) {
       Lock lock = locks.getLock(key).writeLock();
       lock.lock();
+      InternalCacheEntry<WrappedBytes, WrappedBytes> ice = null;
       try {
          checkDeallocation();
          long address = memoryLookup.getMemoryAddress(key);
          if (address != 0) {
-            // TODO: this could be more efficient
-            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = performGet(address, key);
+            ice = offHeapEntryFactory.fromMemory(address);
             if (ice != null) {
-               passivator.passivate(ice);
                performRemove(address, key);
             }
          }
       } finally {
          lock.unlock();
+         if (ice != null) {
+            passivator.passivate(ice);
+         }
       }
    }
 

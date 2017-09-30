@@ -257,12 +257,16 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
                log.tracef("Removing entry: %d due to eviction due to size %d being larger than maximum of %d",
                      addressToRemove, currentSize, maxSize);
             }
+            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = null;
             try {
-               InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
+               ice = offHeapEntryFactory.fromMemory(addressToRemove);
                performRemove(addressToRemove, offHeapEntryFactory.getKey(addressToRemove));
                evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
             } finally {
                entryWriteLock.unlock();
+               if (ice != null) {
+                  passivator.passivate(ice);
+               }
             }
          }
       }

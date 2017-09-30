@@ -9,16 +9,20 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "eviction.EvictionWithPassivationTest")
 public class EvictionWithPassivationTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "testCache";
+   private final int EVICTION_MAX_ENTRIES = 2;
+   private StorageType storage;
 
    public EvictionWithPassivationTest() {
       // Cleanup needs to be after method, else LIRS can cause failures due to it not caching values due to hot
@@ -26,15 +30,30 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   private final int EVICTION_MAX_ENTRIES = 2;
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new EvictionWithPassivationTest().withStorage(StorageType.BINARY),
+            new EvictionWithPassivationTest().withStorage(StorageType.OBJECT),
+            new EvictionWithPassivationTest().withStorage(StorageType.OFF_HEAP)
+      };
+   }
 
    private ConfigurationBuilder buildCfg() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg
-            .persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).purgeOnStartup(true)
-            .invocationBatching().enable();
+            .persistence()
+               .passivation(true)
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class).purgeOnStartup(true)
+            .invocationBatching().enable()
+            .memory().storageType(storage);
       cfg.memory().size(EVICTION_MAX_ENTRIES);
       return cfg;
+   }
+
+   public EvictionWithPassivationTest withStorage(StorageType storage) {
+      this.storage = storage;
+      return this;
    }
 
    @Override
