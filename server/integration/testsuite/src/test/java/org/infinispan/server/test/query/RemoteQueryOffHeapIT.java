@@ -2,7 +2,6 @@ package org.infinispan.server.test.query;
 
 import org.infinispan.server.test.category.Queries;
 import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
@@ -12,7 +11,6 @@ import org.junit.runner.RunWith;
  * @author vjuranek
  * @since 9.2
  */
-@Ignore //ISPN-8349
 @Category(Queries.class)
 @RunWith(Arquillian.class)
 public class RemoteQueryOffHeapIT extends RemoteQueryIT {
