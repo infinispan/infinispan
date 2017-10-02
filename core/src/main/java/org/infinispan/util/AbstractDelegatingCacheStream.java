@@ -30,8 +30,9 @@ import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 
 /**
- * Delegate that forwards all the of the method calls to the underlying cache stream.  It is assumed that a CacheStream
- * is returned for all intermediate operations.
+ * Delegate that forwards all the of the method calls to the underlying cache stream. This can be useful to intercept
+ * a given method call. Note that primitive stream operations are not intercepted (including those from
+ * {@link java.util.stream.BaseStream}, however defined {@link org.infinispan.BaseCacheStream} methods would be.
  */
 public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    protected CacheStream<?> underlyingStream;
@@ -44,50 +45,82 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
       return stream;
    }
 
+   // These are methods that convert to a different AbstractDelegating*CacheStream
+
    @Override
-   public CacheStream<R> sequentialDistribution() {
+   public IntCacheStream mapToInt(ToIntFunction<? super R> mapper) {
+      return new AbstractDelegatingIntCacheStream(this, castStream(underlyingStream).mapToInt(mapper));
+   }
+
+   @Override
+   public LongCacheStream mapToLong(ToLongFunction<? super R> mapper) {
+      return new AbstractDelegatingLongCacheStream(this, castStream(underlyingStream).mapToLong(mapper));
+   }
+
+   @Override
+   public DoubleCacheStream mapToDouble(ToDoubleFunction<? super R> mapper) {
+      return new AbstractDelegatingDoubleCacheStream(this, castStream(underlyingStream).mapToDouble(mapper));
+   }
+
+   @Override
+   public IntCacheStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
+      return new AbstractDelegatingIntCacheStream(this, castStream(underlyingStream).flatMapToInt(mapper));
+   }
+
+   @Override
+   public LongCacheStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
+      return new AbstractDelegatingLongCacheStream(this, castStream(underlyingStream).flatMapToLong(mapper));
+   }
+
+   @Override
+   public DoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
+      return new AbstractDelegatingDoubleCacheStream(this, castStream(underlyingStream).flatMapToDouble(mapper));
+   }
+
+   @Override
+   public AbstractDelegatingCacheStream<R> sequentialDistribution() {
       underlyingStream = underlyingStream.sequentialDistribution();
       return this;
    }
 
    @Override
-   public CacheStream<R> parallelDistribution() {
+   public AbstractDelegatingCacheStream<R> parallelDistribution() {
       underlyingStream = underlyingStream.parallelDistribution();
       return this;
    }
 
    @Override
-   public CacheStream<R> filterKeySegments(Set<Integer> segments) {
+   public AbstractDelegatingCacheStream<R> filterKeySegments(Set<Integer> segments) {
       underlyingStream = underlyingStream.filterKeySegments(segments);
       return this;
    }
 
    @Override
-   public CacheStream<R> filterKeys(Set<?> keys) {
+   public AbstractDelegatingCacheStream<R> filterKeys(Set<?> keys) {
       underlyingStream = underlyingStream.filterKeys(keys);
       return this;
    }
 
    @Override
-   public CacheStream<R> distributedBatchSize(int batchSize) {
+   public AbstractDelegatingCacheStream<R> distributedBatchSize(int batchSize) {
       underlyingStream = underlyingStream.distributedBatchSize(batchSize);
       return this;
    }
 
    @Override
-   public CacheStream<R> segmentCompletionListener(SegmentCompletionListener listener) {
+   public AbstractDelegatingCacheStream<R> segmentCompletionListener(SegmentCompletionListener listener) {
       underlyingStream = underlyingStream.segmentCompletionListener(listener);
       return this;
    }
 
    @Override
-   public CacheStream<R> disableRehashAware() {
+   public AbstractDelegatingCacheStream<R> disableRehashAware() {
       underlyingStream = underlyingStream.disableRehashAware();
       return this;
    }
 
    @Override
-   public CacheStream<R> timeout(long timeout, TimeUnit unit) {
+   public AbstractDelegatingCacheStream<R> timeout(long timeout, TimeUnit unit) {
       underlyingStream = underlyingStream.timeout(timeout, unit);
       return this;
    }
@@ -207,7 +240,7 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
 
    @Override
    public CacheStream<R> skip(long n) {
-      underlyingStream = underlyingStream.limit(n);
+      underlyingStream = underlyingStream.skip(n);
       return this;
    }
 
@@ -278,35 +311,5 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    @Override
    public Optional<R> findAny() {
       return castStream(underlyingStream).findAny();
-   }
-
-   @Override
-   public IntCacheStream mapToInt(ToIntFunction<? super R> mapper) {
-      throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
-   }
-
-   @Override
-   public LongCacheStream mapToLong(ToLongFunction<? super R> mapper) {
-      throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
-   }
-
-   @Override
-   public DoubleCacheStream mapToDouble(ToDoubleFunction<? super R> mapper) {
-      throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
-   }
-
-   @Override
-   public IntCacheStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
-      throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
-   }
-
-   @Override
-   public LongCacheStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
-      throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
-   }
-
-   @Override
-   public DoubleCacheStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
-      throw new UnsupportedOperationException("Primitive delegate is not yet supported!");
    }
 }

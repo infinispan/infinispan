@@ -45,6 +45,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.util.AbstractDelegatingCacheStream;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -138,7 +139,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private BiFunction<? super K, ? super V, ? extends V> convertFunction(
          BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
-      return (k, v) -> remappingFunction.apply(keyFromStorage(k), valueFromStorage(v));
+      return (k, v) -> valueToStorage(remappingFunction.apply(keyFromStorage(k), valueFromStorage(v)));
    }
 
    private Map<K, CacheEntry<K, V>> decodeEntryMapForRead(Map<K, CacheEntry<K, V>> map) {
@@ -159,6 +160,18 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       return entryMap;
    }
 
+   private class EncodedCacheStream<R> extends AbstractDelegatingCacheStream<R> {
+
+      public EncodedCacheStream(CacheStream<R> stream) {
+         super(stream);
+      }
+
+      @Override
+      public AbstractDelegatingCacheStream<R> filterKeys(Set<?> keys) {
+         return super.filterKeys(encodeKeysForWrite(keys));
+      }
+   }
+
    private class EncodedKeySet extends AbstractCloseableIteratorCollection<K, K, V> implements CacheSet<K> {
       private final CacheSet<K> actualCollection;
       private final EncoderKeyMapper keyMapper = new EncoderKeyMapper(keyDataConversion);
@@ -170,12 +183,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Override
       public CacheStream<K> stream() {
-         return actualCollection.stream().map(keyMapper);
+         return new EncodedCacheStream<>(actualCollection.stream().map(keyMapper));
       }
 
       @Override
       public CacheStream<K> parallelStream() {
-         return actualCollection.parallelStream().map(keyMapper);
+         return new EncodedCacheStream<>(actualCollection.parallelStream().map(keyMapper));
       }
 
       @Override
@@ -729,12 +742,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         return actualCollection.stream().map(entryMapper);
+         return new EncodedCacheStream<>(actualCollection.stream().map(entryMapper));
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return actualCollection.parallelStream().map(entryMapper);
+         return new EncodedCacheStream<>(actualCollection.parallelStream().map(entryMapper));
       }
 
       @Override
@@ -781,7 +794,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
             K key = entry.getKey();
             K newKey = keyToStorage(key);
             V value = entry.getValue();
-            V newValue = valueFromStorage(value);
+            V newValue = valueToStorage(value);
             if (key != newKey || value != newValue) {
                if (o instanceof CacheEntry) {
                   CacheEntry returned = (CacheEntry) o;
@@ -812,7 +825,7 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Override
       public B setValue(B value) {
-         previousEntry.setValue(value);
+         previousEntry.setValue((B) valueToStorage(value));
          return super.setValue(value);
       }
    }
@@ -839,12 +852,12 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
       @Override
       public CacheStream<V> stream() {
-         return actualCollection.stream().map(valueMapper);
+         return new EncodedCacheStream<>(actualCollection.stream().map(valueMapper));
       }
 
       @Override
       public CacheStream<V> parallelStream() {
-         return actualCollection.parallelStream().map(valueMapper);
+         return new EncodedCacheStream<>(actualCollection.parallelStream().map(valueMapper));
       }
 
       @Override
