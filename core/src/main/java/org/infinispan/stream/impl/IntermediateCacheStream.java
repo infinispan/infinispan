@@ -30,6 +30,7 @@ import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.stream.impl.local.LocalCacheStream;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * An intermediate cache stream used when an intermediate operation that requires both a remote and local portion
@@ -247,6 +248,16 @@ public class IntermediateCacheStream<R> implements CacheStream<R> {
    @Override
    public <R1, A> R1 collect(Collector<? super R, A, R1> collector) {
       return localStream.collect(collector);
+   }
+
+   @Override
+   public <R1> R1 collect(SerializableSupplier<Collector<? super R, ?, R1>> supplier) {
+      return localStream.collect(supplier);
+   }
+
+   @Override
+   public <R1> R1 collect(Supplier<Collector<? super R, ?, R1>> supplier) {
+      return localStream.collect(supplier);
    }
 
    @Override

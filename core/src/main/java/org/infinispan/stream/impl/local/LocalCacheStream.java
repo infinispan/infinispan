@@ -45,6 +45,7 @@ import org.infinispan.stream.impl.intops.object.SkipOperation;
 import org.infinispan.stream.impl.intops.object.SortedComparatorOperation;
 import org.infinispan.stream.impl.intops.object.SortedOperation;
 import org.infinispan.util.function.RemovableFunction;
+import org.infinispan.util.function.SerializableSupplier;
 
 /**
  * CacheStream that is to be used locally.  This allows for full functionality of a regular stream but also has options
@@ -256,6 +257,16 @@ public class LocalCacheStream<R> extends AbstractLocalCacheStream<R, Stream<R>, 
    @Override
    public <R1, A> R1 collect(Collector<? super R, A, R1> collector) {
       return createStream().collect(collector);
+   }
+
+   @Override
+   public <R1> R1 collect(SerializableSupplier<Collector<? super R, ?, R1>> supplier) {
+      return createStream().collect(supplier.get());
+   }
+
+   @Override
+   public <R1> R1 collect(Supplier<Collector<? super R, ?, R1>> supplier) {
+      return createStream().collect(supplier.get());
    }
 
    @Override

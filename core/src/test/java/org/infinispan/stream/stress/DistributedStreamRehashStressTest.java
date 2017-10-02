@@ -27,7 +27,6 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.stream.CacheCollectors;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
@@ -82,7 +81,7 @@ public class DistributedStreamRehashStressTest extends StressTest {
          Map<Integer, Integer> results = cache.entrySet().stream().filter(
                  (Serializable & Predicate<Map.Entry<Integer, Integer>>)
                          e -> (e.getKey() & 1) == 1).collect(
-                 CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                 () -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
          assertEquals(CACHE_ENTRY_COUNT / 2, results.size());
          for (Map.Entry<Integer, Integer> entry : results.entrySet()) {
             assertEquals(entry.getKey(), entry.getValue());

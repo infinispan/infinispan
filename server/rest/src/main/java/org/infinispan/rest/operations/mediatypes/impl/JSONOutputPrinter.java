@@ -8,7 +8,6 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.operations.exceptions.ServerInternalException;
 import org.infinispan.rest.operations.mediatypes.Charset;
 import org.infinispan.rest.operations.mediatypes.OutputPrinter;
-import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -28,7 +27,7 @@ public class JSONOutputPrinter implements OutputPrinter {
    public byte[] print(String cacheName, CacheSet<?> keys, Charset charset) {
       return keys.stream()
             .map(b -> Escaper.escapeJson(b.toString()))
-            .collect(CacheCollectors.serializableCollector(() -> Collectors.joining(",", "keys=[", "]")))
+            .collect(() -> Collectors.joining(",", "keys=[", "]"))
             .getBytes(charset.getJavaCharset());
    }
 
