@@ -8,6 +8,7 @@ import java.util.Spliterator;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
+import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
@@ -40,6 +41,7 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
    public EntrySetCommand(Cache<K, V> cache, long flagsBitSet) {
       setFlagsBitSet(flagsBitSet);
+      cache = AbstractDelegatingCache.unwrapCache(cache);
       if (flagsBitSet != EnumUtil.EMPTY_BIT_SET) {
          this.cache = cache.getAdvancedCache().withFlags(EnumUtil.enumArrayOf(flagsBitSet, Flag.class));
       } else {
