@@ -8,16 +8,22 @@ package org.infinispan.test.hibernate.cache.functional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.hibernate.FlushMode;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 
+import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.functional.entities.Customer;
+import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
+import org.infinispan.test.hibernate.cache.util.TestTimeService;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -30,6 +36,13 @@ import static org.junit.Assert.assertNull;
  * @since 3.5
  */
 public class BulkOperationsTest extends SingleNodeTest {
+
+   private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(BulkOperationsTest.class);
+   private static final TestTimeService TIME_SERVICE = new AlwaysMoveForwardTimeService();
+
+   @Rule
+   public TestName name = new TestName();
+
 	@Override
 	public List<Object[]> getParameters() {
 		return getParameters(true, true, false, true);
@@ -51,8 +64,16 @@ public class BulkOperationsTest extends SingleNodeTest {
 		};
 	}
 
+   @Override
+   protected void addSettings(Map settings) {
+      super.addSettings(settings);
+      settings.put(TestInfinispanRegionFactory.TIME_SERVICE, TIME_SERVICE);
+   }
+
 	@Test
 	public void testBulkOperations() throws Throwable {
+      log.infof("*** %s", name.getMethodName());
+
 		boolean cleanedUp = false;
 		try {
 			createContacts();
@@ -83,6 +104,10 @@ public class BulkOperationsTest extends SingleNodeTest {
 
 			updateContacts( "Kabir", "Updated" );
 			assertEquals( 0, contactSlcs.getElementCountInMemory() );
+
+         // Advance so that invalidation can be seen as past and data can be loaded
+         TIME_SERVICE.advance(1);
+
 			for ( Integer id : jbContacts ) {
 				Contact contact = getContact( id );
 				assertNotNull( "JBoss contact " + id + " exists", contact );
@@ -225,5 +250,25 @@ public class BulkOperationsTest extends SingleNodeTest {
 			System.out.println( "CREATE CUSTOMER " + id + " -  END" );
 		}
 	}
+
+   /**
+    * A time service that whenever you ask it for the time, it moves the clock forward.
+    *
+    * This time service guarantees that after a session timestamp has been generated,
+    * the next time the region is invalidated and the time is checked, this time is forward in time.
+    *
+    * By doing that, we can guarantee that when a region is invalidated in same session,
+    * the region invalidation timestamp will be in the future and we avoid potential invalid things being added to second level cache.
+    * More info can be found in {@link org.infinispan.hibernate.cache.access.FutureUpdateSynchronization}.
+    */
+   private static final class AlwaysMoveForwardTimeService extends TestTimeService {
+
+      @Override
+      public long wallClockTime() {
+         advance(1);
+         return super.wallClockTime();
+      }
+
+   }
 
 }
