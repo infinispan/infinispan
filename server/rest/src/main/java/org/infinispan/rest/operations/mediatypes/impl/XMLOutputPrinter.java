@@ -7,7 +7,6 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.operations.exceptions.ServerInternalException;
 import org.infinispan.rest.operations.mediatypes.Charset;
 import org.infinispan.rest.operations.mediatypes.OutputPrinter;
-import org.infinispan.stream.CacheCollectors;
 import org.infinispan.util.logging.LogFactory;
 
 import com.thoughtworks.xstream.XStream;
@@ -30,7 +29,7 @@ public class XMLOutputPrinter implements OutputPrinter {
       return keys.stream()
             .map(b -> Escaper.escapeXml(b.toString()))
             .map(s -> "<key>" + s + "</key>")
-            .collect(CacheCollectors.serializableCollector(() -> Collectors.joining("", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys>", "</keys>")))
+            .collect(() -> Collectors.joining("", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><keys>", "</keys>"))
             .getBytes(charset.getJavaCharset());
    }
 

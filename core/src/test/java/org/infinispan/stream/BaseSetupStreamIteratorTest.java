@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
@@ -75,9 +75,8 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       return map;
    }
 
-   protected static <K, V> Map<K, V> mapFromStream(Stream<CacheEntry<K, V>> stream) {
-      return stream.collect(CacheCollectors.serializableCollector(
-            () -> Collectors.toMap(CacheEntry::getKey, CacheEntry::getValue)));
+   protected static <K, V> Map<K, V> mapFromStream(CacheStream<CacheEntry<K, V>> stream) {
+      return stream.collect(() -> Collectors.toMap(CacheEntry::getKey, CacheEntry::getValue));
    }
 
    protected static class StringTruncator implements Converter<Object, String, String>, Serializable, ExternalPojo {
