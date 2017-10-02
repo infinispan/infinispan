@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import javax.security.auth.Subject;
 import javax.transaction.SystemException;
@@ -143,10 +144,11 @@ import org.infinispan.util.logging.LogFactory;
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
    private static final long PFER_FLAGS = EnumUtil.bitSetOf(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ, IGNORE_RETURN_VALUES);
-   static final Function<CacheImpl, InvocationContext>
-         CONTEXT_CREATOR_SINGLE_KEY = c -> c.getInvocationContextWithImplicitTransaction(false, 1);
-   static final Function<CacheImpl, InvocationContext>
-         CONTEXT_CREATOR_PFER = c -> c.getInvocationContextWithImplicitTransaction(true, 1);
+
+   final IntFunction<InvocationContext>
+         contextCreator = c -> getInvocationContextWithImplicitTransaction(false, c);
+   final IntFunction<InvocationContext>
+         contextCreatorPFER = c -> getInvocationContextWithImplicitTransaction(true, c);
 
    protected InvocationContextFactory invocationContextFactory;
    protected CommandsFactory commandsFactory;
@@ -326,17 +328,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent, Metadata metadata, long flags) {
-      return computeInternal(key, remappingFunction, computeIfPresent, metadata, flags, CONTEXT_CREATOR_SINGLE_KEY);
+      return computeInternal(key, remappingFunction, computeIfPresent, metadata, flags, contextCreator);
    }
 
    V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, boolean computeIfPresent,
                      Metadata metadata, long flags,
-                     Function<CacheImpl, InvocationContext> contextCreator) {
+                     IntFunction<InvocationContext> contextCreator) {
       assertKeyNotNull(key);
       assertFunctionNotNull(remappingFunction);
       ComputeCommand command =
             commandsFactory.buildComputeCommand(key, remappingFunction, computeIfPresent, metadata, flags);
-      return (V) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (V) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    @Override
@@ -347,40 +349,40 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata) {
       return computeIfAbsentInternal(key, mappingFunction, metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET),
-                                     CONTEXT_CREATOR_SINGLE_KEY);
+                                     contextCreator);
    }
 
    V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata, long flags,
-                             Function<CacheImpl, InvocationContext> contextCreator) {
+                             IntFunction<InvocationContext> contextCreator) {
       assertKeyNotNull(key);
       assertFunctionNotNull(mappingFunction);
       ComputeIfAbsentCommand command =
             commandsFactory.buildComputeIfAbsentCommand(key, mappingFunction, metadata, flags);
-      return (V) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (V) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
       return mergeInternal(key, value, remappingFunction,
-                           defaultMetadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), CONTEXT_CREATOR_SINGLE_KEY);
+                           defaultMetadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), contextCreator);
    }
 
    @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return mergeInternal(key, value, remappingFunction,
-                           metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), CONTEXT_CREATOR_SINGLE_KEY);
+                           metadata, addUnsafeFlags(EnumUtil.EMPTY_BIT_SET), contextCreator);
    }
 
    V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata,
                    long flags,
-                   Function<CacheImpl, InvocationContext> contextCreator) {
+                   IntFunction<InvocationContext> contextCreator) {
       assertKeyNotNull(key);
       assertValueNotNull(value);
       assertFunctionNotNull(remappingFunction);
       ReadWriteKeyCommand<K, V, V> command =
             commandsFactory.buildReadWriteKeyCommand(key, new MergeFunction(value, remappingFunction, metadata),
                                                      Params.fromFlagsBitSet(flags), getKeyDataConversion(), getValueDataConversion());
-      return (V) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (V) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
 
@@ -441,14 +443,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final boolean remove(Object key, Object value) {
-      return remove(key, value, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return remove(key, value, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    final boolean remove(Object key, Object value, long explicitFlags,
-                        Function<CacheImpl, InvocationContext> contextCreator) {
+                        IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       RemoveCommand command = createRemoveConditionalCommand(key, value, explicitFlags);
-      return (Boolean) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (Boolean) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    private RemoveCommand createRemoveConditionalCommand(Object key, Object value, long explicitFlags) {
@@ -627,13 +629,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final V remove(Object key) {
-      return remove(key, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return remove(key, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
-   final V remove(Object key, long explicitFlags, Function<CacheImpl, InvocationContext> contextCreator) {
+   final V remove(Object key, long explicitFlags, IntFunction<InvocationContext> contextCreator) {
       assertKeyNotNull(key);
       RemoveCommand command = createRemoveCommand(key, explicitFlags);
-      return (V) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (V) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    @SuppressWarnings("unchecked")
@@ -646,7 +648,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public void removeExpired(K key, V value, Long lifespan) {
       RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, lifespan);
       // Send an expired remove command to everyone
-      executeCommandAndCommitIfNeeded(command, CONTEXT_CREATOR_SINGLE_KEY);
+      executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    @Override
@@ -818,7 +820,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          ongoingTransaction = suspendOngoingTransactionIfExists();
 
          // if the entry exists then this should be a no-op.
-         putIfAbsent(key, value, metadata, EnumUtil.mergeBitSets(PFER_FLAGS, explicitFlags), CONTEXT_CREATOR_PFER);
+         putIfAbsent(key, value, metadata, EnumUtil.mergeBitSets(PFER_FLAGS, explicitFlags), contextCreatorPFER);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
       } finally {
@@ -1290,7 +1292,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    final V put(K key, V value, Metadata metadata, long explicitFlags,
-               Function<CacheImpl, InvocationContext> contextCreator) {
+               IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       DataWriteCommand command;
       // CACHE_MODE_LOCAL is used for example when preloading - the entry has empty changeset (unless it's better
@@ -1302,7 +1304,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       } else {
          command = createPutCommand(key, value, metadata, explicitFlags);
       }
-      return (V) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (V) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    @SuppressWarnings("unchecked")
@@ -1331,12 +1333,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private final V putIfAbsent(K key, V value, Metadata metadata, long explicitFlags) {
-      return putIfAbsent(key, value, metadata, explicitFlags, CONTEXT_CREATOR_SINGLE_KEY);
+      return putIfAbsent(key, value, metadata, explicitFlags, contextCreator);
    }
 
    @SuppressWarnings("unchecked")
    final V putIfAbsent(K key, V value, Metadata metadata, long explicitFlags,
-                       Function<CacheImpl, InvocationContext> contextCreator) {
+                       IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       DataWriteCommand command;
       if (value instanceof Delta) {
@@ -1346,7 +1348,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       } else {
          command = createPutIfAbsentCommand(key, value, metadata, explicitFlags);
       }
-      return (V) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (V) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    @SuppressWarnings("unchecked")
@@ -1369,24 +1371,23 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final void putAll(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags,
-                     Function<CacheImpl, InvocationContext> contextCreator) {
+                     IntFunction<InvocationContext> contextCreator) {
       // Vanilla PutMapCommand returns previous values; add IGNORE_RETURN_VALUES as the API will drop the return value.
       // Interceptors are free to clear this flag if appropriate (since interceptors are the only consumers of the
       // return value).
       explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
       PutMapCommand command = createPutAllCommand(map, metadata, explicitFlags);
-      executeCommandAndCommitIfNeeded(command, contextCreator);
+      executeCommandAndCommitIfNeeded(command, map.size(), contextCreator);
    }
 
    public final Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map) {
-      return getAndPutAll(map, defaultMetadata, EnumUtil.EMPTY_BIT_SET,
-                          c -> c.getInvocationContextWithImplicitTransaction(false, map.size()));
+      return getAndPutAll(map, defaultMetadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    final Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags,
-                                Function<CacheImpl, InvocationContext> contextCreator) {
+                                IntFunction<InvocationContext> contextCreator) {
       PutMapCommand command = createPutAllCommand(map, metadata, explicitFlags);
-      return dropNullEntries((Map<K, V>) executeCommandAndCommitIfNeeded(command, contextCreator));
+      return dropNullEntries((Map<K, V>) executeCommandAndCommitIfNeeded(command, map.size(), contextCreator));
    }
 
    private PutMapCommand createPutAllCommand(Map<? extends K, ? extends V> map, Metadata metadata, long explicitFlags) {
@@ -1406,10 +1407,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    final V replace(K key, V value, Metadata metadata, long explicitFlags,
-                   Function<CacheImpl, InvocationContext> contextCreator) {
+                   IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags);
-      return (V) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (V) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    @SuppressWarnings("unchecked")
@@ -1429,11 +1430,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final boolean replace(K key, V oldValue, V value, Metadata metadata, long explicitFlags,
-                         Function<CacheImpl, InvocationContext> contextCreator) {
+                         IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       assertValueNotNull(oldValue);
       ReplaceCommand command = createReplaceConditionalCommand(key, oldValue, value, metadata, explicitFlags);
-      return (Boolean) executeCommandAndCommitIfNeeded(command, contextCreator);
+      return (Boolean) executeCommandAndCommitIfNeeded(command, 1, contextCreator);
    }
 
    private ReplaceCommand createReplaceConditionalCommand(K key, V oldValue, V value, Metadata metadata,
@@ -1473,10 +1474,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<V> putAsync(final K key, final V value, final Metadata metadata, final long explicitFlags,
-                                       Function<CacheImpl, InvocationContext> contextCreator) {
+                                       IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       PutKeyValueCommand command = createPutCommand(key, value, metadata, explicitFlags);
-      return executeCommandAndCommitIfNeededAsync(command, contextCreator);
+      return executeCommandAndCommitIfNeededAsync(command, 1, contextCreator);
    }
 
    @Override
@@ -1488,16 +1489,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata) {
-      return putAllAsync(data, metadata, EnumUtil.EMPTY_BIT_SET,
-                         c -> c.getInvocationContextWithImplicitTransaction(false, data.size()));
+      return putAllAsync(data, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    final CompletableFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final Metadata metadata,
                                              long explicitFlags,
-                                             Function<CacheImpl, InvocationContext> contextCreator) {
+                                             IntFunction<InvocationContext> contextCreator) {
       explicitFlags = EnumUtil.mergeBitSets(explicitFlags, FlagBitSets.IGNORE_RETURN_VALUES);
       PutMapCommand command = createPutAllCommand(data, metadata, explicitFlags);
-      return executeCommandAndCommitIfNeededAsync(command, contextCreator);
+      return executeCommandAndCommitIfNeededAsync(command, 1, contextCreator);
    }
 
    @Override
@@ -1520,39 +1520,39 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata) {
-      return putIfAbsentAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return putIfAbsentAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    final CompletableFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
                                                final long explicitFlags,
-                                               Function<CacheImpl, InvocationContext> contextCreator) {
+                                               IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       PutKeyValueCommand command = createPutIfAbsentCommand(key, value, metadata, explicitFlags);
-      return executeCommandAndCommitIfNeededAsync(command, contextCreator);
+      return executeCommandAndCommitIfNeededAsync(command, 1, contextCreator);
    }
 
    @Override
    public final CompletableFuture<V> removeAsync(Object key) {
-      return removeAsync(key, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return removeAsync(key, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    final CompletableFuture<V> removeAsync(final Object key, final long explicitFlags,
-                                          Function<CacheImpl, InvocationContext> contextCreator) {
+                                          IntFunction<InvocationContext> contextCreator) {
       assertKeyNotNull(key);
       RemoveCommand command = createRemoveCommand(key, explicitFlags);
-      return executeCommandAndCommitIfNeededAsync(command, contextCreator);
+      return executeCommandAndCommitIfNeededAsync(command, 1, contextCreator);
    }
 
    @Override
    public final CompletableFuture<Boolean> removeAsync(Object key, Object value) {
-      return removeAsync(key, value, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return removeAsync(key, value, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    final CompletableFuture<Boolean> removeAsync(final Object key, final Object value, final long explicitFlags,
-                                                Function<CacheImpl, InvocationContext> contextCreator) {
+                                                IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       RemoveCommand command = createRemoveConditionalCommand(key, value, explicitFlags);
-      return executeCommandAndCommitIfNeededAsync(command, contextCreator);
+      return executeCommandAndCommitIfNeededAsync(command, 1, contextCreator);
    }
 
    @Override
@@ -1564,15 +1564,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata) {
-      return replaceAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return replaceAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    final CompletableFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
                                            final long explicitFlags,
-                                           Function<CacheImpl, InvocationContext> contextCreator) {
+                                           IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, value);
       ReplaceCommand command = createReplaceCommand(key, value, metadata, explicitFlags);
-      return executeCommandAndCommitIfNeededAsync(command, contextCreator);
+      return executeCommandAndCommitIfNeededAsync(command, 1, contextCreator);
    }
 
    @Override
@@ -1585,16 +1585,16 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
                                                  final Metadata metadata) {
-      return replaceAsync(key, oldValue, newValue, metadata, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return replaceAsync(key, oldValue, newValue, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    final CompletableFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
                                                  final Metadata metadata, final long explicitFlags,
-                                                 Function<CacheImpl, InvocationContext> contextCreator) {
+                                                 IntFunction<InvocationContext> contextCreator) {
       assertKeyValueNotNull(key, newValue);
       assertValueNotNull(oldValue);
       ReplaceCommand command = createReplaceConditionalCommand(key, oldValue, newValue, metadata, explicitFlags);
-      return executeCommandAndCommitIfNeededAsync(command, contextCreator);
+      return executeCommandAndCommitIfNeededAsync(command, 1, contextCreator);
    }
 
    @Override
@@ -1647,9 +1647,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
-   Object executeCommandAndCommitIfNeeded(VisitableCommand command,
-                                          Function<CacheImpl, InvocationContext> contextCreator) {
-      InvocationContext ctx = contextCreator.apply(this);
+   Object executeCommandAndCommitIfNeeded(VisitableCommand command, int keyCount,
+                                          IntFunction<InvocationContext> contextCreator) {
+      InvocationContext ctx = contextCreator.apply(keyCount);
       final boolean txInjected = isTxInjected(ctx);
       Object result;
       try {
@@ -1669,9 +1669,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return result;
    }
 
-   private <T> CompletableFuture<T> executeCommandAndCommitIfNeededAsync(VisitableCommand command,
-                                                                         Function<CacheImpl, InvocationContext> contextCreator) {
-      InvocationContext ctx = contextCreator.apply(this);
+   private <T> CompletableFuture<T> executeCommandAndCommitIfNeededAsync(VisitableCommand command, int keyCount,
+                                                                         IntFunction<InvocationContext> contextCreator) {
+      InvocationContext ctx = contextCreator.apply(keyCount);
       final boolean txInjected = isTxInjected(ctx);
       CompletableFuture<T> cf;
       final Transaction implicitTransaction;
@@ -1787,13 +1787,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V put(K key, V value, Metadata metadata) {
-      return put(key, value, metadata, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return put(key, value, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
-      putAll(map, metadata, EnumUtil.EMPTY_BIT_SET,
-             c -> c.getInvocationContextWithImplicitTransaction(false, map.size()));
+      putAll(map, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    private Metadata applyDefaultMetadata(Metadata metadata) {
@@ -1806,12 +1805,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
-      return replace(key, value, metadata, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return replace(key, value, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      return replace(key, oldValue, value, metadata, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return replace(key, oldValue, value, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    @Override
@@ -1821,7 +1820,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public CompletableFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return putAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, CONTEXT_CREATOR_SINGLE_KEY);
+      return putAsync(key, value, metadata, EnumUtil.EMPTY_BIT_SET, contextCreator);
    }
 
    private Transaction suspendOngoingTransactionIfExists() {

@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
@@ -51,7 +52,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    private final long flags;
    private final Object lockOwner;
    private final CacheImpl<K, V> cacheImplementation;
-   private Function<CacheImpl, InvocationContext> contextCreatorLockedSingleKey = c -> writeContext(1);
+   private IntFunction<InvocationContext> contextCreatorLockedSingleKey = c -> writeContext(c);
 
    public DecoratedCache(AdvancedCache<K, V> delegate) {
       this(delegate, EMPTY_FLAGS);
@@ -362,10 +363,10 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       return cacheImplementation.putAllAsync(data, metadata, flags, writeContextCreator(data.size()));
    }
 
-   private Function<CacheImpl, InvocationContext> writeContextCreator(int size) {
+   private IntFunction<InvocationContext> writeContextCreator(int size) {
       if (size == 1) {
          if (lockOwner == null) {
-            return CacheImpl.CONTEXT_CREATOR_SINGLE_KEY;
+            return cacheImplementation.contextCreator;
          } else {
             return contextCreatorLockedSingleKey;
          }
