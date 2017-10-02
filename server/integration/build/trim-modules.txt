@@ -31,3 +31,6 @@ org/jboss/resteasy/resteasy-spring/**
 org/jboss/resteasy/resteasy-validator-provider-11/**
 org/jboss/resteasy/resteasy-yaml-provider/**
 org/apache/commons/collections/main/**
+org/infinispan/cachestore/jdbc/main/**
+org/infinispan/cachestore/remote/main/**
+
