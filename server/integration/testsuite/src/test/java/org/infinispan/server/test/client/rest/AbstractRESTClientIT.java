@@ -55,9 +55,13 @@ public abstract class AbstractRESTClientIT {
         }
     }
 
+    protected String getDefaultCache() {
+        return "default";
+    }
+
     @Before
     public void setUp() throws Exception {
-        rest = new RESTHelper();
+        rest = new RESTHelper(getDefaultCache());
         addRestServer();
 
         cleanUpEntries();
