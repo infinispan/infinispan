@@ -9,13 +9,14 @@ pipeline {
         timeout(time: 4, unit: 'HOURS')
     }
 
-    environment {
-        MAVEN_HOME = tool('Maven')
-    }
-
     stages {
         stage('Prepare') {
             steps {
+                // Workaround for JENKINS-47230
+                script {
+                    env.MAVEN_HOME = tool('Maven')
+                }
+
                 sh returnStdout: true, script: 'cleanup.sh'
             }
         }
