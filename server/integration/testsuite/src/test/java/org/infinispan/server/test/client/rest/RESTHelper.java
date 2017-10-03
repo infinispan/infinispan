@@ -53,6 +53,15 @@ public class RESTHelper {
     public static final String KEY_C = "c";
 
     public static final String DEFAULT_CACHE = "default";
+    private final String cache;
+
+    public RESTHelper(String cache) {
+        this.cache = cache;
+    }
+
+    public RESTHelper() {
+        cache = DEFAULT_CACHE;
+    }
 
     private int port = 8080;
     private List<Server> servers = new ArrayList<Server>();
@@ -330,11 +339,11 @@ public class RESTHelper {
     }
 
     public URI fullPathKey(int server, String key) {
-        return fullPathKey(server, DEFAULT_CACHE, key, 0);
+        return fullPathKey(server, cache, key, 0);
     }
 
     public URI fullPathKey(int server, String key, int portOffset) {
-        return fullPathKey(server, DEFAULT_CACHE, key, portOffset);
+        return fullPathKey(server, cache, key, portOffset);
     }
 
     public URI fullPathKey(String key) {
