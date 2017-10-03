@@ -20,7 +20,7 @@ pipeline {
                 sh returnStdout: true, script: 'cleanup.sh'
             }
         }
-        
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -37,7 +37,7 @@ pipeline {
             }
         }
 
-        stage('Main tests') {
+        stage('Tests') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
                     sh "$MAVEN_HOME/bin/mvn verify -B -V -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true"
@@ -47,17 +47,40 @@ pipeline {
                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
                 junit testResults: '**/target/*-reports*/*.xml',
                         testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
-                        healthScaleFactor: 100
+                        healthScaleFactor: 100, allowEmptyResults: true
 
-                sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" \\) -exec xz {} \\;'
-                archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz'
+                // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
+                script {
+                    if (manager.logContains("There was an error in the forked process")) {
+                        echo "Fork error found"
+                        manager.buildFailure()
+                    }
+                }
+
+                // Dump any dump files to the console
+                sh 'find . -name "*.dump*" -exec echo {} \\; -exec cat {} \\;'
+                sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
             }
         }
+    }
 
-        stage('Clean') {
-            steps {
-                sh 'git clean -fdx || echo "git clean failed, exit code $?"'
+    post {
+        always {
+            // Show the agent name in the build list
+            script {
+                // The manager variable requires the Groovy Postbuild plugin
+                def matcher = manager.getLogMatcher("Running on (.*) in .*")
+                if (matcher?.matches()) {
+                    manager.addShortText(matcher.group(1), "grey", "", "0px", "")
+                }
             }
+
+            // Archive logs and dump files
+            sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" \\) -exec xz {} \\;'
+            archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz'
+
+            // Clean
+            sh 'git clean -fdx || echo "git clean failed, exit code $?"'
         }
     }
 }
