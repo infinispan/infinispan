@@ -26,9 +26,9 @@ import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.rest.operations.CacheOperationsHelper;
 import org.infinispan.rest.operations.mime.MimeMetadata;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "rest.RestOperationsTest")
@@ -37,10 +37,14 @@ public class RestOperationsTest extends AbstractInfinispanTest {
    private HttpClient client;
    private RestServerHelper restServer;
 
-   @BeforeSuite
+   public ConfigurationBuilder getDefaultCacheBuilder() {
+      return new ConfigurationBuilder();
+   }
+
+   @BeforeClass
    public void beforeSuite() throws Exception {
       restServer = RestServerHelper.defaultRestServer("default");
-      ConfigurationBuilder configuration = new ConfigurationBuilder();
+      ConfigurationBuilder configuration = getDefaultCacheBuilder();
       configuration.expiration().lifespan(100).maxIdle(100);
       restServer.defineCache("expiration", configuration);
       restServer.start();
@@ -49,7 +53,7 @@ public class RestOperationsTest extends AbstractInfinispanTest {
       client.start();
    }
 
-   @AfterSuite
+   @AfterClass
    public void afterSuite() throws Exception {
       client.stop();
       restServer.stop();
