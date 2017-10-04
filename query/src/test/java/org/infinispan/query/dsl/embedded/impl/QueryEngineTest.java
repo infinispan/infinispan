@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author anistor@redhat.com
@@ -228,6 +229,7 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
 
    public void testNoGroupingOrAggregation() {
       Query q = qe.buildQuery(null, "from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
+      assertTrue(q instanceof EmbeddedLuceneQuery);
       List<User> list = q.list();
       assertEquals(3, list.size());
    }

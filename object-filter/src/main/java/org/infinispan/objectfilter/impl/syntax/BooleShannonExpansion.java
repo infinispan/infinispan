@@ -6,9 +6,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Expands a filter expression into a superset of it, using only indexed fields. The expanded expression is computed by
- * applying <a href="http://en.wikipedia.org/wiki/Boole%27s_expansion_theorem">Boole's expansion theorem</a> to all
- * non-indexed fields and then ignoring the non-indexed fields from the resulting product.
+ * Expands an input filter expression composed of indexed and unindexed fields into a superset of it
+ * (matching the set of the input filter plus some more false positives), using only indexed fields.
+ * The expanded expression is computed by applying <a href="http://en.wikipedia.org/wiki/Boole%27s_expansion_theorem">Boole's expansion theorem</a>
+ * to all non-indexed fields and then ignoring the non-indexed fields from the resulting product. The resulting product
+ * is a more complex expression but it can be executed fully indexed. In some exterme cases it can become a tautology
+ * (TRUE), indicating that the filter should be executed fully non-indexed by doing a full scan.
  *
  * @author anistor@redhat.com
  * @since 8.0
@@ -242,7 +245,11 @@ public final class BooleShannonExpansion {
 
    /**
     * Creates a less restrictive (expanded) query that matches the same objects as the input query plus potentially some
-    * more.
+    * more (false positives). This query can be executed fully indexed and the result can be filtered in a second pass
+    * to remove the false positives. This method can eventually return TRUE and in that case the expansion is useless
+    * and it is better to just run the entire query unindexed (full scan).
+    * <p>
+    * If all fields used by the input query are indexed then the expansion is identical to the input query.
     *
     * @param booleanExpr the expression to expand
     * @return the expanded query if some of the fields are non-indexed or the input query if all fields are indexed
