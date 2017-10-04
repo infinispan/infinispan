@@ -33,12 +33,20 @@ public class ProtostreamWrapper implements Wrapper {
       if (target instanceof ProtobufValueWrapper) {
          return ((ProtobufValueWrapper) target).getBinary();
       }
+      if(target instanceof WrappedByteArray) {
+         return WrappedByteArray.class.cast(target).getBytes();
+      }
       return target;
    }
 
    @Override
    public byte id() {
       return WrapperIds.PROTOSTREAM_WRAPPER;
+   }
+
+   @Override
+   public boolean isFilterable() {
+      return true;
    }
 
 }

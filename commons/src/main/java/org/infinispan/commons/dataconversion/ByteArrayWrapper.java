@@ -20,13 +20,19 @@ public class ByteArrayWrapper implements Wrapper {
 
    @Override
    public Object unwrap(Object obj) {
-      if (obj instanceof WrappedByteArray) return WrappedByteArray.class.cast(obj).getBytes();
+      if (obj != null && obj.getClass().equals(WrappedByteArray.class))
+         return WrappedByteArray.class.cast(obj).getBytes();
       return obj;
    }
 
    @Override
    public byte id() {
       return WrapperIds.BYTE_ARRAY_WRAPPER;
+   }
+
+   @Override
+   public boolean isFilterable() {
+      return false;
    }
 
 }

@@ -29,6 +29,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.MagicKey;
@@ -322,16 +323,30 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
-                                                            ConfigurationBuilder defaultConfigBuilder) {
+                                                            ConfigurationBuilder defaultConfigBuilder,
+                                                            boolean serverMode) {
       List<Cache<K, V>> caches = new ArrayList<>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
-         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfigBuilder);
+         EmbeddedCacheManager cm;
+         if (serverMode) {
+            GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
+            globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+            globalConfigurationBuilder.transport().defaultTransport();
+            cm = addClusterEnabledCacheManager(globalConfigurationBuilder, defaultConfigBuilder);
+         } else {
+            cm = addClusterEnabledCacheManager(defaultConfigBuilder);
+         }
          Cache<K, V> cache = cm.getCache();
          caches.add(cache);
 
       }
       waitForClusterToForm();
       return caches;
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
+                                                            ConfigurationBuilder defaultConfigBuilder) {
+      return createClusteredCaches(numMembersInCluster, defaultConfigBuilder, false);
    }
 
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster,
