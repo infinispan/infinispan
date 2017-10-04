@@ -1,5 +1,12 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
@@ -49,13 +56,6 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -524,9 +524,7 @@ public class QueryEngine {
          return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
       }
 
-      // if cache is indexed but there is no actual 'where' filter clause and we do have sorting or projections we should still use the index, otherwise just go for a non-indexed fetch-all
-      if (!isIndexed || (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE) && parsingResult.getProjections() == null && parsingResult.getSortFields() == null) {
-         // fully non-indexed execution because the filter matches everything or there is no indexing at all
+      if (!isIndexed) {
          return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
