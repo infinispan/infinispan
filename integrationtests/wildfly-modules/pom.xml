@@ -282,6 +282,7 @@
                <clusterName>elasticTestCluster</clusterName>
                <tcpPort>9300</tcpPort>
                <httpPort>9200</httpPort>
+               <pathConf>${project.basedir}/src/elasticsearch-config</pathConf>
             </configuration>
             <executions>
                <execution>

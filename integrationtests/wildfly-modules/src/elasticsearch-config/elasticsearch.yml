@@ -1,0 +1,4 @@
+network.host: _local_
+http.port: 9200
+discovery.zen.minimum_master_nodes: 1
+node.max_local_storage_nodes: 1
