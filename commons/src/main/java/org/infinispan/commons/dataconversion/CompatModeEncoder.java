@@ -57,8 +57,6 @@ public class CompatModeEncoder implements Encoder {
    }
 
    protected Object marshall(Object source) throws Exception {
-      if (marshaller.isMarshallable(source))
-         return marshaller.objectToByteBuffer(source);
-      return source;
+      return marshaller.objectToByteBuffer(source);
    }
 }
