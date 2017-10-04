@@ -15,4 +15,9 @@ public interface Wrapper {
 
    byte id();
 
+   /**
+    * @return true if the wrapped format is suitable to be indexed or filtered, thus avoiding extra unwrapping.
+    */
+   boolean isFilterable();
+
 }

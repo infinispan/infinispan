@@ -10,6 +10,8 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -85,16 +87,26 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
+      GlobalConfigurationBuilder globalConfigurationBuilder = getServerModeGlobalConfigurationBuilder();
+
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(globalConfigurationBuilder, builder);
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);
       servers.add(server);
       return server;
    }
 
+   private GlobalConfigurationBuilder getServerModeGlobalConfigurationBuilder() {
+      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
+      globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+      globalConfigurationBuilder.transport().defaultTransport();
+      return globalConfigurationBuilder;
+   }
+
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder, int port) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
-      HotRodServer server = HotRodTestingUtil.startHotRodServer(
-         cm, port, new HotRodServerConfigurationBuilder());
+      GlobalConfigurationBuilder globalConfigurationBuilder = getServerModeGlobalConfigurationBuilder();
+
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(globalConfigurationBuilder, builder);
+      HotRodServer server = HotRodTestingUtil.startHotRodServer(cm, port, new HotRodServerConfigurationBuilder());
       servers.add(server);
       return server;
    }

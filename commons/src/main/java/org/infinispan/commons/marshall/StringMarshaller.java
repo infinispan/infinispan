@@ -16,7 +16,7 @@ public class StringMarshaller extends AbstractMarshaller {
 
    @Override
    protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException, InterruptedException {
-      byte[] bytes = ((String) o).getBytes(charset);
+      byte[] bytes = o instanceof byte[] ? (byte[]) o : (o.toString()).getBytes(charset);
       return new ByteBufferImpl(bytes, 0, bytes.length);
    }
 

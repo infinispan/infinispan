@@ -80,7 +80,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    }
 
    private Object extractValue(Object storageValue) {
-      return valueDataConversion.fromStorage(storageValue);
+      return valueDataConversion.extractIndexable(storageValue);
    }
 
    @Override
