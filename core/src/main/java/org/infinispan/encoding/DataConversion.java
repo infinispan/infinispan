@@ -91,6 +91,15 @@ public class DataConversion {
       return wrapper.wrap(encoder.toStorage(toStore));
    }
 
+   public Object extractIndexable(Object stored) {
+      if(stored == null) return null;
+      checkConverters();
+      if(encoder.isStorageFormatFilterable()) {
+         return wrapper.isFilterable() ? stored : wrapper.unwrap(stored);
+      }
+      return encoder.fromStorage(wrapper.isFilterable() ? stored : wrapper.unwrap(stored));
+   }
+
    private void checkConverters() {
       if (encoder == null || wrapper == null) {
          throw new IllegalArgumentException("Cannot convert object, both Encoder and Wrapper must be non-null!");

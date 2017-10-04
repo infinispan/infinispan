@@ -89,7 +89,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getConfigurationBuilder();
-      createClusteredCaches(1, cfg);
+      createClusteredCaches(1, cfg, true);
 
       cache = manager(0).getCache();
 
