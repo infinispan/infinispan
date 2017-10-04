@@ -35,17 +35,17 @@ public class RESTOffHeapClientIT extends AbstractRESTClientIT {
    }
 
    @Test
-   @Ignore
+   @Ignore("ISPN-8370")
    public void testPutDataTTLMaxIdleCombo1() throws Exception {
    }
 
    @Test
-   @Ignore
+   @Ignore("ISPN-8370")
    public void testPutDataTTLMaxIdleCombo2() throws Exception {
    }
 
    @Test
-   @Ignore
+   @Ignore("ISPN-8370")
    public void testPutDataWithMaxIdleTime() throws Exception {
    }
 }
