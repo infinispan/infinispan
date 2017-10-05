@@ -43,8 +43,8 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.functions.MergeFunction;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -372,7 +372,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       assertKeyNotNull(key);
       assertValueNotNull(value);
       assertFunctionNotNull(remappingFunction);
-      ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key, new MergeFunction(value, remappingFunction, metadata), Params.fromFlagsBitSet(flags));
+      ReadWriteKeyCommand<K, V, V> command = commandsFactory.buildReadWriteKeyCommand(key, new MergeFunction(value, remappingFunction, metadata), Params.fromFlagsBitSet(flags), getKeyDataConversion(), getValueDataConversion());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(command.getKeyLockOwner());
       }
@@ -904,8 +904,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    /**
-    * If this is a transactional cache and autoCommit is set to true then starts a transaction if this is
-    * not a transactional call.
+    * If this is a transactional cache and autoCommit is set to true then starts a transaction if this is not a
+    * transactional call.
     */
    InvocationContext getInvocationContextWithImplicitTransaction(boolean isPutForExternalRead, int keyCount) {
       InvocationContext invocationContext;
@@ -970,7 +970,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private ReadWriteKeyValueCommand<K, Object, Object> createApplyDelta(K deltaAwareValueKey, Delta delta, long explicitFlags, InvocationContext ctx) {
       ReadWriteKeyValueCommand<K, Object, Object> command = commandsFactory.buildReadWriteKeyValueCommand(
-            deltaAwareValueKey, delta, new ApplyDelta<>(marshaller), Params.create());
+            deltaAwareValueKey, delta, new ApplyDelta<>(marshaller), Params.create(), getKeyDataConversion(), getValueDataConversion());
       command.setFlagsBitSet(explicitFlags);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(command.getKeyLockOwner());

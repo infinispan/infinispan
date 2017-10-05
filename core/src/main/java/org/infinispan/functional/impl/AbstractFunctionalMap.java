@@ -1,6 +1,10 @@
 package org.infinispan.functional.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -9,14 +13,15 @@ import javax.transaction.TransactionManager;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
 
 /**
  * Abstract functional map, providing implementations for some of the shared methods.
@@ -34,6 +39,9 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
    private final BatchContainer batchContainer;
    private final TransactionManager transactionManager;
 
+   protected final DataConversion keyDataConversion;
+   protected final DataConversion valueDataConversion;
+
    protected AbstractFunctionalMap(Params params, FunctionalMapImpl<K, V> fmap) {
       this.fmap = fmap;
       Configuration config = fmap.cache.getCacheConfiguration();
@@ -42,6 +50,8 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       transactionManager = transactional ? fmap.cache.getTransactionManager() : null;
       batchContainer = transactional && config.invocationBatching().enabled() ? fmap.cache.getBatchContainer() : null;
       this.params = params;
+      this.keyDataConversion = fmap.cache.getKeyDataConversion();
+      this.valueDataConversion = fmap.cache.getValueDataConversion();
    }
 
    @Override
@@ -149,5 +159,19 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       } else {
          return cf;
       }
+   }
+
+   protected Set encodeKeys(Set<? extends K> keys) {
+      return keys.stream().map(k -> keyDataConversion.toStorage(k)).collect(Collectors.toSet());
+   }
+
+   protected Map encodeEntries(Map<? extends K, ? extends V> entries) {
+      Map encodedEntries = new HashMap<>();
+      entries.entrySet().forEach(e -> {
+         Object keyEncoded = keyDataConversion.toStorage(e.getKey());
+         Object valueEncoded = valueDataConversion.toStorage(e.getValue());
+         encodedEntries.put(keyEncoded, valueEncoded);
+      });
+      return encodedEntries;
    }
 }

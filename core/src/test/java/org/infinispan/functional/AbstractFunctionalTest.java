@@ -99,7 +99,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
       if (cleanupAfterMethod()) initMaps();
    }
 
-   private void initMaps() {
+   protected void initMaps() {
       fmapL1 = FunctionalMapImpl.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
       fmapL2 = FunctionalMapImpl.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
       fmapD1 = FunctionalMapImpl.create(cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache());

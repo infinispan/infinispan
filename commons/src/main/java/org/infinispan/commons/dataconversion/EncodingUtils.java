@@ -42,5 +42,4 @@ public final class EncodingUtils {
       if (toStore == null) return null;
       return wrapper.wrap(encoder.toStorage(toStore));
    }
-
 }

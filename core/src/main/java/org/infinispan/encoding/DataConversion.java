@@ -92,9 +92,9 @@ public class DataConversion {
    }
 
    public Object extractIndexable(Object stored) {
-      if(stored == null) return null;
+      if (stored == null) return null;
       checkConverters();
-      if(encoder.isStorageFormatFilterable()) {
+      if (encoder.isStorageFormatFilterable()) {
          return wrapper.isFilterable() ? stored : wrapper.unwrap(stored);
       }
       return encoder.fromStorage(wrapper.isFilterable() ? stored : wrapper.unwrap(stored));

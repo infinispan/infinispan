@@ -29,7 +29,7 @@ import org.infinispan.stats.CacheContainerStats;
  * Lifecycle - <tt>EmbeddedCacheManager</tt>s have a lifecycle (it implements {@link Lifecycle}) and
  * the default constructors also call {@link #start()}.  Overloaded versions of the constructors are available, that do
  * not start the <tt>CacheManager</tt>, although it must be kept in mind that <tt>CacheManager</tt>s need to be started
- * before they can be used to create <tt>Cache</tt> instances.
+ * before they can be used to readWriteMap <tt>Cache</tt> instances.
  * <p/>
  * Once constructed, <tt>EmbeddedCacheManager</tt>s should be made available to any component that requires a <tt>Cache</tt>,
  * via <a href="http://en.wikipedia.org/wiki/Java_Naming_and_Directory_Interface">JNDI</a> or via some other mechanism

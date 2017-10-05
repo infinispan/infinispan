@@ -9,6 +9,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
@@ -16,7 +17,6 @@ import org.infinispan.functional.Listeners.ReadWriteListeners;
 import org.infinispan.functional.Listeners.WriteListeners;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.MarshallableFunctions;
-import org.infinispan.commons.util.Experimental;
 import org.infinispan.util.function.SerializableBiConsumer;
 import org.infinispan.util.function.SerializableBiFunction;
 import org.infinispan.util.function.SerializableConsumer;
@@ -84,6 +84,15 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
     * Functional map's status.
     */
    ComponentStatus getStatus();
+
+   /**
+    * Tells if the underlying cache is using encoding or not
+    *
+    * @return true if the underlying cache is encoded
+    */
+   default boolean isEncoded() {
+      return false;
+   }
 
    /**
     * Exposes read-only operations that can be executed against the functional map.
