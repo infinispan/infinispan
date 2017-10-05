@@ -6,7 +6,7 @@
         xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
    <id>remote</id>
 
-   <baseDirectory>infinispan-remote-${project.version}</baseDirectory>
+   <baseDirectory>infinispan-${project.version}-remote</baseDirectory>
 
    <formats>
       <format>zip</format>
@@ -14,7 +14,7 @@
 
    <fileSets>
       <fileSet>
-         <directory>target/distribution/infinispan-remote-${project.version}</directory>
+         <directory>target/distribution/infinispan-${project.version}-remote</directory>
          <outputDirectory/>
          <includes>
             <include>**</include>
