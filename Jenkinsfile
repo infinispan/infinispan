@@ -51,7 +51,7 @@ pipeline {
 
                 // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
                 script {
-                    if (manager.logContains("There was an error in the forked process")) {
+                    if (manager.logContains("org.apache.maven.surefire.booter.SurefireBooterForkException:.*")) {
                         echo "Fork error found"
                         manager.buildFailure()
                     }
