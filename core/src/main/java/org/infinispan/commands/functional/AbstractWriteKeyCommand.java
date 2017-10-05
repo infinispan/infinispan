@@ -6,6 +6,8 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.Params;
 
 public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements FunctionalCommand<K, V> {
@@ -13,12 +15,18 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    Params params;
    ValueMatcher valueMatcher;
    boolean successful = true;
+   DataConversion keyDataConversion;
+   DataConversion valueDataConversion;
 
    public AbstractWriteKeyCommand(K key, ValueMatcher valueMatcher,
-         CommandInvocationId id, Params params) {
+                                  CommandInvocationId id, Params params,
+                                  DataConversion keyDataConversion,
+                                  DataConversion valueDataConversion) {
       super(key, EnumUtil.EMPTY_BIT_SET, id);
       this.valueMatcher = valueMatcher;
       this.params = params;
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
       this.setFlagsBitSet(params.toFlagsBitSet());
    }
 
@@ -63,4 +71,15 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
             "}";
    }
 
+   @Override
+   public DataConversion getKeyDataConversion() {
+      return keyDataConversion;
+   }
+
+   @Override
+   public DataConversion getValueDataConversion() {
+      return valueDataConversion;
+   }
+
+   abstract public void init(ComponentRegistry componentRegistry);
 }

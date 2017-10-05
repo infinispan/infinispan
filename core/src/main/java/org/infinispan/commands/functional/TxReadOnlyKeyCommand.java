@@ -8,10 +8,12 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.functional.EntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
@@ -23,14 +25,20 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public TxReadOnlyKeyCommand() {
    }
 
-   public TxReadOnlyKeyCommand(Object key, List<Mutation<K, V, ?>> mutations) {
-      super(key, null, Params.create());
+   public TxReadOnlyKeyCommand(Object key, List<Mutation<K, V, ?>> mutations,
+                               DataConversion keyDataConversion,
+                               DataConversion valueDataConversion,
+                               ComponentRegistry componentRegistry) {
+      super(key, null, Params.create(), keyDataConversion, valueDataConversion, componentRegistry);
       this.mutations = mutations;
+      init(componentRegistry);
    }
 
-   public TxReadOnlyKeyCommand(ReadOnlyKeyCommand other, List<Mutation<K, V, ?>> mutations) {
-      super(other.getKey(), other.f, Params.create());
+   public TxReadOnlyKeyCommand(ReadOnlyKeyCommand other, List<Mutation<K, V, ?>> mutations, DataConversion keyDataConversion,
+                               DataConversion valueDataConversion, ComponentRegistry componentRegistry) {
+      super(other.getKey(), other.f, Params.create(), keyDataConversion, valueDataConversion, componentRegistry);
       this.mutations = mutations;
+      init(componentRegistry);
    }
 
    @Override
@@ -56,7 +64,7 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
          return super.perform(ctx);
       }
       MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
-      EntryView.ReadWriteEntryView<K, V> rw = EntryViews.readWrite(entry);
+      EntryView.ReadWriteEntryView<K, V> rw = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
       Object ret = null;
       for (Mutation<K, V, ?> mutation : mutations) {
          ret = mutation.apply(rw);
@@ -74,6 +82,8 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
       sb.append("key=").append(key);
       sb.append(", f=").append(f);
       sb.append(", mutations=").append(mutations);
+      sb.append(", keyDataConversion=").append(keyDataConversion);
+      sb.append(", valueDataConversion=").append(valueDataConversion);
       sb.append('}');
       return sb.toString();
    }

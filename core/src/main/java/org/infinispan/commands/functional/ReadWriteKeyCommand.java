@@ -16,6 +16,7 @@ import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
@@ -31,10 +32,12 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f,
                               CommandInvocationId id, ValueMatcher valueMatcher, Params params,
+                              DataConversion keyDataConversion,
+                              DataConversion valueDataConversion,
                               ComponentRegistry componentRegistry) {
-      super(key, valueMatcher, id, params);
+      super(key, valueMatcher, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
-      this.init(componentRegistry);
+      init(componentRegistry);
    }
 
    public ReadWriteKeyCommand() {
@@ -54,6 +57,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeObject(keyDataConversion);
+      output.writeObject(valueDataConversion);
    }
 
    @Override
@@ -64,6 +69,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
+      keyDataConversion = (DataConversion) input.readObject();
+      valueDataConversion = (DataConversion) input.readObject();
    }
 
    @Override
@@ -83,7 +90,10 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
       // Could be that the key is not local, 'null' is how this is signalled
       if (e == null) return null;
-      R ret = f.apply(EntryViews.readWrite(e));
+
+      R ret;
+      ReadWriteEntryView<K, V> entry = EntryViews.readWrite(e, keyDataConversion, valueDataConversion);
+      ret = f.apply(entry);
       return snapshot(ret);
    }
 
@@ -108,25 +118,25 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    @Override
    public String toString() {
-      return "ReadWriteKeyCommand" +
-            "{ key=" + toStr(key) +
-            ", f=" + f +
-            ", flags=" + printFlags() +
-            ", commandInvocationId=" + commandInvocationId +
-            ", params=" + params +
-            ", valueMatcher=" + valueMatcher +
-            ", successful=" + successful +
-            "}";
-   }
-
-   public void init(ComponentRegistry componentRegistry) {
-      if (f instanceof InjectableComponent) {
-         ((InjectableComponent) f).inject(componentRegistry);
-      }
+      final StringBuilder sb = new StringBuilder("ReadWriteKeyCommand{");
+      sb.append(", key=").append(toStr(key));
+      sb.append(", f=").append(f.getClass().getName());
+      sb.append(", flags=").append(printFlags());
+      sb.append(", commandInvocationId=").append(commandInvocationId);
+      sb.append(", params=").append(params);
+      sb.append(", valueMatcher=").append(valueMatcher);
+      sb.append(", successful=").append(successful);
+      sb.append(", keyDataConversion=").append(keyDataConversion);
+      sb.append(", valueDataConversion=").append(valueDataConversion);
+      sb.append('}');
+      return sb.toString();
    }
 
    @Override
-   public final boolean isReturnValueExpected() {
-      return true;
+   public void init(ComponentRegistry componentRegistry) {
+      componentRegistry.wireDependencies(keyDataConversion);
+      componentRegistry.wireDependencies(valueDataConversion);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 }

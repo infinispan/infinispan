@@ -5,11 +5,11 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.Param;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.Param;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 
@@ -41,7 +41,7 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
 
    private static <K, V> long getFlagsBitSet(Cache<K, V> cache) {
       long flagsBitSet = 0;
-      for (;;) {
+      for (; ; ) {
          if (cache instanceof DecoratedCache) {
             flagsBitSet |= ((DecoratedCache) cache).getFlagsBitSet();
          }

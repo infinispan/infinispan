@@ -7,12 +7,15 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
@@ -23,11 +26,18 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    private BiConsumer<V, WriteEntryView<V>> f;
    private V value;
 
-   public WriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f,
-         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
-      super(key, valueMatcher, id, params);
+   public WriteOnlyKeyValueCommand(K key, V value,
+                                   BiConsumer<V, WriteEntryView<V>> f,
+                                   CommandInvocationId id,
+                                   ValueMatcher valueMatcher,
+                                   Params params,
+                                   DataConversion keyDataConversion,
+                                   DataConversion valueDataConversion,
+                                   ComponentRegistry componentRegistry) {
+      super(key, valueMatcher, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
       this.value = value;
+      init(componentRegistry);
    }
 
    public WriteOnlyKeyValueCommand() {
@@ -48,6 +58,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
+      output.writeObject(keyDataConversion);
+      output.writeObject(valueDataConversion);
    }
 
    @Override
@@ -59,6 +71,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
+      keyDataConversion = (DataConversion) input.readObject();
+      valueDataConversion = (DataConversion) input.readObject();
    }
 
    @Override
@@ -73,7 +87,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       // Could be that the key is not local
       if (e == null) return null;
 
-      f.accept(value, EntryViews.writeOnly(e));
+      V decodedValue = (V) valueDataConversion.fromStorage(value);
+      f.accept(decodedValue, EntryViews.writeOnly(e, valueDataConversion));
       return null;
    }
 
@@ -95,5 +110,13 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    @Override
    public Mutation<K, V, ?> toMutation(K key) {
       return new Mutations.WriteWithValue<>(value, f);
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry) {
+      componentRegistry.wireDependencies(keyDataConversion);
+      componentRegistry.wireDependencies(valueDataConversion);
+      if (f instanceof InjectableComponent)
+         ((InjectableComponent) f).inject(componentRegistry);
    }
 }

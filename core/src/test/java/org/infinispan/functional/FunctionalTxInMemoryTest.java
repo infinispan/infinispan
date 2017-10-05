@@ -164,7 +164,7 @@ public class FunctionalTxInMemoryTest extends FunctionalInMemoryTest {
       tm.commit();
    }
 
-   private static SerializableFunction<EntryView.ReadWriteEntryView<Object, String>, String> append(String str) {
+   public static SerializableFunction<EntryView.ReadWriteEntryView<Object, String>, String> append(String str) {
       return ev -> {
          Optional<String> prev = ev.find();
          if (prev.isPresent()) {

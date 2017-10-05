@@ -27,6 +27,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.InvocationSuccessAction;
@@ -156,7 +157,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          return invokeNext(ctx, command);
       } else if (command instanceof ReadWriteKeyCommand) {
          ReadWriteKeyCommand readWriteKeyCommand = (ReadWriteKeyCommand) command;
-         return commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(), readWriteKeyCommand.getFunction(), readWriteKeyCommand.getParams());
+         return commandsFactory.buildReadWriteKeyCommand(readWriteKeyCommand.getKey(), readWriteKeyCommand.getFunction(), readWriteKeyCommand.getParams(), readWriteKeyCommand.getKeyDataConversion(), readWriteKeyCommand.getValueDataConversion());
       }
       return invokeNextThenAccept(ctx, command, handleMultipleKeysWriteReturn);
    }
@@ -190,8 +191,9 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       if (map.isEmpty()) {
          return;
       }
+      //TODO: Converters
       WriteOnlyManyEntriesCommand crossSiteCommand = commandsFactory.buildWriteOnlyManyEntriesCommand(map,
-            MarshallableFunctions.setInternalCacheValueConsumer(), Params.fromFlagsBitSet(writeCommand.getFlagsBitSet()));
+            MarshallableFunctions.setInternalCacheValueConsumer(), Params.fromFlagsBitSet(writeCommand.getFlagsBitSet()), DataConversion.DEFAULT, DataConversion.DEFAULT);
       backupSender.processResponses(backupSender.backupWrite(crossSiteCommand), writeCommand);
    }
 }

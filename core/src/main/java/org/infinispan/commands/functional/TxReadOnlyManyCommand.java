@@ -11,9 +11,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.infinispan.functional.EntryView;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
@@ -26,9 +28,13 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    public TxReadOnlyManyCommand() {
    }
 
-   public TxReadOnlyManyCommand(Collection<? extends K> keys, List<List<Mutation<K, V, ?>>> mutations) {
-      super(keys, null, Params.create());
+   public TxReadOnlyManyCommand(Collection<? extends K> keys, List<List<Mutation<K, V, ?>>> mutations,
+                                DataConversion keyDataConversion,
+                                DataConversion valueDataConversion,
+                                ComponentRegistry componentRegistry) {
+      super(keys, null, Params.create(), keyDataConversion, valueDataConversion, componentRegistry);
       this.mutations = mutations;
+      init(componentRegistry);
    }
 
    public TxReadOnlyManyCommand(ReadOnlyManyCommand c, List<List<Mutation<K, V, ?>>> mutations) {
@@ -102,9 +108,9 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
          EntryView.ReadEntryView<K, V> ro;
          Object ret = null;
          if (mutations.isEmpty()) {
-            ro = entry.isNull() ? EntryViews.noValue(k) : EntryViews.readOnly(entry);
+            ro = entry.isNull() ? EntryViews.noValue(k, getKeyDataConversion()) : EntryViews.readOnly(entry, keyDataConversion, valueDataConversion);
          } else {
-            EntryView.ReadWriteEntryView rw = EntryViews.readWrite(entry);
+            EntryView.ReadWriteEntryView rw = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
             for (Mutation<K, V, ?> mutation : mutations) {
                ret = mutation.apply(rw);
                entry.updatePreviousValue();
@@ -125,6 +131,8 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
       sb.append("keys=").append(keys);
       sb.append(", f=").append(f);
       sb.append(", mutations=").append(mutations);
+      sb.append(", keyDataConversion=").append(keyDataConversion);
+      sb.append(", valueDataConversion=").append(valueDataConversion);
       sb.append('}');
       return sb.toString();
    }

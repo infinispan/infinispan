@@ -67,11 +67,12 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
@@ -499,30 +500,32 @@ public interface CommandsFactory {
    <R> StreamResponseCommand<R> buildStreamResponseCommand(Object identifier, boolean complete, Set<Integer> lostSegments,
            R response);
 
-   <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f, Params params);
+   <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
-   <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f, Params params);
+   <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Collection<? extends K> keys, Function<ReadEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
-      K key, Consumer<WriteEntryView<V>> f, Params params);
+         K key, Consumer<WriteEntryView<V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(
-      K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params);
+         K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
-      K key, Function<ReadWriteEntryView<K, V>, R> f, Params params);
+         K key, Function<ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
-      Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params);
+         Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(
-      K key, V value, BiConsumer<V, WriteEntryView<V>> f, Params params);
+         K key, V value, BiConsumer<V, WriteEntryView<V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
-   <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f, Params params);
+   <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<? extends K> keys, Consumer<WriteEntryView<V>> f,
+                                                               Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
-   <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f, Params params);
+   <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Collection<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f,
+                                                                     Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
-   <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params);
+   <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion);
 
    BackupAckCommand buildBackupAckCommand(long id, int topologyId);
 
