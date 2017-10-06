@@ -50,6 +50,7 @@ import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CacheFilters;
@@ -247,6 +248,7 @@ final class InternalExternalizers {
       addInternalExternalizer(new EncoderKeyMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderValueMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderEntryMapper.Externalizer(), exts);
+      addInternalExternalizer(new DataConversion.Externalizer(), exts);
 
       return exts;
    }

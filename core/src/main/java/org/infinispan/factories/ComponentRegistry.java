@@ -21,7 +21,6 @@ import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -264,10 +263,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    @Override
    public TimeService getTimeService() {
       return globalComponents.getTimeService();
-   }
-
-   public EncoderRegistry getEncoderRegistry() {
-      return getOrCreateComponent(EncoderRegistry.class);
    }
 
    public String getCacheName() {

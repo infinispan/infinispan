@@ -28,4 +28,12 @@ public interface Encoder {
     */
    boolean isStorageFormatFilterable();
 
+   /**
+    * Each encoder is associated with an unique id in order to optimize serialization.
+    * Known ids are kept in {@link EncoderIds}.
+    *
+    * @return unique identifier for this encoder
+    */
+   short id();
+
 }

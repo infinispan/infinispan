@@ -1,7 +1,5 @@
 package org.infinispan.query.backend;
 
-import static org.infinispan.commons.dataconversion.EncodingUtils.fromStorage;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,8 +34,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -45,6 +41,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -85,10 +82,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    private SearchFactoryHandler searchFactoryHandler;
 
    private DataContainer dataContainer;
-   private final Encoder keyEncoder;
-   private final Wrapper keyWrapper;
-   private final Encoder valueEncoder;
-   private final Wrapper valueWrapper;
+   private DataConversion valueDataConversion;
+   private DataConversion keyDataConversion;
    protected TransactionManager transactionManager;
    protected TransactionSynchronizationRegistry transactionSynchronizationRegistry;
    private DistributionManager distributionManager;
@@ -109,10 +104,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.searchFactory = searchFactory;
       this.indexingMode = indexingMode;
       this.cache = cache;
-      this.valueEncoder = cache.getAdvancedCache().getValueEncoder();
-      this.valueWrapper = cache.getAdvancedCache().getValueWrapper();
-      this.keyEncoder = cache.getAdvancedCache().getKeyEncoder();
-      this.keyWrapper = cache.getAdvancedCache().getKeyWrapper();
+      this.valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
+      this.keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
+   }
+
+   public void setValueDataConversion(DataConversion dataConversion) {
+      this.valueDataConversion = dataConversion;
    }
 
    @Inject
@@ -304,12 +301,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return queryKnownClasses.keys();
    }
 
-   private Object extractKey(Object storedValue) {
-      return fromStorage(storedValue, keyEncoder, keyWrapper);
+   private Object extractValue(Object storedValue) {
+      return valueDataConversion.extractIndexable(storedValue);
    }
 
-   private Object extractValue(Object storedValue) {
-      return fromStorage(storedValue, valueEncoder, valueWrapper);
+   private Object extractKey(Object storedValue) {
+      return keyDataConversion.extractIndexable(storedValue);
    }
 
    public void enableClasses(Class[] classes) {

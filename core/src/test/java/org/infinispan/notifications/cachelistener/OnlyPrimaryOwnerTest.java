@@ -12,7 +12,6 @@ import java.util.List;
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.hash.MurmurHash3;
@@ -32,6 +31,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.TestAddress;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -56,10 +56,8 @@ public class OnlyPrimaryOwnerTest {
    public void setUp() {
       n = new CacheNotifierImpl();
       mockCache = mock(EncoderCache.class, RETURNS_DEEP_STUBS);
-      when(mockCache.getAdvancedCache().getKeyEncoder()).thenReturn(IdentityEncoder.INSTANCE);
-      when(mockCache.getAdvancedCache().getValueEncoder()).thenReturn(IdentityEncoder.INSTANCE);
-      when(mockCache.getAdvancedCache().getKeyWrapper()).thenReturn(ByteArrayWrapper.INSTANCE);
-      when(mockCache.getAdvancedCache().getValueWrapper()).thenReturn(ByteArrayWrapper.INSTANCE);
+      when(mockCache.getAdvancedCache().getKeyDataConversion()).thenReturn(DataConversion.DEFAULT);
+      when(mockCache.getAdvancedCache().getValueDataConversion()).thenReturn(DataConversion.DEFAULT);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.memory().storageType()).thenReturn(StorageType.OBJECT);
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);

@@ -13,6 +13,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.components.ComponentMetadataRepo;
@@ -67,6 +68,9 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
       EmbeddedCacheManager cacheManager = gcr.getComponent(EmbeddedCacheManager.class);
+      EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
+      encoderRegistry.registerEncoder(new ProtostreamCompatEncoder(cacheManager));
+      encoderRegistry.registerWrapper(ProtostreamWrapper.INSTANCE);
       initProtobufMetadataManager((DefaultCacheManager) cacheManager, gcr);
    }
 
@@ -115,11 +119,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-      EncoderRegistry encoderRegistry = cr.getEncoderRegistry();
       EmbeddedCacheManager cacheManager = cr.getGlobalComponentRegistry().getComponent(EmbeddedCacheManager.class);
-      encoderRegistry.registerEncoder(new ProtostreamCompatEncoder(cacheManager));
-      encoderRegistry.registerWrapper(new ProtostreamWrapper());
-
       GlobalComponentRegistry gcr = cr.getGlobalComponentRegistry();
       InternalCacheRegistry icr = gcr.getComponent(InternalCacheRegistry.class);
       if (!icr.isInternalCache(cacheName)) {
@@ -140,6 +140,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
          cr.registerComponent(new ProtobufMatcher(serCtx, ProtobufFieldIndexingMetadata::new), ProtobufMatcher.class);
+         QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
 
          if (isCompatMode) {
             EntityNameResolver entityNameResolver;
@@ -151,7 +152,6 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
                serCtx = null;
                ClassLoader classLoader = cr.getGlobalComponentRegistry().getComponent(ClassLoader.class);
                ReflectionEntityNamesResolver reflectionEntityNamesResolver = new ReflectionEntityNamesResolver(classLoader);
-               QueryInterceptor queryInterceptor = cr.getComponent(QueryInterceptor.class);
                if (queryInterceptor != null) {
                   // If indexing is enabled, then use the known set of classes for lookup and the global classloder as a fallback.
                   entityNameResolver = name -> queryInterceptor.getKnownClasses().stream()
@@ -172,7 +172,11 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
             }
             cr.registerComponent(compatibilityReflectionMatcher, CompatibilityReflectionMatcher.class);
          }
-
+         if(queryInterceptor != null) {
+            DataConversion dataConversion = DataConversion.DEFAULT.withWrapping(ProtostreamWrapper.class);
+            cr.wireDependencies(dataConversion);
+            queryInterceptor.setValueDataConversion(dataConversion);
+         }
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
          BaseRemoteQueryEngine remoteQueryEngine = isCompatMode ? new CompatibilityQueryEngine(cache, isIndexed) : new RemoteQueryEngine(cache, isIndexed);
          cr.registerComponent(remoteQueryEngine, BaseRemoteQueryEngine.class);

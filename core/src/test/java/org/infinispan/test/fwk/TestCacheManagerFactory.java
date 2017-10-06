@@ -20,6 +20,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jmx.MBeanServerLookup;
@@ -219,6 +220,12 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager createCacheManager() {
       return createCacheManager(new ConfigurationBuilder());
+   }
+
+   public static EmbeddedCacheManager createServerModeCacheManager() {
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
+      globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+      return createCacheManager(globalBuilder, new ConfigurationBuilder());
    }
 
    public static EmbeddedCacheManager createCacheManager(boolean start) {

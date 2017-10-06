@@ -13,25 +13,50 @@ import org.infinispan.factories.scopes.Scopes;
  * @see EncoderRegistry
  * @since 9.1
  */
-@Scope(Scopes.NAMED_CACHE)
+@Scope(Scopes.GLOBAL)
 public class EncoderRegistryImpl implements EncoderRegistry {
 
-   private final Map<Class<? extends Encoder>, Encoder> encoderMap = CollectionFactory.makeConcurrentMap();
-   private final Map<Class<? extends Wrapper>, Wrapper> wrapperMap = CollectionFactory.makeConcurrentMap();
+   private final Map<Class<? extends Encoder>, Encoder> encoderMap = CollectionFactory.makeConcurrentMap(10);
+   private final Map<Class<? extends Wrapper>, Wrapper> wrapperMap = CollectionFactory.makeConcurrentMap(2);
+   private final Map<Short, Class<? extends Encoder>> encoderById = CollectionFactory.makeConcurrentMap(10);
+   private final Map<Byte, Class<? extends Wrapper>> wrapperById = CollectionFactory.makeConcurrentMap(2);
 
    @Override
    public void registerEncoder(Encoder encoder) {
+      if (encoder == null) {
+         throw new IllegalArgumentException("Encoder cannot be null");
+      }
+      short id = encoder.id();
+      if (encoderById.containsKey(id)) {
+         throw new IllegalArgumentException("Cannot register encoder: duplicate id " + id);
+      }
+      encoderById.put(id, encoder.getClass());
       encoderMap.put(encoder.getClass(), encoder);
    }
 
    @Override
    public void registerWrapper(Wrapper wrapper) {
+      if (wrapper == null) {
+         throw new IllegalArgumentException("Wrapper cannot be null");
+      }
+      byte id = wrapper.id();
+      if (wrapperById.containsKey(id)) {
+         throw new EncodingException("Cannot register wrapper: duplicate id " + id);
+      }
+      wrapperById.put(id, wrapper.getClass());
       wrapperMap.put(wrapper.getClass(), wrapper);
    }
 
    @Override
-   public Encoder getEncoder(Class<? extends Encoder> clazz) {
-      Encoder encoder = encoderMap.get(clazz);
+   public Encoder getEncoder(Class<? extends Encoder> clazz, Short encoderId) {
+      if (clazz == null && encoderId == null) {
+         throw new IllegalArgumentException("Encoder class or identifier must be provided!");
+      }
+      Class<? extends Encoder> encoderClass = clazz == null ? encoderById.get(encoderId) : clazz;
+      if (encoderClass == null) {
+         throw new EncodingException("Encoder not found for id " + encoderId);
+      }
+      Encoder encoder = encoderMap.get(encoderClass);
       if (encoder == null) {
          throw new EncodingException("Encoder not found: " + clazz);
       }
@@ -39,8 +64,19 @@ public class EncoderRegistryImpl implements EncoderRegistry {
    }
 
    @Override
-   public Wrapper getWrapper(Class<? extends Wrapper> wrapperClass) {
-      return wrapperMap.get(wrapperClass);
+   public Wrapper getWrapper(Class<? extends Wrapper> clazz, Byte wrapperId) {
+      if (clazz == null && wrapperId == null) {
+         throw new IllegalArgumentException("Wrapper class or identifier must be provided!");
+      }
+      Class<? extends Wrapper> wrapperClass = clazz == null ? wrapperById.get(wrapperId) : clazz;
+      if (wrapperClass == null) {
+         throw new EncodingException("Wrapper not found id " + wrapperId);
+      }
+      Wrapper wrapper = wrapperMap.get(wrapperClass);
+      if (wrapper == null) {
+         throw new EncodingException("Wrapper not found: " + clazz);
+      }
+      return wrapper;
    }
 
 }

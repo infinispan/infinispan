@@ -1,7 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.Wrapper;
+import org.infinispan.encoding.DataConversion;
 
 /**
  * @since 9.1
@@ -9,38 +8,24 @@ import org.infinispan.commons.dataconversion.Wrapper;
 public class ListenerHolder {
 
    private final Object listener;
-   private final Class<? extends Encoder> keyEncoderClass;
-   private final Class<? extends Encoder> valueEncoderClass;
-   private final Class<? extends Wrapper> keyWrapperClass;
-   private final Class<? extends Wrapper> valueWrapperClass;
+   private final DataConversion keyDataConversion;
+   private final DataConversion valueDataConversion;
 
-   public ListenerHolder(Object listener, Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass,
-                         Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
+   public ListenerHolder(Object listener, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       this.listener = listener;
-      this.keyEncoderClass = keyEncoderClass;
-      this.valueEncoderClass = valueEncoderClass;
-      this.keyWrapperClass = keyWrapperClass;
-      this.valueWrapperClass = valueWrapperClass;
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
    }
 
    public Object getListener() {
       return listener;
    }
 
-   public Class<? extends Encoder> getValueEncoderClass() {
-      return valueEncoderClass;
+   public DataConversion getKeyDataConversion() {
+      return keyDataConversion;
    }
 
-   public Class<? extends Wrapper> getKeyWrapperClass() {
-      return keyWrapperClass;
+   public DataConversion getValueDataConversion() {
+      return valueDataConversion;
    }
-
-   public Class<? extends Wrapper> getValueWrapperClass() {
-      return valueWrapperClass;
-   }
-
-   public Class<? extends Encoder> getKeyEncoderClass() {
-      return keyEncoderClass;
-   }
-
 }

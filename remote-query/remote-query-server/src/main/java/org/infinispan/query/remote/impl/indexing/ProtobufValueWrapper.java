@@ -11,6 +11,7 @@ import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.remote.impl.ExternalizerIds;
 
@@ -21,7 +22,7 @@ import org.infinispan.query.remote.impl.ExternalizerIds;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public final class ProtobufValueWrapper {
+public final class ProtobufValueWrapper implements WrappedBytes {
 
    public static final IndexedTypeIdentifier INDEXING_TYPE = PojoIndexedTypeIdentifier.convertFromLegacy(ProtobufValueWrapper.class);
 
@@ -86,6 +87,26 @@ public final class ProtobufValueWrapper {
       }
       sb.append("])");
       return sb.toString();
+   }
+
+   @Override
+   public byte[] getBytes() {
+      return binary;
+   }
+
+   @Override
+   public int backArrayOffset() {
+      return 0;
+   }
+
+   @Override
+   public int getLength() {
+      return binary.length;
+   }
+
+   @Override
+   public byte getByte(int offset) {
+      return binary[offset];
    }
 
    public static final class Externalizer extends AbstractExternalizer<ProtobufValueWrapper> {

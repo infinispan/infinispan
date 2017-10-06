@@ -21,7 +21,12 @@ public class IdentityEncoder implements Encoder {
 
    @Override
    public boolean isStorageFormatFilterable() {
-      return true;
+      return false;
+   }
+
+   @Override
+   public short id() {
+      return EncoderIds.IDENTITY;
    }
 
 }
