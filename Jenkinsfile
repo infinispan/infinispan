@@ -15,6 +15,7 @@ pipeline {
                 // Workaround for JENKINS-47230
                 script {
                     env.MAVEN_HOME = tool('Maven')
+                    env.MAVEN_FORK_OPTS = "-Xmx2g -XX:NativeMemoryTracking=detail"
                 }
 
                 sh returnStdout: true, script: 'cleanup.sh'
