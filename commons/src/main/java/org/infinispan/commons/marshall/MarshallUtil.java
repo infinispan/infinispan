@@ -191,9 +191,6 @@ public class MarshallUtil {
       final int size = unmarshallSize(in);
       if (size == NULL_VALUE) {
          return null;
-      } else if (size == 0) {
-         //noinspection unchecked
-         return (E[]) Util.EMPTY_OBJECT_ARRAY;
       }
       final E[] array = Objects.requireNonNull(builder, "ArrayBuilder must be non-null").build(size);
       for (int i = 0; i < size; ++i) {
