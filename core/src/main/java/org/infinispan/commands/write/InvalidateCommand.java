@@ -115,7 +115,7 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keys = MarshallUtil.unmarshallArray(input, Object[]::new);
+      keys = MarshallUtil.unmarshallArray(input, Util::objectArray);
       setFlagsBitSet(input.readLong());
    }
 

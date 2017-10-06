@@ -11,6 +11,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Arrays;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.hibernate.cache.access.PutFromLoadValidator;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
@@ -61,11 +62,11 @@ public class EndInvalidationCommand extends BaseRpcCommand {
       LockOwner.writeTo( output, lockOwner );
 	}
 
-	@Override
-	public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-		keys = MarshallUtil.unmarshallArray(input, Object[]::new);
-      lockOwner = LockOwner.readFrom( input );
-	}
+   @Override
+   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      keys = MarshallUtil.unmarshallArray(input, Util::objectArray);
+      lockOwner = LockOwner.readFrom(input);
+   }
 
 	@Override
 	public boolean isReturnValueExpected() {

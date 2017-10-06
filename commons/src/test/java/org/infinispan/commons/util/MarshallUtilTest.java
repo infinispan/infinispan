@@ -152,13 +152,13 @@ public class MarshallUtilTest {
 
       String[] array = new String[0];
       MarshallUtil.marshallArray(array, io);
-      Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallArray(io, String[]::new)));
+      Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallArray(io, Util::stringArray)));
       Assert.assertEquals(0, io.buffer.size());
       io.reset();
 
       array = new String[] {"a", "b", "c"};
       MarshallUtil.marshallArray(array, io);
-      Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallArray(io, String[]::new)));
+      Assert.assertTrue(Arrays.equals(array, MarshallUtil.unmarshallArray(io, Util::stringArray)));
       Assert.assertEquals(0, io.buffer.size());
       io.reset();
    }

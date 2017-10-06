@@ -57,6 +57,7 @@ public final class Util {
    private static final boolean IS_OSGI_CONTEXT;
 
    public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+   public static final String[] EMPTY_STRING_ARRAY = new String[0];
    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
    private static final Log log = LogFactory.getLog(Util.class);
@@ -1055,7 +1056,15 @@ public final class Util {
       return sb.toString();
    }
 
-  public static char[] toCharArray(String s) {
-     return s == null ? null : s.toCharArray();
-  }
+   public static char[] toCharArray(String s) {
+      return s == null ? null : s.toCharArray();
+   }
+
+   public static Object[] objectArray(int length) {
+      return length == 0 ? EMPTY_OBJECT_ARRAY : new Object[length];
+   }
+
+   public static String[] stringArray(int length) {
+      return length == 0 ? EMPTY_STRING_ARRAY : new String[length];
+   }
 }
