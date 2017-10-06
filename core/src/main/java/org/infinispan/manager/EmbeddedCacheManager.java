@@ -73,7 +73,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * If templateName is null or there isn't any named cache with that name, this methods works exactly like {@link
     * #defineConfiguration(String, Configuration)}.
     * <p/>
-    * If this cache was already configured either declaritively or programmatically this method will throw a
+    * If this cache was already configured either declaratively or programmatically this method will throw a
     * {@link org.infinispan.commons.CacheConfigurationException}.
     * @param cacheName             name of cache whose configuration is being defined
     * @param templateCacheName     name of cache to use as a template before overrides are applied to it

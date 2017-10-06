@@ -40,6 +40,11 @@ public class ClusterCacheManagerTest extends MultipleCacheManagersTest {
          assertFalse("Cache 'a' still present on " + m, m.cacheExists("a"));
       }
 
+      EmbeddedCacheManager m = addClusterEnabledCacheManager();
+
+      assertFalse("Cache 'a' should not be present on " + m, m.cacheExists("a"));
+
+
    }
 
    private void checkConsistencyAcrossCluster(Configuration configuration) {
