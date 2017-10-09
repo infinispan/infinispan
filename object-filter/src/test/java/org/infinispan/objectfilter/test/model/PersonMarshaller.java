@@ -24,7 +24,10 @@ public class PersonMarshaller implements MessageMarshaller<Person> {
       person.setFavouriteNumbers(reader.readCollection("favouriteNumbers", new ArrayList<>(), Integer.class));
       person.setLicense(reader.readString("license"));
       person.setGender(reader.readEnum("gender", Person.Gender.class));
-      person.setLastUpdate(new Date(reader.readLong("lastUpdate")));
+      Long lastUpdate = reader.readLong("lastUpdate");
+      if (lastUpdate != null) {
+         person.setLastUpdate(new Date(lastUpdate));
+      }
       person.setDeleted(reader.readBoolean("deleted"));
       return person;
    }
