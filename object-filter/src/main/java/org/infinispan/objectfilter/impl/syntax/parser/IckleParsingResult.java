@@ -47,6 +47,7 @@ public final class IckleParsingResult<TypeMetadata> {
    private final TypeMetadata targetEntityMetadata;
    private final PropertyPath[] projectedPaths;
    private final Class<?>[] projectedTypes;
+   private final Object[] projectedNullMarkers;
    private final PropertyPath[] groupBy;
    private final SortField[] sortFields;
 
@@ -56,7 +57,7 @@ public final class IckleParsingResult<TypeMetadata> {
                              BooleanExpr whereClause,
                              BooleanExpr havingClause,
                              String targetEntityName, TypeMetadata targetEntityMetadata,
-                             PropertyPath[] projectedPaths, Class<?>[] projectedTypes,
+                             PropertyPath[] projectedPaths, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
                              PropertyPath[] groupBy,
                              SortField[] sortFields) {
       this.queryString = queryString;
@@ -70,6 +71,7 @@ public final class IckleParsingResult<TypeMetadata> {
       }
       this.projectedPaths = projectedPaths;
       this.projectedTypes = projectedTypes;
+      this.projectedNullMarkers = projectedNullMarkers;
       this.groupBy = groupBy;
       this.sortFields = sortFields;
    }
@@ -138,6 +140,10 @@ public final class IckleParsingResult<TypeMetadata> {
       return projectedTypes;
    }
 
+   public Object[] getProjectedNullMarkers() {
+      return projectedNullMarkers;
+   }
+
    public boolean hasGroupingOrAggregations() {
       if (groupBy != null || havingClause != null) {
          return true;
@@ -177,6 +183,7 @@ public final class IckleParsingResult<TypeMetadata> {
             + ", havingClause=" + havingClause
             + ", projectedPaths=" + Arrays.toString(projectedPaths)
             + ", projectedTypes=" + Arrays.toString(projectedTypes)
+            + ", projectedNullMarkers=" + Arrays.toString(projectedNullMarkers)
             + ", groupBy=" + Arrays.toString(groupBy)
             + ", sortFields=" + Arrays.toString(sortFields)
             + "]";

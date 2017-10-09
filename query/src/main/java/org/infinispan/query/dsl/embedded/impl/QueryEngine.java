@@ -573,20 +573,24 @@ public class QueryEngine<TypeMetadata> {
                RowProcessor rowProcessor = null;
                if (parsingResult.getProjectedPaths() != null) {
                   if (projectionsMap.size() != parsingResult.getProjectedPaths().length) {
-                     // but some projections are duplicated ...
+                     // but some projections are duplicated and Hibernate Serach does not allow duplicate projections ...
                      final Class<?>[] projectedTypes = new Class<?>[projectionsMap.size()];
+                     final Object[] deduplicatedProjectedNullMarkers = parsingResult.getProjectedNullMarkers() != null ? new Object[projectedTypes.length] : null;
                      final int[] map = new int[parsingResult.getProjectedPaths().length];
                      int j = 0;
                      for (List<Integer> idx : projectionsMap.values()) {
                         int i = idx.get(0);
                         projectedTypes[j] = parsingResult.getProjectedTypes()[i];
+                        if (deduplicatedProjectedNullMarkers != null) {
+                           deduplicatedProjectedNullMarkers[j] = parsingResult.getProjectedNullMarkers()[i];
+                        }
                         for (int k : idx) {
                            map[k] = j;
                         }
                         j++;
                      }
 
-                     RowProcessor projectionProcessor = makeProjectionProcessor(projectedTypes);
+                     RowProcessor projectionProcessor = makeProjectionProcessor(projectedTypes, deduplicatedProjectedNullMarkers);
                      rowProcessor = inRow -> {
                         if (projectionProcessor != null) {
                            inRow = projectionProcessor.process(inRow);
@@ -598,23 +602,24 @@ public class QueryEngine<TypeMetadata> {
                         return outRow;
                      };
                      PropertyPath[] deduplicatedProjection = projectionsMap.keySet().toArray(new PropertyPath[projectionsMap.size()]);
-                     IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, deduplicatedProjection, projectedTypes, sortFields);
-                     return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, parsingResult.getProjections(), makeResultProcessor(rowProcessor), startOffset, maxResults);
+                     IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, deduplicatedProjection, projectedTypes, deduplicatedProjectedNullMarkers, sortFields);
+                     return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, parsingResult.getProjections(), rowProcessor, startOffset, maxResults);
                   } else {
-                     rowProcessor = makeProjectionProcessor(parsingResult.getProjectedTypes());
+                     // happy case: no projections are duplicated
+                     rowProcessor = makeProjectionProcessor(parsingResult.getProjectedTypes(), parsingResult.getProjectedNullMarkers());
                   }
                }
-               return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), makeResultProcessor(rowProcessor), startOffset, maxResults);
+               return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), rowProcessor, startOffset, maxResults);
             } else {
-               IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, sortFields);
-               Query indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, makeResultProcessor(null), startOffset, maxResults);
+               IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, sortFields);
+               Query indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, startOffset, maxResults);
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null);
                return new HybridQuery(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), -1, -1, indexQuery);
             }
          } else {
             // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
-            IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null);
-            Query indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, makeResultProcessor(null), -1, -1);
+            IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, normalizedWhereClause, null, null, null, null);
+            Query indexQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1);
             String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, sortFields);
             return new HybridQuery(queryFactory, cache, projectionQueryStr, null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery);
          }
@@ -626,8 +631,8 @@ public class QueryEngine<TypeMetadata> {
       }
 
       // some fields are indexed, run a hybrid query
-      IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null);
-      Query expandedQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, makeResultProcessor(null), -1, -1);
+      IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null, null);
+      Query expandedQuery = new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, fpr, null, null, -1, -1);
       return new HybridQuery(queryFactory, cache, queryString, namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults, expandedQuery);
    }
 
@@ -636,19 +641,20 @@ public class QueryEngine<TypeMetadata> {
     * grouping/aggregation.
     */
    private IckleParsingResult<TypeMetadata> makeFilterParsingResult(IckleParsingResult<TypeMetadata> parsingResult, BooleanExpr normalizedWhereClause,
-                                                                    PropertyPath[] projection, Class<?>[] projectedTypes, SortField[] sortFields) {
+                                                                    PropertyPath[] projection, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
+                                                                    SortField[] sortFields) {
       String queryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), projection, normalizedWhereClause, sortFields);
       return new IckleParsingResult<>(queryString, parsingResult.getParameterNames(),
             normalizedWhereClause, null,
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
-            projection, projectedTypes, null, sortFields);
+            projection, projectedTypes, projectedNullMarkers, null, sortFields);
    }
 
-   protected ResultProcessor<?, ?> makeResultProcessor(ResultProcessor<?, ?> in) {
-      return in;
-   }
-
-   protected RowProcessor makeProjectionProcessor(Class<?>[] projectedTypes) {
+   /**
+    * Apply some pos-processing to the result when we have projections.
+    */
+   protected RowProcessor makeProjectionProcessor(Class<?>[] projectedTypes, Object[] projectedNullMarkers) {
+      // In embedded mode Hibernate Search is a real blessing as it does all the work for us already. Nothing to be done here.
       return null;
    }
 

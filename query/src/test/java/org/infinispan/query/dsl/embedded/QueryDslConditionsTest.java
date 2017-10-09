@@ -2428,6 +2428,25 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0L, list.get(1)[1]);
    }
 
+   public void testCountNull3() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(property("name"), count("salutation"))
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals("John", list.get(0)[0]);
+      assertEquals(0L, list.get(0)[1]);
+      assertEquals(2, list.get(1).length);
+      assertEquals("Spider", list.get(1)[0]);
+      assertEquals(2L, list.get(1)[1]);
+   }
+
    public void testAvgNull() {
       QueryFactory qf = getQueryFactory();
       Query q = qf.from(getModelFactory().getUserImplClass())
