@@ -3,10 +3,12 @@ package org.infinispan.configuration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -47,19 +49,42 @@ public class ConfigurationManager {
       return globalConfiguration;
    }
 
-   public Configuration getConfiguration(String cacheName) {
-      return namedConfiguration.get(cacheName);
+   public Configuration getConfiguration(String cacheName, boolean includeWildcards) {
+      if (includeWildcards)
+         return findConfiguration(cacheName);
+      else
+         return namedConfiguration.get(cacheName);
    }
 
    public Configuration getConfiguration(String cacheName, String defaultCacheName) {
-      if (namedConfiguration.containsKey(cacheName)) {
-         return namedConfiguration.get(cacheName);
+      Configuration configuration = findConfiguration(cacheName);
+      if (configuration != null)
+         return configuration;
+      if (defaultCacheName != null) {
+         return namedConfiguration.get(defaultCacheName);
       } else {
-         if (defaultCacheName != null) {
-            return namedConfiguration.get(defaultCacheName);
-         } else {
-            throw log.noSuchCacheConfiguration(cacheName);
+         throw log.noSuchCacheConfiguration(cacheName);
+      }
+   }
+
+   private Configuration findConfiguration(String name) {
+      if (namedConfiguration.containsKey(name)) {
+         return namedConfiguration.get(name);
+      } else {
+         // Attempt wildcard matching
+         Configuration match = null;
+         for (Map.Entry<String, Configuration> c : namedConfiguration.entrySet()) {
+            String key = c.getKey();
+            if (GlobUtils.isGlob(key)) {
+               if (name.matches(GlobUtils.globToRegex(key))) {
+                  if (match == null)
+                     match = c.getValue();
+                  else
+                     throw log.configurationNameMatchesMultipleWildcards(name);
+               }
+            }
          }
+         return match;
       }
    }
 

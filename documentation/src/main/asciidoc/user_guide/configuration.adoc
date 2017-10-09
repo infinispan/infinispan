@@ -145,6 +145,30 @@ configuration and `local-bounded` which uses the `extended-template` configurati
 
 WARNING: Be aware that for multi-valued elements (such as `properties`) the inheritance is additive, i.e. the child configuration will be the result of merging the properties from the parent and its own.
 
+===== Cache configuration wildcards
+
+An alternative way to apply templates to caches is to use wildcards in the template name, e.g. `basecache*`. Any cache whose name matches the template wildcard will inherit that configuration.
+
+[source,xml]
+----
+
+<infinispan>
+    <cache-container>
+        <local-cache-configuration name="basecache*">
+            <expiration interval="10500" lifespan="11" max-idle="11"/>
+        </local-cache-configuration>
+        <local-cache name="basecache-1"/>
+        <local-cache name="basecache-2"/>
+    </cache-container>
+</infinispan>
+
+----
+
+Above, caches `basecache-1` and `basecache-2` will use the `basecache*` configuration. The configuration will also
+be applied when retrieving undefined caches programmatically.
+
+NOTE: If a cache name matches multiple wildcards, i.e. it is ambiguous, an exception will be thrown.
+
 ===== Declarative configuration reference
 
 For more details on the declarative configuration schema, refer to the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs[configuration reference].
