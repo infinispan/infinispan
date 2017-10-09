@@ -40,6 +40,28 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
       return getMetadata(propertyPath, IndexingMetadata::isFieldStored, true);
    }
 
+   @Override
+   public Object getNullMarker(String[] propertyPath) {
+      Descriptor md = messageDescriptor;
+      int i = 0;
+      for (String p : propertyPath) {
+         i++;
+         FieldDescriptor field = md.findFieldByName(p);
+         if (field == null) {
+            break;
+         }
+         if (i == propertyPath.length) {
+            IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+            return indexingMetadata == null ? null : indexingMetadata.getNullMarker(field.getName());
+         }
+         if (field.getJavaType() != JavaType.MESSAGE) {
+            break;
+         }
+         md = field.getMessageType();
+      }
+      return null;
+   }
+
    private boolean getMetadata(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun, boolean defVal) {
       Descriptor md = messageDescriptor;
       int i = 0;

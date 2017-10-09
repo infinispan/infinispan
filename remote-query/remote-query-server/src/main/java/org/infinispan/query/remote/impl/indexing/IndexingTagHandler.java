@@ -80,7 +80,7 @@ final class IndexingTagHandler implements TagHandler {
          // WE DO NOT HAVE A FIELD MAPPING!
          // This comes from a message definition that does not have any annotations and is treated as if
          // everything is indexed, stored, and not analyzed for compatibility reasons with first version of remote query.
-         // All null values (regardless of type) are indexed as string as if indexNullAs == "_null_"
+         // All null values (regardless of type) are indexed as a string as if indexNullAs == "_null_" (see IndexingMetadata.DEFAULT_NULL_TOKEN)
          if (value == null) {
             value = IndexingMetadata.DEFAULT_NULL_TOKEN;
             type = Type.STRING;  // we add a string to the index even if the field is numeric!

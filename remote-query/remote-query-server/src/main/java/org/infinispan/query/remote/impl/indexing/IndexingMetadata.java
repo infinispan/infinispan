@@ -220,6 +220,14 @@ public final class IndexingMetadata {
       return fieldMapping != null && fieldMapping.store();
    }
 
+   public Object getNullMarker(String fieldName) {
+      if (fields == null) {
+         return null;
+      }
+      FieldMapping fieldMapping = fields.get(fieldName);
+      return fieldMapping != null ? fieldMapping.indexNullAs() : null;
+   }
+
    public FieldMapping getFieldMapping(String name) {
       return fields.get(name);
    }

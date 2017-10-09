@@ -36,6 +36,11 @@ public class BooleShannonExpansionTest {
       public boolean isStored(String[] propertyPath) {
          return isIndexed(propertyPath);
       }
+
+      @Override
+      public Object getNullMarker(String[] propertyPath) {
+         return null;
+      }
    });
 
    /**

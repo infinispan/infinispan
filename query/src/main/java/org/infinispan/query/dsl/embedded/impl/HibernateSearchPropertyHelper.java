@@ -313,6 +313,13 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
                DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
                return fieldMetadata != null && fieldMetadata.getStore() != Store.NO;
             }
+
+            @Override
+            public Object getNullMarker(String[] propertyPath) {
+               DocumentFieldMetadata fieldMetadata = getDocumentFieldMetadata(entityIndexBinding, propertyPath);
+               return fieldMetadata != null && fieldMetadata.getNullMarkerCodec() != null && fieldMetadata.getNullMarkerCodec().getNullMarker() != null
+                     ? fieldMetadata.getNullMarkerCodec().getNullMarker().nullEncoded() : null;
+            }
          };
       };
    }
