@@ -1653,4 +1653,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Class %s not found", id = 483)
    CacheConfigurationException classNotFound(String name);
+
+   @Message(value = "Wildcards not allowed in cache names: '%s'", id = 484)
+   CacheConfigurationException wildcardsNotAllowedInCacheNames(String name);
+
+   @Message(value = "Configuration '%s' matches multiple wildcard templates", id = 485)
+   CacheConfigurationException configurationNameMatchesMultipleWildcards(String name);
 }

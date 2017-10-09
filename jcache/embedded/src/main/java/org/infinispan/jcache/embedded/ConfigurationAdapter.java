@@ -31,7 +31,19 @@ public class ConfigurationAdapter<K, V> {
    }
 
    public org.infinispan.configuration.cache.Configuration build() {
-      ConfigurationBuilder cb = new ConfigurationBuilder();
+      return build(new ConfigurationBuilder());
+   }
+
+   public org.infinispan.configuration.cache.Configuration build(org.infinispan.configuration.cache.Configuration baseConfig) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      if (baseConfig != null) {
+         builder.read(baseConfig);
+      }
+      return build(builder);
+   }
+
+   private org.infinispan.configuration.cache.Configuration build(ConfigurationBuilder cb) {
+
       if (c.isStoreByValue())
          cb.memory().storageType(StorageType.BINARY);
 
@@ -71,5 +83,6 @@ public class ConfigurationAdapter<K, V> {
    public static <K, V> ConfigurationAdapter<K, V> create() {
       return new ConfigurationAdapter<K, V>(new MutableConfiguration<K, V>());
    }
+
 
 }

@@ -30,6 +30,7 @@ import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
@@ -1179,6 +1180,8 @@ public class Parser implements ConfigurationParser {
    private void parseLocalCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+      if (!template && GlobUtils.isGlob(name))
+         throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
       builder.clustering().cacheMode(CacheMode.LOCAL);
@@ -1918,6 +1921,8 @@ public class Parser implements ConfigurationParser {
    private void parseInvalidationCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+      if (!template && GlobUtils.isGlob(name))
+         throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.INVALIDATION_SYNC : builder.clustering().cacheMode();
@@ -2011,6 +2016,8 @@ public class Parser implements ConfigurationParser {
    private void parseReplicatedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+      if (!template && GlobUtils.isGlob(name))
+         throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.REPL_SYNC : builder.clustering().cacheMode();
@@ -2064,6 +2071,8 @@ public class Parser implements ConfigurationParser {
    private void parseDistributedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+      if (!template && GlobUtils.isGlob(name))
+         throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.DIST_SYNC : builder.clustering().cacheMode();
@@ -2149,6 +2158,8 @@ public class Parser implements ConfigurationParser {
 
    private void parseScatteredCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
+      if (!template && GlobUtils.isGlob(name))
+         throw log.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
       CacheMode baseCacheMode = configuration == null ? CacheMode.SCATTERED_SYNC : builder.clustering().cacheMode();

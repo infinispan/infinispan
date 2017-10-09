@@ -345,7 +345,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public Configuration defineConfiguration(String name, String template, Configuration configurationOverride) {
       if (template != null) {
-         Configuration c = configurationManager.getConfiguration(template);
+         Configuration c = configurationManager.getConfiguration(template, true);
          if (c == null) {
             throw log.undeclaredConfiguration(template, name);
          } else if (configurationOverride == null) {
@@ -365,7 +365,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
       if (name.equals(DEFAULT_CACHE_NAME))
          throw log.illegalCacheName(DEFAULT_CACHE_NAME);
-      Configuration existing = configurationManager.getConfiguration(name);
+      Configuration existing = configurationManager.getConfiguration(name, false);
       if (existing != null) {
          throw log.configAlreadyDefined(name);
       }
@@ -388,7 +388,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       authzHelper.checkPermission(AuthorizationPermission.ADMIN);
       if (configurationName.equals(DEFAULT_CACHE_NAME))
          throw log.illegalCacheName(DEFAULT_CACHE_NAME);
-      Configuration existing = configurationManager.getConfiguration(configurationName);
+      Configuration existing = configurationManager.getConfiguration(configurationName, false);
       if (existing != null) {
          for (CompletableFuture<Cache<?, ?>> cacheFuture : caches.values()) {
             Cache<?, ?> cache = cacheFuture.exceptionally(t -> null).join();
@@ -610,7 +610,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       if (c == null) {
          throw log.noSuchCacheConfiguration(configurationName);
       } else if (!sameCache) {
-         Configuration definedConfig = configurationManager.getConfiguration(cacheName);
+         Configuration definedConfig = configurationManager.getConfiguration(cacheName, true);
          if (definedConfig != null) {
             log.warnAttemptToOverrideExistingConfiguration(cacheName);
             c = definedConfig;
@@ -787,7 +787,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public org.infinispan.configuration.cache.Configuration getDefaultCacheConfiguration() {
       if (defaultCacheName != null) {
-         return configurationManager.getConfiguration(defaultCacheName);
+         return configurationManager.getConfiguration(defaultCacheName, true);
       } else {
          return null;
       }
@@ -795,7 +795,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public Configuration getCacheConfiguration(String name) {
-      Configuration configuration = configurationManager.getConfiguration(name);
+      Configuration configuration = configurationManager.getConfiguration(name, true);
       if (configuration == null && cacheExists(name)) {
          return getDefaultCacheConfiguration();
       }

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan xmlns="urn:infinispan:config:9.2">
     <cache-container default-cache="foo">
+        <local-cache-configuration name="wildcache*">
+            <expiration interval="10500" lifespan="11" max-idle="11"/>
+        </local-cache-configuration>
         <local-cache name="foo" statistics="true">
         </local-cache>
     </cache-container>
