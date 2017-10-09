@@ -34,6 +34,8 @@ public interface IndexedFieldProvider<TypeMetadata> {
        * @return {@code true} if the property is stored, {@code false} otherwise.
        */
       boolean isStored(String[] propertyPath);
+
+      Object getNullMarker(String[] propertyPath);
    }
 
    FieldIndexingMetadata NO_INDEXING = new FieldIndexingMetadata() {
@@ -50,6 +52,11 @@ public interface IndexedFieldProvider<TypeMetadata> {
       @Override
       public boolean isStored(String[] propertyPath) {
          return false;
+      }
+
+      @Override
+      public Object getNullMarker(String[] propertyPath) {
+         return null;
       }
    };
 }

@@ -30,6 +30,11 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private static final Log log = Logger.getMessageLogger(Log.class, QueryRendererDelegateImpl.class.getName());
 
+   /**
+    * Initial length for various internal growable arrays.
+    */
+   private static final int ARRAY_INITIAL_LENGTH = 5;
+
    private enum Phase {
       SELECT,
       FROM,
@@ -67,7 +72,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private String alias;
 
-   private final Map<String, Object> namedParameters = new HashMap<>(5);
+   private final Map<String, Object> namedParameters = new HashMap<>(ARRAY_INITIAL_LENGTH);
 
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
@@ -78,6 +83,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    private List<PropertyPath<TypeDescriptor<TypeMetadata>>> projections;
 
    private List<Class<?>> projectedTypes;
+
+   private List<Object> projectedNullMarkers;
 
    private final String queryString;
 
@@ -472,21 +479,25 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
       if (phase == Phase.SELECT) {
          if (projections == null) {
-            projections = new ArrayList<>(5);
-            projectedTypes = new ArrayList<>(5);
+            projections = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+            projectedTypes = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+            projectedNullMarkers = new ArrayList<>(ARRAY_INITIAL_LENGTH);
          }
          PropertyPath<TypeDescriptor<TypeMetadata>> projection;
          Class<?> propertyType;
+         Object nullMarker;
          if (propertyPath.getLength() == 1 && propertyPath.isAlias()) {
             projection = new PropertyPath<>(Collections.singletonList(new PropertyPath.PropertyReference<>("__HSearch_This", null, true))); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
             propertyType = null;
+            nullMarker = null;
          } else {
             projection = resolveAlias(propertyPath);
             propertyType = propertyHelper.getPrimitivePropertyType(targetEntityMetadata, projection.asArrayPath());
+            nullMarker = fieldIndexingMetadata.getNullMarker(projection.asArrayPath());
          }
          projections.add(projection);
          projectedTypes.add(propertyType);
-
+         projectedNullMarkers.add(nullMarker);
       } else {
          this.propertyPath = propertyPath;
       }
@@ -522,7 +533,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       checkAnalyzed(property, false);     //todo [anistor] cannot sort on analyzed field?
 
       if (sortFields == null) {
-         sortFields = new ArrayList<>(5);
+         sortFields = new ArrayList<>(ARRAY_INITIAL_LENGTH);
       }
       sortFields.add(new IckleParsingResult.SortFieldImpl<>(property, isAscending));
    }
@@ -536,7 +547,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    public void groupingValue(String collateName) {
       // collationName is ignored for now
       if (groupBy == null) {
-         groupBy = new ArrayList<>(5);
+         groupBy = new ArrayList<>(ARRAY_INITIAL_LENGTH);
       }
       groupBy.add(resolveAlias(propertyPath));
    }
@@ -631,6 +642,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
             targetEntityMetadata,
             projections == null ? null : projections.toArray(new PropertyPath[projections.size()]),
             projectedTypes == null ? null : projectedTypes.toArray(new Class<?>[projectedTypes.size()]),
+            projectedNullMarkers == null ? null : projectedNullMarkers.toArray(new Object[projectedNullMarkers.size()]),
             groupBy == null ? null : groupBy.toArray(new PropertyPath[groupBy.size()]),
             sortFields == null ? null : sortFields.toArray(new SortField[sortFields.size()]));
    }
