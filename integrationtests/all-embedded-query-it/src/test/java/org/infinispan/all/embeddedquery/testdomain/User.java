@@ -30,6 +30,10 @@ public interface User {
 
    void setSurname(String surname);
 
+   String getSalutation();
+
+   void setSalutation(String salutation);
+
    Integer getAge();
 
    void setAge(Integer age);
