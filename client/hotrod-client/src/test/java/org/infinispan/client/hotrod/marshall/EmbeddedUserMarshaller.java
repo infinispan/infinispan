@@ -37,6 +37,7 @@ public class EmbeddedUserMarshaller implements MessageMarshaller<UserHS> {
       // Read them out of order. It still works but logs a warning!
       String surname = reader.readString("surname");
       String name = reader.readString("name");
+      String salutation = reader.readString("salutation");
 
       List<Address> addresses = reader.readCollection("addresses", new ArrayList<>(), AddressHS.class);
 
@@ -51,6 +52,7 @@ public class EmbeddedUserMarshaller implements MessageMarshaller<UserHS> {
       user.setAccountIds(accountIds);
       user.setName(name);
       user.setSurname(surname);
+      user.setSalutation(salutation);
       user.setAge(age);
       user.setGender(gender);
       user.setAddresses(addresses);
@@ -66,6 +68,7 @@ public class EmbeddedUserMarshaller implements MessageMarshaller<UserHS> {
       writer.writeCollection("accountIds", user.getAccountIds(), Integer.class);
       writer.writeString("name", user.getName());
       writer.writeString("surname", user.getSurname());
+      writer.writeString("salutation", user.getSalutation());
       writer.writeCollection("addresses", user.getAddresses(), AddressHS.class);
       writer.writeInt("age", user.getAge());
       writer.writeEnum("gender", user.getGender(), User.Gender.class);

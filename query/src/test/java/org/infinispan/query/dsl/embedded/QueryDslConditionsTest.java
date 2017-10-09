@@ -102,6 +102,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       user2.setId(2);
       user2.setName("Spider");
       user2.setSurname("Man");
+      user2.setSalutation("Mr.");
       user2.setGender(User.Gender.MALE);
       user2.setAccountIds(Collections.singleton(3));
       user2.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
@@ -121,11 +122,12 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       user3.setId(3);
       user3.setName("Spider");
       user3.setSurname("Woman");
+      user3.setSalutation("Ms.");
       user3.setGender(User.Gender.FEMALE);
       user3.setAccountIds(Collections.emptySet());
       user3.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user3.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
-      if(!testNullCollections()) {
+      if (!testNullCollections()) {
          user3.setAddresses(new ArrayList<>());
       }
 
@@ -892,7 +894,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIsNull3() throws Exception {
-      if(testNullCollections()) {
+      if (testNullCollections()) {
          QueryFactory qf = getQueryFactory();
 
          Query q = qf.from(getModelFactory().getUserImplClass())
@@ -2419,7 +2421,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<Object[]> list = q.list();
       assertEquals(2, list.size());
       assertEquals(2, list.get(0).length);
-      assertEquals("John" ,list.get(0)[0]);
+      assertEquals("John", list.get(0)[0]);
       assertEquals(1L, list.get(0)[1]);
       assertEquals(2, list.get(1).length);
       assertEquals("Spider", list.get(1)[0]);

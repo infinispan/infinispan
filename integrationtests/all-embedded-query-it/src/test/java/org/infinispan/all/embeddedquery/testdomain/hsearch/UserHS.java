@@ -37,6 +37,9 @@ public class UserHS extends UserBase {
    @SortableField
    private String surname;
 
+   @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
+   private String salutation;
+
    @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "-1")
    @NumericField
    @SortableField
@@ -59,50 +62,72 @@ public class UserHS extends UserBase {
     */
    private String notes;
 
+   @Override
    public int getId() {
       return id;
    }
 
+   @Override
    public void setId(int id) {
       this.id = id;
    }
 
+   @Override
    public Set<Integer> getAccountIds() {
       return accountIds;
    }
 
+   @Override
    public void setAccountIds(Set<Integer> accountIds) {
       this.accountIds = accountIds;
    }
 
+   @Override
    public String getSurname() {
       return surname;
    }
 
+   @Override
    public void setSurname(String surname) {
       this.surname = surname;
    }
 
+   @Override
+   public String getSalutation() {
+      return salutation;
+   }
+
+   @Override
+   public void setSalutation(String salutation) {
+      this.salutation = salutation;
+   }
+
+   @Override
    public Integer getAge() {
       return age;
    }
 
+   @Override
    public void setAge(Integer age) {
       this.age = age;
    }
 
+   @Override
    public Gender getGender() {
       return gender;
    }
 
+   @Override
    public void setGender(Gender gender) {
       this.gender = gender;
    }
 
+   @Override
    public List<Address> getAddresses() {
       return addresses;
    }
 
+   @Override
    public void setAddresses(List<Address> addresses) {
       this.addresses = addresses;
    }
@@ -151,6 +176,7 @@ public class UserHS extends UserBase {
       if (gender != other.gender) return false;
       if (name != null ? !name.equals(other.name) : other.name != null) return false;
       if (surname != null ? !surname.equals(other.surname) : other.surname != null) return false;
+      if (salutation != null ? !salutation.equals(other.salutation) : other.salutation != null) return false;
       if (notes != null ? !notes.equals(other.notes) : other.notes != null) return false;
       if (creationDate != null ? !creationDate.equals(other.creationDate) : other.creationDate != null) return false;
       if (passwordExpirationDate != null ? !passwordExpirationDate.equals(other.passwordExpirationDate) : other.passwordExpirationDate != null) return false;
@@ -164,6 +190,7 @@ public class UserHS extends UserBase {
       result = 31 * result + (accountIds != null ? accountIds.hashCode() : 0);
       result = 31 * result + (name != null ? name.hashCode() : 0);
       result = 31 * result + (surname != null ? surname.hashCode() : 0);
+      result = 31 * result + (salutation != null ? salutation.hashCode() : 0);
       result = 31 * result + (age != null ? age : 0);
       result = 31 * result + (gender != null ? gender.hashCode() : 0);
       result = 31 * result + (addresses != null ? addresses.hashCode() : 0);
@@ -179,6 +206,7 @@ public class UserHS extends UserBase {
             "id=" + id +
             ", name='" + name + '\'' +
             ", surname='" + surname + '\'' +
+            ", salutation='" + salutation + '\'' +
             ", accountIds=" + accountIds +
             ", addresses=" + addresses +
             ", age=" + age +
