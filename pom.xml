@@ -135,6 +135,7 @@
       <module>cdi/common</module>
       <module>cdi/embedded</module>
       <module>cdi/remote</module>
+      <module>lock</module>
       <module>server/integration</module>
       <module>jcache</module>
       <module>wildfly-modules</module>
@@ -384,6 +385,11 @@
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-clustered-counter</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-clustered-lock</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>

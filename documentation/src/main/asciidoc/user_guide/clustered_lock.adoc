@@ -1,0 +1,200 @@
+== Clustered Lock
+
+Clustered lock is a new building block introduced in Infinispan 9.2
+It is a lock which is distributed and shared among all nodes in the Infinispan cluster and currently provides a way to execute
+code that will be synchronized between the nodes in a given cluster.
+
+=== Installation
+
+In order to start using the clustered locks, you needs to add the dependency in your Maven `pom.xml` file:
+
+.pom.xml
+[source,xml]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-clustered-lock</artifactId>
+   <version>...</version> <!-- 9.2.0.Final or higher -->
+</dependency>
+----
+
+Currently no extra configuration needs to be provided.
+
+=== The ClusteredLockConfiguration.
+
+Currently there is a single type of `ClusteredLock` supported : non reentrant, NODE ownership lock.
+
+==== [[ownership]]Ownership
+
+* `NODE`
+When a `ClusteredLock` is defined, this lock can be used from all the nodes in the infinispan cluster.
+When the ownership is NODE type, this means that the owner of the lock is the infinispan node that acquired the lock
+at a given time.
+This means that each time we get a `ClusteredLock` instance with the `ClusteredCacheManager`, this instance will be the
+same instance for each infinispan node.
+This lock can be used to synchronize code between infinispan nodes. The advantage of this lock is that any thread in the
+node can release the lock at a given time.
+
+* `INSTANCE` - not yet supported
+
+When a `ClusteredLock` is defined, this lock can be used from all the nodes in the infinispan cluster.
+When the ownership is INSTANCE type, this means that the owner of the lock is the actual instance we acquired when
+`ClusteredLockManager.get("lockName")` is called.
+
+This means that each time we get a `ClusteredLock` instance with the `ClusteredCacheManager`, this instance will be
+a new instance.
+This lock can be used to synchronize code between infinispan nodes and inside each infinispan node.
+The advantage of this lock is that only the instance that called 'lock' can release the lock.
+
+
+==== Reentrancy
+
+When a `ClusteredLock` is configured reentrant, the owner of the lock can reacquire the lock as many consecutive
+times as it wants while holding the lock.
+
+Currently, only non reentrant locks are supported. This means that when two consecutive `lock` calls are sent for the same
+owner, the first call will acquire the lock if it's available, and the second call will block.
+
+
+=== The ClusteredLockManager interface.
+
+The `ClusteredLockManager` interface, *marked as experimental*, is the entry point to define, retrieve and remove a lock.
+It automatically listen to the creation of `EmbeddedCacheManager` and proceeds with the registration  of an
+instance of it per `EmbeddedCacheManager`.
+It starts the internal caches needed to store the lock state.
+
+Retrieving the `ClusteredLockManager` is as simple as invoking the `EmbeddedClusteredLockManagerFactory.from(EmbeddedCacheManager)`
+as shown in the example below:
+
+[source,java]
+----
+// create or obtain your EmbeddedCacheManager
+EmbeddedCacheManager manager = ...;
+
+// retrieve the ClusteredLockManager
+ClusteredLockManager clusteredLockManager = ClusteredLockManagerFactory.from(manager);
+----
+
+
+[source,java]
+----
+@Experimental
+public interface ClusteredLockManager {
+
+   boolean defineLock(String name);
+
+   boolean defineLock(String name, ClusteredLockConfiguration configuration);
+
+   ClusteredLock get(String name);
+
+   ClusteredLockConfiguration getConfiguration(String name);
+
+   boolean isDefined(String name);
+
+   CompletableFuture<Boolean> remove(String name);
+
+   CompletableFuture<Boolean> forceRelease(String name);
+}
+----
+
+* `defineLock` :
+Defines a lock with the specified name and the default `ClusteredLockConfiguration`. It does not overwrite
+existing configurations.
+
+* `defineLock(String name, ClusteredLockConfiguration configuration)` :
+Defines a lock with the specified name and `ClusteredLockConfiguration`. It does not overwrite existing
+configurations.
+
+* `ClusteredLock get(String name)` :
+Get’s a `ClusteredLock` by it’s name. A call of `defineLock` must be done at least once in the cluster.
+See <<ownership>> level section to understand the implications of `get` method call.
+
+Currently, the only ownership level supported is *NODE*.
+
+* `ClusteredLockConfiguration getConfiguration(String name)` :
+
+Returns the configuration of a `ClusteredLock`, if such exists.
+
+* `boolean isDefined(String name)` :
+Checks if a lock is already defined.
+
+* `CompletableFuture<Boolean> remove(String name)` :
+Removes a `ClusteredLock` if such exists.
+
+* `CompletableFuture<Boolean> forceRelease(String name)` :
+Releases - or unlocks - a `ClusteredLock`, if such exists, no matter who is holding it at a given time.
+Calling this method may cause concurrency issues and has to be used in *exceptional situations*.
+
+
+=== The Clustered Lock
+
+`ClusteredLock` interface, *marked as experimental*, is the interface that implements the clustered locks.
+
+[source,java]
+----
+@Experimental
+public interface ClusteredLock {
+
+   CompletableFuture<Void> lock();
+
+   CompletableFuture<Boolean> tryLock();
+
+   CompletableFuture<Boolean> tryLock(long time, TimeUnit unit);
+
+   CompletableFuture<Void> unlock();
+
+   CompletableFuture<Boolean> isLocked();
+
+   CompletableFuture<Boolean> isLockedByMe();
+}
+
+----
+
+* `lock` :
+Acquires the lock. If the lock is not available then call blocks until the lock is acquired.
+Currently, *there is no maximum time specified for a lock request to fail*, so this could cause thread starvation.
+
+* `tryLock`
+Acquires the lock only if it is free at the time of invocation, and returns `true` in that case. This method does not
+block (or wait) for any lock acquisition.
+
+* `tryLock(long time, TimeUnit unit)`
+If the lock is available this method returns immediately with `true`.
+If the lock is not available then the call waits until :
+   - The lock is acquired
+   - The specified waiting time elapses
+
+If the time is less than or equal to zero, the method will not wait at all.
+
+* `unlock`
+
+Releases the lock. Only the holder of the lock may release the lock.
+
+* `isLocked`
+Returns `true` when the lock is locked and `false` when the lock is released.
+
+* `isLockedByMe`
+Returns `true` when the lock is owned by the caller and `false` when the lock is owned by someone else or it's released.
+
+
+===== Usage Examples
+
+[source,java]
+----
+  EmbeddedCache cm = ...;
+  ClusteredLockManager cclm = ClusteredLockManagerFactory.from(cm);
+
+  lock.tryLock()
+    .thenCompose(result -> {
+       if (result) {
+        try {
+            // manipulate protected state
+            } finally {
+               return lock.unlock();
+            }
+       } else {
+          // Do something else
+       }
+    });
+ }
+----
