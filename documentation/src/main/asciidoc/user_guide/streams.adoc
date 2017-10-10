@@ -118,7 +118,9 @@ This relies on the spec to pick the most specific method as defined link:https:/
 
 In our previous example we used a `Collector` to collect all the results into a `Map`.
 Unfortunately the link:{jdkdocroot}/java/util/stream/Collectors.html[Collectors]
-class doesn't produce Serializable instances.  Thus if you need to use these, you can use the newly provided
+class doesn't produce Serializable instances.  Thus if you need to use these, there are two ways to do so:
+
+One option would be to use the
 link:{javadocroot}/org/infinispan/stream/CacheCollectors.html[CacheCollectors]
 class which allows for a `Supplier<Collector>` to be provided.  This instance could then use the
 link:{jdkdocroot}/java/util/stream/Collectors.html[Collectors]
@@ -130,6 +132,18 @@ collector peforms in a distributed fashion at link:user_guide.html#distributed_s
 Map<Object, String> jbossValues = cache.entrySet().stream()
               .filter(e -> e.getValue().contains("Jboss"))
               .collect(CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+----
+
+Alternatively, you can avoid the use of
+link:{javadocroot}/org/infinispan/stream/CacheCollectors.html[CacheCollectors]
+and instead use the overloaded `collect` methods that take `Supplier<Collector>`.
+These overloaded `collect` methods are only available via `CacheStream` interface.
+
+[source,java]
+----
+Map<Object, String> jbossValues = cache.entrySet().stream()
+              .filter(e -> e.getValue().contains("Jboss"))
+              .collect(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 ----
 
 If however you are not able to use the `Cache` and `CacheStream` interfaces you cannot utilize `Serializable`
@@ -154,7 +168,7 @@ You can use an advanced externalizer as shown below:
 ----
    Map<Object, String> jbossValues = cache.entrySet().stream()
               .filter(new ContainsFilter("Jboss"))
-              .collect(CacheCollectors.serializableCollector(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+              .collect(() -> Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
    class ContainsFilter implements Predicate<Map.Entry<Object, String>> {
       private final String target;
@@ -193,14 +207,14 @@ You can use an advanced externalizer as shown below:
    }
 ----
 
-You could also use an advanced externalizer for the `CacheCollector` supplier to reduce the
+You could also use an advanced externalizer for the collector supplier to reduce the
 payload size even further.
 
 [source,java]
 ----
    Map<Object, String> jbossValues = cache.entrySet().stream()
               .filter(new ContainsFilter("Jboss"))
-              .collect(CacheCollectors.serializableCollector(ToMapCollectorSupplier.INSTANCE);
+              .collect(ToMapCollectorSupplier.INSTANCE);
 
  class ToMapCollectorSupplier<K, U> implements Supplier<Collector<Map.Entry<K, U>, ?, Map<K, U>>> {
       static final ToMapCollectorSupplier INSTANCE = new ToMapCollectorSupplier();
@@ -476,7 +490,7 @@ public class WordCountExample {
       Map<String, Integer> wordCountMap = c1.entrySet().parallelStream()
          .map(e -> e.getValue().split("\\s"))
          .flatMap(Arrays::stream)
-         .collect(CacheCollectors.serializableCollector(() -> Collectors.groupingBy(Function.identity(), Collectors.counting())));
+         .collect(() -> Collectors.groupingBy(Function.identity(), Collectors.counting()));
    }
 }
 
@@ -501,7 +515,7 @@ public class WordCountExample {
       String mostFrequentWord = c1.entrySet().parallelStream()
          .map(e -> e.getValue().split("\\s"))
          .flatMap(Arrays::stream)
-         .collect(CacheCollectors.serializableCollector(() -> Collectors.collectingAndThen(
+         .collect(() -> Collectors.collectingAndThen(
             Collectors.groupingBy(Function.identity(), Collectors.counting()),
                wordCountMap -> {
                   String mostFrequent = null;
@@ -514,7 +528,7 @@ public class WordCountExample {
                         }
                      }
                      return mostFrequent;
-               })));
+               }));
 
 }
 
@@ -535,7 +549,7 @@ public class WordFrequencyExample {
       Map<String, Long> wordCount = c1.entrySet().parallelStream()
               .map(e -> e.getValue().split("\\s"))
               .flatMap(Arrays::stream)
-              .collect(CacheCollectors.serializableCollector(() -> Collectors.groupingBy(Function.identity(), Collectors.counting())));
+              .collect(() -> Collectors.groupingBy(Function.identity(), Collectors.counting()));
       Optional<Map.Entry<String, Long>> mostFrequent = wordCount.entrySet().parallelStream().reduce(
               (e1, e2) -> e1.getValue() > e2.getValue() ? e1 : e2);
 ----
