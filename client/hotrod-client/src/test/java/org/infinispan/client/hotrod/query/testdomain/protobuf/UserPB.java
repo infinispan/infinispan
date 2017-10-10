@@ -21,8 +21,8 @@ public class UserPB implements User {
    private Integer age;
    private Gender gender;
    private String notes;
-   private Instant creationDate = Instant.parse("2011-12-03T10:15:30Z");
-   private Instant passwordExpirationDate = Instant.parse("2011-12-03T10:15:30Z");
+   private Instant creationDate;
+   private Instant passwordExpirationDate;
 
    public int getId() {
       return id;

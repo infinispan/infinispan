@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.embedded;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,6 +55,8 @@ public class QueryStringTest extends AbstractQueryDslTest {
       user1.setAge(22);
       user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
       user1.setNotes("Lorem ipsum dolor sit amet");
+      user1.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
+      user1.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
 
       Address address1 = getModelFactory().makeAddress();
       address1.setStreet("Main Street");
@@ -67,6 +70,8 @@ public class QueryStringTest extends AbstractQueryDslTest {
       user2.setSurname("Man");
       user2.setGender(User.Gender.MALE);
       user2.setAccountIds(Collections.singleton(3));
+      user2.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
+      user2.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
 
       Address address2 = getModelFactory().makeAddress();
       address2.setStreet("Old Street");
@@ -84,6 +89,8 @@ public class QueryStringTest extends AbstractQueryDslTest {
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
       user3.setAccountIds(Collections.emptySet());
+      user3.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
+      user3.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user3.setAddresses(new ArrayList<>());
 
       Transaction transaction0 = getModelFactory().makeTransaction();
