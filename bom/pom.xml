@@ -71,7 +71,7 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.groovy>2.4.8</version.groovy>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
-      <version.hibernate.core>5.2.7.Final</version.hibernate.core>
+      <version.hibernate.core>5.2.11.Final</version.hibernate.core>
       <version.hibernate.search>5.8.1.Final</version.hibernate.search>
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.javax.cache>1.0.0</version.javax.cache>
