@@ -50,10 +50,10 @@ public class UserHS extends UserBase {
    private List<Address> addresses;
 
    @Field(analyze = Analyze.NO, store = Store.YES, index = Index.YES)
-   private Instant creationDate = Instant.parse("2011-12-03T10:15:30Z");
+   private Instant creationDate;
 
    //@Field(analyze = Analyze.NO, store = Store.YES, index = Index.NO)
-   private Instant passwordExpirationDate = Instant.parse("2011-12-03T10:15:30Z");
+   private Instant passwordExpirationDate;
 
    /**
     * This is not indexed!
