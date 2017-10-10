@@ -697,6 +697,14 @@
             <version>${version.commonslang3}</version>
          </dependency>
 
+          <dependency>
+              <groupId>org.infinispan</groupId>
+              <artifactId>infinispan-client-hotrod</artifactId>
+              <version>${version.org.infinispan}</version>
+              <classifier>tests</classifier>
+              <scope>test</scope>
+          </dependency>
+
       </dependencies>
 
    </dependencyManagement>

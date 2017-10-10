@@ -8,6 +8,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.server.test.util.ITestUtils;
 import org.infinispan.server.test.util.PartitionHandlingController;
 import org.infinispan.server.test.util.StandaloneManagementClient;
@@ -38,7 +40,6 @@ public class PartitionHandlingIT {
    final String CONTAINER2 = "partitionhandling-2";
    final String CONTAINER3 = "partitionhandling-3";
 
-   final static int NUM_SEGMENTS = 6;
    final static String DENY_READ_WRITES_CACHE = "denyreadwrites";
    final static String ALLOW_READS_CACHE = "allowreads";
    final static String ALLOW_READS_CACHE_2_OWNERS = "allowreads_2owners";
@@ -92,18 +93,18 @@ public class PartitionHandlingIT {
    // allowReads and denyReadWrites behave the same from the client's view when owners=1
    public void testCommonLogic(String cacheName) {
       eventually(() -> assertNoRebalance(cacheName, server1, server2, server3), 10000);
-      RemoteCacheManager cacheManager = ITestUtils.createCacheManager(server2);
+      RemoteCacheManager cacheManager = ITestUtils.createInternalCacheManager(server2);
       RemoteCache<Object, Object> cache = cacheManager.getCache(cacheName);
 
-      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache, 1);
-      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache, 1);
+      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache);
+      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache);
 
       partitionCluster();
       eventually(() -> assertNoRebalance(cacheName, server1, server2), 10000);
       eventually(() -> assertNoRebalance(cacheName, server3), 10000);
 
-      RemoteCache<Object, Object> cache1 = ITestUtils.createCacheManager(server1).getCache(cacheName);
-      RemoteCache<Object, Object> cache3 = ITestUtils.createCacheManager(server3).getCache(cacheName);
+      RemoteCache<Object, Object> cache1 = ITestUtils.createInternalCacheManager(server1).getCache(cacheName);
+      RemoteCache<Object, Object> cache3 = ITestUtils.createInternalCacheManager(server3).getCache(cacheName);
 
       cache1.put(server1OwnedKey, "value");
       assertEquals("value", cache1.get(server1OwnedKey));
@@ -121,11 +122,11 @@ public class PartitionHandlingIT {
    @Test
    public void testAllowReads2Owners() throws InterruptedException {
       eventually(() -> assertNoRebalance(ALLOW_READS_CACHE_2_OWNERS, server1, server2, server3), 10000);
-      RemoteCacheManager cacheManager = ITestUtils.createCacheManager(server2);
+      RemoteCacheManager cacheManager = ITestUtils.createInternalCacheManager(server2);
       RemoteCache<Object, Object> cache = cacheManager.getCache(ALLOW_READS_CACHE_2_OWNERS);
 
-      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache, 2);
-      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache, 2);
+      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache);
+      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache);
 
       cache.put(server3OwnedKey, "value");
 
@@ -133,8 +134,8 @@ public class PartitionHandlingIT {
       eventually(() -> assertNoRebalance(ALLOW_READS_CACHE_2_OWNERS, server1, server2), 10000);
       eventually(() -> assertNoRebalance(ALLOW_READS_CACHE_2_OWNERS, server3), 10000);
 
-      RemoteCache<Object, Object> allowReadsCache1 = ITestUtils.createCacheManager(server1).getCache(ALLOW_READS_CACHE_2_OWNERS);
-      RemoteCache<Object, Object> allowReadsCache3 = ITestUtils.createCacheManager(server3).getCache(ALLOW_READS_CACHE_2_OWNERS);
+      RemoteCache<Object, Object> allowReadsCache1 = ITestUtils.createInternalCacheManager(server1).getCache(ALLOW_READS_CACHE_2_OWNERS);
+      RemoteCache<Object, Object> allowReadsCache3 = ITestUtils.createInternalCacheManager(server3).getCache(ALLOW_READS_CACHE_2_OWNERS);
 
       allowReadsCache1.put(server1OwnedKey, "value");
       assertEquals("value", allowReadsCache1.get(server1OwnedKey));
@@ -150,11 +151,11 @@ public class PartitionHandlingIT {
    @Test
    public void testAllowReadWrites() throws InterruptedException {
       eventually(() -> assertNoRebalance(ALLOW_READ_WRITES_CACHE, server1, server2, server3), 10000);
-      RemoteCacheManager cacheManager = ITestUtils.createCacheManager(server2);
+      RemoteCacheManager cacheManager = ITestUtils.createInternalCacheManager(server2);
       RemoteCache<Object, Object> cache = cacheManager.getCache(ALLOW_READ_WRITES_CACHE);
 
-      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache, 1);
-      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache, 1);
+      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache);
+      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache);
 
       cache.put(server1OwnedKey, "value");
       cache.put(server3OwnedKey, "value");
@@ -163,8 +164,8 @@ public class PartitionHandlingIT {
       eventually(() -> assertNoRebalance(ALLOW_READ_WRITES_CACHE, server1, server2), 10000);
       eventually(() -> assertNoRebalance(ALLOW_READ_WRITES_CACHE, server3), 10000);
 
-      RemoteCache<Object, Object> allowReadWritesCache1 = ITestUtils.createCacheManager(server1).getCache(ALLOW_READ_WRITES_CACHE);
-      RemoteCache<Object, Object> allowReadWritesCache3 = ITestUtils.createCacheManager(server3).getCache(ALLOW_READ_WRITES_CACHE);
+      RemoteCache<Object, Object> allowReadWritesCache1 = ITestUtils.createInternalCacheManager(server1).getCache(ALLOW_READ_WRITES_CACHE);
+      RemoteCache<Object, Object> allowReadWritesCache3 = ITestUtils.createInternalCacheManager(server3).getCache(ALLOW_READ_WRITES_CACHE);
 
       assertEquals("value", allowReadWritesCache1.get(server1OwnedKey));
       allowReadWritesCache1.put(server1OwnedKey, "value1");
@@ -188,7 +189,7 @@ public class PartitionHandlingIT {
     */
    private boolean assertNoRebalance(String cacheName, RemoteInfinispanServer... servers) {
       return Arrays.stream(servers).allMatch(
-            server -> ITestUtils.createCacheManager(server).getCache(cacheName).getCacheTopologyInfo().getSegmentsPerServer().size() == servers.length);
+            server -> ITestUtils.createInternalCacheManager(server).getCache(cacheName).getCacheTopologyInfo().getSegmentsPerServer().size() == servers.length);
    }
 
    private void partitionCluster() {
@@ -209,8 +210,8 @@ public class PartitionHandlingIT {
       }
    }
 
-   private String getKeyOwnedByNode(String serverAddress, RemoteCacheManager rcm, RemoteCache cache, int owners) {
-      SegmentConsistentHash hash = createHash(cache, NUM_SEGMENTS, owners);
+   private String getKeyOwnedByNode(String serverAddress, RemoteCacheManager rcm, RemoteCache cache) {
+      SegmentConsistentHash hash = createHash(cache);
 
       int segmentOwnedByNode = -1;
       for (Map.Entry<SocketAddress, Set<Integer>> socketAddressToSegments : hash.getSegmentsByServer().entrySet()) {
@@ -229,21 +230,9 @@ public class PartitionHandlingIT {
       return "key" + i;
    }
 
-   private SegmentConsistentHash createHash(RemoteCache cache, int segments, int owners) {
-      SocketAddress[][] mySegmentOwners = new SocketAddress[segments][owners];
-      for (Map.Entry<SocketAddress, Set<Integer>> socketAddressSetEntry : cache.getCacheTopologyInfo().getSegmentsPerServer().entrySet()) {
-         SocketAddress server = socketAddressSetEntry.getKey();
-         for (Integer integer : socketAddressSetEntry.getValue()) {
-            int emptyIndex = 0;
-            while (mySegmentOwners[integer][emptyIndex] != null) {
-               emptyIndex++;
-            }
-            mySegmentOwners[integer][emptyIndex] = server;
-         }
-      }
-      SegmentConsistentHash result = new SegmentConsistentHash();
-      result.init(mySegmentOwners, segments);
-      return result;
+   private SegmentConsistentHash createHash(RemoteCache cache) {
+      TransportFactory transportFactory = ((InternalRemoteCacheManager) cache.getRemoteCacheManager()).getTransportFactory();
+      return (SegmentConsistentHash) transportFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes(cache.getName()));
    }
 
    private byte[] marshall(RemoteCacheManager rcm, Object key) {
