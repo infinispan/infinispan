@@ -6,7 +6,7 @@ import org.infinispan.container.entries.CacheEntry;
  * @author Ryan Emerson
  * @since 9.1
  */
-public class MergePolicies {
+public class ClusterMergePolicies {
 
    public static final EntryMergePolicy PREFERRED_ALWAYS = (preferredEntry, otherEntries) -> preferredEntry;
 

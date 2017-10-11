@@ -329,4 +329,7 @@ public class CacheOperations {
       return response;
    }
 
+   public InfinispanResponse createCache(InfinispanRequest infinispanRequest) {
+      this.restServerConfiguration.adminOperationsHandler().runTask()
+   }
 }
