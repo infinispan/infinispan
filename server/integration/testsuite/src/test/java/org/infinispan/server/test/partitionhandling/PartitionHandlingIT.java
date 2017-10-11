@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.JGroupsProbeClient;
 import org.infinispan.server.test.util.PartitionHandlingController;
 import org.infinispan.server.test.util.StandaloneManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -20,6 +21,7 @@ import org.junit.runner.RunWith;
 
 import java.net.SocketAddress;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -71,11 +73,15 @@ public class PartitionHandlingIT {
          int node1Port = Integer.valueOf(System.getProperty("node1.mgmt.port"));
          int node2Port = Integer.valueOf(System.getProperty("node2.mgmt.port"));
 
-         StandaloneManagementClient[] clients = new StandaloneManagementClient[3];
-         clients[0] = new StandaloneManagementClient(node0Ip, node0Port, "node0");
-         clients[1] = new StandaloneManagementClient(node1Ip, node1Port, "node1");
-         clients[2] = new StandaloneManagementClient(node2Ip, node2Port, "node2");
-         partitionHandlingController = new PartitionHandlingController(clients);
+         StandaloneManagementClient[] managementClients = new StandaloneManagementClient[3];
+         managementClients[0] = new StandaloneManagementClient(node0Ip, node0Port, "node0");
+         managementClients[1] = new StandaloneManagementClient(node1Ip, node1Port, "node1");
+         managementClients[2] = new StandaloneManagementClient(node2Ip, node2Port, "node2");
+         Map<String, JGroupsProbeClient> probeClients = new HashMap<>();
+         probeClients.put("node0", new JGroupsProbeClient("224.0.75.75", 7500));
+         probeClients.put("node1", new JGroupsProbeClient("224.0.75.76", 7500));
+         probeClients.put("node2", new JGroupsProbeClient("224.0.75.77", 7500));
+         partitionHandlingController = new PartitionHandlingController(managementClients, probeClients);
       }
    }
 
@@ -91,7 +97,7 @@ public class PartitionHandlingIT {
    }
 
    // allowReads and denyReadWrites behave the same from the client's view when owners=1
-   public void testCommonLogic(String cacheName) {
+   public void testCommonLogic(String cacheName) throws InterruptedException {
       eventually(() -> assertNoRebalance(cacheName, server1, server2, server3), 10000);
       RemoteCacheManager cacheManager = ITestUtils.createInternalCacheManager(server2);
       RemoteCache<Object, Object> cache = cacheManager.getCache(cacheName);

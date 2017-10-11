@@ -1,6 +1,6 @@
 <stack name="udp">
     <transport type="UDP" socket-binding="jgroups-udp" diagnostics-socket-binding="jgroups-diagnostics"/>
-    <protocol type="PARTITION_HANDLING" />
+    <protocol type="DISCARD" />
     <protocol type="PING"/>
     <protocol type="MERGE3">
         <property name="min_interval">1000</property>

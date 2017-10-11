@@ -45,7 +45,6 @@
     <xsl:param name="trace">none</xsl:param>
     <xsl:param name="remoteStoreHrVersion">none</xsl:param>
     <xsl:param name="addPartitionHandlingProtocol">false</xsl:param>
-    <xsl:param name="jgroupsLibFilename">false</xsl:param>
 
     <xsl:template match="node()|@*" name="copynode">
         <xsl:copy>
@@ -354,19 +353,6 @@
         </xsl:if>
         <xsl:if test="$addPartitionHandlingProtocol != 'false'">
             <xsl:copy-of select="document($addPartitionHandlingProtocol)"/>
-        </xsl:if>
-    </xsl:template>
-
-    <!-- used to modify the module.xml file of the jgroups module -->
-    <xsl:template match="//*[local-name()='resources' and starts-with(namespace-uri(), nsModule)]">
-        <xsl:if test="$jgroupsLibFilename = 'false'">
-            <xsl:call-template name="copynode"/>
-        </xsl:if>
-        <xsl:if test="$jgroupsLibFilename != 'false'">
-            <resources>
-                <xsl:apply-templates select="@* | *"/>
-                <resource-root path="{$jgroupsLibFilename}"/>
-            </resources>
         </xsl:if>
     </xsl:template>
 

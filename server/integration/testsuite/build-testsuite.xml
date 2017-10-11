@@ -5,7 +5,6 @@
     <property name="examples.transform" value="${resources.dir}/config/xslt/examples-modifier.xsl" />
     <property name="default.transform.rest" value="${resources.dir}/config/xslt/rest-sec-config-modifier.xsl" />
     <property name="server1.configs" value="${server1.dist}/standalone/configuration" />
-    <property name="server1.modules" value="${server1.dist}/modules" />
     <property name="server2.configs" value="${server2.dist}/standalone/configuration" />
     <property name="server3.configs" value="${server3.dist}/standalone/configuration" />
     <property name="resources.configs" value="${resources.dir}/config" />
@@ -212,12 +211,15 @@
                    filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-transport-stack.xml" modifyStack="${other.parts}/jgroups-stack.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-l1.xml" modifyInfinispan="${infinispan.parts}/l1.xml" infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"/>
-        <transform in="clustered.xml" out="testsuite/clustered-partitionhandling.xml" modifyInfinispan="${infinispan.parts}/partitionhandling.xml"
+        <transform in="clustered.xml" out="testsuite/clustered-partitionhandling0.xml" modifyInfinispan="${infinispan.parts}/partitionhandling.xml"
                    addPartitionHandlingProtocol="${other.parts}/jgroups-partitionhandling-stack.xml"
-                   addNewJgroupsDiagnosticsSocketBinding="${other.parts}/jgroups-diagnostics-socket-binding.xml"/>
-        <transform transformDir="${server1.modules}"
-                   in="system/layers/base/org/jgroups/main/module.xml" out="system/layers/base/org/jgroups/main/module.xml"
-                   jgroupsLibFilename="${partition.handling.lib.filename}"/>
+                   addNewJgroupsDiagnosticsSocketBinding="${other.parts}/jgroups-diagnostics-socket-binding-0.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-partitionhandling1.xml" modifyInfinispan="${infinispan.parts}/partitionhandling.xml"
+                   addPartitionHandlingProtocol="${other.parts}/jgroups-partitionhandling-stack.xml"
+                   addNewJgroupsDiagnosticsSocketBinding="${other.parts}/jgroups-diagnostics-socket-binding-1.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-partitionhandling2.xml" modifyInfinispan="${infinispan.parts}/partitionhandling.xml"
+                   addPartitionHandlingProtocol="${other.parts}/jgroups-partitionhandling-stack.xml"
+                   addNewJgroupsDiagnosticsSocketBinding="${other.parts}/jgroups-diagnostics-socket-binding-2.xml"/>
         <transform in="standalone.xml" out="testsuite/rest-sec-basic.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec cacheContainer="security" in="@{in}"/>
@@ -406,7 +408,6 @@
         <attribute name="addSecRealm2" default="false"/>
         <attribute name="addConnection" default="false"/>
         <attribute name="remoteStoreHrVersion" default="false"/>
-        <attribute name="jgroupsLibFilename" default="false"/>
         <attribute name="addPartitionHandlingProtocol" default="false"/>
         <element name="jdbc-conf" optional="yes"/>
         <element name="rest-sec" optional="yes"/>
@@ -441,7 +442,6 @@
                 <param name="infinispanFile" expression="@{infinispanFile}"/>
                 <param name="trace" expression="${trace}"/>
                 <param name="remoteStoreHrVersion" expression="${hotrod.protocol.version}"/>
-                <param name="jgroupsLibFilename" expression="@{jgroupsLibFilename}"/>
                 <param name="addPartitionHandlingProtocol" expression="@{addPartitionHandlingProtocol}"/>
             </xslt>
 

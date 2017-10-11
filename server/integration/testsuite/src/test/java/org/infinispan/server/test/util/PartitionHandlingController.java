@@ -1,7 +1,5 @@
 package org.infinispan.server.test.util;
 
-import org.jgroups.protocols.PARTITION_HANDLING;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,59 +9,49 @@ import java.util.Set;
 
 /**
  * Controller that handles managing the cluster's partition handling. Using this controller, you can easily
- * split/merge cluster anyhow you want. It uses a custom JGroups protocol {@link PARTITION_HANDLING}, which
- * is inserted into servers jgroups stack during the test startup via XSLT and some Ant stuff in pom.xml.
+ * split/merge a 3 node cluster anyhow you want.
  *
  * @author Jiri Holusa (jholusa@redhat.com)
  */
 public class PartitionHandlingController {
 
-   private JGroupsProbeClient probeClient = new JGroupsProbeClient();
+   private Map<String, JGroupsProbeClient> probeClients;
 
    StandaloneManagementClient[] clients;
    List<String> nodeNames;
 
-   private static final String JGROUPS_QUERY_PREFIX = "op=PARTITION_HANDLING.";
+   private static final String JGROUPS_QUERY_PREFIX = "op=DISCARD.";
 
-   public PartitionHandlingController(StandaloneManagementClient[] clients) {
+   public PartitionHandlingController(StandaloneManagementClient[] clients, Map<String, JGroupsProbeClient> probeClients) {
       this.clients = clients;
       nodeNames = new ArrayList<>();
+      this.probeClients = probeClients;
       for (StandaloneManagementClient client : clients) {
          nodeNames.add(client.nodeName);
       }
    }
 
    /**
-    * Splits the cluster into any partition you want and waits until it happens. If it doesn't, throws an exception.
+    * Splits the cluster into any partitions you want and waits until it happens. If it doesn't, throws an exception.
     *
-    * To split a 5-node cluster with servers A, B, C, D, E to partitions (A, B, C) and (D, E):
-    * Set<String> part1 = new HashSet<>(Arrays.asList("A", "B", "C"));
-    * Set<String> part2 = new HashSet<>(Arrays.asList("D", "E"));
+    * To split a 3-node cluster with servers A, B and C to partitions (A, B) and (C):
+    * Set<String> part1 = new HashSet<>(Arrays.asList("A", "B"));
+    * Set<String> part2 = new HashSet<>(Arrays.asList("C"));
     * partitionCluster(part1, part2);
     *
     * @param groups division of the partitions, see description of this method for details
     * @throws IllegalStateException when the desired partitioning didn't happen in specified timeout
     */
    public void partitionCluster(Set<String>... groups) {
-      Map<String, Integer> nodeNamesToIndexes = new HashMap<>();
-      int i = 1;
-
-      for (String node: nodeNames) {
-         nodeNamesToIndexes.put(node, i);
-         String query = JGROUPS_QUERY_PREFIX + "setNodeIndex[" + node + "," + i + "]";
-         probeClient.send(query);
-         i++;
-      }
-
       Map<String, String> oldViews = getCurrentViews();
 
       for (Set<String> group: groups) {
-         for (String modifiedNode: group) {
-            String query = JGROUPS_QUERY_PREFIX + "unsetAllowedNodes[" + modifiedNode + "]";
-            probeClient.send(query);
-            for (String otherNode: group) {
-               query = JGROUPS_QUERY_PREFIX + "addAllowedNode[" + modifiedNode + "," + nodeNamesToIndexes.get(otherNode) + "]";
-               probeClient.send(query);
+         if (group.size() == 1) {
+            String node = group.stream().findFirst().get();
+            probeClients.get(node).send(JGROUPS_QUERY_PREFIX + "setDiscardAll[true]");
+         } else {
+            for (String node : group) {
+               probeClients.get(node).send(JGROUPS_QUERY_PREFIX + "setDiscardAll[false]");
             }
          }
       }

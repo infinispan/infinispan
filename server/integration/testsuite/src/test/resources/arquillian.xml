@@ -765,7 +765,7 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">testsuite/clustered-partitionhandling.xml</property>
+                <property name="serverConfig">testsuite/clustered-partitionhandling0.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0
                     -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}
                     -Djgroups.join_timeout=2000
@@ -780,7 +780,7 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
-                <property name="serverConfig">testsuite/clustered-partitionhandling.xml</property>
+                <property name="serverConfig">testsuite/clustered-partitionhandling1.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1
                     -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100 -Djgroups.join_timeout=2000
@@ -795,7 +795,7 @@
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server3.dist}</property>
                 <property name="managementAddress">${node2.ip}</property>
-                <property name="serverConfig">testsuite/clustered-partitionhandling.xml</property>
+                <property name="serverConfig">testsuite/clustered-partitionhandling2.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node2
                     -Djboss.bind.address.management=${node2.ip} -Djboss.bind.address=${node2.ip}
                     -Djboss.socket.binding.port-offset=200 -Djgroups.join_timeout=2000

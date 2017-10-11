@@ -15,12 +15,17 @@ import java.net.MulticastSocket;
  */
 public class JGroupsProbeClient {
 
-   private static final String ADDRESS = System.getProperty("partition.handling.diagnostics.address","224.0.75.75");
-   private static final int PORT = Integer.parseInt(System.getProperty("partition.handling.diagnostics.port", "7500"));
+   private String address = System.getProperty("partition.handling.diagnostics.address","224.0.75.75");
+   private int port = Integer.parseInt(System.getProperty("partition.handling.diagnostics.port", "7500"));
 
    private static final int SOCKET_TIMEOUT = 20000;
 
    protected static Log log = LogFactory.getLog(JGroupsProbeClient.class);
+
+   public JGroupsProbeClient(String diagnosticsAddress, int diagnosticsPort) {
+      address = diagnosticsAddress;
+      port = diagnosticsPort;
+   }
 
    /**
     * Sends JGroups Probe query to defined address.
@@ -35,8 +40,8 @@ public class JGroupsProbeClient {
       try {
          socket = new MulticastSocket();
          socket.setSoTimeout(SOCKET_TIMEOUT);
-         InetAddress targetAddress = InetAddress.getByName(ADDRESS);
-         DatagramPacket packet = new DatagramPacket(payload, 0, payload.length, targetAddress, PORT);
+         InetAddress targetAddress = InetAddress.getByName(address);
+         DatagramPacket packet = new DatagramPacket(payload, 0, payload.length, targetAddress, port);
          socket.send(packet);
 
          long start = System.currentTimeMillis();
