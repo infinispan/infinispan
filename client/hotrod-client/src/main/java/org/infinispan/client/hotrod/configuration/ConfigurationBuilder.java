@@ -61,7 +61,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private Class<? extends Marshaller> marshallerClass;
    private Marshaller marshaller;
    private ProtocolVersion protocolVersion = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
-   private final List<ServerConfigurationBuilder> servers = new ArrayList<ServerConfigurationBuilder>();
+   private final List<ServerConfigurationBuilder> servers = new ArrayList<>();
    private int socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
    private final SecurityConfigurationBuilder security;
    private boolean tcpNoDelay = true;
@@ -428,6 +428,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       for (ServerConfiguration server : template.servers()) {
          this.addServer().host(server.host()).port(server.port());
       }
+      this.clusters.clear();
+      template.clusters().forEach(cluster -> this.addCluster(cluster.getClusterName()).read(cluster));
       this.socketTimeout = template.socketTimeout();
       this.security.read(template.security());
       this.tcpNoDelay = template.tcpNoDelay();
