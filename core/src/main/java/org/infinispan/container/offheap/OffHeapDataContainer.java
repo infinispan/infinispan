@@ -39,7 +39,6 @@ import org.infinispan.util.logging.LogFactory;
 public class OffHeapDataContainer implements DataContainer<WrappedBytes, WrappedBytes> {
    protected final Log log = LogFactory.getLog(getClass());
    protected final boolean trace = log.isTraceEnabled();
-   protected static final UnsafeWrapper UNSAFE = UnsafeWrapper.INSTANCE;
 
    protected final AtomicLong size = new AtomicLong();
    protected final int lockCount;
@@ -144,7 +143,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    protected InternalCacheEntry<WrappedBytes, WrappedBytes> performGet(long address, Object k) {
       WrappedBytes wrappedKey = toWrapper(k);
       while (address != 0) {
-         long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+         long nextAddress = offHeapEntryFactory.getNext(address);
          InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
          if (wrappedKey.equalsWrappedBytes(ice.getKey())) {
             entryRetrieved(address);
@@ -199,7 +198,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          long prevAddress = 0;
          // Keep looping until we get the tail end - we always append the put to the end
          while (address != 0) {
-            long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+            long nextAddress = offHeapEntryFactory.getNext(address);
             if (!foundKey) {
                if (offHeapEntryFactory.equalsKey(address, key)) {
                   entryReplaced(newAddress, address);
@@ -217,7 +216,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
                   } else {
                      // This branch means our node was not the first, so we have to update the address before ours
                      // to the one we previously referenced
-                     UNSAFE.putLong(prevAddress, nextAddress);
+                     offHeapEntryFactory.setNext(prevAddress, nextAddress);
                      // We purposely don't update prevAddress, because we have to keep it as the current pointer
                      // since we removed ours
                      address = nextAddress;
@@ -237,7 +236,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             memoryLookup.putMemoryAddress(key, newAddress);
          } else {
             // Now prevAddress should be the last link so we fix our link
-            offHeapEntryFactory.updateNextLinkedPointerAddress(prevAddress, newAddress);
+            offHeapEntryFactory.setNext(prevAddress, newAddress);
          }
       }
    }
@@ -284,7 +283,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          WrappedByteArray wba = toWrapper(k);
 
          while (address != 0) {
-            long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+            long nextAddress = offHeapEntryFactory.getNext(address);
             if (offHeapEntryFactory.equalsKey(address, wba)) {
                return true;
             }
@@ -332,14 +331,14 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       long prevAddress = 0;
 
       while (address != 0) {
-         long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+         long nextAddress = offHeapEntryFactory.getNext(address);
          InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
          if (ice.getKey().equals(wba)) {
             entryRemoved(address);
             // Free the node
             allocator.deallocate(address);
             if (prevAddress != 0) {
-               UNSAFE.putLong(prevAddress, nextAddress);
+               offHeapEntryFactory.setNext(prevAddress, nextAddress);
             } else {
                memoryLookup.putMemoryAddress(key, nextAddress);
             }
@@ -381,7 +380,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       }
       memoryLookup.toStreamRemoved().forEach(address -> {
          while (address != 0) {
-            long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+            long nextAddress = offHeapEntryFactory.getNext(address);
             allocator.deallocate(address);
             address = nextAddress;
          }
@@ -538,7 +537,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             for (int j = i; j < memoryAddressCount; j += lockCount) {
                long address = memoryLookup.getMemoryAddressOffset(j);
                while (address != 0) {
-                  long nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+                  long nextAddress = offHeapEntryFactory.getNext(address);
                   InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
                   consumer.accept(ice);
                   address = nextAddress;
@@ -584,7 +583,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
                   Stream.Builder<InternalCacheEntry<WrappedBytes, WrappedBytes>> builder = Stream.builder();
                   long nextAddress;
                   do {
-                     nextAddress = offHeapEntryFactory.getNextLinkedPointerAddress(address);
+                     nextAddress = offHeapEntryFactory.getNext(address);
                      builder.accept(offHeapEntryFactory.fromMemory(address));
                   } while ((address = nextAddress) != 0);
                   return builder.build();

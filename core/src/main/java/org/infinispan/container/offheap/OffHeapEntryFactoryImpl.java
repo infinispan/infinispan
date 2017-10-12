@@ -22,7 +22,8 @@ import org.infinispan.util.TimeService;
  * @since 9.0
  */
 public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
-   private static final UnsafeWrapper UNSAFE = UnsafeWrapper.INSTANCE;
+   private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
+   private static final byte[] EMPTY_BYTES = new byte[0];
 
    private Marshaller marshaller;
    private OffHeapMemoryAllocator allocator;
@@ -39,8 +40,6 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final byte MORTAL = 1 << 3;
    private static final byte TRANSIENT = 1 << 4;
    private static final byte TRANSIENT_MORTAL = 1 << 5;
-
-   private static final int BYTE_ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(byte[].class);
 
    /**
     * HEADER is composed of hashCode (int), keyLength (int), metadataLength (int), valueLength (int), type (byte)
@@ -69,7 +68,6 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       byte type;
       byte[] metadataBytes;
       if (metadata instanceof EmbeddedMetadata) {
-
          EntryVersion version = metadata.version();
          byte[] versionBytes;
          if (version != null) {
@@ -81,7 +79,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
             }
          } else {
             type = 0;
-            versionBytes = new byte[0];
+            versionBytes = EMPTY_BYTES;
          }
 
          long lifespan = metadata.lifespan();
@@ -121,84 +119,83 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          }
       }
       int keySize = key.getLength();
-      int valueSize = value.getLength();
       int metadataSize = metadataBytes.length;
-      long totalSize = 8 + HEADER_LENGTH + keySize + metadataSize + valueSize;
-
-      long memoryAddress;
-      long memoryOffset;
+      int valueSize = value.getLength();
 
       // Eviction requires an additional memory pointer at the beginning that points to
       // its linked node
-      if (evictionEnabled) {
-         memoryAddress = allocator.allocate(totalSize + 8);
-         memoryOffset = memoryAddress + 8;
-      } else {
-         memoryAddress = allocator.allocate(totalSize);
-         memoryOffset =  memoryAddress;
-      }
+      int headerOffset = evictionEnabled ? 8 : 0;
+      long totalSize = 8 + headerOffset + HEADER_LENGTH + keySize + metadataSize + valueSize;
+      long memoryAddress = allocator.allocate(totalSize + headerOffset);
 
-      int offset = 0;
-      byte[] header = new byte[HEADER_LENGTH];
-
-      Bits.putInt(header, offset, key.hashCode());
-      offset += 4;
-      Bits.putInt(header, offset, key.getLength());
-      offset += 4;
-      Bits.putInt(header, offset, metadataBytes.length);
-      offset += 4;
-      Bits.putInt(header, offset, value.getLength());
-      offset += 4;
-      header[offset++] = type;
-
+      int offset = evictionEnabled ? 8 : 0;
 
       // Write the empty linked address pointer first
-      UNSAFE.putLong(memoryOffset, 0);
-      memoryOffset += 8;
+      MEMORY.putLong(memoryAddress, offset, 0);
+      offset += 8;
 
-      UNSAFE.copyMemory(header, BYTE_ARRAY_BASE_OFFSET, null, memoryOffset, HEADER_LENGTH);
-      memoryOffset += HEADER_LENGTH;
+      MEMORY.putInt(memoryAddress, offset, key.hashCode());
+      offset += 4;
+      MEMORY.putInt(memoryAddress, offset, key.getLength());
+      offset += 4;
+      MEMORY.putInt(memoryAddress, offset, metadataBytes.length);
+      offset += 4;
+      MEMORY.putInt(memoryAddress, offset, value.getLength());
+      offset += 4;
+      MEMORY.putByte(memoryAddress, offset, type);
+      offset += 1;
 
-      UNSAFE.copyMemory(key.getBytes(), key.backArrayOffset() + BYTE_ARRAY_BASE_OFFSET, null, memoryOffset, keySize);
-      memoryOffset += keySize;
+      MEMORY.putBytes(key.getBytes(), key.backArrayOffset(), memoryAddress, offset, keySize);
+      offset += keySize;
 
-      UNSAFE.copyMemory(metadataBytes, BYTE_ARRAY_BASE_OFFSET, null, memoryOffset, metadataSize);
-      memoryOffset += metadataSize;
+      MEMORY.putBytes(metadataBytes, 0, memoryAddress, offset, metadataSize);
+      offset += metadataSize;
 
-      UNSAFE.copyMemory(value.getBytes(), value.backArrayOffset() + BYTE_ARRAY_BASE_OFFSET, null, memoryOffset,
-            valueSize);
+      MEMORY.putBytes(value.getBytes(), value.backArrayOffset(), memoryAddress, offset, valueSize);
+      offset += valueSize;
+
+      assert offset == totalSize;
 
       return memoryAddress;
    }
 
    @Override
-   public long determineSize(long address) {
-      int beginningOffset = evictionEnabled ? 16 : 8;
-      byte[] header = readHeader(beginningOffset + address);
+   public long getSize(long entryAddress) {
+      int headerOffset = evictionEnabled ? 16 : 8;
 
-      int keyLength = Bits.getInt(header, 4);
-      int metadataLength = Bits.getInt(header, 8);
-      int valueLength = Bits.getInt(header, 12);
+      int keyLength = MEMORY.getInt(entryAddress, headerOffset + 4);
+      int metadataLength = MEMORY.getInt(entryAddress, headerOffset + 8);
+      int valueLength = MEMORY.getInt(entryAddress, headerOffset + 12);
 
-      return beginningOffset + HEADER_LENGTH + keyLength + metadataLength + valueLength;
+      return headerOffset + HEADER_LENGTH + keyLength + metadataLength + valueLength;
    }
 
    @Override
-   public long getNextLinkedPointerAddress(long address) {
-      return UNSAFE.getLong(evictionEnabled ? address + 8 : address);
+   public long getNext(long entryAddress) {
+      return MEMORY.getLong(entryAddress, evictionEnabled ? 8 : 0);
    }
 
    @Override
-   public void updateNextLinkedPointerAddress(long address, long value) {
-      UNSAFE.putLong(evictionEnabled ? address + 8 : address, value);
+   public void setNext(long entryAddress, long value) {
+      MEMORY.putLong(entryAddress, evictionEnabled ? 8 : 0, value);
    }
 
    @Override
-   public int getHashCodeForAddress(long address) {
+   public long getLruNode(long entryAddress) {
+      return MEMORY.getLong(entryAddress, 0);
+   }
+
+   @Override
+   public void setLruNode(long entryAddress, long value) {
+      MEMORY.putLong(entryAddress, 0, value);
+   }
+
+   @Override
+   public int getHashCode(long entryAddress) {
       // 8 bytes for eviction if needed (optional)
       // 8 bytes for linked pointer
-      byte[] header = readHeader(evictionEnabled ? address + 16 : address + 8);
-      return Bits.getInt(header, 0);
+      int headerOffset = evictionEnabled ? 16 : 8;
+      return MEMORY.getInt(entryAddress, headerOffset);
    }
 
    /**
@@ -208,29 +205,26 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
     */
    @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> fromMemory(long address) {
-      address += (evictionEnabled ? 16 : 8);
-      byte[] header = readHeader(address);
+      int headerOffset = evictionEnabled ? 16 : 8;
 
-      int offset = 0;
-      int hashCode = Bits.getInt(header, offset);
+      int offset = headerOffset;
+      int hashCode = MEMORY.getInt(address, offset);
       offset += 4;
-      byte[] keyBytes = new byte[Bits.getInt(header, offset)];
+      byte[] keyBytes = new byte[MEMORY.getInt(address, offset)];
       offset += 4;
-      byte[] metadataBytes = new byte[Bits.getInt(header, offset)];
+      byte[] metadataBytes = new byte[MEMORY.getInt(address, offset)];
       offset += 4;
-      byte[] valueBytes = new byte[Bits.getInt(header, offset)];
+      byte[] valueBytes = new byte[MEMORY.getInt(address, offset)];
       offset += 4;
+      byte metadataType = MEMORY.getByte(address, offset);
+      offset += 1;
 
-      byte metadataType = header[offset++];
-
-      long memoryOffset = address + offset;
-
-      UNSAFE.copyMemory(null, memoryOffset, keyBytes, BYTE_ARRAY_BASE_OFFSET, keyBytes.length);
-      memoryOffset += keyBytes.length;
-      UNSAFE.copyMemory(null, memoryOffset, metadataBytes, BYTE_ARRAY_BASE_OFFSET, metadataBytes.length);
-      memoryOffset += metadataBytes.length;
-      UNSAFE.copyMemory(null, memoryOffset, valueBytes, BYTE_ARRAY_BASE_OFFSET, valueBytes.length);
-      memoryOffset += valueBytes.length;
+      MEMORY.getBytes(address, offset, keyBytes, 0, keyBytes.length);
+      offset += keyBytes.length;
+      MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
+      offset += metadataBytes.length;
+      MEMORY.getBytes(address, offset, valueBytes, 0, valueBytes.length);
+      offset += valueBytes.length;
 
       Metadata metadata;
       // This is a custom metadata
@@ -296,19 +290,12 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
    @Override
    public WrappedBytes getKey(long address) {
-      address += (evictionEnabled ? 16 : 8);
-      byte[] header = readHeader(address);
-      int keyLength = Bits.getInt(header, 4);
+      long headerOffset = (evictionEnabled ? 16 : 8);
+      int keyLength = MEMORY.getInt(address, headerOffset + 4);
       byte[] keyBytes = new byte[keyLength];
 
-      UNSAFE.copyMemory(null, address + HEADER_LENGTH, keyBytes, BYTE_ARRAY_BASE_OFFSET, keyBytes.length);
+      MEMORY.getBytes(address, headerOffset + HEADER_LENGTH, keyBytes, 0, keyBytes.length);
       return new WrappedByteArray(keyBytes);
-   }
-
-   private byte[] readHeader(long address) {
-      byte[] header = new byte[HEADER_LENGTH];
-      UNSAFE.copyMemory(null, address, header, BYTE_ARRAY_BASE_OFFSET, header.length);
-      return header;
    }
 
    /**
@@ -319,17 +306,21 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
     */
    @Override
    public boolean equalsKey(long address, WrappedBytes wrappedBytes) {
-      address += evictionEnabled ? 16 : 8;
-      byte[] header = readHeader(address);
+      int headerOffset = evictionEnabled ? 16 : 8;
       int hashCode = wrappedBytes.hashCode();
-      if (hashCode != Bits.getInt(header, 0)) {
+      if (hashCode != MEMORY.getInt(address, headerOffset)) {
          return false;
       }
-      int keyLength = Bits.getInt(header, 4);
-      byte[] keyBytes = new byte[keyLength];
-      UNSAFE.copyMemory(null, address + HEADER_LENGTH, keyBytes,
-            BYTE_ARRAY_BASE_OFFSET, keyLength);
+      int keyLength = MEMORY.getInt(address, headerOffset + 4);
+      if (keyLength != wrappedBytes.getLength()) {
+         return false;
+      }
+      for (int i = 0; i < keyLength; i++) {
+         byte b = MEMORY.getByte(address, headerOffset + HEADER_LENGTH + i);
+         if (b != wrappedBytes.getByte(i))
+            return false;
+      }
 
-      return new WrappedByteArray(keyBytes, hashCode).equalsWrappedBytes(wrappedBytes);
+      return true;
    }
 }
