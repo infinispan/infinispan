@@ -12,7 +12,7 @@ public class OffHeapSingleNodeStressTest extends OffHeapMultiNodeStressTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.LOCAL, false);
       dcc.memory().storageType(StorageType.OFF_HEAP);
       // Only start up the 1 cache
       addClusterEnabledCacheManager(dcc);
