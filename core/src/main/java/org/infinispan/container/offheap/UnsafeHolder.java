@@ -12,8 +12,8 @@ import sun.misc.Unsafe;
  * @author wburns
  * @since 9.0
  */
-public class UnsafeHolder {
-   public static Unsafe UNSAFE = UnsafeHolder.getUnsafe();
+class UnsafeHolder {
+   static Unsafe UNSAFE = UnsafeHolder.getUnsafe();
 
    @SuppressWarnings("restriction")
    private static Unsafe getUnsafe() {
@@ -32,7 +32,6 @@ public class UnsafeHolder {
          throw new CacheException((Exception) maybeUnsafe);
       } else {
          return (Unsafe) maybeUnsafe;
-
       }
    }
 }

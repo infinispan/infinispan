@@ -25,14 +25,14 @@ public interface OffHeapEntryFactory {
     * @param address the address of the entry
     * @return how many bytes this address was allocated as
     */
-   long determineSize(long address);
+   long getSize(long address);
 
    /**
     * Returns the address to the next linked pointer if there is one for this bucket or 0 if there isn't one
     * @param address the address of the entry
     * @return the next address entry for this bucket or 0
     */
-   long getNextLinkedPointerAddress(long address);
+   long getNext(long address);
 
    /**
     * Called to update the next pointer index when a collision occurs requiring a linked list within the entries
@@ -40,14 +40,18 @@ public interface OffHeapEntryFactory {
     * @param address the address of the entry to update
     * @param value the value of the linked node to set
     */
-   void updateNextLinkedPointerAddress(long address, long value);
+   void setNext(long address, long value);
+
+   long getLruNode(long entryAddress);
+
+   void setLruNode(long entryAddress, long value);
 
    /**
     * Returns the hashCode of the address.  This
     * @param address the address of the entry
     * @return the has code of the entry
     */
-   int getHashCodeForAddress(long address);
+   int getHashCode(long address);
 
    /**
     * Create an entry from the off heap pointer
