@@ -4,7 +4,7 @@ Alternatively, if transaction support is disabled, it is equivalent to using aut
 
 On every cache operation Infinispan does the following:
 
-. Retrieves the current link:{javaeedocroot}/javax/transaction/Transaction.htmll[Transaction] associated with the thread
+. Retrieves the current link:{javaeedocroot}/javax/transaction/Transaction.html[Transaction] associated with the thread
 . If not already done, registers link:{javaeedocroot}/javax/transaction/xa/XAResource.html[XAResource] with the transaction manager to be notified when a transaction commits or is rolled back.
 
 In order to do this, the cache has to be provided with a reference to the environment's link:{javaeedocroot}/javax/transaction/TransactionManager.html[TransactionManager].
@@ -304,7 +304,7 @@ There are situations where Infinispan is not required to be a participant in the
 Starting with 5.0 release, Infinispan allows transaction enlistment through link:{javaeedocroot}/javax/transaction/Synchronization.html[Synchronisation].
 To enable it just use `NON_XA` transaction mode.
 
-``Synchronization``s have the advantage that they allow `TransactionManager` to optimize 2PC with a 1PC where only one other resource is enlisted with that transaction (link:https://access.redhat.com/documentation/en-US/JBoss_Enterprise_Application_Platform/5/html/Administration_And_Configuration_Guide/lrco-overview.html[last resource commit optimization]).
+``Synchronization``s have the advantage that they allow `TransactionManager` to optimize 2PC with a 1PC where only one other resource is enlisted with that transaction (link:https://access.redhat.com/documentation/en-us/red_hat_jboss_enterprise_application_platform/7.0/html/development_guide/java_transaction_api_jta#about_the_lrco_optimization_for_single_phase_commit_1pc[last resource commit optimization]).
 E.g. Hibernate second level cache: if Infinispan registers itself with the `TransactionManager` as a `XAResource` than at commit time, the `TransactionManager` sees two `XAResource` (cache and database) and does not make this optimization.
 Having to coordinate between two resources it needs to write the tx log to disk.
 On the other hand, registering Infinispan as a `Synchronisation` makes the `TransactionManager` skip writing the log to the disk (performance improvement).
