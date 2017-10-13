@@ -330,6 +330,7 @@ public class CacheOperations {
    }
 
    public InfinispanResponse createCache(InfinispanRequest infinispanRequest) {
-      this.restServerConfiguration.adminOperationsHandler().runTask()
+      infinispanRequest.h
+      this.restServerConfiguration.adminOperationsHandler().createCache(infinispanRequest.getCacheName());
    }
 }

@@ -340,10 +340,10 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    Health getHealth();
 
    /**
-    * Provides an {@link EmbeddedCacheManager} whose methods affect the entire cluster as opposed to a single node.
+    * Provides an {@link ClusterCacheManager} whose methods affect the entire cluster as opposed to a single node.
     *
-    * @since 9.1
-    * @return a cluster-aware {@link EmbeddedCacheManager}
+    * @since 9.2
+    * @return a cluster-aware {@link ClusterCacheManager}
     */
    default ClusterCacheManager cluster() {
       throw new UnsupportedOperationException();
