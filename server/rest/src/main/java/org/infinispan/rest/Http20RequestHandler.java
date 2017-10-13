@@ -40,6 +40,7 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
    protected final ContextChecker contextChecker;
 
    protected final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
+   public static final HttpMethod MKCOL = new HttpMethod("MKCOL");
 
    /**
     * Creates new {@link Http20RequestHandler}.
@@ -94,6 +95,9 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
             } else {
                response = cacheOperations.deleteCacheValue(infinispanRequest);
             }
+         } else if (request.method().equals(MKCOL)) {
+            response = cacheOperations.createCache(infinispanRequest);
+
          }
       } catch (RestResponseException responseException) {
          logger.errorWhileReponding(responseException);

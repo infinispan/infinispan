@@ -3,7 +3,8 @@ package org.infinispan.commons.configuration.attributes;
 import org.infinispan.commons.util.Util;
 
 /**
- * SimpleInstanceAttributeCopier. This {@link AttributeCopier} "copies" an instance by creating a new instance
+ * SimpleInstanceAttributeCopier. This {@link AttributeCopier} "copies" an instance by creating a new instance. It does
+ * not copy any fields.
  *
  * @author Tristan Tarrant
  * @since 7.2

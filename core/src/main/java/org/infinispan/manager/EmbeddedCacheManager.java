@@ -73,7 +73,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * If templateName is null or there isn't any named cache with that name, this methods works exactly like {@link
     * #defineConfiguration(String, Configuration)}.
     * <p/>
-    * If this cache was already configured either declaritively or programmatically this method will throw a
+    * If this cache was already configured either declaratively or programmatically this method will throw a
     * {@link org.infinispan.commons.CacheConfigurationException}.
     * @param cacheName             name of cache whose configuration is being defined
     * @param templateCacheName     name of cache to use as a template before overrides are applied to it
@@ -206,6 +206,19 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    boolean cacheExists(String cacheName);
 
    /**
+    * Creates a cache on the local node using the supplied configuration. The cache may be clustered, but this
+    * method (or an equivalent combinatio of {@link #defineConfiguration(String, Configuration)} and
+    * {@link #getCache(String, boolean)}) needs to be invoked on all nodes.
+    *
+    * @param name the name of the cache
+    * @param configuration the configuration to use.
+    * @param <K> the generic type of the key
+    * @param <V> the generic type of the value
+    * @return the cache
+    */
+   <K, V> Cache<K, V> createCache(String name, Configuration configuration);
+
+   /**
     * Retrieves a named cache from the system in the same way that {@link
     * #getCache(String)} does except that if offers the possibility for the
     * named cache not to be retrieved if it has not yet been started, or if
@@ -325,4 +338,14 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * @return Health API for this {@link EmbeddedCacheManager}.
      */
    Health getHealth();
+
+   /**
+    * Provides an {@link ClusterCacheManager} whose methods affect the entire cluster as opposed to a single node.
+    *
+    * @since 9.2
+    * @return a cluster-aware {@link ClusterCacheManager}
+    */
+   default ClusterCacheManager cluster() {
+      throw new UnsupportedOperationException();
+   }
 }

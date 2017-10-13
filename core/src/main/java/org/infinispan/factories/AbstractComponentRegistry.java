@@ -557,7 +557,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    protected void postStart() {
       List<PrioritizedMethod> methods = new ArrayList<>(componentLookup.size());
       for (Component c : componentLookup.values()) {
-         Collections.addAll(methods, c.postStartMethods);
+         if (c != null)
+            Collections.addAll(methods, c.postStartMethods);
       }
 
       // fire all POSTSTART methods according to priority

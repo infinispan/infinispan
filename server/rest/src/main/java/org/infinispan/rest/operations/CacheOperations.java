@@ -329,4 +329,8 @@ public class CacheOperations {
       return response;
    }
 
+   public InfinispanResponse createCache(InfinispanRequest infinispanRequest) {
+      infinispanRequest.h
+      this.restServerConfiguration.adminOperationsHandler().createCache(infinispanRequest.getCacheName());
+   }
 }
