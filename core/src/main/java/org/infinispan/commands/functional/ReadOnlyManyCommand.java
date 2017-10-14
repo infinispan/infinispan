@@ -24,13 +24,13 @@ import org.infinispan.functional.impl.Params;
 public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedCommand implements LocalCommand {
    public static final int COMMAND_ID = 63;
 
-   protected Collection<? extends K> keys;
+   protected Collection<?> keys;
    protected Function<ReadEntryView<K, V>, R> f;
    protected Params params;
    protected DataConversion keyDataConversion;
    protected DataConversion valueDataConversion;
 
-   public ReadOnlyManyCommand(Collection<? extends K> keys,
+   public ReadOnlyManyCommand(Collection<?> keys,
                               Function<ReadEntryView<K, V>, R> f,
                               Params params,
                               DataConversion keyDataConversion,
@@ -62,15 +62,15 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
       componentRegistry.wireDependencies(valueDataConversion);
    }
 
-   public Collection<? extends K> getKeys() {
+   public Collection<?> getKeys() {
       return keys;
    }
 
-   public void setKeys(Collection<? extends K> keys) {
+   public void setKeys(Collection<?> keys) {
       this.keys = keys;
    }
 
-   public final ReadOnlyManyCommand<K, V, R> withKeys(Collection<? extends K> keys) {
+   public final ReadOnlyManyCommand<K, V, R> withKeys(Collection<?> keys) {
       setKeys(keys);
       return this;
    }
@@ -95,8 +95,8 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
       MarshallUtil.marshallCollection(keys, output);
       output.writeObject(f);
       Params.writeObject(output, params);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
@@ -105,23 +105,25 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractTopologyAffectedComman
       this.f = (Function<ReadEntryView<K, V>, R>) input.readObject();
       this.params = Params.readObject(input);
       this.setFlagsBitSet(params.toFlagsBitSet());
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       // lazy execution triggers exceptions on unexpected places
       ArrayList<R> retvals = new ArrayList<R>(keys.size());
-      for (K k : keys) {
-         CacheEntry<K, V> me = lookupCacheEntry(ctx, k);
-         R ret = f.apply(me.isNull() ? EntryViews.noValue(k, keyDataConversion) : EntryViews.readOnly(me, keyDataConversion, valueDataConversion));
-         retvals.add(snapshot(ret));
+      for (Object k : keys) {
+         CacheEntry me = lookupCacheEntry(ctx, k);
+         ReadEntryView<K, V> view = me.isNull() ?
+               EntryViews.noValue(k, keyDataConversion) :
+               EntryViews.readOnly(me, keyDataConversion, valueDataConversion);
+         retvals.add(snapshot(f.apply(view)));
       }
       return retvals.stream();
    }
 
-   protected CacheEntry<K, V> lookupCacheEntry(InvocationContext ctx, Object key) {
+   protected CacheEntry lookupCacheEntry(InvocationContext ctx, Object key) {
       return ctx.lookupEntry(key);
    }
 

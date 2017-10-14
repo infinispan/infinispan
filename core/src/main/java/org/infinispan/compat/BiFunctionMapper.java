@@ -57,15 +57,14 @@ public class BiFunctionMapper implements BiFunction {
       @Override
       public void writeObject(ObjectOutput output, BiFunctionMapper object) throws IOException {
          output.writeObject(object.biFunction);
-         output.writeObject(object.keyDataConversion);
-         output.writeObject(object.valueDataConversion);
+         DataConversion.writeTo(output, object.keyDataConversion);
+         DataConversion.writeTo(output, object.valueDataConversion);
       }
 
       @Override
       public BiFunctionMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new BiFunctionMapper((BiFunction) input.readObject(),
-               (DataConversion) input.readObject(),
-               (DataConversion) input.readObject());
+               DataConversion.readFrom(input), DataConversion.readFrom(input));
       }
    }
 }

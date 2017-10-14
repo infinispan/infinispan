@@ -23,10 +23,10 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    public static final byte COMMAND_ID = 56;
 
-   private Collection<? extends K> keys;
+   private Collection<?> keys;
    private Consumer<WriteEntryView<V>> f;
 
-   public WriteOnlyManyCommand(Collection<? extends K> keys,
+   public WriteOnlyManyCommand(Collection<?> keys,
                                Consumer<WriteEntryView<V>> f,
                                Params params,
                                CommandInvocationId commandInvocationId,
@@ -50,11 +50,11 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    public WriteOnlyManyCommand() {
    }
 
-   public void setKeys(Collection<? extends K> keys) {
+   public void setKeys(Collection<?> keys) {
       this.keys = keys;
    }
 
-   public final WriteOnlyManyCommand<K, V> withKeys(Collection<? extends K> keys) {
+   public final WriteOnlyManyCommand<K, V> withKeys(Collection<?> keys) {
       setKeys(keys);
       return this;
    }
@@ -73,8 +73,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       Params.writeObject(output, params);
       output.writeInt(topologyId);
       output.writeLong(flags);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
@@ -86,8 +86,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
       params = Params.readObject(input);
       topologyId = input.readInt();
       flags = input.readLong();
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    @Override
@@ -97,8 +97,8 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      for (K k : keys) {
-         CacheEntry<K, V> cacheEntry = ctx.lookupEntry(k);
+      for (Object k : keys) {
+         CacheEntry cacheEntry = ctx.lookupEntry(k);
          if (cacheEntry == null) {
             throw new IllegalStateException();
          }
@@ -141,14 +141,13 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
-      // TODO: fixup the generics
-      return (Collection<Object>) keys;
+   public Collection<?> getKeysToLock() {
+      return keys;
    }
 
    @Override
-   public Mutation<K, V, ?> toMutation(K key) {
-      return new Mutations.Write<>(f);
+   public Mutation<K, V, ?> toMutation(Object key) {
+      return new Mutations.Write<>(keyDataConversion, valueDataConversion, f);
    }
 
    @Override

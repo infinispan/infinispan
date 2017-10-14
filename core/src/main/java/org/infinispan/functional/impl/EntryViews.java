@@ -39,7 +39,7 @@ public final class EntryViews {
       return new EntryBackedReadOnlyView<>(entry, keyDataConversion, valueDataConversion);
    }
 
-   public static <K, V> ReadEntryView<K, V> readOnly(CacheEntry<K, V> entry) {
+   public static <K, V> ReadEntryView<K, V> readOnly(CacheEntry entry) {
       return new EntryBackedReadOnlyView<>(entry, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
    }
 
@@ -47,23 +47,23 @@ public final class EntryViews {
       return new ReadOnlySnapshotView<>(key, value, metadata);
    }
 
-   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry, DataConversion valueDataConversion) {
+   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry entry, DataConversion valueDataConversion) {
       return new EntryBackedWriteOnlyView<>(entry, valueDataConversion);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return new EntryBackedReadWriteView<>(entry, keyDataConversion, valueDataConversion);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, V prevValue, Metadata prevMetadata, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry entry, Object prevValue, Metadata prevMetadata, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return new EntryAndPreviousReadWriteView<>(entry, prevValue, prevMetadata, keyDataConversion, valueDataConversion);
    }
 
-   public static <K, V> ReadEntryView<K, V> noValue(K key) {
+   public static <K, V> ReadEntryView<K, V> noValue(Object key) {
       return new NoValueReadOnlyView<>(key, null);
    }
 
-   public static <K, V> ReadEntryView<K, V> noValue(K key, DataConversion keyDataConversion) {
+   public static <K, V> ReadEntryView<K, V> noValue(Object key, DataConversion keyDataConversion) {
       return new NoValueReadOnlyView<>(key, keyDataConversion);
    }
 
@@ -197,7 +197,7 @@ public final class EntryViews {
       final CacheEntry entry;
       private final DataConversion valueDataConversion;
 
-      private EntryBackedWriteOnlyView(CacheEntry<K, V> entry, DataConversion valueDataConversion) {
+      private EntryBackedWriteOnlyView(CacheEntry entry, DataConversion valueDataConversion) {
          this.entry = entry;
          this.valueDataConversion = valueDataConversion;
       }
@@ -244,7 +244,7 @@ public final class EntryViews {
       private K decodedKey;
       private V decodedValue;
 
-      private EntryBackedReadWriteView(CacheEntry<K, V> entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      private EntryBackedReadWriteView(CacheEntry entry, DataConversion keyDataConversion, DataConversion valueDataConversion) {
          this.entry = entry;
          this.keyDataConversion = keyDataConversion;
          this.valueDataConversion = valueDataConversion;
@@ -340,7 +340,7 @@ public final class EntryViews {
 
    private static final class EntryAndPreviousReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
       final CacheEntry entry;
-      final V prevValue;
+      final Object prevValue;
       final Metadata prevMetadata;
       private final DataConversion keyDataConversion;
       private final DataConversion valueDataConversion;
@@ -348,8 +348,8 @@ public final class EntryViews {
       private V decodedPrevValue;
       private V decodedValue;
 
-      private EntryAndPreviousReadWriteView(CacheEntry<K, V> entry,
-                                            V prevValue,
+      private EntryAndPreviousReadWriteView(CacheEntry entry,
+                                            Object prevValue,
                                             Metadata prevMetadata,
                                             DataConversion keyDataConversion,
                                             DataConversion valueDataConversion) {
@@ -456,10 +456,10 @@ public final class EntryViews {
    }
 
    private static final class NoValueReadOnlyView<K, V> implements ReadEntryView<K, V> {
-      final K key;
+      final Object key;
       private final DataConversion keyDataConversion;
 
-      public NoValueReadOnlyView(K key, DataConversion keyDataConversion) {
+      public NoValueReadOnlyView(Object key, DataConversion keyDataConversion) {
          this.key = key;
          this.keyDataConversion = keyDataConversion;
       }

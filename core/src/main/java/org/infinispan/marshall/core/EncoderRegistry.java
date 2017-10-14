@@ -14,6 +14,8 @@ public interface EncoderRegistry {
 
    Encoder getEncoder(Class<? extends Encoder> encoderClass, Short encoderId);
 
+   boolean isRegistered(Class<? extends Encoder> encoderClass);
+
    Wrapper getWrapper(Class<? extends Wrapper> wrapperClass, Byte wrapperId);
 
    /**

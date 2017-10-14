@@ -75,14 +75,14 @@ public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K,
 
       @Override
       public void writeObject(ObjectOutput output, EncoderEntryMapper object) throws IOException {
-         output.writeObject(object.keyDataConversion);
-         output.writeObject(object.valueDataConversion);
+         DataConversion.writeTo(output, object.keyDataConversion);
+         DataConversion.writeTo(output, object.valueDataConversion);
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public EncoderEntryMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new EncoderEntryMapper((DataConversion) input.readObject(), (DataConversion) input.readObject());
+         return new EncoderEntryMapper(DataConversion.readFrom(input), DataConversion.readFrom(input));
       }
    }
 }

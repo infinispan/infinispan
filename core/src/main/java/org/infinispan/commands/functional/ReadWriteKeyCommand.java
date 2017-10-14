@@ -30,7 +30,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    private Function<ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f,
+   public ReadWriteKeyCommand(Object key, Function<ReadWriteEntryView<K, V>, R> f,
                               CommandInvocationId id, ValueMatcher valueMatcher, Params params,
                               DataConversion keyDataConversion,
                               DataConversion valueDataConversion,
@@ -57,8 +57,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
@@ -69,8 +69,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    @Override
@@ -86,7 +86,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
          return null;
       }
 
-      CacheEntry<K, V> e = ctx.lookupEntry(key);
+      CacheEntry e = ctx.lookupEntry(key);
 
       // Could be that the key is not local, 'null' is how this is signalled
       if (e == null) return null;
@@ -108,8 +108,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    }
 
    @Override
-   public Mutation<K, V, ?> toMutation(K key) {
-      return new Mutations.ReadWrite<>(f);
+   public Mutation<K, V, ?> toMutation(Object key) {
+      return new Mutations.ReadWrite<>(keyDataConversion, valueDataConversion, f);
    }
 
    public Function<ReadWriteEntryView<K, V>, R> getFunction() {

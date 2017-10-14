@@ -162,8 +162,8 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          }
          output.writeBoolean(object.sync);
          MarshallUtil.marshallCollection(object.filterAnnotations, output);
-         output.writeObject(object.keyDataConversion);
-         output.writeObject(object.valueDataConversion);
+         DataConversion.writeTo(output, object.keyDataConversion);
+         DataConversion.writeTo(output, object.valueDataConversion);
       }
 
       @Override
@@ -180,8 +180,8 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          }
          boolean sync = input.readBoolean();
          Set<Class<? extends Annotation>> listenerAnnots = MarshallUtil.unmarshallCollection(input, HashSet::new);
-         DataConversion keyDataConversion = (DataConversion) input.readObject();
-         DataConversion valueDataConversion = (DataConversion) input.readObject();
+         DataConversion keyDataConversion = DataConversion.readFrom(input);
+         DataConversion valueDataConversion = DataConversion.readFrom(input);
          return new ClusterListenerReplicateCallable(id, address, filter, converter, sync, listenerAnnots,
                keyDataConversion, valueDataConversion);
       }

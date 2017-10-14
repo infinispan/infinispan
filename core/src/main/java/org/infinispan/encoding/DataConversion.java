@@ -36,7 +36,7 @@ import org.infinispan.marshall.core.EncoderRegistry;
  *
  * @since 9.2
  */
-public class DataConversion {
+public final class DataConversion {
 
    public static final DataConversion DEFAULT_KEY = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, true);
    public static final DataConversion DEFAULT_VALUE = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, false);
@@ -279,6 +279,43 @@ public class DataConversion {
       return Objects.hash(encoderClass, wrapperClass);
    }
 
+   public static DataConversion newKeyDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType requestType) {
+      return new DataConversion(encoderClass, wrapperClass, requestType, null, true);
+   }
+
+   public static DataConversion newValueDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType requestType) {
+      return new DataConversion(encoderClass, wrapperClass, requestType, null, false);
+   }
+
+   private static boolean isDefault(DataConversion dataConversion) {
+      return dataConversion == null || dataConversion.isKey && dataConversion.equals(DEFAULT_KEY) ||
+            !dataConversion.isKey && dataConversion.equals(DEFAULT_VALUE);
+   }
+
+   public static void writeTo(ObjectOutput output, DataConversion dataConversion) throws IOException {
+      if (isDefault(dataConversion)) {
+         output.writeByte(1);
+      } else {
+         byte flags = 0;
+         if (dataConversion.isKey) flags = (byte) (flags | 2);
+         output.writeByte(flags);
+         output.writeShort(dataConversion.encoder.id());
+         output.writeByte(dataConversion.wrapper.id());
+         output.writeObject(dataConversion.requestMediaType);
+      }
+   }
+
+   public static DataConversion readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      byte flags = input.readByte();
+      boolean isKey = ((flags & 2) == 2);
+      if (((flags & 1) == 1))
+         return isKey ? DEFAULT_KEY : DEFAULT_VALUE;
+
+      short encoderId = input.readShort();
+      byte wrapperId = input.readByte();
+      MediaType requestMediaType = (MediaType) input.readObject();
+      return new DataConversion(encoderId, wrapperId, requestMediaType, null, isKey);
+   }
 
    public static class Externalizer extends AbstractExternalizer<DataConversion> {
 
@@ -294,43 +331,18 @@ public class DataConversion {
 
       @Override
       public void writeObject(ObjectOutput output, DataConversion dataConversion) throws IOException {
-         if (isDefault(dataConversion)) {
-            output.writeByte(1);
-         } else {
-            byte flags = 0;
-            if (dataConversion.isKey) flags = (byte) (flags | 2);
-            output.writeByte(flags);
-            output.writeShort(dataConversion.encoder.id());
-            output.writeByte(dataConversion.wrapper.id());
-            output.writeObject(dataConversion.requestMediaType);
-         }
+         writeTo(output, dataConversion);
       }
 
       @Override
       public DataConversion readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte flags = input.readByte();
-         boolean isKey = ((flags & 2) == 2);
-         if (((flags & 1) == 1))
-            return isKey ? DEFAULT_KEY : DEFAULT_VALUE;
-
-         short encoderId = input.readShort();
-         byte wrapperId = input.readByte();
-         MediaType requestMediaType = (MediaType) input.readObject();
-         return new DataConversion(encoderId, wrapperId, requestMediaType, null, isKey);
+         return readFrom(input);
       }
 
       @Override
       public Integer getId() {
          return Ids.DATA_CONVERSION;
       }
-   }
-
-   public static DataConversion newKeyDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType requestType) {
-      return new DataConversion(encoderClass, wrapperClass, requestType, null, true);
-   }
-
-   public static DataConversion newValueDataConversion(Class<? extends Encoder> encoderClass, Class<? extends Wrapper> wrapperClass, MediaType requestType) {
-      return new DataConversion(encoderClass, wrapperClass, requestType, null, false);
    }
 
 }

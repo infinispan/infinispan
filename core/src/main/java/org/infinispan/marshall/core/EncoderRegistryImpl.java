@@ -98,6 +98,11 @@ public class EncoderRegistryImpl implements EncoderRegistry {
    }
 
    @Override
+   public boolean isRegistered(Class<? extends Encoder> encoderClass) {
+      return encoderMap.containsKey(encoderClass);
+   }
+
+   @Override
    public Wrapper getWrapper(Class<? extends Wrapper> clazz, Byte wrapperId) {
       if (clazz == null && wrapperId == null) {
          throw new NullPointerException("Wrapper class or identifier must be provided!");

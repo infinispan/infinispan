@@ -60,8 +60,8 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
       output.writeObject(key);
       output.writeObject(f);
       Params.writeObject(output, params);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
@@ -70,8 +70,8 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
       f = (Function<ReadEntryView<K, V>, R>) input.readObject();
       params = Params.readObject(input);
       this.setFlagsBitSet(params.toFlagsBitSet());
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    // Not really invoked unless in local mode

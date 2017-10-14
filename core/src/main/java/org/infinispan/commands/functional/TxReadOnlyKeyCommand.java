@@ -59,11 +59,22 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    @Override
+   public void init(ComponentRegistry componentRegistry) {
+      super.init(componentRegistry);
+      // This may be called from parent's constructor when mutations are not initialized yet
+      if (mutations != null) {
+         for (Mutation<?, ?, ?> m : mutations) {
+            m.inject(componentRegistry);
+         }
+      }
+   }
+
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       if (mutations == null || mutations.isEmpty()) {
          return super.perform(ctx);
       }
-      MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
+      MVCCEntry entry = (MVCCEntry) ctx.lookupEntry(key);
       EntryView.ReadWriteEntryView<K, V> rw = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
       Object ret = null;
       for (Mutation<K, V, ?> mutation : mutations) {

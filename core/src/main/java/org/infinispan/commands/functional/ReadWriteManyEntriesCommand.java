@@ -30,12 +30,12 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
 
    public static final byte COMMAND_ID = 53;
 
-   private Map<? extends K, ? extends V> entries;
+   private Map<?, ?> entries;
    private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
 
    boolean isForwarded = false;
 
-   public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries,
+   public ReadWriteManyEntriesCommand(Map<?, ?> entries,
                                       BiFunction<V, ReadWriteEntryView<K, V>, R> f,
                                       Params params,
                                       CommandInvocationId commandInvocationId,
@@ -59,15 +59,15 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    public ReadWriteManyEntriesCommand() {
    }
 
-   public Map<? extends K, ? extends V> getEntries() {
+   public Map<?, ?> getEntries() {
       return entries;
    }
 
-   public void setEntries(Map<? extends K, ? extends V> entries) {
+   public void setEntries(Map<?, ?> entries) {
       this.entries = entries;
    }
 
-   public final ReadWriteManyEntriesCommand<K, V, R> withEntries(Map<? extends K, ? extends V> entries) {
+   public final ReadWriteManyEntriesCommand<K, V, R> withEntries(Map<?, ?> entries) {
       setEntries(entries);
       return this;
    }
@@ -86,8 +86,8 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
       Params.writeObject(output, params);
       output.writeInt(topologyId);
       output.writeLong(flags);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
@@ -100,8 +100,8 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
       params = Params.readObject(input);
       topologyId = input.readInt();
       flags = input.readLong();
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    public boolean isForwarded() {
@@ -126,7 +126,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    public Object perform(InvocationContext ctx) throws Throwable {
       List<R> returns = new ArrayList<>(entries.size());
       entries.forEach((k, v) -> {
-         CacheEntry<K, V> entry = ctx.lookupEntry(k);
+         CacheEntry entry = ctx.lookupEntry(k);
 
          if (entry == null) {
             throw new IllegalStateException();
@@ -170,15 +170,13 @@ public final class ReadWriteManyEntriesCommand<K, V, R> extends AbstractWriteMan
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
-      // TODO: fixup the generics
-      return (Collection<Object>) entries.keySet();
+   public Collection<?> getKeysToLock() {
+      return entries.keySet();
    }
 
    @Override
-   public Mutation<K, V, ?> toMutation(K key) {
-      V valueFromStorage = (V) valueDataConversion.fromStorage(entries.get(key));
-      return new Mutations.ReadWriteWithValue(valueFromStorage, f);
+   public Mutation<K, V, ?> toMutation(Object key) {
+      return new Mutations.ReadWriteWithValue(keyDataConversion, valueDataConversion, entries.get(key), f);
    }
 
    @Override
