@@ -25,7 +25,7 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
 
    private Consumer<WriteEntryView<V>> f;
 
-   public WriteOnlyKeyCommand(K key,
+   public WriteOnlyKeyCommand(Object key,
                               Consumer<WriteEntryView<V>> f,
                               CommandInvocationId id,
                               ValueMatcher valueMatcher,
@@ -54,8 +54,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
@@ -66,8 +66,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    @Override
@@ -87,7 +87,7 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      CacheEntry<K, V> e = ctx.lookupEntry(key);
+      CacheEntry e = ctx.lookupEntry(key);
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -102,8 +102,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    }
 
    @Override
-   public Mutation<K, V, ?> toMutation(K key) {
-      return new Mutations.Write(f);
+   public Mutation<K, V, ?> toMutation(Object key) {
+      return new Mutations.Write(keyDataConversion, valueDataConversion, f);
    }
 
    @Override

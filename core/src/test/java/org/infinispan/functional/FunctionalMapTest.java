@@ -60,9 +60,10 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.function.SerializableConsumer;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.Test;
@@ -279,22 +280,28 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       }
    }
 
+   // Transactions use SimpleClusteredVersions, not NumericVersions, and user is not supposed to modify those
+   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testLocalReadWriteForConditionalParamBasedReplace() {
       doReadWriteForConditionalParamBasedReplace(supplyIntKey(), rw(fmapL1), rw(fmapL2));
    }
 
+   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testReplReadWriteForConditionalParamBasedReplaceOnNonOwner() {
       doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, REPL), rw(fmapR1), rw(fmapR2));
    }
 
+   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testReplReadWriteForConditionalParamBasedReplaceOnOwner() {
       doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, REPL), rw(fmapR1), rw(fmapR2));
    }
 
+   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testDistReadWriteForConditionalParamBasedReplaceOnNonOwner() {
       doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
    }
 
+   @InTransactionMode(TransactionMode.NON_TRANSACTIONAL)
    public void testDistReadWriteForConditionalParamBasedReplaceOnOwner() {
       doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
    }
@@ -603,7 +610,4 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          };
    }
 
-   protected AdvancedCache<?, ?> getAdvancedCache(EmbeddedCacheManager cm, String cacheName) {
-      return cm.getCache(cacheName).getAdvancedCache();
-   }
 }

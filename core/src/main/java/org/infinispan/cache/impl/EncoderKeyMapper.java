@@ -51,13 +51,13 @@ public class EncoderKeyMapper<K> implements RemovableFunction<K, K> {
 
       @Override
       public void writeObject(ObjectOutput output, EncoderKeyMapper object) throws IOException {
-         output.writeObject(object.dataConversion);
+         DataConversion.writeTo(output, object.dataConversion);
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public EncoderKeyMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new EncoderKeyMapper((DataConversion) input.readObject());
+         return new EncoderKeyMapper(DataConversion.readFrom(input));
       }
    }
 }

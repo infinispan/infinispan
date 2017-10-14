@@ -18,7 +18,7 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    DataConversion keyDataConversion;
    DataConversion valueDataConversion;
 
-   public AbstractWriteKeyCommand(K key, ValueMatcher valueMatcher,
+   public AbstractWriteKeyCommand(Object key, ValueMatcher valueMatcher,
                                   CommandInvocationId id, Params params,
                                   DataConversion keyDataConversion,
                                   DataConversion valueDataConversion) {

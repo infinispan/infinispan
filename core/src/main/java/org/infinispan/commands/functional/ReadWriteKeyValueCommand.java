@@ -31,12 +31,12 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
 
    public static final byte COMMAND_ID = 51;
 
-   private V value;
+   private Object value;
    private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
-   private V prevValue;
+   private Object prevValue;
    private Metadata prevMetadata;
 
-   public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
+   public ReadWriteKeyValueCommand(Object key, Object value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
                                    CommandInvocationId id,
                                    ValueMatcher valueMatcher,
                                    Params params,
@@ -69,23 +69,23 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       CommandInvocationId.writeTo(output, commandInvocationId);
       output.writeObject(prevValue);
       output.writeObject(prevMetadata);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
-      value = (V) input.readObject();
+      value = input.readObject();
       f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
-      prevValue = (V) input.readObject();
+      prevValue = input.readObject();
       prevMetadata = (Metadata) input.readObject();
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    @Override
@@ -162,8 +162,8 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    }
 
    @Override
-   public Mutation toMutation(K key) {
-      return new Mutations.ReadWriteWithValue<>(value, f);
+   public Mutation toMutation(Object key) {
+      return new Mutations.ReadWriteWithValue<>(keyDataConversion, valueDataConversion, value, f);
    }
 
    @Override

@@ -47,7 +47,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    public <R> CompletableFuture<R> eval(K key, Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
-      ReadWriteKeyCommand cmd = fmap.commandsFactory.buildReadWriteKeyCommand(keyEncoded, (Function) f, params, keyDataConversion, valueDataConversion);
+      ReadWriteKeyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteKeyCommand(keyEncoded, (Function) f, params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -60,7 +60,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
       Object valueEncoded = valueDataConversion.toStorage(value);
-      ReadWriteKeyValueCommand cmd = fmap.commandsFactory.buildReadWriteKeyValueCommand(keyEncoded, valueEncoded, (BiFunction) f, params, keyDataConversion, valueDataConversion);
+      ReadWriteKeyValueCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteKeyValueCommand(keyEncoded, valueEncoded, (BiFunction) f, params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -71,8 +71,8 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public <R> Traversable<R> evalMany(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
-      Map encodedEntries = encodeEntries(entries);
-      ReadWriteManyEntriesCommand cmd = fmap.commandsFactory.buildReadWriteManyEntriesCommand(encodedEntries, f, params, keyDataConversion, valueDataConversion);
+      Map<?, ?> encodedEntries = encodeEntries(entries);
+      ReadWriteManyEntriesCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteManyEntriesCommand(encodedEntries, f, params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, entries.size());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -83,8 +83,8 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public <R> Traversable<R> evalMany(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
-      Set encodedKeys = encodeKeys(keys);
-      ReadWriteManyCommand cmd = fmap.commandsFactory.buildReadWriteManyCommand(encodedKeys, f, params, keyDataConversion, valueDataConversion);
+      Set<?> encodedKeys = encodeKeys(keys);
+      ReadWriteManyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteManyCommand(encodedKeys, f, params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, keys.size());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -98,8 +98,8 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       // TODO: during commmand execution the set is iterated multiple times, and can execute remote operations
       // therefore we should rather have separate command (or different semantics for keys == null)
       Set<K> keys = new HashSet<>(fmap.cache.keySet());
-      Set<K> encodedKeys = encodeKeys(keys);
-      ReadWriteManyCommand cmd = fmap.commandsFactory.buildReadWriteManyCommand(encodedKeys, f, params, keyDataConversion, valueDataConversion);
+      Set<?> encodedKeys = encodeKeys(keys);
+      ReadWriteManyCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteManyCommand(encodedKeys, f, params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, encodedKeys.size());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());

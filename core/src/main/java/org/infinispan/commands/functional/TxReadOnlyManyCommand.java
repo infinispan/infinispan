@@ -28,7 +28,7 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    public TxReadOnlyManyCommand() {
    }
 
-   public TxReadOnlyManyCommand(Collection<? extends K> keys, List<List<Mutation<K, V, ?>>> mutations,
+   public TxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations,
                                 DataConversion keyDataConversion,
                                 DataConversion valueDataConversion,
                                 ComponentRegistry componentRegistry) {
@@ -40,6 +40,18 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    public TxReadOnlyManyCommand(ReadOnlyManyCommand c, List<List<Mutation<K, V, ?>>> mutations) {
       super(c);
       this.mutations = mutations;
+   }
+
+   @Override
+   public void init(ComponentRegistry componentRegistry) {
+      super.init(componentRegistry);
+      if (mutations != null) {
+         for (List<Mutation<K, V, ?>> list : mutations) {
+            for (Mutation<K, V, ?> m : list) {
+               m.inject(componentRegistry);
+            }
+         }
+      }
    }
 
    @Override
@@ -102,9 +114,9 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
       }
       ArrayList<R> retvals = new ArrayList<>(keys.size());
       Iterator<List<Mutation<K, V, ?>>> mutIt = mutations.iterator();
-      for (K k : keys) {
+      for (Object k : keys) {
          List<Mutation<K, V, ?>> mutations = mutIt.next();
-         MVCCEntry<K, V> entry = (MVCCEntry<K, V>) lookupCacheEntry(ctx, k);
+         MVCCEntry entry = (MVCCEntry) lookupCacheEntry(ctx, k);
          EntryView.ReadEntryView<K, V> ro;
          Object ret = null;
          if (mutations.isEmpty()) {

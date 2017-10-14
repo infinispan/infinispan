@@ -9,7 +9,7 @@ import org.infinispan.functional.impl.Params;
 public interface FunctionalCommand<K, V> {
 
    Params getParams();
-   Mutation<K, V, ?> toMutation(K key);
+   Mutation<K, V, ?> toMutation(Object key);
 
    DataConversion getKeyDataConversion();
 

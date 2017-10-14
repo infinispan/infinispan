@@ -24,10 +24,10 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    public static final byte COMMAND_ID = 57;
 
-   private Map<? extends K, ? extends V> entries;
+   private Map<?, ?> entries;
    private BiConsumer<V, WriteEntryView<V>> f;
 
-   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries,
+   public WriteOnlyManyEntriesCommand(Map<?, ?> entries,
                                       BiConsumer<V, WriteEntryView<V>> f,
                                       Params params,
                                       CommandInvocationId commandInvocationId,
@@ -51,15 +51,15 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    public WriteOnlyManyEntriesCommand() {
    }
 
-   public Map<? extends K, ? extends V> getEntries() {
+   public Map<?, ?> getEntries() {
       return entries;
    }
 
-   public void setEntries(Map<? extends K, ? extends V> entries) {
+   public void setEntries(Map<?, ?> entries) {
       this.entries = entries;
    }
 
-   public final WriteOnlyManyEntriesCommand<K, V> withEntries(Map<? extends K, ? extends V> entries) {
+   public final WriteOnlyManyEntriesCommand<K, V> withEntries(Map<?, ?> entries) {
       setEntries(entries);
       return this;
    }
@@ -78,8 +78,8 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       Params.writeObject(output, params);
       output.writeInt(topologyId);
       output.writeLong(flags);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
@@ -92,14 +92,14 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
       params = Params.readObject(input);
       topologyId = input.readInt();
       flags = input.readLong();
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      for (Map.Entry<? extends K, ? extends V> entry : entries.entrySet()) {
-         CacheEntry<K, V> cacheEntry = ctx.lookupEntry(entry.getKey());
+      for (Map.Entry<?, ?> entry : entries.entrySet()) {
+         CacheEntry cacheEntry = ctx.lookupEntry(entry.getKey());
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (cacheEntry == null) {
@@ -150,15 +150,13 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    }
 
    @Override
-   public Collection<Object> getKeysToLock() {
-      // TODO: fixup the generics
-      return (Collection<Object>) entries.keySet();
+   public Collection<?> getKeysToLock() {
+      return entries.keySet();
    }
 
    @Override
-   public Mutation<K, V, ?> toMutation(K key) {
-      V valueFromStorage = (V) valueDataConversion.fromStorage(entries.get(key));
-      return new Mutations.WriteWithValue<>(valueFromStorage, f);
+   public Mutation<K, V, ?> toMutation(Object key) {
+      return new Mutations.WriteWithValue<>(keyDataConversion, valueDataConversion, entries.get(key), f);
    }
 
    @Override

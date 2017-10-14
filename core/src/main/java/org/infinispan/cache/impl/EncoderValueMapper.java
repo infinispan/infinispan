@@ -53,13 +53,13 @@ public class EncoderValueMapper<V> implements RemovableFunction<V, V> {
 
       @Override
       public void writeObject(ObjectOutput output, EncoderValueMapper object) throws IOException {
-         output.writeObject(object.dataConversion);
+         DataConversion.writeTo(output, object.dataConversion);
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public EncoderValueMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new EncoderValueMapper((DataConversion) input.readObject());
+         return new EncoderValueMapper(DataConversion.readFrom(input));
       }
    }
 }

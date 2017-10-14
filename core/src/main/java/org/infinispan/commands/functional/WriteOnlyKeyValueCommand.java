@@ -24,9 +24,9 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    public static final byte COMMAND_ID = 55;
 
    private BiConsumer<V, WriteEntryView<V>> f;
-   private V value;
+   private Object value;
 
-   public WriteOnlyKeyValueCommand(K key, V value,
+   public WriteOnlyKeyValueCommand(Object key, Object value,
                                    BiConsumer<V, WriteEntryView<V>> f,
                                    CommandInvocationId id,
                                    ValueMatcher valueMatcher,
@@ -58,21 +58,21 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       Params.writeObject(output, params);
       output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
       CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeObject(keyDataConversion);
-      output.writeObject(valueDataConversion);
+      DataConversion.writeTo(output, keyDataConversion);
+      DataConversion.writeTo(output, valueDataConversion);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
-      value = (V) input.readObject();
+      value = input.readObject();
       f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
       commandInvocationId = CommandInvocationId.readFrom(input);
-      keyDataConversion = (DataConversion) input.readObject();
-      valueDataConversion = (DataConversion) input.readObject();
+      keyDataConversion = DataConversion.readFrom(input);
+      valueDataConversion = DataConversion.readFrom(input);
    }
 
    @Override
@@ -82,7 +82,7 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      CacheEntry<K, V> e = ctx.lookupEntry(key);
+      CacheEntry e = ctx.lookupEntry(key);
 
       // Could be that the key is not local
       if (e == null) return null;
@@ -108,8 +108,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    }
 
    @Override
-   public Mutation<K, V, ?> toMutation(K key) {
-      return new Mutations.WriteWithValue<>(value, f);
+   public Mutation<K, V, ?> toMutation(Object key) {
+      return new Mutations.WriteWithValue<>(keyDataConversion, valueDataConversion, value, f);
    }
 
    @Override
