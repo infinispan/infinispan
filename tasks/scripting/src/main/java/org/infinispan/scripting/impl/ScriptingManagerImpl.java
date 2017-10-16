@@ -24,7 +24,6 @@ import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
@@ -84,7 +83,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
    public void start() {
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
-      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT));
+      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(Flag.USER, Flag.PROTECTED, Flag.PERSISTENT, Flag.GLOBAL));
       taskManager.registerTaskEngine(new ScriptingTaskEngine(this));
    }
 
@@ -97,10 +96,9 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    private ConfigurationBuilder getScriptCacheConfiguration() {
       GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
-      CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
 
       ConfigurationBuilder cfg = new ConfigurationBuilder();
-      cfg.clustering().cacheMode(cacheMode).sync().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false).compatibility().enable()
+      cfg.compatibility().enable()
             .marshaller(new GenericJBossMarshaller()).customInterceptors().addInterceptor().interceptor(new ScriptingInterceptor()).before(CacheMgmtInterceptor.class);
       if (globalConfiguration.security().authorization().enabled()) {
          globalConfiguration.security().authorization().roles().put(SCRIPT_MANAGER_ROLE, new CacheRoleImpl(SCRIPT_MANAGER_ROLE, AuthorizationPermission.ALL));

@@ -36,7 +36,11 @@ public interface InternalCacheRegistry {
       /**
        * means that this cache should be queryable
        */
-      QUERYABLE
+      QUERYABLE,
+      /**
+       * means that this cache will be global to all nodes when running in clustered mode
+       */
+      GLOBAL
    }
 
    /**
