@@ -6,7 +6,7 @@
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
         <version>9.2.0-SNAPSHOT</version>
-        <relativePath>../../parent/pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>infinispan-marshaller-parent</artifactId>
@@ -49,7 +49,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-compatibility-mode-it</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
             <type>test-jar</type>
         </dependency>
@@ -84,26 +83,22 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-rest</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-memcached</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-memcached</artifactId>
-            <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
-            <version>${version.commons.httpclient}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

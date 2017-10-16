@@ -1,10 +1,8 @@
 package org.infinispan.checkstyle.filters;
 
 import java.io.File;
-import java.util.List;
 
 import com.puppycrawl.tools.checkstyle.api.AbstractFileSetCheck;
-import com.puppycrawl.tools.checkstyle.api.CheckstyleException;
 import com.puppycrawl.tools.checkstyle.api.FileText;
 
 /**

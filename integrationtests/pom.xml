@@ -4,9 +4,9 @@
 
     <parent>
         <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-bom</artifactId>
+        <artifactId>infinispan-parent</artifactId>
         <version>9.2.0-SNAPSHOT</version>
-        <relativePath>../bom/pom.xml</relativePath>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>infinispan-integrationtests-parent</artifactId>

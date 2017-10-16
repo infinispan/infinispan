@@ -346,7 +346,6 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>${version.maven.source}</version>
             <executions>
                <execution>
                   <id>attach-sources</id>
@@ -357,7 +356,6 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>${version.maven.jar}</version>
             <executions>
                <execution>
                   <id>build-test-jar</id>

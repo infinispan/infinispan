@@ -5,7 +5,7 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
       <version>9.2.0-SNAPSHOT</version>
-      <relativePath>../parent/pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-objectfilter</artifactId>
@@ -100,13 +100,6 @@
                <sourceDirectory>${basedir}/src/main/antlr3</sourceDirectory>
                <outputDirectory>${project.build.directory}/generated-sources/antlr3</outputDirectory>
             </configuration>
-            <dependencies>
-               <dependency>
-                  <groupId>org.antlr</groupId>
-                  <artifactId>antlr</artifactId>
-                  <version>${version.antlr}</version>
-               </dependency>
-            </dependencies>
          </plugin>
 
          <plugin>

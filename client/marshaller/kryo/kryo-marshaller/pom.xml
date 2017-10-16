@@ -14,7 +14,6 @@
     <name>Infinispan Kryo Marshaller Bridge</name>
 
     <properties>
-        <version.kryo>4.0.0</version.kryo>
         <version.kryo.serializers>0.41</version.kryo.serializers>
     </properties>
 
@@ -22,7 +21,6 @@
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
-            <version>${version.kryo}</version>
         </dependency>
         <!-- Test dependencies -->
         <dependency>
@@ -34,7 +32,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-marshaller-tests</artifactId>
-            <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
