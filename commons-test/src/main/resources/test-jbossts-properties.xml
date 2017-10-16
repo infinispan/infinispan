@@ -3,7 +3,7 @@
 <properties>
    <!--
    This is the JBossTS configuration file for running ArjunaJTA.
-   It should be called test-jbossts-properties.xml, as it is configured in parent/pom.xml.
+   It should be called test-jbossts-properties.xml, as it is configured in the infinispan-parent pom.xml.
    You need a different version for ArjunaCore or JTS usage.
 
    ***************************

@@ -52,7 +52,7 @@ def switch_to_tag_branch(branch):
 
 def update_versions(base_dir, version):
   os.chdir(base_dir)
-  subprocess.check_call(["bin/reversion.sh", "--new-revision", version, "--pom-location", "parent/pom.xml"])
+  subprocess.check_call(["bin/reversion.sh", "--new-revision", version, "--pom-location", "pom.xml"])
 
   # Now make sure this goes back into the repository.
   git.commit_modified("'Release Script: update versions for %s'" % version)

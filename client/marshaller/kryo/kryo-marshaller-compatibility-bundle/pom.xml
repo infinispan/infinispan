@@ -16,7 +16,6 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-marshaller-kryo</artifactId>
-            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

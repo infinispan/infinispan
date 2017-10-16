@@ -6,7 +6,7 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
       <version>9.2.0-SNAPSHOT</version>
-      <relativePath>../../parent/pom.xml</relativePath>
+      <relativePath>../../pom.xml</relativePath>
    </parent>
 
    <artifactId>integrationtests-osgi</artifactId>
@@ -27,11 +27,6 @@
       <dependency>
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-slf4j-impl</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.apache.logging.log4j</groupId>
-         <artifactId>log4j-core</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

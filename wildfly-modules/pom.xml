@@ -5,7 +5,7 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
       <version>9.2.0-SNAPSHOT</version>
-      <relativePath>../parent/pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-wildfly-modules</artifactId>
@@ -16,13 +16,11 @@
       <dependency>
          <groupId>io.netty</groupId>
          <artifactId>netty-all</artifactId>
-         <version>${version.netty}</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.ant</groupId>
          <artifactId>ant</artifactId>
-         <version>${version.ant}</version>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -105,7 +103,7 @@
       </dependency>
 
       <dependency>
-         <groupId>${project.groupId}</groupId>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-query-dsl</artifactId>
       </dependency>
 
@@ -142,49 +140,41 @@
       <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-infinispan</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-core</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-commons</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-endpoints</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
        <dependency>
            <groupId>org.infinispan.server</groupId>
            <artifactId>infinispan-server-event-logger</artifactId>
-          <version>${project.version}</version>
        </dependency>
 
       <dependency>
          <groupId>org.infinispan.server</groupId>
          <artifactId>infinispan-server-jgroups</artifactId>
-         <version>${project.version}</version>
       </dependency>
 
       <dependency>
          <groupId>com.thoughtworks.xstream</groupId>
          <artifactId>xstream</artifactId>
-         <version>${version.xstream}</version>
       </dependency>
 
       <dependency>
          <groupId>com.github.ben-manes.caffeine</groupId>
          <artifactId>caffeine</artifactId>
-         <version>${version.caffeine}</version>
       </dependency>
 
       <dependency>
@@ -203,37 +193,31 @@
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-queryparser</artifactId>
-         <version>${version.lucene}</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-highlighter</artifactId>
-         <version>${version.lucene}</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-grouping</artifactId>
-         <version>${version.lucene}</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-facet</artifactId>
-         <version>${version.lucene}</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-misc</artifactId>
-         <version>${version.lucene}</version>
       </dependency>
 
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-backward-codecs</artifactId>
-         <version>${version.lucene}</version>
       </dependency>
 
       <dependency>
@@ -263,14 +247,6 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>${version.maven.antrun}</version>
-            <dependencies>
-               <dependency>
-                  <groupId>org.codehaus.groovy</groupId>
-                  <artifactId>groovy-all</artifactId>
-                  <version>${version.groovy}</version>
-               </dependency>
-            </dependencies>
             <executions>
                <execution>
                   <id>build-dist-dir</id>

@@ -13,36 +13,27 @@
     <packaging>jar</packaging>
     <name>Infinispan Protostuff Marshaller Bridge</name>
 
-    <properties>
-        <version.protostuff>1.5.2</version.protostuff>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-runtime</artifactId>
-            <version>${version.protostuff}</version>
         </dependency>
         <dependency>
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-runtime-registry</artifactId>
-            <version>${version.protostuff}</version>
         </dependency>
         <dependency>
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-core</artifactId>
-            <version>${version.protostuff}</version>
         </dependency>
         <dependency>
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-collectionschema</artifactId>
-            <version>${version.protostuff}</version>
         </dependency>
         <!-- Test dependencies -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-marshaller-tests</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
             <type>test-jar</type>
         </dependency>

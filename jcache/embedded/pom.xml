@@ -178,7 +178,6 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-invoker-plugin</artifactId>
-                  <version>${version.maven.invoker}</version>
                   <executions>
                      <execution>
                         <id>integration-test</id>
