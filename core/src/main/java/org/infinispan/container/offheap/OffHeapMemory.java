@@ -108,7 +108,8 @@ class OffHeapMemory {
 
       Long blockSize = allocatedBlocks.get(address);
       if (blockSize == null || blockSize < offset) {
-         throw new IllegalArgumentException();
+         throw new IllegalArgumentException(String.format("Trying to access address 0x%016x+%d, but blockSize was %d",
+               address, offset, blockSize));
       }
    }
 
