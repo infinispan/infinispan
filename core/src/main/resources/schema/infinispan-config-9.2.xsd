@@ -1200,7 +1200,7 @@
                    <xs:documentation>The type of actions that are possible when a split brain scenario is encountered.</xs:documentation>
                  </xs:annotation>
                </xs:attribute>
-               <xs:attribute name="merge-policy" type="tns:merge-policy" default="NONE">
+               <xs:attribute name="merge-policy" type="tns:merge-policy" default="${PartitionHandling.mergePolicy}">
                  <xs:annotation>
                    <xs:documentation>The entry merge policy which should be applied on partition merges.</xs:documentation>
                  </xs:annotation>

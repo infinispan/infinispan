@@ -986,9 +986,9 @@ to have occurred if both a null and non-null value exists for a given key.
 In the event of conflicts arising between one or more replicas of a given CacheEntry, it is necessary for a conflict
 resolution algorithm to be defined, therefore we provide the
 link:{javadocroot}/org/infinispan/conflict/EntryMergePolicy.html[EntryMergePolicy] interface. This interface consists
-of a single method, "merge", whose output is utilised as the "resolved" CacheEntry for a given key. A non-null return
-value is put to all replicas of the CacheEntry in question, whereas a null return value results in all replicas
-being removed from the cache.
+of a single method, "merge", whose returned CacheEntry is utilised as the "resolved" entry for a given key. When a non-null
+CacheEntry is returned, this entries value is "put" to all replicas in the cache. However when the merge implementation
+returns a null value, all replicas associated with the conflicting key are removed from the cache.
 
 The merge method takes two parameters: the "preferredEntry" and "otherEntries". In the context of a partition merge,
 the preferredEntry is the CacheEntry associated with the partition whose coordinator is conducting the merge (or if
