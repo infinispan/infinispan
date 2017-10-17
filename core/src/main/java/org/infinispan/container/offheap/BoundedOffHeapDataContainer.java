@@ -39,7 +39,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       if (type == EvictionType.COUNT) {
          sizeCalculator = i -> 1;
       } else {
-         // Use size of entry plus 28 for our LRU pointer node
+         // Use size of entry plus 16 for our LRU pointers
          sizeCalculator = i -> offHeapEntryFactory.getSize(i) + OffHeapLruNode.getSize();
       }
       this.lruLock = new ReentrantLock();
@@ -73,103 +73,101 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       long newSize = sizeCalculator.applyAsLong(newAddress);
       lruLock.lock();
       try {
-         long lruNode = offHeapEntryFactory.getLruNode(oldAddress);
-         if (trace) {
-            log.tracef("Replacing LRU node: 0x%016x. OldValue: 0x%016x NewValue: 0x%016x", lruNode, oldAddress,
-                       newAddress);
-         }
-         // We have to update the lru node to point to the new address and vice versa
-         offHeapEntryFactory.setLruNode(newAddress, lruNode);
-         OffHeapLruNode.setEntry(lruNode, newAddress);
-
-         moveToEnd(lruNode);
+         removeNode(oldAddress);
+         addEntryAddressToEnd(newAddress);
 
          currentSize += newSize;
          currentSize -= oldSize;
+         // Must only remove entry while holding lru lock now
+         super.entryReplaced(newAddress, oldAddress);
       } finally {
          lruLock.unlock();
       }
-      super.entryReplaced(newAddress, oldAddress);
    }
 
    @Override
    protected void entryCreated(long newAddress) {
-      int hashCode = offHeapEntryFactory.getHashCode(newAddress);
       long newSize = sizeCalculator.applyAsLong(newAddress);
       lruLock.lock();
       try {
          currentSize += newSize;
-         addEntryAddressToEnd(newAddress, hashCode);
+         addEntryAddressToEnd(newAddress);
+         super.entryCreated(newAddress);
       } finally {
          lruLock.unlock();
       }
-      super.entryCreated(newAddress);
    }
 
    @Override
    protected void entryRemoved(long removedAddress) {
       long removedSize = sizeCalculator.applyAsLong(removedAddress);
-      long lruNode = offHeapEntryFactory.getLruNode(removedAddress);
-      assert lruNode != 0;
       lruLock.lock();
       try {
          // Current size has to be updated in the lock
-         currentSize -= removedSize;
-         boolean middleNode = true;
-         if (lruNode == lastAddress) {
-            if (trace) {
-               log.tracef("Removing last LRU node at 0x%016x", lruNode);
-            }
-            long previousLRUNode = OffHeapLruNode.getPrevious(lruNode);
-            if (previousLRUNode != 0) {
-               OffHeapLruNode.setNext(previousLRUNode, 0);
-            }
-            lastAddress = previousLRUNode;
-            middleNode = false;
-         }
-         if (lruNode == firstAddress) {
-            if (trace) {
-               log.tracef("Removing first LRU node at 0x%016x", lruNode);
-            }
-            long nextLRUNode = OffHeapLruNode.getNext(lruNode);
-            if (nextLRUNode != 0) {
-               OffHeapLruNode.setPrevious(nextLRUNode, 0);
-            }
-            firstAddress = nextLRUNode;
-            middleNode = false;
-         }
-         if (middleNode) {
-            if (trace) {
-               log.tracef("Removing middle LRU node at 0x%016x", lruNode);
-            }
-            // We are a middle pointer so both of these have to be non zero
-            long previousLRUNode = OffHeapLruNode.getPrevious(lruNode);
-            long nextLRUNode = OffHeapLruNode.getNext(lruNode);
-            assert previousLRUNode != 0;
-            assert nextLRUNode != 0;
-            OffHeapLruNode.setNext(previousLRUNode, nextLRUNode);
-            OffHeapLruNode.setPrevious(nextLRUNode, previousLRUNode);
-         }
-         allocator.deallocate(lruNode, OffHeapLruNode.getSize());
+         currentSize -=  removedSize;
+         removeNode(removedAddress);
+         // Removals are only done while holding lru lock now
+         super.entryRemoved(removedAddress);
       } finally {
          lruLock.unlock();
       }
-      super.entryRemoved(removedAddress);
+   }
+
+   /**
+    * Removes the address node and updates previous and next lru node pointers properly
+    * The {@link BoundedOffHeapDataContainer#lruLock} <b>must</b> be held when invoking this
+    * @param address
+    */
+   private void removeNode(long address) {
+      boolean middleNode = true;
+      if (address == lastAddress) {
+         if (trace) {
+            log.tracef("Removed entry 0x%016x from the end of the LRU list", address);
+         }
+         long previousLRUNode = OffHeapLruNode.getPrevious(address);
+         if (previousLRUNode != 0) {
+            OffHeapLruNode.setNext(previousLRUNode, 0);
+         }
+         lastAddress = previousLRUNode;
+         middleNode = false;
+      }
+      if (address == firstAddress) {
+         if (trace) {
+            log.tracef("Removed entry 0x%016x from the beginning of the LRU list", address);
+         }
+         long nextLRUNode = OffHeapLruNode.getNext(address);
+         if (nextLRUNode != 0) {
+            OffHeapLruNode.setPrevious(nextLRUNode, 0);
+         }
+         firstAddress = nextLRUNode;
+         middleNode = false;
+      }
+      if (middleNode) {
+         if (trace) {
+            log.tracef("Removed entry 0x%016x from the middle of the LRU list", address);
+         }
+         // We are a middle pointer so both of these have to be non zero
+         long previousLRUNode = OffHeapLruNode.getPrevious(address);
+         long nextLRUNode = OffHeapLruNode.getNext(address);
+         assert previousLRUNode != 0;
+         assert nextLRUNode != 0;
+         OffHeapLruNode.setNext(previousLRUNode, nextLRUNode);
+         OffHeapLruNode.setPrevious(nextLRUNode, previousLRUNode);
+      }
    }
 
    @Override
    protected void entryRetrieved(long entryAddress) {
       lruLock.lock();
       try {
-         long lruNode = offHeapEntryFactory.getLruNode(entryAddress);
          if (trace) {
-            log.tracef("Moving lruNode 0x%016x to the end which points at address 0x%016x", lruNode, entryAddress);
+            log.tracef("Moving entry 0x%016x to the end of the LRU list", entryAddress);
          }
-         moveToEnd(lruNode);
+         moveToEnd(entryAddress);
+         super.entryRetrieved(entryAddress);
       } finally {
          lruLock.unlock();
       }
-      super.entryRetrieved(entryAddress);
    }
 
    @Override
@@ -180,12 +178,6 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       // Technically we don't need to do lruLock since clear obtains all write locks first
       lruLock.lock();
       try {
-         long address = firstAddress;
-         while (address != 0) {
-            long nextAddress = OffHeapLruNode.getNext(address);
-            allocator.deallocate(address, OffHeapLruNode.getSize());
-            address = nextAddress;
-         }
          currentSize = 0;
          firstAddress = 0;
          lastAddress = 0;
@@ -223,12 +215,12 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
             if (currentSize <= maxSize) {
                break;
             }
-            int hashCode = OffHeapLruNode.getHashCode(firstAddress);
+            int hashCode = offHeapEntryFactory.getHashCode(firstAddress);
             entryWriteLock = locks.getLockFromHashCode(hashCode).writeLock();
             if (!entryWriteLock.tryLock()) {
                addressToRemove = 0;
             } else {
-               addressToRemove = OffHeapLruNode.getEntry(firstAddress);
+               addressToRemove = firstAddress;
             }
          } finally {
             lruLock.unlock();
@@ -242,10 +234,10 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
                   if (currentSize <= maxSize) {
                      break;
                   }
-                  int hashCode = OffHeapLruNode.getHashCode(firstAddress);
+                  int hashCode = offHeapEntryFactory.getHashCode(firstAddress);
                   Lock innerLock = locks.getLockFromHashCode(hashCode).writeLock();
                   if (innerLock == entryWriteLock) {
-                     addressToRemove = OffHeapLruNode.getEntry(firstAddress);
+                     addressToRemove = firstAddress;
                   } else {
                      addressToRemove = 0;
                   }
@@ -267,6 +259,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
             try {
                InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
                passivator.passivate(ice);
+               // TODO: this reareads the object from memory again!
                performRemove(addressToRemove, ice.getKey());
                evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
             } finally {
@@ -283,32 +276,26 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
     *
     * @param entryAddress the new entry address pointer *NOT* the lru node
     */
-   private void addEntryAddressToEnd(long entryAddress, int hashCode) {
-      long nodeAddress = allocator.allocate(OffHeapLruNode.getSize());
+   private void addEntryAddressToEnd(long entryAddress) {
       if (trace) {
-         log.tracef("Creating LRU node 0x%016x for new entry 0x%016x", nodeAddress, entryAddress);
+         log.tracef("Adding entry 0x%016x to the end of the LRU list", entryAddress);
       }
-      // First update the pointer to our new entry address
-      OffHeapLruNode.setEntry(nodeAddress, entryAddress);
-      // Also our entry address needs a pointer to its lru node
-      offHeapEntryFactory.setLruNode(entryAddress, nodeAddress);
       // This means it is the first entry
       if (lastAddress == 0) {
-         firstAddress = nodeAddress;
-         lastAddress = nodeAddress;
+         firstAddress = entryAddress;
+         lastAddress = entryAddress;
          // Have to make sure the memory is cleared so we don't use unitialized values
-         OffHeapLruNode.setPrevious(nodeAddress, 0);
+         OffHeapLruNode.setPrevious(entryAddress, 0);
       } else {
          // Writes back pointer to the old lastAddress
-         OffHeapLruNode.setPrevious(nodeAddress, lastAddress);
+         OffHeapLruNode.setPrevious(entryAddress, lastAddress);
          // Write the forward pointer in old lastAddress to point to us
-         OffHeapLruNode.setNext(lastAddress, nodeAddress);
+         OffHeapLruNode.setNext(lastAddress, entryAddress);
          // Finally make us the last address
-         lastAddress = nodeAddress;
+         lastAddress = entryAddress;
       }
       // Since we are last there is no pointer after us
-      OffHeapLruNode.setNext(nodeAddress, 0);
-      OffHeapLruNode.setHashCode(nodeAddress, hashCode);
+      OffHeapLruNode.setNext(entryAddress, 0);
    }
 
    /**
