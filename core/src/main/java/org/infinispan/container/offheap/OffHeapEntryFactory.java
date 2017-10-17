@@ -42,10 +42,6 @@ public interface OffHeapEntryFactory {
     */
    void setNext(long address, long value);
 
-   long getLruNode(long entryAddress);
-
-   void setLruNode(long entryAddress, long value);
-
    /**
     * Returns the hashCode of the address.  This
     * @param address the address of the entry
@@ -59,13 +55,6 @@ public interface OffHeapEntryFactory {
     * @return the entry created on heap from off heap
     */
    InternalCacheEntry<WrappedBytes, WrappedBytes> fromMemory(long address);
-
-   /**
-    * Returns the key for the given address
-    * @param address the address pointer to find the key of
-    * @return the key of the given address pointer
-    */
-   WrappedBytes getKey(long address);
 
    /**
     * Returns whether the given key as bytes is the same key as the key stored in the entry for the given address.

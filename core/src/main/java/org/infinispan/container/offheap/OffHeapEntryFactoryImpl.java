@@ -122,13 +122,11 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       int metadataSize = metadataBytes.length;
       int valueSize = value.getLength();
 
-      // Eviction requires an additional memory pointer at the beginning that points to
-      // its linked node
-      int headerOffset = evictionEnabled ? 8 : 0;
-      long totalSize = 8 + headerOffset + HEADER_LENGTH + keySize + metadataSize + valueSize;
-      long memoryAddress = allocator.allocate(totalSize + headerOffset);
-
-      int offset = evictionEnabled ? 8 : 0;
+      // Eviction requires 2 additional pointers at the beginning
+      int offset = evictionEnabled ? 16 : 0;
+      // First 8 is for linked pointer to next address
+      long totalSize = 8 + offset + HEADER_LENGTH + keySize + metadataSize + valueSize;
+      long memoryAddress = allocator.allocate(totalSize);
 
       // Write the empty linked address pointer first
       MEMORY.putLong(memoryAddress, offset, 0);
@@ -161,7 +159,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
    @Override
    public long getSize(long entryAddress) {
-      int headerOffset = evictionEnabled ? 16 : 8;
+      int headerOffset = evictionEnabled ? 24 : 8;
 
       int keyLength = MEMORY.getInt(entryAddress, headerOffset + 4);
       int metadataLength = MEMORY.getInt(entryAddress, headerOffset + 8);
@@ -172,29 +170,19 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
    @Override
    public long getNext(long entryAddress) {
-      return MEMORY.getLong(entryAddress, evictionEnabled ? 8 : 0);
+      return MEMORY.getLong(entryAddress, evictionEnabled ? 16 : 0);
    }
 
    @Override
    public void setNext(long entryAddress, long value) {
-      MEMORY.putLong(entryAddress, evictionEnabled ? 8 : 0, value);
-   }
-
-   @Override
-   public long getLruNode(long entryAddress) {
-      return MEMORY.getLong(entryAddress, 0);
-   }
-
-   @Override
-   public void setLruNode(long entryAddress, long value) {
-      MEMORY.putLong(entryAddress, 0, value);
+      MEMORY.putLong(entryAddress, evictionEnabled ? 16 : 0, value);
    }
 
    @Override
    public int getHashCode(long entryAddress) {
-      // 8 bytes for eviction if needed (optional)
+      // 16 bytes for eviction if needed (optional)
       // 8 bytes for linked pointer
-      int headerOffset = evictionEnabled ? 16 : 8;
+      int headerOffset = evictionEnabled ? 24 : 8;
       return MEMORY.getInt(entryAddress, headerOffset);
    }
 
@@ -205,9 +193,8 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
     */
    @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> fromMemory(long address) {
-      int headerOffset = evictionEnabled ? 16 : 8;
+      int offset = evictionEnabled ? 24 : 8;
 
-      int offset = headerOffset;
       int hashCode = MEMORY.getInt(address, offset);
       offset += 4;
       byte[] keyBytes = new byte[MEMORY.getInt(address, offset)];
@@ -288,16 +275,6 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       }
    }
 
-   @Override
-   public WrappedBytes getKey(long address) {
-      long headerOffset = (evictionEnabled ? 16 : 8);
-      int keyLength = MEMORY.getInt(address, headerOffset + 4);
-      byte[] keyBytes = new byte[keyLength];
-
-      MEMORY.getBytes(address, headerOffset + HEADER_LENGTH, keyBytes, 0, keyBytes.length);
-      return new WrappedByteArray(keyBytes);
-   }
-
    /**
     * Assumes the address points to the entry excluding the pointer reference at the beginning
     * @param address the address of an entry to read
@@ -306,7 +283,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
     */
    @Override
    public boolean equalsKey(long address, WrappedBytes wrappedBytes) {
-      int headerOffset = evictionEnabled ? 16 : 8;
+      int headerOffset = evictionEnabled ? 24 : 8;
       int hashCode = wrappedBytes.hashCode();
       if (hashCode != MEMORY.getInt(address, headerOffset)) {
          return false;
