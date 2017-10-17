@@ -75,7 +75,7 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       this.operation = Operation.READ_WRITE_KEY_VALUE;
       setCommonFields(command);
       this.function = command.getBiFunction();
-      this.value = command.getValue();
+      this.value = command.getArgument();
       this.prevValue = command.getPrevValue();
       this.prevMetadata = command.getPrevMetadata();
    }
@@ -84,7 +84,7 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       this.operation = Operation.WRITE_ONLY_KEY_VALUE;
       setCommonFields(command);
       this.function = command.getBiConsumer();
-      this.value = command.getValue();
+      this.value = command.getArgument();
    }
 
    public void setWriteOnlyKeyCommand(WriteOnlyKeyCommand command) {

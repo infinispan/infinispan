@@ -19,26 +19,26 @@ class ReadWriteManyEntriesHelper extends WriteManyCommandHelper<ReadWriteManyEnt
 
    @Override
    public ReadWriteManyEntriesCommand copyForLocal(ReadWriteManyEntriesCommand cmd, Map<Object, Object> entries) {
-      return new ReadWriteManyEntriesCommand(cmd).withEntries(entries);
+      return new ReadWriteManyEntriesCommand(cmd).withArguments(entries);
    }
 
    @Override
    public ReadWriteManyEntriesCommand copyForPrimary(ReadWriteManyEntriesCommand cmd, ConsistentHash ch, Set<Integer> segments) {
       return new ReadWriteManyEntriesCommand(cmd)
-            .withEntries(new ReadOnlySegmentAwareMap<>(cmd.getEntries(), ch, segments));
+            .withArguments(new ReadOnlySegmentAwareMap<>(cmd.getArguments(), ch, segments));
    }
 
    @Override
    public ReadWriteManyEntriesCommand copyForBackup(ReadWriteManyEntriesCommand cmd, ConsistentHash ch, Set<Integer> segments) {
       ReadWriteManyEntriesCommand copy = new ReadWriteManyEntriesCommand(cmd)
-            .withEntries(new ReadOnlySegmentAwareMap(cmd.getEntries(), ch, segments));
+            .withArguments(new ReadOnlySegmentAwareMap(cmd.getArguments(), ch, segments));
       copy.setForwarded(true);
       return copy;
    }
 
    @Override
    public Collection<Map.Entry<Object, Object>> getItems(ReadWriteManyEntriesCommand cmd) {
-      return cmd.getEntries().entrySet();
+      return cmd.getArguments().entrySet();
    }
 
    @Override

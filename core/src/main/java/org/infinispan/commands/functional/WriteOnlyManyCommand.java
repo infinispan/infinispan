@@ -24,10 +24,10 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    public static final byte COMMAND_ID = 56;
 
    private Collection<?> keys;
-   private Consumer<WriteEntryView<V>> f;
+   private Consumer<WriteEntryView<K, V>> f;
 
    public WriteOnlyManyCommand(Collection<?> keys,
-                               Consumer<WriteEntryView<V>> f,
+                               Consumer<WriteEntryView<K, V>> f,
                                Params params,
                                CommandInvocationId commandInvocationId,
                                DataConversion keyDataConversion,
@@ -50,7 +50,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    public WriteOnlyManyCommand() {
    }
 
-   public Consumer<WriteEntryView<V>> getConsumer() {
+   public Consumer<WriteEntryView<K, V>> getConsumer() {
       return f;
    }
 
@@ -85,7 +85,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
       keys = MarshallUtil.unmarshallCollectionUnbounded(input, ArrayList::new);
-      f = (Consumer<WriteEntryView<V>>) input.readObject();
+      f = (Consumer<WriteEntryView<K, V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
       topologyId = input.readInt();

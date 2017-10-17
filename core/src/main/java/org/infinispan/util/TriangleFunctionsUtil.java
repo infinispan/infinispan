@@ -49,9 +49,9 @@ public final class TriangleFunctionsUtil {
       return copy;
    }
 
-   public static <K, V> WriteOnlyManyEntriesCommand<K, V> copy(WriteOnlyManyEntriesCommand<K, V> command,
+   public static <K, V, T> WriteOnlyManyEntriesCommand<K, V, T> copy(WriteOnlyManyEntriesCommand<K, V, T> command,
          Collection<Object> keys) {
-      return new WriteOnlyManyEntriesCommand<>(command).withEntries(filterEntries(command.getEntries(), keys));
+      return new WriteOnlyManyEntriesCommand<>(command).withArguments(filterEntries(command.getArguments(), keys));
    }
 
    public static <K, V> WriteOnlyManyCommand<K, V> copy(WriteOnlyManyCommand<K, V> command, Collection<Object> keys) {
@@ -67,9 +67,9 @@ public final class TriangleFunctionsUtil {
       return copy;
    }
 
-   public static <K, V, R> ReadWriteManyEntriesCommand<K, V, R> copy(ReadWriteManyEntriesCommand<K, V, R> command,
+   public static <K, V, T, R> ReadWriteManyEntriesCommand<K, V, T, R> copy(ReadWriteManyEntriesCommand<K, V, T, R> command,
          Collection<Object> keys) {
-      return new ReadWriteManyEntriesCommand<K, V, R>(command).withEntries(filterEntries(command.getEntries(), keys));
+      return new ReadWriteManyEntriesCommand<K, V, T, R>(command).withArguments(filterEntries(command.getArguments(), keys));
    }
 
    public static Map<Object, Object> mergeHashMap(ValidResponse response, Map<Object, Object> resultMap) {
@@ -168,15 +168,15 @@ public final class TriangleFunctionsUtil {
       return cmd;
    }
 
-   public static <K, V> BackupWriteCommand backupFrom(CommandsFactory factory,
-         WriteOnlyManyEntriesCommand<K, V> command, Collection<Object> keys) {
+   public static <K, V, T> BackupWriteCommand backupFrom(CommandsFactory factory,
+         WriteOnlyManyEntriesCommand<K, V, T> command, Collection<Object> keys) {
       MultiEntriesFunctionalBackupWriteCommand cmd = factory.buildMultiEntriesFunctionalBackupWriteCommand();
       cmd.setWriteOnly(command, keys);
       return cmd;
    }
 
-   public static <K, V, R> BackupWriteCommand backupFrom(CommandsFactory factory,
-         ReadWriteManyEntriesCommand<K, V, R> command, Collection<Object> keys) {
+   public static <K, V, T, R> BackupWriteCommand backupFrom(CommandsFactory factory,
+         ReadWriteManyEntriesCommand<K, V, T, R> command, Collection<Object> keys) {
       MultiEntriesFunctionalBackupWriteCommand cmd = factory.buildMultiEntriesFunctionalBackupWriteCommand();
       cmd.setReadWrite(command, keys);
       return cmd;

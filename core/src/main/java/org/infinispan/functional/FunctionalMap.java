@@ -272,7 +272,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
       WriteOnlyMap<K, V> withParams(Param<?>... ps);
 
       /**
-       * Evaluate a write-only {@link BiConsumer} operation, with a value
+       * Evaluate a write-only {@link BiConsumer} operation, with an argument
        * passed in and a {@link WriteEntryView} of the value associated with
        * the key, and return a {@link CompletableFuture} which will be
        * completed when the operation completes.
@@ -297,9 +297,13 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * such as {@code javax.cache.Cache#put(Object, Object)}, and hence, the
        * {@link BiConsumer} could be cached and reused each time it's invoked.
        *
+       * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
+       * are in place despite the argument type and value type don't have to match
+       * the argument will use value encoding.
+       *
        * @param key the key associated with the {@link WriteEntryView} to be
        *            passed to the operation
-       * @param value value to write, passed in as first parameter to the
+       * @param argument argument passed in as first parameter to the
        *              {@link BiConsumer} operation.
        * @param f operation that takes a user defined value, and a
        *          {@link WriteEntryView} associated with the key, and writes
@@ -307,7 +311,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * @return a {@link CompletableFuture} which will be completed when the
        *         operation completes
        */
-      CompletableFuture<Void> eval(K key, V value, BiConsumer<V, WriteEntryView<V>> f);
+      <T> CompletableFuture<Void> eval(K key, T argument, BiConsumer<T, WriteEntryView<K, V>> f);
 
       /**
        * Same as {@link #eval(Object, Object, BiConsumer)} except that the function must also
@@ -315,8 +319,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>
        * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
        */
-      default CompletableFuture<Void> eval(K key, V value, SerializableBiConsumer<V, WriteEntryView<V>> f) {
-         return eval(key, value, (BiConsumer<V, WriteEntryView<V>>) f);
+      default <T> CompletableFuture<Void> eval(K key, T argument, SerializableBiConsumer<T, WriteEntryView<K, V>> f) {
+         return eval(key, argument, (BiConsumer<T, WriteEntryView<K, V>>) f);
       }
 
       /**
@@ -338,7 +342,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * @return a {@link CompletableFuture} which will be completed when the
        *         operation completes
        */
-      CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<V>> f);
+      CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<K, V>> f);
 
       /**
        * Same as {@link #eval(Object, Consumer)} except that the function must also
@@ -346,12 +350,12 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>
        * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
        */
-      default CompletableFuture<Void> eval(K key, SerializableConsumer<WriteEntryView<V>> f) {
-         return eval(key, (Consumer<WriteEntryView<V>>) f);
+      default CompletableFuture<Void> eval(K key, SerializableConsumer<WriteEntryView<K, V>> f) {
+         return eval(key, (Consumer<WriteEntryView<K, V>>) f);
       }
 
       /**
-       * Evaluate a write-only {@link BiConsumer} operation, with a value
+       * Evaluate a write-only {@link BiConsumer} operation, with an argument
        * passed in and a {@link WriteEntryView} of the value associated with
        * the key, for each of the keys in the set passed in, and returns a
        * {@link CompletableFuture} that will be completed when the write-only
@@ -371,7 +375,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>Since this is a write-only operation, no entry attributes can be
        * queried, hence the only reasonable thing can be returned is Void.
        *
-       * @param entries the key/value pairs associated with each of the
+       * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
+       * are in place despite the argument type and value type don't have to match
+       * the argument will use value encoding.
+       *
+       * @param arguments the key/value pairs associated with each of the
        *             {@link WriteEntryView} passed in the function callbacks
        * @param f operation that consumes a value associated with a key in the
        *          entries collection and the {@link WriteEntryView} associated
@@ -380,7 +388,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *         the {@link BiConsumer} operation  has been executed against
        *         all entries
        */
-      CompletableFuture<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f);
+      <T> CompletableFuture<Void> evalMany(Map<? extends K, ? extends T> arguments, BiConsumer<T, WriteEntryView<K, V>> f);
 
       /**
        * Same as {@link #evalMany(Map, BiConsumer)} except that the function must also
@@ -388,8 +396,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>
        * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
        */
-      default CompletableFuture<Void> evalMany(Map<? extends K, ? extends V> entries, SerializableBiConsumer<V, WriteEntryView<V>> f) {
-         return evalMany(entries, (BiConsumer<V, WriteEntryView<V>>) f);
+      default <T> CompletableFuture<Void> evalMany(Map<? extends K, ? extends T> arguments, SerializableBiConsumer<T, WriteEntryView<K, V>> f) {
+         return evalMany(arguments, (BiConsumer<T, WriteEntryView<K, V>>) f);
       }
 
       /**
@@ -417,7 +425,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *         the {@link Consumer} operation has been executed against all
        *         entries
        */
-      CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f);
+      CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<K, V>> f);
 
       /**
        * Same as {@link #evalMany(Set, Consumer)} except that the function must also
@@ -425,8 +433,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>
        * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
        */
-      default CompletableFuture<Void> evalMany(Set<? extends K> keys, SerializableConsumer<WriteEntryView<V>> f) {
-         return evalMany(keys, (Consumer<WriteEntryView<V>>) f);
+      default CompletableFuture<Void> evalMany(Set<? extends K> keys, SerializableConsumer<WriteEntryView<K, V>> f) {
+         return evalMany(keys, (Consumer<WriteEntryView<K, V>>) f);
       }
 
       /**
@@ -445,7 +453,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *         the {@link Consumer} operation has been executed against all
        *         entries
        */
-      CompletableFuture<Void> evalAll(Consumer<WriteEntryView<V>> f);
+      CompletableFuture<Void> evalAll(Consumer<WriteEntryView<K, V>> f);
 
       /**
        * Same as {@link #evalAll(Consumer)} except that the function must also
@@ -453,8 +461,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>
        * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
        */
-      default CompletableFuture<Void> evalAll(SerializableConsumer<WriteEntryView<V>> f) {
-         return evalAll((Consumer<WriteEntryView<V>>) f);
+      default CompletableFuture<Void> evalAll(SerializableConsumer<WriteEntryView<K, V>> f) {
+         return evalAll((Consumer<WriteEntryView<K, V>>) f);
       }
 
       /**
@@ -545,7 +553,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
       }
 
       /**
-       * Evaluate a read-write function, with a value passed in and a
+       * Evaluate a read-write function, with an argument passed in and a
        * {@link WriteEntryView} of the value associated with the key, and
        * return a {@link CompletableFuture} which will be completed with the
        * returned value by the function.
@@ -584,13 +592,17 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * and hence, the {@link BiFunction} could be cached and reused each
        * time it's invoked.
        *
+       * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
+       * are in place despite the argument type and value type don't have to match
+       * the argument will use value encoding.
+       *
        * <p>The function must not mutate neither the key returned through
        * {@link ReadEntryView#key()} nor the internally stored value provided
        * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
        *
        * @param key the key associated with the {@link ReadWriteEntryView} to be
        *            passed to the operation
-       * @param value value to write, passed in as first parameter to the {@link BiFunction}.
+       * @param argument argument passed in as first parameter to the {@link BiFunction}.
        * @param f operation that takes a user defined value, and a
        *          {@link ReadWriteEntryView} associated with the key, and writes
        *          to the {@link ReadWriteEntryView} passed in, possibly
@@ -599,7 +611,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * @return a {@link CompletableFuture} which will be completed with the
        *         returned value from the function
        */
-      <R> CompletableFuture<R> eval(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f);
+      <T, R> CompletableFuture<R> eval(K key, T argument, BiFunction<T, ReadWriteEntryView<K, V>, R> f);
 
       /**
        * Same as {@link #eval(Object, Object, BiFunction)}  except that the function must also
@@ -607,12 +619,12 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>
        * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
        */
-      default <R> CompletableFuture<R> eval(K key, V value, SerializableBiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-         return eval(key, value, (BiFunction<V, ReadWriteEntryView<K, V>, R>) f);
+      default <T, R> CompletableFuture<R> eval(K key, T argument, SerializableBiFunction<T, ReadWriteEntryView<K, V>, R> f) {
+         return eval(key, argument, (BiFunction<T, ReadWriteEntryView<K, V>, R>) f);
       }
 
       /**
-       * Evaluate a read-write {@link BiFunction}, with a value passed in and
+       * Evaluate a read-write {@link BiFunction}, with an argument passed in and
        * a {@link ReadWriteEntryView} of the value associated with
        * the key, for each of the keys in the set passed in, and
        * returns an {@link Traversable} to navigate each of the
@@ -625,18 +637,22 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * iterations because the internal logic can often iterate more
        * efficiently since it knows more about the system.
        *
+       * <p>Note that when {@link org.infinispan.commons.dataconversion.Encoder encoders}
+       * are in place despite the argument type and value type don't have to match
+       * the argument will use value encoding.
+       *
        * <p>The function must not mutate neither the key returned through
        * {@link ReadEntryView#key()} nor the internally stored value provided
        * through {@link ReadEntryView#get()} or {@link ReadEntryView#find()}.
        *
-       * @param entries the key/value pairs associated with each of the
+       * @param arguments the key/value pairs associated with each of the
        *             {@link ReadWriteEntryView} passed in the function callbacks
        * @param f function that takes in a value associated with a key in the
        *          entries collection and the {@link ReadWriteEntryView} associated
        *          with that key in the cache
        * @return a {@link Traversable} to navigate each {@link BiFunction} return
        */
-      <R> Traversable<R> evalMany(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f);
+      <T, R> Traversable<R> evalMany(Map<? extends K, ? extends T> arguments, BiFunction<T, ReadWriteEntryView<K, V>, R> f);
 
       /**
        * Same as {@link #evalMany(Map, BiFunction)}  except that the function must also
@@ -644,8 +660,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <p>
        * The compiler will pick this overload for lambda parameters, making them <code>Serializable</code>
        */
-      default <R> Traversable<R> evalMany(Map<? extends K, ? extends V> entries, SerializableBiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-         return evalMany(entries, (BiFunction<V, ReadWriteEntryView<K, V>, R>) f);
+      default <T, R> Traversable<R> evalMany(Map<? extends K, ? extends T> arguments, SerializableBiFunction<T, ReadWriteEntryView<K, V>, R> f) {
+         return evalMany(arguments, (BiFunction<T, ReadWriteEntryView<K, V>, R>) f);
       }
 
       /**

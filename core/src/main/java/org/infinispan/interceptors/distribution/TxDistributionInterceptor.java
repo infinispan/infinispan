@@ -190,7 +190,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
-      return handleTxWriteManyEntriesCommand(ctx, command, command.getEntries(), (c, entries) -> new WriteOnlyManyEntriesCommand(c).withEntries(entries));
+      return handleTxWriteManyEntriesCommand(ctx, command, command.getArguments(), (c, entries) -> new WriteOnlyManyEntriesCommand(c).withArguments(entries));
    }
 
    @Override
@@ -227,8 +227,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             return handleFunctionalReadManyCommand(ctx, command, readWriteManyEntriesHelper);
          }
       } else {
-         return handleTxWriteManyEntriesCommand(ctx, command, command.getEntries(),
-               (c, entries) -> new ReadWriteManyEntriesCommand<>(c).withEntries(entries));
+         return handleTxWriteManyEntriesCommand(ctx, command, command.getArguments(),
+               (c, entries) -> new ReadWriteManyEntriesCommand<>(c).withArguments(entries));
       }
    }
 
@@ -713,7 +713,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private class ReadWriteManyEntriesHelper extends BaseFunctionalWriteHelper<ReadWriteManyEntriesCommand> {
       @Override
       public ReadWriteManyEntriesCommand copyForLocal(ReadWriteManyEntriesCommand command, List<Object> keys) {
-         return new ReadWriteManyEntriesCommand(command).withEntries(filterEntries(command.getEntries(), keys));
+         return new ReadWriteManyEntriesCommand(command).withArguments(filterEntries(command.getArguments(), keys));
       }
 
       private  <K, V> Map<K, V> filterEntries(Map<K, V> originalEntries, List<K> keys) {

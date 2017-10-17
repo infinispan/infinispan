@@ -19,26 +19,26 @@ class WriteOnlyManyEntriesHelper extends WriteManyCommandHelper<WriteOnlyManyEnt
 
    @Override
    public WriteOnlyManyEntriesCommand copyForLocal(WriteOnlyManyEntriesCommand cmd, Map<Object, Object> entries) {
-      return new WriteOnlyManyEntriesCommand(cmd).withEntries(entries);
+      return new WriteOnlyManyEntriesCommand(cmd).withArguments(entries);
    }
 
    @Override
    public WriteOnlyManyEntriesCommand copyForPrimary(WriteOnlyManyEntriesCommand cmd, ConsistentHash ch, Set<Integer> segments) {
       return new WriteOnlyManyEntriesCommand(cmd)
-            .withEntries(new ReadOnlySegmentAwareMap<>(cmd.getEntries(), ch, segments));
+            .withArguments(new ReadOnlySegmentAwareMap<>(cmd.getArguments(), ch, segments));
    }
 
    @Override
    public WriteOnlyManyEntriesCommand copyForBackup(WriteOnlyManyEntriesCommand cmd, ConsistentHash ch, Set<Integer> segments) {
       WriteOnlyManyEntriesCommand copy = new WriteOnlyManyEntriesCommand(cmd)
-            .withEntries(new ReadOnlySegmentAwareMap(cmd.getEntries(), ch, segments));
+            .withArguments(new ReadOnlySegmentAwareMap(cmd.getArguments(), ch, segments));
       copy.setForwarded(true);
       return copy;
    }
 
    @Override
    public Collection<Map.Entry<Object, Object>> getItems(WriteOnlyManyEntriesCommand cmd) {
-      return cmd.getEntries().entrySet();
+      return cmd.getArguments().entrySet();
    }
 
    @Override

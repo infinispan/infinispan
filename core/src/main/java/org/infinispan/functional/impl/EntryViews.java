@@ -48,7 +48,7 @@ public final class EntryViews {
       return new ReadOnlySnapshotView<>(key, value, metadata);
    }
 
-   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry entry, DataConversion valueDataConversion) {
+   public static <K, V> WriteEntryView<K, V> writeOnly(CacheEntry entry, DataConversion valueDataConversion) {
       return new EntryBackedWriteOnlyView<>(entry, valueDataConversion);
    }
 
@@ -198,7 +198,7 @@ public final class EntryViews {
       }
    }
 
-   private static final class EntryBackedWriteOnlyView<K, V> implements WriteEntryView<V> {
+   private static final class EntryBackedWriteOnlyView<K, V> implements WriteEntryView<K, V> {
       final CacheEntry entry;
       private final DataConversion valueDataConversion;
 
@@ -226,6 +226,11 @@ public final class EntryViews {
          entry.setValue(encodedValue);
          entry.setChanged(true);
          entry.setRemoved(value == null);
+      }
+
+      @Override
+      public K key() {
+         return (K) entry.getKey();
       }
 
       @Override

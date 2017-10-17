@@ -977,12 +977,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
       assertKeyNotNull(deltaAwareValueKey);
       InvocationContext ctx = invocationContextFactory.createInvocationContext(true, 1);
-      ReadWriteKeyValueCommand<K, Object, Object> command = createApplyDelta(deltaAwareValueKey, delta, FlagBitSets.IGNORE_RETURN_VALUES, ctx);
+      ReadWriteKeyValueCommand<K, Object, Object, Object> command = createApplyDelta(deltaAwareValueKey, delta, FlagBitSets.IGNORE_RETURN_VALUES, ctx);
       invoker.invoke(ctx, command);
    }
 
-   private ReadWriteKeyValueCommand<K, Object, Object> createApplyDelta(K deltaAwareValueKey, Delta delta, long explicitFlags, InvocationContext ctx) {
-      ReadWriteKeyValueCommand<K, Object, Object> command = commandsFactory.buildReadWriteKeyValueCommand(
+   private ReadWriteKeyValueCommand<K, Object, Object, Object> createApplyDelta(K deltaAwareValueKey, Delta delta, long explicitFlags, InvocationContext ctx) {
+      ReadWriteKeyValueCommand<K, Object, Object, Object> command = commandsFactory.buildReadWriteKeyValueCommand(
             deltaAwareValueKey, delta, new ApplyDelta<>(marshaller), Params.create(), getKeyDataConversion(), getValueDataConversion());
       command.setFlagsBitSet(explicitFlags);
       if (ctx.getLockOwner() == null) {

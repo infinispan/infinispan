@@ -20,29 +20,29 @@ import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.Params;
 
-public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCommand<K, V> {
+public final class WriteOnlyManyEntriesCommand<K, V, T> extends AbstractWriteManyCommand<K, V> {
 
    public static final byte COMMAND_ID = 57;
 
-   private Map<?, ?> entries;
-   private BiConsumer<V, WriteEntryView<V>> f;
+   private Map<?, ?> arguments;
+   private BiConsumer<T, WriteEntryView<K, V>> f;
 
-   public WriteOnlyManyEntriesCommand(Map<?, ?> entries,
-                                      BiConsumer<V, WriteEntryView<V>> f,
+   public WriteOnlyManyEntriesCommand(Map<?, ?> arguments,
+                                      BiConsumer<T, WriteEntryView<K, V>> f,
                                       Params params,
                                       CommandInvocationId commandInvocationId,
                                       DataConversion keyDataConversion,
                                       DataConversion valueDataConversion,
                                       ComponentRegistry componentRegistry) {
       super(commandInvocationId, params, keyDataConversion, valueDataConversion);
-      this.entries = entries;
+      this.arguments = arguments;
       this.f = f;
       init(componentRegistry);
    }
 
-   public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V> command) {
+   public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V, T> command) {
       super(command);
-      this.entries = command.entries;
+      this.arguments = command.arguments;
       this.f = command.f;
       this.keyDataConversion = command.keyDataConversion;
       this.valueDataConversion = command.valueDataConversion;
@@ -51,20 +51,20 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    public WriteOnlyManyEntriesCommand() {
    }
 
-   public BiConsumer<V, WriteEntryView<V>> getBiConsumer() {
+   public BiConsumer<T, WriteEntryView<K, V>> getBiConsumer() {
       return f;
    }
 
-   public Map<?, ?> getEntries() {
-      return entries;
+   public Map<?, ?> getArguments() {
+      return arguments;
    }
 
-   public void setEntries(Map<?, ?> entries) {
-      this.entries = entries;
+   public void setArguments(Map<?, ?> arguments) {
+      this.arguments = arguments;
    }
 
-   public final WriteOnlyManyEntriesCommand<K, V> withEntries(Map<?, ?> entries) {
-      setEntries(entries);
+   public final WriteOnlyManyEntriesCommand<K, V, T> withArguments(Map<?, ?> entries) {
+      setArguments(entries);
       return this;
    }
 
@@ -76,7 +76,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallMap(entries, output);
+      MarshallUtil.marshallMap(arguments, output);
       output.writeObject(f);
       output.writeBoolean(isForwarded);
       Params.writeObject(output, params);
@@ -90,8 +90,8 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       commandInvocationId = CommandInvocationId.readFrom(input);
       // We use LinkedHashMap in order to guarantee the same order of iteration
-      entries = MarshallUtil.unmarshallMap(input, LinkedHashMap::new);
-      f = (BiConsumer<V, WriteEntryView<V>>) input.readObject();
+      arguments = MarshallUtil.unmarshallMap(input, LinkedHashMap::new);
+      f = (BiConsumer<T, WriteEntryView<K, V>>) input.readObject();
       isForwarded = input.readBoolean();
       params = Params.readObject(input);
       topologyId = input.readInt();
@@ -102,14 +102,14 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      for (Map.Entry<?, ?> entry : entries.entrySet()) {
+      for (Map.Entry<?, ?> entry : arguments.entrySet()) {
          CacheEntry cacheEntry = ctx.lookupEntry(entry.getKey());
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (cacheEntry == null) {
             throw new IllegalStateException();
          }
-         V decodedValue = (V) valueDataConversion.fromStorage(entry.getValue());
+         T decodedValue = (T) valueDataConversion.fromStorage(entry.getValue());
          f.accept(decodedValue, EntryViews.writeOnly(cacheEntry, valueDataConversion));
       }
       return null;
@@ -123,7 +123,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    @Override
    public Collection<?> getAffectedKeys() {
-      return entries.keySet();
+      return arguments.keySet();
    }
 
    @Override
@@ -144,7 +144,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder("WriteOnlyManyEntriesCommand{");
-      sb.append("entries=").append(entries);
+      sb.append("arguments=").append(arguments);
       sb.append(", f=").append(f.getClass().getName());
       sb.append(", isForwarded=").append(isForwarded);
       sb.append(", keyDataConversion=").append(keyDataConversion);
@@ -155,12 +155,12 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    @Override
    public Collection<?> getKeysToLock() {
-      return entries.keySet();
+      return arguments.keySet();
    }
 
    @Override
    public Mutation<K, V, ?> toMutation(Object key) {
-      return new Mutations.WriteWithValue<>(keyDataConversion, valueDataConversion, entries.get(key), f);
+      return new Mutations.WriteWithValue<>(keyDataConversion, valueDataConversion, arguments.get(key), f);
    }
 
    @Override

@@ -78,19 +78,19 @@ public final class MarshallableFunctions {
       return RemoveIfValueEqualsReturnBoolean.getInstance();
    }
 
-   public static <V> BiConsumer<V, WriteEntryView<V>> setValueConsumer() {
+   public static <K, V> BiConsumer<V, WriteEntryView<K, V>> setValueConsumer() {
       return SetValue.getInstance();
    }
 
-   public static <V> BiConsumer<V, WriteEntryView<V>> setValueMetasConsumer(MetaParam.Writable... metas) {
+   public static <K, V> BiConsumer<V, WriteEntryView<K, V>> setValueMetasConsumer(MetaParam.Writable... metas) {
       return new SetValueMetas<>(metas);
    }
 
-   public static <V> BiConsumer<V, WriteEntryView<V>> setInternalCacheValueConsumer() {
+   public static <K, V> BiConsumer<V, WriteEntryView<K, V>> setInternalCacheValueConsumer() {
       return SetInternalCacheValue.getInstance();
    }
 
-   public static <V> Consumer<WriteEntryView<V>> removeConsumer() {
+   public static <K, V> Consumer<WriteEntryView<K, V>> removeConsumer() {
       return Remove.getInstance();
    }
 
@@ -456,7 +456,7 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static abstract class AbstractSetValue<V> implements BiConsumer<V, WriteEntryView<V>> {
+   private static abstract class AbstractSetValue<K, V> implements BiConsumer<V, WriteEntryView<K, V>> {
       final MetaParam.Writable[] metas;
 
       protected AbstractSetValue(MetaParam.Writable[] metas) {
@@ -464,24 +464,24 @@ public final class MarshallableFunctions {
       }
 
       @Override
-      public void accept(V v, WriteEntryView<V> wo) {
+      public void accept(V v, WriteEntryView<K, V> wo) {
          wo.set(v, metas);
       }
    }
 
-   private static final class SetValue<V> extends AbstractSetValue<V> {
+   private static final class SetValue<K, V> extends AbstractSetValue<K, V> {
       protected SetValue(MetaParam.Writable[] metas) {
          super(metas);
       }
 
       private static final SetValue INSTANCE = new SetValue<>(new MetaParam.Writable[0]);
       @SuppressWarnings("unchecked")
-      private static <K, V> BiConsumer<V, WriteEntryView<V>> getInstance() {
+      private static <K, V> BiConsumer<V, WriteEntryView<K, V>> getInstance() {
          return SetValue.INSTANCE;
       }
    }
 
-   static final class SetValueMetas<V> extends AbstractSetValue<V> implements LambdaWithMetas {
+   static final class SetValueMetas<K, V> extends AbstractSetValue<K, V> implements LambdaWithMetas {
       SetValueMetas(MetaParam.Writable[] metas) {
          super(metas);
       }
@@ -492,28 +492,28 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static final class SetInternalCacheValue<V> implements BiConsumer<InternalCacheValue<V>, WriteEntryView<V>> {
+   private static final class SetInternalCacheValue<V> implements BiConsumer<InternalCacheValue<V>, WriteEntryView<?, V>> {
       private static final SetInternalCacheValue INSTANCE = new SetInternalCacheValue<>();
       @SuppressWarnings("unchecked")
-      private static <K, V> BiConsumer<V, WriteEntryView<V>> getInstance() {
+      private static <K, V> BiConsumer<V, WriteEntryView<K, V>> getInstance() {
          return SetInternalCacheValue.INSTANCE;
       }
 
       @Override
-      public void accept(InternalCacheValue<V> icv, WriteEntryView<V> view) {
+      public void accept(InternalCacheValue<V> icv, WriteEntryView<?, V> view) {
          view.set(icv.getValue(), icv.getMetadata());
       }
    }
 
-   private static final class Remove<V> implements Consumer<WriteEntryView<V>> {
+   private static final class Remove<V> implements Consumer<WriteEntryView<?, V>> {
       @Override
-      public void accept(WriteEntryView<V> wo) {
+      public void accept(WriteEntryView<?, V> wo) {
          wo.remove();
       }
 
       private static final Remove INSTANCE = new Remove<>();
       @SuppressWarnings("unchecked")
-      private static <V> Consumer<WriteEntryView<V>> getInstance() {
+      private static <K, V> Consumer<WriteEntryView<K, V>> getInstance() {
          return Remove.INSTANCE;
       }
    }

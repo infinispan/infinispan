@@ -42,7 +42,7 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    @Override
-   public CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<V>> f) {
+   public CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<K, V>> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
       WriteOnlyKeyCommand<K, V> cmd = fmap.commandsFactory.buildWriteOnlyKeyCommand(keyEncoded, f, params, keyDataConversion, valueDataConversion);
@@ -54,11 +54,11 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    @Override
-   public CompletableFuture<Void> eval(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
+   public <T> CompletableFuture<Void> eval(K key, T argument, BiConsumer<T, WriteEntryView<K, V>> f) {
+      log.tracef("Invoked eval(k=%s, v=%s, %s)", key, argument, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
-      Object valueEncoded = valueDataConversion.toStorage(value);
-      WriteOnlyKeyValueCommand<K, V> cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(keyEncoded, valueEncoded, (BiConsumer) f, params, keyDataConversion, valueDataConversion);
+      Object argumentEncoded = valueDataConversion.toStorage(argument);
+      WriteOnlyKeyValueCommand<K, V, T> cmd = fmap.commandsFactory.buildWriteOnlyKeyValueCommand(keyEncoded, argumentEncoded, (BiConsumer) f, params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -67,11 +67,11 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    @Override
-   public CompletableFuture<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
-      log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
-      Map<?, ?> encodedEntries = encodeEntries(entries);
-      WriteOnlyManyEntriesCommand<K, V> cmd = fmap.commandsFactory.buildWriteOnlyManyEntriesCommand(encodedEntries, f, params, keyDataConversion, valueDataConversion);
-      InvocationContext ctx = getInvocationContext(true, entries.size());
+   public <T> CompletableFuture<Void> evalMany(Map<? extends K, ? extends T> arguments, BiConsumer<T, WriteEntryView<K, V>> f) {
+      log.tracef("Invoked evalMany(entries=%s, %s)", arguments, params);
+      Map<?, ?> argumentsEncoded = encodeEntries(arguments);
+      WriteOnlyManyEntriesCommand<K, V, T> cmd = fmap.commandsFactory.buildWriteOnlyManyEntriesCommand(argumentsEncoded, f, params, keyDataConversion, valueDataConversion);
+      InvocationContext ctx = getInvocationContext(true, arguments.size());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
       }
@@ -79,7 +79,7 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    @Override
-   public CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
+   public CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<K, V>> f) {
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
       Set<?> encodedKeys = encodeKeys(keys);
       WriteOnlyManyCommand<K, V> cmd = fmap.commandsFactory.buildWriteOnlyManyCommand(encodedKeys, f, params, keyDataConversion, valueDataConversion);
@@ -91,7 +91,7 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    @Override
-   public CompletableFuture<Void> evalAll(Consumer<WriteEntryView<V>> f) {
+   public CompletableFuture<Void> evalAll(Consumer<WriteEntryView<K, V>> f) {
       log.tracef("Invoked evalAll(%s)", params);
       // TODO: during commmand execution the set is iterated multiple times, and can execute remote operations
       // therefore we should rather have separate command (or different semantics for keys == null)
