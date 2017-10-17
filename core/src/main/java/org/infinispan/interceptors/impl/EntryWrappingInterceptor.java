@@ -487,7 +487,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
          removeFromContextOnRetry(ctx, command.getAffectedKeys());
       }
       boolean ignoreOwnership = ignoreOwnership(command);
-      for (Object key : command.getEntries().keySet()) {
+      for (Object key : command.getArguments().keySet()) {
          //the put map never reads the keys
          entryFactory.wrapEntryForWriting(ctx, key, ignoreOwnership || canRead(key), false);
       }

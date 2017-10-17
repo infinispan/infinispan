@@ -56,11 +56,11 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    @Override
-   public <R> CompletableFuture<R> eval(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
+   public <T, R> CompletableFuture<R> eval(K key, T argument, BiFunction<T, ReadWriteEntryView<K, V>, R> f) {
+      log.tracef("Invoked eval(k=%s, v=%s, %s)", key, argument, params);
       Object keyEncoded = keyDataConversion.toStorage(key);
-      Object valueEncoded = valueDataConversion.toStorage(value);
-      ReadWriteKeyValueCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteKeyValueCommand(keyEncoded, valueEncoded, (BiFunction) f, params, keyDataConversion, valueDataConversion);
+      Object argumentEncoded = valueDataConversion.toStorage(argument);
+      ReadWriteKeyValueCommand<K, V, T, R> cmd = fmap.commandsFactory.buildReadWriteKeyValueCommand(keyEncoded, argumentEncoded, (BiFunction) f, params, keyDataConversion, valueDataConversion);
       InvocationContext ctx = getInvocationContext(true, 1);
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
@@ -69,11 +69,11 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    @Override
-   public <R> Traversable<R> evalMany(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
-      Map<?, ?> encodedEntries = encodeEntries(entries);
-      ReadWriteManyEntriesCommand<K, V, R> cmd = fmap.commandsFactory.buildReadWriteManyEntriesCommand(encodedEntries, f, params, keyDataConversion, valueDataConversion);
-      InvocationContext ctx = getInvocationContext(true, entries.size());
+   public <T, R> Traversable<R> evalMany(Map<? extends K, ? extends T> arguments, BiFunction<T, ReadWriteEntryView<K, V>, R> f) {
+      log.tracef("Invoked evalMany(entries=%s, %s)", arguments, params);
+      Map<?, ?> argumentsEncoded = encodeEntries(arguments);
+      ReadWriteManyEntriesCommand<K, V, T, R> cmd = fmap.commandsFactory.buildReadWriteManyEntriesCommand(argumentsEncoded, f, params, keyDataConversion, valueDataConversion);
+      InvocationContext ctx = getInvocationContext(true, arguments.size());
       if (ctx.getLockOwner() == null) {
          ctx.setLockOwner(cmd.getKeyLockOwner());
       }

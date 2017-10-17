@@ -95,7 +95,13 @@ public final class EntryView {
     * @since 8.0
     */
    @Experimental
-   public interface WriteEntryView<V> {
+   public interface WriteEntryView<K, V> {
+      /**
+       * Key of the write-only entry view. Guaranteed to return a non-null value.
+       * The instance of the key must not be mutated.
+       */
+      K key();
+
       /**
        * Set this value along with optional metadata parameters.
        *
@@ -138,6 +144,6 @@ public final class EntryView {
     * @since 8.0
     */
    @Experimental
-   public interface ReadWriteEntryView<K, V> extends ReadEntryView<K, V>, WriteEntryView<V> {}
+   public interface ReadWriteEntryView<K, V> extends ReadEntryView<K, V>, WriteEntryView<K, V> {}
 
 }

@@ -460,7 +460,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       } else if (command instanceof ClearCommand) {
          return true;
       } else if (command instanceof WriteOnlyManyEntriesCommand) {
-         InternalCacheValue icv = (InternalCacheValue) ((WriteOnlyManyEntriesCommand) command).getEntries().get(key);
+         InternalCacheValue icv = (InternalCacheValue) ((WriteOnlyManyEntriesCommand) command).getArguments().get(key);
          return Objects.equals(icv.getValue(), value);
       } else if (command instanceof PrepareCommand) {
          for (WriteCommand writeCommand : ((PrepareCommand) command).getModifications()) {

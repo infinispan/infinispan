@@ -46,7 +46,7 @@ public class TestFunctionalInterfaces {
    }
 
    @SerializeWith(value = SetConstantOnWriteOnly.Externalizer0.class)
-   public static final class SetConstantOnWriteOnly implements Consumer<WriteEntryView<String>> {
+   public static final class SetConstantOnWriteOnly<K> implements Consumer<WriteEntryView<K, String>> {
       final String constant;
 
       public SetConstantOnWriteOnly(String constant) {
@@ -54,7 +54,7 @@ public class TestFunctionalInterfaces {
       }
 
       @Override
-      public void accept(WriteEntryView<String> wo) {
+      public void accept(WriteEntryView<K, String> wo) {
          wo.set(constant);
       }
 

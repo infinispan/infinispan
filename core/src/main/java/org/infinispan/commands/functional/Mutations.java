@@ -22,7 +22,7 @@ final class Mutations {
    private Mutations() {}
 
    // No need to occupy externalizer ids when we have a limited set of options
-   static <K, V, R> void writeTo(ObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
+   static <K, V, T, R> void writeTo(ObjectOutput output, Mutation<K, V, R> mutation) throws IOException {
       BaseMutation bm = (BaseMutation) mutation;
       DataConversion.writeTo(output, bm.keyDataConversion);
       DataConversion.writeTo(output, bm.valueDataConversion);
@@ -33,22 +33,22 @@ final class Mutations {
             output.writeObject(((ReadWrite<K, V, ?>) mutation).f);
             break;
          case ReadWriteWithValue.TYPE:
-            ReadWriteWithValue<K, V, R> rwwv = (ReadWriteWithValue<K, V, R>) mutation;
-            output.writeObject(rwwv.value);
+            ReadWriteWithValue<K, V, T, R> rwwv = (ReadWriteWithValue<K, V, T, R>) mutation;
+            output.writeObject(rwwv.argument);
             output.writeObject(rwwv.f);
             break;
          case Write.TYPE:
             output.writeObject(((Write<K, V>) mutation).f);
             break;
          case WriteWithValue.TYPE:
-            WriteWithValue<K, V> wwv = (WriteWithValue<K, V>) mutation;
-            output.writeObject(wwv.value);
+            WriteWithValue<K, V, T> wwv = (WriteWithValue<K, V, T>) mutation;
+            output.writeObject(wwv.argument);
             output.writeObject(wwv.f);
             break;
       }
    }
 
-   static <K, V> Mutation<K, V, ?> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+   static <K, V, T> Mutation<K, V, ?> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       DataConversion keyDataConversion = DataConversion.readFrom(input);
       DataConversion valueDataConversion = DataConversion.readFrom(input);
       switch (input.readByte()) {
@@ -57,9 +57,9 @@ final class Mutations {
          case ReadWriteWithValue.TYPE:
             return new ReadWriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiFunction<V, EntryView.ReadWriteEntryView<K, V>, ?>) input.readObject());
          case Write.TYPE:
-            return new Write<>(keyDataConversion, valueDataConversion, (Consumer<EntryView.WriteEntryView<V>>) input.readObject());
+            return new Write<>(keyDataConversion, valueDataConversion, (Consumer<EntryView.WriteEntryView<K, V>>) input.readObject());
          case WriteWithValue.TYPE:
-            return new WriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiConsumer<V, EntryView.WriteEntryView<V>>) input.readObject());
+            return new WriteWithValue<>(keyDataConversion, valueDataConversion, input.readObject(), (BiConsumer<T, EntryView.WriteEntryView<K, V>>) input.readObject());
          default:
             throw new IllegalStateException("Unknown type of mutation, broken input?");
       }
@@ -112,14 +112,14 @@ final class Mutations {
       }
    }
 
-   static class ReadWriteWithValue<K, V, R> extends BaseMutation<K, V, R> {
+   static class ReadWriteWithValue<K, V, T, R> extends BaseMutation<K, V, R> {
       static final byte TYPE = 1;
-      private final Object value;
-      private final BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f;
+      private final Object argument;
+      private final BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f;
 
-      public ReadWriteWithValue(DataConversion keyDataConversion, DataConversion valueDataConversion, Object value, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f) {
+      public ReadWriteWithValue(DataConversion keyDataConversion, DataConversion valueDataConversion, Object argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f) {
          super(keyDataConversion, valueDataConversion);
-         this.value = value;
+         this.argument = argument;
          this.f = f;
       }
 
@@ -130,15 +130,15 @@ final class Mutations {
 
       @Override
       public R apply(EntryView.ReadWriteEntryView<K, V> view) {
-         return f.apply((V) valueDataConversion.fromStorage(value), view);
+         return f.apply((T) valueDataConversion.fromStorage(argument), view);
       }
    }
 
    static class Write<K, V> extends BaseMutation<K, V, Void> {
       static final byte TYPE = 2;
-      private final Consumer<EntryView.WriteEntryView<V>> f;
+      private final Consumer<EntryView.WriteEntryView<K, V>> f;
 
-      public Write(DataConversion keyDataConversion, DataConversion valueDataConversion, Consumer<EntryView.WriteEntryView<V>> f) {
+      public Write(DataConversion keyDataConversion, DataConversion valueDataConversion, Consumer<EntryView.WriteEntryView<K, V>> f) {
          super(keyDataConversion, valueDataConversion);
          this.f = f;
       }
@@ -155,14 +155,14 @@ final class Mutations {
       }
    }
 
-   static class WriteWithValue<K, V> extends BaseMutation<K, V, Void> {
+   static class WriteWithValue<K, V, T> extends BaseMutation<K, V, Void> {
       static final byte TYPE = 3;
-      private final Object value;
-      private final BiConsumer<V, EntryView.WriteEntryView<V>> f;
+      private final Object argument;
+      private final BiConsumer<T, EntryView.WriteEntryView<K, V>> f;
 
-      public WriteWithValue(DataConversion keyDataConversion, DataConversion valueDataConversion, Object value, BiConsumer<V, EntryView.WriteEntryView<V>> f) {
+      public WriteWithValue(DataConversion keyDataConversion, DataConversion valueDataConversion, Object argument, BiConsumer<T, EntryView.WriteEntryView<K, V>> f) {
          super(keyDataConversion, valueDataConversion);
-         this.value = value;
+         this.argument = argument;
          this.f = f;
       }
 
@@ -173,7 +173,7 @@ final class Mutations {
 
       @Override
       public Void apply(EntryView.ReadWriteEntryView<K, V> view) {
-         f.accept((V) valueDataConversion.fromStorage(value), view);
+         f.accept((T) valueDataConversion.fromStorage(argument), view);
          return null;
       }
    }

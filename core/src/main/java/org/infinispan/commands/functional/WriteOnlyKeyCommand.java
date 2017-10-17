@@ -25,10 +25,10 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
 
    public static final byte COMMAND_ID = 54;
 
-   private Consumer<WriteEntryView<V>> f;
+   private Consumer<WriteEntryView<K, V>> f;
 
    public WriteOnlyKeyCommand(Object key,
-                              Consumer<WriteEntryView<V>> f,
+                              Consumer<WriteEntryView<K, V>> f,
                               CommandInvocationId id,
                               ValueMatcher valueMatcher,
                               Params params,
@@ -63,7 +63,7 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       key = input.readObject();
-      f = (Consumer<WriteEntryView<V>>) input.readObject();
+      f = (Consumer<WriteEntryView<K, V>>) input.readObject();
       valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
       params = Params.readObject(input);
       setFlagsBitSet(input.readLong());
@@ -122,7 +122,7 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
          ((InjectableComponent) f).inject(componentRegistry);
    }
 
-   public Consumer<WriteEntryView<V>> getConsumer() {
+   public Consumer<WriteEntryView<K, V>> getConsumer() {
       return f;
    }
 }

@@ -443,9 +443,9 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(Object key, Object value, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f,
-                                                                                    Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return actual.buildReadWriteKeyValueCommand(key, value, f, params, keyDataConversion, valueDataConversion);
+   public <K, V, T, R> ReadWriteKeyValueCommand<K, V, T, R> buildReadWriteKeyValueCommand(Object key, Object argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f,
+                                                                                          Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildReadWriteKeyValueCommand(key, argument, f, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
@@ -460,30 +460,30 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<?, ?> entries, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public <K, V, T, R> ReadWriteManyEntriesCommand<K, V, T, R> buildReadWriteManyEntriesCommand(Map<?, ?> entries, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return actual.buildReadWriteManyEntriesCommand(entries, f, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
-         Object key, Consumer<EntryView.WriteEntryView<V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+         Object key, Consumer<EntryView.WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return actual.buildWriteOnlyKeyCommand(key, f, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
-   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(Object key, Object value, BiConsumer<V, EntryView.WriteEntryView<V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return actual.buildWriteOnlyKeyValueCommand(key, value, f, params, keyDataConversion, valueDataConversion);
+   public <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(Object key, Object argument, BiConsumer<T, EntryView.WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildWriteOnlyKeyValueCommand(key, argument, f, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
-   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<?> keys, Consumer<EntryView.WriteEntryView<V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Collection<?> keys, Consumer<EntryView.WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return actual.buildWriteOnlyManyCommand(keys, f, params, keyDataConversion, valueDataConversion);
    }
 
    @Override
-   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
-         Map<?, ?> entries, BiConsumer<V, EntryView.WriteEntryView<V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return actual.buildWriteOnlyManyEntriesCommand(entries, f, params, keyDataConversion, valueDataConversion);
+   public <K, V, T> WriteOnlyManyEntriesCommand<K, V, T> buildWriteOnlyManyEntriesCommand(
+         Map<?, ?> arguments, BiConsumer<T, EntryView.WriteEntryView<K, V>> f, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
+      return actual.buildWriteOnlyManyEntriesCommand(arguments, f, params, keyDataConversion, valueDataConversion);
    }
 
    @Override

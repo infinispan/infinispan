@@ -263,7 +263,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       public <K, R> R eval(K key,
                            WriteOnlyMap<K, String> wo, ReadWriteMap<K, String> rw,
                            SerializableFunction<ReadEntryView<K, String>, R> read,
-                           SerializableBiConsumer<WriteEntryView<String>, R> write,
+                           SerializableBiConsumer<WriteEntryView<K, String>, R> write,
                            Class<? extends AbstractFunctionalOpTest> clazz) {
          return ((Performer<K, R>) action).eval(key, wo, rw, read, write, clazz);
       }
@@ -271,7 +271,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       public <K, R> R eval(K key,
                            WriteOnlyMap<K, String> wo, ReadWriteMap<K, String> rw,
                            Function<ReadEntryView<K, String>, R> read,
-                           SerializableBiConsumer<WriteEntryView<String>, R> write,
+                           SerializableBiConsumer<WriteEntryView<K, String>, R> write,
                            Class<? extends AbstractFunctionalOpTest> clazz) {
          return ((Performer<K, R>) action).eval(key, wo, rw, read, write, clazz);
       }
@@ -281,7 +281,7 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
          R eval(K key,
                 WriteOnlyMap<K, String> wo, ReadWriteMap<K, String> rw,
                 Function<ReadEntryView<K, String>, R> read,
-                BiConsumer<WriteEntryView<String>, R> write,
+                BiConsumer<WriteEntryView<K, String>, R> write,
                 Class<? extends AbstractFunctionalOpTest> clazz);
       }
    }

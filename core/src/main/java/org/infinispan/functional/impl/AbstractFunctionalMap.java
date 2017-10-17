@@ -166,7 +166,7 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       return keys.stream().map(k -> keyDataConversion.toStorage(k)).collect(Collectors.toSet());
    }
 
-   protected Map<?, ?> encodeEntries(Map<? extends K, ? extends V> entries) {
+   protected Map<?, ?> encodeEntries(Map<? extends K, ?> entries) {
       Map encodedEntries = new HashMap<>();
       entries.entrySet().forEach(e -> {
          Object keyEncoded = keyDataConversion.toStorage(e.getKey());

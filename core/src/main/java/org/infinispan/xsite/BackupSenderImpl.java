@@ -406,7 +406,7 @@ public class BackupSenderImpl implements BackupSender {
 
       @Override
       public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
-         failurePolicy.handleWriteOnlyManyEntriesFailure(site, command.getEntries());
+         failurePolicy.handleWriteOnlyManyEntriesFailure(site, command.getArguments());
          return null;
       }
 
@@ -430,7 +430,7 @@ public class BackupSenderImpl implements BackupSender {
 
       @Override
       public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
-         failurePolicy.handleReadWriteManyEntriesFailure(site, command.getEntries());
+         failurePolicy.handleReadWriteManyEntriesFailure(site, command.getArguments());
          return null;
       }
 

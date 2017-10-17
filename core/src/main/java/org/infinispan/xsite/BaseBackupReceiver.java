@@ -123,7 +123,7 @@ public abstract class BaseBackupReceiver implements BackupReceiver {
 
       @Override
       public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
-         CompletableFuture<Void> future = writeOnlyMap.evalMany(command.getEntries(), MarshallableFunctions.setInternalCacheValueConsumer());
+         CompletableFuture<Void> future = writeOnlyMap.evalMany(command.getArguments(), MarshallableFunctions.setInternalCacheValueConsumer());
          // TODO: accept async invocation
          return future.join();
       }

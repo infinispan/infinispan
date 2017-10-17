@@ -49,19 +49,19 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       this.componentRegistry = componentRegistry;
    }
 
-   public <K, V> void setWriteOnly(WriteOnlyManyEntriesCommand<K, V> command, Collection<Object> keys) {
+   public <K, V, T> void setWriteOnly(WriteOnlyManyEntriesCommand<K, V, T> command, Collection<Object> keys) {
       setCommonAttributesFromCommand(command);
       setFunctionalCommand(command);
       writeOnly = true;
-      this.entries = TriangleFunctionsUtil.filterEntries(command.getEntries(), keys);
+      this.entries = TriangleFunctionsUtil.filterEntries(command.getArguments(), keys);
       this.function = command.getBiConsumer();
    }
 
-   public <K, V, R> void setReadWrite(ReadWriteManyEntriesCommand<K, V, R> command, Collection<Object> keys) {
+   public <K, V, T, R> void setReadWrite(ReadWriteManyEntriesCommand<K, V, T, R> command, Collection<Object> keys) {
       setCommonAttributesFromCommand(command);
       setFunctionalCommand(command);
       writeOnly = false;
-      this.entries = TriangleFunctionsUtil.filterEntries(command.getEntries(), keys);
+      this.entries = TriangleFunctionsUtil.filterEntries(command.getArguments(), keys);
       this.function = command.getBiFunction();
    }
 

@@ -64,7 +64,6 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.InTransactionMode;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.function.SerializableConsumer;
 import org.infinispan.util.function.SerializableFunction;
 import org.testng.annotations.Test;
 
@@ -117,9 +116,9 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    }
 
    @SerializeWith(value = SetStringConstant.Externalizer0.class)
-   private static final class SetStringConstant implements Consumer<WriteEntryView<String>> {
+   private static final class SetStringConstant<K> implements Consumer<WriteEntryView<K, String>> {
       @Override
-      public void accept(WriteEntryView<String> wo) {
+      public void accept(WriteEntryView<K, String> wo) {
          wo.set("one");
       }
 
@@ -171,15 +170,15 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    }
 
    @SerializeWith(value = SetValueAndConstantLifespan.Externalizer0.class)
-   private static final class SetValueAndConstantLifespan<V>
-         implements BiConsumer<V, WriteEntryView<V>> {
+   private static final class SetValueAndConstantLifespan<K, V>
+         implements BiConsumer<V, WriteEntryView<K, V>> {
       @Override
-      public void accept(V v, WriteEntryView<V> wo) {
+      public void accept(V v, WriteEntryView<K, V> wo) {
          wo.set(v, new MetaLifespan(100000));
       }
 
       @SuppressWarnings("unchecked")
-      private static <V> SetValueAndConstantLifespan<V> getInstance() {
+      private static <K, V> SetValueAndConstantLifespan<K, V> getInstance() {
          return INSTANCE;
       }
 
@@ -565,12 +564,8 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
                                          ReadOnlyMap<K, String> ro, WriteOnlyMap<K, String> wo) {
       K k = keySupplier.get();
       assertReadOnlyViewEmpty(k, await(ro.eval(k, identity())));
-      await(wo.eval(k, setOneWriteOnly()));
+      await(wo.eval(k, wv -> wv.set("one")));
       assertReadOnlyViewEquals(k, "one", await(ro.eval(k, identity())));
-   }
-
-   private SerializableConsumer<WriteEntryView<String>> setOneWriteOnly() {
-      return wv -> wv.set("one");
    }
 
    public void testLocalReturnViewFromReadWriteEval() {
