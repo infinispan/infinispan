@@ -125,6 +125,15 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> get(Object k) {
+      return peekOrGet(k, false);
+   }
+
+   @Override
+   public InternalCacheEntry<WrappedBytes, WrappedBytes> peek(Object k) {
+      return peekOrGet(k, true);
+   }
+
+   private InternalCacheEntry<WrappedBytes, WrappedBytes> peekOrGet(Object k, boolean peek) {
       Lock lock = locks.getLock(k).readLock();
       lock.lock();
       try {
@@ -134,30 +143,27 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             return null;
          }
 
-         return performGet(address, k);
+         return performGet(address, k, peek);
       } finally {
          lock.unlock();
       }
    }
 
-   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performGet(long address, Object k) {
+   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performGet(long address, Object k, boolean peek) {
       WrappedBytes wrappedKey = toWrapper(k);
       while (address != 0) {
          long nextAddress = offHeapEntryFactory.getNext(address);
          InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
          if (wrappedKey.equalsWrappedBytes(ice.getKey())) {
-            entryRetrieved(address);
+            if (!peek) {
+               entryRetrieved(address);
+            }
             return ice;
          } else {
             address = nextAddress;
          }
       }
       return null;
-   }
-
-   @Override
-   public InternalCacheEntry<WrappedBytes, WrappedBytes> peek(Object k) {
-      return get(k);
    }
 
    @Override
@@ -487,7 +493,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          long address = memoryLookup.getMemoryAddress(key);
          if (address != 0) {
             // TODO: this could be more efficient
-            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = performGet(address, key);
+            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = performGet(address, key, true);
             if (ice != null) {
                passivator.passivate(ice);
                performRemove(address, key);
@@ -506,7 +512,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       try {
          checkDeallocation();
          long address = memoryLookup.getMemoryAddress(key);
-         InternalCacheEntry<WrappedBytes, WrappedBytes> prev = address == 0 ? null : performGet(address, key);
+         InternalCacheEntry<WrappedBytes, WrappedBytes> prev = address == 0 ? null : performGet(address, key, true);
          InternalCacheEntry<WrappedBytes, WrappedBytes> result = action.compute(key, prev, internalEntryFactory);
          if (prev == result) {
             // noop
