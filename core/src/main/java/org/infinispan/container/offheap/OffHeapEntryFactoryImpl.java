@@ -124,8 +124,8 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
       // Eviction requires 2 additional pointers at the beginning
       int offset = evictionEnabled ? 16 : 0;
-      // First 8 is for linked pointer to next address
-      long totalSize = 8 + offset + HEADER_LENGTH + keySize + metadataSize + valueSize;
+      // Next 8 is for linked pointer to next address
+      long totalSize = offset + 8 + HEADER_LENGTH + keySize + metadataSize + valueSize;
       long memoryAddress = allocator.allocate(totalSize);
 
       // Write the empty linked address pointer first
