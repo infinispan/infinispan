@@ -684,9 +684,9 @@ Note, that only steps 1-4 are required for local cache instances:
 [source,xml,subs=attributes+]
 ----
 <extensions>
-  <extension module="org.infinispan.extension:ispn-9.1"/>
-  <extension module="org.infinispan.server.endpoint:ispn-9.1"/>
-  <extension module="org.jgroups.extension:ispn-9.1"/>
+  <extension module="org.infinispan.extension:ispn-9.2"/>
+  <extension module="org.infinispan.server.endpoint:ispn-9.2"/>
+  <extension module="org.jgroups.extension:ispn-9.2"/>
 
   <!--Other wildfly extensions-->
 </extensions>
@@ -737,19 +737,19 @@ Note, it's important that the module attribue is defined so that correct infinis
  </channels>
  <stacks>
    <stack name="udp">
-     <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:ispn-9.1"/>
-     <protocol type="PING" module="org.jgroups:ispn-9.1"/>
-     <protocol type="MERGE3" module="org.jgroups:ispn-9.1"/>
-     <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:ispn-9.1"/>
-     <protocol type="FD_ALL" module="org.jgroups:ispn-9.1"/>
-     <protocol type="VERIFY_SUSPECT" module="org.jgroups:ispn-9.1"/>
-     <protocol type="pbcast.NAKACK2" module="org.jgroups:ispn-9.1"/>
-     <protocol type="UNICAST3" module="org.jgroups:ispn-9.1"/>
-     <protocol type="pbcast.STABLE" module="org.jgroups:ispn-9.1"/>
-     <protocol type="pbcast.GMS" module="org.jgroups:ispn-9.1"/>
-     <protocol type="UFC" module="org.jgroups:ispn-9.1"/>
-     <protocol type="MFC" module="org.jgroups:ispn-9.1"/>
-     <protocol type="FRAG2" module="org.jgroups:ispn-9.1"/>
+     <transport type="UDP" socket-binding="jgroups-udp" module="org.jgroups:ispn-9.2"/>
+     <protocol type="PING" module="org.jgroups:ispn-9.2"/>
+     <protocol type="MERGE3" module="org.jgroups:ispn-9.2"/>
+     <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd" module="org.jgroups:ispn-9.2"/>
+     <protocol type="FD_ALL" module="org.jgroups:ispn-9.2"/>
+     <protocol type="VERIFY_SUSPECT" module="org.jgroups:ispn-9.2"/>
+     <protocol type="pbcast.NAKACK2" module="org.jgroups:ispn-9.2"/>
+     <protocol type="UNICAST3" module="org.jgroups:ispn-9.2"/>
+     <protocol type="pbcast.STABLE" module="org.jgroups:ispn-9.2"/>
+     <protocol type="pbcast.GMS" module="org.jgroups:ispn-9.2"/>
+     <protocol type="UFC" module="org.jgroups:ispn-9.2"/>
+     <protocol type="MFC" module="org.jgroups:ispn-9.2"/>
+     <protocol type="FRAG2" module="org.jgroups:ispn-9.2"/>
    </stack>
  </stacks>
 </subsystem>
