@@ -2,6 +2,7 @@ package org.infinispan.counter;
 
 import java.util.Objects;
 
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.util.Utils;
 
@@ -60,6 +61,20 @@ public class SyncWeakCounter {
     */
    public void reset() {
       Utils.awaitCounterOperation(counter.reset());
+   }
+
+   /**
+    * @see WeakCounter#getConfiguration()
+    */
+   public CounterConfiguration getConfiguration() {
+      return counter.getConfiguration();
+   }
+
+   /**
+    * @see WeakCounter#remove()
+    */
+   public void remove() {
+      Utils.awaitCounterOperation(counter.remove());
    }
 
    @Override

@@ -1,16 +1,19 @@
 package org.infinispan.counter.impl.strong;
 
 import static org.infinispan.counter.impl.entries.CounterValue.newCounterValue;
+import static org.infinispan.counter.util.Utils.getPersistenceMode;
+import static org.infinispan.counter.util.Utils.rethrowAsCounterException;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
-import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.exception.CounterException;
@@ -18,14 +21,14 @@ import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.function.AddFunction;
 import org.infinispan.counter.impl.function.CompareAndSetFunction;
-import org.infinispan.counter.impl.function.InitializeCounterFunction;
+import org.infinispan.counter.impl.function.CreateAndAddFunction;
+import org.infinispan.counter.impl.function.CreateAndCASFunction;
 import org.infinispan.counter.impl.function.ReadFunction;
+import org.infinispan.counter.impl.function.RemoveFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.listener.CounterEventGenerator;
 import org.infinispan.counter.impl.listener.CounterEventImpl;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
-import org.infinispan.counter.logging.Log;
-import org.infinispan.counter.util.Utils;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
@@ -64,7 +67,7 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
          CounterConfiguration configuration, CounterManagerNotificationManager notificationManager) {
       this.notificationManager = notificationManager;
       FunctionalMapImpl<StrongCounterKey, CounterValue> functionalMap = FunctionalMapImpl.create(cache)
-            .withParams(Utils.getPersistenceMode(configuration.storage()));
+            .withParams(getPersistenceMode(configuration.storage()));
       this.key = new StrongCounterKey(counterName);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
       this.readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
@@ -72,16 +75,25 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
       this.configuration = configuration;
    }
 
+   /**
+    * It removes a strong counter from the {@code cache}, identified by the {@code counterName}.
+    *
+    * @param cache       The {@link Cache} to remove the counter from.
+    * @param counterName The counter's name.
+    */
+   public static void removeStrongCounter(Cache<StrongCounterKey, CounterValue> cache, String counterName) {
+      cache.remove(new StrongCounterKey(counterName));
+   }
+
    public final void init() {
       registerListener();
       try {
-         CounterValue existingValue = readWriteMap.eval(key, new InitializeCounterFunction<>(configuration)).get();
-         initCounterState(existingValue == null ? newCounterValue(configuration) : existingValue);
+         readOnlyMap.eval(key, ReadFunction.getInstance()).thenAccept(this::initCounterState).get();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CounterException(e);
       } catch (ExecutionException e) {
-         throw Utils.rethrowAsCounterException(e);
+         throw rethrowAsCounterException(e);
       }
    }
 
@@ -97,7 +109,7 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
 
    @Override
    public final CompletableFuture<Long> addAndGet(long delta) {
-      return readWriteMap.eval(key, new AddFunction<>(delta)).thenApply(this::handleAddResult);
+      return readWriteMap.eval(key, new AddFunction<>(delta)).thenCompose(value -> checkAddResult(value, delta));
    }
 
    @Override
@@ -112,14 +124,22 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
 
    @Override
    public CompletableFuture<Boolean> compareAndSet(long expect, long update) {
-      return readWriteMap.eval(key, new CompareAndSetFunction<>(expect, update)).thenApply(this::handleCASResult);
+      return readWriteMap.eval(key, new CompareAndSetFunction<>(expect, update))
+            .thenCompose(result -> checkCasResult(result, expect, update));
    }
 
    @Override
    public synchronized CounterEvent generate(CounterKey key, CounterValue value) {
-      CounterEvent event = CounterEventImpl.create(weakCounter, value);
-      weakCounter = value;
+      CounterValue newValue = value == null ?
+            CounterValue.newCounterValue(configuration) :
+            value;
+      CounterEvent event = CounterEventImpl.create(weakCounter, newValue);
+      weakCounter = newValue;
       return event;
+   }
+
+   public CompletableFuture<Void> remove() {
+      return readWriteMap.eval(key, RemoveFunction.getInstance());
    }
 
    @Override
@@ -127,7 +147,18 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
       return configuration;
    }
 
-   protected abstract Boolean handleCASResult(CounterState state);
+   public void destroyAndRemove() {
+      removeListener();
+      try {
+         remove().get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+         throw rethrowAsCounterException(e);
+      }
+   }
+
+   protected abstract Boolean handleCASResult(Object state);
 
    /**
     * Extracts and validates the value after a read.
@@ -140,11 +171,6 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
    protected abstract long handleAddResult(CounterValue counterValue);
 
    /**
-    * @return The {@link Log} to use.
-    */
-   protected abstract Log getLog();
-
-   /**
     * Registers this instance as a cluster listener.
     * <p>
     * Note: It must be invoked when initialize the instance.
@@ -154,13 +180,22 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
    }
 
    /**
+    * Removes this counter from the notification manager.
+    */
+   private void removeListener() {
+      notificationManager.removeCounter(key.getCounterName());
+   }
+
+   /**
     * Initializes the weak value.
     *
-    * @param value The initial value.
+    * @param currentValue The current value.
     */
-   private synchronized void initCounterState(CounterValue value) {
+   private synchronized void initCounterState(Long currentValue) {
       if (weakCounter == null) {
-         weakCounter = value;
+         weakCounter = currentValue == null ?
+               newCounterValue(configuration) :
+               newCounterValue(currentValue, configuration);
       }
    }
 
@@ -171,9 +206,28 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
     * @return The current value.
     */
    private long handleReadResult(Long value) {
-      if (value != null) {
-         return value;
+      return value == null ?
+            configuration.initialValue() :
+            value;
+   }
+
+   private CompletableFuture<Long> checkAddResult(CounterValue value, long delta) {
+      if (value == null) {
+         //key doesn't exist in the cache. create and add.
+         return readWriteMap.eval(key, new CreateAndAddFunction<>(configuration, delta))
+               .thenApply(this::handleAddResult);
+      } else {
+         return CompletableFuture.completedFuture(handleAddResult(value));
       }
-      throw new CompletionException(getLog().counterDeleted());
+   }
+
+   private CompletionStage<Boolean> checkCasResult(Object result, long expect, long update) {
+      if (result == null) {
+         //key doesn't exist in the cache. create and CAS
+         return readWriteMap.eval(key, new CreateAndCASFunction<>(configuration, expect, update))
+               .thenApply(this::handleCASResult);
+      } else {
+         return CompletableFuture.completedFuture(handleCASResult(result));
+      }
    }
 }

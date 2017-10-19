@@ -11,10 +11,12 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
+import org.infinispan.counter.impl.strong.AbstractStrongCounter;
 import org.infinispan.counter.impl.strong.BoundedStrongCounter;
 import org.infinispan.counter.impl.strong.UnboundedStrongCounter;
 import org.infinispan.counter.impl.weak.WeakCounterImpl;
@@ -126,6 +128,42 @@ public class EmbeddedCounterManager implements CounterManager {
    public CounterConfiguration getConfiguration(String counterName) {
       CacheHolder holder = extractCacheHolder(future);
       return holder == null ? null : holder.getConfiguration(counterName);
+   }
+
+   @Override
+   public void remove(String counterName) {
+      CacheHolder holder = extractCacheHolder(future);
+      if (holder == null) {
+         throw log.unableToFetchCaches();
+      }
+      CounterConfiguration configuration = holder.getConfiguration(counterName);
+      if (configuration == null) {
+         //counter not defined (cluster-wide). do nothing :)
+         return;
+      }
+      counters.compute(counterName, (name, counter) -> {
+         removeCounter(name, counter, configuration, holder);
+         return null;
+      });
+   }
+
+   private void removeCounter(String name, Object counter, CounterConfiguration configuration,
+         CacheHolder holder) {
+      if (configuration.type() == CounterType.WEAK) {
+         if (counter ==  null) {
+            //no instance stored locally. Remove from cache only.
+            WeakCounterImpl.removeWeakCounter(holder.getCounterCache(configuration), configuration, name);
+         } else {
+            ((WeakCounterImpl) counter).destroyAndRemove();
+         }
+      } else {
+         if (counter == null) {
+            //no instance stored locally. Remove from cache only.
+            AbstractStrongCounter.removeStrongCounter(holder.getCounterCache(configuration), name);
+         } else {
+            ((AbstractStrongCounter) counter).destroyAndRemove();
+         }
+      }
    }
 
    private Object createCounter(String counterName) {

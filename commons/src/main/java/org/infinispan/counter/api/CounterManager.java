@@ -77,4 +77,15 @@ public interface CounterManager {
     */
    CounterConfiguration getConfiguration(String counterName);
 
+   /**
+    * It removes the counter from the cluster.
+    * <p>
+    * All instances returned by {@link #getWeakCounter(String)} or {@link #getStrongCounter(String)} are destroyed and
+    * they shouldn't be used anymore. Also, the registered {@link CounterListener}s are removed and they aren't invoked
+    * anymore.
+    *
+    * @param counterName The counter's name to remove.
+    */
+   void remove(String counterName);
+
 }

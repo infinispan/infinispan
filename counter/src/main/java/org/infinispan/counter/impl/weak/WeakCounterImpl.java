@@ -1,16 +1,16 @@
 package org.infinispan.counter.impl.weak;
 
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
+import static org.infinispan.counter.util.Utils.rethrowAsCounterException;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterEvent;
@@ -22,19 +22,22 @@ import org.infinispan.counter.exception.CounterException;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.function.AddFunction;
-import org.infinispan.counter.impl.function.InitializeCounterFunction;
+import org.infinispan.counter.impl.function.CreateAndAddFunction;
+import org.infinispan.counter.impl.function.ReadFunction;
+import org.infinispan.counter.impl.function.RemoveFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.listener.CounterEventGenerator;
 import org.infinispan.counter.impl.listener.CounterEventImpl;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 import org.infinispan.counter.impl.listener.TopologyChangeListener;
-import org.infinispan.counter.logging.Log;
 import org.infinispan.counter.util.Utils;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A weak consistent counter implementation.
@@ -57,7 +60,6 @@ import org.infinispan.util.ByteString;
  */
 public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, TopologyChangeListener {
 
-   private static final Log log = LogFactory.getLog(WeakCounterImpl.class, Log.class);
    private static final AtomicReferenceFieldUpdater<Entry, Long> L1_UPDATER =
          newUpdater(Entry.class, Long.class, "snapshot");
 
@@ -65,7 +67,9 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
    private final AdvancedCache<WeakCounterKey, CounterValue> cache;
    private final FunctionalMap.ReadWriteMap<WeakCounterKey, CounterValue> readWriteMap;
    private final CounterManagerNotificationManager notificationManager;
+   private final FunctionalMap.ReadOnlyMap<WeakCounterKey, CounterValue> readOnlyMap;
    private final CounterConfiguration configuration;
+   private final CounterConfiguration zeroConfiguration;
    private final KeySelector selector;
 
    public WeakCounterImpl(String counterName, AdvancedCache<WeakCounterKey, CounterValue> cache,
@@ -75,9 +79,13 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       FunctionalMapImpl<WeakCounterKey, CounterValue> functionalMap = FunctionalMapImpl.create(cache)
             .withParams(Utils.getPersistenceMode(configuration.storage()));
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
+      this.readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
       this.entries = initKeys(counterName, configuration.concurrencyLevel());
       this.selector = new KeySelector(entries);
       this.configuration = configuration;
+      this.zeroConfiguration = CounterConfiguration.builder(CounterType.WEAK)
+            .concurrencyLevel(configuration.concurrencyLevel()).storage(configuration.storage()).initialValue(0)
+            .build();
    }
 
    private static <T> T get(int hash, T[] array) {
@@ -95,33 +103,40 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
    }
 
    /**
+    * It removes a weak counter from the {@code cache}, identified by the {@code counterName}.
+    *
+    * @param cache         The {@link Cache} to remove the counter from.
+    * @param configuration The counter's configuration.
+    * @param counterName   The counter's name.
+    */
+   public static void removeWeakCounter(Cache<WeakCounterKey, CounterValue> cache, CounterConfiguration configuration,
+         String counterName) {
+      ByteString counterNameByteString = ByteString.fromString(counterName);
+      for (int i = 0; i < configuration.concurrencyLevel(); ++i) {
+         cache.remove(new WeakCounterKey(counterNameByteString, i));
+      }
+   }
+
+   /**
     * Initializes the key set.
     * <p>
     * Only one key will have the initial value and the remaining is zero.
     */
    public void init() {
       registerListener();
-      initEntry(0, configuration);
-      CounterConfiguration zeroConfig = CounterConfiguration.builder(CounterType.WEAK).initialValue(0)
-            .storage(configuration.storage()).build();
-      for (int i = 1; i < entries.length; ++i) {
-         initEntry(i, zeroConfig);
+      for (int i = 0; i < entries.length; ++i) {
+         final int index = i;
+         try {
+            readOnlyMap.eval(entries[index].key, ReadFunction.getInstance())
+                  .thenAccept(value -> initEntry(index, value)).get();
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CounterException(e);
+         } catch (ExecutionException e) {
+            throw rethrowAsCounterException(e);
+         }
       }
       selector.updatePreferredKeys();
-   }
-
-   private void initEntry(int index, CounterConfiguration configuration) {
-      try {
-         CounterValue existing = readWriteMap.eval(entries[index].key, new InitializeCounterFunction<>(configuration))
-               .get();
-         entries[index].init(existing.getValue());
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CounterException(e);
-      } catch (ExecutionException e) {
-         throw Utils.rethrowAsCounterException(e);
-      }
-
    }
 
    @Override
@@ -136,7 +151,9 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
 
    @Override
    public CompletableFuture<Void> add(long delta) {
-      return readWriteMap.eval(findKey(), new AddFunction<>(delta)).thenApply(this::handleAddResult);
+      WeakCounterKey key = findKey();
+      return readWriteMap.eval(key, new AddFunction<>(delta))
+            .thenCompose(counterValue -> handleAddResult(key, counterValue, delta));
    }
 
    @Override
@@ -164,9 +181,31 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       assert key instanceof WeakCounterKey;
       int index = ((WeakCounterKey) key).getIndex();
       long base = getCachedValue(index);
-      long newValue = value.getValue();
+      long newValue = value == null ?
+            (index == 0 ? configuration.initialValue() : 0) :
+            value.getValue();
       long oldValue = updateCounterState(index, newValue);
       return CounterEventImpl.create(base + oldValue, base + newValue);
+   }
+
+   public CompletableFuture<Void> remove() {
+      final int size = entries.length;
+      CompletableFuture[] futures = new CompletableFuture[size];
+      for (int i = 0; i < size; ++i) {
+         futures[i] = readWriteMap.eval(entries[i].key, RemoveFunction.getInstance());
+      }
+      return CompletableFuture.allOf(futures);
+   }
+
+   public void destroyAndRemove() {
+      removeListener();
+      try {
+         remove().get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+         throw rethrowAsCounterException(e);
+      }
    }
 
    @Override
@@ -190,6 +229,20 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
          keys[i] = entries[i].key;
       }
       return keys;
+   }
+
+   @Override
+   public String toString() {
+      return "WeakCounter{" +
+            "counterName=" + counterName() +
+            '}';
+   }
+
+   private void initEntry(int index, Long value) {
+      if (value == null) {
+         value = index == 0 ? configuration.initialValue() : 0;
+      }
+      entries[index].init(value);
    }
 
    private long getCachedValue() {
@@ -240,26 +293,29 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       return entries[index].update(newValue);
    }
 
-   private Void handleAddResult(CounterValue counterValue) {
-      if (counterValue == null) {
-         throw new CompletionException(log.counterDeleted());
+   private CompletableFuture<Void> handleAddResult(WeakCounterKey key, CounterValue value, long delta) {
+      if (value == null) {
+         //first time
+         CounterConfiguration createConfiguration = key.getIndex() == 0 ?
+               configuration :
+               zeroConfiguration;
+         return readWriteMap.eval(key, new CreateAndAddFunction<>(createConfiguration, delta))
+               .thenApply(value1 -> null);
+      } else {
+         return CompletableFutures.completedNull();
       }
-      return null;
    }
 
    private void registerListener() {
       notificationManager.registerCounter(counterName(), this, this);
    }
 
-   private WeakCounterKey findKey() {
-      return selector.findKey((int) Thread.currentThread().getId());
+   private void removeListener() {
+      notificationManager.removeCounter(counterName());
    }
 
-   @Override
-   public String toString() {
-      return "WeakCounter{" +
-            "counterName=" + counterName() +
-            '}';
+   private WeakCounterKey findKey() {
+      return selector.findKey((int) Thread.currentThread().getId());
    }
 
    private ByteString counterName() {

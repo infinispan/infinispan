@@ -3,12 +3,11 @@ package org.infinispan.counter.impl.function;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.infinispan.functional.EntryView;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
 import org.infinispan.counter.logging.Log;
-import org.infinispan.util.ByteString;
+import org.infinispan.functional.EntryView;
 
 /**
  * A base function to update an existing counter.
@@ -23,7 +22,6 @@ abstract class BaseFunction<K extends CounterKey, R> implements
    public final R apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView) {
       Optional<CounterValue> value = entryView.find();
       if (!value.isPresent()) {
-         logCounterNotFound(entryView.key().getCounterName());
          return null;
       }
       Optional<ConfigurationMetadata> metadata = entryView.findMetaParam(ConfigurationMetadata.class);
@@ -32,8 +30,6 @@ abstract class BaseFunction<K extends CounterKey, R> implements
       }
       return apply(entryView, metadata.get());
    }
-
-   abstract void logCounterNotFound(ByteString counterName);
 
    abstract R apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, ConfigurationMetadata metadata);
 

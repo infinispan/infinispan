@@ -16,7 +16,6 @@ import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;
 import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
 import org.infinispan.counter.logging.Log;
-import org.infinispan.util.ByteString;
 
 /**
  * Reset function that sets the counter's delta to it's initial delta.
@@ -37,11 +36,6 @@ public class ResetFunction<K extends CounterKey> extends BaseFunction<K, Void> {
    public static <K extends CounterKey> ResetFunction<K> getInstance() {
       //noinspection unchecked
       return INSTANCE;
-   }
-
-   @Override
-   void logCounterNotFound(ByteString counterName) {
-      log.noSuchCounterReset(counterName);
    }
 
    @Override

@@ -1,6 +1,7 @@
 package org.infinispan.counter;
 
 import static java.lang.String.format;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.impl.BaseCounterTest;
@@ -101,6 +103,18 @@ public abstract class AbstractCounterTest<T extends TestCounter> extends BaseCou
       addAndAssertResult(counter, 1, Long.MIN_VALUE + 1);
    }
 
+   public void testGetConfigurationAndGetName(Method method) {
+      final String counterNamePrefix = method.getName();
+      final CounterManager counterManager = counterManager(0);
+      int suffix = 0;
+      for (CounterConfiguration configuration : configurationToTest()) {
+         T counter = createCounter(counterManager, counterNamePrefix + suffix, configuration);
+         assertEquals(configuration, counter.getConfiguration());
+         assertEquals(counterNamePrefix + suffix, counter.getName());
+         suffix++;
+      }
+   }
+
    protected abstract void assertMinValueAfterMinValue(T counter, long delta);
 
    protected abstract T createCounter(CounterManager counterManager, String counterName, long initialValue);
@@ -108,6 +122,14 @@ public abstract class AbstractCounterTest<T extends TestCounter> extends BaseCou
    protected abstract void assertMaxValueAfterMaxValue(T counter, long delta);
 
    protected abstract void addAndAssertResult(T counter, long delta, long expected);
+
+   protected abstract T createCounter(CounterManager counterManager, String counterName,
+         CounterConfiguration configuration);
+
+   /**
+    * {@link CounterConfiguration} to be used by {@link #testGetConfigurationAndGetName(Method)}
+    */
+   protected abstract List<CounterConfiguration> configurationToTest();
 
    private void addIgnoringBounds(T counter, long delta) {
       try {
