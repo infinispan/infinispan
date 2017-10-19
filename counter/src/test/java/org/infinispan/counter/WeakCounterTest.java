@@ -2,6 +2,8 @@ package org.infinispan.counter;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.infinispan.counter.api.CounterConfiguration;
@@ -40,6 +42,22 @@ public class WeakCounterTest extends AbstractCounterTest<WeakTestCounter> {
    protected void addAndAssertResult(WeakTestCounter counter, long delta, long expected) {
       counter.add(delta);
       eventuallyEquals(expected, counter::getValue);
+   }
+
+   @Override
+   protected WeakTestCounter createCounter(CounterManager counterManager, String counterName,
+         CounterConfiguration configuration) {
+      counterManager.defineCounter(counterName, configuration);
+      return new WeakTestCounter(counterManager.getWeakCounter(counterName));
+   }
+
+   @Override
+   protected List<CounterConfiguration> configurationToTest() {
+      return Arrays.asList(
+            CounterConfiguration.builder(CounterType.WEAK).initialValue(10).concurrencyLevel(10).build(),
+            CounterConfiguration.builder(CounterType.WEAK).initialValue(20).concurrencyLevel(20).build(),
+            CounterConfiguration.builder(CounterType.WEAK).build()
+      );
    }
 
    @Override

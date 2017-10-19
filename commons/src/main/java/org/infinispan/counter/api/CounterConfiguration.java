@@ -243,9 +243,9 @@ public class CounterConfiguration {
          CounterType type = MarshallUtil.unmarshallEnum(input, CounterType::valueOf);
          Storage storage = MarshallUtil.unmarshallEnum(input, Storage::valueOf);
          long initialValue = input.readLong();
-         long lowerBound = 0;
-         long upperBound = 0;
-         int concurrencyLevel = 0;
+         long lowerBound = Long.MIN_VALUE;
+         long upperBound = Long.MAX_VALUE;
+         int concurrencyLevel = 64;
          //noinspection ConstantConditions
          switch (type) {
             case BOUNDED_STRONG:

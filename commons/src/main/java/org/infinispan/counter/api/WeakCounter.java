@@ -20,7 +20,6 @@ public interface WeakCounter {
     */
    String getName();
 
-
    /**
     * It returns the counter's value.
     * <p>
@@ -71,4 +70,14 @@ public interface WeakCounter {
     * @return the {@link CounterConfiguration} used by this counter.
     */
    CounterConfiguration getConfiguration();
+
+   /**
+    * It removes this counter from the cluster.
+    * <p>
+    * Note that it doesn't remove the counter from the {@link CounterManager}. If you want to remove the counter from
+    * the {@link CounterManager} use {@link CounterManager#remove(String)}.
+    *
+    * @return The {@link CompletableFuture} that is completed when the counter is removed from the cluster.
+    */
+   CompletableFuture<Void> remove();
 }

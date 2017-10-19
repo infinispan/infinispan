@@ -86,6 +86,19 @@ public class CounterValue {
    }
 
    /**
+    * Creates the initial {@link CounterValue} based on {@code currentValue} and the {@link CounterConfiguration}.
+    *
+    * @param currentValue  the current counter's value.
+    * @param configuration the configuration.
+    * @return the {@link CounterValue}.
+    */
+   public static CounterValue newCounterValue(long currentValue, CounterConfiguration configuration) {
+      return configuration.type() == CounterType.BOUNDED_STRONG ?
+             newCounterValue(currentValue, configuration.lowerBound(), configuration.upperBound()) :
+             newCounterValue(currentValue);
+   }
+
+   /**
     * @return the counter's value.
     */
    public long getValue() {

@@ -6,6 +6,8 @@ import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.infinispan.counter.api.CounterConfiguration;
@@ -23,16 +25,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "counter.BoundedCounterTest")
 public class BoundedCounterTest extends StrongCounterTest {
-
-   private void assertOutOfBoundsAdd(StrongTestCounter counter, long delta, long expected) {
-      try {
-         counter.add(delta);
-         fail("Bound should have been reached!");
-      } catch (CounterOutOfBoundsException e) {
-         log.debug("Expected exception.", e);
-      }
-      assertEquals("Wrong return value of counter.getNewValue()", expected, counter.getValue());
-   }
 
    public void testSimpleThreshold(Method method) throws ExecutionException, InterruptedException {
       CounterManager counterManager = counterManager(0);
@@ -68,16 +60,6 @@ public class BoundedCounterTest extends StrongCounterTest {
       assertFalse(counter.compareAndSet(1, -3));
    }
 
-   private void assertOutOfBoundCas(SyncStrongCounter counter, long expect, long value) {
-      try {
-         counter.compareAndSet(expect, value);
-         fail("Threshold should have been reached!");
-      } catch (CounterOutOfBoundsException e) {
-         log.debug("Expected exception", e);
-      }
-      assertEquals("Wrong return value of counter.getNewValue()", expect, counter.getValue());
-   }
-
    @Override
    protected StrongTestCounter createCounter(CounterManager counterManager, String counterName, long initialValue) {
       counterManager.defineCounter(counterName,
@@ -96,4 +78,34 @@ public class BoundedCounterTest extends StrongCounterTest {
       assertOutOfBoundsAdd(counter, delta, Long.MIN_VALUE);
    }
 
+   @Override
+   protected List<CounterConfiguration> configurationToTest() {
+      return Arrays.asList(
+            CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(10).lowerBound(1).build(),
+            CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(-10).upperBound(1).build(),
+            CounterConfiguration.builder(CounterType.BOUNDED_STRONG).initialValue(1).upperBound(2).upperBound(2)
+                  .build(),
+            CounterConfiguration.builder(CounterType.BOUNDED_STRONG).build()
+      );
+   }
+
+   private void assertOutOfBoundsAdd(StrongTestCounter counter, long delta, long expected) {
+      try {
+         counter.add(delta);
+         fail("Bound should have been reached!");
+      } catch (CounterOutOfBoundsException e) {
+         log.debug("Expected exception.", e);
+      }
+      assertEquals("Wrong return value of counter.getNewValue()", expected, counter.getValue());
+   }
+
+   private void assertOutOfBoundCas(SyncStrongCounter counter, long expect, long value) {
+      try {
+         counter.compareAndSet(expect, value);
+         fail("Threshold should have been reached!");
+      } catch (CounterOutOfBoundsException e) {
+         log.debug("Expected exception", e);
+      }
+      assertEquals("Wrong return value of counter.getNewValue()", expect, counter.getValue());
+   }
 }

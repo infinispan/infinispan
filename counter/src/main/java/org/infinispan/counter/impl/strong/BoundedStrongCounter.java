@@ -35,19 +35,16 @@ public class BoundedStrongCounter extends AbstractStrongCounter {
 
    @Override
    protected long handleAddResult(CounterValue counterValue) {
-      if (counterValue == null) {
-         throw new CompletionException(log.counterDeleted());
-      }
       throwOutOfBoundExceptionIfNeeded(counterValue.getState());
       return counterValue.getValue();
    }
 
-   protected Boolean handleCASResult(CounterState state) {
-      if (state == null) {
-         return false;
+   protected Boolean handleCASResult(Object state) {
+      if (state instanceof CounterState) {
+         throwOutOfBoundExceptionIfNeeded((CounterState) state);
       }
-      throwOutOfBoundExceptionIfNeeded(state);
-      return state == CounterState.VALID;
+      //noinspection ConstantConditions
+      return (Boolean) state;
    }
 
    private void throwOutOfBoundExceptionIfNeeded(CounterState state) {
@@ -58,11 +55,6 @@ public class BoundedStrongCounter extends AbstractStrongCounter {
             throw new CompletionException(log.counterOurOfBounds(UPPER_BOUND));
          default:
       }
-   }
-
-   @Override
-   protected Log getLog() {
-      return log;
    }
 
    @Override

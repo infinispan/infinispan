@@ -18,7 +18,9 @@ import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
@@ -104,6 +106,15 @@ public class CounterManagerNotificationManager {
          cache.addListener(new TopologyListener());
          listenersRegistered = true;
       }
+   }
+
+   /**
+    * It removes and stops sending notification to the counter.
+    *
+    * @param counterName The counter's name to remove.
+    */
+   public void removeCounter(ByteString counterName) {
+      counters.remove(counterName);
    }
 
    /**
@@ -195,7 +206,9 @@ public class CounterManagerNotificationManager {
    @Listener(clustered = true, observation = Listener.Observation.POST)
    private class CounterValueListener {
 
+      @CacheEntryCreated
       @CacheEntryModified
+      @CacheEntryRemoved
       public void updateState(CacheEntryEvent<? extends CounterKey, CounterValue> event) {
          CounterKey key = event.getKey();
          Holder holder = counters.get(key.getCounterName());

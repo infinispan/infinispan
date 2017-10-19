@@ -7,8 +7,6 @@ import java.util.concurrent.CompletableFuture;
  * <p>
  * It provides atomic updates for the counter. All the operations are perform asynchronously and they complete the
  * {@link CompletableFuture} when completed.
- * <p>
- * The implementation may support weakly consistent reads via {@link #weakGetValue()}.
  *
  * @author Pedro Ruivo
  * @since 9.0
@@ -85,4 +83,14 @@ public interface StrongCounter {
     * @return the {@link CounterConfiguration} used by this counter.
     */
    CounterConfiguration getConfiguration();
+
+   /**
+    * It removes this counter from the cluster.
+    * <p>
+    * Note that it doesn't remove the counter from the {@link CounterManager}. If you want to remove the counter from
+    * the {@link CounterManager} use {@link CounterManager#remove(String)}.
+    *
+    * @return The {@link CompletableFuture} that is completed when the counter is removed from the cluster.
+    */
+   CompletableFuture<Void> remove();
 }

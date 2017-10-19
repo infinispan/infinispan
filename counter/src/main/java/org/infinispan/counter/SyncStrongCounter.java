@@ -2,6 +2,7 @@ package org.infinispan.counter;
 
 import java.util.Objects;
 
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.util.Utils;
 
@@ -67,6 +68,20 @@ public class SyncStrongCounter {
     */
    public String getName() {
       return counter.getName();
+   }
+
+   /**
+    * @see StrongCounter#getConfiguration()
+    */
+   public CounterConfiguration getConfiguration() {
+      return counter.getConfiguration();
+   }
+
+   /**
+    * @see StrongCounter#remove()
+    */
+   public void remove() {
+      Utils.awaitCounterOperation(counter.remove());
    }
 
    @Override

@@ -1,5 +1,6 @@
 package org.infinispan.counter.util;
 
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
 
@@ -23,4 +24,12 @@ public interface TestCounter {
    long getValue();
 
    void reset();
+
+   String getName();
+
+   CounterConfiguration getConfiguration();
+
+   boolean isSame(TestCounter other);
+
+   void remove();
 }

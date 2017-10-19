@@ -1,6 +1,7 @@
 package org.infinispan.counter.util;
 
 import org.infinispan.counter.SyncWeakCounter;
+import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.api.WeakCounter;
@@ -47,5 +48,25 @@ public class WeakTestCounter implements TestCounter {
    @Override
    public void reset() {
       syncCounter.reset();
+   }
+
+   @Override
+   public String getName() {
+      return syncCounter.getName();
+   }
+
+   @Override
+   public CounterConfiguration getConfiguration() {
+      return syncCounter.getConfiguration();
+   }
+
+   @Override
+   public boolean isSame(TestCounter other) {
+      return other instanceof WeakTestCounter && counter == ((WeakTestCounter) other).counter;
+   }
+
+   @Override
+   public void remove() {
+      syncCounter.remove();
    }
 }

@@ -22,8 +22,11 @@ import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.function.AddFunction;
 import org.infinispan.counter.impl.function.CompareAndSetFunction;
+import org.infinispan.counter.impl.function.CreateAndAddFunction;
+import org.infinispan.counter.impl.function.CreateAndCASFunction;
 import org.infinispan.counter.impl.function.InitializeCounterFunction;
 import org.infinispan.counter.impl.function.ReadFunction;
+import org.infinispan.counter.impl.function.RemoveFunction;
 import org.infinispan.counter.impl.function.ResetFunction;
 import org.infinispan.counter.impl.interceptor.CounterConfigurationInterceptor;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
@@ -146,6 +149,9 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, AddFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CompareAndSetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CounterState.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, CreateAndCASFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, CreateAndAddFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, RemoveFunction.EXTERNALIZER);
    }
 
    @Override
