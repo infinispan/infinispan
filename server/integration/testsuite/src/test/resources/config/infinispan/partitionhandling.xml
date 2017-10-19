@@ -1,5 +1,6 @@
         <subsystem xmlns="urn:infinispan:server:core:9.1" >
             <cache-container
+                    statistics="true"
                 name="clustered"
                 default-cache="denyreadwrites">
                 <transport
@@ -19,6 +20,22 @@
                 <distributed-cache
                         name="allowreadwrites" segments="6" owners="1">
                     <partition-handling when-split="ALLOW_READ_WRITES"/>
+                </distributed-cache>
+                <distributed-cache
+                        name="removeall" segments="6" owners="2">
+                    <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="REMOVE_ALL"/>
+                </distributed-cache>
+                <distributed-cache
+                        name="preferredalways" segments="6" owners="2">
+                    <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_ALWAYS"/>
+                </distributed-cache>
+                <distributed-cache
+                        name="preferrednonnull" segments="6" owners="2">
+                    <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="PREFERRED_NON_NULL"/>
+                </distributed-cache>
+                <distributed-cache
+                        name="customentrymergepolicy" segments="6" owners="2">
+                    <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="org.infinispan.server.test.partitionhandling.CustomEntryMergePolicy"/>
                 </distributed-cache>
             </cache-container>
         </subsystem>

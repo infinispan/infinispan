@@ -10,16 +10,22 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.server.test.util.ITestUtils;
 import org.infinispan.server.test.util.JGroupsProbeClient;
 import org.infinispan.server.test.util.PartitionHandlingController;
 import org.infinispan.server.test.util.StandaloneManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,6 +35,7 @@ import java.util.Set;
 
 import static org.infinispan.server.test.util.ITestUtils.eventually;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 /**
@@ -47,6 +54,10 @@ public class PartitionHandlingIT {
    final static String ALLOW_READS_CACHE = "allowreads";
    final static String ALLOW_READS_CACHE_2_OWNERS = "allowreads_2owners";
    final static String ALLOW_READ_WRITES_CACHE = "allowreadwrites";
+   final static String REMOVE_ALL_CACHE = "removeall";
+   final static String PREFERRED_ALWAYS_CACHE = "preferredalways";
+   final static String PREFERRED_NON_NULL_CACHE = "preferrednonnull";
+   final static String CUSTOM_ENTRY_MERGE_POLICY_CACHE = "customentrymergepolicy";
 
    private PartitionHandlingController partitionHandlingController;
    private boolean healed = true; // in case a test fails before healing the cluster
@@ -85,6 +96,20 @@ public class PartitionHandlingIT {
          probeClients.put("node2", new JGroupsProbeClient("224.0.75.77", 7500));
          partitionHandlingController = new PartitionHandlingController(managementClients, probeClients);
       }
+   }
+
+   @BeforeClass
+   public static void before() throws Exception {
+      JavaArchive deployedCacheStore = ShrinkWrap.create(JavaArchive.class);
+      deployedCacheStore.addPackage(CustomEntryMergePolicy.class.getPackage());
+      deployedCacheStore.addAsServiceProvider(EntryMergePolicy.class, CustomEntryMergePolicy.class);
+
+      deployedCacheStore.as(ZipExporter.class).exportTo(
+            new File(System.getProperty("server1.dist"), "/standalone/deployments/custom-entry-merge-policy.jar"), true);
+      deployedCacheStore.as(ZipExporter.class).exportTo(
+            new File(System.getProperty("server2.dist"), "/standalone/deployments/custom-entry-merge-policy.jar"), true);
+      deployedCacheStore.as(ZipExporter.class).exportTo(
+            new File(System.getProperty("server3.dist"), "/standalone/deployments/custom-entry-merge-policy.jar"), true);
    }
 
    @After
@@ -195,6 +220,130 @@ public class PartitionHandlingIT {
       assertEquals("value2", allowReadWritesCache3.get(server1OwnedKey));
 
       healCluster();
+   }
+
+   @Test
+   public void testPreferredAlwaysEntryMergePolicy() throws InterruptedException {
+      eventually(() -> assertNoRebalance(PREFERRED_ALWAYS_CACHE, server1, server2, server3), 10000);
+      RemoteCacheManager cacheManager = ITestUtils.createInternalCacheManager(server2);
+      RemoteCache<Object, Object> cache = cacheManager.getCache(PREFERRED_ALWAYS_CACHE);
+
+      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache);
+      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache);
+
+      cache.put(server1OwnedKey, "value");
+      cache.put(server3OwnedKey, "value");
+
+      partitionCluster();
+      eventually(() -> assertNoRebalance(PREFERRED_ALWAYS_CACHE, server1, server2), 10000);
+      eventually(() -> assertNoRebalance(PREFERRED_ALWAYS_CACHE, server3), 10000);
+
+      RemoteCache<Object, Object> preferredAlwaysCache1 = ITestUtils.createInternalCacheManager(server1).getCache(PREFERRED_ALWAYS_CACHE);
+      RemoteCache<Object, Object> preferredAlwaysCache3 = ITestUtils.createInternalCacheManager(server3).getCache(PREFERRED_ALWAYS_CACHE);
+
+      preferredAlwaysCache1.put(server1OwnedKey, "value1");
+      preferredAlwaysCache1.put(server3OwnedKey, "value1");
+      preferredAlwaysCache3.put(server1OwnedKey, "value3");
+      preferredAlwaysCache3.put(server3OwnedKey, "value3");
+
+      healCluster();
+      eventually(() -> assertNoRebalance(PREFERRED_ALWAYS_CACHE, server1, server2, server3), 10000);
+
+      assertEquals("value1", cache.get(server1OwnedKey));
+      assertEquals("value1", cache.get(server3OwnedKey));
+   }
+
+   @Test
+   public void testPreferredNonNullEntryMergePolicy() throws InterruptedException {
+      eventually(() -> assertNoRebalance(PREFERRED_NON_NULL_CACHE, server1, server2, server3), 10000);
+      RemoteCacheManager cacheManager = ITestUtils.createInternalCacheManager(server2);
+      RemoteCache<Object, Object> cache = cacheManager.getCache(PREFERRED_NON_NULL_CACHE);
+
+      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache);
+      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache);
+
+      cache.put(server1OwnedKey, "value");
+      cache.put(server3OwnedKey, "value");
+
+      partitionCluster();
+      eventually(() -> assertNoRebalance(PREFERRED_NON_NULL_CACHE, server1, server2), 10000);
+      eventually(() -> assertNoRebalance(PREFERRED_NON_NULL_CACHE, server3), 10000);
+
+      RemoteCache<Object, Object> preferredNonNullCache1 = ITestUtils.createInternalCacheManager(server1).getCache(PREFERRED_NON_NULL_CACHE);
+      RemoteCache<Object, Object> preferredNonNullCache3 = ITestUtils.createInternalCacheManager(server3).getCache(PREFERRED_NON_NULL_CACHE);
+
+      preferredNonNullCache1.put(server1OwnedKey, "value1");
+      preferredNonNullCache1.remove(server3OwnedKey);
+      preferredNonNullCache3.put(server1OwnedKey, "value3");
+      preferredNonNullCache3.put(server3OwnedKey, "value3");
+
+      healCluster();
+      eventually(() -> assertNoRebalance(PREFERRED_NON_NULL_CACHE, server1, server2, server3), 10000);
+
+      assertEquals("value1", cache.get(server1OwnedKey));
+      assertEquals("value3", cache.get(server3OwnedKey));
+   }
+
+   @Test
+   public void testRemoveAllEntryMergePolicy() throws InterruptedException {
+      eventually(() -> assertNoRebalance(REMOVE_ALL_CACHE, server1, server2, server3), 10000);
+      RemoteCacheManager cacheManager = ITestUtils.createInternalCacheManager(server2);
+      RemoteCache<Object, Object> cache = cacheManager.getCache(REMOVE_ALL_CACHE);
+
+      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache);
+      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache);
+
+      cache.put(server1OwnedKey, "value");
+      cache.put(server3OwnedKey, "value");
+
+      partitionCluster();
+      eventually(() -> assertNoRebalance(REMOVE_ALL_CACHE, server1, server2), 10000);
+      eventually(() -> assertNoRebalance(REMOVE_ALL_CACHE, server3), 10000);
+
+      RemoteCache<Object, Object> removeAllCache1 = ITestUtils.createInternalCacheManager(server1).getCache(REMOVE_ALL_CACHE);
+      RemoteCache<Object, Object> removeAllCache3 = ITestUtils.createInternalCacheManager(server3).getCache(REMOVE_ALL_CACHE);
+
+      removeAllCache1.put(server1OwnedKey, "value1");
+      removeAllCache1.put(server3OwnedKey, "value1");
+      removeAllCache3.put(server1OwnedKey, "value3");
+      removeAllCache3.put(server3OwnedKey, "value3");
+
+      healCluster();
+      eventually(() -> assertNoRebalance(REMOVE_ALL_CACHE, server1, server2, server3), 10000);
+
+      assertNull(cache.get(server1OwnedKey));
+      assertNull(cache.get(server3OwnedKey));
+   }
+
+   @Test
+   public void testCustomEntryMergePolicy() throws InterruptedException {
+      eventually(() -> assertNoRebalance(CUSTOM_ENTRY_MERGE_POLICY_CACHE, server1, server2, server3), 10000);
+      RemoteCacheManager cacheManager = ITestUtils.createInternalCacheManager(server2);
+      RemoteCache<Object, Object> cache = cacheManager.getCache(CUSTOM_ENTRY_MERGE_POLICY_CACHE);
+
+      String server1OwnedKey = getKeyOwnedByNode(server1Address, cacheManager, cache);
+      String server3OwnedKey = getKeyOwnedByNode(server3Address, cacheManager, cache);
+
+      cache.put(server1OwnedKey, "value");
+      cache.put(server3OwnedKey, "value");
+
+      partitionCluster();
+      eventually(() -> assertNoRebalance(CUSTOM_ENTRY_MERGE_POLICY_CACHE, server1, server2), 10000);
+      eventually(() -> assertNoRebalance(CUSTOM_ENTRY_MERGE_POLICY_CACHE, server3), 10000);
+
+      RemoteCache<Object, Object> customEntryMergePolicyCache1 = ITestUtils.createInternalCacheManager(server1).getCache(CUSTOM_ENTRY_MERGE_POLICY_CACHE);
+      RemoteCache<Object, Object> customEntryMergePolicyCache3 = ITestUtils.createInternalCacheManager(server3).getCache(CUSTOM_ENTRY_MERGE_POLICY_CACHE);
+
+      customEntryMergePolicyCache1.put(server1OwnedKey, "value1");
+      customEntryMergePolicyCache1.put(server3OwnedKey, "value1");
+      customEntryMergePolicyCache3.put(server1OwnedKey, "value3");
+      customEntryMergePolicyCache3.put(server3OwnedKey, "value3");
+
+      healCluster();
+      eventually(() -> assertNoRebalance(CUSTOM_ENTRY_MERGE_POLICY_CACHE, server1, server2, server3), 10000);
+
+      assertEquals("customValue", cache.get(server1OwnedKey));
+      assertEquals("customValue", cache.get(server3OwnedKey));
    }
 
    /**
