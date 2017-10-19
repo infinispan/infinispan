@@ -9,6 +9,9 @@ ROOT="/"
 MVN="mvn"
 
 MAVEN_OPTS="$MAVEN_OPTS -Xmx1G"
+if $JAVA_HOME/bin/java -fullversion 2>&1 | grep -q 'java full version "9' ; then
+  MAVEN_OPTS="$MAVEN_OPTS --add-modules java.xml.bind"
+fi
 export MAVEN_OPTS
 
 #  Use the maximum available, or set MAX_FD != -1 to use that

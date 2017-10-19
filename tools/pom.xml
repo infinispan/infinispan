@@ -109,14 +109,14 @@
          <id>default-tools.jar</id>
          <activation>
             <file>
-              <exists>${java.home}/../lib/tools.jar</exists>
+               <exists>${java.home}/../lib/tools.jar</exists>
             </file>
          </activation>
          <dependencies>
             <dependency>
                <groupId>com.sun</groupId>
                <artifactId>tools</artifactId>
-               <version>1.4.2</version>
+               <version>${java.version}</version>
                <scope>system</scope>
                <systemPath>${java.home}/../lib/tools.jar</systemPath>
             </dependency>

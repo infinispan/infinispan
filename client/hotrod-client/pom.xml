@@ -171,15 +171,6 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <dependencies>
-               <dependency>
-                  <groupId>com.sun</groupId>
-                  <artifactId>tools</artifactId>
-                  <version>${java.version}</version>
-                  <scope>system</scope>
-                  <systemPath>${java.home}/../lib/tools.jar</systemPath>
-               </dependency>
-            </dependencies>
             <executions>
                <execution>
                   <id>create-certificates</id>
@@ -532,16 +523,17 @@
                      </excludes>
                   </configuration>
                </plugin>
-      <plugin>
-            <groupId>org.apache.karaf.tooling</groupId>
-            <artifactId>karaf-maven-plugin</artifactId>
-            <configuration>
-               <features>
-                  <feature>infinispan-client-hotrod,infinispan-client-hotrod-with-query,hotrod-client,hotrod-client-with-query</feature>
-               </features>
-            </configuration>
-         </plugin>
-      </plugins>
-   </build></profile>
+               <plugin>
+                  <groupId>org.apache.karaf.tooling</groupId>
+                  <artifactId>karaf-maven-plugin</artifactId>
+                  <configuration>
+                     <features>
+                        <feature>infinispan-client-hotrod,infinispan-client-hotrod-with-query,hotrod-client,hotrod-client-with-query</feature>
+                     </features>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
    </profiles>
 </project>
