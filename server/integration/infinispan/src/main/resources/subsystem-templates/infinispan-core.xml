@@ -80,6 +80,24 @@
          </cache-container>
       </replacement>
    </supplement>
+   <supplement name="services">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="clustered" default-cache="default" statistics="true">
+            <transport lock-timeout="60000" />
+            <global-state />
+
+            <distributed-cache-configuration name="shared-memory-service" owners="2">
+               <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="REMOVE_ALL"/>
+            </distributed-cache-configuration>
+
+            <distributed-cache-configuration name="caching-service" owners="1">
+            </distributed-cache-configuration>
+
+            <distributed-cache name="default" />
+         </cache-container>
+      </replacement>
+   </supplement>
    <!-- Examples -->
    <supplement name="fcs-local">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
