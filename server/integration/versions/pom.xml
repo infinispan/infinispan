@@ -23,7 +23,7 @@
       <maven.compiler.target>1.8</maven.compiler.target>
       <maven.compiler.source>1.8</maven.compiler.source>
       <server.output.dir.prefix>infinispan-server</server.output.dir.prefix>
-      <forkJvmArgs></forkJvmArgs>
+      <forkJvmArgs>-Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
       <jigsawForkJvmArgs></jigsawForkJvmArgs>
 
       <!-- Override plugin versions defined in the JBoss parent POM to work with JDK9-->

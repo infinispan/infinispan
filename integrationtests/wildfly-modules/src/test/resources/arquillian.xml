@@ -12,6 +12,7 @@
                 <property name="jbossHome">${basedir}/target/node1/wildfly-${version.org.wildfly}</property>
                 <property name="javaVmArguments">
                     ${jigsawForkJvmArgs}
+                    -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
                     -Djboss.socket.binding.port-offset=100 -Xmx512m -Djava.net.preferIPv4Stack=true
                     -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                 </property>
@@ -29,7 +30,8 @@
                 <property name="jbossHome">${basedir}/target/node2/wildfly-${version.org.wildfly}</property>
                 <property name="javaVmArguments">
                     ${jigsawForkJvmArgs}
-                    -Djboss.socket.binding.port-offset=200 -Xmx512m
+                    -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
+                    -Djboss.socket.binding.port-offset=200
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000
                 </property>
                 <property name="managementPort">10190</property>

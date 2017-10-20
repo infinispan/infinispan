@@ -11,7 +11,8 @@
                 <property name="serverConfig">clustered.xml</property>
                 <property name="javaVmArguments">
                     ${jigsawForkJvmArgs}
-                    -Xmx512m -Djava.net.preferIPv4Stack=true
+                    -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
+                    -Djava.net.preferIPv4Stack=true
                     -Djgroups.bind_addr=127.0.0.1 -Djboss.server.default.config=clustered.xml
                     -Djboss.node.name=node1 -Djgroups.join_timeout=2000
                 </property>
@@ -23,7 +24,8 @@
                 <property name="serverConfig">clustered.xml</property>
                 <property name="javaVmArguments">
                     ${jigsawForkJvmArgs}
-                    -Xmx512m -Djava.net.preferIPv4Stack=true
+                    -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
+                    -Djava.net.preferIPv4Stack=true
                     -Djgroups.bind_addr=127.0.0.1 -Djboss.server.default.config=clustered.xml
                     -Djboss.node.name=node2 -Djboss.socket.binding.port-offset=10000
                     -Djgroups.join_timeout=2000

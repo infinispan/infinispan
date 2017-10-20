@@ -169,7 +169,7 @@
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
-      <forkJvmArgs>-Xmx2G</forkJvmArgs>
+      <forkJvmArgs>-Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
       <infinispan.codename>Bastille</infinispan.codename>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>

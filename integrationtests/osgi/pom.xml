@@ -220,6 +220,7 @@
       <defaultExcludedTestGroup />
       <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+      <forkJvmArgs>-Xmx500m -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
       <target.tmp.dir>${project.build.directory}/tmp/</target.tmp.dir>
       <skipOSGiTests>${skipTests}</skipOSGiTests>
       <verbose.karaf>false</verbose.karaf>

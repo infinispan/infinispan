@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <forkJvmArgs>-Xmx2G</forkJvmArgs>
+        <forkJvmArgs>-Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
         <jigsawForkJvmArgs></jigsawForkJvmArgs>
     </properties>
 

@@ -6,15 +6,22 @@ pipeline {
     }
 
     options {
-        timeout(time: 4, unit: 'HOURS')
+        timeout(time: 2, unit: 'HOURS')
     }
 
     stages {
         stage('Prepare') {
             steps {
+                // Show the agent name in the build list
+                script {
+                    // The manager variable requires the Groovy Postbuild plugin
+                    manager.addShortText(env.NODE_NAME, "grey", "", "0px", "")
+                }
+
                 // Workaround for JENKINS-47230
                 script {
                     env.MAVEN_HOME = tool('Maven')
+                    env.MAVEN_OPTS = "-Xmx700m -XX:+HeapDumpOnOutOfMemoryError"
                 }
 
                 sh returnStdout: true, script: 'cleanup.sh'
@@ -30,7 +37,7 @@ pipeline {
         stage('Build') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn clean install -B -V -s $MAVEN_SETTINGS -DskipTests"
+                    sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -s $MAVEN_SETTINGS -DskipTests"
                 }
                 warnings canRunOnFailed: true, consoleParsers: [[parserName: 'Maven'], [parserName: 'Java Compiler (javac)']], shouldDetectModules: true
                 checkstyle canRunOnFailed: true, pattern: '**/target/checkstyle-result.xml', shouldDetectModules: true
@@ -40,7 +47,7 @@ pipeline {
         stage('Tests') {
             steps {
                 configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true"
+                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true"
                 }
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
@@ -66,21 +73,12 @@ pipeline {
 
     post {
         always {
-            // Show the agent name in the build list
-            script {
-                // The manager variable requires the Groovy Postbuild plugin
-                def matcher = manager.getLogMatcher("Running on (.*) in .*")
-                if (matcher?.matches()) {
-                    manager.addShortText(matcher.group(1), "grey", "", "0px", "")
-                }
-            }
-
             // Archive logs and dump files
             sh 'find . \\( -name "*.log" -o -name "*.dump*" -o -name "hs_err_*" \\) -exec xz {} \\;'
             archiveArtifacts allowEmptyArchive: true, artifacts: '**/*.xz'
 
             // Clean
-            sh 'git clean -fdx || echo "git clean failed, exit code $?"'
+            sh 'git clean -fdx -e "*.hprof" || echo "git clean failed, exit code $?"'
         }
     }
 }
