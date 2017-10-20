@@ -104,6 +104,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       assertServerTransactionTableEmpty();
    }
 
+   @Test(groups = "unstable", description = "ISPN-8432")
    public void testOriginatorLeft(Method method) {
       final byte[] k1 = k(method, "k1");
       final byte[] k2 = k(method, "k2");
