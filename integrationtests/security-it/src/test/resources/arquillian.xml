@@ -18,7 +18,8 @@
             <property name="serverConfig">standalone.xml</property>
             <property name="javaVmArguments">
                 ${jigsawForkJvmArgs}
-                -Djboss.node.name=testnode -Djgroups.join_timeout=2000
+               -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
+               -Djboss.node.name=testnode -Djgroups.join_timeout=2000
             </property>
             <property name="managementPort">9990</property>
          </configuration>
@@ -34,6 +35,7 @@
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
                ${jigsawForkJvmArgs}
+               -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
                -Djboss.node.name=node0
                -Djboss.socket.binding.port-offset=100
                -Djava.net.preferIPv4Stack=true
@@ -56,6 +58,7 @@
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
                ${jigsawForkJvmArgs}
+               -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
                -Djboss.node.name=node1
                -Djboss.socket.binding.port-offset=200
                -Djava.net.preferIPv4Stack=true
@@ -77,6 +80,7 @@
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
                ${jigsawForkJvmArgs}
+               -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
                -Djboss.node.name=node1
                -Djboss.socket.binding.port-offset=200
                -Djava.net.preferIPv4Stack=true
@@ -99,6 +103,7 @@
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
                ${jigsawForkJvmArgs}
+               -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
                -Djboss.node.name=node0
                -Djboss.socket.binding.port-offset=100
                -Djava.net.preferIPv4Stack=true
@@ -120,6 +125,7 @@
             <property name="serverConfig">standalone-ha.xml</property>
             <property name="javaVmArguments">
                ${jigsawForkJvmArgs}
+               -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
                -Djboss.node.name=node1
                -Djboss.socket.binding.port-offset=200
                -Djava.net.preferIPv4Stack=true

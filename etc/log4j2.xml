@@ -9,7 +9,7 @@
 
   <Appenders>
     <Console name="STDOUT">
-      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%n%throwable{10}"/>
+      <PatternLayout pattern="%d{HH:mm:ss,SSS} %-5p (%t) [%c{1}] %m%throwable{10}%n"/>
     </Console>
     <File name="File" fileName="${sys:infinispan.log.path}/infinispan${sys:infinispan.module-suffix}.log"
           append="false">

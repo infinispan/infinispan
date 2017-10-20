@@ -316,7 +316,7 @@
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${project.build.testOutputDirectory}</resources.dir>
 
-        <jvm.memory.args>-Xmx512m</jvm.memory.args>
+        <serverMemoryJvmArgs>-Xmx300m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</serverMemoryJvmArgs>
         <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
@@ -335,7 +335,7 @@
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false
             -Djboss.default.multicast.address=${mcast.ip}
         </jvm.ip.stack>
-        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args} ${jigsawForkJvmArgs}</server.jvm.args>
+        <server.jvm.args>${jvm.ip.stack} ${serverMemoryJvmArgs} ${transport.stack} ${jvm.x64.args} ${jigsawForkJvmArgs}</server.jvm.args>
         <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
         <suite.manual.phase>integration-test</suite.manual.phase>
         <suite.queries.phase>integration-test</suite.queries.phase>
@@ -870,7 +870,7 @@
 
                         <server.jmx.domain>jboss.datagrid-infinispan</server.jmx.domain>
                     </systemPropertyVariables>
-                    <argLine>${jigsawForkJvmArgs}</argLine>
+                    <argLine>${forkJvmArgs} ${jigsawForkJvmArgs}</argLine>
                     <!--add jdbc driver to classpath-->
                     <additionalClasspathElements>
                         <element>${driver.dir}/${driver.jar}</element>

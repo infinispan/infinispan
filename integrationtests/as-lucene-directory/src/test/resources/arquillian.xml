@@ -15,8 +15,9 @@
                 <!-- Here you can add debug arguments, e.g. -Xrunjdwp:transport=dt_socket,address=5005,server=y,suspend=y -->
                 <property name="javaVmArguments">
                     ${jigsawForkJvmArgs}
-                    -Xmx512m -Djava.net.preferIPv4Stack=true
-                    -Djgroups.bind_addr=127.0.0.1 -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions
+                    -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
+                    -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
+                    -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions
                 </property>
             </configuration>
         </container>
@@ -28,7 +29,8 @@
                 <property name="serverConfig">standalone-full-testqueues.xml</property>
                 <property name="javaVmArguments">
                     ${jigsawForkJvmArgs}
-                    -Djboss.socket.binding.port-offset=10000 -Xmx512m
+                    -Xmx500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}
+                    -Djboss.socket.binding.port-offset=10000
                     -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1
                     -Djgroups.join_timeout=2000 -XX:+IgnoreUnrecognizedVMOptions
                 </property>

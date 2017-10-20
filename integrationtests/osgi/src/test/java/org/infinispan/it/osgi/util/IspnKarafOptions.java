@@ -332,6 +332,7 @@ public class IspnKarafOptions {
    public static Option commonOptions() throws Exception {
       return composite(karafContainer(),
                        vmOptions("-Djava.net.preferIPv4Stack=true", "-Djgroups.bind_addr=127.0.0.1"),
+                       vmOptions("-Xmx500m", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=" + System.getProperty("user.dir")),
 //                       vmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000"),
                        verboseKaraf(),
                        runWithoutConsole(),
