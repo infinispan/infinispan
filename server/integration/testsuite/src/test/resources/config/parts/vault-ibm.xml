@@ -1,8 +1,0 @@
-                <vault>
-                    <vault-option name="KEYSTORE_URL" value="${jboss.server.config.dir}/vault/vault-ibm.keystore"/>
-                    <vault-option name="KEYSTORE_PASSWORD" value="MASK-AI3ZRwVO1Pd"/> <!-- password: secret -->
-                    <vault-option name="KEYSTORE_ALIAS" value="ispn-vault"/>
-                    <vault-option name="SALT" value="12345678"/>
-                    <vault-option name="ITERATION_COUNT" value="23"/>
-                    <vault-option name="ENC_FILE_DIR" value="${jboss.server.config.dir}/vault/"/>
-                </vault>
