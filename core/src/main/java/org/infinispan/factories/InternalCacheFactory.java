@@ -9,19 +9,12 @@ import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
-import org.infinispan.commons.dataconversion.CompatModeEncoder;
-import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
-import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.cache.JMXStatisticsConfiguration;
-import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
@@ -80,9 +73,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
                                              String cacheName) throws Exception {
       StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class);
 
-      boolean embeddedMode = Configurations.isEmbeddedMode(globalComponentRegistry.getGlobalConfiguration());
-
-      AdvancedCache<K, V> cache = buildEncodingCache((kc, vc) -> new CacheImpl<>(cacheName), configuration, embeddedMode);
+      AdvancedCache<K, V> cache = buildEncodingCache((kc, vc) -> new CacheImpl<>(cacheName), configuration);
 
       bootstrap(cacheName, cache, configuration, globalComponentRegistry);
       if (marshaller != null) {
@@ -91,37 +82,15 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       return cache;
    }
 
-   private AdvancedCache<K, V> buildEncodingCache(BiFunction<DataConversion, DataConversion,
-         AdvancedCache<K, V>> wrappedCacheBuilder, Configuration configuration, boolean embeddedMode) {
+   private AdvancedCache<K, V> buildEncodingCache(BiFunction<DataConversion, DataConversion, AdvancedCache<K, V>> wrappedCacheBuilder, Configuration configuration) {
       ContentTypeConfiguration keyEncodingConfig = configuration.encoding().keyDataType();
       ContentTypeConfiguration valueEncodingConfig = configuration.encoding().valueDataType();
 
       MediaType keyType = keyEncodingConfig.mediaType();
       MediaType valueType = valueEncodingConfig.mediaType();
 
-      StorageType storageType = configuration.memory().storageType();
-
-      Class<? extends Encoder> keyEncoderClass = IdentityEncoder.class;
-      Class<? extends Encoder> valueEncoderClass = IdentityEncoder.class;
-
-      boolean compatEnabled = configuration.compatibility().enabled();
-
-      if (compatEnabled && !embeddedMode) {
-         keyEncoderClass = CompatModeEncoder.class;
-         valueEncoderClass = CompatModeEncoder.class;
-      } else {
-         if (storageType == StorageType.BINARY) {
-            keyEncoderClass = BinaryEncoder.class;
-            valueEncoderClass = BinaryEncoder.class;
-         }
-         if (embeddedMode && storageType == StorageType.OFF_HEAP) {
-            keyEncoderClass = GlobalMarshallerEncoder.class;
-            valueEncoderClass = GlobalMarshallerEncoder.class;
-         }
-      }
-
-      DataConversion keyDataConversion = DataConversion.newKeyDataConversion(keyEncoderClass, ByteArrayWrapper.class, keyType);
-      DataConversion valueDataConversion = DataConversion.newValueDataConversion(valueEncoderClass, ByteArrayWrapper.class, valueType);
+      DataConversion keyDataConversion = DataConversion.newKeyDataConversion(null, ByteArrayWrapper.class, keyType);
+      DataConversion valueDataConversion = DataConversion.newValueDataConversion(null, ByteArrayWrapper.class, valueType);
 
       return new EncoderCache<>(wrappedCacheBuilder.apply(keyDataConversion, valueDataConversion), keyDataConversion, valueDataConversion);
    }
@@ -133,9 +102,9 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       JMXStatisticsConfiguration jmxStatistics = configuration.jmxStatistics();
       boolean statisticsAvailable = jmxStatistics != null && jmxStatistics.available();
       if (statisticsAvailable) {
-         cache = buildEncodingCache((kc, vc) -> new StatsCollectingCache<>(cacheName, kc, vc), configuration, true);
+         cache = buildEncodingCache((kc, vc) -> new StatsCollectingCache<>(cacheName, kc, vc), configuration);
       } else {
-         cache = buildEncodingCache((kc, vc) -> new SimpleCacheImpl<>(cacheName, kc, vc), configuration, true);
+         cache = buildEncodingCache((kc, vc) -> new SimpleCacheImpl<>(cacheName, kc, vc), configuration);
       }
       this.configuration = configuration;
 

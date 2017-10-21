@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -19,6 +20,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.auth.AuthScope;
@@ -226,8 +228,9 @@ public class RESTHelper {
             put.setHeader((String) headers[i], (String) headers[i + 1]);
         }
         HttpResponse resp = client.execute(put);
+        String responseBody = IOUtils.toString(new InputStreamReader(resp.getEntity().getContent()));
         EntityUtils.consume(resp.getEntity());
-        assertEquals("URI=" + uri, expectedCode, resp.getStatusLine().getStatusCode());
+        assertEquals(responseBody + " [URI=" + uri + "]", expectedCode, resp.getStatusLine().getStatusCode());
         return resp;
     }
 
@@ -343,6 +346,10 @@ public class RESTHelper {
     }
 
     public URI fullPathKey(int server, String key, int portOffset) {
+        return fullPathKey(server, cache, key, portOffset);
+    }
+
+    public URI fullPathKey(String cache, int server, String key, int portOffset) {
         return fullPathKey(server, cache, key, portOffset);
     }
 

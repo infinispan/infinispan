@@ -6,9 +6,12 @@ import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.Set;
 
+import org.infinispan.commons.dataconversion.BinaryEncoder;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.Encoder;
+import org.infinispan.commons.dataconversion.EncodingException;
+import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
@@ -19,8 +22,12 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.cache.EncodingConfiguration;
+import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.EncoderRegistry;
 
@@ -31,7 +38,8 @@ import org.infinispan.marshall.core.EncoderRegistry;
  */
 public class DataConversion {
 
-   public static final DataConversion DEFAULT = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE);
+   public static final DataConversion DEFAULT_KEY = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, true);
+   public static final DataConversion DEFAULT_VALUE = new DataConversion(IdentityEncoder.INSTANCE, ByteArrayWrapper.INSTANCE, false);
 
    private Class<? extends Encoder> encoderClass;
    private Class<? extends Wrapper> wrapperClass;
@@ -67,11 +75,12 @@ public class DataConversion {
       this.isKey = isKey;
    }
 
-   private DataConversion(Encoder encoder, Wrapper wrapper) {
+   private DataConversion(Encoder encoder, Wrapper wrapper, boolean isKey) {
       this.encoder = encoder;
       this.wrapper = wrapper;
       this.encoderClass = encoder.getClass();
       this.wrapperClass = wrapper.getClass();
+      this.isKey = isKey;
    }
 
    public DataConversion withRequestMediaType(MediaType requestMediaType) {
@@ -92,30 +101,99 @@ public class DataConversion {
             this.isKey);
    }
 
-   private MediaType getConfiguredMediaType(Configuration configuration) {
+   public void overrideWrapper(Class<? extends Wrapper> newWrapper, ComponentRegistry cr) {
+      this.wrapper = null;
+      this.wrapperClass = newWrapper;
+      cr.wireDependencies(this);
+   }
+
+   /**
+    * Obtain the configured {@link MediaType} for this instance, or assume sensible defaults.
+    */
+   private MediaType getStorageMediaType(Configuration configuration, boolean embeddedMode) {
       EncodingConfiguration encodingConfiguration = configuration.encoding();
       ContentTypeConfiguration contentTypeConfiguration = isKey ? encodingConfiguration.keyDataType() : encodingConfiguration.valueDataType();
-      return contentTypeConfiguration.mediaType();
+      // If explicitly configured, use the value provided
+      if (contentTypeConfiguration.isMediaTypeChanged()) {
+         return contentTypeConfiguration.mediaType();
+      }
+      // Compatibility mode assumes application/x-java-object
+      if (configuration.compatibility().enabled()) {
+         return MediaType.APPLICATION_OBJECT;
+      }
+      // Indexed caches started by the server will assume application/protostream as storage media type
+      if (!embeddedMode && configuration.indexing().index().isEnabled() && contentTypeConfiguration.mediaType() == null) {
+         return MediaType.APPLICATION_PROTOSTREAM;
+      }
+      // Otherwise don't guess the media type, preventing transcoding.
+      return null;
    }
 
    @Inject
-   public void injectDependencies(EncoderRegistry encoderRegistry, Configuration configuration) {
-      if (wrapper == null) {
-         this.wrapper = encoderRegistry.getWrapper(wrapperClass, wrapperId);
+   public void injectDependencies(GlobalConfiguration gcr, EncoderRegistry encoderRegistry, Configuration configuration) {
+      boolean embeddedMode = Configurations.isEmbeddedMode(gcr);
+      CompatibilityModeConfiguration compatibility = configuration.compatibility();
+      boolean compat = compatibility.enabled();
+
+      StorageType storageType = configuration.memory().storageType();
+      boolean offheap = storageType == StorageType.OFF_HEAP;
+      boolean binary = storageType == StorageType.BINARY;
+      boolean isEncodingEmpty = encoderClass == null && encoderId == null && encoder == null;
+      if (isEncodingEmpty) {
+         encoderClass = IdentityEncoder.class;
+         if (offheap) {
+            if (embeddedMode) {
+               encoderClass = GlobalMarshallerEncoder.class;
+            }
+         }
+         if (binary) {
+            encoderClass = BinaryEncoder.class;
+         }
+         if (compat) {
+            this.encoderClass = embeddedMode ? IdentityEncoder.class : CompatModeEncoder.class;
+         }
       }
-      if (!CompatModeEncoder.class.equals(encoderClass)) {
-         if (encoder == null) {
+      this.lookupWrapper(encoderRegistry);
+      this.lookupEncoder(encoderRegistry, compatibility);
+      this.storageMediaType = getStorageMediaType(configuration, embeddedMode);
+      this.lookupTranscoder(encoderRegistry);
+   }
+
+   private void lookupTranscoder(EncoderRegistry encoderRegistry) {
+      boolean needsTranscoding = storageMediaType != null && requestMediaType != null && !requestMediaType.equals(storageMediaType);
+      if (needsTranscoding) {
+         Transcoder directTranscoder = null;
+         if (encoder.getStorageFormat() != null) {
+            try {
+               directTranscoder = encoderRegistry.getTranscoder(requestMediaType, encoder.getStorageFormat());
+            } catch (EncodingException ignored) {
+            }
+         }
+         if (directTranscoder != null) {
+            encoder = IdentityEncoder.INSTANCE;
+            transcoder = directTranscoder;
+         } else {
+            transcoder = encoderRegistry.getTranscoder(requestMediaType, storageMediaType);
+         }
+      }
+   }
+
+   private void lookupEncoder(EncoderRegistry encoderRegistry, CompatibilityModeConfiguration compatConfig) {
+      if (!compatConfig.enabled()) {
+         this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
+      } else {
+         if (encoderClass == null || encoderClass.equals(CompatModeEncoder.class)) {
+            this.encoderClass = CompatModeEncoder.class;
+            Marshaller compatMarshaller = compatConfig.marshaller();
+            this.encoder = new CompatModeEncoder(compatMarshaller);
+         } else {
             this.encoder = encoderRegistry.getEncoder(encoderClass, encoderId);
          }
-      } else {
-         CompatibilityModeConfiguration compatibility = configuration.compatibility();
-         Marshaller compatMarshaller = compatibility.marshaller();
-         this.encoder = new CompatModeEncoder(compatMarshaller);
       }
-      storageMediaType = getConfiguredMediaType(configuration);
-      if (requestMediaType != null && storageMediaType != null && !requestMediaType.equals(storageMediaType)) {
-         this.transcoder = encoderRegistry.getTranscoder(requestMediaType, storageMediaType);
-      }
+   }
+
+   private void lookupWrapper(EncoderRegistry encoderRegistry) {
+      this.wrapper = encoderRegistry.getWrapper(wrapperClass, wrapperId);
    }
 
    public Object fromStorage(Object stored) {
@@ -131,8 +209,8 @@ public class DataConversion {
    }
 
    public Object extractIndexable(Object stored) {
-      if(stored == null) return null;
-      if(encoder.isStorageFormatFilterable()) {
+      if (stored == null) return null;
+      if (encoder.isStorageFormatFilterable()) {
          return wrapper.isFilterable() ? stored : wrapper.unwrap(stored);
       }
       return encoder.fromStorage(wrapper.isFilterable() ? stored : wrapper.unwrap(stored));
@@ -169,9 +247,26 @@ public class DataConversion {
    }
 
    @Override
+   public String toString() {
+      return "DataConversion{" +
+            "encoderClass=" + encoderClass +
+            ", wrapperClass=" + wrapperClass +
+            ", requestMediaType=" + requestMediaType +
+            ", storageMediaType=" + storageMediaType +
+            ", encoderId=" + encoderId +
+            ", wrapperId=" + wrapperId +
+            ", encoder=" + encoder +
+            ", wrapper=" + wrapper +
+            ", isKey=" + isKey +
+            ", transcoder=" + transcoder +
+            '}';
+   }
+
+   @Override
    public int hashCode() {
       return Objects.hash(encoderClass, wrapperClass);
    }
+
 
    public static class Externalizer extends AbstractExternalizer<DataConversion> {
 
@@ -180,10 +275,14 @@ public class DataConversion {
          return Util.asSet(DataConversion.class);
       }
 
+      private boolean isDefault(DataConversion dataConversion) {
+         return dataConversion.isKey && dataConversion.equals(DEFAULT_KEY) ||
+               !dataConversion.isKey && dataConversion.equals(DEFAULT_VALUE);
+      }
+
       @Override
       public void writeObject(ObjectOutput output, DataConversion dataConversion) throws IOException {
-         boolean isDefault = dataConversion.equals(DEFAULT);
-         if (isDefault) {
+         if (isDefault(dataConversion)) {
             output.writeByte(1);
          } else {
             byte flags = 0;
@@ -198,9 +297,10 @@ public class DataConversion {
       @Override
       public DataConversion readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          byte flags = input.readByte();
-         if ((flags & 1) == 1) return DataConversion.DEFAULT;
-
          boolean isKey = ((flags & 2) == 2);
+         if (((flags & 1) == 1))
+            return isKey ? DEFAULT_KEY : DEFAULT_VALUE;
+
          short encoderId = input.readShort();
          byte wrapperId = input.readByte();
          MediaType requestMediaType = (MediaType) input.readObject();

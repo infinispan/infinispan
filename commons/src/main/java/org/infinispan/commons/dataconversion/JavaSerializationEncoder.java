@@ -16,6 +16,11 @@ public class JavaSerializationEncoder extends MarshallerEncoder {
    }
 
    @Override
+   public MediaType getStorageFormat() {
+      return MediaType.APPLICATION_SERIALIZED_OBJECT;
+   }
+
+   @Override
    public short id() {
       return EncoderIds.JAVA_SERIALIZATION;
    }

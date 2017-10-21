@@ -10,7 +10,7 @@ public class EmbeddedMetadataHelper implements MetadataHelper {
 
    @Override
    public String getContentType(MarshalledEntry entry) {
-      return "application/binary";
+      return "application/octet-stream";
    }
 
    @Override

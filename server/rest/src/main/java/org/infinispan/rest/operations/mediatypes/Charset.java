@@ -1,5 +1,6 @@
 package org.infinispan.rest.operations.mediatypes;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -32,12 +33,13 @@ public class Charset {
    }
 
    /**
-    * Creates {@link Charset} based on {@link MediaType} as string.
+    * Creates {@link Charset} based on {@link org.infinispan.commons.dataconversion.MediaType} as string.
     *
-    * @param mediaType {@link MediaType} value.
+    * @param mediaType {@link org.infinispan.commons.dataconversion.MediaType} value.
     * @return Returns {@link Charset} value or <code>null</code> if charset is not supported.
     */
    public static Charset fromMediaType(String mediaType) {
+      if (mediaType == null) return null;
       int indexOfCharset = mediaType.indexOf(CHARSET_HEADER);
       if (indexOfCharset != -1) {
          try {

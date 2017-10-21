@@ -48,6 +48,11 @@ public class CompatModeEncoder implements Encoder {
    }
 
    @Override
+   public MediaType getStorageFormat() {
+      return MediaType.APPLICATION_OBJECT;
+   }
+
+   @Override
    public short id() {
       return COMPAT;
    }

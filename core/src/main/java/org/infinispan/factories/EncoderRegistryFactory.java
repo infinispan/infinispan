@@ -6,6 +6,7 @@ import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.GlobalMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.dataconversion.JavaCompatEncoder;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.TextTranscoder;
@@ -41,7 +42,8 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerEncoder(UTF8CompatEncoder.INSTANCE);
       encoderRegistry.registerTranscoder(TextTranscoder.INSTANCE);
 
-      encoderRegistry.registerWrapper(new ByteArrayWrapper());
+      encoderRegistry.registerWrapper(ByteArrayWrapper.INSTANCE);
+      encoderRegistry.registerWrapper(IdentityWrapper.INSTANCE);
       return componentType.cast(encoderRegistry);
    }
 

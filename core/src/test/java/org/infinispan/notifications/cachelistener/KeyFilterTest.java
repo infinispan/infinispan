@@ -39,8 +39,8 @@ public class KeyFilterTest extends AbstractInfinispanTest {
 
       n = new CacheNotifierImpl();
       mockCache = mock(EncoderCache.class, RETURNS_DEEP_STUBS);
-      when(mockCache.getAdvancedCache().getKeyDataConversion()).thenReturn(DataConversion.DEFAULT);
-      when(mockCache.getAdvancedCache().getValueDataConversion()).thenReturn(DataConversion.DEFAULT);
+      when(mockCache.getAdvancedCache().getKeyDataConversion()).thenReturn(DataConversion.DEFAULT_KEY);
+      when(mockCache.getAdvancedCache().getValueDataConversion()).thenReturn(DataConversion.DEFAULT_VALUE);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
       Answer answer = (Answer<Object>) invocationOnMock -> Mockito.mock((Class) invocationOnMock.getArguments()[0]);

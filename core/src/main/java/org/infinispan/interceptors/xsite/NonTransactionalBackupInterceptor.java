@@ -193,7 +193,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       }
       //TODO: Converters
       WriteOnlyManyEntriesCommand crossSiteCommand = commandsFactory.buildWriteOnlyManyEntriesCommand(map,
-            MarshallableFunctions.setInternalCacheValueConsumer(), Params.fromFlagsBitSet(writeCommand.getFlagsBitSet()), DataConversion.DEFAULT, DataConversion.DEFAULT);
+            MarshallableFunctions.setInternalCacheValueConsumer(), Params.fromFlagsBitSet(writeCommand.getFlagsBitSet()), DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
       backupSender.processResponses(backupSender.backupWrite(crossSiteCommand), writeCommand);
    }
 }

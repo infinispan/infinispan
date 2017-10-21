@@ -23,6 +23,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
@@ -60,6 +61,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
             .allowDuplicateDomains(true)
             .jmxDomain(getClass().getSimpleName())
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
+      gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
 
       ConfigurationBuilder builder = getConfigurationBuilder();
 

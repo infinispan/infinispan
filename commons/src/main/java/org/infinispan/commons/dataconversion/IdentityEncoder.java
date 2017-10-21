@@ -25,6 +25,11 @@ public class IdentityEncoder implements Encoder {
    }
 
    @Override
+   public MediaType getStorageFormat() {
+      return null;
+   }
+
+   @Override
    public short id() {
       return EncoderIds.IDENTITY;
    }

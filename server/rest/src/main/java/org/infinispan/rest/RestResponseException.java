@@ -11,7 +11,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  *    exception and translate them into proper Netty responses.
  * </p>
  */
-public class RestResponseException extends Exception {
+public class RestResponseException extends RuntimeException {
 
    private final HttpResponseStatus status;
    private final String text;
@@ -47,7 +47,7 @@ public class RestResponseException extends Exception {
     * @param request
     */
    public InfinispanResponse toResponse(InfinispanRequest request) {
-      return InfinispanResponse.asError(request, status, text);
+      return InfinispanErrorResponse.asError(request, status, text);
    }
 
 }

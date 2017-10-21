@@ -29,8 +29,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.ByteArrayWrapper;
-import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
@@ -60,9 +58,6 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.query.remote.ProtostreamCompatEncoder;
-import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
-import org.infinispan.query.remote.impl.ProtostreamWrapper;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -166,9 +161,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    /**
     * Class used to allow for remote clients to essentially ignore the value by returning an empty byte[].
     */
-   @SerializeWith(value=ToEmptyBytesKeyValueFilterConverter.ToEmptyBytesKeyValueFilterConverterExternalizer.class)
+   @SerializeWith(value = ToEmptyBytesKeyValueFilterConverter.ToEmptyBytesKeyValueFilterConverterExternalizer.class)
    static class ToEmptyBytesKeyValueFilterConverter extends AbstractKeyValueFilterConverter {
-      private ToEmptyBytesKeyValueFilterConverter() { }
+      private ToEmptyBytesKeyValueFilterConverter() {
+      }
 
       public static ToEmptyBytesKeyValueFilterConverter INSTANCE = new ToEmptyBytesKeyValueFilterConverter();
 
@@ -182,7 +178,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       public static final class ToEmptyBytesKeyValueFilterConverterExternalizer implements Externalizer<ToEmptyBytesKeyValueFilterConverter> {
 
          @Override
-         public void writeObject(ObjectOutput output, ToEmptyBytesKeyValueFilterConverter object) throws IOException { }
+         public void writeObject(ObjectOutput output, ToEmptyBytesKeyValueFilterConverter object) throws IOException {
+         }
 
          @Override
          public ToEmptyBytesKeyValueFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
@@ -362,38 +359,16 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       if (cache == null) {
          String validCacheName = cacheName.isEmpty() ? configuration.defaultCacheName() : cacheName;
-         Cache<byte[], byte[]> tmpCache = SecurityActions.getCache(cacheManager, validCacheName);
-         Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(tmpCache.getAdvancedCache());
-         boolean compatibility = cacheConfiguration.compatibility().enabled();
+         cache = SecurityActions.getCache(cacheManager, validCacheName).getAdvancedCache();
+         Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
          Marshaller marshaller = cacheConfiguration.compatibility().marshaller();
-         boolean indexing = cacheConfiguration.indexing().index().isEnabled();
-         ComponentRegistry cacheComponentRegistry = SecurityActions.getCacheComponentRegistry(tmpCache.getAdvancedCache());
+         ComponentRegistry cacheComponentRegistry = SecurityActions.getCacheComponentRegistry(cache);
          if (marshaller != null) {
             cacheComponentRegistry.wireDependencies(marshaller);
          }
-
-         // Use flag when compatibility is enabled, otherwise it's unnecessary
-         if (compatibility || indexing) {
-            cache = tmpCache.getAdvancedCache().withFlags(Flag.OPERATION_HOTROD);
-            if (compatibility && !indexing) {
-               cache = cache.getAdvancedCache().withEncoding(CompatModeEncoder.class);
-            }
-            if (compatibility && indexing) {
-               if (marshaller instanceof BaseProtoStreamMarshaller) {
-                  cache = cache.getAdvancedCache().withEncoding(ProtostreamCompatEncoder.class).withWrapping(ByteArrayWrapper.class, ProtostreamWrapper.class);
-               } else {
-                  cache = cache.getAdvancedCache().withEncoding(CompatModeEncoder.class);
-               }
-            }
-            if (!compatibility) {
-               cache = cache.getAdvancedCache().withWrapping(ByteArrayWrapper.class, ProtostreamWrapper.class);
-            }
-         } else
-            cache = tmpCache.getAdvancedCache();
-
          // We don't need synchronization as long as we store the cache last
          knownCacheConfigurations.put(cacheName, cacheConfiguration);
-         knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(tmpCache.getAdvancedCache()));
+         knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()));
          if (addToKnownCaches) {
             knownCaches.put(cacheName, cache);
          }

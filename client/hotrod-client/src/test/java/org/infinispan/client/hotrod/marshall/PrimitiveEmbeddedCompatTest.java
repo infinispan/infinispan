@@ -38,7 +38,7 @@ public class PrimitiveEmbeddedCompatTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = createConfigBuilder();
 
-      cacheManager = TestCacheManagerFactory.createCacheManager(builder);
+      cacheManager = TestCacheManagerFactory.createServerModeCacheManager(builder);
       cache = cacheManager.getCache();
 
       embeddedCache = cache.getAdvancedCache().withEncoding(IdentityEncoder.class);

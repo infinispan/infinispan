@@ -8,6 +8,8 @@ import java.util.Map;
 
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
@@ -106,6 +108,10 @@ public class QueryEngine<TypeMetadata> {
    }
 
    protected AdvancedCache<?, ?> wrapCache(AdvancedCache<?, ?> cache, boolean isIndexed) {
+      DataConversion valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
+      if (valueDataConversion.isStorageFormatFilterable()) {
+         cache = cache.withEncoding(IdentityEncoder.class);
+      }
       return cache;
    }
 

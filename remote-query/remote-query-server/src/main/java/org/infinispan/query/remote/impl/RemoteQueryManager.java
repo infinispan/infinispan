@@ -1,8 +1,11 @@
 package org.infinispan.query.remote.impl;
 
+import java.util.List;
+
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
@@ -51,5 +54,25 @@ public interface RemoteQueryManager {
     * @return the {@link Encoder} associated with the cache's values.
     */
    Encoder getValueEncoder();
+
+   /**
+    * @return apply optional encoding to query hits
+    */
+   default List<Object> encodeQueryResults(List<Object> results) {
+      return results;
+   }
+
+   default RemoteQueryResult executeQuery(String q, Integer offset, Integer maxResults) {
+      BaseQuery baseQuery = getQueryEngine().makeQuery(q, null, offset, maxResults);
+      List<Object> results = baseQuery.list();
+      String[] projection = baseQuery.getProjection();
+      int totalResults = baseQuery.getResultSize();
+      if (projection == null) {
+         return new RemoteQueryResult(null, totalResults, encodeQueryResults(results));
+      } else {
+         return new RemoteQueryResult(projection, totalResults, results);
+      }
+
+   }
 
 }

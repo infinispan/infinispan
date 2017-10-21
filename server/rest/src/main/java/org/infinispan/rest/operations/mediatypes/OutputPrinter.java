@@ -26,13 +26,4 @@ public interface OutputPrinter {
     */
    byte[] print(String cacheName, CacheSet<?> cacheSet, Charset charset) throws ServerInternalException;
 
-   /**
-    * Converts specific value to a desired output format.
-    *
-    * @param value
-    * @param charset Desired {@link Charset}
-    * @return Byte array representation of converted values.
-    * @throws ServerInternalException Thrown if conversion was not successful.
-    */
-   byte[] print(Object value, Charset charset) throws ServerInternalException;
 }

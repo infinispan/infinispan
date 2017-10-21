@@ -33,7 +33,12 @@
         <artifactId>infinispan-server-core</artifactId>
       </dependency>
 
-      <!-- and now for unit and integration tests -->
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-remote-query-server</artifactId>
+      </dependency>
+
+       <!-- and now for unit and integration tests -->
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>

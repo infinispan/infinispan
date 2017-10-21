@@ -6,9 +6,13 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.cache.ContentTypeConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -24,6 +28,8 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
+import org.infinispan.query.remote.impl.dataconversion.ProtostreamJsonTranscoder;
+import org.infinispan.query.remote.impl.dataconversion.ProtostreamTextTranscoder;
 import org.infinispan.query.remote.impl.filter.ContinuousQueryResultExternalizer;
 import org.infinispan.query.remote.impl.filter.FilterResultExternalizer;
 import org.infinispan.query.remote.impl.filter.IckleBinaryProtobufFilterAndConverter;
@@ -69,6 +75,12 @@ public final class LifecycleManager implements ModuleLifecycle {
       ProtobufMetadataManagerImpl protobufMetadataManager = new ProtobufMetadataManagerImpl();
       gcr.registerComponent(protobufMetadataManager, ProtobufMetadataManager.class);
       registerProtobufMetadataManagerMBean(protobufMetadataManager, gcr, cacheManager.getName());
+
+      SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
+      EncoderRegistry encoderRegistry = gcr.getComponent(EncoderRegistry.class);
+      encoderRegistry.registerTranscoder(new ProtostreamJsonTranscoder(serCtx));
+      encoderRegistry.registerTranscoder(new ProtostreamTextTranscoder(serCtx));
+
    }
 
    private void registerProtobufMetadataManagerMBean(ProtobufMetadataManager protobufMetadataManager, GlobalComponentRegistry gcr, String cacheManagerName) {
@@ -119,6 +131,26 @@ public final class LifecycleManager implements ModuleLifecycle {
       }
    }
 
+   private RemoteQueryManager buildQueryManager(Configuration cfg, SerializationContext ctx, ComponentRegistry cr) {
+      ContentTypeConfiguration valueEncoding = cfg.encoding().valueDataType();
+      boolean compatEnabled = cfg.compatibility().enabled();
+      boolean embeddedMode = Configurations.isEmbeddedMode(cr.getGlobalComponentRegistry().getGlobalConfiguration());
+      if (!compatEnabled) {
+         if (valueEncoding != null) {
+            if (!valueEncoding.isEncodingChanged() || valueEncoding.mediaType() != null && valueEncoding.mediaType().equals(MediaType.APPLICATION_PROTOSTREAM)) {
+               return new ProtobufRemoteQueryManager(ctx, cr, embeddedMode);
+            }
+         }
+         return new GenericCompatRemoteQueryManager(cr);
+
+      } else {
+         Marshaller compatMarshaller = cfg.compatibility().marshaller();
+         if (compatMarshaller instanceof BaseProtoStreamMarshaller) {
+            return new ProtostreamCompatRemoteQueryManager(cr);
+         }
+         return new GenericCompatRemoteQueryManager(cr);
+      }
+   }
 
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
@@ -129,17 +161,7 @@ public final class LifecycleManager implements ModuleLifecycle {
          ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) cr.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
          SerializationContext serCtx = protobufMetadataManager.getSerializationContext();
 
-         RemoteQueryManager remoteQueryManager;
-
-         if (!cfg.compatibility().enabled()) {
-            remoteQueryManager = new ProtobufRemoteQueryManager(serCtx, cr);
-         } else {
-            if (cfg.compatibility().marshaller() instanceof BaseProtoStreamMarshaller) {
-               remoteQueryManager = new ProtostreamCompatRemoteQueryManager(cr);
-            } else {
-               remoteQueryManager = new GenericCompatRemoteQueryManager(cr);
-            }
-         }
+         RemoteQueryManager remoteQueryManager = buildQueryManager(cfg, serCtx, cr);
 
          Matcher matcher = remoteQueryManager.getMatcher();
          cr.registerComponent(matcher, matcher.getClass());

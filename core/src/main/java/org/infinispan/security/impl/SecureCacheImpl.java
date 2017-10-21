@@ -627,6 +627,11 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder) {
+      return new SecureCacheImpl<>(delegate.withKeyEncoding(encoder), authzManager, subject);
+   }
+
+   @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
       return new SecureCacheImpl<>(delegate.withWrapping(wrapperClass), authzManager, subject);
    }

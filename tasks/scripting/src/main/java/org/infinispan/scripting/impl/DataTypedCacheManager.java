@@ -11,6 +11,8 @@ import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.AbstractDelegatingEmbeddedCacheManager;
 import org.infinispan.scripting.logging.Log;
@@ -42,7 +44,11 @@ public final class DataTypedCacheManager extends AbstractDelegatingEmbeddedCache
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName) {
       Cache<K, V> cache = super.getCache(cacheName);
-      return (AdvancedCache<K, V>) cache.getAdvancedCache().withEncoding(encoderClass).withSubject(subject);
+      MemoryConfiguration memory = SecurityActions.getCacheConfiguration(cache).memory();
+      if (memory.storageType() == StorageType.OBJECT) {
+         return (AdvancedCache<K, V>) cache.getAdvancedCache().withEncoding(encoderClass).withSubject(subject);
+      }
+      return cache.getAdvancedCache();
    }
 
 }

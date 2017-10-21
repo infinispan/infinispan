@@ -30,6 +30,11 @@ public class UTF8Encoder implements Encoder {
    }
 
    @Override
+   public MediaType getStorageFormat() {
+      return MediaType.TEXT_PLAIN;
+   }
+
+   @Override
    public short id() {
       return EncoderIds.UTF8;
    }

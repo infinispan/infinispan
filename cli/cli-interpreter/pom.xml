@@ -82,17 +82,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-rest</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-rest</artifactId>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>net.spy</groupId>
          <artifactId>spymemcached</artifactId>
          <scope>test</scope>

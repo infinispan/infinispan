@@ -6,9 +6,6 @@
                     name="default"
                     batching="false"
                     >
-                    <encoding>
-                        <value media-type="text/plain"/>
-                    </encoding>
                 </local-cache>
                 <local-cache-configuration name="compatibilityCacheConfiguration">
                     <compatibility enabled="true"/>
@@ -19,9 +16,17 @@
                     name="memcachedCache"
                     batching="false"
                     >
+                    <encoding>
+                        <value media-type="text/plain"/>
+                    </encoding>
                 </local-cache>
                 <local-cache name="namedCache" />
                 <local-cache name="restNamedCache" />
+                <local-cache name="restNamedCacheText">
+                    <encoding>
+                        <value media-type="text/plain"/>
+                    </encoding>
+                </local-cache>
                 <local-cache name="offHeapCache">
                     <memory>
                         <off-heap/>

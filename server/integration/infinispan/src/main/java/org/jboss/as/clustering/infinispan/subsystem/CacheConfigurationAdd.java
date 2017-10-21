@@ -76,7 +76,6 @@ import org.infinispan.persistence.remote.configuration.AuthenticationConfigurati
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.SslConfigurationBuilder;
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
-import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
 import org.infinispan.persistence.rocksdb.configuration.CompressionType;
 import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -911,7 +910,6 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 builder.path(RestStoreConfigurationResource.PATH.resolveModelAttribute(context, store).asString());
                 builder.maxContentLength(RestStoreConfigurationResource.MAX_CONTENT_LENGTH.resolveModelAttribute(context, store).asInt());
                 builder.rawValues(true);
-                builder.metadataHelper(MimeMetadataHelper.class);
 
                 if (store.hasDefined(ModelKeys.CONNECTION_POOL)) {
                     ModelNode pool = store.get(ModelKeys.CONNECTION_POOL);

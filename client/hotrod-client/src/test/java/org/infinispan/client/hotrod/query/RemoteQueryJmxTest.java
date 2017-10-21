@@ -31,6 +31,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
@@ -72,6 +73,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
             .allowDuplicateDomains(true)
             .jmxDomain(jmxDomain)
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
+      gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().index(Index.ALL)
@@ -137,8 +139,8 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       assertEquals("Tom1", list.get(0).getName());
 
       assertEquals(2, mBeanServer.invoke(name, "getNumberOfIndexedEntities",
-                                    new Object[]{ProtobufValueWrapper.class.getName()},
-                                    new String[]{String.class.getName()}));
+            new Object[]{ProtobufValueWrapper.class.getName()},
+            new String[]{String.class.getName()}));
 
       Set<String> classNames = (Set<String>) mBeanServer.getAttribute(name, "IndexedClassNames");
       assertEquals(1, classNames.size());
@@ -164,13 +166,13 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
    private ObjectName getQueryStatsObjectName(String cacheName) throws MalformedObjectNameException {
       String cacheManagerName = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
       return new ObjectName(jmxDomain + ":type=Query,manager=" + ObjectName.quote(cacheManagerName)
-                                  + ",cache=" + ObjectName.quote(cacheName) + ",component=Statistics");
+            + ",cache=" + ObjectName.quote(cacheName) + ",component=Statistics");
    }
 
    private ObjectName getProtobufMetadataManagerObjectName() throws MalformedObjectNameException {
       String cacheManagerName = cacheManager.getCacheManagerConfiguration().globalJmxStatistics().cacheManagerName();
       return new ObjectName(jmxDomain + ":type=RemoteQuery,name="
-                                  + ObjectName.quote(cacheManagerName)
-                                  + ",component=" + ProtobufMetadataManagerMBean.OBJECT_NAME);
+            + ObjectName.quote(cacheManagerName)
+            + ",component=" + ProtobufMetadataManagerMBean.OBJECT_NAME);
    }
 }

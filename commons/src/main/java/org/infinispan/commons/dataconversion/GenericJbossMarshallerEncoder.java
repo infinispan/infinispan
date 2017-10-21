@@ -14,6 +14,11 @@ public class GenericJbossMarshallerEncoder extends MarshallerEncoder {
    }
 
    @Override
+   public MediaType getStorageFormat() {
+      return MediaType.APPLICATION_JBOSS_MARSHALLED;
+   }
+
+   @Override
    public short id() {
       return EncoderIds.GENERIC_MARSHALLER;
    }

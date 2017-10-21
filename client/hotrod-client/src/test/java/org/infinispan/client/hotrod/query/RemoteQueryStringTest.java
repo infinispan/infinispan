@@ -54,14 +54,14 @@ public class RemoteQueryStringTest extends QueryStringTest {
          "}\n";
 
    private static final String CUSTOM_ANALYZER_PROTO_SCHEMA = "package sample_bank_account;\n" +
-           "/* @Indexed \n" +
-           "   @Analyzer(definition = \"standard\") */" +
-           "message AnalyzerTestEntity {\n" +
-           "\t/* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"stemmer\")) */\n" +
-           "\toptional string f1 = 1;\n" +
-           "\t/* @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = \"-1\") */\n" +
-           "\toptional int32 f2 = 2;\n" +
-           "}\n";
+         "/* @Indexed \n" +
+         "   @Analyzer(definition = \"standard\") */" +
+         "message AnalyzerTestEntity {\n" +
+         "\t/* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"stemmer\")) */\n" +
+         "\toptional string f1 = 1;\n" +
+         "\t/* @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = \"-1\") */\n" +
+         "\toptional int32 f2 = 2;\n" +
+         "}\n";
 
    protected HotRodServer hotRodServer;
    protected RemoteCacheManager remoteCacheManager;
@@ -100,7 +100,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = getConfigurationBuilder();
-      createClusteredCaches(1, cfg);
+      createClusteredCaches(1, cfg, true);
 
       cache = manager(0).getCache();
 

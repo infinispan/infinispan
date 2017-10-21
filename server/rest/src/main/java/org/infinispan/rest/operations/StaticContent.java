@@ -1,15 +1,18 @@
 package org.infinispan.rest.operations;
 
+import static org.infinispan.commons.dataconversion.MediaType.IMAGE_PNG;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_HTML;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.infinispan.rest.InfinispanCacheResponse;
 import org.infinispan.rest.InfinispanRequest;
 import org.infinispan.rest.InfinispanResponse;
 import org.infinispan.rest.operations.exceptions.ServerInternalException;
-import org.infinispan.rest.operations.mediatypes.MediaType;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -22,10 +25,10 @@ public class StaticContent {
    private static final URL BANNER_FILE = StaticContent.class.getClassLoader().getResource("banner.png");
 
    public InfinispanResponse serveHtmlFile(InfinispanRequest request) throws ServerInternalException {
-      InfinispanResponse response = InfinispanResponse.inReplyTo(request);
+      InfinispanResponse response = InfinispanCacheResponse.inReplyTo(request);
       try {
          response.contentAsBytes(loadFile(HTML_FILE));
-         response.contentType(MediaType.TEXT_HTML.toString());
+         response.contentType(TEXT_HTML.toString());
          response.status(HttpResponseStatus.OK);
       } catch (Exception e) {
          throw new ServerInternalException(e);
@@ -34,10 +37,10 @@ public class StaticContent {
    }
 
    public InfinispanResponse serveBannerFile(InfinispanRequest request) throws ServerInternalException {
-      InfinispanResponse response = InfinispanResponse.inReplyTo(request);
+      InfinispanResponse response = InfinispanCacheResponse.inReplyTo(request);
       try {
          response.contentAsBytes(loadFile(BANNER_FILE));
-         response.contentType(MediaType.IMAGE_PNG.toString());
+         response.contentType(IMAGE_PNG.toString());
          response.status(HttpResponseStatus.OK);
       } catch (Exception e) {
          throw new ServerInternalException(e);

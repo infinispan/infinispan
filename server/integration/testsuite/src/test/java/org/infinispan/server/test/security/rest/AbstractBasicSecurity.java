@@ -21,13 +21,13 @@ public abstract class AbstractBasicSecurity {
 
     protected void securedReadWriteOperations() throws Exception {
         rest.setCredentials(TEST_USER_NAME, TEST_USER_PASSWORD);
-        rest.put(rest.fullPathKey(KEY_A), "data", "application/text", HttpStatus.SC_OK);
+        rest.put(rest.fullPathKey(KEY_A), "data", "text/plain", HttpStatus.SC_OK);
         rest.clearCredentials();
-        rest.put(rest.fullPathKey(KEY_B), "data", "application/text", HttpStatus.SC_UNAUTHORIZED);
+        rest.put(rest.fullPathKey(KEY_B), "data", "text/plain", HttpStatus.SC_UNAUTHORIZED);
         rest.setCredentials(TEST_USER_NAME, TEST_USER_PASSWORD);
-        rest.post(rest.fullPathKey(KEY_C), "data", "application/text", HttpStatus.SC_OK);
+        rest.post(rest.fullPathKey(KEY_C), "data", "text/plain", HttpStatus.SC_OK);
         rest.clearCredentials();
-        rest.post(rest.fullPathKey(KEY_D), "data", "application/text", HttpStatus.SC_UNAUTHORIZED);
+        rest.post(rest.fullPathKey(KEY_D), "data", "text/plain", HttpStatus.SC_UNAUTHORIZED);
         rest.get(rest.fullPathKey(KEY_A), HttpStatus.SC_UNAUTHORIZED);
         rest.setCredentials(TEST_USER_NAME, TEST_USER_PASSWORD);
         rest.get(rest.fullPathKey(KEY_A), "data");

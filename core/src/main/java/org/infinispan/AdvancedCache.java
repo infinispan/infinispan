@@ -60,13 +60,12 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *   cache.withFlags(Flag.FORCE_WRITE_LOCK).get(key);
     * </pre>
     * will invoke a cache.get() with a write lock forced.
-    * <p />
-    * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned by
-    * this method.
-    * <p />
-    * As an alternative to setting this on every
-    * invocation, users could also consider using the {@link DecoratedCache} wrapper, as this allows for more readable
-    * code.  E.g.:
+    * <p/>
+    * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
+    * by this method.
+    * <p/>
+    * As an alternative to setting this on every invocation, users could also consider using the {@link DecoratedCache}
+    * wrapper, as this allows for more readable code.  E.g.:
     * <pre>
     *    Cache forceWriteLockCache = new DecoratedCache(cache, Flag.FORCE_WRITE_LOCK);
     *    forceWriteLockCache.get(key1);
@@ -75,14 +74,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * </pre>
     *
     * @param flags a set of flags to apply.  See the {@link Flag} documentation.
-    * @return an {@link AdvancedCache} instance on which a real operation is to be invoked, if the flags are
-    * to be applied.
+    * @return an {@link AdvancedCache} instance on which a real operation is to be invoked, if the flags are to be
+    * applied.
     */
    AdvancedCache<K, V> withFlags(Flag... flags);
 
    /**
     * Performs any cache operations using the specified {@link Subject}. Only applies to caches with authorization
     * enabled (see {@link ConfigurationBuilder#security()}).
+    *
     * @param subject
     * @return an {@link AdvancedCache} instance on which a real operation is to be invoked, using the specified subject
     */
@@ -150,7 +150,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    /**
     * Allows the modification of the interceptor chain.
-    *
+    * <p>
     * Experimental: The ability to modify the interceptors at runtime may be removed in future versions.
     *
     * @since 9.0
@@ -174,8 +174,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    ComponentRegistry getComponentRegistry();
 
    /**
-    * Retrieves a reference to the {@link org.infinispan.distribution.DistributionManager} if the cache is configured
-    * to use Distribution.  Otherwise, returns a null.
+    * Retrieves a reference to the {@link org.infinispan.distribution.DistributionManager} if the cache is configured to
+    * use Distribution.  Otherwise, returns a null.
+    *
     * @return a DistributionManager, or null.
     */
    DistributionManager getDistributionManager();
@@ -190,12 +191,14 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    /**
     * Whenever this cache acquires a lock it will do so using the given Object as the owner of said lock.
     * <p>
-    * This can be useful when a lock may have been manually acquired and you wish to reuse that lock across invocations.
+    * This can be useful when a lock may have been manually acquired and you wish to reuse that lock across
+    * invocations.
     * <p>
     * Great care should be taken with this command as misuse can very easily lead to deadlocks.
+    *
     * @param lockOwner the lock owner to lock any keys as
-    * @return an {@link AdvancedCache} instance on which when an operation is invoked it will use lock owner
-    * object to acquire any locks
+    * @return an {@link AdvancedCache} instance on which when an operation is invoked it will use lock owner object to
+    * acquire any locks
     */
    AdvancedCache<K, V> lockAs(Object lockOwner);
 
@@ -205,11 +208,10 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * Keys can be locked eagerly in the context of a transaction only.
     *
     * @param keys the keys to lock
-    * @return true if the lock acquisition attempt was successful for <i>all</i> keys;
-    * false will only be returned if the lock acquisition timed out and the
-    * operation has been called with {@link Flag#FAIL_SILENTLY}.
-    * @throws org.infinispan.util.concurrent.TimeoutException if the lock
-    * cannot be acquired within the configured lock acquisition time.
+    * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false will only be returned if
+    * the lock acquisition timed out and the operation has been called with {@link Flag#FAIL_SILENTLY}.
+    * @throws org.infinispan.util.concurrent.TimeoutException if the lock cannot be acquired within the configured lock
+    *                                                         acquisition time.
     */
    boolean lock(K... keys);
 
@@ -219,33 +221,31 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * Collections of keys can be locked eagerly in the context of a transaction only.
     *
     * @param keys collection of keys to lock
-    * @return true if the lock acquisition attempt was successful for <i>all</i> keys;
-    * false will only be returned if the lock acquisition timed out and the
-    * operation has been called with {@link Flag#FAIL_SILENTLY}.
-    * @throws org.infinispan.util.concurrent.TimeoutException if the lock
-    * cannot be acquired within the configured lock acquisition time.
+    * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false will only be returned if
+    * the lock acquisition timed out and the operation has been called with {@link Flag#FAIL_SILENTLY}.
+    * @throws org.infinispan.util.concurrent.TimeoutException if the lock cannot be acquired within the configured lock
+    *                                                         acquisition time.
     */
    boolean lock(Collection<? extends K> keys);
 
 
    /**
-    * Applies the given Delta to the DeltaAware object stored under deltaAwareValueKey if and only if all
-    * locksToAcquire locks are successfully obtained
-    *
+    * Applies the given Delta to the DeltaAware object stored under deltaAwareValueKey if and only if all locksToAcquire
+    * locks are successfully obtained
     *
     * @param deltaAwareValueKey the key for DeltaAware object
-    * @param delta the delta to be applied to DeltaAware object
-    * @param locksToAcquire keys to be locked in DeltaAware scope. Must contain only single key equal to <code>deltaAwareValueKey</code>
+    * @param delta              the delta to be applied to DeltaAware object
+    * @param locksToAcquire     keys to be locked in DeltaAware scope. Must contain only single key equal to
+    *                           <code>deltaAwareValueKey</code>
     * @deprecated since 9.1
     */
    @Deprecated
    void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire);
 
    /**
-    * Returns the component in charge of communication with other caches in
-    * the cluster.  If the cache's {@link org.infinispan.configuration.cache.ClusteringConfiguration#cacheMode()}
-    * is {@link org.infinispan.configuration.cache.CacheMode#LOCAL}, this
-    * method will return null.
+    * Returns the component in charge of communication with other caches in the cluster.  If the cache's {@link
+    * org.infinispan.configuration.cache.ClusteringConfiguration#cacheMode()} is {@link
+    * org.infinispan.configuration.cache.CacheMode#LOCAL}, this method will return null.
     *
     * @return the RPC manager component associated with this cache instance or null
     */
@@ -259,8 +259,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    BatchContainer getBatchContainer();
 
    /**
-    * Returns the component in charge of managing the interactions between the
-    * cache operations and the context information associated with them.
+    * Returns the component in charge of managing the interactions between the cache operations and the context
+    * information associated with them.
     *
     * @return the invocation context container component
     * @deprecated No longer in use, implementations might return null.
@@ -269,42 +269,38 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    InvocationContextContainer getInvocationContextContainer();
 
    /**
-    * Returns the container where data is stored in the cache. Users should
-    * interact with this component with care because direct calls on it bypass
-    * the internal interceptors and other infrastructure in place to guarantee
-    * the consistency of data.
+    * Returns the container where data is stored in the cache. Users should interact with this component with care
+    * because direct calls on it bypass the internal interceptors and other infrastructure in place to guarantee the
+    * consistency of data.
     *
     * @return the data container associated with this cache instance
     */
    DataContainer<K, V> getDataContainer();
 
    /**
-    * Returns the transaction manager configured for this cache. If no
-    * transaction manager was configured, this method returns null.
+    * Returns the transaction manager configured for this cache. If no transaction manager was configured, this method
+    * returns null.
     *
     * @return the transaction manager associated with this cache instance or null
     */
    TransactionManager getTransactionManager();
 
    /**
-    * Returns the component that deals with all aspects of acquiring and
-    * releasing locks for cache entries.
+    * Returns the component that deals with all aspects of acquiring and releasing locks for cache entries.
     *
     * @return retrieves the lock manager associated with this cache instance
     */
    LockManager getLockManager();
 
    /**
-    * Returns a {@link Stats} object that allows several statistics associated
-    * with this cache at runtime.
+    * Returns a {@link Stats} object that allows several statistics associated with this cache at runtime.
     *
     * @return this cache's {@link Stats} object
     */
    Stats getStats();
 
    /**
-    * Returns the {@link XAResource} associated with this cache which can be
-    * used to do transactional recovery.
+    * Returns the {@link XAResource} associated with this cache which can be used to do transactional recovery.
     *
     * @return an instance of {@link XAResource}
     */
@@ -319,27 +315,23 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    ClassLoader getClassLoader();
 
    /**
-    * Using this operation, users can call any {@link AdvancedCache} operation
-    * with a given {@link ClassLoader}. This means that any {@link ClassLoader} happening
-    * as a result of the cache operation will be done using the {@link ClassLoader}
-    * given. For example:
-    * <p />
+    * Using this operation, users can call any {@link AdvancedCache} operation with a given {@link ClassLoader}. This
+    * means that any {@link ClassLoader} happening as a result of the cache operation will be done using the {@link
+    * ClassLoader} given. For example:
+    * <p/>
     * When users store POJO instances in caches configured with {@link org.infinispan.configuration.cache.StoreAsBinaryConfiguration},
-    * these instances are transformed into byte arrays. When these entries are
-    * read from the cache, a lazy unmarshalling process happens where these byte
-    * arrays are transformed back into POJO instances. Using {@link AdvancedCache#with(ClassLoader)}
-    * when reading that enables users to provide the class loader that should
-    * be used when trying to locate the classes that are constructed as a result
-    * of the unmarshalling process.
+    * these instances are transformed into byte arrays. When these entries are read from the cache, a lazy unmarshalling
+    * process happens where these byte arrays are transformed back into POJO instances. Using {@link
+    * AdvancedCache#with(ClassLoader)} when reading that enables users to provide the class loader that should be used
+    * when trying to locate the classes that are constructed as a result of the unmarshalling process.
     * <pre>
     *    cache.with(classLoader).get(key);
     * </pre>
-    * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance
-    * returned by this method.
-    * <p />
-    * As an alternative to setting this on every
-    * invocation, users could also consider using the {@link DecoratedCache} wrapper, as this allows for more readable
-    * code.  E.g.:
+    * <b>Note</b> that for the flag to take effect, the cache operation <b>must</b> be invoked on the instance returned
+    * by this method.
+    * <p/>
+    * As an alternative to setting this on every invocation, users could also consider using the {@link DecoratedCache}
+    * wrapper, as this allows for more readable code.  E.g.:
     * <pre>
     *    Cache classLoaderSpecificCache = new DecoratedCache(cache, classLoader);
     *    classLoaderSpecificCache.get(key1);
@@ -347,119 +339,102 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *    classLoaderSpecificCache.get(key3);
     * </pre>
     *
-    * @return an {@link AdvancedCache} instance upon which operations can be called
-    * with a particular {@link ClassLoader}.
-    * @deprecated A cache manager, and all caches within it, can only have
-    * one classloader associated to it, so it's no longer possible to read
-    * cached data with a different classloader.
+    * @return an {@link AdvancedCache} instance upon which operations can be called with a particular {@link
+    * ClassLoader}.
+    * @deprecated A cache manager, and all caches within it, can only have one classloader associated to it, so it's no
+    * longer possible to read cached data with a different classloader.
     */
    @Deprecated
    AdvancedCache<K, V> with(ClassLoader classLoader);
 
    /**
-    * An overloaded form of {@link #put(K, V)}, which takes in an instance of
-    * {@link org.infinispan.metadata.Metadata} which can be used to provide metadata information for
-    * the entry being stored, such as lifespan, version of value...etc.
+    * An overloaded form of {@link #put(K, V)}, which takes in an instance of {@link org.infinispan.metadata.Metadata}
+    * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
+    * value...etc.
     *
-    * @param key key to use
-    * @param value value to store
+    * @param key      key to use
+    * @param value    value to store
     * @param metadata information to store alongside the value
-    * @return the previous value associated with <tt>key</tt>, or
-    *         <tt>null</tt> if there was no mapping for <tt>key</tt>.
-    *
+    * @return the previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no mapping for
+    * <tt>key</tt>.
     * @since 5.3
     */
    V put(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #putAll(Map)}, which takes in an instance of
-    * {@link org.infinispan.metadata.Metadata} which can be used to provide metadata information for
-    * the entries being stored, such as lifespan, version of value...etc.
+    * An overloaded form of {@link #putAll(Map)}, which takes in an instance of {@link org.infinispan.metadata.Metadata}
+    * which can be used to provide metadata information for the entries being stored, such as lifespan, version of
+    * value...etc.
     *
-    * @param map the values to store
+    * @param map      the values to store
     * @param metadata information to store alongside the value(s)
     * @since 7.2
     */
    void putAll(Map<? extends K, ? extends V> map, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #replace(K, V)}, which takes in an
-    * instance of {@link Metadata} which can be used to provide metadata
-    * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored if the call is
-    * successful.
+    * An overloaded form of {@link #replace(K, V)}, which takes in an instance of {@link Metadata} which can be used to
+    * provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
+    * Metadata} is only stored if the call is successful.
     *
-    * @param key key with which the specified value is associated
-    * @param value value to be associated with the specified key
+    * @param key      key with which the specified value is associated
+    * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
-    * @return the previous value associated with the specified key, or
-    *         <tt>null</tt> if there was no mapping for the key.
-    *
+    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * key.
     * @since 5.3
     */
    V replace(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #replace(K, V, V)}, which takes in an
-    * instance of {@link Metadata} which can be used to provide metadata
-    * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored if the call is
-    * successful.
+    * An overloaded form of {@link #replace(K, V, V)}, which takes in an instance of {@link Metadata} which can be used
+    * to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
+    * Metadata} is only stored if the call is successful.
     *
-    * @param key key with which the specified value is associated
+    * @param key      key with which the specified value is associated
     * @param oldValue value expected to be associated with the specified key
     * @param newValue value to be associated with the specified key
     * @param metadata information to store alongside the new value
     * @return <tt>true</tt> if the value was replaced
-    *
     * @since 5.3
     */
    boolean replace(K key, V oldValue, V newValue, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #putIfAbsent(K, V)}, which takes in an
-    * instance of {@link Metadata} which can be used to provide metadata
-    * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored if the call is
-    * successful.
+    * An overloaded form of {@link #putIfAbsent(K, V)}, which takes in an instance of {@link Metadata} which can be used
+    * to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The {@link
+    * Metadata} is only stored if the call is successful.
     *
-    * @param key key with which the specified value is to be associated
-    * @param value value to be associated with the specified key
+    * @param key      key with which the specified value is to be associated
+    * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
-    * @return the previous value associated with the specified key, or
-    *         <tt>null</tt> if there was no mapping for the key.
-    *
+    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * key.
     * @since 5.3
     */
    V putIfAbsent(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in an
-    * instance of {@link Metadata} which can be used to provide metadata
-    * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored if the call is
-    * successful.
+    * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in an instance of {@link Metadata} which can
+    * be used to provide metadata information for the entry being stored, such as lifespan, version of value...etc. The
+    * {@link Metadata} is only stored if the call is successful.
     *
-    * @param key key with which the specified value is to be associated
-    * @param value value to be associated with the specified key
+    * @param key      key with which the specified value is to be associated
+    * @param value    value to be associated with the specified key
     * @param metadata information to store alongside the new value
-    *
     * @since 7.0
     */
    void putForExternalRead(K key, V value, Metadata metadata);
 
    /**
-    * An overloaded form of {@link #compute(K, BiFunction)}, which takes in an
-    * instance of {@link Metadata} which can be used to provide metadata
-    * information for the entry being stored, such as lifespan, version
-    * of value...etc.
+    * An overloaded form of {@link #compute(K, BiFunction)}, which takes in an instance of {@link Metadata} which can be
+    * used to provide metadata information for the entry being stored, such as lifespan, version of value...etc.
     *
-    * @param key key with which the specified value is associated
+    * @param key               key with which the specified value is associated
     * @param remappingFunction function to be applied to the specified key/value
-    * @param metadata information to store alongside the new value
-    * @return the previous value associated with the specified key, or
-    *         <tt>null</tt> if remapping function is gives null.
-    *
+    * @param metadata          information to store alongside the new value
+    * @return the previous value associated with the specified key, or <tt>null</tt> if remapping function is gives
+    * null.
     * @since 9.1
     */
    V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
@@ -470,19 +445,17 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    default V compute(K key, SerializableBiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       return this.compute(key, (BiFunction<? super K, ? super V, ? extends V>) remappingFunction, metadata);
    }
+
    /**
-    * An overloaded form of {@link #computeIfPresent(K, BiFunction)}, which takes in an
-    * instance of {@link Metadata} which can be used to provide metadata
-    * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored if the call is
-    * successful.
+    * An overloaded form of {@link #computeIfPresent(K, BiFunction)}, which takes in an instance of {@link Metadata}
+    * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
+    * value...etc. The {@link Metadata} is only stored if the call is successful.
     *
-    * @param key key with which the specified value is associated
+    * @param key               key with which the specified value is associated
     * @param remappingFunction function to be applied to the specified key/value
-    * @param metadata information to store alongside the new value
-    * @return the previous value associated with the specified key, or
-    *         <tt>null</tt> if there was no mapping for the key.
-    *
+    * @param metadata          information to store alongside the new value
+    * @return the previous value associated with the specified key, or <tt>null</tt> if there was no mapping for the
+    * key.
     * @since 9.1
     */
    V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, Metadata metadata);
@@ -495,18 +468,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    }
 
    /**
-    * An overloaded form of {@link #computeIfAbsent(K, Function)}, which takes in an
-    * instance of {@link Metadata} which can be used to provide metadata
-    * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored if the call is
-    * successful.
+    * An overloaded form of {@link #computeIfAbsent(K, Function)}, which takes in an instance of {@link Metadata} which
+    * can be used to provide metadata information for the entry being stored, such as lifespan, version of value...etc.
+    * The {@link Metadata} is only stored if the call is successful.
     *
-    * @param key key with which the specified value is associated
+    * @param key             key with which the specified value is associated
     * @param mappingFunction function to be applied to the specified key
-    * @param metadata information to store alongside the new value
-    * @return the value created with the mapping function associated with the specified key, or
-    *        the previous value associated with the specified key if the key is not absent.
-    *
+    * @param metadata        information to store alongside the new value
+    * @return the value created with the mapping function associated with the specified key, or the previous value
+    * associated with the specified key if the key is not absent.
     * @since 9.1
     */
    V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, Metadata metadata);
@@ -519,21 +489,17 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    }
 
    /**
-    * An overloaded form of {@link #merge(Object, Object, BiFunction)}, which takes in an
-    * instance of {@link Metadata} which can be used to provide metadata
-    * information for the entry being stored, such as lifespan, version
-    * of value...etc. The {@link Metadata} is only stored if the call is
-    * successful.
+    * An overloaded form of {@link #merge(Object, Object, BiFunction)}, which takes in an instance of {@link Metadata}
+    * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
+    * value...etc. The {@link Metadata} is only stored if the call is successful.
     *
-    * @param key, key with which the resulting value is to be associated
-    * @param value, the non-null value to be merged with the existing value
-    *        associated with the key or, if no existing value or a null value
-    *        is associated with the key, to be associated with the key
+    * @param key,               key with which the resulting value is to be associated
+    * @param value,             the non-null value to be merged with the existing value associated with the key or, if
+    *                           no existing value or a null value is associated with the key, to be associated with the
+    *                           key
     * @param remappingFunction, the function to recompute a value if present
-    * @param metadata, information to store alongside the new value
-    * @return the new value associated with the specified key, or null if no
-    *         value is associated with the key
-    *
+    * @param metadata,          information to store alongside the new value
+    * @return the new value associated with the specified key, or null if no value is associated with the key
     * @since 9.2
     */
    V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata);
@@ -546,17 +512,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    }
 
    /**
-    * Asynchronous version of {@link #put(Object, Object, Metadata)} which stores
-    * metadata alongside the value.  This method does not block on remote calls,
-    * even if your cache mode is synchronous.  Has no benefit over
-    * {@link #put(Object, Object, Metadata)} if used in LOCAL mode.
+    * Asynchronous version of {@link #put(Object, Object, Metadata)} which stores metadata alongside the value.  This
+    * method does not block on remote calls, even if your cache mode is synchronous.  Has no benefit over {@link
+    * #put(Object, Object, Metadata)} if used in LOCAL mode.
     * <p/>
     *
-    * @param key   key to use
-    * @param value value to store
+    * @param key      key to use
+    * @param value    value to store
     * @param metadata information to store alongside the new value
     * @return a future containing the old value replaced.
-    *
     * @since 5.3
     */
    CompletableFuture<V> putAsync(K key, V value, Metadata metadata);
@@ -565,27 +529,24 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    // That way, you could do comparison not only on the cache value, but also based on version...etc
 
    /**
-    * Gets a collection of entries, returning them as {@link Map} of the values
-    * associated with the set of keys requested.
+    * Gets a collection of entries, returning them as {@link Map} of the values associated with the set of keys
+    * requested.
     * <p>
-    * If the cache is configured read-through, and a get for a key would
-    * return null because an entry is missing from the cache, the Cache's
-    * {@link CacheLoader} is called in an attempt to load the entry. If an
-    * entry cannot be loaded for a given key, the returned Map will contain null for
-    * value of the key.
+    * If the cache is configured read-through, and a get for a key would return null because an entry is missing from
+    * the cache, the Cache's {@link CacheLoader} is called in an attempt to load the entry. If an entry cannot be loaded
+    * for a given key, the returned Map will contain null for value of the key.
     * <p>
-    * Unlike other bulk methods if this invoked in an existing transaction all entries
-    * will be stored in the current transactional context
+    * Unlike other bulk methods if this invoked in an existing transaction all entries will be stored in the current
+    * transactional context
     * <p>
-    * The returned {@link Map} will be a copy and updates to the map will not be reflected
-    * in the Cache and vice versa.  The keys and values themselves however may not be
-    * copies depending on if storeAsBinary is enabled and the value was retrieved from
-    * the local node.
+    * The returned {@link Map} will be a copy and updates to the map will not be reflected in the Cache and vice versa.
+    * The keys and values themselves however may not be copies depending on if storeAsBinary is enabled and the value
+    * was retrieved from the local node.
     *
     * @param keys The keys whose associated values are to be returned.
-    * @return A map of entries that were found for the given keys. If an entry is not
-    *         found for a given key, it will not be in the returned map.
-    * @throws NullPointerException  if keys is null or if keys contains a null
+    * @return A map of entries that were found for the given keys. If an entry is not found for a given key, it will not
+    * be in the returned map.
+    * @throws NullPointerException if keys is null or if keys contains a null
     */
    Map<K, V> getAll(Set<?> keys);
 
@@ -593,44 +554,40 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * Retrieves a CacheEntry corresponding to a specific key.
     *
     * @param key the key whose associated cache entry is to be returned
-    * @return the cache entry to which the specified key is mapped, or
-    *         {@code null} if this map contains no mapping for the key
-    *
+    * @return the cache entry to which the specified key is mapped, or {@code null} if this map contains no mapping for
+    * the key
     * @since 5.3
     */
    CacheEntry<K, V> getCacheEntry(Object key);
 
    /**
-    * Gets a collection of entries from the {@link AdvancedCache}, returning them as
-    * {@link Map} of the cache entries associated with the set of keys requested.
+    * Gets a collection of entries from the {@link AdvancedCache}, returning them as {@link Map} of the cache entries
+    * associated with the set of keys requested.
     * <p>
-    * If the cache is configured read-through, and a get for a key would
-    * return null because an entry is missing from the cache, the Cache's
-    * {@link CacheLoader} is called in an attempt to load the entry. If an
-    * entry cannot be loaded for a given key, the returned Map will contain null for
-    * value of the key.
+    * If the cache is configured read-through, and a get for a key would return null because an entry is missing from
+    * the cache, the Cache's {@link CacheLoader} is called in an attempt to load the entry. If an entry cannot be loaded
+    * for a given key, the returned Map will contain null for value of the key.
     * <p>
-    * Unlike other bulk methods if this invoked in an existing transaction all entries
-    * will be stored in the current transactional context
+    * Unlike other bulk methods if this invoked in an existing transaction all entries will be stored in the current
+    * transactional context
     * <p>
-    * The returned {@link Map} will be a copy and updates to the map will not be reflected
-    * in the Cache and vice versa.  The keys and values themselves however may not be
-    * copies depending on if storeAsBinary is enabled and the value was retrieved from
-    * the local node.
+    * The returned {@link Map} will be a copy and updates to the map will not be reflected in the Cache and vice versa.
+    * The keys and values themselves however may not be copies depending on if storeAsBinary is enabled and the value
+    * was retrieved from the local node.
     *
     * @param keys The keys whose associated values are to be returned.
-    * @return A map of entries that were found for the given keys. Keys not found
-    *         in the cache are present in the map with null values.
-    * @throws NullPointerException  if keys is null or if keys contains a null
+    * @return A map of entries that were found for the given keys. Keys not found in the cache are present in the map
+    * with null values.
+    * @throws NullPointerException if keys is null or if keys contains a null
     */
    Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys);
 
    /**
-    * Executes an equivalent of {@link Map#putAll(Map)}, returning previous values
-    * of the modified entries.
+    * Executes an equivalent of {@link Map#putAll(Map)}, returning previous values of the modified entries.
+    *
     * @param map mappings to be stored in this map
-    * @return A map of previous values for the given keys. If the previous mapping
-    *         does not exist it will not be in the returned map.
+    * @return A map of previous values for the given keys. If the previous mapping does not exist it will not be in the
+    * returned map.
     * @since 9.1
     */
    default Map<K, V> getAndPutAll(Map<? extends K, ? extends V> map) {
@@ -675,70 +632,69 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    void removeGroup(String groupName);
 
    /**
-    * Returns the cache's availability. In local mode this method will always return {@link AvailabilityMode#AVAILABLE}. In
-    * clustered mode, the {@link PartitionHandlingManager} is queried to obtain the availability mode.
+    * Returns the cache's availability. In local mode this method will always return {@link AvailabilityMode#AVAILABLE}.
+    * In clustered mode, the {@link PartitionHandlingManager} is queried to obtain the availability mode.
     */
    AvailabilityMode getAvailability();
 
    /**
-    * Manually change the availability of the cache.
-    * Doesn't change anything if the cache is not clustered or {@link PartitionHandlingConfiguration#whenSplit() is set to
-    * {@link org.infinispan.partitionhandling.PartitionHandling#ALLOW_READ_WRITES }
+    * Manually change the availability of the cache. Doesn't change anything if the cache is not clustered or {@link
+    * PartitionHandlingConfiguration#whenSplit() is set to {@link org.infinispan.partitionhandling.PartitionHandling#ALLOW_READ_WRITES
+    * }
     */
    void setAvailability(AvailabilityMode availabilityMode);
 
    /**
-    * Identical to {@link Cache#entrySet()} but is typed to return CacheEntries instead of Entries.  Please see
-    * the other method for a description of its behaviors.
+    * Identical to {@link Cache#entrySet()} but is typed to return CacheEntries instead of Entries.  Please see the
+    * other method for a description of its behaviors.
     * <p>
     * This method is needed since nested generics do not support covariance
-    * @see Cache#entrySet()
+    *
     * @return the entry set containing all of the CacheEntries
+    * @see Cache#entrySet()
     */
    CacheSet<CacheEntry<K, V>> cacheEntrySet();
 
    /**
-    * Returns a sequential stream using this Cache as the source. This stream is very similar to using the
-    * {@link CacheStream} returned from the {@link CacheSet#stream()} method of the collection
-    * returned via {@link AdvancedCache#cacheEntrySet()}. The use of this locked stream is that when an entry is
-    * being processed by the user the entry is locked for the invocation preventing a different thread from modifying
-    * it.
+    * Returns a sequential stream using this Cache as the source. This stream is very similar to using the {@link
+    * CacheStream} returned from the {@link CacheSet#stream()} method of the collection returned via {@link
+    * AdvancedCache#cacheEntrySet()}. The use of this locked stream is that when an entry is being processed by the user
+    * the entry is locked for the invocation preventing a different thread from modifying it.
     * <p>
     * Note that this stream is not supported when using a optimistic transactional or simple cache. Both non
     * transactional and pessimistic transactional caches are supported.
     * <p>
     * The stream will not share any ongoing transaction the user may have. Code executed by the stream should be treated
-    * as completely independent. That is any operation performed via the stream will require the user to start their
-    * own transaction or will be done intrinsically on the invocation. Note that if there is an ongoing transaction
-    * that has a lock on a key from the cache, that it will cause a deadlock.
+    * as completely independent. That is any operation performed via the stream will require the user to start their own
+    * transaction or will be done intrinsically on the invocation. Note that if there is an ongoing transaction that has
+    * a lock on a key from the cache, that it will cause a deadlock.
     * <p>
-    * Currently simple cache, {@link org.infinispan.configuration.cache.ConfigurationBuilder#simpleCache(boolean)}
-    * was set to true, and optimistic caches,
-    * {@link org.infinispan.configuration.cache.TransactionConfigurationBuilder#lockingMode(LockingMode)} was set to
-    * {@link LockingMode#OPTIMISTIC}, do not support this method. In this case it will throw an
-    * {@link UnsupportedOperationException}. This restriction may be removed in a
-    * future version. Also this method cannot be used on a cache that has a lock owner already specified via
-    * {@link AdvancedCache#lockAs(Object)} as this could lead to a deadlock or the release of locks early and will
-    * throw an {@link IllegalStateException}.
+    * Currently simple cache, {@link org.infinispan.configuration.cache.ConfigurationBuilder#simpleCache(boolean)} was
+    * set to true, and optimistic caches, {@link org.infinispan.configuration.cache.TransactionConfigurationBuilder#lockingMode(LockingMode)}
+    * was set to {@link LockingMode#OPTIMISTIC}, do not support this method. In this case it will throw an {@link
+    * UnsupportedOperationException}. This restriction may be removed in a future version. Also this method cannot be
+    * used on a cache that has a lock owner already specified via {@link AdvancedCache#lockAs(Object)} as this could
+    * lead to a deadlock or the release of locks early and will throw an {@link IllegalStateException}.
+    *
     * @return the locked stream
     * @throws UnsupportedOperationException this is thrown if invoked from a cache that doesn't support this
-    * @throws IllegalStateException if this cache has already explicitly set a lock owner
+    * @throws IllegalStateException         if this cache has already explicitly set a lock owner
     * @since 9.1
     */
    LockedStream<K, V> lockedStream();
 
    /**
     * Attempts to remove the entry if it is expired.  Due to expired entries not being consistent across nodes, this
-    * will still attempt to remove the value if it is not present.  Note that this will raise an expired event
-    * even if the entry is not present.  Normally this method should never be invoked except by the
-    * {@link ExpirationManager}.
+    * will still attempt to remove the value if it is not present.  Note that this will raise an expired event even if
+    * the entry is not present.  Normally this method should never be invoked except by the {@link ExpirationManager}.
     * <p>
     * This command will only remove the value if the value and lifespan also match if provided.
     * <p>
     * NOTE: This method may be removed at any point including in a minor release and is not supported for external
     * usage.
-    * @param key the key that is expiring
-    * @param value the value that mapped to the given.  Null means it will match any value
+    *
+    * @param key      the key that is expiring
+    * @param value    the value that mapped to the given.  Null means it will match any value
     * @param lifespan the lifespan that should match.  If null is provided it will match any lifespan value
     */
    void removeExpired(K key, V value, Long lifespan);
@@ -779,9 +735,11 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    /**
     * Perform any cache operations using an alternate {@link org.infinispan.commons.dataconversion.MediaType}.
-    * @param keyMediaType {@link org.infinispan.commons.dataconversion.MediaType} for the keys.
+    *
+    * @param keyMediaType   {@link org.infinispan.commons.dataconversion.MediaType} for the keys.
     * @param valueMediaType {@link org.infinispan.commons.dataconversion} for the values.
-    * @return an instance of {@link AdvancedCache} where all data will formatted according to the supplied {@link org.infinispan.commons.dataconversion.MediaType}.
+    * @return an instance of {@link AdvancedCache} where all data will formatted according to the supplied {@link
+    * org.infinispan.commons.dataconversion.MediaType}.
     */
    AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType);
 
@@ -819,4 +777,5 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     */
    DataConversion getValueDataConversion();
 
+   AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder);
 }

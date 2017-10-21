@@ -130,7 +130,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private boolean hasListeners = false;
 
    public SimpleCacheImpl(String cacheName) {
-      this(cacheName, DataConversion.DEFAULT, DataConversion.DEFAULT);
+      this(cacheName, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
    }
 
    public SimpleCacheImpl(String cacheName, DataConversion keyDataConversion, DataConversion valueDataConversion) {
@@ -472,6 +472,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public AdvancedCache<Object, Object> withKeyEncoding(Class<? extends Encoder> encoder) {
       throw new UnsupportedOperationException();
    }
 

@@ -162,15 +162,16 @@ public class ExampleConfigsIT {
         RESTHelper rest = new RESTHelper();
 
         controller.start("rest-rolling-upgrade-2");
+        // Source server is in compat mode
         try {
             RemoteInfinispanMBeans s2 = createRemotes("rest-rolling-upgrade-2", "local", DEFAULT_CACHE_NAME);
             rest.addServer(s2.server.getRESTEndpoint().getInetAddress().getHostName(), s2.server.getRESTEndpoint().getContextPath());
 
-            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", "text/html");
-            rest.get(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", "text/plain");
+            rest.get(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "key1", PORT_OFFSET), "data", 200, false, "Accept", "text/plain");
 
             for (int i = 0; i < 50; i++) {
-                rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET), "valueLoad" + i, "text/html");
+                rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "keyLoad" + i, PORT_OFFSET), "valueLoad" + i, "text/plain");
             }
 
             controller.start("rest-rolling-upgrade-1");
@@ -178,7 +179,7 @@ public class ExampleConfigsIT {
             RemoteInfinispanMBeans s1 = createRemotes("rest-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
             rest.addServer(s1.server.getRESTEndpoint().getInetAddress().getHostName(), s1.server.getRESTEndpoint().getContextPath());
 
-            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "key1", 0), "data");
+            rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "key1", 0), "data", 200, false, "Accept", "text/plain");
 
             provider1 = new MBeanServerConnectionProvider(s1.server.getRESTEndpoint().getInetAddress().getHostName(),
                                                           SERVER1_MGMT_PORT);
@@ -192,7 +193,7 @@ public class ExampleConfigsIT {
             invokeOperation(provider1, rollMan.toString(), "disconnectSource", new Object[]{"rest"},
                             new String[]{"java.lang.String"});
 
-            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "text/plain");
 
             //Source node entries should NOT be accessible from target node
             rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);
@@ -521,9 +522,9 @@ public class ExampleConfigsIT {
         rest.head(rest.fullPathKey(1, KEY_A), HttpStatus.SC_NOT_FOUND);
         rest.head(rest.fullPathKey(1, KEY_B), HttpStatus.SC_NOT_FOUND);
         cleanRESTServer(rest);
-        rest.post(rest.fullPathKey(0, KEY_A), "data", "application/text", HttpStatus.SC_OK,
+        rest.post(rest.fullPathKey(0, KEY_A), "data", "text/plain", HttpStatus.SC_OK,
                 // headers
-                "Content-Type", "application/text", "timeToLiveSeconds", "2");
+                "Content-Type", "text/plain", "timeToLiveSeconds", "2");
         rest.head(rest.fullPathKey(1, KEY_A));
         sleepForSecs(2.1);
         // should be evicted

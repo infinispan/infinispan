@@ -2,8 +2,10 @@ package org.infinispan.rest.helper;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
@@ -29,9 +31,14 @@ public class RestServerHelper {
    }
 
    public static RestServerHelper defaultRestServer(String... cachesDefined) {
-      GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder().nonClusteredDefault();
+      return defaultRestServer(new ConfigurationBuilder(), cachesDefined);
+   }
+
+   public static RestServerHelper defaultRestServer(ConfigurationBuilder configuration, String... cachesDefined) {
+      GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
+      globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+      GlobalConfigurationBuilder globalConfiguration = globalConfigurationBuilder.nonClusteredDefault();
       globalConfiguration.globalJmxStatistics().allowDuplicateDomains(true);
-      ConfigurationBuilder configuration = new ConfigurationBuilder();
       DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfiguration.build(), configuration.build());
       for (String cacheConfiguration : cachesDefined) {
          cacheManager.defineConfiguration(cacheConfiguration, configuration.build());
@@ -56,9 +63,11 @@ public class RestServerHelper {
    }
 
    public void clear() {
-      for (String cacheName : cacheManager.getCacheNames()) {
-         cacheManager.getCache(cacheName).clear();
-      }
+      InternalCacheRegistry registry = cacheManager.getGlobalComponentRegistry()
+            .getComponent(InternalCacheRegistry.class);
+      cacheManager.getCacheNames().stream()
+            .filter(cacheName -> !registry.isInternalCache(cacheName))
+            .forEach(cacheName -> cacheManager.getCache(cacheName).clear());
    }
 
    public void stop() {

@@ -550,7 +550,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          entryFactory.wrapEntryForWriting(ctx, key, false, true);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
          // TODO: ISPN-8090 support full cache encoding in tx cache
-         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.DEFAULT, DataConversion.DEFAULT);
+         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
          for (Mutation mutation : mutationsOnKey) {
             mutation.apply(readWriteEntryView);
             cacheEntry.updatePreviousValue();
@@ -573,7 +573,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          Object key = keysIterator.next();
          entryFactory.wrapEntryForWriting(ctx, key, false, true);
          MVCCEntry cacheEntry = (MVCCEntry) ctx.lookupEntry(key);
-         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.DEFAULT, DataConversion.DEFAULT);
+         EntryView.ReadWriteEntryView readWriteEntryView = EntryViews.readWrite(cacheEntry, DataConversion.DEFAULT_KEY, DataConversion.DEFAULT_VALUE);
          for (Mutation mutation : mutationsIterator.next()) {
             mutation.apply(readWriteEntryView);
             cacheEntry.updatePreviousValue();

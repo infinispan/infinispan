@@ -14,6 +14,11 @@ public class GlobalMarshallerEncoder extends MarshallerEncoder {
    }
 
    @Override
+   public MediaType getStorageFormat() {
+      return MediaType.APPLICATION_INFINISPAN_MARSHALLED;
+   }
+
+   @Override
    public short id() {
       return EncoderIds.GLOBAL_MARSHALLER;
    }

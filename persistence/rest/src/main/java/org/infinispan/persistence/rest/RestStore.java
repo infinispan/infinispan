@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.codec.net.URLCodec;
 import org.infinispan.commons.configuration.ConfiguredBy;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.persistence.Store;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.InternalEntryFactory;
@@ -47,6 +48,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpClientCodec;
@@ -93,7 +95,7 @@ public class RestStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void start()   {
+   public void start() {
       if (iceFactory == null) {
          iceFactory = ctx.getCache().getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
       }
@@ -134,7 +136,7 @@ public class RestStore implements AdvancedLoadWriteStore {
    }
 
    @Override
-   public void stop()   {
+   public void stop() {
       workerGroup.shutdownGracefully();
    }
 
@@ -177,6 +179,7 @@ public class RestStore implements AdvancedLoadWriteStore {
    }
 
    private boolean isTextContentType(String contentType) {
+      if (contentType == null) return false;
       return contentType.startsWith("text/") || "application/xml".equals(contentType) || "application/json".equals(contentType);
    }
 
@@ -268,7 +271,11 @@ public class RestStore implements AdvancedLoadWriteStore {
    public MarshalledEntry load(Object key) {
 
       try {
-         DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, keyToUri(key));
+         DefaultHttpHeaders headers = new DefaultHttpHeaders();
+         if (configuration.rawValues()) {
+            headers.add("Accept", MediaType.APPLICATION_OCTET_STREAM_TYPE);
+         }
+         DefaultHttpRequest get = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, keyToUri(key), headers);
 
          HttpResponseHandler handler = new HttpResponseHandler(true);
          Channel ch = bootstrap.connect(configuration.host(), configuration.port()).awaitUninterruptibly().channel().pipeline().addLast(new HttpObjectAggregator(maxContentLength), handler).channel();
@@ -366,8 +373,8 @@ public class RestStore implements AdvancedLoadWriteStore {
    }
 
    private void submitProcessTask(final CacheLoaderTask cacheLoaderTask, CompletionService ecs,
-         final TaskContext taskContext, final Set<Object> batch, final boolean loadEntry,
-         final boolean loadMetadata) {
+                                  final TaskContext taskContext, final Set<Object> batch, final boolean loadEntry,
+                                  final boolean loadMetadata) {
       ecs.submit(new Callable<Void>() {
          @Override
          public Void call() throws Exception {

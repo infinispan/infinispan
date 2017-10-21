@@ -105,27 +105,27 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> encoderClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT.withEncoding(encoderClass),
-            DataConversion.DEFAULT.withEncoding(encoderClass));
+      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withEncoding(encoderClass),
+            DataConversion.DEFAULT_VALUE.withEncoding(encoderClass));
    }
 
 
    @Override
    public AdvancedCache<K, V> withEncoding(Class<? extends Encoder> keyEncoderClass, Class<? extends Encoder> valueEncoderClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT.withEncoding(keyEncoderClass),
-            DataConversion.DEFAULT.withEncoding(valueEncoderClass));
+      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withEncoding(keyEncoderClass),
+            DataConversion.DEFAULT_VALUE.withEncoding(valueEncoderClass));
    }
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT.withWrapping(wrapperClass),
-            DataConversion.DEFAULT.withWrapping(wrapperClass));
+      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withWrapping(wrapperClass),
+            DataConversion.DEFAULT_VALUE.withWrapping(wrapperClass));
    }
 
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
-      return new EncoderCache<>(this, DataConversion.DEFAULT.withWrapping(keyWrapperClass),
-            DataConversion.DEFAULT.withWrapping(valueWrapperClass));
+      return new EncoderCache<>(this, DataConversion.DEFAULT_KEY.withWrapping(keyWrapperClass),
+            DataConversion.DEFAULT_VALUE.withWrapping(valueWrapperClass));
    }
 
    @Override
