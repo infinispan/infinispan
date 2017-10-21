@@ -11,11 +11,12 @@ import java.util.stream.Stream;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DistributedCallable;
@@ -46,6 +47,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    private Set<Object> keys = new HashSet<>();
    private ClusteringDependentLogic clusteringDependentLogic;
    private DataConversion valueDataConversion;
+   private DataConversion keyDataConversion;
 
    public IndexWorker(IndexedTypeIdentifier indexedType, boolean flush, boolean clean, boolean primaryOwner, Set<Object> everywhereKeys) {
       this.indexedType = indexedType;
@@ -57,15 +59,20 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
    @Override
    public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
+      Cache<Object, Object> unwrapped = SecurityActions.getUnwrappedCache(cache);
+      MemoryConfiguration memory = unwrapped.getCacheConfiguration().memory();
       this.cache = cache;
-      this.indexUpdater = new IndexUpdater(cache);
+      if (memory.storageType() == StorageType.OBJECT) {
+         this.cache = unwrapped.getAdvancedCache().withWrapping(ByteArrayWrapper.class, IdentityWrapper.class);
+      }
+      this.indexUpdater = new IndexUpdater(this.cache);
       ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache());
       this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
       if (everywhereKeys != null && everywhereKeys.size() > 0)
          keys.addAll(everywhereKeys);
       if (inputKeys != null && inputKeys.size() > 0)
          keys.addAll(inputKeys);
-
+      keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
       valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
    }
 
@@ -89,12 +96,10 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    @Override
    @SuppressWarnings("unchecked")
    public Void call() throws Exception {
-      AdvancedCache iterationCache = cache.getAdvancedCache().withWrapping(ByteArrayWrapper.class, IdentityWrapper.class);
-      Cache<Object, Object> unwrappedCache = SecurityActions.getUnwrappedCache(iterationCache);
       if (keys == null || keys.size() == 0) {
          preIndex();
          KeyValueFilter filter = getFilter();
-         try (Stream<CacheEntry<Object, Object>> stream = unwrappedCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
+         try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
                .cacheEntrySet().stream()) {
             Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
             while (iterator.hasNext()) {
@@ -109,7 +114,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
       } else {
          Set<Class<?>> classSet = new HashSet<>();
          for (Object key : keys) {
-            Object value = extractValue(unwrappedCache.get(key));
+            Object value = extractValue(cache.get(key));
             if (value != null) {
                indexUpdater.updateIndex(key, value);
                classSet.add(value.getClass());
@@ -152,7 +157,7 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
       @Override
       public boolean accept(Object key, Object value, Metadata metadata) {
-         return clusteringDependentLogic.getCacheTopology().getDistribution(key).isPrimary();
+         return clusteringDependentLogic.getCacheTopology().getDistribution(keyDataConversion.toStorage(key)).isPrimary();
       }
    }
 
