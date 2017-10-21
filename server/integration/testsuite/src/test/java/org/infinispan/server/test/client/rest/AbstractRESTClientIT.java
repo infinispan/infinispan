@@ -1,5 +1,6 @@
 package org.infinispan.server.test.client.rest;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_A;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_B;
 import static org.infinispan.server.test.client.rest.RESTHelper.KEY_C;
@@ -41,6 +42,7 @@ public abstract class AbstractRESTClientIT {
     protected RESTHelper rest;
 
     protected static final String REST_NAMED_CACHE = "restNamedCache";
+    protected static final String REST_NAMED_CACHE_TEXT = "restNamedCacheText";
 
     public static class TestSerializable implements Serializable {
         private String content;
@@ -70,6 +72,7 @@ public abstract class AbstractRESTClientIT {
         rest.head(rest.fullPathKey(KEY_B), HttpStatus.SC_NOT_FOUND);
         rest.head(rest.fullPathKey(KEY_C), HttpStatus.SC_NOT_FOUND);
         rest.head(rest.fullPathKey(REST_NAMED_CACHE, KEY_A), HttpStatus.SC_NOT_FOUND);
+        rest.head(rest.fullPathKey(REST_NAMED_CACHE_TEXT, KEY_A), HttpStatus.SC_NOT_FOUND);
     }
 
     private void cleanUpEntries() throws Exception {
@@ -77,6 +80,7 @@ public abstract class AbstractRESTClientIT {
         rest.delete(rest.fullPathKey(KEY_B));
         rest.delete(rest.fullPathKey(KEY_C));
         rest.delete(rest.fullPathKey(REST_NAMED_CACHE, KEY_A));
+        rest.delete(rest.fullPathKey(REST_NAMED_CACHE_TEXT, KEY_A));
     }
 
     @After
@@ -127,35 +131,45 @@ public abstract class AbstractRESTClientIT {
     }
 
     @Test
-    public void testGet() throws Exception {
+    public void testGetWithoutMediaTypeConfig() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
-        rest.post(fullPathKey, "data", "application/text");
+        rest.post(fullPathKey, "data", "text/plain");
         HttpResponse resp = rest.get(fullPathKey, "data");
         assertNotNull(resp.getHeaders("ETag")[0].getValue());
         assertNotNull(resp.getHeaders("Last-Modified")[0].getValue());
-        assertEquals("application/text;charset=UTF-8", resp.getHeaders("Content-Type")[0].getValue());
+        assertEquals(APPLICATION_OCTET_STREAM_TYPE, resp.getHeaders("Content-Type")[0].getValue());
+    }
+
+    @Test
+    public void testGetWithMediaTypeConfig() throws Exception {
+        URI fullPathKey = rest.fullPathKey(REST_NAMED_CACHE_TEXT, KEY_A);
+        rest.post(fullPathKey, "data", "text/plain");
+        HttpResponse resp = rest.get(fullPathKey, "data");
+        assertNotNull(resp.getHeaders("ETag")[0].getValue());
+        assertNotNull(resp.getHeaders("Last-Modified")[0].getValue());
+        assertEquals("text/plain", resp.getHeaders("Content-Type")[0].getValue());
     }
 
     @Test
     public void testGetNamedCache() throws Exception {
-        URI fullPathKey = rest.fullPathKey(REST_NAMED_CACHE, KEY_A);
-        rest.post(fullPathKey, "data", "application/text");
+        URI fullPathKey = rest.fullPathKey(REST_NAMED_CACHE_TEXT, KEY_A);
+        rest.post(fullPathKey, "data", "text/plain");
         HttpResponse resp = rest.get(fullPathKey, "data");
         assertNotNull(resp.getHeaders("ETag")[0].getValue());
         assertNotNull(resp.getHeaders("Last-Modified")[0].getValue());
-        assertEquals("application/text;charset=UTF-8", resp.getHeaders("Content-Type")[0].getValue());
+        assertEquals("text/plain", resp.getHeaders("Content-Type")[0].getValue());
     }
 
     @Test
     public void testHead() throws Exception {
-        URI fullPathKey = rest.fullPathKey(KEY_A);
-        rest.post(fullPathKey, "data", "application/text");
+        URI fullPathKey = rest.fullPathKey(REST_NAMED_CACHE_TEXT, KEY_A);
+        rest.post(fullPathKey, "data", "text/plain");
         HttpResponse resp = null;
         try {
             resp = rest.headWithoutClose(fullPathKey);
             assertNotNull(resp.getHeaders("ETag")[0].getValue());
             assertNotNull(resp.getHeaders("Last-Modified")[0].getValue());
-            assertEquals("application/text;charset=UTF-8", resp.getHeaders("Content-Type")[0].getValue());
+            assertEquals("text/plain", resp.getHeaders("Content-Type")[0].getValue());
             assertNull(resp.getEntity());
         } finally {
             EntityUtils.consume(resp.getEntity());
@@ -166,20 +180,20 @@ public abstract class AbstractRESTClientIT {
     public void testPostDuplicate() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
 
-        rest.post(fullPathKey, "data", "application/text");
+        rest.post(fullPathKey, "data", "text/plain");
         // second post, returns 409
-        rest.post(fullPathKey, "data", "application/text", HttpStatus.SC_CONFLICT);
+        rest.post(fullPathKey, "data", "text/plain", HttpStatus.SC_CONFLICT);
         // Should be all ok as its a put
-        rest.put(fullPathKey, "data", "application/text");
+        rest.put(fullPathKey, "data", "text/plain");
     }
 
     @Test
     public void testPutDataWithTimeToLive() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
 
-        rest.post(fullPathKey, "data", "application/text", HttpStatus.SC_OK,
+        rest.post(fullPathKey, "data", "text/plain", HttpStatus.SC_OK,
                 // headers
-                "Content-Type", "application/text", "timeToLiveSeconds", "2");
+                "Content-Type", "text/plain", "timeToLiveSeconds", "2");
 
         rest.get(fullPathKey, "data");
         sleepForSecs(2.1);
@@ -191,9 +205,9 @@ public abstract class AbstractRESTClientIT {
     public void testPutDataWithMaxIdleTime() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
 
-        rest.post(fullPathKey, "data", "application/text", HttpStatus.SC_OK,
+        rest.post(fullPathKey, "data", "text/plain", HttpStatus.SC_OK,
                 // headers
-                "Content-Type", "application/text", "maxIdleTimeSeconds", "2");
+                "Content-Type", "text/plain", "maxIdleTimeSeconds", "2");
 
         rest.get(fullPathKey, "data");
 
@@ -213,9 +227,9 @@ public abstract class AbstractRESTClientIT {
     public void testPutDataTTLMaxIdleCombo1() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
 
-        rest.post(fullPathKey, "data", "application/text", HttpStatus.SC_OK,
+        rest.post(fullPathKey, "data", "text/plain", HttpStatus.SC_OK,
                 // headers
-                "Content-Type", "application/text", "timeToLiveSeconds", "10", "maxIdleTimeSeconds", "2");
+                "Content-Type", "text/plain", "timeToLiveSeconds", "10", "maxIdleTimeSeconds", "2");
 
         rest.get(fullPathKey, "data");
 
@@ -235,9 +249,9 @@ public abstract class AbstractRESTClientIT {
     public void testPutDataTTLMaxIdleCombo2() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
 
-        rest.post(fullPathKey, "data", "application/text", HttpStatus.SC_OK,
+        rest.post(fullPathKey, "data", "text/plain", HttpStatus.SC_OK,
                 // headers
-                "Content-Type", "application/text", "timeToLiveSeconds", "2", "maxIdleTimeSeconds", "10");
+                "Content-Type", "text/plain", "timeToLiveSeconds", "2", "maxIdleTimeSeconds", "10");
 
         rest.get(fullPathKey, "data");
         sleepForSecs(2.1);
@@ -248,7 +262,7 @@ public abstract class AbstractRESTClientIT {
     @Test
     public void testRemoveEntry() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
-        rest.post(fullPathKey, "data", "application/text");
+        rest.post(fullPathKey, "data", "text/plain");
         rest.head(fullPathKey);
         rest.delete(fullPathKey);
         rest.head(fullPathKey, HttpStatus.SC_NOT_FOUND);
@@ -256,8 +270,8 @@ public abstract class AbstractRESTClientIT {
 
     @Test
     public void testWipeCacheBucket() throws Exception {
-        rest.post(rest.fullPathKey(KEY_A), "data", "application/text");
-        rest.post(rest.fullPathKey(KEY_B), "data", "application/text");
+        rest.post(rest.fullPathKey(KEY_A), "data", "text/plain");
+        rest.post(rest.fullPathKey(KEY_B), "data", "text/plain");
         rest.head(rest.fullPathKey(KEY_A));
         rest.head(rest.fullPathKey(KEY_B));
         rest.delete(rest.fullPathKey(null));
@@ -302,21 +316,21 @@ public abstract class AbstractRESTClientIT {
     @Test
     public void testETagChanges() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
-        rest.put(fullPathKey, "data1", "application/text");
+        rest.put(fullPathKey, "data1", "text/plain");
         String eTagFirst = rest.get(fullPathKey).getHeaders("ETag")[0].getValue();
         // second get should get the same ETag
         assertEquals(eTagFirst, rest.get(fullPathKey).getHeaders("ETag")[0].getValue());
         // do second PUT
-        rest.put(fullPathKey, "data2", "application/text");
+        rest.put(fullPathKey, "data2", "text/plain");
         // get ETag again
         assertFalse(eTagFirst.equals(rest.get(fullPathKey).getHeaders("ETag")[0].getValue()));
     }
 
     @Test
     public void testXJavaSerializedObjectPutAndDelete() throws Exception {
-        //show that "application/text" works for delete
+        //show that "text/plain" works for delete
         URI fullPathKey1 = rest.fullPathKey("j");
-        rest.put(fullPathKey1, "data1", "application/text");
+        rest.put(fullPathKey1, "data1", "text/plain");
         rest.head(fullPathKey1, HttpStatus.SC_OK);
         rest.delete(fullPathKey1);
         rest.head(fullPathKey1, HttpStatus.SC_NOT_FOUND);
@@ -337,7 +351,7 @@ public abstract class AbstractRESTClientIT {
     @Test
     public void testIfModifiedSince() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
-        rest.put(fullPathKey, "data", "application/text");
+        rest.put(fullPathKey, "data", "text/plain");
         HttpResponse resp = rest.get(fullPathKey);
         String dateLast = resp.getHeaders("Last-Modified")[0].getValue();
         String dateMinus = addDay(dateLast, -1);
@@ -359,7 +373,7 @@ public abstract class AbstractRESTClientIT {
     @Test
     public void testIfUnmodifiedSince() throws Exception {
         URI fullPathKey = rest.fullPathKey(KEY_A);
-        rest.put(fullPathKey, "data", "application/text");
+        rest.put(fullPathKey, "data", "text/plain");
 
         HttpResponse resp = rest.get(fullPathKey);
         String dateLast = resp.getHeaders("Last-Modified")[0].getValue();
@@ -408,7 +422,7 @@ public abstract class AbstractRESTClientIT {
         //See https://issues.jboss.org/browse/ISPN-7821
         //rest.head(rest.fullPathKey("nonexistentcache", "nodata"), HttpStatus.SC_NOT_FOUND);
         rest.get(rest.fullPathKey("nonexistentcache", "nodata"), HttpStatus.SC_NOT_FOUND);
-        rest.put(rest.fullPathKey("nonexistentcache", "nodata"), "data", "application/text", HttpStatus.SC_NOT_FOUND);
+        rest.put(rest.fullPathKey("nonexistentcache", "nodata"), "data", "text/plain", HttpStatus.SC_NOT_FOUND);
         rest.delete(rest.fullPathKey("nonexistentcache", "nodata"), HttpStatus.SC_NOT_FOUND);
     }
 
@@ -426,7 +440,7 @@ public abstract class AbstractRESTClientIT {
         rest.put(rest.fullPathKey(0, KEY_Z), serializedData, "application/x-java-serialized-object");
 
         HttpResponse resp = rest.get(rest.fullPathKey(0, KEY_Z), null, HttpStatus.SC_OK, false, "Accept",
-                "application/x-java-serialized-object");
+                APPLICATION_OCTET_STREAM_TYPE);
         ObjectInputStream oin = new ObjectInputStream(resp.getEntity().getContent());
         byte[] dataBack = (byte[]) oin.readObject();
         EntityUtils.consume(resp.getEntity());
@@ -467,10 +481,10 @@ public abstract class AbstractRESTClientIT {
     @Test
     public void testKeyIncludingSlashURLEncoded() throws Exception {
         String encodedSlashKey = URLEncoder.encode("x/y", "UTF-8");
-        rest.post(rest.fullPathKey(encodedSlashKey), "data", "application/text");
+        rest.post(rest.fullPathKey(encodedSlashKey), "data", "text/plain");
         HttpResponse get = rest.get(rest.fullPathKey(encodedSlashKey), "data");
         assertNotNull(get.getHeaders("ETag")[0].getValue());
         assertNotNull(get.getHeaders("Last-Modified")[0].getValue());
-        assertEquals("application/text;charset=UTF-8", get.getHeaders("Content-Type")[0].getValue());
+        assertEquals(APPLICATION_OCTET_STREAM_TYPE, get.getHeaders("Content-Type")[0].getValue());
     }
 }

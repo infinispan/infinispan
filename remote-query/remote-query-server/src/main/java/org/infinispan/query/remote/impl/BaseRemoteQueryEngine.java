@@ -15,7 +15,7 @@ import org.infinispan.query.dsl.impl.BaseQuery;
  * @author anistor@redhat.com
  * @since 9.0
  */
-class BaseRemoteQueryEngine extends QueryEngine<Descriptor> {
+public class BaseRemoteQueryEngine extends QueryEngine<Descriptor> {
 
    private final SerializationContext serializationContext;
 
@@ -31,7 +31,7 @@ class BaseRemoteQueryEngine extends QueryEngine<Descriptor> {
       return serializationContext;
    }
 
-   protected BaseQuery makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+   public BaseQuery makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       BaseQuery query = queryFactory.create(queryString);
       query.startOffset(startOffset);
       query.maxResults(maxResults);

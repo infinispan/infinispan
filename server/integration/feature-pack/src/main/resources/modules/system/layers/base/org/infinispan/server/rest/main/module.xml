@@ -20,6 +20,9 @@
       <module name="org.codehaus.jackson.jackson-jaxrs" />
       <module name="org.codehaus.jackson.jackson-xc" />
       <module name="org.infinispan" />
+      <module name="org.infinispan.remote-query.server" />
+      <module name="org.infinispan.query.dsl" />
+      <module name="org.infinispan.objectfilter" />
       <!-- Netty is exported by server core -->
       <module name="org.infinispan.server" />
       <module name="org.jboss.logging" />

@@ -53,7 +53,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       EntityEnclosingMethod put = new PutMethod(restUrl + "/k");
       put.setRequestEntity(new ByteArrayRequestEntity(
-            "v".getBytes(), "application/octet-stream"));
+            "v".getBytes(), "text/plain"));
       remote.executeMethod(put);
 
       assertEquals(1, l.createdCounter);
@@ -65,7 +65,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       EntityEnclosingMethod put2 = new PutMethod(restUrl + "/key");
       put2.setRequestEntity(new ByteArrayRequestEntity(
-            "value".getBytes(), "application/octet-stream"));
+            "value".getBytes(), "text/plain"));
       remote.executeMethod(put2);
 
       assertEquals(2, l.createdCounter);
@@ -75,7 +75,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       EntityEnclosingMethod put3 = new PutMethod(restUrl + "/key");
       put3.setRequestEntity(new ByteArrayRequestEntity(
-            "modifiedValue".getBytes(), "application/octet-stream"));
+            "modifiedValue".getBytes(), "text/plain"));
       remote.executeMethod(put3);
 
       assertEquals(2, l.createdCounter);
@@ -86,7 +86,7 @@ public class EmbeddedRestCacheListenerTest extends AbstractInfinispanTest {
 
       EntityEnclosingMethod post = new PutMethod(restUrl + "/k");
       post.setRequestEntity(new ByteArrayRequestEntity(
-            "replacedValue".getBytes(), "application/octet-stream"));
+            "replacedValue".getBytes(), "text/plain"));
       remote.executeMethod(post);
 
       assertEquals(2, l.createdCounter);

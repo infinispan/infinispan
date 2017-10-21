@@ -54,14 +54,14 @@ public class ExpirationIT {
         URI key4Path = rest.fullPathKey(0, "k4");
         Assert.assertEquals(2, server1.getCacheManager("clustered").getClusterSize());
         // specific entry timeToLiveSeconds and maxIdleTimeSeconds that overrides the default
-        rest.post(key1Path, "v1", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
+        rest.post(key1Path, "v1", "text/plain", HttpStatus.SC_OK, "Content-Type", "text/plain",
              "timeToLiveSeconds", "4", "maxIdleTimeSeconds", "4");
         // no value means use the default
-        rest.post(key2Path, "v2", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text");
+        rest.post(key2Path, "v2", "text/plain", HttpStatus.SC_OK, "Content-Type", "text/plain");
         // 0 value means use default
-        rest.post(key3Path, "v3", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
+        rest.post(key3Path, "v3", "text/plain", HttpStatus.SC_OK, "Content-Type", "text/plain",
                 "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "0");
-        rest.post(key4Path, "v4", "application/text", HttpStatus.SC_OK, "Content-Type", "application/text",
+        rest.post(key4Path, "v4", "text/plain", HttpStatus.SC_OK, "Content-Type", "text/plain",
                 "timeToLiveSeconds", "0", "maxIdleTimeSeconds", "2");
 
         sleepForSecs(1);

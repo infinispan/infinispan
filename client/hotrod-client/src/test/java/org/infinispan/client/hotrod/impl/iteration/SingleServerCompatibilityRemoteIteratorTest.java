@@ -21,7 +21,7 @@ public class SingleServerCompatibilityRemoteIteratorTest extends SingleServerRem
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cb = HotRodTestingUtil.hotRodCacheConfiguration();
       cb.compatibility().enable();
-      return TestCacheManagerFactory.createCacheManager(cb);
+      return TestCacheManagerFactory.createServerModeCacheManager(cb);
    }
 
 }

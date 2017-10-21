@@ -56,11 +56,12 @@ public class TestCacheManagerFactory {
 
    /**
     * Note this method does not amend the global configuration to reduce overall resource footprint.  It is therefore
-    * suggested to use {@link org.infinispan.test.fwk.TestCacheManagerFactory#createClusteredCacheManager(org.infinispan.configuration.cache.ConfigurationBuilder, TransportFlags)}
-    * instead when this is needed
-    * @param start Whether to start this cache container
-    * @param gc The global configuration builder to use
-    * @param c The default configuration to use
+    * suggested to use {@link org.infinispan.test.fwk.TestCacheManagerFactory#createClusteredCacheManager(org.infinispan.configuration.cache.ConfigurationBuilder,
+    * TransportFlags)} instead when this is needed
+    *
+    * @param start         Whether to start this cache container
+    * @param gc            The global configuration builder to use
+    * @param c             The default configuration to use
     * @param keepJmxDomain Whether or not the provided jmx domain should be used or if a unique one is generated
     * @return The resultant cache manager that is created
     */
@@ -91,7 +92,7 @@ public class TestCacheManagerFactory {
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean keepJmxDomainName, boolean defaultParserOnly) throws IOException {
       InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
-              xmlFile, Thread.currentThread().getContextClassLoader());
+            xmlFile, Thread.currentThread().getContextClassLoader());
       return fromStream(is, keepJmxDomainName, defaultParserOnly, true);
    }
 
@@ -128,7 +129,7 @@ public class TestCacheManagerFactory {
          builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       } else {
          builder.transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL);
+               .transactionMode(TransactionMode.TRANSACTIONAL);
          if (!Util.isOSGiContext()) {
             //automatically change default TM lookup to the desired one but only outside OSGi. In OSGi we need to use GenericTransactionManagerLookup
             builder.transaction().transactionManagerLookup(Util.getInstance(TransactionSetup.getManagerLookup(), TestCacheManagerFactory.class.getClassLoader()));
@@ -219,9 +220,13 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager createServerModeCacheManager() {
+      return createServerModeCacheManager(new ConfigurationBuilder());
+   }
+
+   public static EmbeddedCacheManager createServerModeCacheManager(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      return createCacheManager(globalBuilder, new ConfigurationBuilder());
+      return createCacheManager(globalBuilder, builder);
    }
 
    public static EmbeddedCacheManager createCacheManager(boolean start) {
@@ -245,16 +250,15 @@ public class TestCacheManagerFactory {
    public static EmbeddedCacheManager createCacheManager(CacheMode mode, boolean indexing) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder
-         .clustering()
+            .clustering()
             .cacheMode(mode)
-         .indexing()
+            .indexing()
             .index(indexing ? Index.ALL : Index.NONE)
             .addProperty("lucene_version", "LUCENE_CURRENT")
-         ;
+      ;
       if (mode.isClustered()) {
          return createClusteredCacheManager(builder);
-      }
-      else {
+      } else {
          return createCacheManager(builder);
       }
    }
@@ -317,7 +321,7 @@ public class TestCacheManagerFactory {
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, String cacheManagerName, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
       globalConfiguration
-         .globalJmxStatistics()
+            .globalJmxStatistics()
             .jmxDomain(jmxDomain)
             .mBeanServerLookup(new PerThreadMBeanServerLookup())
             .enabled(exposeGlobalJmx);

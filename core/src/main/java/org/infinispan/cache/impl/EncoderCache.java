@@ -537,6 +537,15 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       return encoderCache;
    }
 
+   @Override
+   public AdvancedCache<K, V> withKeyEncoding(Class<? extends Encoder> encoderClass) {
+      checkSubclass(encoderClass, Encoder.class);
+      DataConversion newKeyDataConversion = keyDataConversion.withEncoding(encoderClass);
+      EncoderCache<K, V> encoderCache = new EncoderCache<>(cache, newKeyDataConversion, valueDataConversion);
+      initState(encoderCache, this);
+      return encoderCache;
+   }
+
    private void checkSubclass(Class<?> configured, Class<?> required) {
       if (!required.isAssignableFrom(configured)) {
          throw log.invalidEncodingClass(configured, required);

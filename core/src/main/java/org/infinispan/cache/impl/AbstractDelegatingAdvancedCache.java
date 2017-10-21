@@ -403,6 +403,16 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       }
    }
 
+   public AdvancedCache<K, V> withKeyEncoding(Class<? extends Encoder> encoder) {
+      AdvancedCache encoderCache = this.cache.withKeyEncoding(encoder);
+      if (encoderCache != cache) {
+         return this.wrapper.wrap(encoderCache);
+      } else {
+         return this;
+      }
+   }
+
+
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
       AdvancedCache encoderCache = this.cache.withWrapping(wrapper);

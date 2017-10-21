@@ -12,20 +12,19 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.operations.exceptions.WrongDateFormatException;
-import org.infinispan.rest.operations.mime.MimeMetadataBuilder;
 
 public class CacheOperationsHelper {
 
    private CacheOperationsHelper() {
    }
 
-   public static Metadata createMetadata(Configuration cfg, String dataType, Optional<Long> ttl, Optional<Long> idleTime) {
-      MimeMetadataBuilder metadata = new MimeMetadataBuilder();
-      metadata.contentType(dataType);
+   public static Metadata createMetadata(Configuration cfg, Optional<Long> ttl, Optional<Long> idleTime) {
+      EmbeddedMetadata.Builder metadata = new EmbeddedMetadata.Builder();
 
       if (ttl.isPresent()) {
          long ttlValue = ttl.get();

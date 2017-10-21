@@ -12,8 +12,8 @@ import org.infinispan.security.impl.SecureCacheImpl;
 /**
  * SecurityActions for the org.infinispan.query.impl.massindex package.
  * <p>
- * Do not move. Do not change class and method visibility to avoid being called from other
- * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.
+ * Do not move. Do not change class and method visibility to avoid being called from other {@link
+ * java.security.CodeSource}s, thus granting privilege escalation to external code.
  *
  * @since 9.1
  */

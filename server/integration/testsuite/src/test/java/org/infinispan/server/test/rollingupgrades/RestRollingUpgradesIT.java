@@ -81,7 +81,7 @@ public class RestRollingUpgradesIT {
             invokeOperation(provider1, rollMan.toString(), "disconnectSource", new Object[]{"rest"},
                     new String[]{"java.lang.String"});
 
-            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "application/text");
+            rest.post(rest.fullPathKey(0, DEFAULT_CACHE_NAME, "disconnected", PORT_OFFSET), "source", "text/plain");
 
             //Source node entries should NOT be accessible from target node
             rest.get(rest.fullPathKey(1, DEFAULT_CACHE_NAME, "disconnected", 0), HttpStatus.SC_NOT_FOUND);

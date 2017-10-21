@@ -23,7 +23,7 @@ public class JsonObjectTranscoderTest {
 
       Object result = transcoder.transcode(joe, personMediaType, jsonMediaType);
 
-      assertEquals(result, "{\"name\":\"joe\",\"address\":null}");
+      assertEquals(result, "{\"_type\":\"org.infinispan.test.data.Person\",\"name\":\"joe\",\"address\":null}");
 
       Object fromJson = transcoder.transcode(result, jsonMediaType, personMediaType);
 

@@ -534,6 +534,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
+   public AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder) {
+      return cache.withKeyEncoding(encoder);
+   }
+
+   @Override
    public AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder) {
       return cache.withEncoding(keyEncoder, valueEncoder);
    }

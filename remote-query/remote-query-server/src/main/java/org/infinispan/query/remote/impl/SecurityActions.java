@@ -7,7 +7,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 
@@ -42,5 +44,9 @@ final class SecurityActions {
 
    static <K, V> Cache<K, V> getCache(EmbeddedCacheManager cacheManager, String cacheName) {
       return doPrivileged(() -> cacheManager.getCache(cacheName));
+   }
+
+   static void registerProtobufMetadataManager(GlobalComponentRegistry gcr, ProtobufMetadataManager protobufMetadataManager) {
+      gcr.registerComponent(protobufMetadataManager, ProtobufMetadataManager.class);
    }
 }

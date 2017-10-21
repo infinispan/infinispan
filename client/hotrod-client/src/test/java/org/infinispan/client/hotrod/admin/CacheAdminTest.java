@@ -22,6 +22,8 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -51,7 +53,10 @@ public class CacheAdminTest extends MultiHotRodServersTest {
 
    @Override
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(gcb, builder);
       cm.defineConfiguration("template", builder.build());
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());

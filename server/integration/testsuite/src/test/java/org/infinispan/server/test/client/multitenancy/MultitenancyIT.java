@@ -62,7 +62,7 @@ public class MultitenancyIT {
       remoteCache.put("hello", "Infinispan!");
 
       //then
-      rest.get(rest.fullPathKey(CACHE_NAME, "hello"), "Infinispan!");
+      rest.get(rest.fullPathKey(CACHE_NAME, "hello"), "Infinispan!", 200, true, "Accept", "text/plain");
    }
 
 }

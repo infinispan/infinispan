@@ -28,6 +28,7 @@ public final class MediaType {
    public static final String APPLICATION_SERIALIZED_OBJECT_TYPE = "application/x-java-serialized-object";
    public static final String APPLICATION_XML_TYPE = "application/xml";
    public static final String APPLICATION_ZIP_TYPE = "application/zip";
+   public static final String APPLICATION_JBOSS_MARSHALLING_TYPE = "application/x-jboss-marshalling";
    public static final String APPLICATION_PROTOSTREAM_TYPE = "application/x-protostream";
    public static final String IMAGE_GIF_TYPE = "image/gif";
    public static final String IMAGE_JPEG_TYPE = "image/jpeg";
@@ -36,6 +37,10 @@ public final class MediaType {
    public static final String TEXT_CSV_TYPE = "text/csv";
    public static final String TEXT_PLAIN_TYPE = "text/plain";
    public static final String TEXT_HTML_TYPE = "text/html";
+   public static final String APPLICATION_INFINISPAN_MARSHALLING_TYPE = "application/x-infinispan-marshalling";
+   public static final String APPLICATION_INFINISPAN_BINARY_TYPE = "application/x-infinispan-binary";
+   public static final String APPLICATION_PROTOSTUFF_TYPE = "application/x-protostuff";
+   public static final String APPLICATION_KRYO_TYPE = "application/x-kryo";
 
    public static MediaType APPLICATION_JSON = fromString(APPLICATION_JSON_TYPE);
    public static MediaType APPLICATION_OCTET_STREAM = fromString(APPLICATION_OCTET_STREAM_TYPE);
@@ -43,9 +48,14 @@ public final class MediaType {
    public static MediaType APPLICATION_SERIALIZED_OBJECT = fromString(APPLICATION_SERIALIZED_OBJECT_TYPE);
    public static MediaType APPLICATION_XML = fromString(APPLICATION_XML_TYPE);
    public static MediaType APPLICATION_PROTOSTREAM = fromString(APPLICATION_PROTOSTREAM_TYPE);
+   public static MediaType APPLICATION_JBOSS_MARSHALLED = fromString(APPLICATION_JBOSS_MARSHALLING_TYPE);
+   public static MediaType APPLICATION_INFINISPAN_MARSHALLED = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    public static MediaType IMAGE_PNG = fromString(IMAGE_PNG_TYPE);
    public static MediaType TEXT_PLAIN = fromString(TEXT_PLAIN_TYPE);
    public static MediaType TEXT_HTML = fromString(TEXT_HTML_TYPE);
+   public static MediaType APPLICATION_PROTOSTUFF = fromString(APPLICATION_PROTOSTUFF_TYPE);
+   public static MediaType APPLICATION_KRYO = fromString(APPLICATION_KRYO_TYPE);
+   public static MediaType APPLICATION_INFINISPAN_BINARY = fromString(APPLICATION_INFINISPAN_BINARY_TYPE);
 
    private static final String INVALID_TOKENS = "()<>@,;:/[]?=\\\"";
 

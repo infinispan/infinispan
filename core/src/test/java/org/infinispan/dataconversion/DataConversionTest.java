@@ -22,6 +22,7 @@ import org.infinispan.commons.dataconversion.CompatModeEncoder;
 import org.infinispan.commons.dataconversion.GenericJbossMarshallerEncoder;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
@@ -153,7 +154,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       cfg.compatibility().marshaller(marshaller).enable();
 
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(cfg)) {
+            TestCacheManagerFactory.createServerModeCacheManager(cfg)) {
 
          private byte[] marshall(Object o) throws IOException, InterruptedException {
             return marshaller.objectToByteBuffer(o);
@@ -295,6 +296,8 @@ public class DataConversionTest extends AbstractInfinispanTest {
    public void testTranscoding() throws Exception {
 
       ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.encoding().key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
+      cfg.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
 
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(cfg)) {
@@ -377,9 +380,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
       ConfigurationBuilder cfg = new ConfigurationBuilder();
 
-      String keyMediaType = "text/plain; charset=ISO-8859-1";
-
-      cfg.encoding().key().mediaType(keyMediaType);
+      cfg.encoding().key().mediaType("text/plain; charset=ISO-8859-1");
       cfg.encoding().value().mediaType("text/plain; charset=UTF-8");
 
       withCacheManager(new CacheManagerCallable(
@@ -389,13 +390,13 @@ public class DataConversionTest extends AbstractInfinispanTest {
             Cache<byte[], byte[]> cache = cm.getCache();
 
             byte[] key = "key1".getBytes(ISO_8859_1);
-            byte[] value = new byte[]{97, 118, 105, -61, -93, 111};  // avião in UTF-8
+            byte[] value = new byte[]{97, 118, 105, -61, -93, 111};  // 'avião' in UTF-8
             cache.put(key, value);
 
             assertEquals(cache.get(key), value);
 
             // Value as UTF-16
-            Cache<byte[], byte[]> utf16ValueCache = (Cache<byte[], byte[]>) cache.getAdvancedCache().withMediaType(keyMediaType, "text/plain; charset=UTF-16");
+            Cache<byte[], byte[]> utf16ValueCache = (Cache<byte[], byte[]>) cache.getAdvancedCache().withMediaType("text/plain; charset=ISO-8859-1", "text/plain; charset=UTF-16");
 
             assertEquals(utf16ValueCache.get(key), new byte[]{-2, -1, 0, 97, 0, 118, 0, 105, 0, -29, 0, 111});
          }

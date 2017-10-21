@@ -22,6 +22,7 @@ import org.infinispan.client.hotrod.event.EventLogListener.DynamicCacheEventFilt
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
+import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -55,9 +56,13 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       CompatibilityCacheFactory.killCacheFactories(cacheFactory);
    }
 
+   private Cache<Integer, String> getEmbeddedCache() {
+      return (Cache<Integer, String>) cacheFactory.getEmbeddedCache().getAdvancedCache().withEncoding(IdentityEncoder.class);
+   }
+
    public void testEmbeddedPutHotRodGet() {
       final Integer key = 1;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, embedded.put(key, "v1"));
       assertEquals("v1", remote.get(key));
@@ -69,7 +74,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
    public void testHotRodPutEmbeddedGet() {
       final Integer key = 2;
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
       assertEquals("v1", embedded.get(key));
       assertEquals(null, remote.put(key, "v2"));
@@ -80,7 +85,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testEmbeddedPutIfAbsentHotRodGet() {
       final Integer key = 3;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, embedded.putIfAbsent(key, "v1"));
       assertEquals("v1", remote.get(key));
@@ -91,7 +96,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testHotRodPutIfAbsentEmbeddedGet() {
       final Integer key = 4;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent(key, "v1"));
       assertEquals("v1", embedded.get(key));
@@ -103,7 +108,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testEmbeddedReplaceHotRodGet() {
       final Integer key = 5;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, embedded.replace(key, "v1"));
       assertEquals(null, embedded.put(key, "v1"));
@@ -114,7 +119,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testHotRodReplaceEmbeddedGet() {
       final Integer key = 6;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).replace(key, "v1"));
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
@@ -124,7 +129,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testEmbeddedReplaceConditionalHotRodGet() {
       final Integer key = 7;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, embedded.put(key, "v1"));
       assertTrue(embedded.replace(key, "v1", "v2"));
@@ -134,7 +139,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testHotRodReplaceConditionalEmbeddedGet() {
       final Integer key = 8;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, remote.put(key, "v1"));
       VersionedValue<String> versioned = remote.getVersioned(key);
@@ -148,7 +153,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testEmbeddedRemoveHotRodGet() {
       final Integer key = 9;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, embedded.put(key, "v1"));
       assertEquals("v1", embedded.remove(key));
@@ -157,7 +162,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testHotRodRemoveEmbeddedGet() {
       final Integer key = 10;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
       assertEquals("v1", remote.withFlags(Flag.FORCE_RETURN_VALUE).remove(key));
@@ -166,7 +171,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testEmbeddedRemoveConditionalHotRodGet() {
       final Integer key = 11;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, embedded.put(key, "v1"));
       assertFalse(embedded.remove(key, "vX"));
@@ -176,7 +181,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    public void testHotRodRemoveConditionalEmbeddedGet() {
       final Integer key = 12;
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       assertEquals(null, remote.withFlags(Flag.FORCE_RETURN_VALUE).put(key, "v1"));
       VersionedValue<String> versioned = remote.getVersioned(key);
@@ -192,10 +197,10 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          remote.remove(1);
          l.expectNoEvents();
          remote.put(1, "one");
-         assertEquals("one", cacheFactory.getEmbeddedCache().get(1));
+         assertEquals("one", getEmbeddedCache().get(1));
          l.expectOnlyCreatedEvent(1);
          remote.put(1, "new-one");
-         assertEquals("new-one", cacheFactory.getEmbeddedCache().get(1));
+         assertEquals("new-one", getEmbeddedCache().get(1));
          l.expectOnlyModifiedEvent(1);
          remote.remove(1);
          l.expectOnlyRemovedEvent(1);
@@ -257,7 +262,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    private void createRemove() {
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       remote.put(1, "one");
       assertEquals("one", embedded.get(1));
       remote.put(2, "two");
@@ -274,7 +279,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       withClientListener(l, remote -> {
          l.expectNoEvents();
          remote.put(1, "one");
-         Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+         Cache<Integer, String> embedded = getEmbeddedCache();
          assertEquals("one", embedded.get(1));
          l.expectNoEvents();
          remote.put(2, "two");
@@ -292,7 +297,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
    public void testEventFilteringDynamic() {
       RemoteCache<Integer, String> remote = cacheFactory.getHotRodCache();
       DynamicFilteredEventLogListener<Integer> eventListener = new DynamicFilteredEventLogListener<>(remote);
-      Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+      Cache<Integer, String> embedded = getEmbeddedCache();
       remote.addClientListener(eventListener, new Object[]{3}, null);
       try {
          eventListener.expectNoEvents();
@@ -334,7 +339,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       withClientListener(l, remote -> {
          l.expectNoEvents();
          remote.put(1, "one");
-         Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+         Cache<Integer, String> embedded = getEmbeddedCache();
          assertEquals("one", embedded.get(1));
          l.expectCreatedEvent(new CustomEvent(1, "one", 0));
          remote.put(1, "new-one");
@@ -351,7 +356,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       withClientListener(l, null, new Object[]{2}, remote -> {
          l.expectNoEvents();
          remote.put(1, "one");
-         Cache<Integer, String> embedded = cacheFactory.getEmbeddedCache();
+         Cache<Integer, String> embedded = getEmbeddedCache();
          assertEquals("one", embedded.get(1));
          l.expectCreatedEvent(new CustomEvent(1, "one", 0));
          remote.put(2, "two");
@@ -368,7 +373,9 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
 
    @ClientListener(includeCurrentState = true)
    public static class EventLogWithStateListener<K> extends EventLogListener<K> {
-      public EventLogWithStateListener(RemoteCache<K, ?> r) { super(r); }
+      public EventLogWithStateListener(RemoteCache<K, ?> r) {
+         super(r);
+      }
    }
 
 }

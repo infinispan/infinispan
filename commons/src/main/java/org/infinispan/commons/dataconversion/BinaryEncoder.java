@@ -46,6 +46,11 @@ public class BinaryEncoder implements Encoder {
    }
 
    @Override
+   public MediaType getStorageFormat() {
+      return MediaType.APPLICATION_INFINISPAN_BINARY;
+   }
+
+   @Override
    public short id() {
       return EncoderIds.BINARY;
    }

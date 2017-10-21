@@ -1,29 +1,36 @@
 package org.infinispan.rest.operations;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheSet;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.dataconversion.EncodingException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
+import org.infinispan.rest.InfinispanCacheAPIRequest;
+import org.infinispan.rest.InfinispanCacheResponse;
+import org.infinispan.rest.InfinispanErrorResponse;
 import org.infinispan.rest.InfinispanRequest;
 import org.infinispan.rest.InfinispanResponse;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
-import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
 import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
 import org.infinispan.rest.operations.mediatypes.Charset;
-import org.infinispan.rest.operations.mediatypes.MediaType;
-import org.infinispan.rest.operations.mime.MimeMetadata;
+import org.infinispan.rest.operations.mediatypes.EntrySetFormatter;
+import org.infinispan.rest.operations.mediatypes.OutputPrinter;
 
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -39,16 +46,20 @@ public class CacheOperations {
 
    private final RestCacheManager<Object> restCacheManager;
    private final RestServerConfiguration restServerConfiguration;
+   private final EncoderRegistry encoderRegistry;
+   private final Set<String> supported = new HashSet<>();
 
    /**
     * Creates new instance of {@link CacheOperations}.
     *
     * @param configuration REST Server configuration.
-    * @param cacheManager Embedded Cache Manager for storing data.
+    * @param cacheManager  Embedded Cache Manager for storing data.
     */
    public CacheOperations(RestServerConfiguration configuration, RestCacheManager<Object> cacheManager) {
       this.restServerConfiguration = configuration;
       this.restCacheManager = cacheManager;
+      this.encoderRegistry = restCacheManager.encoderRegistry();
+      supported.addAll(encoderRegistry.getSupportedMediaTypes());
    }
 
    /**
@@ -58,24 +69,30 @@ public class CacheOperations {
     * @return InfinispanResponse which shall be sent to the client.
     * @throws RestResponseException Thrown in case of any non-critical processing errors.
     */
-   public InfinispanResponse getCacheValues(InfinispanRequest request) throws RestResponseException {
+   public InfinispanResponse getCacheValues(InfinispanCacheAPIRequest request) throws RestResponseException {
       try {
          String cacheName = request.getCacheName().get();
-         AdvancedCache<String, Object> cache = restCacheManager.getCache(cacheName);
+         MediaType contentType = request.getAcceptContentType().map(MediaType::fromString).orElse(null);
+
+         AdvancedCache<String, Object> cache = restCacheManager.getCache(cacheName, contentType);
          CacheSet<String> keys = cache.keySet();
          MediaType mediaType = getMediaType(request);
          Charset charset = request.getAcceptContentType()
-               .map(m -> Charset.fromMediaType(m))
+               .map(Charset::fromMediaType)
                .orElse(Charset.UTF8);
 
-         InfinispanResponse response = InfinispanResponse.inReplyTo(request);
+         if (mediaType == null) {
+            mediaType = MediaType.TEXT_PLAIN;
+         }
+         InfinispanCacheResponse response = InfinispanCacheResponse.inReplyTo(request);
          response.contentType(mediaType.toString());
          response.charset(charset);
          response.cacheControl(CacheControl.noCache());
-         response.contentAsBytes(mediaType.getOutputPrinter().print(cacheName, keys, charset));
+         OutputPrinter outputPrinter = EntrySetFormatter.forMediaType(mediaType);
+         response.contentAsBytes(outputPrinter.print(cacheName, keys, charset));
          return response;
       } catch (CacheException cacheException) {
-         throw new NoCacheFoundException(cacheException.getLocalizedMessage());
+         throw createResponseException(cacheException);
       }
    }
 
@@ -86,15 +103,17 @@ public class CacheOperations {
     * @return InfinispanResponse which shall be sent to the client.
     * @throws RestResponseException Thrown in case of any non-critical processing errors.
     */
-   public InfinispanResponse getCacheValue(InfinispanRequest request) throws RestResponseException {
+   public InfinispanResponse getCacheValue(InfinispanCacheAPIRequest request) throws RestResponseException {
       try {
          String cacheName = request.getCacheName().get();
+
+         MediaType mediaType = getMediaType(request);
+
          String key = request.getKey().orElseThrow(NoKeyException::new);
          String cacheControl = request.getCacheControl().orElse("");
          boolean returnBody = request.getRawRequest().method() == HttpMethod.GET;
-         CacheEntry<String, Object> entry = restCacheManager.getInternalEntry(cacheName, key);
-         MediaType mediaType = getMediaType(request);
-         InfinispanResponse response = InfinispanResponse.inReplyTo(request);
+         CacheEntry<String, Object> entry = restCacheManager.getInternalEntry(cacheName, key, mediaType);
+         InfinispanCacheResponse response = InfinispanCacheResponse.inReplyTo(request);
          response.status(HttpResponseStatus.NOT_FOUND);
 
          if (entry instanceof InternalCacheEntry) {
@@ -104,17 +123,7 @@ public class CacheOperations {
             OptionalInt minFreshSeconds = CacheOperationsHelper.minFresh(cacheControl);
             if (CacheOperationsHelper.entryFreshEnough(expires, minFreshSeconds)) {
                Metadata meta = ice.getMetadata();
-               String metadataContentType;
-               //We need to this this nasty trick because of compatibility. We might find objects in cache with unknown
-               //media type. And moreover we need to ignore original content type sent by the client :)
-               if (meta instanceof MimeMetadata) {
-                  metadataContentType = ((MimeMetadata) meta).contentType();
-                  mediaType = MediaType.fromMediaTypeAsString(metadataContentType);
-               } else {
-                  metadataContentType = mediaType.toString();
-               }
-               String etag = calcETAG(ice.getValue(), metadataContentType);
-               Charset charset = request.getAcceptContentType().map(m -> Charset.fromMediaType(metadataContentType)).orElse(Charset.UTF8);
+               String etag = calcETAG(ice.getValue());
                if (CacheOperationsHelper.ifNoneMatchMathesEtag(request.getEtagIfNoneMatch(), etag)) {
                   response.status(HttpResponseStatus.NOT_MODIFIED);
                   return response;
@@ -131,33 +140,11 @@ public class CacheOperations {
                   response.status(HttpResponseStatus.NOT_MODIFIED);
                   return response;
                }
-
-               //We are checking this twice, the first one was needed to obtain proper media type and check if all
-               //preconditions were met. If everything is ok, we can proceed to print out the response (which might be heavy).
-               if (meta instanceof MimeMetadata) {
-                  if (returnBody) {
-                     Object valueFromCacheWithMetadata = ice.getValue();
-                     if (valueFromCacheWithMetadata instanceof byte[]) {
-                        // The content was inserted using POST method and has been already written into bytes.
-                        // There is no transcoding here - just put it in the response as is.
-                        response.contentAsBytes((byte[]) ice.getValue());
-                     } else {
-                        // The format is unknown. We can only relay on proper implementation of #toString() method.
-                        response.contentAsText(ice.getValue().toString());
-                     }
-                  }
-               } else {
-                  if (returnBody) {
-                     //we know the media type is there. Otherwise an exception would be thrown by #getMediaType(request)
-                     response.contentAsBytes(mediaType.getOutputPrinter().print(ice.getValue(), charset));
-                  }
-               }
+               Object value = ice.getValue();
+               MediaType configuredMediaType = restCacheManager.getConfiguredMediaType(cacheName);
+               writeValue(value, mediaType, configuredMediaType, response, returnBody);
 
                response.status(HttpResponseStatus.OK);
-               response.contentType(metadataContentType);
-               if (mediaType != null && mediaType.needsCharset()) {
-                  response.charset(charset);
-               }
                response.lastModified(lastMod);
                response.etag(etag);
                response.cacheControl(CacheOperationsHelper.calcCacheControl(expires));
@@ -166,66 +153,112 @@ public class CacheOperations {
                response.maxIdle(meta.maxIdle());
 
                if (request.getExtended().isPresent() && CacheOperationsHelper.supportsExtendedHeaders(restServerConfiguration, request.getExtended().get())) {
-                  response.clusterPrimaryOwner(restCacheManager.getPrimaryOwner(cacheName, key));
-                  response.clusterNodeName(restCacheManager.getNodeName().toString());
+                  response.clusterPrimaryOwner(restCacheManager.getPrimaryOwner(cacheName, key, mediaType));
+                  response.clusterNodeName(restCacheManager.getNodeName());
                   response.clusterServerAddress(restCacheManager.getServerAddress());
                }
             }
          }
          return response;
       } catch (CacheException cacheException) {
-         throw new NoCacheFoundException(cacheException.getLocalizedMessage());
+         throw createResponseException(cacheException);
       }
    }
 
-   private MediaType getMediaType(InfinispanRequest request) throws UnacceptableDataFormatException {
-      if (request.getAcceptContentType().isPresent()) {
-         return request.getAcceptContentType()
-               .map(m -> MediaType.fromMediaTypeAsString(m))
-               .orElseThrow(UnacceptableDataFormatException::new);
+   private RestResponseException createResponseException(CacheException cacheException) {
+      Throwable rootCauseException = getRootCauseException(cacheException);
+
+      return new RestResponseException(HttpResponseStatus.INTERNAL_SERVER_ERROR, rootCauseException.getMessage(), rootCauseException);
+   }
+
+   private void writeValue(Object value, MediaType requested, MediaType configuredMediaType, InfinispanResponse response, boolean returnBody) {
+      String returnType;
+      if (value instanceof byte[]) {
+         if (returnBody) response.contentAsBytes((byte[]) value);
+         returnType = MediaType.APPLICATION_OCTET_STREAM_TYPE;
+      } else {
+         if (returnBody) response.contentAsText(value.toString());
+         returnType = MediaType.TEXT_PLAIN_TYPE;
       }
-      return MediaType.TEXT_PLAIN;
+      if (requested != null) {
+         response.contentType(requested.toString());
+      } else if (configuredMediaType == null) {
+         response.contentType(returnType);
+      } else {
+         response.contentType(configuredMediaType.toString());
+      }
+   }
+
+   private Throwable getRootCauseException(Throwable re) {
+      if (re == null) return null;
+      Throwable cause = re.getCause();
+      if (cause instanceof RuntimeException)
+         return getRootCauseException(cause);
+      else
+         return re;
+   }
+
+   private MediaType getMediaType(InfinispanRequest request) throws UnacceptableDataFormatException {
+      Optional<String> maybeContentType = request.getAcceptContentType();
+      if (maybeContentType.isPresent()) {
+         try {
+            String contents = maybeContentType.get();
+            if (contents.equals("*/*")) return null;
+            for (String content : contents.split(" *, *")) {
+               MediaType mediaType = MediaType.fromString(content);
+               if (supported.contains(mediaType.getTypeSubtype())) {
+                  return mediaType;
+               }
+            }
+            throw new UnacceptableDataFormatException();
+         } catch (EncodingException e) {
+            throw new UnacceptableDataFormatException();
+         }
+      }
+      return null;
+   }
+
+   private Object transcode(Object content, MediaType from, MediaType to) {
+      return encoderRegistry.getTranscoder(from, to).transcode(content, from, to);
    }
 
    /**
     * Implementation of HTTP DELETE request invoked with a key.
     *
-    * @param request {@link InfinispanRequest} to be processed.
+    * @param request {@link InfinispanRequest}   to be processed.
     * @return InfinispanResponse which shall be sent to the client.
     * @throws RestResponseException Thrown in case of any non-critical processing errors.
     */
-   public InfinispanResponse deleteCacheValue(InfinispanRequest request) throws RestResponseException {
+   public InfinispanResponse deleteCacheValue(InfinispanCacheAPIRequest request) throws RestResponseException {
       try {
          String cacheName = request.getCacheName().get();
          String key = request.getKey().orElseThrow(NoKeyException::new);
          Optional<Boolean> useAsync = request.getUseAsync();
-         CacheEntry<String, Object> entry = restCacheManager.getInternalEntry(cacheName, key);
+         MediaType contentType = request.getContentType().map(MediaType::fromString).orElse(null);
+         CacheEntry<String, Object> entry = restCacheManager.getInternalEntry(cacheName, key, null);
 
-         InfinispanResponse response = InfinispanResponse.inReplyTo(request);
+         InfinispanResponse response = InfinispanCacheResponse.inReplyTo(request);
          response.status(HttpResponseStatus.NOT_FOUND);
 
          if (entry instanceof InternalCacheEntry) {
             InternalCacheEntry<String, Object> ice = (InternalCacheEntry<String, Object>) entry;
-            Metadata meta = entry.getMetadata();
-            if (meta instanceof MimeMetadata) {
-               String etag = calcETAG(ice.getValue(), ((MimeMetadata) meta).contentType());
-               Optional<String> clientEtag = request.getEtagIfNoneMatch();
-               if (clientEtag.map(t -> t.equals(etag)).orElse(true)) {
-                  response.status(HttpResponseStatus.OK);
-                  if (useAsync.isPresent() && useAsync.get()) {
-                     restCacheManager.getCache(cacheName).removeAsync(key);
-                  } else {
-                     restCacheManager.getCache(cacheName).remove(key);
-                  }
+            String etag = calcETAG(ice.getValue());
+            Optional<String> clientEtag = request.getEtagIfNoneMatch();
+            if (clientEtag.map(t -> t.equals(etag)).orElse(true)) {
+               response.status(HttpResponseStatus.OK);
+               if (useAsync.isPresent() && useAsync.get()) {
+                  restCacheManager.getCache(cacheName, contentType).removeAsync(key);
                } else {
-                  //ETags don't match, so preconditions failed
-                  response.status(HttpResponseStatus.PRECONDITION_FAILED);
+                  restCacheManager.getCache(cacheName, null).remove(key);
                }
+            } else {
+               //ETags don't match, so preconditions failed
+               response.status(HttpResponseStatus.PRECONDITION_FAILED);
             }
          }
          return response;
       } catch (CacheException cacheException) {
-         throw new NoCacheFoundException(cacheException.getLocalizedMessage());
+         throw createResponseException(cacheException);
       }
    }
 
@@ -236,23 +269,23 @@ public class CacheOperations {
     * @return InfinispanResponse which shall be sent to the client.
     * @throws RestResponseException Thrown in case of any non-critical processing errors.
     */
-   public InfinispanResponse clearEntireCache(InfinispanRequest request) throws RestResponseException {
+   public InfinispanResponse clearEntireCache(InfinispanCacheAPIRequest request) throws RestResponseException {
       try {
          String cacheName = request.getCacheName().get();
          Optional<Boolean> useAsync = request.getUseAsync();
 
-         InfinispanResponse response = InfinispanResponse.inReplyTo(request);
+         InfinispanResponse response = InfinispanCacheResponse.inReplyTo(request);
          response.status(HttpResponseStatus.OK);
 
          if (useAsync.isPresent() && useAsync.get()) {
-            restCacheManager.getCache(cacheName).clearAsync();
+            restCacheManager.getCache(cacheName, null).clearAsync();
          } else {
-            restCacheManager.getCache(cacheName).clear();
+            restCacheManager.getCache(cacheName, null).clear();
          }
 
          return response;
       } catch (CacheException cacheException) {
-         throw new NoCacheFoundException(cacheException.getLocalizedMessage());
+         throw createResponseException(cacheException);
       }
    }
 
@@ -263,55 +296,52 @@ public class CacheOperations {
     * @return InfinispanResponse which shall be sent to the client.
     * @throws RestResponseException Thrown in case of any non-critical processing errors.
     */
-   public InfinispanResponse putValueToCache(InfinispanRequest request) throws RestResponseException {
+   public InfinispanResponse putValueToCache(InfinispanCacheAPIRequest request) throws RestResponseException {
       try {
          String cacheName = request.getCacheName().get();
-         AdvancedCache<String, Object> cache = restCacheManager.getCache(cacheName);
+
+         MediaType contentType = request.getContentType().map(MediaType::fromString).orElse(null);
+         AdvancedCache<String, Object> cache = restCacheManager.getCache(cacheName, contentType);
          String key = request.getKey().orElseThrow(NoKeyException::new);
 
          if (HttpMethod.POST.equals(request.getRawRequest().method()) && cache.containsKey(key)) {
-            return InfinispanResponse.asError(request, HttpResponseStatus.CONFLICT, "An entry already exists");
+            return InfinispanErrorResponse.asError(request, HttpResponseStatus.CONFLICT, "An entry already exists");
          } else {
-            InfinispanResponse response = InfinispanResponse.inReplyTo(request);
+            InfinispanCacheResponse response = InfinispanCacheResponse.inReplyTo(request);
             Optional<Object> oldData = Optional.empty();
             byte[] data = request.data().orElseThrow(NoDataFoundException::new);
-            CacheEntry<String, Object> entry = restCacheManager.getInternalEntry(cacheName, key, true);
+            CacheEntry<String, Object> entry = restCacheManager.getInternalEntry(cacheName, key, true, contentType);
             if (entry instanceof InternalCacheEntry) {
                InternalCacheEntry ice = (InternalCacheEntry) entry;
                oldData = Optional.of(entry.getValue());
-               Metadata meta = ice.getMetadata();
-               if (meta instanceof MimeMetadata) {
-                  // The item already exists in the cache, evaluate preconditions based on its attributes and the headers
-                  Optional<String> clientEtag = request.getEtagIfNoneMatch();
-                  if (clientEtag.isPresent()) {
-                     String etag = calcETAG(ice.getValue(), ((MimeMetadata) meta).contentType());
-                     if (clientEtag.get().equals(etag)) {
-                        //client's and our ETAG match. Nothing to do, an entry is cached on the client side...
-                        response.status(HttpResponseStatus.NOT_MODIFIED);
-                        return response;
-                     }
+               Optional<String> clientEtag = request.getEtagIfNoneMatch();
+               if (clientEtag.isPresent()) {
+                  String etag = calcETAG(ice.getValue());
+                  if (clientEtag.get().equals(etag)) {
+                     //client's and our ETAG match. Nothing to do, an entry is cached on the client side...
+                     response.status(HttpResponseStatus.NOT_MODIFIED);
+                     return response;
                   }
                }
             }
 
             boolean useAsync = request.getUseAsync().orElse(false);
-            String dataType = request.getContentType().orElse("text/plain");
             Optional<Long> ttl = request.getTimeToLiveSeconds();
             Optional<Long> idle = request.getMaxIdleTimeSeconds();
-            return putInCache(response, useAsync, cache, key, data, dataType, ttl, idle, oldData);
+            return putInCache(response, useAsync, cache, key, data, ttl, idle, oldData);
          }
       } catch (CacheException cacheException) {
-         throw new NoCacheFoundException(cacheException.getLocalizedMessage());
+         throw createResponseException(cacheException);
       }
    }
 
-   private <V> String calcETAG(V value, String contentType) {
-      return contentType + hashFunc.hash(value);
+   private <V> String calcETAG(V value) {
+      return String.valueOf(hashFunc.hash(value));
    }
 
-   private InfinispanResponse putInCache(InfinispanResponse response, boolean useAsync, AdvancedCache<String, Object> cache, String key,
-                                         byte[] data, String dataType, Optional<Long> ttl, Optional<Long> idleTime, Optional<Object> prevCond) {
-      final Metadata metadata = CacheOperationsHelper.createMetadata(cache.getCacheConfiguration(), dataType, ttl, idleTime);
+   private InfinispanResponse putInCache(InfinispanCacheResponse response, boolean useAsync, AdvancedCache<String, Object> cache, String key,
+                                         byte[] data, Optional<Long> ttl, Optional<Long> idleTime, Optional<Object> prevCond) {
+      final Metadata metadata = CacheOperationsHelper.createMetadata(cache.getCacheConfiguration(), ttl, idleTime);
       if (prevCond.isPresent()) {
          boolean replaced = cache.replace(key, prevCond.get(), data, metadata);
          // If not replaced, simply send back that the precondition failed
@@ -325,7 +355,7 @@ public class CacheOperations {
             cache.put(key, data, metadata);
          }
       }
-      response.etag(calcETAG(data, dataType));
+      response.etag(calcETAG(data));
       return response;
    }
 

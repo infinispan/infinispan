@@ -37,7 +37,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @LogMessage(level = TRACE)
    @Message(value = "An error occurred while responding to the client", id = 12005)
-   void errorWhileReponding(@Cause Exception e);
+   void errorWhileResponding(@Cause Exception e);
 
    @LogMessage(level = WARN)
    @Message(value = "Uncaught exception in the pipeline", id = 12006)

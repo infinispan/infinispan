@@ -90,9 +90,9 @@ public abstract class AbstractRESTClusteredIT {
 
     @Test
     public void testReplicationTTL() throws Exception {
-        rest.post(rest.fullPathKey(0, KEY_A), "data", "application/text", HttpStatus.SC_OK,
+        rest.post(rest.fullPathKey(0, KEY_A), "data", "text/plain", HttpStatus.SC_OK,
                 // headers
-                "Content-Type", "application/text", "timeToLiveSeconds", "2");
+                "Content-Type", "text/plain", "timeToLiveSeconds", "2");
         rest.head(rest.fullPathKey(1, KEY_A));
         sleepForSecs(2.1);
         // should be evicted

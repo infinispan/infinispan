@@ -11,7 +11,10 @@ import java.util.stream.Stream;
 
 import org.hibernate.search.spi.IndexedTypeIdentifier;
 import org.hibernate.search.spi.impl.PojoIndexedTypeIdentifier;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.commons.dataconversion.IdentityWrapper;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -86,7 +89,8 @@ public class IndexWorker implements DistributedCallable<Object, Object, Void> {
    @Override
    @SuppressWarnings("unchecked")
    public Void call() throws Exception {
-      Cache<Object, Object> unwrappedCache = SecurityActions.getUnwrappedCache(cache);
+      AdvancedCache iterationCache = cache.getAdvancedCache().withWrapping(ByteArrayWrapper.class, IdentityWrapper.class);
+      Cache<Object, Object> unwrappedCache = SecurityActions.getUnwrappedCache(iterationCache);
       if (keys == null || keys.size() == 0) {
          preIndex();
          KeyValueFilter filter = getFilter();

@@ -33,7 +33,6 @@ import org.infinispan.server.hotrod.test.TestBulkGetResponse;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
 import org.infinispan.server.hotrod.test.TestGetResponse;
 import org.infinispan.server.hotrod.test.TestGetWithVersionResponse;
-import org.infinispan.server.hotrod.test.TestQueryResponse;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.server.hotrod.test.TestResponseWithPrevious;
 import org.infinispan.server.hotrod.test.TestSizeResponse;
@@ -495,13 +494,6 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       // Not really necessary, SingleByteFrameDecoderChannelInitializer forces the server to retry even for small keys
       byte[] value = generateRandomString(1024).getBytes();
       assertStatus(client().put(k(m), 0, 0, value), Success);
-   }
-
-   public void testQuery() {
-      byte[] query = new byte[]{1, 2, 3, 4, 5};
-      TestQueryResponse resp = client().query(query);
-      assertStatus(resp, Success);
-      assertTrue(Arrays.equals(query, resp.result));
    }
 
    public void testSize(Method m) {

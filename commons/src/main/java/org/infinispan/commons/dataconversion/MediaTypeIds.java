@@ -1,5 +1,7 @@
 package org.infinispan.commons.dataconversion;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_INFINISPAN_MARSHALLING_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JBOSS_MARSHALLING_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -41,6 +43,8 @@ final class MediaTypeIds {
       idByType.put(APPLICATION_PROTOSTREAM_TYPE, (short) 12);
       idByType.put(TEXT_PLAIN_TYPE, (short) 13);
       idByType.put(TEXT_HTML_TYPE, (short) 14);
+      idByType.put(APPLICATION_JBOSS_MARSHALLING_TYPE, (short) 15);
+      idByType.put(APPLICATION_INFINISPAN_MARSHALLING_TYPE, (short) 16);
 
       idByType.entrySet().forEach(e -> typeById.put(e.getValue(), e.getKey()));
    }

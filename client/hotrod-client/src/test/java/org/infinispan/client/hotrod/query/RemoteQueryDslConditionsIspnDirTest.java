@@ -21,7 +21,7 @@ public class RemoteQueryDslConditionsIspnDirTest extends RemoteQueryDslCondition
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultCacheConfiguration = new ConfigurationBuilder();
-      createClusteredCaches(1, defaultCacheConfiguration);
+      createClusteredCaches(1, defaultCacheConfiguration, true);
 
       ConfigurationBuilder cfg = getConfigurationBuilder();
       manager(0).defineConfiguration(TEST_CACHE_NAME, cfg.build());
