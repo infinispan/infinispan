@@ -301,8 +301,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return valueDataConversion.extractIndexable(storedValue);
    }
 
-   private Object extractKey(Object storedValue) {
-      return keyDataConversion.extractIndexable(storedValue);
+   private Object extractKey(Object storedKey) {
+      return keyDataConversion.extractIndexable(storedKey);
    }
 
    public void enableClasses(Class[] classes) {
@@ -318,7 +318,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private String keyToString(Object key) {
-      return keyTransformationHandler.keyToString(extractValue(key));
+      return keyTransformationHandler.keyToString(extractKey(key));
    }
 
    public KeyTransformationHandler getKeyTransformationHandler() {
@@ -433,7 +433,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processReplaceCommand(final ReplaceCommand command, final InvocationContext ctx, final Object valueReplaced, TransactionContext transactionContext) {
       if (valueReplaced != null && command.isSuccessful()) {
-         Object key = extractKey(command.getKey());
+         Object key = command.getKey();
          if (shouldModifyIndexes(command, ctx, key)) {
             final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
             Object p2 = extractValue(command.getNewValue());
@@ -444,12 +444,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                final boolean originalIsIndexed = updateKnownTypesIfNeeded(p1);
                if (p1 != null && originalIsIndexed) {
                   transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-                  removeFromIndexes(p1, key, transactionContext);
+                  removeFromIndexes(p1, extractKey(key), transactionContext);
                }
             }
             if (newValueIsIndexed) {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-               updateIndexes(usingSkipIndexCleanupFlag, p2, key, transactionContext);
+               updateIndexes(usingSkipIndexCleanupFlag, p2, extractKey(key), transactionContext);
             }
          }
       }
@@ -533,7 +533,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private void processFunctionalCommand(AbstractDataWriteCommand command, InvocationContext ctx, Object prevValue, Object computedValue, TransactionContext transactionContext) {
-      Object key = extractKey(command.getKey());
+      Object key = command.getKey();
       if (shouldModifyIndexes(command, ctx, key)) {
          final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
          Object p2 = extractValue(computedValue);
@@ -542,12 +542,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(prevValue) && shouldRemove(p2, prevValue)) {
             if (shouldModifyIndexes(command, ctx, key)) {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-               removeFromIndexes(prevValue, extractValue(key), transactionContext);
+               removeFromIndexes(prevValue, extractKey(key), transactionContext);
             }
          }
          if (newValueIsIndexed) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            updateIndexes(usingSkipIndexCleanupFlag, p2, key, transactionContext);
+            updateIndexes(usingSkipIndexCleanupFlag, p2, extractKey(key), transactionContext);
          }
       }
    }
@@ -562,12 +562,12 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     */
    private void processRemoveCommand(final RemoveCommand command, final InvocationContext ctx, final Object valueRemoved, TransactionContext transactionContext) {
       if (command.isSuccessful() && !command.isNonExistent()) {
-         Object key = extractKey(command.getKey());
+         Object key = command.getKey();
          if (shouldModifyIndexes(command, ctx, key)) {
             final Object value = extractValue(command.isConditional() ? command.getValue() : valueRemoved);
             if (updateKnownTypesIfNeeded(value)) {
                transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-               removeFromIndexes(value, key, transactionContext);
+               removeFromIndexes(value, extractKey(key), transactionContext);
             }
          }
       }
@@ -587,18 +587,18 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       // Loop through all the keys and put those key-value pairings into lucene.
       for (Map.Entry<Object, Object> entry : previousValues.entrySet()) {
          Object originalKey = entry.getKey();
-         final Object key = extractValue(originalKey);
+         final Object key = extractKey(originalKey);
          final Object value = extractValue(dataMap.get(originalKey));
          final Object previousValue = extractValue(entry.getValue());
          if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            if (shouldModifyIndexes(command, ctx, key)) {
+            if (shouldModifyIndexes(command, ctx, originalKey)) {
                removeFromIndexes(previousValue, key, transactionContext);
             }
          }
          if (updateKnownTypesIfNeeded(value)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            if (shouldModifyIndexes(command, ctx, key)) {
+            if (shouldModifyIndexes(command, ctx, originalKey)) {
                updateIndexes(usingSkipIndexCleanupFlag, value, key, transactionContext);
             }
          }
@@ -617,18 +617,18 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       final boolean usingSkipIndexCleanupFlag = usingSkipIndexCleanup(command);
       //whatever the new type, we might still need to cleanup for the previous value (and schedule removal first!)
       Object value = extractValue(command.getValue());
-      Object key = extractKey(command.getKey());
+      Object key = command.getKey();
       if (!usingSkipIndexCleanupFlag && updateKnownTypesIfNeeded(previousValue) && shouldRemove(value, previousValue)) {
          if (shouldModifyIndexes(command, ctx, key)) {
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            removeFromIndexes(previousValue, extractValue(key), transactionContext);
+            removeFromIndexes(previousValue, extractKey(key), transactionContext);
          }
       }
       if (updateKnownTypesIfNeeded(value)) {
          if (shouldModifyIndexes(command, ctx, key)) {
             // This means that the entry is just modified so we need to update the indexes and not add to them.
             transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
-            updateIndexes(usingSkipIndexCleanupFlag, value, extractValue(key), transactionContext);
+            updateIndexes(usingSkipIndexCleanupFlag, value, extractKey(key), transactionContext);
          }
       }
    }
