@@ -14,7 +14,7 @@ public class GlobalJmxStatisticsConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<String> JMX_DOMAIN = AttributeDefinition.builder("jmxDomain", "org.infinispan").immutable().build();
    public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder("mBeanServerLookup", (MBeanServerLookup) Util.getInstance(PlatformMBeanServerLookup.class)).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
-   public static final AttributeDefinition<Boolean> ALLOW_DUPLICATE_DOMAINS = AttributeDefinition.builder("allowDuplicateDomains", false).immutable().build();
+   public static final AttributeDefinition<Boolean> ALLOW_DUPLICATE_DOMAINS = AttributeDefinition.builder("allowDuplicateDomains", true).immutable().build();
    public static final AttributeDefinition<String> CACHE_MANAGER_NAME = AttributeDefinition.builder("cacheManagerName", "DefaultCacheManager").immutable().build();
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).immutable().initializer(new AttributeInitializer<TypedProperties>() {
       @Override

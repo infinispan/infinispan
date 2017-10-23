@@ -44,7 +44,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, true, false);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, true, false, true);
       name = getCacheManagerObjectName(JMX_DOMAIN);
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       server.invoke(name, "startCache", new Object[]{}, new String[]{});
@@ -92,7 +92,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    public void testJmxRegistrationAtStartupAndStop(Method m) throws Exception {
       final String otherJmxDomain = getMethodSpecificJmxDomain(m, JMX_DOMAIN);
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, true, false);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, true, false, true);
       ObjectName otherName = getCacheManagerObjectName(otherJmxDomain);
       try {
          assertEquals("0", server.getAttribute(otherName, "CreatedCacheCount"));
@@ -105,7 +105,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    public void testCustomCacheManagerName(Method m) throws Exception {
       final String otherJmxDomain = getMethodSpecificJmxDomain(m, JMX_DOMAIN);
-      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, "Hibernate2LC", true, false);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, "Hibernate2LC", true, false, true);
       ObjectName otherName = getCacheManagerObjectName(otherJmxDomain, "Hibernate2LC");
       try {
          assertEquals("0", server.getAttribute(otherName, "CreatedCacheCount"));
