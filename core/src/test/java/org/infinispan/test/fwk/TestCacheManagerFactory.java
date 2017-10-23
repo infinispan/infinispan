@@ -267,7 +267,7 @@ public class TestCacheManagerFactory {
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
    public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain) {
-      return createCacheManagerEnforceJmxDomain(jmxDomain, true, true);
+      return createCacheManagerEnforceJmxDomain(jmxDomain, true, true, true);
    }
 
    public static EmbeddedCacheManager createClusteredCacheManagerEnforceJmxDomain(String jmxDomain) {
@@ -311,17 +311,18 @@ public class TestCacheManagerFactory {
    /**
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
-   public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
-      return createCacheManagerEnforceJmxDomain(jmxDomain, null, exposeGlobalJmx, exposeCacheJmx);
+   public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, boolean exposeCacheJmx, boolean allowDuplicates) {
+      return createCacheManagerEnforceJmxDomain(jmxDomain, null, exposeGlobalJmx, exposeCacheJmx, allowDuplicates);
    }
 
    /**
     * @see #createCacheManagerEnforceJmxDomain(String)
     */
-   public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, String cacheManagerName, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
+   public static EmbeddedCacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, String cacheManagerName, boolean exposeGlobalJmx, boolean exposeCacheJmx, boolean allowDuplicates) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
       globalConfiguration
             .globalJmxStatistics()
+            .allowDuplicateDomains(allowDuplicates)
             .jmxDomain(jmxDomain)
             .mBeanServerLookup(new PerThreadMBeanServerLookup())
             .enabled(exposeGlobalJmx);

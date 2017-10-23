@@ -111,7 +111,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() throws Exception {
       CacheContainer otherContainer = null;
       try {
-         otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true);
+         otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true, false);
          otherContainer.getCache();
          assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
       } catch (CacheException e) {
@@ -124,7 +124,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
    public void testAvoidLeakOfCacheMBeanWhenCacheStatisticsDisabled(Method m) {
       final String jmxDomain = "jmx_" + m.getName();
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain, false, false)) {
+            TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain, false, false, true)) {
          @Override
          public void call() throws Exception {
             cm.getCache();
