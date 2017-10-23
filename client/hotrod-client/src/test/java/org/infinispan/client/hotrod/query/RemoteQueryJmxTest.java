@@ -70,7 +70,6 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
       gcb.globalJmxStatistics()
             .enable()
-            .allowDuplicateDomains(true)
             .jmxDomain(jmxDomain)
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);

@@ -38,7 +38,7 @@ public class RemoteStoreTest extends BaseStoreTest {
       localBuilder.memory().evictionType(EvictionType.COUNT).size(WRITE_DELETE_BATCH_MAX_ENTRIES).expiration().wakeUpInterval(10L);
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfig.globalJmxStatistics().allowDuplicateDomains(true).defaultCacheName(REMOTE_CACHE);
+      globalConfig.globalJmxStatistics().defaultCacheName(REMOTE_CACHE);
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(
             globalConfig, hotRodCacheConfiguration(localBuilder));

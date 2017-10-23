@@ -48,7 +48,6 @@ public class ClusterListenerStressTest extends MultipleCacheManagersTest {
       Configuration distConfig = getDefaultClusteredCacheConfig(cacheMode, false).build();
       for (int i = 0; i < NUM_NODES; i++) {
          GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-         gcb.globalJmxStatistics().allowDuplicateDomains(true);
          gcb.transport().defaultTransport().nodeName(TestResourceTracker.getNameForIndex(i));
          BlockingThreadPoolExecutorFactory remoteExecutorFactory = new BlockingThreadPoolExecutorFactory(
                10, 1, 0, 60000);

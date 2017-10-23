@@ -38,7 +38,6 @@ public class RestServerHelper {
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
       globalConfigurationBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       GlobalConfigurationBuilder globalConfiguration = globalConfigurationBuilder.nonClusteredDefault();
-      globalConfiguration.globalJmxStatistics().allowDuplicateDomains(true);
       DefaultCacheManager cacheManager = new DefaultCacheManager(globalConfiguration.build(), configuration.build());
       for (String cacheConfiguration : cachesDefined) {
          cacheManager.defineConfiguration(cacheConfiguration, configuration.build());

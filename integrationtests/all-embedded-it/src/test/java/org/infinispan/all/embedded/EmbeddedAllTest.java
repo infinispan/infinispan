@@ -46,12 +46,12 @@ public class EmbeddedAllTest {
    public static void beforeTest() throws Exception {
 
       GlobalConfiguration globalConfiguration = GlobalConfigurationBuilder
-            .defaultClusteredBuilder().globalJmxStatistics().allowDuplicateDomains(true)
+            .defaultClusteredBuilder()
             .transport().nodeName("node1")
             .build();
 
       GlobalConfiguration globalConfiguration2 = GlobalConfigurationBuilder
-            .defaultClusteredBuilder().globalJmxStatistics().allowDuplicateDomains(true)
+            .defaultClusteredBuilder()
             .transport().nodeName("node2")
             .build();
 

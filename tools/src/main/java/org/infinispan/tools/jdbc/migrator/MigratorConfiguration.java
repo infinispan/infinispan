@@ -183,8 +183,6 @@ class MigratorConfiguration {
                return null;
 
             GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder()
-                  .globalJmxStatistics()
-                  .allowDuplicateDomains(true)
                   .defaultCacheName(cacheName);
             addExternalizersToConfig(globalConfig.serialization());
 

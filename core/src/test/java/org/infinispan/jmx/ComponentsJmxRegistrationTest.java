@@ -85,7 +85,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
 
    public void testRegisterReplicatedCache() throws Exception {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().allowDuplicateDomains(true);
+      globalConfiguration.globalJmxStatistics().enable();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       cacheContainers.add(cm);
       cm.start();
@@ -106,7 +106,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
 
    public void testLocalAndReplicatedCache() throws Exception {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration.globalJmxStatistics().enable().allowDuplicateDomains(true);
+      globalConfiguration.globalJmxStatistics().enable();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration, new ConfigurationBuilder());
       cacheContainers.add(cm);
       cm.start();

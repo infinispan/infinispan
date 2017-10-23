@@ -115,7 +115,6 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
 
    private EmbeddedCacheManager createCacheManager(int index) {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.globalJmxStatistics().disable().allowDuplicateDomains(true);
       gcb.transport().defaultTransport();
       TestCacheManagerFactory.amendGlobalConfiguration(gcb, new TransportFlags().withPortRange(index));
       EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), false);

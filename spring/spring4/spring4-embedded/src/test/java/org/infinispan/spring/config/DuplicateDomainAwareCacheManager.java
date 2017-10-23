@@ -11,6 +11,6 @@ import org.infinispan.manager.DefaultCacheManager;
 public class DuplicateDomainAwareCacheManager extends DefaultCacheManager {
 
    public DuplicateDomainAwareCacheManager() {
-      super(new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build());
+      super(new GlobalConfigurationBuilder().build());
    }
 }

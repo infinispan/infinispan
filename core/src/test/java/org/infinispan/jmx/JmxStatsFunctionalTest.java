@@ -208,7 +208,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       assert existsObject(getCacheObjectName(jmxDomain, "local_cache(local)", "Statistics"));
 
       GlobalConfigurationBuilder globalConfiguration2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration2.globalJmxStatistics().enable().mBeanServerLookup(new PerThreadMBeanServerLookup()).allowDuplicateDomains(true);
+      globalConfiguration2.globalJmxStatistics().enable().mBeanServerLookup(new PerThreadMBeanServerLookup());
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration2, new ConfigurationBuilder());
       String jmxDomain2 = cm2.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
@@ -219,7 +219,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
       assert existsObject(getCacheObjectName(jmxDomain2, "local_cache(local)", "Statistics"));
 
       GlobalConfigurationBuilder globalConfiguration3 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration3.globalJmxStatistics().enable().mBeanServerLookup(new PerThreadMBeanServerLookup()).allowDuplicateDomains(true);
+      globalConfiguration3.globalJmxStatistics().enable().mBeanServerLookup(new PerThreadMBeanServerLookup());
       cm3 = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration3, new ConfigurationBuilder());
       String jmxDomain3 = cm3.getCacheManagerConfiguration().globalJmxStatistics().domain();
 
@@ -261,7 +261,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
       //now register a global one
       GlobalConfigurationBuilder globalConfiguration2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalConfiguration2.globalJmxStatistics().enable().mBeanServerLookup(new PerThreadMBeanServerLookup()).allowDuplicateDomains(true);
+      globalConfiguration2.globalJmxStatistics().enable().mBeanServerLookup(new PerThreadMBeanServerLookup());
       cm2 = TestCacheManagerFactory.createClusteredCacheManager(globalConfiguration2, new ConfigurationBuilder());
       ConfigurationBuilder remoteCache = new ConfigurationBuilder();
       remoteCache.jmxStatistics().enable();

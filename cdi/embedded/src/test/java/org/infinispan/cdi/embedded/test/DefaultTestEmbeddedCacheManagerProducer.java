@@ -34,7 +34,6 @@ public class DefaultTestEmbeddedCacheManagerProducer {
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
-      globalConfigurationBuilder.globalJmxStatistics().allowDuplicateDomains(true);
       builder.read(defaultConfiguration);
       return TestCacheManagerFactory.createClusteredCacheManager(globalConfigurationBuilder, builder);
    }

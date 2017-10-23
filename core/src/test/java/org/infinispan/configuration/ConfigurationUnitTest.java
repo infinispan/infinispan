@@ -231,7 +231,6 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
    public void testConfigureMarshaller() {
       GlobalConfigurationBuilder gc = new GlobalConfigurationBuilder();
-      gc.globalJmxStatistics().allowDuplicateDomains(true);
       TestObjectStreamMarshaller marshaller = new TestObjectStreamMarshaller();
       gc.serialization().marshaller(marshaller);
       withCacheManager(new CacheManagerCallable(

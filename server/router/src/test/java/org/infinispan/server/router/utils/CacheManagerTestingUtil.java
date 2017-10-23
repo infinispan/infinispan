@@ -12,8 +12,6 @@ public class CacheManagerTestingUtil {
     }
 
     public static GlobalConfigurationBuilder createDefaultGlobalConfiguration() {
-        GlobalConfigurationBuilder configurationBuilder = new GlobalConfigurationBuilder();
-        configurationBuilder.globalJmxStatistics().disable().allowDuplicateDomains(true);
-        return configurationBuilder;
+       return new GlobalConfigurationBuilder();
     }
 }

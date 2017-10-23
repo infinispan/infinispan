@@ -54,7 +54,6 @@ public class InfinispanCoreIT {
    @Test
    public void testCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.globalJmxStatistics().allowDuplicateDomains(true);
 
       cm = new DefaultCacheManager(gcb.build(), new ConfigurationBuilder().build());
       Cache<String, String> cache = cm.getCache();

@@ -73,7 +73,6 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
    protected static EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcfg = new GlobalConfigurationBuilder();
-      gcfg.globalJmxStatistics().allowDuplicateDomains(true);
 
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.transaction()
