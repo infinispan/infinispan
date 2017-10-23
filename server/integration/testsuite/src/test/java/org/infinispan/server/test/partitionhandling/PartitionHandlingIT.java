@@ -15,6 +15,7 @@ import org.infinispan.server.test.util.JGroupsProbeClient;
 import org.infinispan.server.test.util.PartitionHandlingController;
 import org.infinispan.server.test.util.StandaloneManagementClient;
 import org.jboss.arquillian.junit.Arquillian;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,6 +49,7 @@ public class PartitionHandlingIT {
    final static String ALLOW_READ_WRITES_CACHE = "allowreadwrites";
 
    private PartitionHandlingController partitionHandlingController;
+   private boolean healed = true; // in case a test fails before healing the cluster
 
    @InfinispanResource(CONTAINER1)
    private RemoteInfinispanServer server1;
@@ -82,6 +84,13 @@ public class PartitionHandlingIT {
          probeClients.put("node1", new JGroupsProbeClient("224.0.75.76", 7500));
          probeClients.put("node2", new JGroupsProbeClient("224.0.75.77", 7500));
          partitionHandlingController = new PartitionHandlingController(managementClients, probeClients);
+      }
+   }
+
+   @After
+   public void after() {
+      if (!healed) {
+         healCluster();
       }
    }
 
@@ -201,10 +210,12 @@ public class PartitionHandlingIT {
    private void partitionCluster() {
       partitionHandlingController.partitionCluster(new HashSet<>(Arrays.asList("node0", "node1")),
                                                    new HashSet<>(Arrays.asList("node2")));
+      healed = false;
    }
 
    private void healCluster() {
       partitionHandlingController.heal();
+      healed = true;
    }
 
    private void assertThrowsHotRodClientException(Runnable r) {
