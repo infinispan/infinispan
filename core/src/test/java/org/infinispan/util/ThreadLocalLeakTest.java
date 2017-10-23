@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -97,9 +96,8 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
    }
 
    private Thread doStuffWithCache(ConfigurationBuilder builder) {
-      GlobalJmxStatisticsConfigurationBuilder globalBuilder =
-            new GlobalConfigurationBuilder().nonClusteredDefault()
-                  .globalJmxStatistics().allowDuplicateDomains(true);
+      GlobalConfigurationBuilder globalBuilder =
+            new GlobalConfigurationBuilder().nonClusteredDefault();
       final EmbeddedCacheManager[] cm = {new DefaultCacheManager(globalBuilder.build(), builder.build(),
             true)};
       Thread forkedThread = null;

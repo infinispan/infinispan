@@ -79,7 +79,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       GlobalConfigurationBuilder globalConfiguration = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalConfiguration.globalJmxStatistics().enable()
             .mBeanServerLookup(new PerThreadMBeanServerLookup())
-            .jmxDomain(JMX_DOMAIN).allowDuplicateDomains(true);
+            .jmxDomain(JMX_DOMAIN);
       return globalConfiguration;
    }
 

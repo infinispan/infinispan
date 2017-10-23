@@ -33,14 +33,14 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder defaultConfig = new ConfigurationBuilder();
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb1.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(JMX_DOMAIN)
+      gcb1.globalJmxStatistics().enable().jmxDomain(JMX_DOMAIN)
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
       CacheContainer cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager(gcb1, defaultConfig,
             new TransportFlags(), true);
       cacheManager1.start();
 
       GlobalConfigurationBuilder gcb2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb2.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(JMX_DOMAIN)
+      gcb2.globalJmxStatistics().enable().jmxDomain(JMX_DOMAIN)
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
       CacheContainer cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager(gcb2, defaultConfig,
             new TransportFlags(), true);

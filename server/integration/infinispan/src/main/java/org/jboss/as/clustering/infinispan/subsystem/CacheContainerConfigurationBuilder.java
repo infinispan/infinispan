@@ -239,8 +239,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 .enabled(this.statisticsEnabled)
                 .cacheManagerName(this.name)
                 .mBeanServerLookup(new MBeanServerProvider(this.server.getValue()))
-                .jmxDomain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(CacheServiceNameFactory.DEFAULT_CACHE).getParent().getCanonicalName())
-                .allowDuplicateDomains(true);
+                .jmxDomain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(CacheServiceNameFactory.DEFAULT_CACHE).getParent().getCanonicalName());
 
         builder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
         return builder.build();

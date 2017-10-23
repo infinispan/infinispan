@@ -61,10 +61,7 @@ public class MigratorSerializerTest {
    private static final String TABLE_TS_COL = "TIMESTAMP_COLUMN";
    private static final String TABLE_TS_TYPE = "BIGINT";
 
-   private static final GlobalConfiguration GLOBAL_CONFIG = new GlobalConfigurationBuilder()
-         .globalJmxStatistics()
-         .allowDuplicateDomains(true)
-         .build();
+   private static final GlobalConfiguration GLOBAL_CONFIG = new GlobalConfigurationBuilder().build();
 
    private JDBCMigrator migrator;
 

@@ -165,11 +165,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    public final void testAddConfigurations() throws Exception {
       final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
 
-      // Allow duplicate domains. A good little configuration modification to make. If this isn't enabled,
-      // JMXDomainConflicts occur which break the testsuite. This way we can also have a non-default configuration to
-      // check.
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.globalJmxStatistics().allowDuplicateDomains(true);
 
       // Now prepare a cache configuration.
       ConfigurationBuilder builder = new ConfigurationBuilder();

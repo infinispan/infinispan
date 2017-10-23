@@ -65,9 +65,7 @@ public class JDBCMigrator {
    private AdvancedCache initAndGetTargetCache() {
       MigratorConfiguration config = new MigratorConfiguration(false, properties);
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.defaultCacheName(defaultCacheName)
-            .globalJmxStatistics()
-            .allowDuplicateDomains(true);
+      builder.defaultCacheName(defaultCacheName);
 
       SerializationConfigurationBuilder serialBuilder = builder.serialization().marshaller(config.getMarshaller());
       config.addExternalizersToConfig(serialBuilder);

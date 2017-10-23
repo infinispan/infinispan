@@ -40,7 +40,6 @@ public class RestStoreTest extends BaseStoreTest {
       localBuilder.memory().evictionType(EvictionType.COUNT).size(WRITE_DELETE_BATCH_MAX_ENTRIES).expiration().wakeUpInterval(10L);
 
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalConfig.globalJmxStatistics().allowDuplicateDomains(true);
 
       localCacheManager = TestCacheManagerFactory.createCacheManager(globalConfig, localBuilder);
       localCacheManager.defineConfiguration(REMOTE_CACHE, localCacheManager.getDefaultCacheConfiguration());

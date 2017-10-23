@@ -56,7 +56,6 @@ public class TestInfinispanRegionFactory extends InfinispanRegionFactory {
 	}
 
 	protected void amendConfiguration(ConfigurationBuilderHolder holder) {
-		holder.getGlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true);
 		TransportConfigurationBuilder transport = holder.getGlobalConfigurationBuilder().transport();
 		transport.nodeName(TestResourceTracker.getNextNodeName());
 		transport.clusterName(TestResourceTracker.getCurrentTestName());

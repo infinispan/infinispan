@@ -35,7 +35,6 @@ public class HotRodSharedContainerTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() {
       GlobalConfigurationBuilder globalCfg = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalCfg.globalJmxStatistics().allowDuplicateDomains(true);
       EmbeddedCacheManager cm =
             TestCacheManagerFactory.createClusteredCacheManager(globalCfg, hotRodCacheConfiguration());
       cacheManagers.add(cm);

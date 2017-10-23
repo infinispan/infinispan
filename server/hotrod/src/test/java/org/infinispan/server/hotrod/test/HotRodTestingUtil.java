@@ -123,7 +123,6 @@ public class HotRodTestingUtil {
 
    public static HotRodServer startHotRodServerWithoutTransport(HotRodServerConfigurationBuilder builder) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
-      globalConfiguration.globalJmxStatistics().allowDuplicateDomains(true);
 
       ConfigurationBuilder cacheConfiguration = new ConfigurationBuilder();
       cacheConfiguration.compatibility().enable();

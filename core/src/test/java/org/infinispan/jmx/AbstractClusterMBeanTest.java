@@ -43,7 +43,7 @@ abstract class AbstractClusterMBeanTest extends MultipleCacheManagersTest {
 
    private CacheContainer createManager(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder gcb1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      gcb1.globalJmxStatistics().enable().allowDuplicateDomains(true).jmxDomain(jmxDomain)
+      gcb1.globalJmxStatistics().enable().jmxDomain(jmxDomain)
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
       CacheContainer cacheManager = TestCacheManagerFactory.createClusteredCacheManager(gcb1, builder,
             new TransportFlags(), true);

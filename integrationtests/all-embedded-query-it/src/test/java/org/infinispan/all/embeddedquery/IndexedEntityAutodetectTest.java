@@ -21,7 +21,6 @@ public class IndexedEntityAutodetectTest extends LocalCacheTest {
 
    protected static EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder gcfg = new GlobalConfigurationBuilder();
-      gcfg.globalJmxStatistics().allowDuplicateDomains(true);
 
       // this configuration does not declare any indexed types on purpose, so they are autodetected
       ConfigurationBuilder cfg = new ConfigurationBuilder();

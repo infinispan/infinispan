@@ -58,7 +58,6 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
       gcb.globalJmxStatistics()
             .enable()
-            .allowDuplicateDomains(true)
             .jmxDomain(getClass().getSimpleName())
             .mBeanServerLookup(new PerThreadMBeanServerLookup());
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);

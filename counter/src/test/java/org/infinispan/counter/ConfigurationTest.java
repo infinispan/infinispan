@@ -52,7 +52,6 @@ public class ConfigurationTest extends AbstractCacheTest {
 
    private static GlobalConfigurationBuilder defaultGlobalConfigurationBuilder(boolean globalStateEnabled) {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.globalJmxStatistics().enabled(false).allowDuplicateDomains(true);
       builder.globalState().enabled(globalStateEnabled).persistentLocation(PERSISTENT_FOLDER)
             .temporaryLocation(TEMP_PERSISTENT_FOLDER);
       return builder;

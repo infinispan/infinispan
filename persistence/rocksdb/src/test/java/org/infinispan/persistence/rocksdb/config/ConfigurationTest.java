@@ -38,7 +38,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
 
    public void testConfigBuilder() {
       GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-            .globalJmxStatistics().allowDuplicateDomains(true)
             .transport().defaultTransport()
             .build();
 

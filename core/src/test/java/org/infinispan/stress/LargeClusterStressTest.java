@@ -67,7 +67,6 @@ public class LargeClusterStressTest extends MultipleCacheManagersTest {
                @Override
                public Object call() throws Exception {
                   GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-                  gcb.globalJmxStatistics().allowDuplicateDomains(true);
                   gcb.transport().defaultTransport().nodeName(nodeName);
 //                  gcb.transport().machineId(machineId);
                   BlockingThreadPoolExecutorFactory remoteExecutorFactory = new BlockingThreadPoolExecutorFactory(

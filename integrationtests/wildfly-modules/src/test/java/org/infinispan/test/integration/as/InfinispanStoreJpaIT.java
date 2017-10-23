@@ -64,7 +64,6 @@ public class InfinispanStoreJpaIT {
    @Test
    public void testCacheManager() {
       GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-      gcb.globalJmxStatistics().allowDuplicateDomains(true);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JpaStoreConfigurationBuilder.class)

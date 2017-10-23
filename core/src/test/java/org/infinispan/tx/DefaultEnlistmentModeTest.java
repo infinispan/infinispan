@@ -69,6 +69,6 @@ public class DefaultEnlistmentModeTest extends AbstractCacheTest {
    }
 
    private GlobalConfiguration getGlobalConfig() {
-      return new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build();
+      return new GlobalConfigurationBuilder().build();
    }
 }

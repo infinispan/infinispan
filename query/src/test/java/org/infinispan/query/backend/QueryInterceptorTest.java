@@ -206,7 +206,7 @@ public class QueryInterceptorTest {
 
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
       return new DefaultCacheManager(
-              new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build(),
+              new GlobalConfigurationBuilder().build(),
               new ConfigurationBuilder()
                       .memory().evictionType(EvictionType.COUNT).size(maxEntries)
                       .persistence().passivation(true)
@@ -223,7 +223,7 @@ public class QueryInterceptorTest {
 
    protected EmbeddedCacheManager createVolatileCacheManager() throws Exception {
       return new DefaultCacheManager(
-            new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build(),
+            new GlobalConfigurationBuilder().build(),
             new ConfigurationBuilder()
                   .indexing().index(Index.ALL)
                   .addIndexedEntity(Person.class)
