@@ -14,9 +14,7 @@
     <description>Integration tests for Infinispan and Spring Boot</description>
 
     <properties>
-        <!-- Most or our tests require JUnit 4.11 for Arquillian, however Spring needs 4.12 -->
-        <!-- FIXME: https://issues.jboss.org/browse/ISPN-7034 -->
-        <overridden.version.junit>4.12</overridden.version.junit>
+        <overridden.version.junit>${version.junit}</overridden.version.junit>
         <!-- Spring Boot needs the MockUtil constructor to be public, so it can't use mockito-core 2+ -->
         <overridden.version.mockito>1.10.19</overridden.version.mockito>
     </properties>
