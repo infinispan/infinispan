@@ -8,7 +8,6 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.rest.logging.Log;
@@ -37,11 +36,11 @@ public class TextBinaryTranscoder implements Transcoder {
          if (content instanceof byte[]) {
             return content;
          }
-         throw new EncodingException("Invalid format for text " + content);
+         throw logger.invalidTextFormat(content);
       }
       if (destinationType.match(TEXT_PLAIN)) {
          if (!(content instanceof byte[])) {
-            throw new EncodingException("Invalid binary format for  " + content);
+            throw logger.invalidBinaryFormat(content);
          }
          return Base64.getEncoder().encodeToString((byte[]) content);
       }

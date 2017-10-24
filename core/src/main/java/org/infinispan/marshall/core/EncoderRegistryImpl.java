@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -14,6 +13,8 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @see EncoderRegistry
@@ -21,6 +22,8 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 public class EncoderRegistryImpl implements EncoderRegistry {
+
+   private static final Log log = LogFactory.getLog(EncoderRegistryImpl.class);
 
    private final Map<Class<? extends Encoder>, Encoder> encoderMap = CollectionFactory.makeConcurrentMap(10);
    private final Map<Class<? extends Wrapper>, Wrapper> wrapperMap = CollectionFactory.makeConcurrentMap(2);
@@ -35,7 +38,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
       }
       short id = encoder.id();
       if (encoderById.containsKey(id)) {
-         throw new IllegalArgumentException("Cannot register encoder: duplicate id " + id);
+         throw log.duplicateIdEncoder(id);
       }
       encoderById.put(id, encoder.getClass());
       encoderMap.put(encoder.getClass(), encoder);
@@ -48,7 +51,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
       }
       byte id = wrapper.id();
       if (wrapperById.containsKey(id)) {
-         throw new EncodingException("Cannot register wrapper: duplicate id " + id);
+         throw log.duplicateIdWrapper(id);
       }
       wrapperById.put(id, wrapper.getClass());
       wrapperMap.put(wrapper.getClass(), wrapper);
@@ -66,7 +69,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
             .filter(t -> t.supportsConversion(mediaType, another))
             .findAny();
       if (!transcoder.isPresent()) {
-         throw new EncodingException("Cannot find transcoder from " + mediaType + " to " + another);
+         throw log.cannotFindTranscoder(mediaType, another);
       }
       return transcoder.get();
    }
@@ -83,11 +86,11 @@ public class EncoderRegistryImpl implements EncoderRegistry {
       }
       Class<? extends Encoder> encoderClass = clazz == null ? encoderById.get(encoderId) : clazz;
       if (encoderClass == null) {
-         throw new EncodingException("Encoder not found for id " + encoderId);
+         throw log.encoderIdNotFound(encoderId);
       }
       Encoder encoder = encoderMap.get(encoderClass);
       if (encoder == null) {
-         throw new EncodingException("Encoder not found: " + clazz);
+         throw log.encoderClassNotFound(clazz);
       }
       return encoder;
    }
@@ -99,11 +102,11 @@ public class EncoderRegistryImpl implements EncoderRegistry {
       }
       Class<? extends Wrapper> wrapperClass = clazz == null ? wrapperById.get(wrapperId) : clazz;
       if (wrapperClass == null) {
-         throw new EncodingException("Wrapper not found id " + wrapperId);
+         throw log.wrapperIdNotFound(wrapperId);
       }
       Wrapper wrapper = wrapperMap.get(wrapperClass);
       if (wrapper == null) {
-         throw new EncodingException("Wrapper not found: " + clazz);
+         throw log.wrapperClassNotFound(clazz);
       }
       return wrapper;
    }

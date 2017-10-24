@@ -5,10 +5,15 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+
 /**
  * @since 9.2
  */
 public class TextTranscoder implements Transcoder {
+
+   private static final Log log = LogFactory.getLog(TextTranscoder.class);
 
    public static final TextTranscoder INSTANCE = new TextTranscoder();
 
@@ -31,7 +36,7 @@ public class TextTranscoder implements Transcoder {
          byte[] byteContent = (byte[]) content;
          return TranscodingUtils.convertCharset(byteContent, sourceCharset, destinationCharset);
       }
-      throw new EncodingException("Failed to transcode, unsupported content " + content);
+      throw log.unsupportedContent(content);
    }
 
    @Override
