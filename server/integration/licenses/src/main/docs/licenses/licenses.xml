@@ -1633,7 +1633,7 @@
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-analyzers-common</artifactId>
-      <version>5.5.4</version>
+      <version>5.5.5</version>
       <licenses>
         <license>
           <name>Apache Software License, Version 2.0</name>
@@ -1655,7 +1655,7 @@
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-core</artifactId>
-      <version>5.5.4</version>
+      <version>5.5.5</version>
       <licenses>
         <license>
           <name>Apache Software License, Version 2.0</name>
@@ -1666,7 +1666,7 @@
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-facet</artifactId>
-      <version>5.5.4</version>
+      <version>5.5.5</version>
       <licenses>
         <license>
           <name>Apache Software License, Version 2.0</name>
@@ -1699,7 +1699,7 @@
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-queryparser</artifactId>
-      <version>5.5.4</version>
+      <version>5.5.5</version>
       <licenses>
         <license>
           <name>Apache Software License, Version 2.0</name>

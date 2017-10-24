@@ -166,7 +166,7 @@
         <version.latency.utils>2.0.2</version.latency.utils>
         <version.assertj>3.4.1</version.assertj>
         <version.log4j>2.8.2</version.log4j>
-        <version.lucene>5.5.4</version.lucene>
+        <version.lucene>5.5.5</version.lucene>
         <version.mc4j>1.2.6</version.mc4j>
         <version.mockito>2.7.21</version.mockito>
         <version.mockito_dep.objenesis>2.5</version.mockito_dep.objenesis>
