@@ -17,6 +17,7 @@ import sun.misc.Unsafe;
 public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
    private static final Log log = LogFactory.getLog(UnpooledOffHeapMemoryAllocator.class, Log.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
    private final AtomicLong amountAllocated = new AtomicLong();
    private LongUnaryOperator sizeCalculator;
 
@@ -27,7 +28,7 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
 
    @Override
    public long allocate(long memoryLength) {
-      long memoryLocation = OffHeapMemory.allocate(memoryLength);
+      long memoryLocation = MEMORY.allocate(memoryLength);
       long currentSize = amountAllocated.addAndGet(memoryLength);
       if (trace) {
          log.tracef("Allocated off heap memory at 0x%016x with %d bytes. Total size: %d", memoryLocation, memoryLength,
@@ -48,7 +49,7 @@ public class UnpooledOffHeapMemoryAllocator implements OffHeapMemoryAllocator {
          log.tracef("Deallocating off heap memory at 0x%016x with %d bytes. Total size: %d", memoryAddress, size,
                currentSize);
       }
-      OffHeapMemory.free(memoryAddress);
+      MEMORY.free(memoryAddress);
    }
 
    @Override

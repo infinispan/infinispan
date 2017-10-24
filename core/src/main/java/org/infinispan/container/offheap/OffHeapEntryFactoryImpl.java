@@ -265,7 +265,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          } catch (IOException | ClassNotFoundException e) {
             throw new CacheException(e);
          }
-         return internalEntryFactory.create(new WrappedByteArray(keyBytes),
+         return internalEntryFactory.create(new WrappedByteArray(keyBytes, hashCode),
                new WrappedByteArray(valueBytes), metadata);
       } else {
          long lifespan;

@@ -325,12 +325,14 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    /**
     * Performs the actual remove operation removing the new address from the memory lookups.  The write lock for the given
     * key <b>must</b> be held before calling this method.
-    * @param address the address of the entry to remove
+    * @param bucketHeadAddress the starting address of the address hash
     * @param key the key of the entry
     */
-   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performRemove(long address, Object key) {
+   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performRemove(long bucketHeadAddress, Object key) {
       WrappedByteArray wba = toWrapper(key);
       long prevAddress = 0;
+      // We only use the head pointer for the first iteration
+      long address = bucketHeadAddress;
 
       while (address != 0) {
          long nextAddress = offHeapEntryFactory.getNext(address);
