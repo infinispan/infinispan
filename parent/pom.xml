@@ -109,7 +109,7 @@
         <version.maven.antlr3>3.5.2</version.maven.antlr3>
         <version.maven.antrun>1.8</version.maven.antrun>
         <version.apache.ds>2.0.0-M20</version.apache.ds>
-        <version.arquillian>1.1.5.Final</version.arquillian>
+        <version.arquillian>1.1.13.Final</version.arquillian>
         <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
         <version.aspectj.aspectjweaver>1.8.1</version.aspectj.aspectjweaver>
         <version.byteman>3.0.6</version.byteman>
@@ -162,7 +162,7 @@
         <version.jgoodies.forms>1.0.7</version.jgoodies.forms>
         <version.jsap>2.1</version.jsap>
         <version.jstl>1.2</version.jstl>
-        <version.junit>4.11</version.junit>
+        <version.junit>4.12</version.junit>
         <version.latency.utils>2.0.2</version.latency.utils>
         <version.assertj>3.4.1</version.assertj>
         <version.log4j>2.8.2</version.log4j>

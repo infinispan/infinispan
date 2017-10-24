@@ -43,7 +43,7 @@
       <version.org.jboss.jbossts.jbossjts>4.16.2.Final</version.org.jboss.jbossts.jbossjts>
       <version.org.jboss.marshalling.jboss-marshalling>2.0.0.Beta3</version.org.jboss.marshalling.jboss-marshalling>
       <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
-      <version.junit>4.11</version.junit>
+      <version.junit>4.12</version.junit>
       <version.org.infinispan.infinispan-management-console>9.2.0.Alpha1</version.org.infinispan.infinispan-management-console>
       <version.org.infinispan.arquillian.container>1.2.0.Beta2</version.org.infinispan.arquillian.container>
       <version.org.infinispan.server-build.old>8.2.7.Final</version.org.infinispan.server-build.old>
