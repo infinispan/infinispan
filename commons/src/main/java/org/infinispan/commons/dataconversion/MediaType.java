@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 
@@ -19,6 +21,8 @@ import org.infinispan.commons.marshall.SerializeWith;
  */
 @SerializeWith(value = MediaType.MediaTypeExternalizer.class)
 public final class MediaType {
+
+   private static final Log log = LogFactory.getLog(MediaType.class);
 
    public static final String APPLICATION_JSON_TYPE = "application/json";
    public static final String APPLICATION_OCTET_STREAM_TYPE = "application/octet-stream";
@@ -80,9 +84,9 @@ public final class MediaType {
    }
 
    public static MediaType parse(String str) {
-      if (str == null || str.isEmpty()) throw new EncodingException("MediaType cannot be empty or null!");
+      if (str == null || str.isEmpty()) throw log.missingMediaType();
       if (str.indexOf('/') == -1)
-         throw new EncodingException("MediaType must contain a type and a subtype separated by '/'");
+         throw log.invalidMediaTypeSubtype();
       boolean hasParams = str.indexOf(';') != -1;
       if (!hasParams) {
          String[] types = str.split("/");
@@ -102,7 +106,7 @@ public final class MediaType {
       String[] parameters = params.split(";");
 
       for (String p : parameters) {
-         if (!p.contains("=")) throw new EncodingException("Failed to parse MediaType: Invalid param description" + p);
+         if (!p.contains("=")) throw log.invalidMediaTypeParam(p);
          String[] nameValue = p.split("=");
          String paramName = nameValue[0].trim();
          String paramValue = nameValue[1].trim();
@@ -124,7 +128,7 @@ public final class MediaType {
 
    private static void checkValidQuotes(String paramValue) {
       if (!checkStartAndEnd(paramValue, '\'') && !checkStartAndEnd(paramValue, '\"')) {
-         throw new EncodingException("Unclosed param value quote");
+         throw log.unquotedMediaTypeParam();
       }
    }
 
@@ -172,7 +176,7 @@ public final class MediaType {
    private static String validate(String token) {
       for (char c : token.toCharArray()) {
          if (c < 0x20 || c > 0x7F || INVALID_TOKENS.indexOf(c) > 0) {
-            throw new EncodingException("Invalid character '" + c + "' found in token '" + token + "'");
+            throw log.invalidCharMediaType(c, token);
          }
       }
       return token;

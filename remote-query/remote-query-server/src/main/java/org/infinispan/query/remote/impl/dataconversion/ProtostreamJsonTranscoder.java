@@ -10,17 +10,20 @@ import java.io.Reader;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.remote.impl.logging.Log;
 
 
 /**
  * @since 9.2
  */
 public class ProtostreamJsonTranscoder implements Transcoder {
+
+   private static final Log log = LogFactory.getLog(ProtostreamJsonTranscoder.class, Log.class);
 
    private final Set<MediaType> supportedTypes;
    private final SerializationContext ctx;
@@ -34,23 +37,18 @@ public class ProtostreamJsonTranscoder implements Transcoder {
 
    @Override
    public Object transcode(Object content, MediaType contentType, MediaType destinationType) {
-      if (destinationType.match(APPLICATION_JSON)) {
-         try {
+      try {
+         if (destinationType.match(APPLICATION_JSON)) {
             return ProtobufUtil.toCanonicalJSON(ctx, (byte[]) content);
-         } catch (IOException e) {
-            throw new CacheException(e);
          }
-      } else {
          if (destinationType.match(APPLICATION_PROTOSTREAM)) {
-            try {
-               Reader reader = new InputStreamReader(new ByteArrayInputStream((byte[]) content));
-               return ProtobufUtil.fromCanonicalJSON(ctx, reader);
-            } catch (IOException e) {
-               e.printStackTrace();
-            }
+            Reader reader = new InputStreamReader(new ByteArrayInputStream((byte[]) content));
+            return ProtobufUtil.fromCanonicalJSON(ctx, reader);
          }
+      } catch (IOException e) {
+         throw log.errorTranscoding(e);
       }
-      throw new IllegalArgumentException("Not supported");
+      throw log.unsupportedContent(content);
    }
 
    @Override

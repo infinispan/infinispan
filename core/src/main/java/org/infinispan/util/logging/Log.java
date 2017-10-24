@@ -31,6 +31,8 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.dataconversion.EncodingException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
@@ -1659,4 +1661,41 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Configuration '%s' matches multiple wildcard templates", id = 485)
    CacheConfigurationException configurationNameMatchesMultipleWildcards(String name);
+
+   @Message(value = "Cannot register Wrapper: duplicate Id %d", id = 486)
+   EncodingException duplicateIdWrapper(byte id);
+
+   @Message(value = "Wrapper with class '%s' not found", id = 487)
+   EncodingException wrapperClassNotFound(Class<?> wrapperClass);
+
+   @Message(value = "Wrapper with Id %d not found", id = 488)
+   EncodingException wrapperIdNotFound(byte id);
+
+   @Message(value = "Cannot register Encoder: duplicate Id %d", id = 489)
+   EncodingException duplicateIdEncoder(short id);
+
+   @Message(value = "Encoder with class '%s' not found", id = 490)
+   EncodingException encoderClassNotFound(Class<?> wrapperClass);
+
+   @Message(value = "Encoder with Id %d not found", id = 491)
+   EncodingException encoderIdNotFound(short id);
+
+   @Message(value = "Cannot find transcoder between '%s' to '%s'", id = 492)
+   EncodingException cannotFindTranscoder(MediaType mediaType, MediaType another);
+
+   @Message(value = "Invalid text format: '%s'", id = 493)
+   EncodingException invalidTextFormat(Object content);
+
+   @Message(value = "Invalid text format: '%s'", id = 494)
+   EncodingException invalidBinaryFormat(Object content);
+
+   @Message(value = "Error transcoding content", id = 495)
+   EncodingException errorTranscoding(@Cause Throwable cause);
+
+   @Message(value = "Error transcoding content '%s'", id = 496)
+   EncodingException errorTranscodingContent(@Cause Throwable cause, Object content);
+
+   @Message(value = "Unsupported content '%s' during transcoding", id = 497)
+   EncodingException unsupportedContent(Object content);
+
 }

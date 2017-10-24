@@ -4,15 +4,18 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.rest.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @since 9.2
  */
 public class JavaSerializationTranscoder implements Transcoder {
+
+   protected final static Log logger = LogFactory.getLog(JavaSerializationTranscoder.class, Log.class);
 
    private final Set<MediaType> supported;
    private static final JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
@@ -33,9 +36,9 @@ public class JavaSerializationTranscoder implements Transcoder {
             return marshaller.objectFromByteBuffer((byte[]) content);
          }
       } catch (InterruptedException | IOException | ClassNotFoundException e) {
-         throw new EncodingException("Cannot transcode " + content, e);
+         throw logger.errorTranscodingContent(e, content);
       }
-      return null;
+      throw logger.unsupportedContent(content);
    }
 
    @Override
