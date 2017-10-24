@@ -149,7 +149,7 @@
       <version.leveldb>0.7</version.leveldb>
       <version.leveldbjni>1.7</version.leveldbjni>
       <version.log4j>2.5</version.log4j>
-      <version.lucene>5.5.1</version.lucene>
+      <version.lucene>5.5.5</version.lucene>
       <version.mc4j>1.2.6</version.mc4j>
       <version.mockito>1.9.5</version.mockito>
       <version.mockito_dep.objenesis>1.4</version.mockito_dep.objenesis>
