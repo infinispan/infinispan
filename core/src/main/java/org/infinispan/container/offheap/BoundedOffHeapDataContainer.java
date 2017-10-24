@@ -259,8 +259,8 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
             try {
                InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(addressToRemove);
                passivator.passivate(ice);
-               // TODO: this reareads the object from memory again!
-               performRemove(addressToRemove, ice.getKey());
+               // TODO: this rereads the object from memory again!
+               performRemove(memoryLookup.getMemoryAddress(ice.getKey()), ice.getKey());
                evictionManager.onEntryEviction(Collections.singletonMap(ice.getKey(), ice));
             } finally {
                entryWriteLock.unlock();
@@ -308,11 +308,13 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
    private void moveToEnd(long lruNode) {
       if (lruNode != lastAddress) {
          long nextLruNode = OffHeapLruNode.getNext(lruNode);
+         assert nextLruNode != 0;
          if (lruNode == firstAddress) {
             OffHeapLruNode.setPrevious(nextLruNode, 0);
             firstAddress = nextLruNode;
          } else {
             long prevLruNode = OffHeapLruNode.getPrevious(lruNode);
+            assert prevLruNode != 0;
             OffHeapLruNode.setNext(prevLruNode, nextLruNode);
             OffHeapLruNode.setPrevious(nextLruNode, prevLruNode);
          }
