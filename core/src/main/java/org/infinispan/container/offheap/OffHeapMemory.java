@@ -113,7 +113,7 @@ class OffHeapMemory {
       }
    }
 
-   static long allocate(long size) {
+   long allocate(long size) {
       long address = UNSAFE.allocateMemory(size);
       if (trace) {
          Long prev = allocatedBlocks.put(address, size);
@@ -124,7 +124,7 @@ class OffHeapMemory {
       return address;
    }
 
-   static void free(long address) {
+   void free(long address) {
       Long prev = allocatedBlocks.remove(address);
       if (trace) {
          if (prev == null) {
