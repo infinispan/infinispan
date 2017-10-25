@@ -167,12 +167,6 @@ public class APINonTxOffHeapTest extends APINonTxTest {
 
    @Test(enabled = false) // ISPN-8354
    @Override
-   public void testLockedStream() throws Throwable {
-      super.testLockedStream();
-   }
-
-   @Test(enabled = false) // ISPN-8354
-   @Override
    public void testLockedStreamSetValue() {
       super.testLockedStreamSetValue();
    }
@@ -183,41 +177,6 @@ public class APINonTxOffHeapTest extends APINonTxTest {
       super.testLockedStreamWithinLockedStream();
    }
 
-   @Test(enabled = false) // ISPN-8354
-   @Override
-   public void testLockedStreamFunctionalCommand() throws Throwable {
-      super.testLockedStreamFunctionalCommand();
-   }
-
-   @Test(enabled = false) // ISPN-8354
-   @Override
-   public void testLockedStreamPutAll() throws Throwable {
-      super.testLockedStreamPutAll();
-   }
-
-   @Test(enabled = false) // ISPN-8354
-   @Override
-   public void testLockedStreamPutAsync() throws Throwable {
-      super.testLockedStreamPutAsync();
-   }
-
-   @Test(enabled = false) // ISPN-8354
-   @Override
-   public void testLockedStreamCompute() throws Throwable {
-      super.testLockedStreamCompute();
-   }
-
-   @Test(enabled = false) // ISPN-8354
-   @Override
-   public void testLockedStreamComputeIfPresent() throws Throwable {
-      super.testLockedStreamComputeIfPresent();
-   }
-
-   @Test(enabled = false) // ISPN-8354
-   @Override
-   public void testLockedStreamMerge() throws Throwable {
-      super.testLockedStreamMerge();
-   }
 
    private void assertCacheSize(int expectedSize) {
       assertEquals(expectedSize, cache.size());
