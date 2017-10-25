@@ -814,7 +814,7 @@ public abstract class BaseRestOperationsTest {
 
       ResponseAssertion.assertThat(response).isError();
       ResponseAssertion.assertThat(response)
-            .hasReturnedText("ISPN000490: Cannot find transcoder between 'application/json' to 'application/xml'");
+            .hasReturnedText("ISPN000492: Cannot find transcoder between 'application/json' to 'application/xml'");
    }
 
    @Test
