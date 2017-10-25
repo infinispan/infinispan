@@ -15,8 +15,10 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.marshall.core.ExternalPojo;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Factory;
@@ -177,6 +179,23 @@ public class APINonTxOffHeapTest extends APINonTxTest {
       super.testLockedStreamWithinLockedStream();
    }
 
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamActuallyLocks(BiConsumer<Cache<Object, Object>, CacheEntry<Object, Object>> consumer, boolean forEachOrInvokeAll) throws Throwable {
+      super.testLockedStreamActuallyLocks(consumer, forEachOrInvokeAll);
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamInvokeAllFilteredSet() {
+      super.testLockedStreamInvokeAllFilteredSet();
+   }
+
+   @Test(enabled = false) // ISPN-8354
+   @Override
+   public void testLockedStreamInvokeAllPut() {
+      super.testLockedStreamInvokeAllPut();
+   }
 
    private void assertCacheSize(int expectedSize) {
       assertEquals(expectedSize, cache.size());
