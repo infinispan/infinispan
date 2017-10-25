@@ -1,18 +1,30 @@
 package org.infinispan.eviction.impl;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.GlobalMarshaller;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
+import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -34,7 +46,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
    public Object[] factory() {
       return new Object[] {
 //            new EvictionWithPassivationTest().withStorage(StorageType.BINARY),
-//            new EvictionWithPassivationTest().withStorage(StorageType.OBJECT),
+            new EvictionWithPassivationTest().withStorage(StorageType.OBJECT),
             new EvictionWithPassivationTest().withStorage(StorageType.OFF_HEAP)
       };
    }
@@ -208,4 +220,91 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       // The data should still be present even if a rollback occurred
       assertEquals(value, testCache.get(key));
    }
+
+   public void testRemovalOfEvictedEntry() throws Exception {
+      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      for (int i = 0; i < EVICTION_MAX_ENTRIES + 1; i++) {
+         testCache.put("key" + i, "value" + i);
+      }
+
+      String evictedKey = "key0";
+      assertTrue(isEntryInStore(evictedKey));
+      testCache.remove(evictedKey);
+      assertFalse(testCache.containsKey(evictedKey));
+      assertNull(testCache.get(evictedKey));
+   }
+
+   public void testComputeOnEvictedEntry() throws Exception {
+      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      for (int i = 0; i < EVICTION_MAX_ENTRIES + 1; i++) {
+         testCache.put("key" + i, "value" + i);
+      }
+
+      String evictedKey = "key0";
+      assertTrue(isEntryInStore(evictedKey));
+      testCache.compute(evictedKey, (k ,v) -> v + "-modfied");
+      assertFalse(isEntryInStore(evictedKey));
+   }
+
+   public void testRemoveViaComputeOnEvictedEntry() throws Exception {
+      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      for (int i = 0; i < EVICTION_MAX_ENTRIES + 1; i++) {
+         testCache.put("key" + i, "value" + i);
+      }
+
+      String evictedKey = "key0";
+      assertTrue(isEntryInStore(evictedKey));
+      testCache.compute(evictedKey, (k ,v) -> null);
+      assertFalse(testCache.containsKey(evictedKey));
+      assertFalse(isEntryInStore(evictedKey));
+   }
+
+   public void testCleanStoreOnPut() throws Exception {
+      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      testCache.clear();
+      putIntoStore("key", "oldValue");
+      testCache.put("key", "value");
+      assertFalse(isEntryInStore("key"));
+   }
+
+   private boolean isEntryInStore(String key) throws Exception {
+      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      CacheLoader<String, String> loader = TestingUtil.getFirstLoader(testCache);
+      Object loaderKey = key;
+      if (storage == StorageType.OFF_HEAP) {
+         GlobalMarshaller gm = TestingUtil.extractGlobalMarshaller(testCache.getCacheManager());
+         loaderKey = new WrappedByteArray(gm.objectToByteBuffer(key));
+      }
+      return loader.contains(loaderKey);
+   }
+
+   private void putIntoStore(String key, String value) throws Exception {
+      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      CacheWriter<String, String> writer = TestingUtil.getFirstWriter(testCache);
+      Object writerKey = key;
+      Object writerValue = value;
+      if (storage == StorageType.OFF_HEAP) {
+         GlobalMarshaller gm = TestingUtil.extractGlobalMarshaller(testCache.getCacheManager());
+         writerKey = new WrappedByteArray(gm.objectToByteBuffer(key));
+         writerValue = new WrappedByteArray(gm.objectToByteBuffer(value));
+      }
+      MarshalledEntry entry = new MarshalledEntryImpl(writerKey, writerValue, null, null);
+      writer.write(entry);
+   }
+
+   @Listener
+   public static class EvictionListener {
+
+      private String evictedKey;
+
+      @CacheEntriesEvicted
+      public void entryEvicted(CacheEntriesEvictedEvent e) {
+         evictedKey = (String) e.getEntries().keySet().iterator().next();
+      }
+
+      public String getEvictedKey() {
+         return evictedKey;
+      }
+   }
+
 }
