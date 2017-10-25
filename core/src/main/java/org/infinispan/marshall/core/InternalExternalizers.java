@@ -61,6 +61,8 @@ import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.MetaParamsInternalMetadata;
+import org.infinispan.globalstate.ScopedState;
+import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.interceptors.distribution.VersionedResult;
 import org.infinispan.interceptors.distribution.VersionedResults;
 import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
@@ -249,6 +251,8 @@ final class InternalExternalizers {
       addInternalExternalizer(new EncoderValueMapper.Externalizer(), exts);
       addInternalExternalizer(new EncoderEntryMapper.Externalizer(), exts);
       addInternalExternalizer(new DataConversion.Externalizer(), exts);
+      addInternalExternalizer(new ScopedState.Externalizer(), exts);
+      addInternalExternalizer(new ScopeFilter.Externalizer(), exts);
 
       return exts;
    }

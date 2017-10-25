@@ -24,6 +24,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -59,6 +60,11 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
 
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
+   }
+
+   @Override
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      NoOpGlobalConfigurationManager.amendCacheManager(cm);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

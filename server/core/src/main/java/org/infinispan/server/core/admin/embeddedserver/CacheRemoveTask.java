@@ -49,7 +49,7 @@ public class CacheRemoveTask extends AdminServerTask<Void> {
          throw new UnsupportedOperationException();
 
       String name = requireParameter(parameters,"name");
-      cacheManager.removeCache(name);
+      cacheManager.administration().removeCache(name);
       return null;
    }
 }

@@ -22,9 +22,11 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.Exceptions;
 import org.infinispan.test.TestingUtil;
@@ -56,9 +58,14 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       return builder;
    }
 
+   @Override
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      NoOpGlobalConfigurationManager.amendCacheManager(cm);
+   }
+
    protected BlockingInterceptor addBlockingInterceptorBeforeTx(Cache<?, ?> cache,
-         final CyclicBarrier barrier,
-                                                 Class<? extends VisitableCommand> commandClass) {
+                                                                final CyclicBarrier barrier,
+                                                                Class<? extends VisitableCommand> commandClass) {
       return addBlockingInterceptorBeforeTx(cache, barrier, commandClass, true);
    }
 

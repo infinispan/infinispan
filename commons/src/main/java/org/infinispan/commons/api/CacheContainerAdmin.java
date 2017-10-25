@@ -1,0 +1,66 @@
+package org.infinispan.commons.api;
+
+/**
+ * Administrative cache container operations.
+ *
+ * @author Tristan Tarrant
+ * @since 9.2
+ */
+
+public interface CacheContainerAdmin {
+
+   /**
+    * Flags which affect only administrative operations
+    *
+    * @author Tristan Tarrant
+    * @since 9.2
+    */
+   enum AdminFlag {
+      /**
+       * If the operation affects configuration, make it persistent. If the server cannot honor this flag an error will
+       * be returned
+       */
+      PERSISTENT("persistent");
+
+
+      private final String value;
+
+      AdminFlag(String value) {
+         this.value = value;
+      }
+
+
+      @Override
+      public String toString() {
+         return value;
+      }
+   }
+
+
+   /**
+    * Creates a cache on the container using the specified template.
+    *
+    * @param name     the name of the cache to create
+    * @param template the template to use for the cache. If null, the configuration marked as default on the container
+    *                 will be used
+    */
+   void createCache(String name, String template);
+
+   /**
+    * Removes a cache from the cache container.
+    *
+    * @param name the name of the cache to remove
+    */
+   void removeCache(String name);
+
+   /**
+    * Sets any additional {@link AdminFlag}s to be used when performing administrative operations.
+    *
+    * <b>Note:</b> whether an operation supports a certain flag or not is dependent on the configuration and environment.
+    * If a flag cannot be honored, the operation will fail with an exception.
+    *
+    * @param flags
+    * @return
+    */
+   CacheContainerAdmin withFlags(AdminFlag... flags);
+}

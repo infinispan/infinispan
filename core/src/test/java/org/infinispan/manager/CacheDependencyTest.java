@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -57,7 +58,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB);
-      assertEquals(Arrays.asList("B", DEFAULT_CACHE_NAME), listener.stopOrder);
+      assertEquals(Arrays.asList("B", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, DEFAULT_CACHE_NAME), listener.stopOrder);
    }
 
    @Test
@@ -101,7 +102,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB, cacheC, cacheD);
-      assertEquals(Arrays.asList("A", "B", "D", "C", DEFAULT_CACHE_NAME), listener.stopOrder);
+      assertEquals(Arrays.asList("A", "B", "D", "C", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, DEFAULT_CACHE_NAME), listener.stopOrder);
    }
 
    @Test
@@ -118,7 +119,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.addCacheDependency("A", "C");
       cacheManager.addCacheDependency("B", "C");
 
-      cacheManager.removeCache("B");
+      cacheManager.administration().removeCache("B");
 
       CacheEventListener listener = new CacheEventListener();
       cacheManager.addListener(listener);
@@ -126,7 +127,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB, cacheC);
-      assertEquals(Arrays.asList("A", "C", DEFAULT_CACHE_NAME), listener.stopOrder);
+      assertEquals(Arrays.asList("A", "C", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, DEFAULT_CACHE_NAME), listener.stopOrder);
 
    }
 

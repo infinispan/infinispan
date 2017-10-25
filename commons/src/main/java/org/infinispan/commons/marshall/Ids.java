@@ -190,6 +190,9 @@ public interface Ids {
 
    int DATA_CONVERSION = 131;
 
+   int SCOPED_STATE = 132;
+   int SCOPED_STATE_FILTER = 133;
+
 
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter

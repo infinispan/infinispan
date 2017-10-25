@@ -258,6 +258,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
+   @Test(groups = "unstable")
    public void testConcurrentCacheManagerStopAndGetCache() throws Exception {
       EmbeddedCacheManager manager = createCacheManager(false);
       try {
@@ -301,7 +302,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       try {
          manager.getCache("cache");
          // An attempt to remove a non-existing cache should be a no-op
-         manager.removeCache("does-not-exist");
+         manager.administration().removeCache("does-not-exist");
       } finally {
          manager.stop();
       }
@@ -318,11 +319,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          DataContainer data = getDataContainer(cache);
          assertFalse(store.isEmpty());
          assertTrue(0 != data.size());
-         manager.removeCache("cache");
+         manager.administration().removeCache("cache");
          assertEquals(0, DummyInMemoryStore.getStoreDataSize(store.getStoreName()));
          assertEquals(0, data.size());
          // Try removing the cache again, it should be a no-op
-         manager.removeCache("cache");
+         manager.administration().removeCache("cache");
          assertEquals(0, DummyInMemoryStore.getStoreDataSize(store.getStoreName()));
          assertEquals(0, data.size());
       } finally {
@@ -497,7 +498,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             assertFalse(store2.isEmpty());
             assertEquals(5, data2.size());
 
-            manager1.removeCache("cache");
+            manager1.administration().removeCache("cache");
             assertFalse(manager1.cacheExists("cache"));
             assertFalse(manager2.cacheExists("cache"));
             assertNull(manager1.getCache("cache", false));

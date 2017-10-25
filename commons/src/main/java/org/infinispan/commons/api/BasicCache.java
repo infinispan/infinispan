@@ -110,7 +110,7 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
    /**
     * An overloaded form of {@link #replace(Object, Object, Object)}, which takes in lifespan parameters.
     *
-    * @param key      key to use
+    * @param key w     key to use
     * @param oldValue value to replace
     * @param value    value to store
     * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.

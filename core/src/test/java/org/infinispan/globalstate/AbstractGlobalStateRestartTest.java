@@ -73,6 +73,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
       addClusterEnabledCacheManager(global, config);
    }
 
+
    protected abstract void applyCacheManagerClusteringConfiguration(ConfigurationBuilder config);
 
    protected void shutdownAndRestart(int extraneousNodePosition, boolean reverse) throws Throwable {
