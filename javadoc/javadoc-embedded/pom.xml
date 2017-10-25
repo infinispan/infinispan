@@ -161,6 +161,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.0.0-M1</version>
             <executions>
                <execution>
                   <id>javadoc</id>
@@ -238,40 +239,49 @@
                         <additionalDependency>
                            <groupId>javax.enterprise</groupId>
                            <artifactId>cdi-api</artifactId>
+                           <version>${version.cdi}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>javax.cache</groupId>
                            <artifactId>cache-api</artifactId>
+                           <version>${version.javax.cache}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>javax.servlet</groupId>
                            <artifactId>servlet-api</artifactId>
+                           <version>${version.javax.servlet}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.kohsuke.metainf-services</groupId>
                            <artifactId>metainf-services</artifactId>
+                           <version>${version.metainf-services}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.osgi</groupId>
                            <artifactId>org.osgi.core</artifactId>
                            <scope>provided</scope>
+                           <version>${version.osgi}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.osgi</groupId>
                            <artifactId>org.osgi.compendium</artifactId>
                            <scope>provided</scope>
+                           <version>${version.osgi}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>org.hibernate</groupId>
                            <artifactId>hibernate-core</artifactId>
+                           <version>${version.hibernate.core}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>com.mchange</groupId>
                            <artifactId>c3p0</artifactId>
+                           <version>${version.c3p0}</version>
                         </additionalDependency>
                         <additionalDependency>
                            <groupId>com.zaxxer</groupId>
                            <artifactId>HikariCP</artifactId>
+                           <version>${version.hikaricp}</version>
                         </additionalDependency>
                      </additionalDependencies>
                   </configuration>

@@ -233,6 +233,7 @@
                     <dependency>
                         <groupId>org.codehaus.groovy</groupId>
                         <artifactId>groovy-all</artifactId>
+                        <version>${version.groovy}</version>
                     </dependency>
                 </dependencies>
             </plugin>

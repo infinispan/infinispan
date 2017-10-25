@@ -198,6 +198,7 @@
       <version.assertj>3.4.1</version.assertj>
       <version.avro>1.7.6</version.avro>
       <version.byteman>3.0.6</version.byteman>
+      <version.cdi>1.2</version.cdi>
       <version.c3p0>0.9.5</version.c3p0>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
       <version.caffeine>2.4.0</version.caffeine>
@@ -228,6 +229,7 @@
       <version.javassist>3.20.0-GA</version.javassist>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
+      <version.javax.servlet>2.5</version.javax.servlet>
       <version.jboss.common.core>2.2.16.GA</version.jboss.common.core>
       <version.jboss.jboss-transaction-spi>7.1.0.Final</version.jboss.jboss-transaction-spi>
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
@@ -281,6 +283,7 @@
       <version.org.wildfly.cli>1.0.1.Final</version.org.wildfly.cli>
       <version.org.wildfly.core>2.2.0.Final</version.org.wildfly.core>
       <version.org.wildfly.maven-plugin>1.1.0.Final</version.org.wildfly.maven-plugin>
+      <version.osgi>4.3.1</version.osgi>
       <version.pax.exam>4.11.0</version.pax.exam>
       <version.pax.url>2.5.2</version.pax.url>
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
