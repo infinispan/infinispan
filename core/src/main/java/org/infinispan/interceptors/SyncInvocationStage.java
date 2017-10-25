@@ -11,10 +11,14 @@ import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
  * @since 9.0
  */
 public class SyncInvocationStage extends InvocationStage {
-   private Object rv;
+   private final Object rv;
 
    public SyncInvocationStage(Object rv) {
       this.rv = rv;
+   }
+
+   public SyncInvocationStage() {
+      this.rv = null;
    }
 
    @Override

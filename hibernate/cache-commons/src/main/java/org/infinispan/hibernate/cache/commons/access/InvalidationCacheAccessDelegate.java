@@ -10,7 +10,6 @@ import org.hibernate.cache.CacheException;
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.infinispan.hibernate.cache.commons.util.Caches;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
-import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.AdvancedCache;
 
@@ -123,16 +122,10 @@ public abstract class InvalidationCacheAccessDelegate implements AccessDelegate 
 
 	@Override
 	public void remove(Object session, Object key) throws CacheException {
-		putValidator.setCurrentSession(session);
-		try {
-			// We update whether or not the region is valid. Other nodes
-			// may have already restored the region so they need to
-			// be informed of the change.
-			writeCache.remove(key);
-		}
-		finally {
-			putValidator.resetCurrentSession();
-		}
+		// We update whether or not the region is valid. Other nodes
+		// may have already restored the region so they need to
+		// be informed of the change.
+		writeCache.remove(key);
 	}
 
 	@Override

@@ -1,5 +1,6 @@
 package org.infinispan.stats.logic;
 
+import static java.util.concurrent.ForkJoinPool.commonPool;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.stats.CacheStatisticCollector.convertNanosToMicro;
 import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
@@ -151,9 +152,9 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
             LockManager actualLockManager = lockManager.getActual();
             LockContainer container = extractField(actualLockManager, "lockContainer");
             if (container instanceof PerKeyLockContainer) {
-               ((PerKeyLockContainer) container).inject(lockManagerTimeService);
+               ((PerKeyLockContainer) container).inject(commonPool(), lockManagerTimeService);
             } else if (container instanceof StripedLockContainer) {
-               ((StripedLockContainer) container).inject(lockManagerTimeService);
+               ((StripedLockContainer) container).inject(commonPool(), lockManagerTimeService);
             }
          }
       }

@@ -42,7 +42,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -56,7 +58,7 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    @Inject protected LockManager lockManager;
    @Inject protected ClusteringDependentLogic cdl;
 
-   protected final InvocationFinallyAction unlockAllReturnHandler = new InvocationFinallyAction() {
+   final InvocationFinallyAction unlockAllReturnHandler = new InvocationFinallyAction() {
       @Override
       public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv,
             Throwable throwable) throws Throwable {
@@ -115,19 +117,14 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    protected abstract Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable;
 
    // We need this method in here because of putForExternalRead
-   protected final Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
+   final Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) {
       Object key;
       if (hasSkipLocking(command) || !shouldLockKey((key = command.getKey()))) {
          return invokeNext(ctx, command);
       }
 
-      try {
-         lockAndRecord(ctx, key, getLockTimeoutMillis(command));
-      } catch (Throwable t) {
-         lockManager.unlockAll(ctx);
-         throw t;
-      }
-      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+      LockPromise lockPromise = lockAndRecord(ctx, key, getLockTimeoutMillis(command));
+      return nonTxLockAndInvokeNext(ctx, command, lockPromise, unlockAllReturnHandler);
    }
 
    @Override
@@ -135,12 +132,8 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       if (hasSkipLocking(command)) {
          return invokeNext(ctx, command);
       }
-      try {
-         lockAllAndRecord(ctx, Arrays.asList(command.getKeys()), getLockTimeoutMillis(command));
-      } catch (Throwable t) {
-         lockManager.unlockAll(ctx);
-      }
-      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+      LockPromise lockPromise = lockAllAndRecord(ctx, Arrays.asList(command.getKeys()), getLockTimeoutMillis(command));
+      return nonTxLockAndInvokeNext(ctx, command, lockPromise, unlockAllReturnHandler);
    }
 
    @Override
@@ -162,7 +155,9 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
       ArrayList<Object> keysToInvalidate = new ArrayList<>(keys.length);
       for (Object key : keys) {
          try {
-            lockAndRecord(ctx, key, 0);
+            //don't make it async. the command is remote anyway and therefore this should be locked in LockAction
+            // If we ever stop locking there this should be made non-blocking
+            lockAndRecord(ctx, key, 0).lock();
             keysToInvalidate.add(key);
          } catch (TimeoutException te) {
             getLog().unableToLockToInvalidate(key, cdl.getAddress());
@@ -248,32 +243,47 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
             cacheConfiguration.locking().lockAcquisitionTimeout();
    }
 
-   protected final boolean shouldLockKey(Object key) {
+   final boolean shouldLockKey(Object key) {
       //only the primary owner acquires the lock.
       boolean shouldLock = isLockOwner(key);
       if (trace) getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), toStr(key), shouldLock);
       return shouldLock;
    }
 
-   protected final boolean isLockOwner(Object key) {
+   final boolean isLockOwner(Object key) {
       return cdl.getCacheTopology().getDistribution(key).isPrimary();
    }
 
-   protected final void lockAndRecord(InvocationContext context, Object key, long timeout) throws InterruptedException {
+   protected final KeyAwareLockPromise lockAndRecord(InvocationContext context, Object key, long timeout) {
       context.addLockedKey(key);
-      lockManager.lock(key, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).lock();
+      return lockManager.lock(key, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS);
    }
 
-   protected final void lockAllAndRecord(InvocationContext context, Stream<?> keys, long timeout) throws InterruptedException {
-      lockAllAndRecord(context, keys.collect(Collectors.toList()), timeout);
+   final KeyAwareLockPromise lockAllAndRecord(InvocationContext context, Stream<?> keys, long timeout) {
+      return lockAllAndRecord(context, keys.collect(Collectors.toList()), timeout);
    }
 
-   protected final void lockAllAndRecord(InvocationContext context, Collection<?> keys, long timeout) throws InterruptedException {
+   final KeyAwareLockPromise lockAllAndRecord(InvocationContext context, Collection<?> keys, long timeout) {
       keys.forEach(context::addLockedKey);
-      lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).lock();
+      return lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS);
    }
 
-   protected final boolean hasSkipLocking(FlagAffectedCommand command) {
+   final boolean hasSkipLocking(FlagAffectedCommand command) {
       return command.hasAnyFlag(FlagBitSets.SKIP_LOCKING);
+   }
+
+   /**
+    * Locks and invoke the next interceptor for non-transactional commands.
+    */
+   protected final Object nonTxLockAndInvokeNext(InvocationContext ctx, VisitableCommand command,
+         LockPromise lockPromise, InvocationFinallyAction finallyFunction) {
+      return lockPromise.toInvocationStage().andHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+         if (throwable != null) {
+            lockManager.unlockAll(rCtx);
+            throw throwable;
+         } else {
+            return invokeNextAndFinally(rCtx, rCommand, finallyFunction);
+         }
+      });
    }
 }

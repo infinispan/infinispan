@@ -106,11 +106,6 @@ public class PutFromLoadValidator {
 	private final InfinispanRegionFactory regionFactory;
 
 	/**
-	 * Injected interceptor
-	 */
-	private NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
-
-	/**
 	 * The time of the last call to {@link #endInvalidatingRegion()}. Puts from transactions started after
 	 * this timestamp are denied.
 	 */
@@ -120,11 +115,6 @@ public class PutFromLoadValidator {
 	 * Number of ongoing concurrent invalidations.
 	 */
 	private int regionInvalidations = 0;
-
-	/**
-	 * Allows propagation of current Session to callbacks invoked from interceptors
-	 */
-	private final SessionThreadLocal currentSession;
 
 	/**
 	 * Creates a new put from load validator instance.
@@ -142,7 +132,6 @@ public class PutFromLoadValidator {
 	 * @param cacheManager where to find a cache to store pending put information
 	 */
 	public PutFromLoadValidator(AdvancedCache cache, InfinispanRegionFactory regionFactory, EmbeddedCacheManager cacheManager) {
-      this.currentSession = new SessionThreadLocal();
 		this.regionFactory = regionFactory;
 		Configuration cacheConfiguration = cache.getCacheConfiguration();
 		Configuration pendingPutsConfiguration = regionFactory.getPendingPutsCacheConfiguration();
@@ -189,12 +178,8 @@ public class PutFromLoadValidator {
       log.debugf("Interceptor chain was: ", interceptors);
       int position = 0;
 		// add interceptor before uses exact match, not instanceof match
-		int invalidationPosition = 0;
 		int entryWrappingPosition = 0;
       for (AsyncInterceptor ci : interceptors) {
-			if (ci instanceof InvalidationInterceptor) {
-				invalidationPosition = position;
-			}
 			if (ci instanceof EntryWrappingInterceptor) {
 				entryWrappingPosition = position;
 			}
@@ -202,10 +187,9 @@ public class PutFromLoadValidator {
 		}
 		boolean transactional = cache.getCacheConfiguration().transaction().transactionMode().isTransactional();
 		if (transactional) {
-			cache.removeInterceptor(invalidationPosition);
 			TxInvalidationInterceptor txInvalidationInterceptor = new TxInvalidationInterceptor();
 			cache.getComponentRegistry().registerComponent(txInvalidationInterceptor, TxInvalidationInterceptor.class);
-			chain.addInterceptor(txInvalidationInterceptor, invalidationPosition);
+			chain.replaceInterceptor(txInvalidationInterceptor, InvalidationInterceptor.class);
 
 			// Note that invalidation does *NOT* acquire locks; therefore, we have to start invalidating before
 			// wrapping the entry, since if putFromLoad was invoked between wrap and beginInvalidatingKey, the invalidation
@@ -215,15 +199,14 @@ public class PutFromLoadValidator {
          chain.addInterceptor(txPutFromLoadInterceptor, entryWrappingPosition);
 		}
 		else {
-			cache.removeInterceptor(invalidationPosition);
-			NonTxInvalidationInterceptor nonTxInvalidationInterceptor = new NonTxInvalidationInterceptor(validator);
-			cache.getComponentRegistry().registerComponent(nonTxInvalidationInterceptor, NonTxInvalidationInterceptor.class);
-			chain.addInterceptor(nonTxInvalidationInterceptor, invalidationPosition);
-
 			NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor = new NonTxPutFromLoadInterceptor(validator, ByteString.fromString(cache.getName()));
 			cache.getComponentRegistry().registerComponent(nonTxPutFromLoadInterceptor, NonTxPutFromLoadInterceptor.class);
          chain.addInterceptor(nonTxPutFromLoadInterceptor, entryWrappingPosition);
-			validator.nonTxPutFromLoadInterceptor = nonTxPutFromLoadInterceptor;
+
+			NonTxInvalidationInterceptor nonTxInvalidationInterceptor = new NonTxInvalidationInterceptor(validator, nonTxPutFromLoadInterceptor);
+			cache.getComponentRegistry().registerComponent(nonTxInvalidationInterceptor, NonTxInvalidationInterceptor.class);
+			chain.replaceInterceptor(nonTxInvalidationInterceptor, InvalidationInterceptor.class);
+
 		}
 		log.debugf("New interceptor chain is: ", cache.getAsyncInterceptorChain());
 
@@ -259,14 +242,6 @@ public class PutFromLoadValidator {
 		}
 		CacheCommandInitializer cci = cache.getComponentRegistry().getComponent(CacheCommandInitializer.class);
 		return cci.removePutFromLoadValidator(cache.getName());
-	}
-
-	public void setCurrentSession(Object session) {
-		currentSession.setSession(session);
-	}
-
-	public void resetCurrentSession() {
-		currentSession.remove();
 	}
 
 	public void destroy() {
@@ -649,19 +624,6 @@ public class PutFromLoadValidator {
 			}
 			return false;
 		}
-	}
-
-	public boolean registerRemoteInvalidation(Object key, Object lockOwner) {
-		if (currentSession.hasTransactionCoordinator()) {
-			if (trace) {
-				log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwnerToString(currentSession.getSession()), cache.getName(), key);
-			}
-			InvalidationSynchronization sync = new InvalidationSynchronization(nonTxPutFromLoadInterceptor, key, lockOwner);
-			currentSession.registerSynchronization(sync);
-			return true;
-		}
-		// evict() command is not executed in session context
-		return false;
 	}
 
 	// ---------------------------------------------------------------- Private

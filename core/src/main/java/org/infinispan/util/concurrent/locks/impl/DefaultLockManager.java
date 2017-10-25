@@ -11,11 +11,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -23,6 +26,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.SyncInvocationStage;
+import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -56,6 +62,8 @@ public class DefaultLockManager implements LockManager {
    @Inject private Configuration configuration;
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    private ScheduledExecutorService scheduler;
+   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
+   private Executor executor;
 
    @Override
    public KeyAwareLockPromise lock(Object key, Object lockOwner, long time, TimeUnit unit) {
@@ -109,7 +117,7 @@ public class DefaultLockManager implements LockManager {
                unit);
       }
 
-      final CompositeLockPromise compositeLockPromise = new CompositeLockPromise(uniqueKeys.size());
+      final CompositeLockPromise compositeLockPromise = new CompositeLockPromise(uniqueKeys.size(), executor);
       //needed to avoid internal deadlock when 2 or more lock owner invokes this method with the same keys.
       //ordering will not solve the problem since acquire() is non-blocking and each lock owner can iterate faster/slower than the other.
       synchronized (this) {
@@ -207,7 +215,8 @@ public class DefaultLockManager implements LockManager {
       return lockContainer.getLock(key);
    }
 
-   private static class KeyAwareExtendedLockPromise implements KeyAwareLockPromise, ExtendedLockPromise, Callable<Void> {
+   private static class KeyAwareExtendedLockPromise implements KeyAwareLockPromise, ExtendedLockPromise, Callable<Void>,
+         Supplier<TimeoutException> {
 
       private final ExtendedLockPromise lockPromise;
       private final Object key;
@@ -235,6 +244,11 @@ public class DefaultLockManager implements LockManager {
       }
 
       @Override
+      public InvocationStage toInvocationStage(Supplier<TimeoutException> timeoutSupplier) {
+         return lockPromise.toInvocationStage(timeoutSupplier);
+      }
+
+      @Override
       public boolean isAvailable() {
          return lockPromise.isAvailable();
       }
@@ -244,14 +258,18 @@ public class DefaultLockManager implements LockManager {
          try {
             lockPromise.lock();
          } catch (TimeoutException e) {
-            throw log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), toStr(key),
-                  lockPromise.getRequestor(), lockPromise.getOwner());
+            throw get();
          }
       }
 
       @Override
       public void addListener(LockListener listener) {
          lockPromise.addListener(listener);
+      }
+
+      @Override
+      public InvocationStage toInvocationStage() {
+         return toInvocationStage(this);
       }
 
       @Override
@@ -265,10 +283,23 @@ public class DefaultLockManager implements LockManager {
          return null;
       }
 
+      @Override
+      public TimeoutException get() {
+         return log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), toStr(key), lockPromise.getRequestor(),
+               lockPromise.getOwner());
+      }
+
       KeyAwareExtendedLockPromise scheduleLockTimeoutTask(ScheduledExecutorService executorService) {
-         if (executorService != null && timeoutMillis > 0 && !isAvailable()) {
+         assert executorService != null;
+         if (isAvailable()) {
+            return this;
+         }
+         if (timeoutMillis > 0) {
             ScheduledFuture<?> future = executorService.schedule(this, timeoutMillis, TimeUnit.MILLISECONDS);
             lockPromise.addListener((state -> future.cancel(false)));
+         } else {
+            //zero lock acquisition and we aren't available yet. Trigger timeout
+            lockPromise.cancel(LockState.TIMED_OUT);
          }
          return this;
       }
@@ -278,12 +309,14 @@ public class DefaultLockManager implements LockManager {
 
       private final List<KeyAwareExtendedLockPromise> lockPromiseList;
       private final CompletableFuture<LockState> notifier;
+      private final Executor executor;
       @SuppressWarnings("CanBeFinal")
       volatile LockState lockState = LockState.ACQUIRED;
       private final AtomicInteger countersLeft = new AtomicInteger();
 
-      private CompositeLockPromise(int size) {
+      private CompositeLockPromise(int size, Executor executor) {
          lockPromiseList = new ArrayList<>(size);
+         this.executor = executor;
          notifier = new CompletableFuture<>();
       }
 
@@ -340,6 +373,21 @@ public class DefaultLockManager implements LockManager {
       }
 
       @Override
+      public InvocationStage toInvocationStage() {
+         if (notifier.isDone()) {
+            return checkState(notifier.getNow(lockState), SyncInvocationStage::new, SimpleAsyncInvocationStage::new);
+         } else {
+            return new SimpleAsyncInvocationStage(notifier.thenApplyAsync(lockState -> {
+               Object rv = checkState(lockState, () -> null, throwable -> throwable);
+               if (rv != null) {
+                  throw (RuntimeException) rv;
+               }
+               return null;
+            }, executor));
+         }
+      }
+
+      @Override
       public void onEvent(LockState state) {
          if (notifier.isDone()) {
             //already finished
@@ -382,6 +430,23 @@ public class DefaultLockManager implements LockManager {
             addListener((state -> future.cancel(false)));
          }
          return this;
+      }
+
+      private <T> T checkState(LockState state, Supplier<T> acquired, Function<Throwable, T> exception) {
+         if (state == LockState.ACQUIRED) {
+            return acquired.get();
+         }
+         T rv = null;
+         for (LockPromise lockPromise : lockPromiseList) {
+            try {
+               lockPromise.lock();
+            } catch (Throwable throwable) {
+               if (rv == null) {
+                  rv = exception.apply(throwable);
+               }
+            }
+         }
+         return rv;
       }
    }
 }

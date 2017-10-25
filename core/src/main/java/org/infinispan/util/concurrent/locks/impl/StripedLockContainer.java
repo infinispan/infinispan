@@ -3,8 +3,11 @@ package org.infinispan.util.concurrent.locks.impl;
 import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
 import java.util.Arrays;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.StripedHashFunction;
 import org.infinispan.util.TimeService;
@@ -28,10 +31,10 @@ public class StripedLockContainer implements LockContainer {
    }
 
    @Inject
-   public void inject(TimeService timeService) {
+   public void inject(@ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) Executor executor, TimeService timeService) {
       for (int i = 0; i < sharedLocks.length; i++) {
          if (sharedLocks[i] == null) {
-            sharedLocks[i] = new InfinispanLock(timeService);
+            sharedLocks[i] = new InfinispanLock(executor, timeService);
          } else {
             sharedLocks[i].setTimeService(timeService);
          }

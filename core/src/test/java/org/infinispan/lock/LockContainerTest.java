@@ -1,5 +1,7 @@
 package org.infinispan.lock;
 
+import static java.util.concurrent.ForkJoinPool.commonPool;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,25 +34,25 @@ public class LockContainerTest extends AbstractInfinispanTest {
 
    public void testSingleLockWithPerEntry() throws InterruptedException {
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
+      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
       doSingleLockTest(lockContainer, -1);
    }
 
    public void testSingleCounterTestPerEntry() throws ExecutionException, InterruptedException {
       PerKeyLockContainer lockContainer = new PerKeyLockContainer();
-      lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
+      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
       doSingleCounterTest(lockContainer, -1);
    }
 
    public void testSingleLockWithStriped() throws InterruptedException {
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
+      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
       doSingleLockTest(lockContainer, 16);
    }
 
    public void testSingleCounterWithStriped() throws ExecutionException, InterruptedException {
       StripedLockContainer lockContainer = new StripedLockContainer(16);
-      lockContainer.inject(AbstractCacheTest.TIME_SERVICE);
+      lockContainer.inject(commonPool(), AbstractCacheTest.TIME_SERVICE);
       doSingleCounterTest(lockContainer, 16);
    }
 

@@ -1,5 +1,7 @@
 package org.infinispan.api.tree;
 
+import static java.util.concurrent.ForkJoinPool.commonPool;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +36,7 @@ public class TreeStructureHashCodeTest {
 
    private void doTest(List<Fqn> fqns) {
       StripedLockContainer container = new StripedLockContainer(512);
-      container.inject(AbstractInfinispanTest.TIME_SERVICE);
+      container.inject(commonPool(), AbstractInfinispanTest.TIME_SERVICE);
       Map<InfinispanLock, Integer> distribution = new HashMap<>();
       for (Fqn f : fqns) {
          NodeKey dataKey = new NodeKey(f, NodeKey.Type.DATA);
