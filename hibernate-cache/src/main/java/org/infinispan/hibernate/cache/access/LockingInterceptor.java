@@ -6,17 +6,17 @@
  */
 package org.infinispan.hibernate.cache.access;
 
-import org.infinispan.commands.VisitableCommand;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
+import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 /**
  * With regular {@link org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor},
@@ -34,17 +34,14 @@ import java.util.concurrent.CompletionException;
 public class LockingInterceptor extends NonTransactionalLockingInterceptor {
 	private static final Log log = LogFactory.getLog(LockingInterceptor.class);
 
-   protected final InvocationFinallyAction unlockAllReturnCheckCompletableFutureHandler = new InvocationFinallyAction() {
-      @Override
-      public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv, Throwable throwable) throws Throwable {
-         lockManager.unlockAll(rCtx);
-         if (rv instanceof CompletableFuture) {
-            try {
-               ((CompletableFuture) rv).join();
-            }
-            catch (CompletionException e) {
-               throw e.getCause();
-            }
+   private final InvocationFinallyAction unlockAllReturnCheckCompletableFutureHandler = (rCtx, rCommand, rv, throwable) -> {
+      lockManager.unlockAll(rCtx);
+      if (rv instanceof CompletableFuture) {
+         try {
+            ((CompletableFuture) rv).join();
+         }
+         catch (CompletionException e) {
+            throw e.getCause();
          }
       }
    };
@@ -61,13 +58,13 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
             ctx.setLockOwner( command.getCommandInvocationId() );
          }
 
-         lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
+         LockPromise lockPromise = lockAndRecord(ctx,command, getLockTimeoutMillis(command));
+         return nonTxLockAndInvokeNext(ctx, command, lockPromise, unlockAllReturnCheckCompletableFutureHandler);
       }
       catch (Throwable t) {
          lockManager.unlockAll(ctx);
          throw t;
       }
-      return invokeNextAndFinally(ctx, command, unlockAllReturnCheckCompletableFutureHandler);
    }
 
 }

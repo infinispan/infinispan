@@ -8,6 +8,7 @@ import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -50,13 +51,8 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
       if (forwarded || hasSkipLocking(command)) {
          return invokeNext(ctx, command);
       }
-      try {
-         lockAllAndRecord(ctx, keys.stream().filter(shouldLockKey), getLockTimeoutMillis(command));
-      } catch (Throwable t) {
-         lockManager.unlockAll(ctx);
-         throw t;
-      }
-      return invokeNextAndFinally(ctx, command, unlockAllReturnHandler);
+      KeyAwareLockPromise lockPromise = lockAllAndRecord(ctx, keys.stream().filter(shouldLockKey), getLockTimeoutMillis(command));
+      return nonTxLockAndInvokeNext(ctx, command, lockPromise, unlockAllReturnHandler);
    }
 
    private void assertNonTransactional(InvocationContext ctx) {
