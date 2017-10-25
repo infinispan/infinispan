@@ -20,6 +20,7 @@ import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
@@ -50,6 +51,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    protected InternalEntryFactory internalEntryFactory;
    protected TimeService timeService;
    protected EvictionManager evictionManager;
+   protected ActivationManager activator;
    protected PassivationManager passivator;
    // Variable to make sure memory locations aren't read after being deallocated
    // This variable should always be read first after acquiring either the read or write lock
@@ -81,9 +83,10 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    }
 
    @Inject
-   public void inject(EvictionManager evictionManager, PassivationManager passivator, OffHeapEntryFactory offHeapEntryFactory,
+   public void inject(EvictionManager evictionManager, ActivationManager activator, PassivationManager passivator, OffHeapEntryFactory offHeapEntryFactory,
                       OffHeapMemoryAllocator allocator, TimeService timeService, InternalEntryFactory internalEntryFactory) {
       this.evictionManager = evictionManager;
+      this.activator = activator;
       this.passivator = passivator;
       this.internalEntryFactory = internalEntryFactory;
       this.allocator = allocator;
@@ -174,7 +177,8 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          checkDeallocation();
          long newAddress = offHeapEntryFactory.create(key, value, metadata);
          long address = memoryLookup.getMemoryAddress(key);
-         performPut(address, newAddress, key);
+         boolean newEntry = performPut(address, newAddress, key);
+         activator.onUpdate(key, newEntry);
       } finally {
          lock.unlock();
       }
@@ -186,13 +190,15 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
     * @param address the entry address of the first element in the lookup
     * @param newAddress the address of the new entry
     * @param key the key of the entry
+    * @return {@code true} if the entry doesn't exists in memory and was newly create, {@code false} otherwise
     */
-   protected void performPut(long address, long newAddress, WrappedBytes key) {
+   protected boolean performPut(long address, long newAddress, WrappedBytes key) {
       // Have to start new linked node list
       if (address == 0) {
          memoryLookup.putMemoryAddress(key, newAddress);
          entryCreated(newAddress);
          size.incrementAndGet();
+         return true;
       } else {
          boolean replaceHead = false;
          // Whether the key was found or not - short circuit equality checks
@@ -240,6 +246,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             // Now prevAddress should be the last link so we fix our link
             offHeapEntryFactory.setNext(prevAddress, newAddress);
          }
+         return !foundKey;
       }
    }
 
@@ -316,7 +323,11 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          if (address == 0) {
             return null;
          }
-         return performRemove(address, 0, key, true);
+         InternalCacheEntry ice = performRemove(address, 0, key, true);
+         if (ice != null) {
+            activator.onRemove(ice.getKey(), ice.getValue() == null);
+         }
+         return ice;
       } finally {
          lock.unlock();
       }
@@ -532,8 +543,10 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          } else if (result != null) {
             long newAddress = offHeapEntryFactory.create(key, result.getValue(), result.getMetadata());
             performPut(address, newAddress, key);
+            activator.onUpdate(key, prev == null);
          } else {
             performRemove(address, 0, key, false);
+            activator.onRemove(key, false);
          }
          return result;
       } finally {
