@@ -1,5 +1,6 @@
 package org.infinispan.lock;
 
+import static java.util.concurrent.ForkJoinPool.commonPool;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -40,7 +41,7 @@ public class InfinispanLockTest extends AbstractInfinispanTest {
       final String lockOwner1 = "LO1";
       final String lockOwner2 = "LO2";
 
-      final InfinispanLock lock = new InfinispanLock(AbstractCacheTest.TIME_SERVICE);
+      final InfinispanLock lock = new InfinispanLock(commonPool(), AbstractCacheTest.TIME_SERVICE);
       final LockPromise lockPromise1 = lock.acquire(lockOwner1, 0, TimeUnit.MILLISECONDS);
       final LockPromise lockPromise2 = lock.acquire(lockOwner2, 0, TimeUnit.MILLISECONDS);
 
@@ -70,7 +71,7 @@ public class InfinispanLockTest extends AbstractInfinispanTest {
       final String lockOwner2 = "LO2";
       final String lockOwner3 = "LO3";
 
-      final InfinispanLock lock = new InfinispanLock(AbstractCacheTest.TIME_SERVICE);
+      final InfinispanLock lock = new InfinispanLock(commonPool(), AbstractCacheTest.TIME_SERVICE);
       final LockPromise lockPromise1 = lock.acquire(lockOwner1, 0, TimeUnit.MILLISECONDS);
       final LockPromise lockPromise2 = lock.acquire(lockOwner2, 0, TimeUnit.MILLISECONDS);
       final LockPromise lockPromise3 = lock.acquire(lockOwner3, 1, TimeUnit.DAYS);
@@ -107,7 +108,7 @@ public class InfinispanLockTest extends AbstractInfinispanTest {
       final String lockOwner2 = "LO2";
       final String lockOwner3 = "LO3";
 
-      final InfinispanLock lock = new InfinispanLock(AbstractCacheTest.TIME_SERVICE);
+      final InfinispanLock lock = new InfinispanLock(commonPool(), AbstractCacheTest.TIME_SERVICE);
       final LockPromise lockPromise1 = lock.acquire(lockOwner1, 0, TimeUnit.MILLISECONDS);
       final LockPromise lockPromise2 = lock.acquire(lockOwner2, 1, TimeUnit.DAYS);
       final LockPromise lockPromise3 = lock.acquire(lockOwner3, 1, TimeUnit.DAYS);
@@ -141,7 +142,7 @@ public class InfinispanLockTest extends AbstractInfinispanTest {
    }
 
    public void testCancel() throws InterruptedException {
-      final InfinispanLock lock = new InfinispanLock(AbstractCacheTest.TIME_SERVICE);
+      final InfinispanLock lock = new InfinispanLock(commonPool(), AbstractCacheTest.TIME_SERVICE);
       final String lockOwner1 = "LO1";
       final String lockOwner2 = "LO2";
       final String lockOwner3 = "LO3";
@@ -225,7 +226,7 @@ public class InfinispanLockTest extends AbstractInfinispanTest {
 
    public void testSingleCounter() throws ExecutionException, InterruptedException {
       final NotThreadSafeCounter counter = new NotThreadSafeCounter();
-      final InfinispanLock counterLock = new InfinispanLock(AbstractCacheTest.TIME_SERVICE);
+      final InfinispanLock counterLock = new InfinispanLock(commonPool(), AbstractCacheTest.TIME_SERVICE);
       final int numThreads = 8;
       final int maxCounterValue = 100;
       final CyclicBarrier barrier = new CyclicBarrier(numThreads);

@@ -6,18 +6,16 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
-import org.infinispan.commands.VisitableCommand;
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.Ownership;
-import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
+import org.infinispan.util.concurrent.locks.LockPromise;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 /**
  * With regular {@link org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor},
@@ -41,9 +39,20 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
          throw throwable;
 
       if (rv instanceof CompletableFuture) {
+         // The future is produced in UnorderedDistributionInterceptor.
+         // We need the EWI to commit the entry & unlock before the remote call completes
+         // but here we wait for the other nodes, without blocking concurrent updates.
          return asyncValue((CompletableFuture) rv);
       } else {
          return rv;
+      }
+   };
+   protected final InvocationFinallyFunction invokeNextAndUnlock = (rCtx, rCommand, rv, throwable) -> {
+      if (throwable != null) {
+         lockManager.unlockAll(rCtx);
+         throw throwable;
+      } else {
+         return invokeNextAndHandle(rCtx, rCommand, unlockAllReturnCheckCompletableFutureHandler);
       }
    };
 
@@ -59,13 +68,13 @@ public class LockingInterceptor extends NonTransactionalLockingInterceptor {
             ctx.setLockOwner( command.getCommandInvocationId() );
          }
 
-         lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
+         LockPromise lockPromise = lockAndRecord(ctx, command.getKey(), getLockTimeoutMillis(command));
+         return lockPromise.toInvocationStage().andHandle(ctx, command, invokeNextAndUnlock);
       }
       catch (Throwable t) {
          lockManager.unlockAll(ctx);
          throw t;
       }
-      return invokeNextAndHandle(ctx, command, unlockAllReturnCheckCompletableFutureHandler);
    }
 
 }

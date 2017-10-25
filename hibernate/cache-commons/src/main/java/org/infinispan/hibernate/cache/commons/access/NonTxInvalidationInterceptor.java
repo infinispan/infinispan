@@ -6,6 +6,8 @@
  */
 package org.infinispan.hibernate.cache.commons.access;
 
+import org.hibernate.engine.spi.SessionImplementor;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.hibernate.cache.commons.util.CacheCommandInitializer;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.commands.VisitableCommand;
@@ -39,14 +41,19 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
 public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
+	private final static SessionAccess SESSION_ACCESS = SessionAccess.findSessionAccess();
+
 	private final PutFromLoadValidator putFromLoadValidator;
+	private final NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor;
+
 	@Inject private CacheCommandInitializer commandInitializer;
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(InvalidationInterceptor.class);
    private static final Log ispnLog = LogFactory.getLog(NonTxInvalidationInterceptor.class);
 
-	public NonTxInvalidationInterceptor(PutFromLoadValidator putFromLoadValidator) {
+	public NonTxInvalidationInterceptor(PutFromLoadValidator putFromLoadValidator, NonTxPutFromLoadInterceptor nonTxPutFromLoadInterceptor) {
 		this.putFromLoadValidator = putFromLoadValidator;
+		this.nonTxPutFromLoadInterceptor = nonTxPutFromLoadInterceptor;
 	}
 
 	@Override
@@ -55,7 +62,8 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 			return invokeNext(ctx, command);
 		}
 		else {
-			boolean isTransactional = putFromLoadValidator.registerRemoteInvalidation(command.getKey(), command.getKeyLockOwner());
+			assert ctx.isOriginLocal();
+			boolean isTransactional = registerRemoteInvalidation(command, (SessionInvocationContext) ctx);
 			if (!isTransactional) {
 				throw new IllegalStateException("Put executed without transaction!");
 			}
@@ -74,16 +82,35 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 
 	@Override
 	public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-		boolean isTransactional = putFromLoadValidator.registerRemoteInvalidation(command.getKey(), command.getKeyLockOwner());
-		if (isTransactional) {
+		boolean isTransactional = false;
+		if (ctx instanceof SessionInvocationContext) {
+			isTransactional = registerRemoteInvalidation(command, (SessionInvocationContext) ctx);
+			assert isTransactional;
 			if (!putFromLoadValidator.beginInvalidatingKey(command.getKeyLockOwner(), command.getKey())) {
 				log.failedInvalidatePendingPut(command.getKey(), cacheName);
 			}
-		}
-		else {
+		} else {
 			log.trace("This is an eviction, not invalidating anything");
 		}
       return invokeNextAndHandle( ctx, command, new InvalidateAndReturnFunction(isTransactional, command.getKeyLockOwner()) );
+	}
+
+	private boolean registerRemoteInvalidation(AbstractDataWriteCommand command, SessionInvocationContext sctx) {
+		SessionAccess.TransactionCoordinatorAccess transactionCoordinator = SESSION_ACCESS.getTransactionCoordinator(sctx.getSession());
+		if (transactionCoordinator != null) {
+			if (trace) {
+				log.tracef("Registering synchronization on transaction in %s, cache %s: %s", lockOwnerToString(sctx.getSession()), cache.getName(), command.getKey());
+			}
+			InvalidationSynchronization sync = new InvalidationSynchronization(nonTxPutFromLoadInterceptor, command.getKey(), command.getKeyLockOwner());
+			transactionCoordinator.registerLocalSynchronization(sync);
+			return true;
+		}
+		// evict() command is not executed in session context
+		return false;
+	}
+
+	private static String lockOwnerToString(Object lockOwner) {
+		return lockOwner instanceof SessionImplementor ? "Session#" + lockOwner.hashCode() : lockOwner.toString();
 	}
 
 	@Override

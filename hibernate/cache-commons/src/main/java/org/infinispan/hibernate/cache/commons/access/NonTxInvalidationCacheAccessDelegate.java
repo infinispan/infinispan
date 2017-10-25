@@ -7,8 +7,17 @@
 package org.infinispan.hibernate.cache.commons.access;
 
 import org.hibernate.cache.CacheException;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.impl.BaseRegion;
 import org.hibernate.cache.spi.access.SoftLock;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 
 /**
  * Delegate for non-transactional caches
@@ -16,8 +25,18 @@ import org.hibernate.cache.spi.access.SoftLock;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAccessDelegate {
+	private final AsyncInterceptorChain invoker;
+	private final CommandsFactory commandsFactory;
+	private final Metadata metadata;
+
 	public NonTxInvalidationCacheAccessDelegate(BaseRegion region, PutFromLoadValidator validator) {
 		super(region, validator);
+		ComponentRegistry cr = region.getCache().getComponentRegistry();
+		invoker = cr.getComponent(AsyncInterceptorChain.class);
+		commandsFactory = cr.getComponent(CommandsFactory.class);
+		Configuration config = region.getCache().getCacheConfiguration();
+		metadata = new EmbeddedMetadata.Builder()
+				.lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
 	}
 
 	@Override
@@ -30,15 +49,11 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		// We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
 		// (or any other invalidation), naked put that was started after the eviction ended but before this insert
 		// ended could insert the stale entry into the cache (since the entry was removed by eviction).
-		putValidator.setCurrentSession(session);
-		try {
-			// NonTxInvalidationInterceptor will call beginInvalidatingWithPFER and change this to a removal because
-			// we must publish the new value only after invalidation ends.
-			writeCache.put(key, value);
-		}
-		finally {
-			putValidator.resetCurrentSession();
-		}
+		PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, FlagBitSets.IGNORE_RETURN_VALUES);
+		SessionInvocationContext ctx = new SessionInvocationContext(session, command.getKeyLockOwner());
+		// NonTxInvalidationInterceptor will call beginInvalidatingWithPFER and change this to a removal because
+		// we must publish the new value only after invalidation ends.
+		invoker.invoke(ctx, command);
 		return true;
 	}
 
@@ -53,16 +68,22 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 		// We need to be invalidating even for regular writes; if we were not and the write was followed by eviction
 		// (or any other invalidation), naked put that was started after the eviction ended but before this update
 		// ended could insert the stale entry into the cache (since the entry was removed by eviction).
-		putValidator.setCurrentSession(session);
-		try {
-			// NonTxInvalidationInterceptor will call beginInvalidatingWithPFER and change this to a removal because
-			// we must publish the new value only after invalidation ends.
-			writeCache.put(key, value);
-		}
-		finally {
-			putValidator.resetCurrentSession();
-		}
+		PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, FlagBitSets.IGNORE_RETURN_VALUES);
+		SessionInvocationContext ctx = new SessionInvocationContext(session, command.getKeyLockOwner());
+		// NonTxInvalidationInterceptor will call beginInvalidatingWithPFER and change this to a removal because
+		// we must publish the new value only after invalidation ends.
+		invoker.invoke(ctx, command);
 		return true;
+	}
+
+	@Override
+	public void remove(Object session, Object key) throws CacheException {
+		// We update whether or not the region is valid. Other nodes
+		// may have already restored the region so they need to
+		// be informed of the change.
+		RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, FlagBitSets.IGNORE_RETURN_VALUES);
+		SessionInvocationContext ctx = new SessionInvocationContext(session, command.getKeyLockOwner());
+		invoker.invoke(ctx, command);
 	}
 
 	@Override

@@ -2,9 +2,12 @@ package org.infinispan.util.concurrent.locks.impl;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.locks.DeadlockChecker;
@@ -20,6 +23,7 @@ public class PerKeyLockContainer implements LockContainer {
 
    private static final int INITIAL_CAPACITY = 32;
    private final ConcurrentMap<Object, InfinispanLock> lockMap;
+   private Executor executor;
    private TimeService timeService;
 
    public PerKeyLockContainer() {
@@ -27,7 +31,8 @@ public class PerKeyLockContainer implements LockContainer {
    }
 
    @Inject
-   public void inject(TimeService timeService) {
+   public void inject(@ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) Executor executor, TimeService timeService) {
+      this.executor = executor;
       this.timeService = timeService;
       for (InfinispanLock lock : lockMap.values()) {
          lock.setTimeService(timeService);
@@ -95,7 +100,7 @@ public class PerKeyLockContainer implements LockContainer {
    }
 
    private InfinispanLock createInfinispanLock(Object key) {
-      return new InfinispanLock(timeService, () -> lockMap.computeIfPresent(key, (ignoredKey, lock) -> lock.isLocked() ? lock : null));
+      return new InfinispanLock(executor, timeService, () -> lockMap.computeIfPresent(key, (ignoredKey, lock) -> lock.isLocked() ? lock : null));
    }
 
 }

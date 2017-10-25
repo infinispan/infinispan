@@ -1,6 +1,7 @@
 package org.infinispan.lock;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -15,7 +16,7 @@ public class SimpleLockContainerTest extends AbstractInfinispanTest {
    PerKeyLockContainer lc = new PerKeyLockContainer();
 
    public void simpleTest() throws Exception {
-      lc.inject(TIME_SERVICE);
+      lc.inject(ForkJoinPool.commonPool(), TIME_SERVICE);
       final String k1 = ab();
       final String k2 = ab2();
       assert k1 != k2 && k1.equals(k2);
