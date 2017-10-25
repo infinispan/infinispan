@@ -15,6 +15,7 @@ import javax.transaction.SystemException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.hibernate.cache.access.PutFromLoadValidator;
 import org.infinispan.hibernate.cache.impl.BaseRegion;
 import org.infinispan.hibernate.cache.util.Caches;
@@ -642,7 +643,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 
    private void expectInvalidateCommand(R region, CountDownLatch latch) {
       ExpectingInterceptor.get(region.getCache())
-         .when((ctx, cmd) -> cmd instanceof InvalidateCommand)
+         .when((ctx, cmd) -> cmd instanceof InvalidateCommand || cmd instanceof ClearCommand)
          .countDown(latch);
       cleanup.add(() -> ExpectingInterceptor.cleanup(region.getCache()));
    }
