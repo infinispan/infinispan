@@ -133,14 +133,10 @@
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
                <argLine combine.self="override">-Xmx768m</argLine>
-               <properties>
+               <properties combine.self="override">
                   <property>
                      <name>usedefaultlisteners</name>
-                     <value>false</value>
-                  </property>
-                  <property>
-                     <name>listener</name>
-                     <value>${junitListener}</value>
+                     <value>true</value>
                   </property>
                </properties>
                <disableXmlReport>false</disableXmlReport>
