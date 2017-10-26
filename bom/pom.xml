@@ -99,7 +99,7 @@
       <version.netty>4.1.9.Final</version.netty>
       <version.netty.tcp.native>2.0.0.Final</version.netty.tcp.native>
       <version.osgi>4.3.1</version.osgi>
-      <version.protostream>4.2.0.Alpha4</version.protostream>
+      <version.protostream>4.2.0.Alpha6</version.protostream>
       <version.protostuff>1.5.2</version.protostuff>
       <version.rocksdb>5.6.1</version.rocksdb>
       <version.reactivestreams>1.0.1</version.reactivestreams>

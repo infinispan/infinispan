@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <features name="infinispan-client-hotrod-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0">
    <repository>mvn:org.infinispan/infinispan-commons/${project.version}/xml/features</repository>
+   <repository>mvn:org.infinispan.protostream/protostream/${version.protostream}/xml/features</repository>
 
    <feature name="infinispan-client-hotrod" version="${project.version}">
       <feature version="${project.version}">infinispan-commons</feature>
       <bundle>mvn:org.infinispan/infinispan-client-hotrod/${project.version}</bundle>
       <bundle>mvn:commons-pool/commons-pool/${version.commons.pool}</bundle>
    </feature>
+
    <feature name="infinispan-client-hotrod-with-query" version="${project.version}">
       <feature version="${project.version}">infinispan-client-hotrod</feature>
+      <feature version="${version.protostream}">protostream</feature>
       <bundle>mvn:org.infinispan/infinispan-remote-query-client/${project.version}</bundle>
       <bundle>mvn:org.infinispan/infinispan-query-dsl/${project.version}</bundle>
-      <bundle>mvn:org.infinispan.protostream/protostream/${version.protostream}</bundle>
    </feature>
 
    <!-- deprecated will be removed in the future, use 'infinispan-client-hotrod-with-query' instead -->
