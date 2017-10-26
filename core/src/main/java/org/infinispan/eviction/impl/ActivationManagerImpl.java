@@ -3,7 +3,6 @@ package org.infinispan.eviction.impl;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.SHARED;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -88,7 +87,7 @@ public class ActivationManagerImpl implements ActivationManager {
          } else {
             //the entry already exists in data container. It may be put during the load by the CacheLoaderInterceptor
             //so it was already activate in the private stores.
-            if (primaryOwner && persistenceManager.deleteFromAllStores(key, SHARED) && statisticsEnabled) {
+            if (primaryOwner && persistenceManager.deleteFromAllStores(key, BOTH) && statisticsEnabled) {
                activations.incrementAndGet();
             }
          }
