@@ -68,7 +68,7 @@
       <version.aesh>0.66.13</version.aesh>
       <version.antlr>3.4</version.antlr>
       <version.antlr.runtime>3.5.2</version.antlr.runtime>
-      <version.c3p0>0.9.5</version.c3p0>
+      <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.caffeine>2.4.0</version.caffeine>
       <version.cdi>1.2</version.cdi>
       <version.commons.codec>1.4</version.commons.codec>
