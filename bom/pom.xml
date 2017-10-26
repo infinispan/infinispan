@@ -63,7 +63,7 @@
 
       <!-- Versions for dependencies -->
       <version.caffeine>2.4.0</version.caffeine>
-      <version.protostream>4.1.1.Final</version.protostream>
+      <version.protostream>4.1.3.Final</version.protostream>
       <version.aesh>0.66.13</version.aesh>
       <version.antlr>3.5.2</version.antlr>
       <version.c3p0>0.9.5</version.c3p0>
