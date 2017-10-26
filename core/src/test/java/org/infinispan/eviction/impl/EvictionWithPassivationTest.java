@@ -35,6 +35,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
    private static final String CACHE_NAME = "testCache";
    private final int EVICTION_MAX_ENTRIES = 2;
    private StorageType storage;
+   private EvictionListener evictionListener;
 
    public EvictionWithPassivationTest() {
       // Cleanup needs to be after method, else LIRS can cause failures due to it not caching values due to hot
@@ -72,6 +73,9 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(getDefaultStandaloneCacheConfig(true));
       cacheManager.defineConfiguration(CACHE_NAME, buildCfg().build());
+      evictionListener = new EvictionListener();
+      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      testCache.addListener(evictionListener);
       return cacheManager;
    }
 
@@ -227,7 +231,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
          testCache.put("key" + i, "value" + i);
       }
 
-      String evictedKey = "key0";
+      String evictedKey = evictionListener.getEvictedKey();
       assertTrue(isEntryInStore(evictedKey));
       testCache.remove(evictedKey);
       assertFalse(testCache.containsKey(evictedKey));
@@ -240,7 +244,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
          testCache.put("key" + i, "value" + i);
       }
 
-      String evictedKey = "key0";
+      String evictedKey = evictionListener.getEvictedKey();
       assertTrue(isEntryInStore(evictedKey));
       testCache.compute(evictedKey, (k ,v) -> v + "-modfied");
       assertFalse(isEntryInStore(evictedKey));
@@ -252,7 +256,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
          testCache.put("key" + i, "value" + i);
       }
 
-      String evictedKey = "key0";
+      String evictedKey = evictionListener.getEvictedKey();
       assertTrue(isEntryInStore(evictedKey));
       testCache.compute(evictedKey, (k ,v) -> null);
       assertFalse(testCache.containsKey(evictedKey));
