@@ -199,7 +199,7 @@
       <version.avro>1.7.6</version.avro>
       <version.byteman>3.0.6</version.byteman>
       <version.cdi>1.2</version.cdi>
-      <version.c3p0>0.9.5</version.c3p0>
+      <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
       <version.caffeine>2.4.0</version.caffeine>
       <version.checkstyle>8.1</version.checkstyle>
@@ -264,6 +264,7 @@
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.maven.jar>3.0.2</version.maven.jar>
       <version.maven.plugin>3.5</version.maven.plugin>
+      <version.maven.source>3.0.1</version.maven.source>
       <version.maven.shade>2.4.3</version.maven.shade>
       <version.maven.surefire>2.20</version.maven.surefire>
       <version.mc4j>1.2.6</version.mc4j>
@@ -1419,6 +1420,11 @@
       <finalName>${project.artifactId}</finalName>
       <pluginManagement>
          <plugins>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-source-plugin</artifactId>
+               <version>${version.maven.source}</version>
+            </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-plugin-plugin</artifactId>
