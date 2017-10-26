@@ -121,6 +121,15 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.karaf.tooling</groupId>
+            <artifactId>karaf-maven-plugin</artifactId>
+            <configuration>
+               <features>
+                  <feature>${project.artifactId}</feature>
+               </features>
+            </configuration>
+         </plugin>
       </plugins>
    </build>
    <dependencies>
@@ -246,15 +255,6 @@
                         <db.username>${db.username}</db.username>
                         <db.password>${db.password}</db.password>
                      </systemPropertyVariables>
-                  </configuration>
-               </plugin>
-               <plugin>
-                  <groupId>org.apache.karaf.tooling</groupId>
-                  <artifactId>karaf-maven-plugin</artifactId>
-                  <configuration>
-                     <features>
-                        <feature>${project.artifactId}</feature>
-                     </features>
                   </configuration>
                </plugin>
             </plugins>
