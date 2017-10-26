@@ -117,7 +117,11 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                      indexNullAs,
                      fieldLevelBoost, 1.0f);
 
-               fields.put(fieldName, new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions, fd));
+               FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions, fd);
+               fields.put(fieldName, fieldMapping);
+               if (log.isEnabled(Logger.Level.DEBUG)) {
+                  log.debugf("fieldName=%s fieldMapping=%s" , fieldName, fieldMapping);
+               }
             }
 
             // process the deprecated @IndexedField annotation if present
@@ -152,10 +156,19 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                      indexNullAs,
                      1.0f, 1.0f);
 
-               fields.put(fd.getName(), new FieldMapping(fd.getName(), isIndexed, 1.0f, false, isStored, false, null, indexNullAs, luceneOptions, fd));
+               FieldMapping fieldMapping = new FieldMapping(fd.getName(), isIndexed, 1.0f, false, isStored, false, null, indexNullAs, luceneOptions, fd);
+               fields.put(fd.getName(), fieldMapping);
+               if (log.isEnabled(Logger.Level.DEBUG)) {
+                  log.debugf("fieldName=%s fieldMapping=%s" , fd.getName(), fieldMapping);
+               }
             }
          }
-         return new IndexingMetadata(true, indexName, entityAnalyzer, fields);
+
+         IndexingMetadata indexingMetadata = new IndexingMetadata(true, indexName, entityAnalyzer, fields);
+         if (log.isEnabled(Logger.Level.DEBUG)) {
+            log.debugf("Descriptor name=%s indexingMetadata=%s" , descriptor.getFullName() , indexingMetadata);
+         }
+         return indexingMetadata;
       } else {
          return IndexingMetadata.NO_INDEXING;
       }
