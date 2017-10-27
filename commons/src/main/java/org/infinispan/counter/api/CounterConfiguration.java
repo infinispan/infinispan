@@ -123,7 +123,7 @@ public class CounterConfiguration {
       private long lowerBound = Long.MIN_VALUE;
       private long upperBound = Long.MAX_VALUE;
       private Storage storage = Storage.VOLATILE;
-      private int concurrencyLevel = 64;
+      private int concurrencyLevel = 16;
 
       private Builder(CounterType type) {
          this.type = type;
@@ -245,7 +245,7 @@ public class CounterConfiguration {
          long initialValue = input.readLong();
          long lowerBound = Long.MIN_VALUE;
          long upperBound = Long.MAX_VALUE;
-         int concurrencyLevel = 64;
+         int concurrencyLevel = 16;
          //noinspection ConstantConditions
          switch (type) {
             case BOUNDED_STRONG:

@@ -1,6 +1,10 @@
 package org.infinispan.counter.impl.manager;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -32,6 +36,12 @@ public class CacheHolder {
       this.configurationCache = configurationCache;
       this.counterCache = counterCache;
       this.defaultCounters = defaultCounters;
+   }
+
+   Collection<String> getCounterNames() {
+      Set<String> countersName = new HashSet<>(configurationCache.keySet());
+      defaultCounters.stream().map(AbstractCounterConfiguration::name).forEach(countersName::add);
+      return Collections.unmodifiableCollection(countersName);
    }
 
    /**
