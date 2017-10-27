@@ -30,7 +30,6 @@
          <memory>
             <object/>
          </memory>
-         <store-as-binary keys="false" values="false"/>
          <data-container key-equivalence="org.infinispan.commons.equivalence.AnyServerEquivalence"
                          value-equivalence="org.infinispan.commons.equivalence.AnyServerEquivalence" />
       </local-cache>
