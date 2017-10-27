@@ -38,6 +38,7 @@ import org.infinispan.counter.impl.strong.StrongCounterKey;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -102,6 +103,10 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
             counterManager = new EmbeddedCounterManager(future,
                   registry.getGlobalConfiguration().globalState().enabled());
             registry.registerComponent(counterManager, CounterManager.class);
+            //this start() is only invoked when the DefaultCacheManager.start() is invoked
+            //it is invoked here again to force it to check the managed global components
+            // and register them in the MBeanServer, if they are missing.
+            registry.getComponent(CacheManagerJmxRegistration.class).start(); //HACK!
          }
       }
    }

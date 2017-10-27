@@ -1,5 +1,7 @@
 package org.infinispan.counter.api;
 
+import java.util.Collection;
+
 /**
  * The {@link CounterManager} creates, defines and returns counters.
  * <p>
@@ -87,5 +89,12 @@ public interface CounterManager {
     * @param counterName The counter's name to remove.
     */
    void remove(String counterName);
+
+   /**
+    * Returns a {@link Collection} of defined counter names.
+    *
+    * @return a {@link Collection} of defined counter names.
+    */
+   Collection<String> getCounterNames();
 
 }

@@ -1,6 +1,11 @@
 package org.infinispan.counter.impl.manager;
 
+import static org.infinispan.counter.util.Utils.awaitCounterOperation;
+
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -12,6 +17,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
+import org.infinispan.counter.api.PropertyFormatter;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
@@ -25,6 +31,10 @@ import org.infinispan.counter.util.Utils;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedOperation;
 
 /**
  * A {@link CounterManager} implementation for embedded cache manager.
@@ -32,7 +42,10 @@ import org.infinispan.factories.annotations.Inject;
  * @author Pedro Ruivo
  * @since 9.0
  */
+@Scope(Scopes.GLOBAL)
+@MBean(objectName = EmbeddedCounterManager.OBJECT_NAME, description = "Component to manage counters")
 public class EmbeddedCounterManager implements CounterManager {
+   public static final String OBJECT_NAME = "CounterManager";
    private static final long WAIT_CACHES_TIMEOUT = TimeUnit.SECONDS.toNanos(15);
    private static final Log log = LogFactory.getLog(EmbeddedCounterManager.class, Log.class);
 
@@ -130,6 +143,11 @@ public class EmbeddedCounterManager implements CounterManager {
       return holder == null ? null : holder.getConfiguration(counterName);
    }
 
+   @ManagedOperation(
+         description = "Removes the counter's value from the cluster. The counter will be re-created when access next time.",
+         displayName = "Remove Counter",
+         name = "remove"
+   )
    @Override
    public void remove(String counterName) {
       CacheHolder holder = extractCacheHolder(future);
@@ -145,6 +163,66 @@ public class EmbeddedCounterManager implements CounterManager {
          removeCounter(name, counter, configuration, holder);
          return null;
       });
+   }
+
+   @ManagedOperation(
+         description = "Returns a collection of defined counter's name.",
+         displayName = "Get Defined Counters",
+         name = "counters")
+   @Override
+   public Collection<String> getCounterNames() {
+      CacheHolder holder = extractCacheHolder(future);
+      if (holder == null) {
+         return Collections.emptyList();
+      }
+      return holder.getCounterNames();
+   }
+
+   @ManagedOperation(
+         description = "Returns the current counter's value",
+         displayName = "Get Counter' Value",
+         name = "value"
+   )
+   public long getValue(String counterName) {
+      CounterConfiguration configuration = getConfiguration(counterName);
+      if (configuration == null) {
+         throw log.undefinedCounter(counterName);
+      }
+      if (configuration.type() == CounterType.WEAK) {
+         return getWeakCounter(counterName).getValue();
+      } else {
+         return awaitCounterOperation(getStrongCounter(counterName).getValue());
+      }
+   }
+
+   @ManagedOperation(
+         description = "Resets the counter's value",
+         displayName = "Reset Counter",
+         name = "reset"
+   )
+   public void reset(String counterName) {
+      CounterConfiguration configuration = getConfiguration(counterName);
+      if (configuration == null) {
+         throw log.undefinedCounter(counterName);
+      }
+      if (configuration.type() == CounterType.WEAK) {
+         awaitCounterOperation(getWeakCounter(counterName).reset());
+      } else {
+         awaitCounterOperation(getStrongCounter(counterName).reset());
+      }
+   }
+
+   @ManagedOperation(
+         description = "Returns the counter's configuration",
+         displayName = "Counter Configuration",
+         name = "configuration"
+   )
+   public Properties getCounterConfiguration(String counterName) {
+      CounterConfiguration configuration = getConfiguration(counterName);
+      if (configuration == null) {
+         throw log.undefinedCounter(counterName);
+      }
+      return PropertyFormatter.getInstance().format(configuration);
    }
 
    private void removeCounter(String name, Object counter, CounterConfiguration configuration,
