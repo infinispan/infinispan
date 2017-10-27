@@ -35,12 +35,12 @@ public class CreateCommandHandler extends NoArgumentsCliCommandHandler {
    public Collection<CommandArgument> getArguments(CommandContext ctx) {
       ParsedCommandLine parsedCommandLine = ctx.getParsedCommandLine();
       if (parsedCommandLine.getOtherProperties().size() == 0) {
-         return Collections.<CommandArgument> singleton(cacheName);
+         return Collections.singleton(cacheName);
       } else if (addIfMissing(parsedCommandLine, "like", 1)) {
-         return Collections.<CommandArgument> singleton(like);
+         return Collections.singleton(like);
       } else if (parsedCommandLine.getOtherProperties().size() == 2
             || (parsedCommandLine.getOtherProperties().size() == 3 && parsedCommandLine.getLastParsedPropertyValue() != null)) {
-         return Collections.<CommandArgument> singleton(baseCacheName);
+         return Collections.singleton(baseCacheName);
       }
       return Collections.emptyList();
    }

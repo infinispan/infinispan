@@ -309,7 +309,7 @@ public final class SecurityActions {
         GetSitesViewAction action = new GetSitesViewAction(cacheManager);
         return doPrivileged(action);
     }
-    
+
     public static Optional<CounterManager> findCounterManager(EmbeddedCacheManager cacheManager) {
        return Optional.ofNullable(doPrivileged((PrivilegedAction<CounterManager>) () -> EmbeddedCounterManagerFactory.asCounterManager(cacheManager)));
    }

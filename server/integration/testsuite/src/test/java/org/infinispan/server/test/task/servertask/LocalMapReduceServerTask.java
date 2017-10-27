@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
-import org.infinispan.stream.CacheCollectors;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
 

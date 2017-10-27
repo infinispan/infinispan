@@ -33,17 +33,17 @@ import org.junit.runner.RunWith;
 
 /**
  * Test for issues related to ISPN-6574
- * 
+ *
  * Test check whether JCache API is aware of caches defined in Infinispan server
  * configuration
- * 
+ *
  * Three tested functionalities are not yet implemented (not part of the
  * original ticket), fix pending in <b>ISPN-7095</b>
- * 
+ *
  * Calling getCache on a cache will refresh that cache inside CacheManager,
  * making the other functionality work ok for that particular cache (hence the
  * separate caches for each test)
- * 
+ *
  * @author zhostasa
  *
  */
@@ -112,7 +112,7 @@ public class JCacheStateAwarenessIT {
     * Test enableManagement command on JCache API<br>
     * <br>
     * Fix pending in <b>ISPN-7095</b>
-    * 
+    *
     * @throws MalformedObjectNameException
     */
    @Test
@@ -133,12 +133,12 @@ public class JCacheStateAwarenessIT {
 
    /**
     * Creates canonical name of managed bean
-    * 
+    *
     * @param testCacheName
     *           name of the cache to enable management on
     * @param objectNameType
     *           Object name as per {@link ObjectNameType}
-    * 
+    *
     * @return ObjectName of the managed bean
     * @throws MalformedObjectNameException
     */
@@ -165,7 +165,7 @@ public class JCacheStateAwarenessIT {
    /**
     * Accesses cache trough HR client to confirm its existence and insert data,
     * then attempts to access it trough JCache API and retrieve the data
-    * 
+    *
     * @param testCacheName
     *           test on specific cache name, development feature
     */
@@ -191,5 +191,4 @@ public class JCacheStateAwarenessIT {
       assertEquals("The cache was retrieved but the retrieved value was not same", remoteCacheFromJCache.get(testKey),
             testValue);
    }
-
 }
