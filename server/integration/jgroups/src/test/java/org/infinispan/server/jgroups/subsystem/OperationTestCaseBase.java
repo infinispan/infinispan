@@ -55,43 +55,12 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return Util.createAddOperation(getTransportAddress(stackName, protocol));
     }
 
-    protected static ModelNode getTransportAddOperationWithProperties(String stackName, String type) {
-        ModelNode[] operations = new ModelNode[] {
-                getTransportAddOperation(stackName, type),
-                getProtocolPropertyAddOperation(stackName, type, "A", "a"),
-                getProtocolPropertyAddOperation(stackName, type, "B", "b"),
-        };
-        return Operations.createCompositeOperation(operations);
-    }
-
-    protected static ModelNode getTransportRemoveOperation(String stackName, String type) {
-        return Util.createRemoveOperation(getTransportAddress(stackName, type));
-    }
-
     protected static ModelNode getTransportReadOperation(String stackName, String type, String name) {
         return Operations.createReadAttributeOperation(getTransportAddress(stackName, type), name);
     }
 
     protected static ModelNode getTransportWriteOperation(String stackName, String type, String name, String value) {
         return Operations.createWriteAttributeOperation(getTransportAddress(stackName, type), name, new ModelNode(value));
-    }
-
-    protected static ModelNode getTransportPropertyAddOperation(String stackName, String type, String propertyName, String propertyValue) {
-        ModelNode operation = Util.createAddOperation(getTransportPropertyAddress(stackName, type, propertyName));
-        operation.get(PropertyResourceDefinition.VALUE.getName()).set(propertyValue);
-        return operation;
-    }
-
-    protected static ModelNode getTransportPropertyRemoveOperation(String stackName, String type, String propertyName) {
-        return Util.createRemoveOperation(getTransportPropertyAddress(stackName, type, propertyName));
-    }
-
-    protected static ModelNode getTransportPropertyReadOperation(String stackName, String type, String propertyName) {
-        return Operations.createReadAttributeOperation(getTransportPropertyAddress(stackName, type, propertyName), PropertyResourceDefinition.VALUE.getName());
-    }
-
-    protected static ModelNode getTransportPropertyWriteOperation(String stackName, String type, String propertyName, String propertyValue) {
-        return Operations.createWriteAttributeOperation(getTransportPropertyAddress(stackName, type, propertyName), PropertyResourceDefinition.VALUE.getName(), new ModelNode(propertyValue));
     }
 
     protected static ModelNode getTransportGetPropertyOperation(String stackName, String type, String propertyName) {
@@ -110,39 +79,12 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return Util.createAddOperation(getProtocolAddress(stackName, type));
     }
 
-    protected static ModelNode getProtocolAddOperationWithProperties(String stackName, String type) {
-        ModelNode[] operations = new ModelNode[] {
-                getProtocolAddOperation(stackName, type),
-                getProtocolPropertyAddOperation(stackName, type, "A", "a"),
-                getProtocolPropertyAddOperation(stackName, type, "B", "b"),
-        };
-        return Operations.createCompositeOperation(operations);
-    }
-
     protected static ModelNode getProtocolReadOperation(String stackName, String protocolName, String name) {
         return Operations.createReadAttributeOperation(getProtocolAddress(stackName, protocolName), name);
     }
 
     protected static ModelNode getProtocolWriteOperation(String stackName, String protocolName, String name, String value) {
         return Operations.createWriteAttributeOperation(getProtocolAddress(stackName, protocolName), name, new ModelNode(value));
-    }
-
-    protected static ModelNode getProtocolPropertyAddOperation(String stackName, String protocolName, String propertyName, String propertyValue) {
-        ModelNode operation = Util.createAddOperation(getProtocolPropertyAddress(stackName, protocolName, propertyName));
-        operation.get(PropertyResourceDefinition.VALUE.getName()).set(propertyValue);
-        return operation;
-    }
-
-    protected static ModelNode getProtocolPropertyRemoveOperation(String stackName, String protocolName, String propertyName) {
-        return Util.createRemoveOperation(getProtocolPropertyAddress(stackName, protocolName, propertyName));
-    }
-
-    protected static ModelNode getProtocolPropertyReadOperation(String stackName, String protocolName, String propertyName) {
-        return Operations.createReadAttributeOperation(getProtocolPropertyAddress(stackName, protocolName, propertyName), PropertyResourceDefinition.VALUE.getName());
-    }
-
-    protected static ModelNode getProtocolPropertyWriteOperation(String stackName, String protocolName, String propertyName, String propertyValue) {
-        return Operations.createWriteAttributeOperation(getProtocolPropertyAddress(stackName, protocolName, propertyName), PropertyResourceDefinition.VALUE.getName(), new ModelNode(propertyValue));
     }
 
     protected static ModelNode getProtocolGetPropertyOperation(String stackName, String protocolName, String propertyName) {
@@ -157,10 +99,6 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return Operations.createMapRemoveOperation(getProtocolAddress(stackName, protocolName), ProtocolResourceDefinition.PROPERTIES.getName(), propertyName);
     }
 
-    protected static ModelNode getProtocolRemoveOperation(String stackName, String type) {
-        return Util.createRemoveOperation(getProtocolAddress(stackName, type));
-    }
-
     protected static PathAddress getSubsystemAddress() {
         return PathAddress.pathAddress(JGroupsSubsystemResourceDefinition.PATH);
     }
@@ -173,16 +111,8 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return getProtocolStackAddress(stackName).append(TransportResourceDefinition.pathElement(type));
     }
 
-    protected static PathAddress getTransportPropertyAddress(String stackName, String type, String propertyName) {
-        return getTransportAddress(stackName, type).append(PropertyResourceDefinition.pathElement(propertyName));
-    }
-
     protected static PathAddress getProtocolAddress(String stackName, String type) {
         return getProtocolStackAddress(stackName).append(ProtocolResourceDefinition.pathElement(type));
-    }
-
-    protected static PathAddress getProtocolPropertyAddress(String stackName, String type, String propertyName) {
-        return getProtocolAddress(stackName, type).append(PropertyResourceDefinition.pathElement(propertyName));
     }
 
     protected String getSubsystemXml() throws IOException {

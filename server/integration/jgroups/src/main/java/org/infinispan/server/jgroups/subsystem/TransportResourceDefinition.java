@@ -138,8 +138,6 @@ public class TransportResourceDefinition extends SimpleResourceDefinition {
 
     @Override
     public void registerChildren(ManagementResourceRegistration registration) {
-        registration.registerSubModel(new PropertyResourceDefinition());
-
         for (ThreadPoolResourceDefinition pool : ThreadPoolResourceDefinition.values()) {
             registration.registerSubModel(pool);
         }
