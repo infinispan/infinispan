@@ -206,7 +206,7 @@
       <version.groovy>2.4.8</version.groovy>
       <version.hibernate.core>5.2.11.Final</version.hibernate.core>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
-      <version.hibernate.search>5.8.1.Final</version.hibernate.search>
+      <version.hibernate.search>5.9.0.Final</version.hibernate.search>
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.jboss.logging>3.3.1.Final</version.jboss.logging>

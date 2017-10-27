@@ -310,7 +310,7 @@
 
         <!-- Infinispan/Lucene targeting the latest community release of Hibernate Search which we support -->
         <hibernatesearch-directoryprovide-module
-            slot="for-hibernatesearch-5.8" hibernatesearch.slot="5.8" lucene.slot="5.5" />
+            slot="for-hibernatesearch-5.9" hibernatesearch.slot="5.9" lucene.slot="5.5" />
 
         <!-- Infinispan/Lucene targeting the version of Hibernate Search included in WildFly -->
         <hibernatesearch-directoryprovide-module

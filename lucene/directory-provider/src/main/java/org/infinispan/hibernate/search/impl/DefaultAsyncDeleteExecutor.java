@@ -1,5 +1,6 @@
 package org.infinispan.hibernate.search.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,7 +22,7 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(AsyncDeleteExecutorService.class)
 public class DefaultAsyncDeleteExecutor implements AsyncDeleteExecutorService, Startable, Stoppable {
 
-   private static final Log log = LoggerFactory.make(Log.class);
+   private static final Log log = LoggerFactory.make(Log.class, MethodHandles.lookup());
 
    private ThreadPoolExecutor threadPool;
 
