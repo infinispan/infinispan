@@ -33,7 +33,7 @@ public class StatsCommandHandler extends CacheNameArgumentCommandHandler {
       try {
          ParsedCommandLine parsedCommandLine = ctx.getParsedCommandLine();
          if (!container.isPresent(parsedCommandLine) && parsedCommandLine.getOtherProperties().size() <= 1) {
-            return Arrays.<CommandArgument> asList(container, cacheName);
+            return Arrays.asList(container, cacheName);
          }
       } catch (CommandFormatException e) {
          //ignored
