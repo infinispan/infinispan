@@ -28,7 +28,6 @@ import org.infinispan.hibernate.cache.util.InfinispanMessageLogger;
 import org.hibernate.engine.spi.SessionImplementor;
 
 import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.util.TestTimeService;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.hibernate.testing.TestForIssue;
@@ -37,6 +36,7 @@ import org.infinispan.test.hibernate.cache.util.CacheTestUtil;
 import org.hibernate.testing.junit4.CustomRunner;
 import org.infinispan.AdvancedCache;
 import org.infinispan.test.fwk.TestResourceTracker;
+import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Test;
 
@@ -68,7 +68,7 @@ public class PutFromLoadValidatorUnitTest {
 
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(
 			PutFromLoadValidatorUnitTest.class);
-	private static final TestTimeService TIME_SERVICE = new TestTimeService();
+	private static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
 
 	private Object KEY1 = "KEY1";
 

@@ -19,7 +19,7 @@ import org.infinispan.test.hibernate.cache.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.util.TestTimeService;
+import org.infinispan.util.ControlledTimeService;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +38,7 @@ import static org.junit.Assert.assertNull;
 public class BulkOperationsTest extends SingleNodeTest {
 
    private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(BulkOperationsTest.class);
-   private static final TestTimeService TIME_SERVICE = new AlwaysMoveForwardTimeService();
+   private static final ControlledTimeService TIME_SERVICE = new AlwaysMoveForwardTimeService();
 
    @Rule
    public TestName name = new TestName();
@@ -261,7 +261,7 @@ public class BulkOperationsTest extends SingleNodeTest {
     * the region invalidation timestamp will be in the future and we avoid potential invalid things being added to second level cache.
     * More info can be found in {@link org.infinispan.hibernate.cache.access.FutureUpdateSynchronization}.
     */
-   private static final class AlwaysMoveForwardTimeService extends TestTimeService {
+   private static final class AlwaysMoveForwardTimeService extends ControlledTimeService {
 
       @Override
       public long wallClockTime() {

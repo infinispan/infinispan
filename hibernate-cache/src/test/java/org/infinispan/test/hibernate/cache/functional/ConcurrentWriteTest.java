@@ -29,7 +29,7 @@ import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.infinispan.test.hibernate.cache.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.util.TestTimeService;
+import org.infinispan.util.ControlledTimeService;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -52,7 +52,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 	private static final int THINK_TIME_MILLIS = 10;
 	private static final long LAUNCH_INTERVAL_MILLIS = 10;
 	private static final Random random = new Random();
-	private static final TestTimeService TIME_SERVICE = new TestTimeService();
+	private static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
 
 	/**
 	 * kill switch used to stop all users when one fails

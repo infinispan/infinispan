@@ -22,13 +22,13 @@ import org.infinispan.hibernate.cache.timestamp.ClusteredTimestampsRegionImpl;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.hibernate.cache.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.util.TestTimeService;
+import org.infinispan.util.ControlledTimeService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(CustomRunner.class)
 public class QueryStalenessTest {
-   TestTimeService timeService = new TestTimeService();
+   ControlledTimeService timeService = new ControlledTimeService();
    SessionFactory sf1, sf2;
 
    @BeforeClassOnce

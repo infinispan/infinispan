@@ -31,7 +31,7 @@ import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.infinispan.test.hibernate.cache.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.util.TestTimeService;
+import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Before;
 
@@ -48,7 +48,7 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
    protected static final int WAIT_TIMEOUT = 2000;
-   protected static final TestTimeService TIME_SERVICE = new TestTimeService();
+   protected static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
 
    protected long TIMEOUT;
    protected ExecutorService executor;
