@@ -211,6 +211,15 @@
                    filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-transport-stack.xml" modifyStack="${other.parts}/jgroups-stack.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-l1.xml" modifyInfinispan="${infinispan.parts}/l1.xml" infinispanServerEndpoint="${infinispan.parts}/all-endpoints-clustered.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-partitionhandling0.xml" modifyInfinispan="${infinispan.parts}/partitionhandling.xml"
+                   addPartitionHandlingProtocol="${other.parts}/jgroups-partitionhandling-stack.xml"
+                   addNewJgroupsDiagnosticsSocketBinding="${other.parts}/jgroups-diagnostics-socket-binding-0.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-partitionhandling1.xml" modifyInfinispan="${infinispan.parts}/partitionhandling.xml"
+                   addPartitionHandlingProtocol="${other.parts}/jgroups-partitionhandling-stack.xml"
+                   addNewJgroupsDiagnosticsSocketBinding="${other.parts}/jgroups-diagnostics-socket-binding-1.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-partitionhandling2.xml" modifyInfinispan="${infinispan.parts}/partitionhandling.xml"
+                   addPartitionHandlingProtocol="${other.parts}/jgroups-partitionhandling-stack.xml"
+                   addNewJgroupsDiagnosticsSocketBinding="${other.parts}/jgroups-diagnostics-socket-binding-2.xml"/>
         <transform in="standalone.xml" out="testsuite/rest-sec-basic.xml" modifyInfinispan="${infinispan.parts}/rest-security.xml" filtering="true">
             <rest-sec>
                 <transform-rest-sec cacheContainer="security" in="@{in}"/>
@@ -383,6 +392,7 @@
         <attribute name="addHotrodSocketBinding" default="false"/>
         <attribute name="addNewHotrodSocketBinding" default="false"/>
         <attribute name="addNewRestSocketBinding" default="false"/>
+        <attribute name="addNewJgroupsDiagnosticsSocketBinding" default="false"/>
         <attribute name="removeRestSecurity" default="true"/>
         <attribute name="infinispanServerEndpoint" default="false"/>
         <attribute name="infinispanFile" default="false"/>
@@ -399,6 +409,7 @@
         <attribute name="addSecRealm2" default="false"/>
         <attribute name="addConnection" default="false"/>
         <attribute name="remoteStoreHrVersion" default="false"/>
+        <attribute name="addPartitionHandlingProtocol" default="false"/>
         <element name="jdbc-conf" optional="yes"/>
         <element name="rest-sec" optional="yes"/>
 
@@ -426,11 +437,13 @@
                 <param name="addHotrodSocketBinding" expression="@{addHotrodSocketBinding}"/>
                 <param name="addNewHotrodSocketBinding" expression="@{addNewHotrodSocketBinding}"/>
                 <param name="addNewRestSocketBinding" expression="@{addNewRestSocketBinding}"/>
+                <param name="addNewJgroupsDiagnosticsSocketBinding" expression="@{addNewJgroupsDiagnosticsSocketBinding}"/>
                 <param name="removeRestSecurity" expression="@{removeRestSecurity}"/>
                 <param name="infinispanServerEndpoint" expression="@{infinispanServerEndpoint}"/>
                 <param name="infinispanFile" expression="@{infinispanFile}"/>
                 <param name="trace" expression="${trace}"/>
                 <param name="remoteStoreHrVersion" expression="${hotrod.protocol.version}"/>
+                <param name="addPartitionHandlingProtocol" expression="@{addPartitionHandlingProtocol}"/>
             </xslt>
 
             <jdbc-conf/>

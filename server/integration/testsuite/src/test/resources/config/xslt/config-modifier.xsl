@@ -12,6 +12,7 @@
     <xsl:variable name="nsSecurity">urn:jboss:domain:security:</xsl:variable>
     <xsl:variable name="nsDatasources">urn:jboss:domain:datasources:</xsl:variable>
     <xsl:variable name="nsEndpoint">urn:infinispan:server:endpoint:</xsl:variable>
+    <xsl:variable name="nsModule">urn:jboss:module:</xsl:variable>
 
     <!-- Parameter declarations with defaults set -->
     <xsl:param name="modifyInfinispan">false</xsl:param>
@@ -25,6 +26,7 @@
     <xsl:param name="addHotrodSocketBinding">false</xsl:param>
     <xsl:param name="addNewHotrodSocketBinding">false</xsl:param>
     <xsl:param name="addNewRestSocketBinding">false</xsl:param>
+    <xsl:param name="addNewJgroupsDiagnosticsSocketBinding">false</xsl:param>
     <xsl:param name="removeRestSecurity">true</xsl:param>
     <xsl:param name="infinispanServerEndpoint">false</xsl:param>
     <xsl:param name="infinispanFile">none</xsl:param>
@@ -42,6 +44,7 @@
     <xsl:param name="addConnection">false</xsl:param>
     <xsl:param name="trace">none</xsl:param>
     <xsl:param name="remoteStoreHrVersion">none</xsl:param>
+    <xsl:param name="addPartitionHandlingProtocol">false</xsl:param>
 
     <xsl:template match="node()|@*" name="copynode">
         <xsl:copy>
@@ -319,22 +322,16 @@
     </xsl:template>
 
     <xsl:template match="p:socket-binding[position()=last() and position()!=1]">
+        <xsl:call-template name="copynode"/>
         <xsl:choose>
-            <xsl:when test="$addNewHotrodSocketBinding = 'false' and $addNewRestSocketBinding = 'false'">
-                <xsl:call-template name="copynode"/>
-            </xsl:when>
-            <xsl:when test="$addNewHotrodSocketBinding != 'false' and $addNewRestSocketBinding = 'false'">
-                <xsl:call-template name="copynode"/>
+            <xsl:when test="$addNewHotrodSocketBinding != 'false'">
                 <xsl:copy-of select="document($addNewHotrodSocketBinding)"/>
             </xsl:when>
-            <xsl:when test="$addNewHotrodSocketBinding = 'false' and $addNewRestSocketBinding != 'false'">
-                <xsl:call-template name="copynode"/>
+            <xsl:when test="$addNewRestSocketBinding != 'false'">
                 <xsl:copy-of select="document($addNewRestSocketBinding)"/>
             </xsl:when>
-            <xsl:when test="$addNewHotrodSocketBinding != 'false' and $addNewRestSocketBinding != 'false'">
-                <xsl:call-template name="copynode"/>
-                <xsl:copy-of select="document($addNewRestSocketBinding)"/>
-                <xsl:copy-of select="document($addNewHotrodSocketBinding)"/>
+            <xsl:when test="$addNewJgroupsDiagnosticsSocketBinding != 'false'">
+                <xsl:copy-of select="document($addNewJgroupsDiagnosticsSocketBinding)"/>
             </xsl:when>
         </xsl:choose>
     </xsl:template>
@@ -348,6 +345,15 @@
             </xsl:if>
             <xsl:apply-templates select="node()|@*"/>
         </xsl:copy>
+    </xsl:template>
+
+    <xsl:template match="//*[local-name()='stack' and @name='udp' and starts-with(namespace-uri(), nsJgroups)]">
+        <xsl:if test="$addPartitionHandlingProtocol = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$addPartitionHandlingProtocol != 'false'">
+            <xsl:copy-of select="document($addPartitionHandlingProtocol)"/>
+        </xsl:if>
     </xsl:template>
 
     <!-- matches on the remaining tags and recursively applies templates to their children and copies them to the result -->

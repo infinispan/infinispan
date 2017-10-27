@@ -1,0 +1,24 @@
+        <subsystem xmlns="urn:infinispan:server:core:9.1" >
+            <cache-container
+                name="clustered"
+                default-cache="denyreadwrites">
+                <transport
+                    lock-timeout="240000"/>
+                <distributed-cache
+                    name="denyreadwrites" segments="6" owners="1">
+                    <partition-handling when-split="DENY_READ_WRITES"/>
+                </distributed-cache>
+                <distributed-cache
+                        name="allowreads" segments="6" owners="1">
+                    <partition-handling when-split="ALLOW_READS"/>
+                </distributed-cache>
+                <distributed-cache
+                        name="allowreads_2owners" segments="6" owners="2">
+                    <partition-handling when-split="ALLOW_READS"/>
+                </distributed-cache>
+                <distributed-cache
+                        name="allowreadwrites" segments="6" owners="1">
+                    <partition-handling when-split="ALLOW_READ_WRITES"/>
+                </distributed-cache>
+            </cache-container>
+        </subsystem>
