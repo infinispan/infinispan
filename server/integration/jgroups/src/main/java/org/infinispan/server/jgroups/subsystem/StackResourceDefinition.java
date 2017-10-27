@@ -44,7 +44,6 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
-import org.jboss.dmr.Property;
 
 /**
  * Resource description for the addressable resource /subsystem=jgroups/stack=X
@@ -121,14 +120,6 @@ public class StackResourceDefinition extends SimpleResourceDefinition {
                         }
                     }
                     context.addStep(transportOperation, new ReloadRequiredAddStepHandler(TransportResourceDefinition.ATTRIBUTES), OperationContext.Stage.MODEL);
-
-                    if (transport.hasDefined(ProtocolResourceDefinition.PROPERTIES.getName())) {
-                        for (Property property : operation.get(ProtocolResourceDefinition.PROPERTIES.getName()).asPropertyList()) {
-                            ModelNode propertyOperation = Util.createAddOperation(transportAddress.append(property.getName()));
-                            propertyOperation.set(PropertyResourceDefinition.VALUE.getName()).set(property.getValue());
-                            context.addStep(propertyOperation, new ReloadRequiredAddStepHandler(PropertyResourceDefinition.VALUE), OperationContext.Stage.MODEL);
-                        }
-                    }
                 }
                 if (!protocols.isEmpty()) {
                     for (ModelNode protocol : protocols) {
@@ -142,14 +133,6 @@ public class StackResourceDefinition extends SimpleResourceDefinition {
                             }
                         }
                         context.addStep(protocolOperation, new ReloadRequiredAddStepHandler(ProtocolResourceDefinition.ATTRIBUTES), OperationContext.Stage.MODEL);
-
-                        if (protocol.hasDefined(ProtocolResourceDefinition.PROPERTIES.getName())) {
-                            for (Property property : operation.get(ProtocolResourceDefinition.PROPERTIES.getName()).asPropertyList()) {
-                                ModelNode propertyOperation = Util.createAddOperation(protocolAddress.append(property.getName()));
-                                propertyOperation.set(PropertyResourceDefinition.VALUE.getName()).set(property.getValue());
-                                context.addStep(propertyOperation, new ReloadRequiredAddStepHandler(PropertyResourceDefinition.VALUE), OperationContext.Stage.MODEL);
-                            }
-                        }
                     }
                 }
             }
@@ -175,13 +158,6 @@ public class StackResourceDefinition extends SimpleResourceDefinition {
                 }
             }
             context.addStep(protocolOperation, new ReloadRequiredAddStepHandler(ProtocolResourceDefinition.ATTRIBUTES), OperationContext.Stage.MODEL);
-            if (operation.hasDefined(ProtocolResourceDefinition.PROPERTIES.getName())) {
-                for (Property property : operation.get(ProtocolResourceDefinition.PROPERTIES.getName()).asPropertyList()) {
-                    ModelNode addPropertyOperation = Util.createAddOperation(protocolAddress.append(PropertyResourceDefinition.pathElement(property.getName())));
-                    addPropertyOperation.get(PropertyResourceDefinition.VALUE.getName()).set(property.getValue());
-                    context.addStep(addPropertyOperation, new ReloadRequiredAddStepHandler(PropertyResourceDefinition.VALUE), OperationContext.Stage.MODEL);
-                }
-            }
         };
         registration.registerOperationHandler(legacyAddProtocolOperation, legacyAddProtocolHandler);
 

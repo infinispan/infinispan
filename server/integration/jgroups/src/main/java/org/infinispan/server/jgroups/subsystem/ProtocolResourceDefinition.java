@@ -77,7 +77,7 @@ public class ProtocolResourceDefinition extends SimpleResourceDefinition {
             .setValidator(new ModuleIdentifierValidator(true))
             .build();
 
-    static final SimpleMapAttributeDefinition PROPERTIES = new SimpleMapAttributeDefinition.Builder("properties", true)
+    static final SimpleMapAttributeDefinition PROPERTIES = new SimpleMapAttributeDefinition.Builder(ModelKeys.PROPERTIES, true)
             .setAllowExpression(true)
             .setAttributeMarshaller(AttributeMarshallers.PROPERTY_LIST)
             .setDefaultValue(new ModelNode().setEmptyList())
@@ -99,10 +99,5 @@ public class ProtocolResourceDefinition extends SimpleResourceDefinition {
         for (AttributeDefinition attr : ATTRIBUTES) {
             registration.registerReadWriteAttribute(attr, null, writeHandler);
         }
-    }
-
-    @Override
-    public void registerChildren(ManagementResourceRegistration registration) {
-        registration.registerSubModel(new PropertyResourceDefinition());
     }
 }
