@@ -77,6 +77,12 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
 	}
 
 	@Override
+	public void put(SessionImplementor session, Object key, Object value) throws CacheException {
+		updateLocalCache(key, value);
+		super.put(session, key, value);
+	}
+
+	@Override
 	public void evictAll() throws CacheException {
 		// TODO Is this a valid operation on a timestamps cache?
 		final Transaction tx = suspend();
@@ -128,7 +134,7 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
 	@SuppressWarnings({"unused", "unchecked"})
 	public void nodeModified(CacheEntryModifiedEvent event) {
 		if ( !event.isPre() ) {
-			localCache.put( event.getKey(), event.getValue() );
+			updateLocalCache( event.getKey(), event.getValue() );
 		}
 	}
 
@@ -146,4 +152,14 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
 		localCache.remove( event.getKey() );
 	}
 
+	// TODO: with recent Infinispan we should access the cache directly
+	private void updateLocalCache(Object key, Object value) {
+		localCache.compute(key, (k, v) -> {
+			if (v instanceof Number && value instanceof Number) {
+				return Math.max(((Number) v).longValue(), ((Number) value).longValue());
+			} else {
+				return value;
+			}
+		});
+	}
 }
