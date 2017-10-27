@@ -46,13 +46,13 @@ import org.infinispan.test.hibernate.cache.util.ExpectingInterceptor;
 import org.infinispan.test.hibernate.cache.util.JdbcResourceTransactionMock;
 import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
 import org.infinispan.test.hibernate.cache.util.TestSynchronization;
-import org.infinispan.test.hibernate.cache.util.TestTimeService;
 import org.hibernate.testing.AfterClassOnce;
 import org.hibernate.testing.BeforeClassOnce;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.util.ControlledTimeService;
 import org.junit.After;
 import org.junit.Test;
 import junit.framework.AssertionFailedError;
@@ -87,7 +87,7 @@ public abstract class AbstractRegionAccessStrategyTest<R extends BaseRegion, S e
 	public static final CacheDataDescription CACHE_DATA_DESCRIPTION
 			= new CacheDataDescriptionImpl(true, true, ComparableComparator.INSTANCE, null);
 
-	protected static final TestTimeService TIME_SERVICE = new TestTimeService();
+	protected static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
 
 	protected NodeEnvironment localEnvironment;
 	protected R localRegion;

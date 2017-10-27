@@ -14,7 +14,7 @@ import org.hibernate.stat.SecondLevelCacheStatistics;
 import org.hibernate.stat.Statistics;
 import org.infinispan.test.hibernate.cache.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.util.TestInfinispanRegionFactory;
-import org.infinispan.test.hibernate.cache.util.TestTimeService;
+import org.infinispan.util.ControlledTimeService;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class ReadOnlyTest extends SingleNodeTest {
 	protected static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(ReadOnlyTest.class);
-	protected static final TestTimeService TIME_SERVICE = new TestTimeService();
+	protected static final ControlledTimeService TIME_SERVICE = new ControlledTimeService();
 
 	@Override
 	public List<Object[]> getParameters() {
