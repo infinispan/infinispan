@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.container.test.api.Config;
@@ -52,6 +53,15 @@ public class ITestUtils {
         return new RemoteCacheManager(createConfigBuilder(server.getHotrodEndpoint().getInetAddress().getHostName(),
                 server.getHotrodEndpoint().getPort(), protocolVersion).build());
     }
+
+   public static RemoteCacheManager createInternalCacheManager(RemoteInfinispanServer server) {
+      return createInternalCacheManager(server, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());
+   }
+
+   public static RemoteCacheManager createInternalCacheManager(RemoteInfinispanServer server, String protocolVersion) {
+      return new InternalRemoteCacheManager(createConfigBuilder(server.getHotrodEndpoint().getInetAddress().getHostName(),
+                                                                server.getHotrodEndpoint().getPort(), protocolVersion).build());
+   }
 
     public static ConfigurationBuilder createConfigBuilder(String hostName, int port) {
         return createConfigBuilder(hostName, port, ProtocolVersion.DEFAULT_PROTOCOL_VERSION.toString());

@@ -1,0 +1,26 @@
+<stack name="udp">
+    <transport type="UDP" socket-binding="jgroups-udp" diagnostics-socket-binding="jgroups-diagnostics"/>
+    <protocol type="DISCARD" />
+    <protocol type="PING"/>
+    <protocol type="MERGE3">
+        <property name="min_interval">1000</property>
+        <property name="max_interval">4000</property>
+    </protocol>
+    <protocol type="FD_SOCK" socket-binding="jgroups-udp-fd"/>
+    <protocol type="FD_ALL">
+        <property name="timeout">2000</property>
+        <property name="interval">1000</property>
+    </protocol>
+    <protocol type="VERIFY_SUSPECT">
+        <property name="timeout">1000</property>
+    </protocol>
+    <protocol type="pbcast.NAKACK2"/>
+    <protocol type="UNICAST3"/>
+    <protocol type="pbcast.STABLE"/>
+    <protocol type="pbcast.GMS">
+        <property name="view_ack_collection_timeout">1000</property>
+    </protocol>
+    <protocol type="UFC"/>
+    <protocol type="MFC"/>
+    <protocol type="FRAG3"/>
+</stack>
