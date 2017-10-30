@@ -122,6 +122,32 @@
          </cache-container>
       </replacement>
    </supplement>
+   <supplement name="counters">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="local" default-cache="default">
+            <global-state />
+            <local-cache name="default">
+               <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
+               <memory>
+                  <object size="1000"/>
+               </memory>
+               <file-store passivation="true" path="dc" purge="true" shared="false" />
+            </local-cache>
+            <local-cache name="namedCache">
+               <expiration lifespan="2000"/>
+            </local-cache>
+            <counters>
+                <strong-counter name="c1" initial-value="0"
+                    storage="VOLATILE">
+                    <lower-bound value="0" />
+                </strong-counter>
+                <weak-counter name="c2" initial-value="0" storage="VOLATILE"
+                    concurrency-level="32" />
+            </counters>
+         </cache-container>
+      </replacement>
+   </supplement>
    <supplement name="rocksdb-cs-local">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">

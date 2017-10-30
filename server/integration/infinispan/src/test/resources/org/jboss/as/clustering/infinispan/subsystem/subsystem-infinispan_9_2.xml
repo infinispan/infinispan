@@ -186,6 +186,20 @@
             <indexing index="PRIMARY_OWNER" auto-config="true"/>
             <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
         </distributed-cache>
+        <counters>
+             <strong-counter name="c1" initial-value="0" storage="PERSISTENT"/>
+             <strong-counter name="c2" initial-value="0" storage="VOLATILE">
+                 <lower-bound value="0"/>
+             </strong-counter>
+             <strong-counter name="c3" initial-value="0" storage="PERSISTENT">
+                 <upper-bound value="5"/>
+             </strong-counter>
+             <strong-counter name="c4" initial-value="0" storage="VOLATILE">
+                 <lower-bound value="0"/>
+                 <upper-bound value="10"/>
+             </strong-counter>
+             <weak-counter name="c5" initial-value="5" storage="PERSISTENT" concurrency-level="1"/>
+        </counters>
     </cache-container>
     <cache-container name="secure-container" default-cache="default">
         <security>

@@ -185,6 +185,10 @@
             <maven-resource group="org.infinispan" artifact="infinispan-tree" />
         </module-def>
 
+        <module-def name="org.infinispan.counter" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-clustered-counter" />
+        </module-def>
+
         <module-def name="org.jboss.marshalling" slot="${infinispan.slot}">
             <maven-resource group="org.jboss.marshalling" artifact="jboss-marshalling-osgi" />
         </module-def>

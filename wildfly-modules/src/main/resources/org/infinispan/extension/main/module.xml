@@ -15,6 +15,7 @@
         <module name="org.infinispan.persistence.rocksdb" services="import" slot="${slot}"/>
         <module name="org.infinispan.hotrod.client" optional="true" slot="${slot}"/>
         <module name="org.infinispan.cli.interpreter" services="import" slot="${slot}"/>
+        <module name="org.infinispan.counter" services="import" slot="${slot}"/>
         <module name="org.infinispan.server" services="import" slot="${slot}"/>
         <module name="org.infinispan.server.commons" slot="${slot}"/>
         <module name="org.infinispan.server.event-logger" services="import" slot="${slot}"/>

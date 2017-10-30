@@ -143,6 +143,11 @@
                     </xs:annotation>
                 </xs:element>
             </xs:choice>
+            <xs:element name="counters" type="tns:counters" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>Defines counters.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required">
             <xs:annotation>
@@ -369,6 +374,121 @@
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="counters">
+        <xs:sequence>
+            <xs:element name="strong-counter" type="tns:strong-counter"
+                minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines strong counter
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="weak-counter" type="tns:weak-counter"
+                minOccurs="0" maxOccurs="unbounded">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines strong counter
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="num-owners" type="xs:int" default="${Server.CacheContainerCounters.num_owners}" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the number of counter’s copies to keep
+                    cluster-wide. It must be positive and its default value is 2.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="reliability" type="tns:counter-availability" default="${Server.CacheContainerCounters.reliability}" use="optional">
+            <xs:annotation>
+                <xs:documentation>Sets the counter’s update behavior in a network
+                    partition. Default value is AVAILABLE
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="strong-counter">
+        <xs:complexContent>
+            <xs:extension base="tns:counter">
+                <xs:sequence>
+                    <xs:element name="lower-bound" type="tns:lower-bound"
+                        minOccurs="0" maxOccurs="1">
+                        <xs:annotation>
+                            <xs:documentation>The lower bound for this
+                                strong counter
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element name="upper-bound" type="tns:upper-bound"
+                        minOccurs="0" maxOccurs="1">
+                        <xs:annotation>
+                            <xs:documentation>The upper bound for this
+                                strong counter
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="weak-counter">
+        <xs:complexContent>
+            <xs:extension base="tns:counter">
+                <xs:attribute name="concurrency-level" type="xs:long"
+                    default="${Server.WeakCounter.concurrency-level}">
+                    <xs:annotation>
+                        <xs:documentation>Sets the number of concurrent
+                            updates. Its value
+                            must be positive and the default value is 64.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="counter" abstract="true">
+        <xs:attribute name="name" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>Counter name</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="initial-value" type="xs:long" default="${Server.Counter.initial-value}">
+            <xs:annotation>
+                <xs:documentation>Counter initial value. Default is 0
+                    (zero)
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="storage" type="tns:counter-storage" default="${Server.Counter.storage}">
+            <xs:annotation>
+                <xs:documentation>Sets the counter’s behavior when the
+                    cluster is shutdown and restarted. Default value is
+                    VOLATILE.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="lower-bound">
+        <xs:attribute name="value" type="xs:long">
+            <xs:annotation>
+                <xs:documentation>Counter lower bound</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="upper-bound">
+        <xs:attribute name="value" type="xs:long">
+            <xs:annotation>
+                <xs:documentation>Counter upper bound</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="global-state-path">
@@ -1711,6 +1831,43 @@
             </xs:enumeration>
         </xs:restriction>
     </xs:simpleType>
+
+	<xs:simpleType name="counter-availability">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="AVAILABLE">
+				<xs:annotation>
+					<xs:documentation>All partitions are able to read and update the
+						counter’s value.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="CONSISTENT">
+				<xs:annotation>
+					<xs:documentation>Only the primary partition (majority of nodes)
+						will be able to read and update the counter’s value. The remaining
+						partitions can only read its value.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="counter-storage">
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="VOLATILE">
+				<xs:annotation>
+					<xs:documentation>The counter’s value is only available in memory.
+						The value will be lost when a cluster is shutdown.
+					</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="PERSISTENT">
+				<xs:annotation>
+					<xs:documentation>The counter’s value is stored in a private and
+						local persistent store. The value is kept when the cluster is
+						shutdown and restored after a restart.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
 
     <xs:simpleType name="indexing">
         <xs:restriction base="xs:token">

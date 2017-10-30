@@ -165,6 +165,9 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 processCacheConfiguration(writer, container, configurations, ModelKeys.REPLICATED_CACHE);
                 processCacheConfiguration(writer, container, configurations, ModelKeys.DISTRIBUTED_CACHE);
 
+                // counters
+                processCounterConfigurations(writer, container);
+
                 writer.writeEndElement();
             }
         }
@@ -204,7 +207,69 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         }
     }
 
-    private void processCacheConfiguration(XMLExtendedStreamWriter writer, ModelNode container, ModelNode configurations, String cacheType)
+   private void processCounterConfigurations(XMLExtendedStreamWriter writer, ModelNode container)
+         throws XMLStreamException {
+
+      if (container.hasDefined(ModelKeys.COUNTERS)) {
+         writer.writeStartElement(Element.COUNTERS.getLocalName());
+
+         //counters element and its attributes
+         ModelNode counterRoot = container.get(ModelKeys.COUNTERS);
+         this.writeOptional(writer, Attribute.RELIABILITY, counterRoot, ModelKeys.RELIABILITY);
+         this.writeOptional(writer, Attribute.NUM_OWNERS, counterRoot, ModelKeys.NUM_OWNERS);
+
+         //all counters configurations
+         ModelNode counterConfigurations = counterRoot.get(ModelKeys.COUNTERS_NAME);
+         processStrongCounterConfigurations(writer, counterConfigurations.get(ModelKeys.STRONG_COUNTER));
+         processWeakCounterConfigurations(writer, counterConfigurations.get(ModelKeys.WEAK_COUNTER));
+         writer.writeEndElement();
+      }
+   }
+
+   private void processWeakCounterConfigurations(XMLExtendedStreamWriter writer, ModelNode configurations) throws XMLStreamException {
+      if (configurations != null &&  configurations.isDefined()) {
+         for (Property e : configurations.asPropertyList()) {
+            processWeakCounterConfiguration(writer, e.getValue());
+         }
+      }
+   }
+
+   private void processStrongCounterConfigurations(XMLExtendedStreamWriter writer, ModelNode configurations) throws XMLStreamException {
+      if (configurations != null && configurations.isDefined()) {
+         for (Property e : configurations.asPropertyList()) {
+            processStrongCounterConfiguration(writer, e.getValue());
+         }
+      }
+   }
+
+   private void processWeakCounterConfiguration(XMLExtendedStreamWriter writer, ModelNode weakConfiguration) throws XMLStreamException {
+      writer.writeStartElement(Element.WEAK_COUNTER.getLocalName());
+      this.writeRequired(writer, Attribute.NAME, weakConfiguration, ModelKeys.NAME);
+      this.writeOptional(writer, Attribute.INITIAL_VALUE, weakConfiguration, ModelKeys.INITIAL_VALUE);
+      this.writeOptional(writer, Attribute.STORAGE, weakConfiguration, ModelKeys.STORAGE);
+      this.writeOptional(writer, Attribute.CONCURRENCY_LEVEL, weakConfiguration, ModelKeys.CONCURRENCY_LEVEL);
+      writer.writeEndElement();
+   }
+
+   private void processStrongCounterConfiguration(XMLExtendedStreamWriter writer, ModelNode strongConfiguration) throws XMLStreamException {
+      writer.writeStartElement(Element.STRONG_COUNTER.getLocalName());
+      this.writeRequired(writer, Attribute.NAME, strongConfiguration, ModelKeys.NAME);
+      this.writeOptional(writer, Attribute.INITIAL_VALUE, strongConfiguration, ModelKeys.INITIAL_VALUE);
+      this.writeOptional(writer, Attribute.STORAGE, strongConfiguration, ModelKeys.STORAGE);
+      if (strongConfiguration.hasDefined(ModelKeys.LOWER_BOUND)) {
+         writer.writeStartElement(Element.LOWER_BOUND.getLocalName());
+         this.writeRequired(writer, Attribute.VALUE, strongConfiguration, ModelKeys.LOWER_BOUND);
+         writer.writeEndElement();
+      }
+      if (strongConfiguration.hasDefined(ModelKeys.UPPER_BOUND)) {
+         writer.writeStartElement(Element.UPPER_BOUND.getLocalName());
+         this.writeRequired(writer, Attribute.VALUE, strongConfiguration, ModelKeys.UPPER_BOUND);
+         writer.writeEndElement();
+      }
+      writer.writeEndElement();
+   }
+
+   private void processCacheConfiguration(XMLExtendedStreamWriter writer, ModelNode container, ModelNode configurations, String cacheType)
             throws XMLStreamException {
         String cacheConfigurationType = cacheType + ModelKeys.CONFIGURATION_SUFFIX;
         Map<String, List<String>> configurationMappings = new HashMap<>();
