@@ -7,6 +7,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.distribution.group.Group;
 import org.infinispan.distribution.group.Grouper;
 
@@ -16,7 +17,7 @@ import org.infinispan.distribution.group.Grouper;
  * @author pmuir
  *
  */
-public class GroupsConfiguration {
+public class GroupsConfiguration implements Matchable<GroupsConfiguration> {
    public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder("groupers", null, (Class<List<Grouper<?>>>)(Class<?>)List.class).initializer(new AttributeInitializer<List<Grouper<?>>>() {
       @Override

@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * Controls whether when stored in memory, keys and values are stored as references to their original objects, or in
@@ -17,7 +18,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @deprecated Use {@link MemoryConfiguration} instead
  */
 @Deprecated
-public class StoreAsBinaryConfiguration {
+public class StoreAsBinaryConfiguration implements Matchable<StoreAsBinaryConfiguration> {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).autoPersist(false).build();
    public static final AttributeDefinition<Boolean> STORE_KEYS_AS_BINARY = AttributeDefinition.builder("keys", true).immutable().build();
    public static final AttributeDefinition<Boolean> STORE_VALUES_AS_BINARY = AttributeDefinition.builder("values", true).immutable().build();

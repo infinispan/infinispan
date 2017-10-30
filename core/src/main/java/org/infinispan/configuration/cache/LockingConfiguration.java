@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
@@ -13,7 +14,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * @author pmuir
  *
  */
-public class LockingConfiguration {
+public class LockingConfiguration implements Matchable<LockingConfiguration> {
    public static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder("concurrencyLevel", 32).immutable().build();
    public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder("isolationLevel", IsolationLevel.REPEATABLE_READ).xmlName("isolation").immutable().build();
    public static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder("lockAcquisitionTimeout", TimeUnit.SECONDS.toMillis(10)).xmlName("acquire-timeout").build();

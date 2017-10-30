@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * Determines whether statistics are gather and reported.
@@ -10,7 +11,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author pmuir
  *
  */
-public class JMXStatisticsConfiguration {
+public class JMXStatisticsConfiguration implements Matchable<JMXStatisticsConfiguration> {
 
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).build();
    public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder("available", true).build();

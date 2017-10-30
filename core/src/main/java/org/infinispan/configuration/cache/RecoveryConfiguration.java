@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * Defines recovery configuration for the cache.
@@ -10,7 +11,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author pmuir
  *
  */
-public class RecoveryConfiguration {
+public class RecoveryConfiguration implements Matchable<RecoveryConfiguration> {
    public static final String DEFAULT_RECOVERY_INFO_CACHE = "__recoveryInfoCacheName__";
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public static final AttributeDefinition<String> RECOVERY_INFO_CACHE_NAME = AttributeDefinition.builder("recoveryInfoCacheName", DEFAULT_RECOVERY_INFO_CACHE)

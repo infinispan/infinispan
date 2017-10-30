@@ -5,6 +5,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.eviction.EvictionType;
 
 /**
@@ -12,7 +13,7 @@ import org.infinispan.eviction.EvictionType;
  *
  * @author William Burns
  */
-public class MemoryConfiguration {
+public class MemoryConfiguration implements Matchable<MemoryConfiguration> {
    public static final AttributeDefinition<Integer> ADDRESS_COUNT = AttributeDefinition.builder("address-count", 1_048_576).build();
    public static final AttributeDefinition<StorageType> STORAGE_TYPE = AttributeDefinition
          .builder("storage", StorageType.OBJECT).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
@@ -80,6 +81,31 @@ public class MemoryConfiguration {
 
    public AttributeSet attributes() {
       return attributes;
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      MemoryConfiguration other = (MemoryConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      return result;
    }
 
    @Override

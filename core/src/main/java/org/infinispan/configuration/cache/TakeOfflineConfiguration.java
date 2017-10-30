@@ -3,12 +3,13 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * @author Mircea Markus
  * @since 5.2
  */
-public class TakeOfflineConfiguration {
+public class TakeOfflineConfiguration implements Matchable<TakeOfflineConfiguration> {
    public static final AttributeDefinition<Integer> AFTER_FAILURES = AttributeDefinition.builder("after-failures", 0).immutable().build();
    public static final AttributeDefinition<Long> MIN_TIME_TO_WAIT = AttributeDefinition.builder("min-wait", 0l).immutable().build();
    static AttributeSet attributeDefinitionSet() {

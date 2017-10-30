@@ -19,7 +19,7 @@ import org.infinispan.commons.util.Util;
  * @author Tristan Tarrant
  * @since 7.2
  */
-public final class Attribute<T> implements Cloneable {
+public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
    private final AttributeDefinition<T> definition;
    protected T value;
    private boolean protect;
@@ -182,6 +182,22 @@ public final class Attribute<T> implements Cloneable {
             return false;
       } else if (!value.equals(other.value))
          return false;
+      return true;
+   }
+
+   /**
+    * Compares this attribute to another attribute taking into account the {@link AttributeDefinition#isLocal()} flag.
+    * If the attribute is global, then this method will return true only if the values are identical.
+    * If the attribute is local, then this method will return true even if the values don't match.
+    * Essentially, this method only ensures that the attribute definitions are equals.
+    * @param other
+    * @return
+    */
+   public boolean matches(Attribute<?> other) {
+      if (!this.definition.equals(other.definition))
+         return false;
+      if (!this.definition.isLocal())
+         return value.equals(other.value);
       return true;
    }
 

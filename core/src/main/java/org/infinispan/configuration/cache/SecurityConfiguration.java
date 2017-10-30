@@ -1,12 +1,14 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.attributes.Matchable;
+
 /**
  * SecurityConfiguration.
  *
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class SecurityConfiguration {
+public class SecurityConfiguration implements Matchable<SecurityConfiguration> {
 
    private final AuthorizationConfiguration authorization;
 

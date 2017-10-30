@@ -5,6 +5,7 @@ import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.persistence.file.SingleFileStore;
 
 /**
@@ -15,8 +16,8 @@ import org.infinispan.persistence.file.SingleFileStore;
  */
 @BuiltBy(SingleFileStoreConfigurationBuilder.class)
 @ConfigurationFor(SingleFileStore.class)
-public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
-   public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-SingleFileStore").immutable().xmlName("path").build();
+public class SingleFileStoreConfiguration extends AbstractStoreConfiguration implements Matchable<SingleFileStoreConfiguration> {
+   public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-SingleFileStore").immutable().xmlName("path").local(true).build();
    public static final AttributeDefinition<Integer> MAX_ENTRIES = AttributeDefinition.builder("maxEntries", -1).immutable().build();
    public static final AttributeDefinition<Float> FRAGMENTATION_FACTOR = AttributeDefinition.builder("fragmentationFactor", 0.75f).immutable().build();
    public static AttributeSet attributeDefinitionSet() {

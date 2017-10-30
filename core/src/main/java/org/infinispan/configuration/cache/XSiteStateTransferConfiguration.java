@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * Configuration needed for State Transfer between different sites.
@@ -12,7 +13,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class XSiteStateTransferConfiguration {
+public class XSiteStateTransferConfiguration implements Matchable<XSiteStateTransferConfiguration> {
    public static final int DEFAULT_CHUNK_SIZE = 512;
    public static final long DEFAULT_TIMEOUT = TimeUnit.MINUTES.toMillis(20);
    public static final int DEFAULT_MAX_RETRIES = 30;

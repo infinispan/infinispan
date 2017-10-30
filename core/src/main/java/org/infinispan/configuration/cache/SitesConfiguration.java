@@ -10,12 +10,13 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
-public class SitesConfiguration {
+public class SitesConfiguration implements Matchable<SitesConfiguration> {
    public static final AttributeDefinition<Boolean> DISABLE_BACKUPS = AttributeDefinition.builder("disable", false).immutable().build();
    public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("backup-sites-in-use", null, (Class<Set<String>>)(Class<?>)Set.class)
          .initializer(new AttributeInitializer<Set<String>>() {

@@ -28,17 +28,22 @@ public final class AttributeDefinition<T> {
    private final T defaultValue;
    private final boolean immutable;
    private final boolean autoPersist;
+   private final boolean local;
    private final AttributeCopier copier;
    private final AttributeInitializer<? extends T> initializer;
    private final AttributeValidator<? super T> validator;
    private final Class<T> type;
 
-   AttributeDefinition(String name, String xmlName, T initialValue, Class<T> type, boolean immutable, boolean autoPersist, AttributeCopier copier, AttributeValidator<? super T> validator, AttributeInitializer<? extends T> initializer) {
+   AttributeDefinition(String name, String xmlName, T initialValue, Class<T> type,
+                       boolean immutable, boolean autoPersist, boolean local,
+                       AttributeCopier copier, AttributeValidator<? super T> validator,
+                       AttributeInitializer<? extends T> initializer) {
       this.name = name;
       this.xmlName = xmlName;
       this.defaultValue = initialValue;
       this.immutable = immutable;
       this.autoPersist = autoPersist;
+      this.local = local;
       this.copier = copier;
       this.initializer = initializer;
       this.validator = validator;
@@ -67,6 +72,10 @@ public final class AttributeDefinition<T> {
 
    public boolean isAutoPersist() {
       return autoPersist;
+   }
+
+   public boolean isLocal() {
+      return local;
    }
 
    public AttributeCopier copier() {
@@ -110,6 +119,7 @@ public final class AttributeDefinition<T> {
 
       private boolean immutable = false;
       private boolean autoPersist = true;
+      private boolean local = false;
       private String xmlName;
       private AttributeCopier copier = null;
       private AttributeInitializer<? extends T> initializer;
@@ -142,6 +152,11 @@ public final class AttributeDefinition<T> {
          return this;
       }
 
+      public Builder<T> local(boolean local) {
+         this.local = local;
+         return this;
+      }
+
       public Builder<T> validator(AttributeValidator<? super T> validator) {
          this.validator = validator;
          return this;
@@ -153,7 +168,7 @@ public final class AttributeDefinition<T> {
       }
 
       public AttributeDefinition<T> build() {
-         return new AttributeDefinition<T>(name, xmlName == null ? Util.xmlify(name) : xmlName, defaultValue, type, immutable, autoPersist, copier, validator, initializer);
+         return new AttributeDefinition<T>(name, xmlName == null ? Util.xmlify(name) : xmlName, defaultValue, type, immutable, autoPersist, local, copier, validator, initializer);
       }
    }
 
