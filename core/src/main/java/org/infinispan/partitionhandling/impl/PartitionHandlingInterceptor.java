@@ -173,6 +173,14 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
+
+      // Don't send a 2PC prepare at all if the cache is in degraded mode
+      if (partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE &&
+            !command.isOnePhaseCommit() && ctx.hasModifications()) {
+         for (Object key : ctx.getAffectedKeys()) {
+            partitionHandlingManager.checkWrite(key);
+         }
+      }
       return invokeNextThenAccept(ctx, command, postTxCommandCheck);
    }
 
@@ -186,7 +194,9 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
    protected void postTxCommandCheck(InvocationContext rCtx, VisitableCommand rCommand, Object rv) {
       TxInvocationContext ctx = (TxInvocationContext) rCtx;
-      if (ctx.hasModifications() && partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE && !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction())) {
+      if (partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE &&
+            !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction()) &&
+            ctx.hasModifications()) {
          for (Object key : ctx.getAffectedKeys()) {
             partitionHandlingManager.checkWrite(key);
          }

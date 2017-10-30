@@ -67,6 +67,16 @@ public class Exceptions {
       assertException(exceptionClass, t.getCause().getCause());
    }
 
+   public static void assertException(Class<? extends Throwable> wrapperExceptionClass3,
+                                      Class<? extends Throwable> wrapperExceptionClass2,
+                                      Class<? extends Throwable> wrapperExceptionClass,
+                                      Class<? extends Throwable> exceptionClass, Throwable t) {
+      assertException(wrapperExceptionClass3, t);
+      assertException(wrapperExceptionClass2, t.getCause());
+      assertException(wrapperExceptionClass, t.getCause().getCause());
+      assertException(exceptionClass, t.getCause().getCause().getCause());
+   }
+
    public static void expectException(Class<? extends Throwable> exceptionClass, String messageRegex,
          ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);
