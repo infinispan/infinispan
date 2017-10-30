@@ -8,8 +8,9 @@ import java.util.Map;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
-public class Configuration {
+public class Configuration implements Matchable<Configuration> {
    public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder("simpleCache", false).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
@@ -334,6 +335,11 @@ public class Configuration {
             return false;
       } else if (!lockingConfiguration.equals(other.lockingConfiguration))
          return false;
+      if (memoryConfiguration == null) {
+         if (other.memoryConfiguration != null)
+            return false;
+      } else if (!memoryConfiguration.equals(other.memoryConfiguration))
+         return false;
       if (moduleConfiguration == null) {
          if (other.moduleConfiguration != null)
             return false;
@@ -375,5 +381,49 @@ public class Configuration {
       } else if (!versioningConfiguration.equals(other.versioningConfiguration))
          return false;
       return true;
+   }
+
+   @Override
+   public boolean matches(Configuration other) {
+      if (!clusteringConfiguration.matches(other.clusteringConfiguration))
+         return false;
+      if (!compatibilityConfiguration.matches(other.compatibilityConfiguration))
+         return false;
+      if (!customInterceptorsConfiguration.matches(other.customInterceptorsConfiguration))
+         return false;
+      if (!dataContainerConfiguration.matches(other.dataContainerConfiguration))
+         return false;
+      if (!deadlockDetectionConfiguration.matches(other.deadlockDetectionConfiguration))
+         return false;
+      if (!evictionConfiguration.matches(other.evictionConfiguration))
+         return false;
+      if (!expirationConfiguration.matches(other.expirationConfiguration))
+         return false;
+      if (!indexingConfiguration.matches(other.indexingConfiguration))
+         return false;
+      if (!invocationBatchingConfiguration.matches(other.invocationBatchingConfiguration))
+         return false;
+      if (!jmxStatisticsConfiguration.matches(other.jmxStatisticsConfiguration))
+         return false;
+      if (!lockingConfiguration.matches(other.lockingConfiguration))
+         return false;
+      if (!memoryConfiguration.matches(other.memoryConfiguration))
+         return false;
+      if (!persistenceConfiguration.matches(other.persistenceConfiguration))
+         return false;
+      if (!securityConfiguration.matches(other.securityConfiguration))
+         return false;
+      if (!sitesConfiguration.matches(other.sitesConfiguration))
+         return false;
+      if (!storeAsBinaryConfiguration.matches(other.storeAsBinaryConfiguration))
+         return false;
+      if (!transactionConfiguration.matches(other.transactionConfiguration))
+         return false;
+      if (!unsafeConfiguration.matches(other.unsafeConfiguration))
+         return false;
+      if (!versioningConfiguration.matches(other.versioningConfiguration))
+         return false;
+
+      return attributes.matches(other.attributes);
    }
 }

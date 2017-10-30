@@ -5,12 +5,13 @@ import java.util.List;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * Configuration for stores.
  *
  */
-public class PersistenceConfiguration {
+public class PersistenceConfiguration implements Matchable<PersistenceConfiguration> {
    public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder("passivation", false).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(PersistenceConfiguration.class, PASSIVATION);

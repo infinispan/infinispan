@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -20,7 +21,7 @@ import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLooku
  * @author Pedro Ruivo
  *
  */
-public class TransactionConfiguration {
+public class TransactionConfiguration implements Matchable<TransactionConfiguration> {
    public static final AttributeDefinition<Boolean> AUTO_COMMIT = AttributeDefinition.builder("auto-commit", true).immutable().build();
    public static final AttributeDefinition<Long> CACHE_STOP_TIMEOUT = AttributeDefinition.builder("stop-timeout", TimeUnit.SECONDS.toMillis(30)).build();
    public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder("locking", LockingMode.OPTIMISTIC).build();

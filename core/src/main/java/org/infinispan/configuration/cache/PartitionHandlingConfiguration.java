@@ -2,6 +2,7 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicies;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -12,7 +13,7 @@ import org.infinispan.partitionhandling.PartitionHandling;
  * @author Mircea Markus
  * @since 7.0
  */
-public class PartitionHandlingConfiguration {
+public class PartitionHandlingConfiguration implements Matchable<PartitionHandlingConfiguration> {
 
    @Deprecated
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable()

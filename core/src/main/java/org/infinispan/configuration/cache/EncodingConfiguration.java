@@ -2,12 +2,14 @@ package org.infinispan.configuration.cache;
 
 import java.util.Objects;
 
+import org.infinispan.commons.configuration.attributes.Matchable;
+
 /**
  * Controls encoding configuration for keys and values in the cache.
  *
  * @since 9.2
  */
-public final class EncodingConfiguration {
+public final class EncodingConfiguration implements Matchable<EncodingConfiguration> {
 
    private ContentTypeConfiguration keyDataType, valueDataType;
 

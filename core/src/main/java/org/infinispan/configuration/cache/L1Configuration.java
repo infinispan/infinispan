@@ -5,13 +5,14 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * Configures the L1 cache behavior in 'distributed' caches instances. In any other cache modes,
  * this element is ignored.
  */
 
-public class L1Configuration {
+public class L1Configuration implements Matchable<L1Configuration> {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Integer> INVALIDATION_THRESHOLD = AttributeDefinition.builder("invalidationThreshold", 0).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Long> LIFESPAN = AttributeDefinition.builder("lifespan", TimeUnit.MINUTES.toMillis(10)).xmlName("l1-lifespan").immutable().build();

@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
@@ -14,7 +15,7 @@ import org.infinispan.util.logging.LogFactory;
  * @deprecated Use {@link MemoryConfiguration} instead
  */
 @Deprecated
-public class EvictionConfiguration {
+public class EvictionConfiguration implements Matchable<EvictionConfiguration> {
    static final Log log = LogFactory.getLog(EvictionConfiguration.class);
    public static final AttributeDefinition<Long> SIZE  = AttributeDefinition.builder("size", -1l).build();
    public static final AttributeDefinition<EvictionType> TYPE  = AttributeDefinition.builder("type", EvictionType.COUNT).build();

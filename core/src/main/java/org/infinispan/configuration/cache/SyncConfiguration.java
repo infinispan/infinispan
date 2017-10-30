@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * If configured all communications are synchronous, in that whenever a thread sends a message sent
@@ -14,7 +15,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @deprecated Since 9.0, the {@code replTimeout} attribute is now {@code ClusteringConfiguration.remoteTimeout}.
  */
 @Deprecated
-public class SyncConfiguration {
+public class SyncConfiguration implements Matchable<SyncConfiguration> {
 
    /**
     * @deprecated Since 9.0, replaced with {@link ClusteringConfiguration#REMOTE_TIMEOUT}

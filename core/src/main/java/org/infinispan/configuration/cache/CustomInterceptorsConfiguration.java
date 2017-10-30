@@ -3,12 +3,14 @@ package org.infinispan.configuration.cache;
 import java.util.Collections;
 import java.util.List;
 
+import org.infinispan.commons.configuration.attributes.Matchable;
+
 /**
  * Configures custom interceptors to be added to the cache.
  *
  * @author pmuir
  */
-public class CustomInterceptorsConfiguration {
+public class CustomInterceptorsConfiguration implements Matchable<CustomInterceptorsConfiguration> {
 
    private List<InterceptorConfiguration> interceptors;
 

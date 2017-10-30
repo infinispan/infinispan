@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * This configuration element controls whether entries are versioned. Versioning is necessary, for example, when
@@ -10,7 +11,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @deprecated since 9.0. Infinispan automatically enable versioning when needed.
  */
 @Deprecated
-public class VersioningConfiguration {
+public class VersioningConfiguration implements Matchable<VersioningConfiguration> {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", true).immutable().autoPersist(false).build();
    public static final AttributeDefinition<VersioningScheme> SCHEME = AttributeDefinition.builder("scheme", VersioningScheme.SIMPLE).immutable().build();
 

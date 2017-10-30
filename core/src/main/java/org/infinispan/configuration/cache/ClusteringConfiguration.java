@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 
 /**
@@ -13,7 +14,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author pmuir
  *
  */
-public class ClusteringConfiguration {
+public class ClusteringConfiguration implements Matchable<ClusteringConfiguration> {
    public static final AttributeDefinition<CacheMode> CACHE_MODE = AttributeDefinition.builder("cacheMode",  CacheMode.LOCAL).immutable().build();
    public static final AttributeDefinition<Long> REMOTE_TIMEOUT =
          AttributeDefinition.builder("remoteTimeout", TimeUnit.SECONDS.toMillis(15)).build();

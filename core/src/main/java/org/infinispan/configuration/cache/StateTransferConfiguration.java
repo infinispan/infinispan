@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * Configures how state is retrieved when a new cache joins the cluster.
@@ -12,7 +13,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  *
  * @since 5.1
  */
-public class StateTransferConfiguration {
+public class StateTransferConfiguration implements Matchable<StateTransferConfiguration> {
    public static final AttributeDefinition<Boolean> AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder("awaitInitialTransfer", true).immutable().build();
    public static final AttributeDefinition<Boolean> FETCH_IN_MEMORY_STATE = AttributeDefinition.builder("fetchInMemoryState", true).xmlName("enabled").immutable().build();
    public static final AttributeDefinition<Long> TIMEOUT = AttributeDefinition.builder("timeout", TimeUnit.MINUTES.toMillis(4)).immutable().build();

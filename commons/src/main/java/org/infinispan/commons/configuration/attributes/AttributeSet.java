@@ -19,7 +19,7 @@ import org.infinispan.commons.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 7.2
  */
-public class AttributeSet implements AttributeListener<Object> {
+public class AttributeSet implements AttributeListener<Object>, Matchable<AttributeSet> {
    private static final Log log = LogFactory.getLog(AttributeSet.class);
    private final Class<?> klass;
    private final String name;
@@ -266,6 +266,25 @@ public class AttributeSet implements AttributeListener<Object> {
             return false;
       } else if (!attributes.equals(other.attributes))
          return false;
+      return true;
+   }
+
+   public boolean matches(AttributeSet other) {
+      if (other.attributes.size() != attributes.size())
+         return false;
+      Iterator<Map.Entry<String, Attribute<?>>> i = attributes.entrySet().iterator();
+      while (i.hasNext()) {
+         Map.Entry<String, Attribute<?>> e = i.next();
+         String key = e.getKey();
+         Attribute<?> value = e.getValue();
+         if (value == null) {
+            if (!(other.attributes.get(key)==null && other.attributes.containsKey(key)))
+               return false;
+         } else {
+            if (!value.matches(other.attributes.get(key)))
+               return false;
+         }
+      }
       return true;
    }
 

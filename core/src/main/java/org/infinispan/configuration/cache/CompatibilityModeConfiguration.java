@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.commons.marshall.Marshaller;
 
 /**
@@ -11,7 +12,7 @@ import org.infinispan.commons.marshall.Marshaller;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public final class CompatibilityModeConfiguration {
+public final class CompatibilityModeConfiguration implements Matchable<CompatibilityModeConfiguration> {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class).immutable().build();
    static AttributeSet attributeDefinitionSet() {

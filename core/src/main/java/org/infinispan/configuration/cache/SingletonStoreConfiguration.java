@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.Matchable;
 
 /**
  * SingletonStore is a delegating cache store used for situations when only one instance in a
@@ -17,7 +18,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * then a shared store should be used instead, as this only performs store writes at a key's primary owner.
  */
 @Deprecated
-public class SingletonStoreConfiguration {
+public class SingletonStoreConfiguration implements Matchable<SingletonStoreConfiguration> {
    public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    public final static AttributeDefinition<Long> PUSH_STATE_TIMEOUT = AttributeDefinition.builder("push-state-timeout", TimeUnit.SECONDS.toMillis(10)).immutable().build();
    public final static AttributeDefinition<Boolean> PUSH_STATE_WHEN_COORDINATOR = AttributeDefinition.builder("push-state-when-coordinator", true).immutable().build();
