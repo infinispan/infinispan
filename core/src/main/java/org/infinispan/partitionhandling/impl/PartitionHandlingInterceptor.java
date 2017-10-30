@@ -153,6 +153,14 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      // Don't send a 2PC prepare at all if the cache is in degraded mode
+      if (partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE &&
+            !command.isOnePhaseCommit() && ctx.hasModifications()) {
+         for (Object key : ctx.getAffectedKeys()) {
+            partitionHandlingManager.checkWrite(key);
+         }
+      }
+
       Object result = super.visitPrepareCommand(ctx, command);
       if (ctx.isOriginLocal()) {
          postTxCommandCheck(ctx);
@@ -170,7 +178,9 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    protected void postTxCommandCheck(TxInvocationContext ctx) {
-      if (ctx.hasModifications() && partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE && !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction())) {
+      if (partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE &&
+            !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction()) &&
+            ctx.hasModifications()) {
          for (Object key : ctx.getAffectedKeys()) {
             partitionHandlingManager.checkWrite(key);
          }
