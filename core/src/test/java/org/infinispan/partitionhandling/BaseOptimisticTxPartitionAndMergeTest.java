@@ -1,18 +1,19 @@
 package org.infinispan.partitionhandling;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
+import javax.transaction.RollbackException;
 import javax.transaction.Status;
+import javax.transaction.xa.XAException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.Exceptions;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -66,9 +67,14 @@ public abstract class BaseOptimisticTxPartitionAndMergeTest extends BaseTxPartit
       filterCollection.unblock();
 
       try {
-         assertEquals(txFail ? Status.STATUS_ROLLEDBACK : Status.STATUS_COMMITTED, (int) put.get());
+         Integer txStatus = put.get(10, TimeUnit.SECONDS);
+         assertEquals(txFail ? Status.STATUS_ROLLEDBACK : Status.STATUS_COMMITTED, (int) txStatus);
       } catch (ExecutionException e) {
-         assertTrue(txFail);
+         if (txFail) {
+            Exceptions.assertException(ExecutionException.class, RollbackException.class, XAException.class, AvailabilityException.class, e);
+         } else {
+            throw e;
+         }
       }
 
       checkLocksDuringPartition(splitMode, keyInfo, discard);
