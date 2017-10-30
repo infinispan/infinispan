@@ -101,4 +101,7 @@ public class MetricKeys {
     public static final String NUMBER_OF_NODES = "number-of-nodes";
     public static final String CACHE_HEALTH = "cache-health";
     public static final String LOG_TAIL = "log-tail";
+
+    // Counter
+    public static final String VALUE="value";
 }

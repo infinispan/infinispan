@@ -403,5 +403,6 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerSubModel(new InvalidationCacheResource(resolvePathHandler, runtimeRegistration));
         resourceRegistration.registerSubModel(new ReplicatedCacheResource(resolvePathHandler, runtimeRegistration));
         resourceRegistration.registerSubModel(new DistributedCacheResource(resolvePathHandler, runtimeRegistration));
+        resourceRegistration.registerSubModel(new CacheContainerCountersResource(resolvePathHandler, runtimeRegistration));
     }
 }

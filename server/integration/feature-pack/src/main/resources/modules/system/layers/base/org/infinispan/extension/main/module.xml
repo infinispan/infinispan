@@ -32,6 +32,7 @@
       <module name="org.infinispan.scripting" services="import"/>
       <module name="org.infinispan.tasks" services="import"/>
       <module name="org.infinispan.tasks.api" services="import"/>
+      <module name="org.infinispan.counter" services="import"/>
       <module name="org.jgroups"/>
       <module name="org.jgroups.extension"/>
 

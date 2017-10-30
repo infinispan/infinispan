@@ -215,6 +215,9 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         PathAddress configurationsAddress = containerAddress.append(CacheContainerConfigurationsResource.PATH);
         operations.put(configurationsAddress, Util.getEmptyOperation(ADD, configurationsAddress.toModelNode()));
 
+        PathAddress countersAddress = containerAddress.append(CacheContainerCountersResource.PATH);
+        operations.put(countersAddress, Util.getEmptyOperation(ADD, countersAddress.toModelNode()));
+
         Stream.of(ThreadPoolResource.values()).forEach(
                 pool -> operations.put(containerAddress.append(pool.getPathElement()), Util.createAddOperation(containerAddress.append(pool.getPathElement())))
         );
