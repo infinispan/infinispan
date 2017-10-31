@@ -7,13 +7,12 @@ import java.net.URI;
 import java.util.Properties;
 
 import org.apache.karaf.features.FeaturesService;
-import org.infinispan.commons.test.skip.SkipOnOs;
-import org.infinispan.commons.test.skip.SkipOnOsRule;
+import org.infinispan.commons.test.skip.OS;
+import org.infinispan.commons.test.skip.SkipJunit;
 import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.it.osgi.util.MavenUtils;
 import org.infinispan.it.osgi.util.PaxExamUtils;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -37,9 +36,6 @@ import org.osgi.framework.ServiceReference;
 @Category(PerClass.class)
 public class OSGiKarafFeaturesTest {
 
-   @Rule
-   public final SkipOnOsRule skipOnOsRule = new SkipOnOsRule();
-
    private static final String PROP_PROJECT_VERSION = "project.version";
 
 
@@ -60,8 +56,9 @@ public class OSGiKarafFeaturesTest {
     * Verifies that Karaf Features install correctly on clean containers.
     */
    @Test
-   @SkipOnOs({SkipOnOs.OS.WINDOWS, SkipOnOs.OS.SOLARIS})
    public void testCleanInstall() throws Exception {
+      SkipJunit.skipOnOS(OS.SOLARIS, OS.WINDOWS);
+
       Bundle bundle = FrameworkUtil.getBundle(getClass());
       Assert.assertNotNull("Failed to find class bundle.", bundle);
 

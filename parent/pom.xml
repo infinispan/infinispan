@@ -89,7 +89,7 @@
         <forkJvmArgs>-Xmx2G</forkJvmArgs>
         <jigsawForkJvmArgs></jigsawForkJvmArgs>
         <testNGListeners>
-            org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter,org.infinispan.commons.test.skip.SkipOnOsListener
+            org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter
         </testNGListeners>
         <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
         <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>

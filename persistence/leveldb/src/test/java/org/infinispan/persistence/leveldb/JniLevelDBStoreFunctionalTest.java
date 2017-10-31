@@ -2,15 +2,21 @@ package org.infinispan.persistence.leveldb;
 
 import java.lang.reflect.Method;
 
-import org.infinispan.commons.test.skip.SkipOnOs;
+import org.infinispan.commons.test.skip.OS;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @Test(groups = {"unit", "smoke"}, testName = "persistence.leveldb.JniLevelDBStoreFunctionalTest")
-@SkipOnOs({SkipOnOs.OS.SOLARIS, SkipOnOs.OS.WINDOWS})
 public class JniLevelDBStoreFunctionalTest extends LevelDBStoreFunctionalTest {
+
+   @BeforeClass
+   public void skipOnOS() {
+      SkipTestNG.skipOnOS(OS.SOLARIS, OS.WINDOWS);
+   }
 
    @Override
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder p, boolean preload) {
