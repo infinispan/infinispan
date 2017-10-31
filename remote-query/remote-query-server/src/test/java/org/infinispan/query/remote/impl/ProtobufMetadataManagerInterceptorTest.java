@@ -65,21 +65,21 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
          cache(0).put(42, "import \"test.proto\";");
          fail();
       } catch (CacheException e) {
-         assertEquals("The key must be a string", e.getMessage());
+         assertEquals("ISPN028007: The key must be a String : class java.lang.Integer", e.getMessage());
       }
 
       try {
          cache(0).put("some.proto", 42);
          fail();
       } catch (CacheException e) {
-         assertEquals("The value must be a string", e.getMessage());
+         assertEquals("ISPN028008: The value must be a String : class java.lang.Integer", e.getMessage());
       }
 
       try {
          cache0.put("some.xml", "import \"test.proto\";");
          fail();
       } catch (CacheException e) {
-         assertEquals("The key must be a string ending with \".proto\" : some.xml", e.getMessage());
+         assertEquals("ISPN028009: The key must be a String ending with \".proto\" : some.xml", e.getMessage());
       }
 
       cache0.put("test.proto", "package x");
