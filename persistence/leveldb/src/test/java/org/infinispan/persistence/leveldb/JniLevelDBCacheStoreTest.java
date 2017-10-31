@@ -40,6 +40,11 @@ public class JniLevelDBCacheStoreTest extends LevelDBStoreTest {
    }
 
    @Override
+   public void testWriteAndDeleteBatch() throws Exception {
+      super.testWriteAndDeleteBatch();
+   }
+
+   @Override
    public void testLoadAndStoreWithIdle() throws Exception {
       super.testLoadAndStoreWithIdle();
    }
