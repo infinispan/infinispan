@@ -25,7 +25,7 @@ public class HashConfiguration implements Matchable<HashConfiguration> {
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)
    public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder("numSegments", 256).xmlName("segments").immutable().build();
-   public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder("capacityFactor", 1.0f).immutable().local(true).xmlName("capacity").build();
+   public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder("capacityFactor", 1.0f).immutable().global(false).xmlName("capacity").build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
          .builder("keyPartitioner", new HashFunctionPartitioner(), KeyPartitioner.class)
          .copier(SimpleInstanceAttributeCopier.INSTANCE).immutable().build();

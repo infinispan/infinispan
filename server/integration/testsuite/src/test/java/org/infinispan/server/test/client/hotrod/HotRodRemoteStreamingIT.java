@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 
 /**
  * The basic set of tests for Streaming API over HottRod client
- * 
+ *
  * @author zhostasa
  *
  */
@@ -104,7 +104,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Test for basic functionality on multiple streams
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -133,7 +133,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Test behaviour of cache if stream object if garbageCollected
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -164,7 +164,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Test stream reaction on negative one value in stream
-    * 
+    *
     * @throws IOException
     */
    @Test
@@ -196,7 +196,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Test cache behaviour if same key is being manipulated multiple times
-    * 
+    *
     * @throws IOException
     */
    @Test
@@ -247,7 +247,7 @@ public class HotRodRemoteStreamingIT {
     * Test correct behaviour for RemoteCacheManagers start/stop function <br>
     * Current operations can be completed, but no new operations are supposed to
     * be issued
-    * 
+    *
     * @throws IOException
     * @throws InterruptedException
     */
@@ -285,7 +285,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Test behaviour if one server is gracefully shutdown
-    * 
+    *
     * @throws IOException
     * @throws InterruptedException
     */
@@ -327,7 +327,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Test behaviour if one server is killed
-    * 
+    *
     * @throws IOException
     * @throws InterruptedException
     */
@@ -336,7 +336,7 @@ public class HotRodRemoteStreamingIT {
       byte[] value = new byte[5000];
       random.nextBytes(value);
       try {
-         for (int i = 0; i < 10; i++) {
+         for (int i = 0; i < 2; i++) {
             Long key = random.nextLong();
 
             OutputStream out = src1.put(key);
@@ -369,7 +369,7 @@ public class HotRodRemoteStreamingIT {
    /**
     * Test basic memory consumption difference between standard API and
     * streaming API
-    * 
+    *
     * @throws Exception
     */
    @Test
@@ -476,7 +476,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Convenience method for killing servers according to number parity
-    * 
+    *
     * @param i
     */
    private void killServer(int i) {
@@ -491,7 +491,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Convenience method for stopping servers according to number parity
-    * 
+    *
     * @param i
     */
    private void stopServer(int i) {
@@ -506,7 +506,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Convenience method for starting servers according to number parity
-    * 
+    *
     * @param i
     */
    private void startServer(int i) {
@@ -521,7 +521,7 @@ public class HotRodRemoteStreamingIT {
    /**
     * Testing class that will put object via stream into a cache (random key and
     * size) and then retrieve it and check for consistency
-    * 
+    *
     * @author zhostasa
     *
     */
@@ -541,7 +541,7 @@ public class HotRodRemoteStreamingIT {
 
       /**
        * Both cache instances can be identical
-       * 
+       *
        * @param seed
        *           seed for object data, can be null
        * @param cache1
@@ -557,7 +557,7 @@ public class HotRodRemoteStreamingIT {
       }
 
       /**
-       * 
+       *
        * @return true if the test was finished successfully, false otherwise
        * @throws Exception
        *            Exception is to be considered a failed test
@@ -617,7 +617,7 @@ public class HotRodRemoteStreamingIT {
 
       /**
        * Sets finalized flag in parent class for GC test
-       * 
+       *
        * @throws Throwable
        */
       @Override
@@ -628,7 +628,7 @@ public class HotRodRemoteStreamingIT {
 
       /**
        * Because Random.nextBytes(byte[]) will drop bytes between calls
-       * 
+       *
        * @param ba
        *           byte[] to fill
        * @param count
@@ -643,7 +643,7 @@ public class HotRodRemoteStreamingIT {
 
    /**
     * Simple class for computing memory usage
-    * 
+    *
     * @author zhostasa
     *
     */

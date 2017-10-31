@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.Health;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -128,6 +129,16 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public boolean cacheExists(String cacheName) {
       return cm.cacheExists(cacheName);
+   }
+
+   @Override
+   public EmbeddedCacheManagerAdmin administration() {
+      return cm.administration();
+   }
+
+   @Override
+   public <K, V> Cache<K, V> createCache(String name, Configuration configuration) {
+      return cm.createCache(name, configuration);
    }
 
    @Override

@@ -1066,7 +1066,6 @@ public final class Util {
       return BASIC_TYPES.contains(type);
    }
 
-
    public static String xmlify(String s) {
       StringBuilder sb = new StringBuilder();
       for(int i=0; i < s.length(); i++) {

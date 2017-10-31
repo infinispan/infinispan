@@ -21,14 +21,13 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.GlobalStateProvider;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * GlobalStateManagerImpl. This global component manages persistent state across restarts. The
- * information is stored in a Properties file. On a graceful shutdown it persists the following
+ * GlobalStateManagerImpl. This global component manages persistent state across restarts as well as global configurations.
+ * The information is stored in a Properties file. On a graceful shutdown it persists the following
  * information:
  *
  * version = full version (e.g. major.minor.micro.qualifier) timestamp = timestamp using ISO-8601
@@ -46,16 +45,30 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    private GlobalConfiguration globalConfiguration;
    private List<GlobalStateProvider> stateProviders = new ArrayList<>();
    private TimeService timeService;
+   private boolean persistentState;
 
    @Inject
-   public void inject(GlobalConfiguration globalConfiguration, TimeService timeService,
-         EmbeddedCacheManager cacheManager) {
+   public void inject(GlobalConfiguration globalConfiguration, TimeService timeService) {
       this.globalConfiguration = globalConfiguration;
       this.timeService = timeService;
+      this.persistentState = globalConfiguration.globalState().enabled();
    }
 
    @Start(priority = 1) // Must start before everything else
    public void start() {
+      if (persistentState) {
+         loadGlobalState();
+      }
+   }
+
+   @Stop(priority = 1) // Must write global state before other global components shut down
+   public void stop() {
+      if (persistentState) {
+         writeGlobalState();
+      }
+   }
+
+   private void loadGlobalState() {
       File stateFile = getStateFile(GLOBAL_SCOPE);
       Optional<ScopedPersistentState> globalState = readScopedState(GLOBAL_SCOPE);
       if (globalState.isPresent()) {
@@ -79,37 +92,38 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
       }
    }
 
-   @Stop(priority = 1)
-   public void stop() {
-      writeGlobalState();
-   }
-
    @Override
    public void writeGlobalState() {
-      ScopedPersistentState state = new ScopedPersistentStateImpl(GLOBAL_SCOPE);
-      state.setProperty(VERSION, Version.getVersion());
-      state.setProperty(VERSION_MAJOR, Version.getMajor());
-      state.setProperty(TIMESTAMP, timeService.instant().toString());
-      // ask any state providers to contribute to the global state
-      stateProviders.forEach(provider -> provider.prepareForPersist(state));
-      writeScopedState(state);
-      log.globalStateWrite(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
+      if (persistentState) {
+         ScopedPersistentState state = new ScopedPersistentStateImpl(GLOBAL_SCOPE);
+         state.setProperty(VERSION, Version.getVersion());
+         state.setProperty(VERSION_MAJOR, Version.getMajor());
+         state.setProperty(TIMESTAMP, timeService.instant().toString());
+         // ask any state providers to contribute to the global state
+         stateProviders.forEach(provider -> provider.prepareForPersist(state));
+         writeScopedState(state);
+         log.globalStateWrite(state.getProperty(VERSION), state.getProperty(TIMESTAMP));
+      }
    }
 
    @Override
    public void writeScopedState(ScopedPersistentState state) {
-      File stateFile = getStateFile(state.getScope());
-      try (PrintWriter w = new PrintWriter(stateFile)) {
-         state.forEach((key, value) -> {
-            w.printf("%s=%s%n", Util.unicodeEscapeString(key), Util.unicodeEscapeString(value));
-         });
-      } catch (IOException e) {
-         throw log.failedWritingGlobalState(e, stateFile);
+      if (persistentState) {
+         File stateFile = getStateFile(state.getScope());
+         try (PrintWriter w = new PrintWriter(stateFile)) {
+            state.forEach((key, value) -> {
+               w.printf("%s=%s%n", Util.unicodeEscapeString(key), Util.unicodeEscapeString(value));
+            });
+         } catch (IOException e) {
+            throw log.failedWritingGlobalState(e, stateFile);
+         }
       }
    }
 
    @Override
    public Optional<ScopedPersistentState> readScopedState(String scope) {
+      if (!persistentState)
+         return Optional.empty();
       File stateFile = getStateFile(scope);
       if (!stateFile.exists())
          return Optional.empty();

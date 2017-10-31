@@ -83,8 +83,11 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
 
    @Override
    public void serialize(XMLExtendedStreamWriter writer, ConfigurationHolder holder) throws XMLStreamException {
-      writeJGroups(writer, holder.getGlobalConfiguration());
-      writeThreads(writer, holder.getGlobalConfiguration());
+      GlobalConfiguration globalConfiguration = holder.getGlobalConfiguration();
+      if (globalConfiguration != null) {
+         writeJGroups(writer, globalConfiguration);
+         writeThreads(writer, globalConfiguration);
+      }
       writeCacheContainer(writer, holder);
    }
 
@@ -165,31 +168,33 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
    private void writeCacheContainer(XMLExtendedStreamWriter writer, ConfigurationHolder holder) throws XMLStreamException {
       writer.writeStartElement(Element.CACHE_CONTAINER);
       GlobalConfiguration globalConfiguration = holder.getGlobalConfiguration();
-      writer.writeAttribute(Attribute.NAME, globalConfiguration.globalJmxStatistics().cacheManagerName());
-      if (globalConfiguration.shutdown().hookBehavior() != ShutdownHookBehavior.DEFAULT) {
-         writer.writeAttribute(Attribute.SHUTDOWN_HOOK, globalConfiguration.shutdown().hookBehavior().name());
+      if (globalConfiguration != null) {
+         writer.writeAttribute(Attribute.NAME, globalConfiguration.globalJmxStatistics().cacheManagerName());
+         if (globalConfiguration.shutdown().hookBehavior() != ShutdownHookBehavior.DEFAULT) {
+            writer.writeAttribute(Attribute.SHUTDOWN_HOOK, globalConfiguration.shutdown().hookBehavior().name());
+         }
+         globalConfiguration.globalJmxStatistics().attributes().write(writer, GlobalJmxStatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+         if (globalConfiguration.asyncThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.ASYNC_EXECUTOR, "async-pool");
+         }
+         if (globalConfiguration.expirationThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.EXPIRATION_EXECUTOR, "expiration-pool");
+         }
+         if (globalConfiguration.listenerThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.LISTENER_EXECUTOR, "listener-pool");
+         }
+         if (globalConfiguration.persistenceThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.PERSISTENCE_EXECUTOR, "persistence-pool");
+         }
+         if (globalConfiguration.stateTransferThreadPool().threadPoolFactory() != null) {
+            writer.writeAttribute(Attribute.STATE_TRANSFER_EXECUTOR, "state-transfer-pool");
+         }
+         writeTransport(writer, globalConfiguration);
+         writeSerialization(writer, globalConfiguration);
+         writeJMX(writer, globalConfiguration);
+         writeGlobalState(writer, globalConfiguration);
+         writeExtraConfiguration(writer, globalConfiguration.modules());
       }
-      globalConfiguration.globalJmxStatistics().attributes().write(writer, GlobalJmxStatisticsConfiguration.ENABLED, Attribute.STATISTICS);
-      if (globalConfiguration.asyncThreadPool().threadPoolFactory() != null) {
-         writer.writeAttribute(Attribute.ASYNC_EXECUTOR, "async-pool");
-      }
-      if (globalConfiguration.expirationThreadPool().threadPoolFactory() != null) {
-         writer.writeAttribute(Attribute.EXPIRATION_EXECUTOR, "expiration-pool");
-      }
-      if (globalConfiguration.listenerThreadPool().threadPoolFactory() != null) {
-         writer.writeAttribute(Attribute.LISTENER_EXECUTOR, "listener-pool");
-      }
-      if (globalConfiguration.persistenceThreadPool().threadPoolFactory() != null) {
-         writer.writeAttribute(Attribute.PERSISTENCE_EXECUTOR, "persistence-pool");
-      }
-      if (globalConfiguration.stateTransferThreadPool().threadPoolFactory() != null) {
-         writer.writeAttribute(Attribute.STATE_TRANSFER_EXECUTOR, "state-transfer-pool");
-      }
-      writeTransport(writer, globalConfiguration);
-      writeSerialization(writer, globalConfiguration);
-      writeJMX(writer, globalConfiguration);
-      writeGlobalState(writer, globalConfiguration);
-      writeExtraConfiguration(writer, globalConfiguration.modules());
       for (Entry<String, Configuration> configuration : holder.getConfigurations().entrySet()) {
          Configuration config = configuration.getValue();
          switch (config.clustering().cacheMode()) {
@@ -442,14 +447,16 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          writer.writeStartElement(Element.CUSTOM_INTERCEPTORS);
          for (InterceptorConfiguration interceptor : customInterceptors.interceptors()) {
             AttributeSet attributes = interceptor.attributes();
-            writer.writeStartElement(Element.INTERCEPTOR);
-            attributes.write(writer, InterceptorConfiguration.INTERCEPTOR_CLASS, Attribute.CLASS);
-            attributes.write(writer, InterceptorConfiguration.AFTER, Attribute.AFTER);
-            attributes.write(writer, InterceptorConfiguration.BEFORE, Attribute.BEFORE);
-            attributes.write(writer, InterceptorConfiguration.INDEX, Attribute.INDEX);
-            attributes.write(writer, InterceptorConfiguration.POSITION, Attribute.POSITION);
-            writeTypedProperties(writer, interceptor.properties());
-            writer.writeEndElement();
+            if (!attributes.attribute(InterceptorConfiguration.INTERCEPTOR_CLASS).isNull()) {
+               writer.writeStartElement(Element.INTERCEPTOR);
+               attributes.write(writer, InterceptorConfiguration.INTERCEPTOR_CLASS, Attribute.CLASS);
+               attributes.write(writer, InterceptorConfiguration.AFTER, Attribute.AFTER);
+               attributes.write(writer, InterceptorConfiguration.BEFORE, Attribute.BEFORE);
+               attributes.write(writer, InterceptorConfiguration.INDEX, Attribute.INDEX);
+               attributes.write(writer, InterceptorConfiguration.POSITION, Attribute.POSITION);
+               writeTypedProperties(writer, interceptor.properties());
+               writer.writeEndElement();
+            }
          }
          writer.writeEndElement();
       }

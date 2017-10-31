@@ -21,6 +21,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.RetryingEntryWrappingInterceptor;
@@ -66,6 +67,11 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
 
       addClusterEnabledCacheManager(c);
       waitForClusterToForm();
+   }
+
+   @Override
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      NoOpGlobalConfigurationManager.amendCacheManager(cm);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

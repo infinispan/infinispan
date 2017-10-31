@@ -20,6 +20,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
@@ -65,6 +66,11 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       d1 = TestingUtil.getDiscardForCache(c1);
       d2 = TestingUtil.getDiscardForCache(c2);
       d3 = TestingUtil.getDiscardForCache(c3);
+   }
+
+   @Override
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      NoOpGlobalConfigurationManager.amendCacheManager(cm);
    }
 
    public void testNodeAbruptLeave() throws Exception {

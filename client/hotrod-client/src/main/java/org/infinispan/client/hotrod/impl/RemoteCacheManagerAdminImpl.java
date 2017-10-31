@@ -4,9 +4,9 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.infinispan.client.hotrod.AdminFlag;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
@@ -22,18 +22,17 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    public static final String CACHE_TEMPLATE = "template";
    public static final String FLAGS = "flags";
    private final OperationsFactory operationsFactory;
+   private final EnumSet<AdminFlag> flags;
+   private final Consumer<String> remover;
 
-   public RemoteCacheManagerAdminImpl(OperationsFactory operationsFactory) {
+   public RemoteCacheManagerAdminImpl(OperationsFactory operationsFactory, EnumSet<AdminFlag> flags, Consumer<String> remover) {
       this.operationsFactory = operationsFactory;
+      this.flags = flags;
+      this.remover = remover;
    }
 
    @Override
    public void createCache(String name, String template) {
-      createCache(name, template, EnumSet.noneOf(AdminFlag.class));
-   }
-
-   @Override
-   public void createCache(String name, String template, EnumSet<AdminFlag> flags) {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (template != null) params.put(CACHE_TEMPLATE, string(template));
@@ -42,8 +41,31 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    }
 
    @Override
+   public void createCache(String name, String template, EnumSet<org.infinispan.client.hotrod.AdminFlag> flags) {
+      EnumSet<AdminFlag> newFlags = EnumSet.noneOf(AdminFlag.class);
+      for(org.infinispan.client.hotrod.AdminFlag flag : flags) newFlags.add(flag.upgrade());
+      new RemoteCacheManagerAdminImpl(operationsFactory, newFlags, remover).createCache(name, template);
+   }
+
+   @Override
    public void removeCache(String name) {
+      remover.accept(name);
       operationsFactory.newExecuteOperation("@@cache@remove", Collections.singletonMap(CACHE_NAME, string(name))).execute();
+   }
+
+   @Override
+   public RemoteCacheManagerAdmin withFlags(AdminFlag... flags) {
+      EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
+      for(AdminFlag flag : flags)
+         newFlags.add(flag);
+      return new RemoteCacheManagerAdminImpl(operationsFactory, newFlags, remover);
+   }
+
+   @Override
+   public RemoteCacheManagerAdmin withFlags(EnumSet<AdminFlag> flags) {
+      EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
+      newFlags.addAll(flags);
+      return new RemoteCacheManagerAdminImpl(operationsFactory, newFlags, remover);
    }
 
    @Override

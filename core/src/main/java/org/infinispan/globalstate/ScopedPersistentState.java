@@ -13,7 +13,7 @@ import java.util.function.BiConsumer;
  * @since 8.1
  */
 public interface ScopedPersistentState {
-   public static final String GLOBAL_SCOPE = "___global";
+   String GLOBAL_SCOPE = "___global";
 
    /**
     * Returns the name of this persistent state's scope

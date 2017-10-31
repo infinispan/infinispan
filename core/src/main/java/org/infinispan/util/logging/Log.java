@@ -36,6 +36,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.jmx.JmxDomainConflictException;
@@ -1556,7 +1557,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException configAlreadyDefined(String cacheName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke defineConfiguration first and then getCache. Cache name was %s", id = 454)
+   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke createCache first and then getCache. Cache name was %s", id = 454)
    void warnAttemptToOverrideExistingConfiguration(String cacheName);
 
    @LogMessage(level = ERROR)
@@ -1698,7 +1699,20 @@ public interface Log extends BasicLogger {
    @Message(value = "Unsupported content '%s' during transcoding", id = 497)
    EncodingException unsupportedContent(Object content);
 
+
    @LogMessage(level = WARN)
    @Message(value = "Indexing mode ALL without owning all data locally (replicated mode).", id = 498)
    void allIndexingInNonReplicatedCache();
+
+   @Message(value = "Could not serialize the configuration of cache '%s' (%s)", id = 499)
+   CacheConfigurationException configurationSerializationFailed(String cacheName, Configuration configuration, @Cause Exception e);
+
+   @Message(value = "Cannot create clustered configuration for cache '%s' because configuration %n%s%n is incompatible with the existing configuration %n%s", id = 500)
+   CacheConfigurationException incompatibleClusterConfiguration(String cacheName, Configuration configuration, Configuration existing);
+
+   @Message(value = "Cannot persist cache configuration as global state is disabled", id = 501)
+   CacheConfigurationException globalStateDisabled();
+
+   @Message(value = "Error while persisting global configuration state", id = 502)
+   CacheConfigurationException errorPersistingGlobalConfiguration(@Cause Throwable cause);
 }

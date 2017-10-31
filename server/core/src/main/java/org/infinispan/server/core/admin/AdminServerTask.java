@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.tasks.Task;
@@ -42,10 +43,6 @@ public abstract class AdminServerTask<T> implements Task {
             parameters,
             AdminFlag.fromString(sFlags)
       );
-   }
-
-   public boolean isPersistent(EnumSet<AdminFlag> flags) {
-      return flags.contains(AdminFlag.PERSISTENT);
    }
 
    protected String requireParameter(Map<String, String> parameters, String parameter) {

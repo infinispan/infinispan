@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.core.admin.AdminFlag;
 import org.infinispan.server.core.admin.AdminServerTask;
 
 /**
@@ -44,12 +44,9 @@ public class CacheRemoveTask extends AdminServerTask<Void> {
    }
 
    @Override
-   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<AdminFlag> adminFlags) {
-      if (isPersistent(adminFlags))
-         throw new UnsupportedOperationException();
-
+   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<CacheContainerAdmin.AdminFlag> adminFlags) {
       String name = requireParameter(parameters,"name");
-      cacheManager.removeCache(name);
+      cacheManager.administration().withFlags(adminFlags).removeCache(name);
       return null;
    }
 }

@@ -106,9 +106,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
       if (persistentUUID == null) {
          persistentUUID = PersistentUUID.randomUUID();
-
-         if (globalStateManager != null)
-            globalStateManager.writeGlobalState();
+         globalStateManager.writeGlobalState();
       }
       persistentUUIDManager.addPersistentAddressMapping(transport.getAddress(), persistentUUID);
       running = true;
@@ -682,9 +680,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       cacheState.setProperty(GlobalStateManagerImpl.VERSION_MAJOR, Version.getMajor());
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       cacheStatus.getCurrentTopology().getCurrentCH().remapAddresses(persistentUUIDManager.addressToPersistentUUID()).toScopedState(cacheState);
-      if (globalStateManager != null) {
-         globalStateManager.writeScopedState(cacheState);
-      }
+      globalStateManager.writeScopedState(cacheState);
    }
 
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {

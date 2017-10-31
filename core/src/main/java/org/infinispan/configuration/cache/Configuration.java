@@ -385,6 +385,8 @@ public class Configuration implements Matchable<Configuration> {
 
    @Override
    public boolean matches(Configuration other) {
+      if (!simpleCache.get().equals(other.simpleCache.get()))
+         return false;
       if (!clusteringConfiguration.matches(other.clusteringConfiguration))
          return false;
       if (!compatibilityConfiguration.matches(other.compatibilityConfiguration))
@@ -423,7 +425,16 @@ public class Configuration implements Matchable<Configuration> {
          return false;
       if (!versioningConfiguration.matches(other.versioningConfiguration))
          return false;
-
+      for(Map.Entry<Class<?>, ?> module : moduleConfiguration.entrySet()) {
+         if (!other.moduleConfiguration.containsKey(module.getKey()))
+            return false;
+         Object thisModule = module.getValue();
+         Object thatModule = other.moduleConfiguration.get(module.getKey());
+         if (thisModule instanceof Matchable && (!((Matchable)thisModule).matches(thatModule)))
+            return false;
+         if (!thisModule.equals(thatModule))
+            return false;
+      }
       return attributes.matches(other.attributes);
    }
 }

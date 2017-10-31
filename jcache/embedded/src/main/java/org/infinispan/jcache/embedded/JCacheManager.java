@@ -137,8 +137,7 @@ public class JCacheManager extends AbstractJCacheManager {
    @Override
    protected <K, V> void delegateRemoveCache(AbstractJCache<K, V> jcache) {
       String cacheName = jcache.getName();
-      cm.removeCache(cacheName);
-      cm.undefineConfiguration(cacheName);
+      cm.administration().removeCache(cacheName);
    }
 
    @Override

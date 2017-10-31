@@ -193,6 +193,11 @@ public interface Ids {
 
    int INT_SET = 132;
 
+   int SCOPED_STATE = 133;
+   int SCOPED_STATE_FILTER = 134;
+   int ADMIN_FLAG = 135;
+   int CACHE_STATE = 136;
+
    int COUNTER_CONFIGURATION = 2000; //from counter
    int COUNTER_STATE = 2001; //from counter
 }
