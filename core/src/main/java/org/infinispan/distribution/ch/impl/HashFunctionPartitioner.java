@@ -15,10 +15,13 @@ import org.infinispan.distribution.ch.KeyPartitioner;
  * @author Dan Berindei
  * @since 8.2
  */
-public class HashFunctionPartitioner implements KeyPartitioner {
+public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
    private Hash hashFunction;
    private int numSegments;
    private int segmentSize;
+
+
+   public HashFunctionPartitioner() {}
 
    @Override
    public void init(HashConfiguration configuration) {

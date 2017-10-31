@@ -14,7 +14,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -57,9 +56,9 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       builder.jmxStatistics().disable(); // Internal caches must not be included in stats counts
       GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
       if (flags.contains(Flag.GLOBAL) && globalConfiguration.isClustered()) {
+         // TODO: choose a merge policy
          builder.clustering()
                .cacheMode(CacheMode.REPL_SYNC)
-               .partitionHandling().whenSplit(PartitionHandling.DENY_READ_WRITES)
                .sync().stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false);
       }
       if (flags.contains(Flag.PERSISTENT) && globalConfiguration.globalState().enabled()) {

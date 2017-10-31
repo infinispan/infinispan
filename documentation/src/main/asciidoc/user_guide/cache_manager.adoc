@@ -65,6 +65,16 @@ the cache to exist on all nodes, this operation must be invoked locally everywhe
 across multiple nodes, where you obtain caches during initialization, this ensures that the caches are _symmetric_, i.e.
 they exist on every node.
 
+If you need to create caches dynamically across the whole cluster, you should invoke the following operation:
+
+[source,java]
+----
+
+Cache<String, String> myCache = manager.administration().createCache("myCache");
+
+----
+
+
 === Clustering Information
 The `EmbeddedCacheManager` has quite a few methods to provide information
 as to how the cluster is operating.  The following methods only really make
@@ -95,5 +105,4 @@ case JGroups) you can use this mechanism.
 .link:{javadocroot}/org/infinispan/manager/EmbeddedCacheManager.html#getStats--[getStats()]
 The stats provided here are coalesced from all of the active caches in this manager.
 These stats can be useful to see if there is something wrong going on with your
-cluster overall. If you want to see cluster-wide statistics, use the
-link:{javadocroot}/org/infinispan/manager/ClusterCacheManager.html#getStats--[_cluster().getStats()_] method.
+cluster overall.

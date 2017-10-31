@@ -750,6 +750,7 @@ public class JGroupsTransport implements Transport {
 
       channel = null;
       address = null;
+      physicalAddress = null;
       clusterView = new ClusterView(ClusterView.FINAL_VIEW_ID, Collections.emptyList(), null);
 
       requests = null;

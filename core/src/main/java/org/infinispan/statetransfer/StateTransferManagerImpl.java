@@ -101,11 +101,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.localTopologyManager = localTopologyManager;
       this.partitionHandlingManager = partitionHandlingManager;
       this.distributionManager = distributionManager;
-      if (globalStateManager != null) {
-         persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(ScopedPersistentState::getChecksum);
-      } else {
-         persistentStateChecksum = Optional.empty();
-      }
+      persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(ScopedPersistentState::getChecksum);
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads

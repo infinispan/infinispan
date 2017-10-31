@@ -186,7 +186,7 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
    }
 
    /**
-    * Compares this attribute to another attribute taking into account the {@link AttributeDefinition#isLocal()} flag.
+    * Compares this attribute to another attribute taking into account the {@link AttributeDefinition#isGlobal()} flag.
     * If the attribute is global, then this method will return true only if the values are identical.
     * If the attribute is local, then this method will return true even if the values don't match.
     * Essentially, this method only ensures that the attribute definitions are equals.
@@ -194,9 +194,11 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>> {
     * @return
     */
    public boolean matches(Attribute<?> other) {
+      if (other == null)
+         return false;
       if (!this.definition.equals(other.definition))
          return false;
-      if (!this.definition.isLocal())
+      if (this.definition.isGlobal())
          return value.equals(other.value);
       return true;
    }

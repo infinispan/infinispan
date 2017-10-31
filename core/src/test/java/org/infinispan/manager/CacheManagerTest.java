@@ -301,7 +301,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       try {
          manager.getCache("cache");
          // An attempt to remove a non-existing cache should be a no-op
-         manager.removeCache("does-not-exist");
+         manager.administration().removeCache("does-not-exist");
       } finally {
          manager.stop();
       }
@@ -318,11 +318,11 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          DataContainer data = getDataContainer(cache);
          assertFalse(store.isEmpty());
          assertTrue(0 != data.size());
-         manager.removeCache("cache");
+         manager.administration().removeCache("cache");
          assertEquals(0, DummyInMemoryStore.getStoreDataSize(store.getStoreName()));
          assertEquals(0, data.size());
          // Try removing the cache again, it should be a no-op
-         manager.removeCache("cache");
+         manager.administration().removeCache("cache");
          assertEquals(0, DummyInMemoryStore.getStoreDataSize(store.getStoreName()));
          assertEquals(0, data.size());
       } finally {
@@ -363,12 +363,13 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          public void call() {
             EmbeddedCacheManager cm1 = cms[0];
             EmbeddedCacheManager cm2 = cms[1];
+            TestingUtil.waitForNoRebalance(cm1.getCache(), cm2.getCache());
             Cache<Object, Object> c1 = cm1.getCache();
-            cm2.getCache();
 
             GlobalConfiguration globalCfg = cm1.getCacheManagerConfiguration();
             Configuration cfg = c1.getCacheConfiguration();
-            cm1.stop();
+            TestingUtil.killCacheManagers(cm1);
+            globalCfg = new GlobalConfigurationBuilder().read(globalCfg).build();
 
             withCacheManager(new CacheManagerCallable(
                   new DefaultCacheManager(globalCfg, cfg)) {
@@ -496,7 +497,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             assertFalse(store2.isEmpty());
             assertEquals(5, data2.size());
 
-            manager1.removeCache("cache");
+            manager1.administration().removeCache("cache");
             assertFalse(manager1.cacheExists("cache"));
             assertFalse(manager2.cacheExists("cache"));
             assertNull(manager1.getCache("cache", false));

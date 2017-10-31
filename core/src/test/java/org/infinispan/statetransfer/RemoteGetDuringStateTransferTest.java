@@ -29,6 +29,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.CacheContainer;
@@ -662,6 +663,11 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       createClusteredCaches(2, configuration());
    }
 
+   @Override
+   protected void amendCacheManagerBeforeStart(EmbeddedCacheManager cm) {
+      NoOpGlobalConfigurationManager.amendCacheManager(cm);
+   }
+
    private Future<Object> remoteGet(Cache cache, Object key) {
       return fork(() -> cache.get(key));
    }
@@ -825,4 +831,5 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       Future<Void> joinerFuture;
       BlockingLocalTopologyManager localTopologyManager;
    }
+
 }

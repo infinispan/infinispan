@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.server.core.admin.AdminFlag;
 import org.infinispan.server.core.admin.AdminServerTask;
 
 /**
@@ -46,8 +46,8 @@ public class CacheReindexTask extends AdminServerTask<Void> {
    }
 
    @Override
-   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<AdminFlag> adminFlags) {
-      if (isPersistent(adminFlags))
+   protected Void execute(EmbeddedCacheManager cacheManager, Map<String, String> parameters, EnumSet<CacheContainerAdmin.AdminFlag> adminFlags) {
+      if(!adminFlags.isEmpty())
          throw new UnsupportedOperationException();
 
       String name = requireParameter(parameters, "name");

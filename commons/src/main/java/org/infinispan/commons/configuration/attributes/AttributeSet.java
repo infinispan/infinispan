@@ -278,7 +278,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
          String key = e.getKey();
          Attribute<?> value = e.getValue();
          if (value == null) {
-            if (!(other.attributes.get(key)==null && other.attributes.containsKey(key)))
+            if (!(other.attributes.containsKey(key) && other.attributes.get(key)==null))
                return false;
          } else {
             if (!value.matches(other.attributes.get(key)))

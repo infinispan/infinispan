@@ -6,12 +6,17 @@ import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
@@ -108,6 +113,10 @@ public class ParserRegistry implements NamespaceMappingParser {
       }
    }
 
+   public ConfigurationBuilderHolder parse(String s) {
+      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)));
+   }
+
    public ConfigurationBuilderHolder parse(InputStream is) {
       try {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl.get());
@@ -163,6 +172,14 @@ public class ParserRegistry implements NamespaceMappingParser {
       reader.setSchema(oldSchema);
    }
 
+   /**
+    * Serializes a full configuration to an {@link OutputStream}
+    *
+    * @param os the output stream where the configuration should be serialized to
+    * @param globalConfiguration the global configuration. Can be null
+    * @param configurations a map of named configurations
+    * @throws XMLStreamException
+    */
    public void serialize(OutputStream os, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) throws XMLStreamException {
       BufferedOutputStream output = new BufferedOutputStream(os);
       XMLStreamWriter subWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(output);
@@ -171,6 +188,14 @@ public class ParserRegistry implements NamespaceMappingParser {
       subWriter.close();
    }
 
+   /**
+    * Serializes a full configuration to an {@link XMLExtendedStreamWriter}
+    *
+    * @param writer the writer where the configuration should be serialized to
+    * @param globalConfiguration the global configuration. Can be null
+    * @param configurations a map of named configurations
+    * @throws XMLStreamException
+    */
    public void serialize(XMLExtendedStreamWriter writer, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) throws XMLStreamException {
       writer.writeStartDocument();
       writer.writeStartElement("infinispan");
@@ -178,5 +203,33 @@ public class ParserRegistry implements NamespaceMappingParser {
       serializer.serialize(writer, new ConfigurationHolder(globalConfiguration, configurations));
       writer.writeEndElement();
       writer.writeEndDocument();
+   }
+
+   /**
+    * Serializes a single configuration to an OutputStream
+    * @param os
+    * @param name
+    * @param configuration
+    */
+   public void serialize(OutputStream os, String name, Configuration configuration) throws XMLStreamException {
+      serialize(os, null, Collections.singletonMap(name, configuration));
+   }
+
+   /**
+    * Serializes a single configuration to a String
+    * @param name the name of the configuration
+    * @param configuration the {@link Configuration}
+    * @return the XML representation of the specified configuration
+    * @throws XMLStreamException
+    */
+   public String serialize(String name, Configuration configuration) throws XMLStreamException {
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
+      serialize(os, name, configuration);
+      try {
+         return os.toString("UTF-8");
+      } catch (UnsupportedEncodingException e) {
+         // Will never happen
+         return null;
+      }
    }
 }
