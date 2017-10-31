@@ -51,8 +51,7 @@ class ProtobufRemoteQueryManager implements RemoteQueryManager {
       this.queryEngine = new RemoteQueryEngine(cache, isIndexed);
       this.keyEncoder = cache.getKeyDataConversion().getEncoder();
       this.valueEncoder = cache.getValueDataConversion().getEncoder();
-      this.transcoder = cr.getGlobalComponentRegistry().
-            getComponent(EncoderRegistry.class)
+      this.transcoder = cr.getGlobalComponentRegistry().getComponent(EncoderRegistry.class)
             .getTranscoder(MediaType.APPLICATION_PROTOSTREAM, MediaType.APPLICATION_JSON);
    }
 
@@ -107,6 +106,4 @@ class ProtobufRemoteQueryManager implements RemoteQueryManager {
    public List<Object> encodeQueryResults(List<Object> results) {
       return results.stream().map(o -> transcoder.transcode(o, MediaType.APPLICATION_PROTOSTREAM, MediaType.APPLICATION_JSON)).collect(Collectors.toList());
    }
-
-
 }

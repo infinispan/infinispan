@@ -30,6 +30,21 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Field %s from type %s is not analyzed", id = 28005)
    IllegalArgumentException fieldIsNotAnalyzed(String fieldName, String fullyQualifiedTypeName);
 
-   @Message(value = "An exception has occurred during filter processing execution", id = 28006)
+   @Message(value = "An exception has occurred during filter execution", id = 28006)
    CacheException errorFiltering(@Cause Throwable cause);
+
+   @Message(value = "The key must be a String : %s", id = 28007)
+   CacheException keyMustBeString(Class<?> c);
+
+   @Message(value = "The value must be a String : %s", id = 28008)
+   CacheException valueMustBeString(Class<?> c);
+
+   @Message(value = "The key must be a String ending with \".proto\" : %s", id = 28009)
+   CacheException keyMustBeStringEndingWithProto(Object key);
+
+   @Message(value = "Failed to parse proto file.", id = 28010)
+   CacheException failedToParseProtoFile(@Cause Throwable cause);
+
+   @Message(value = "Failed to parse proto file : %s", id = 28011)
+   CacheException failedToParseProtoFile(String fileName, @Cause Throwable cause);
 }

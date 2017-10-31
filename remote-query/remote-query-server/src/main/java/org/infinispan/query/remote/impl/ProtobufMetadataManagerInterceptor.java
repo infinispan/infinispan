@@ -16,7 +16,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -32,6 +32,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.query.remote.impl.logging.Log;
 
 
 /**
@@ -41,6 +42,9 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
  * @since 7.0
  */
 final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncInterceptor implements ProtobufMetadataManagerConstants {
+
+   private static final Log log = LogFactory.getLog(ProtobufMetadataManagerInterceptor.class, Log.class);
+
    private static final Metadata DEFAULT_METADATA = new EmbeddedMetadata.Builder().build();
 
    private CommandsFactory commandsFactory;
@@ -102,7 +106,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             try {
                serializationContext.registerProtoFiles(source);
             } catch (IOException | DescriptorParserException e) {
-               throw new CacheException("Failed to parse proto file : " + key, e);
+               throw log.failedToParseProtoFile(key, e);
             }
          }
          return null;
@@ -121,7 +125,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          try {
             serializationContext.registerProtoFiles(source);
          } catch (IOException | DescriptorParserException e) {
-            throw new CacheException(e);
+            throw log.failedToParseProtoFile(e);
          }
          return null;
       }
@@ -136,7 +140,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             try {
                serializationContext.registerProtoFiles(source);
             } catch (IOException | DescriptorParserException e) {
-               throw new CacheException("Failed to parse proto file : " + key, e);
+               throw log.failedToParseProtoFile(key, e);
             }
          }
          return null;
@@ -188,15 +192,15 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       if (ctx.isOriginLocal()) {
          if (!(key instanceof String)) {
-            throw new CacheException("The key must be a string");
+            throw log.keyMustBeString(key.getClass());
          }
          if (!(value instanceof String)) {
-            throw new CacheException("The value must be a string");
+            throw log.valueMustBeString(value.getClass());
          }
          if (shouldIntercept(key)) {
             if (!command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
                if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-                  throw new CacheException("The key must be a string ending with \".proto\" : " + key);
+                  throw log.keyMustBeStringEndingWithProto(key);
                }
 
                // lock .errors key
@@ -226,7 +230,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             try {
                serializationContext.registerProtoFiles(source);
             } catch (IOException | DescriptorParserException e) {
-               throw new CacheException("Failed to parse proto file : " + key, e);
+               throw log.failedToParseProtoFile((String) key, e);
             }
 
             if (progressCallback != null) {
@@ -252,14 +256,14 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       for (Object key : map.keySet()) {
          final Object value = map.get(key);
          if (!(key instanceof String)) {
-            throw new CacheException("The key must be a string");
+            throw log.keyMustBeString(key.getClass());
          }
          if (!(value instanceof String)) {
-            throw new CacheException("The value must be a string");
+            throw log.valueMustBeString(value.getClass());
          }
          if (shouldIntercept(key)) {
             if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-               throw new CacheException("The key must be a string ending with \".proto\" : " + key);
+               throw log.keyMustBeStringEndingWithProto(key);
             }
             source.addProtoFile((String) key, (String) value);
          }
@@ -282,7 +286,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          try {
             serializationContext.registerProtoFiles(source);
          } catch (IOException | DescriptorParserException e) {
-            throw new CacheException(e);
+            throw log.failedToParseProtoFile(e);
          }
 
          if (progressCallback != null) {
@@ -295,7 +299,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          if (!(command.getKey() instanceof String)) {
-            throw new CacheException("The key must be a string");
+            throw log.keyMustBeString(command.getKey().getClass());
          }
          String key = (String) command.getKey();
          if (shouldIntercept(key)) {
@@ -314,15 +318,16 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             // put error key for all unresolved files and remove error key for all resolved files
             StringBuilder sb = new StringBuilder();
             for (FileDescriptor fd : serializationContext.getFileDescriptors().values()) {
+               String errorFileName = fd.getName() + ERRORS_KEY_SUFFIX;
                if (fd.isResolved()) {
-                  cmd = commandsFactory.buildRemoveCommand(fd.getName() + ERRORS_KEY_SUFFIX, null, flagsBitSet);
+                  cmd = commandsFactory.buildRemoveCommand(errorFileName, null, flagsBitSet);
                   invoker.invoke(ctx, cmd);
                } else {
                   if (sb.length() > 0) {
                      sb.append('\n');
                   }
                   sb.append(fd.getName());
-                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(fd.getName() + ERRORS_KEY_SUFFIX, "One of the imported files is missing or has errors", DEFAULT_METADATA, flagsBitSet);
+                  PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(errorFileName, "One of the imported files is missing or has errors", DEFAULT_METADATA, flagsBitSet);
                   put.setPutIfAbsent(true);
                   invoker.invoke(ctx, put);
                }
@@ -349,16 +354,16 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          return invokeNext(ctx, command);
       }
       if (!(key instanceof String)) {
-         throw new CacheException("The key must be a string");
+         throw log.keyMustBeString(key.getClass());
       }
       if (!(value instanceof String)) {
-         throw new CacheException("The value must be a string");
+         throw log.valueMustBeString(value.getClass());
       }
       if (!shouldIntercept(key)) {
          return invokeNext(ctx, command);
       }
       if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-         throw new CacheException("The key must be a string ending with \".proto\" : " + key);
+         throw log.keyMustBeStringEndingWithProto(key);
       }
 
       // lock .errors key
@@ -382,7 +387,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             try {
                serializationContext.registerProtoFiles(source);
             } catch (IOException | DescriptorParserException e) {
-               throw new CacheException("Failed to parse proto file : " + key, e);
+               throw log.failedToParseProtoFile((String) key, e);
             }
 
             if (progressCallback != null) {
