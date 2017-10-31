@@ -209,7 +209,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  CommandAckCollector commandAckCollector,
                                  StateReceiver stateReceiver,
                                  ComponentRegistry componentRegistry,
-                                 OrderedUpdatesManager orderedUpdatesManager,
+                                 OrderedUpdatesManager orderedUpdatesManager, StateTransferLock stateTransferLock,
                                  IteratorHandler iteratorHandler) {
       this.dataContainer = container;
       this.notifier = notifier;

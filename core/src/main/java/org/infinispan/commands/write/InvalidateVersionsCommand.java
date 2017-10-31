@@ -77,7 +77,7 @@ public class InvalidateVersionsCommand extends BaseRpcCommand {
             int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
             if (topologyId > currentTopologyId) {
                if (trace) {
-                  log.tracef("Delaying command %s, current topology id %d", currentTopologyId);
+                  log.tracef("Delaying command %s, current topology id %d", this, currentTopologyId);
                }
                return stateTransferLock.topologyFuture(topologyId).thenCompose(nil -> invokeAsync());
             } else if (topologyId < currentTopologyId) {
