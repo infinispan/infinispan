@@ -35,6 +35,8 @@ import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.server.infinispan.task.ServerTaskRegistry;
 import org.infinispan.server.infinispan.task.ServerTaskRegistryService;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyFactory;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyFactoryService;
 import org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactory;
 import org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactoryService;
 import org.jboss.as.controller.AbstractAddStepHandler;
@@ -170,6 +172,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
 
         builder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME, DeployedCacheStoreFactory.class, cacheDependencies.getDeployedCacheStoreFactoryInjector());
         builder.addDependency(ServerTaskRegistryService.SERVICE_NAME, ServerTaskRegistry.class, cacheDependencies.getDeployedTaskRegistryInjector());
+        builder.addDependency(DeployedMergePolicyFactoryService.SERVICE_NAME, DeployedMergePolicyFactory.class, cacheDependencies.getDeployedMergePolicyRegistryInjector());
 
         return builder.install();
     }
@@ -248,6 +251,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         private final InjectedValue<XAResourceRecoveryRegistry> recoveryRegistry = new InjectedValue<>();
         private final InjectedValue<DeployedCacheStoreFactory> deployedCacheStoreFactory = new InjectedValue<>();
         private final InjectedValue<ServerTaskRegistry> deployedTaskRegistry = new InjectedValue<>();
+        private final InjectedValue<DeployedMergePolicyFactory> deployedMergePolicyRegistry = new InjectedValue<>();
 
         CacheDependencies(Value<EmbeddedCacheManager> container) {
             this.container = container;
@@ -263,6 +267,10 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
 
         public InjectedValue<ServerTaskRegistry> getDeployedTaskRegistryInjector() {
             return deployedTaskRegistry;
+        }
+
+        public InjectedValue<DeployedMergePolicyFactory> getDeployedMergePolicyRegistryInjector() {
+            return deployedMergePolicyRegistry;
         }
 
         public ServerTaskRegistry getDeployedTaskRegistry() {
@@ -282,6 +290,11 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
         @Override
         public CacheStoreFactory getDeployedCacheStoreFactory() {
            return deployedCacheStoreFactory.getValue();
+        }
+
+        @Override
+        public DeployedMergePolicyFactory getDeployedMergePolicyRegistry() {
+            return deployedMergePolicyRegistry.getValue();
         }
     }
 }

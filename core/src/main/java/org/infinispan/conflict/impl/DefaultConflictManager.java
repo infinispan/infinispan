@@ -34,7 +34,9 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
+import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
+import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -85,6 +87,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private RpcManager rpcManager;
    private StateConsumer stateConsumer;
    private StateReceiver<K, V> stateReceiver;
+   private EntryMergePolicyFactoryRegistry mergePolicyRegistry;
    private String cacheName;
    private Address localAddress;
    private RpcOptions rpcOptions;
@@ -96,14 +99,15 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    @Inject
    public void init(AsyncInterceptorChain interceptorChain,
-                      AdvancedCache<K, V> cache,
-                      CommandsFactory commandsFactory,
-                      DistributionManager distributionManager,
-                      @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService stateTransferExecutor,
-                      InvocationContextFactory invocationContextFactory,
-                      RpcManager rpcManager,
-                      StateConsumer stateConsumer,
-                      StateReceiver<K, V> stateReceiver) {
+                    AdvancedCache<K, V> cache,
+                    CommandsFactory commandsFactory,
+                    DistributionManager distributionManager,
+                    @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService stateTransferExecutor,
+                    InvocationContextFactory invocationContextFactory,
+                    RpcManager rpcManager,
+                    StateConsumer stateConsumer,
+                    StateReceiver<K, V> stateReceiver,
+                    EntryMergePolicyFactoryRegistry mergePolicyRegistry) {
       this.interceptorChain = interceptorChain;
       this.cache = cache;
       this.commandsFactory = commandsFactory;
@@ -113,6 +117,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.rpcManager = rpcManager;
       this.stateConsumer = stateConsumer;
       this.stateReceiver = stateReceiver;
+      this.mergePolicyRegistry = mergePolicyRegistry;
    }
 
    @Start
@@ -120,7 +125,9 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.cacheName = cache.getName();
       this.localAddress = rpcManager.getAddress();
       this.installedTopology = distributionManager.getCacheTopology();
-      this.entryMergePolicy = cache.getCacheConfiguration().clustering().partitionHandling().mergePolicy();
+
+      PartitionHandlingConfiguration config = cache.getCacheConfiguration().clustering().partitionHandling();
+      this.entryMergePolicy = mergePolicyRegistry.createInstance(config);
 
       initRpcOptions();
       cache.getCacheConfiguration().clustering()

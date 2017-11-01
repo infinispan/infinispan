@@ -71,7 +71,7 @@ public class PartitionHandlingConfigurationResource extends CacheConfigurationCh
 
     static final AttributeDefinition[] ATTRIBUTES = {ENABLED, WHEN_SPLIT, MERGE_POLICY};
 
-    public PartitionHandlingConfigurationResource(CacheConfigurationResource parent) {
+    PartitionHandlingConfigurationResource(CacheConfigurationResource parent) {
         super(PATH, ModelKeys.PARTITION_HANDLING, parent, ATTRIBUTES);
     }
 }

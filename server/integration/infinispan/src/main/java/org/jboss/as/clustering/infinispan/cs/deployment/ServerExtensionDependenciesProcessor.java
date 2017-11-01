@@ -1,5 +1,6 @@
 package org.jboss.as.clustering.infinispan.cs.deployment;
 
+import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -66,7 +67,7 @@ public class ServerExtensionDependenciesProcessor implements DeploymentUnitProce
 
    private boolean hasDeployableCache(ServicesAttachment sa) {
       return hasAdvancedCacheLoaders(sa) || hasAdvancedCacheWriters(sa) || hasAdvancedLoadWriteStores(sa) ||
-            hasCacheLoader(sa) || hasCacheWriter(sa) || hasExternalStores(sa);
+            hasCacheLoader(sa) || hasCacheWriter(sa) || hasExternalStores(sa) || hasCustomMergePolicy(sa);
    }
 
    private boolean hasServerTasks(ServicesAttachment servicesAttachment) {
@@ -95,6 +96,10 @@ public class ServerExtensionDependenciesProcessor implements DeploymentUnitProce
 
    private boolean hasExternalStores(ServicesAttachment servicesAttachment) {
       return hasExtension(servicesAttachment, ExternalStore.class);
+   }
+
+   private boolean hasCustomMergePolicy(ServicesAttachment servicesAttachment) {
+      return hasExtension(servicesAttachment, EntryMergePolicy.class);
    }
 
    private boolean hasExtension(ServicesAttachment servicesAttachment, Class<?> extensionClass) {

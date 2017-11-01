@@ -1,0 +1,8 @@
+        <subsystem xmlns="urn:infinispan:server:core:9.2">
+            <cache-container name="clustered" default-cache="default">
+                <transport lock-timeout="240000" initial-cluster-size="1"/>
+                <distributed-cache name="default" owners="1">
+                    <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="org.infinispan.server.test.partitionhandling.CustomEntryMergePolicy"/>
+                </distributed-cache>
+            </cache-container>
+        </subsystem>
