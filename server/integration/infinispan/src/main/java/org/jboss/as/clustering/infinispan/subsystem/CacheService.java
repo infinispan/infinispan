@@ -25,11 +25,13 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.Cache;
+import org.infinispan.conflict.EntryMergePolicyFactoryRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.factory.CacheStoreFactory;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.task.ServerTaskRegistry;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyFactory;
 import org.jboss.logging.Logger;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
@@ -57,6 +59,7 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
         XAResourceRecoveryRegistry getRecoveryRegistry();
         CacheStoreFactory getDeployedCacheStoreFactory();
         ServerTaskRegistry getDeployedTaskRegistry();
+        DeployedMergePolicyFactory getDeployedMergePolicyRegistry();
     }
 
     public CacheService(String name, String configurationName, Dependencies dependencies) {
@@ -80,6 +83,8 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
 
         CacheStoreFactoryRegistry cacheStoreFactoryRegistry = container.getGlobalComponentRegistry().getComponent(CacheStoreFactoryRegistry.class);
         cacheStoreFactoryRegistry.addCacheStoreFactory(this.dependencies.getDeployedCacheStoreFactory());
+        EntryMergePolicyFactoryRegistry mergePolicyRegistry = container.getGlobalComponentRegistry().getComponent(EntryMergePolicyFactoryRegistry.class);
+        mergePolicyRegistry.addMergePolicyFactory(this.dependencies.getDeployedMergePolicyRegistry());
 
         container.getGlobalComponentRegistry().registerComponent(this.dependencies.getDeployedTaskRegistry(), ServerTaskRegistry.class);
 

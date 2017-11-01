@@ -26,12 +26,11 @@ import java.util.List;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.jboss.as.clustering.infinispan.InfinispanMessages;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicy;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.dmr.ModelNode;
@@ -78,18 +77,10 @@ public abstract class SharedStateCacheConfigurationAdd extends ClusteredCacheCon
           if (phType != null)
             phBuilder.whenSplit(PartitionHandling.valueOf(phType));
 
-          String policy = PartitionHandlingConfigurationResource.MERGE_POLICY.resolveModelAttribute(context, partitionHandling).asString();
-          Parser.MergePolicy mergePolicy = Parser.MergePolicy.fromString(policy);
-          if (mergePolicy != Parser.MergePolicy.CUSTOM) {
-             phBuilder.mergePolicy(mergePolicy.getImpl());
-          } else {
-             try {
-                EntryMergePolicy entryMergePolicy = (EntryMergePolicy) PartitionHandlingConfiguration.class.getClassLoader().loadClass(policy).newInstance();
-                phBuilder.mergePolicy(entryMergePolicy);
-             } catch (Exception e) {
-                throw InfinispanMessages.MESSAGES.invalidEntryMergePolicy(e, policy);
-             }
-          }
+          String policyClassName = PartitionHandlingConfigurationResource.MERGE_POLICY.resolveModelAttribute(context, partitionHandling).asString();
+          Parser.MergePolicy mergePolicy = Parser.MergePolicy.fromString(policyClassName);
+          EntryMergePolicy policy = mergePolicy != Parser.MergePolicy.CUSTOM ? mergePolicy.getImpl() : new DeployedMergePolicy(policyClassName);
+          phBuilder.mergePolicy(policy);
        }
     }
 }

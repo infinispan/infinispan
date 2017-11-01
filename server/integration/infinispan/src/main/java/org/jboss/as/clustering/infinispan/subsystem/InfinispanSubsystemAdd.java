@@ -26,6 +26,8 @@ import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
 
 import org.infinispan.server.infinispan.task.ServerTaskProcessor;
 import org.infinispan.server.infinispan.task.ServerTaskRegistryService;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyProcessor;
+import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicyFactoryService;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedCacheLoaderExtensionProcessor;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedCacheWriterExtensionProcessor;
 import org.jboss.as.clustering.infinispan.cs.deployment.AdvancedLoadWriteStoreExtensionProcessor;
@@ -88,12 +90,14 @@ public class InfinispanSubsystemAdd extends AbstractAddStepHandler {
             processorTarget.addDeploymentProcessor(INFINISPAN_SUBSYSTEM_NAME, Phase.POST_MODULE, ++basePriority, new CacheWriterExtensionProcessor());
             processorTarget.addDeploymentProcessor(INFINISPAN_SUBSYSTEM_NAME, Phase.POST_MODULE, ++basePriority, new ExternalStoreExtensionProcessor());
             processorTarget.addDeploymentProcessor(INFINISPAN_SUBSYSTEM_NAME, Phase.POST_MODULE, ++basePriority, new ServerTaskProcessor());
+            processorTarget.addDeploymentProcessor(INFINISPAN_SUBSYSTEM_NAME, Phase.POST_MODULE, ++basePriority, new DeployedMergePolicyProcessor());
             processorTarget.addDeploymentProcessor(INFINISPAN_SUBSYSTEM_NAME, Phase.DEPENDENCIES, DEPENDENCIES_PRIORITY_PRIORITY, new ServerExtensionDependenciesProcessor());
          }
       }, OperationContext.Stage.RUNTIME);
 
       context.getServiceTarget().addService(DeployedCacheStoreFactoryService.SERVICE_NAME, new DeployedCacheStoreFactoryService()).install();
       context.getServiceTarget().addService(ServerTaskRegistryService.SERVICE_NAME, new ServerTaskRegistryService()).install();
+      context.getServiceTarget().addService(DeployedMergePolicyFactoryService.SERVICE_NAME, new DeployedMergePolicyFactoryService()).install();
    }
 
    @Override

@@ -235,6 +235,7 @@
         <transform in="standalone.xml" out="testsuite/standalone-filecs.xml" modifyInfinispan="${infinispan.parts}/filecachestore.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-eviction.xml" modifyInfinispan="${infinispan.parts}/eviction.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-customcs.xml" modifyInfinispan="${infinispan.parts}/customcs.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-mergepolicies.xml" modifyInfinispan="${infinispan.parts}/mergepolicies.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-customtask.xml" modifyInfinispan="${infinispan.parts}/customtask.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-deployed-pojos.xml" modifyInfinispan="${infinispan.parts}/deployed-pojos.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-custom-compat-marshaller.xml" modifyInfinispan="${infinispan.parts}/custom-compat-marshaller.xml" filtering="true"/>

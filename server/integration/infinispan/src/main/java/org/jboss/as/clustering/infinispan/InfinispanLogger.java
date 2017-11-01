@@ -182,4 +182,16 @@ public interface InfinispanLogger extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 17, value = "Found and ignored unsupported (deprecated) attribute 'module' in cache configuration at [row,col] [%s, %s]")
     void cacheModuleDeprecated(int row, int col);
+
+    @LogMessage(level = INFO)
+    @Message(id = 18, value = "Registering custom EntryMergePolicy '%s'")
+    void registeringCustomMergePolicy(String className);
+
+    @LogMessage(level = INFO)
+    @Message(id = 19, value = "Unregistering custom EntryMergePolicy '%s'")
+    void unregisteringCustomMergePolicy(String className);
+
+    @LogMessage(level = ERROR)
+    @Message(id = 20, value = "Waiting for deployment of custom EntryMergePolicy (%s) timed out. Please check if this EntryMergePolicy is really present.")
+    void loadingCustomMergePolicyTimeout(String className);
 }
