@@ -28,11 +28,15 @@ import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
 import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
+/**
+ * Manages caches instances used during rest requests.
+ */
 public class RestCacheManager<V> {
    private final EmbeddedCacheManager instance;
    private final Predicate<? super String> isCacheIgnored;
    private final boolean allowInternalCacheAccess;
-   private Map<String, AdvancedCache<String, V>> knownCaches = CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
+   private final Map<String, AdvancedCache<String, V>> knownCaches =
+         CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
 
    public RestCacheManager(EmbeddedCacheManager instance) {
       this(instance, s -> Boolean.FALSE);
@@ -99,7 +103,7 @@ public class RestCacheManager<V> {
    }
 
    public MediaType getConfiguredMediaType(String cacheName) {
-      ContentTypeConfiguration valueMediaType = getCache(cacheName).getCacheConfiguration().encoding().valueDataType();
+      ContentTypeConfiguration valueMediaType = instance.getCache(cacheName).getCacheConfiguration().encoding().valueDataType();
       if (!valueMediaType.isMediaTypeChanged()) {
          return null;
       }
@@ -120,7 +124,6 @@ public class RestCacheManager<V> {
       }
       return addressToBeReturned.toString();
    }
-
 
    public String getServerAddress() {
       Transport transport = instance.getTransport();

@@ -21,7 +21,6 @@ import io.netty.handler.codec.http.HttpMethod;
 public class InfinispanCacheAPIRequest extends InfinispanRequest {
 
    private final Optional<String> key;
-   private final StaticContent staticContent = new StaticContent();
 
    InfinispanCacheAPIRequest(FullHttpRequest request, ChannelHandlerContext ctx, Optional<String> cacheName, Optional<String> key, String context) {
       super(request, ctx, cacheName.orElse(null), context);
@@ -35,17 +34,16 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
       return key;
    }
 
-
    @Override
    protected InfinispanResponse execute(CacheOperations cacheOperations) {
       InfinispanResponse response = InfinispanErrorResponse.asError(this, NOT_IMPLEMENTED, null);
 
       if (request.method() == HttpMethod.GET) {
          if (request.uri().endsWith("banner.png")) {
-            response = staticContent.serveBannerFile(this);
+            response = StaticContent.INSTANCE.serveBannerFile(this);
          } else if (!getCacheName().isPresent()) {
             //we are hitting root context here
-            response = staticContent.serveHtmlFile(this);
+            response = StaticContent.INSTANCE.serveHtmlFile(this);
          } else if (!key.isPresent()) {
             response = cacheOperations.getCacheValues(this);
          } else {
