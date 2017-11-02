@@ -17,15 +17,17 @@ import org.infinispan.commons.util.Util;
 public class WrappedByteArray implements WrappedBytes {
    private final byte[] bytes;
    private transient int hashCode;
+   private transient boolean initializedHashCode;
 
    public WrappedByteArray(byte[] bytes) {
       this.bytes = bytes;
-      this.hashCode = Arrays.hashCode(bytes);
    }
 
    public WrappedByteArray(byte[] bytes, int hashCode) {
       this.bytes = bytes;
+      assert hashCode == Arrays.hashCode(bytes) : "HashCode " + hashCode + " doesn't match " + Arrays.hashCode(bytes);
       this.hashCode = hashCode;
+      this.initializedHashCode = true;
    }
 
    @Override
@@ -74,6 +76,10 @@ public class WrappedByteArray implements WrappedBytes {
 
    @Override
    public int hashCode() {
+      if (!initializedHashCode) {
+         this.hashCode = Arrays.hashCode(bytes);
+         initializedHashCode = true;
+      }
       return hashCode;
    }
 
@@ -100,12 +106,23 @@ public class WrappedByteArray implements WrappedBytes {
       @Override
       public void writeObject(ObjectOutput output, WrappedByteArray object) throws IOException {
          MarshallUtil.marshallByteArray(object.bytes, output);
+         if (object.initializedHashCode) {
+            output.writeBoolean(true);
+            output.writeInt(object.hashCode);
+         } else {
+            output.writeBoolean(false);
+         }
       }
 
       @Override
       public WrappedByteArray readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          byte[] bytes = MarshallUtil.unmarshallByteArray(input);
-         return new WrappedByteArray(bytes);
+         boolean hasHashCode = input.readBoolean();
+         if (hasHashCode) {
+            return new WrappedByteArray(bytes, input.readInt());
+         } else {
+            return new WrappedByteArray(bytes);
+         }
       }
    }
 }
