@@ -92,6 +92,7 @@
             </distributed-cache-configuration>
 
             <distributed-cache-configuration name="caching-service" owners="1">
+               <partition-handling when-split="ALLOW_READ_WRITES" merge-policy="REMOVE_ALL"/>
             </distributed-cache-configuration>
 
             <distributed-cache name="default" />
