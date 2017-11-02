@@ -21,6 +21,10 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class StaticContent {
 
+   public static StaticContent INSTANCE = new StaticContent();
+
+   private StaticContent() {}
+
    private static final URL HTML_FILE = StaticContent.class.getClassLoader().getResource("index.html");
    private static final URL BANNER_FILE = StaticContent.class.getClassLoader().getResource("banner.png");
 

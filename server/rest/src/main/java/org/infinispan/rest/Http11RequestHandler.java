@@ -3,10 +3,6 @@ package org.infinispan.rest;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.rest.configuration.RestServerConfiguration;
-import org.infinispan.rest.authentication.Authenticator;
-
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -24,22 +20,10 @@ public class Http11RequestHandler extends Http20RequestHandler {
    /**
     * Creates new {@link Http11RequestHandler}.
     *
-    * @param configuration Rest Server configuration
-    * @param embeddedCacheManager Embedded Cache Manager for storing data.
+    * @param restServer    Rest Server.
     */
-   public Http11RequestHandler(RestServerConfiguration configuration, EmbeddedCacheManager embeddedCacheManager) {
-      super(configuration, embeddedCacheManager);
-   }
-
-   /**
-    * Creates new {@link Http11RequestHandler}.
-    *
-    * @param configuration Rest Server configuration
-    * @param embeddedCacheManager Embedded Cache Manager for storing data.
-    * @param authenticator Authenticator.
-    */
-   public Http11RequestHandler(RestServerConfiguration configuration, EmbeddedCacheManager embeddedCacheManager, Authenticator authenticator) {
-      super(configuration, embeddedCacheManager, authenticator);
+   Http11RequestHandler(RestServer restServer) {
+      super(restServer);
    }
 
    @Override

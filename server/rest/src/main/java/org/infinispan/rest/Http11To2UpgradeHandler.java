@@ -29,7 +29,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
 
    private final RestServer restServer;
 
-   public Http11To2UpgradeHandler(RestServer restServer) {
+   Http11To2UpgradeHandler(RestServer restServer) {
       super(ApplicationProtocolNames.HTTP_1_1);
       this.restServer = restServer;
    }
@@ -39,7 +39,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
       configurePipeline(ctx.pipeline(), protocol);
    }
 
-   public void configurePipeline(ChannelPipeline pipeline, String protocol) {
+   void configurePipeline(ChannelPipeline pipeline, String protocol) {
       if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
          configureHttp2(pipeline);
          return;
@@ -80,7 +80,8 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
 
    /**
     * Creates a handler for HTTP/1.1 -> HTTP/2 upgrade
-    * @return
+    *
+    * @return new instance of {@link HttpToHttp2ConnectionHandler}.
     */
    private HttpToHttp2ConnectionHandler getHttp11To2ConnectionHandler() {
       DefaultHttp2Connection connection = new DefaultHttp2Connection(true);
@@ -103,7 +104,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
     * @return HTTP/1.1 handler.
     */
    public Http11RequestHandler getHttp1Handler() {
-      return new Http11RequestHandler(restServer.getConfiguration(), restServer.getCacheManager(), restServer.getAuthenticator());
+      return new Http11RequestHandler(restServer);
    }
 
    /**
@@ -111,7 +112,7 @@ public class Http11To2UpgradeHandler extends ApplicationProtocolNegotiationHandl
     *
     * @return HTTP/2 handler.
     */
-   public Http20RequestHandler getHttp2Handler() {
-      return new Http20RequestHandler(restServer.getConfiguration(), restServer.getCacheManager(), restServer.getAuthenticator());
+   private Http20RequestHandler getHttp2Handler() {
+      return new Http20RequestHandler(restServer);
    }
 }

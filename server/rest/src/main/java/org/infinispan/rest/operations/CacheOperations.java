@@ -44,7 +44,7 @@ public class CacheOperations {
 
    private static final MurmurHash3 hashFunc = MurmurHash3.getInstance();
 
-   private final RestCacheManager<Object> restCacheManager;
+   private final RestCacheManager restCacheManager;
    private final RestServerConfiguration restServerConfiguration;
    private final EncoderRegistry encoderRegistry;
    private final Set<String> supported = new HashSet<>();

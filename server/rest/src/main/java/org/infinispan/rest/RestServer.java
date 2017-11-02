@@ -2,9 +2,12 @@ package org.infinispan.rest;
 
 import java.util.Arrays;
 
-import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
+import org.infinispan.rest.cachemanager.RestCacheManager;
+import org.infinispan.rest.configuration.RestServerConfiguration;
+import org.infinispan.rest.operations.CacheOperations;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyInitializers;
 
@@ -21,6 +24,7 @@ import io.netty.channel.ChannelOutboundHandler;
 public class RestServer extends AbstractProtocolServer<RestServerConfiguration> {
 
    private Authenticator authenticator = new VoidAuthenticator();
+   private CacheOperations cacheOperations;
 
    public RestServer() {
       super("REST");
@@ -55,8 +59,12 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
     *
     * @return {@link Authenticator} instance.
     */
-   public Authenticator getAuthenticator() {
+   Authenticator getAuthenticator() {
       return authenticator;
+   }
+
+   CacheOperations getCacheOperations() {
+      return cacheOperations;
    }
 
    /**
@@ -66,5 +74,11 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
     */
    public void setAuthenticator(Authenticator authenticator) {
       this.authenticator = authenticator;
+   }
+
+   @Override
+   protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
+      super.startInternal(configuration, cacheManager);
+      this.cacheOperations = new CacheOperations(configuration, new RestCacheManager<>(cacheManager));
    }
 }

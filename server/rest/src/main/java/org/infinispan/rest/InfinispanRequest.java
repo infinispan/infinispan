@@ -23,7 +23,7 @@ public abstract class InfinispanRequest {
    private final ChannelHandlerContext nettyChannelContext;
    private final String cacheName;
    private final String context;
-   protected final QueryStringDecoder queryStringDecoder;
+   final QueryStringDecoder queryStringDecoder;
 
    protected InfinispanRequest(FullHttpRequest request, ChannelHandlerContext ctx, String cacheName, String context) {
       this.request = request;
