@@ -448,6 +448,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          Configuration cacheConfiguration = cacheManager.getCacheConfiguration(cacheName);
          PartitionHandling partitionHandling = cacheConfiguration != null ? cacheConfiguration.clustering().partitionHandling().whenSplit() : null;
          boolean resolveConflictsOnMerge = partitionHandling == PartitionHandling.ALLOW_READ_WRITES && cacheConfiguration.clustering().partitionHandling().mergePolicy() != null;
+         resolveConflictsOnMerge = resolveConflictsOnMerge && !cacheMode.isScattered();
          if (partitionHandling != null && partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
             availabilityStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager, lostDataCheck);
          } else {

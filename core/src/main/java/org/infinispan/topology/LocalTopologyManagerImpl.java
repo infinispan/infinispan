@@ -337,8 +337,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                case CONFLICT_RESOLUTION:
                   // Ensure that this node utilises it's old partitions readConsistentHash during conflict resolution
                   // But has an updated write consistent hash which contains owners from the pre and post merge hashes
-                  unionCH = chf.union(existingTopology.getWriteConsistentHash(), cacheTopology.getPendingCH());
-                  currentCH = existingTopology.getCurrentCH();
+
+                  if (existingTopology != null) {
+                     ConsistentHash existingWriteHash = existingTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE ? existingTopology.getCurrentCH() : existingTopology.getPendingCH();
+                     unionCH = chf.union(existingWriteHash, cacheTopology.getPendingCH());
+                     currentCH = existingTopology.getCurrentCH();
+                  } else {
+                     unionCH = cacheTopology.getPendingCH();
+                  }
                   break;
                default:
                   unionCH = chf.union(cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
