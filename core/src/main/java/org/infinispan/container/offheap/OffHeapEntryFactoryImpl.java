@@ -42,9 +42,10 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final byte TRANSIENT_MORTAL = 1 << 5;
 
    /**
-    * HEADER is composed of hashCode (int), keyLength (int), metadataLength (int), valueLength (int), type (byte)
+    * HEADER is composed of type (byte), hashCode (int), keyLength (int), valueLength (int)
+    * Note that metadata is not included as this is now optional
     */
-   private static final int HEADER_LENGTH = 4 + 4 + 4 + 4 + 1;
+   private static final int HEADER_LENGTH = 1 + 4 + 4 + 4;
 
    @Inject
    public void inject(Marshaller marshaller, OffHeapMemoryAllocator allocator, TimeService timeService,
@@ -66,12 +67,14 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    @Override
    public long create(WrappedBytes key, WrappedBytes value, Metadata metadata) {
       byte type;
+      boolean shouldWriteMetadataSize = false;
       byte[] metadataBytes;
       if (metadata instanceof EmbeddedMetadata) {
          EntryVersion version = metadata.version();
          byte[] versionBytes;
          if (version != null) {
             type = HAS_VERSION;
+            shouldWriteMetadataSize = true;
             try {
                versionBytes = marshaller.objectToByteBuffer(version);
             } catch (IOException | InterruptedException e) {
@@ -112,6 +115,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          }
       } else {
          type = CUSTOM;
+         shouldWriteMetadataSize = true;
          try {
             metadataBytes = marshaller.objectToByteBuffer(metadata);
          } catch (IOException | InterruptedException e) {
@@ -125,23 +129,28 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       // Eviction requires 2 additional pointers at the beginning
       int offset = evictionEnabled ? 16 : 0;
       // Next 8 is for linked pointer to next address
-      long totalSize = offset + 8 + HEADER_LENGTH + keySize + metadataSize + valueSize;
+      long totalSize = offset + 8 + HEADER_LENGTH +
+            // If the type has a version or is custom we have to add 4 more bytes for an int to include that
+            (shouldWriteMetadataSize ? 4 : 0)
+            + keySize + metadataSize + valueSize;
       long memoryAddress = allocator.allocate(totalSize);
 
       // Write the empty linked address pointer first
       MEMORY.putLong(memoryAddress, offset, 0);
       offset += 8;
 
+      MEMORY.putByte(memoryAddress, offset, type);
+      offset += 1;
       MEMORY.putInt(memoryAddress, offset, key.hashCode());
       offset += 4;
       MEMORY.putInt(memoryAddress, offset, key.getLength());
       offset += 4;
-      MEMORY.putInt(memoryAddress, offset, metadataBytes.length);
-      offset += 4;
+      if (shouldWriteMetadataSize) {
+         MEMORY.putInt(memoryAddress, offset, metadataBytes.length);
+         offset += 4;
+      }
       MEMORY.putInt(memoryAddress, offset, value.getLength());
       offset += 4;
-      MEMORY.putByte(memoryAddress, offset, type);
-      offset += 1;
 
       MEMORY.putBytes(key.getBytes(), key.backArrayOffset(), memoryAddress, offset, keySize);
       offset += keySize;
@@ -161,11 +170,24 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    public long getSize(long entryAddress) {
       int headerOffset = evictionEnabled ? 24 : 8;
 
-      int keyLength = MEMORY.getInt(entryAddress, headerOffset + 4);
-      int metadataLength = MEMORY.getInt(entryAddress, headerOffset + 8);
-      int valueLength = MEMORY.getInt(entryAddress, headerOffset + 12);
+      byte type = MEMORY.getByte(entryAddress, headerOffset);
+      headerOffset++;
+      // Skip the hashCode
+      headerOffset += 4;
+      int keyLength = MEMORY.getInt(entryAddress, headerOffset);
+      headerOffset += 4;
+      int metadataLength;
+      if ((type & (CUSTOM | HAS_VERSION)) != 0) {
+         metadataLength = MEMORY.getInt(entryAddress, headerOffset);
+         metadataLength += 4;
+      } else {
+         metadataLength = 0;
+      }
 
-      return headerOffset + HEADER_LENGTH + keyLength + metadataLength + valueLength;
+      int valueLength = MEMORY.getInt(entryAddress, headerOffset);
+      headerOffset += 4;
+
+      return headerOffset + keyLength + metadataLength + valueLength;
    }
 
    @Override
@@ -182,7 +204,8 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    public int getHashCode(long entryAddress) {
       // 16 bytes for eviction if needed (optional)
       // 8 bytes for linked pointer
-      int headerOffset = evictionEnabled ? 24 : 8;
+      // 1 for type
+      int headerOffset = evictionEnabled ? 25 : 9;
       return MEMORY.getInt(entryAddress, headerOffset);
    }
 
@@ -193,18 +216,39 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
     */
    @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> fromMemory(long address) {
+      // 16 bytes for eviction if needed (optional)
+      // 8 bytes for linked pointer
       int offset = evictionEnabled ? 24 : 8;
 
+      byte metadataType = MEMORY.getByte(address, offset);
+      offset += 1;
       int hashCode = MEMORY.getInt(address, offset);
       offset += 4;
       byte[] keyBytes = new byte[MEMORY.getInt(address, offset)];
       offset += 4;
-      byte[] metadataBytes = new byte[MEMORY.getInt(address, offset)];
-      offset += 4;
+
+      byte[] metadataBytes;
+      switch (metadataType) {
+         case IMMORTAL:
+            metadataBytes = EMPTY_BYTES;
+            break;
+         case MORTAL:
+            metadataBytes = new byte[16];
+            break;
+         case TRANSIENT:
+            metadataBytes = new byte[16];
+            break;
+         case TRANSIENT_MORTAL:
+            metadataBytes = new byte[32];
+            break;
+         default:
+            // This means we had CUSTOM or HAS_VERSION so we have to read it all
+            metadataBytes = new byte[MEMORY.getInt(address, offset)];
+            offset += 4;
+      }
+
       byte[] valueBytes = new byte[MEMORY.getInt(address, offset)];
       offset += 4;
-      byte metadataType = MEMORY.getByte(address, offset);
-      offset += 1;
 
       MEMORY.getBytes(address, offset, keyBytes, 0, keyBytes.length);
       offset += keyBytes.length;
@@ -215,7 +259,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
 
       Metadata metadata;
       // This is a custom metadata
-      if ((metadataType & 1) == 1) {
+      if ((metadataType & CUSTOM) == CUSTOM) {
          try {
             metadata = (Metadata) marshaller.objectFromByteBuffer(metadataBytes);
          } catch (IOException | ClassNotFoundException e) {
@@ -229,7 +273,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          long created;
          long lastUsed;
          offset = 0;
-         boolean hasVersion = (metadataType & 2) == 2;
+         boolean hasVersion = (metadataType & HAS_VERSION) == HAS_VERSION;
          // Ignore CUSTOM and VERSION to find type
          switch (metadataType & 0xFC) {
             case IMMORTAL:
@@ -283,21 +327,39 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
     */
    @Override
    public boolean equalsKey(long address, WrappedBytes wrappedBytes) {
+      // 16 bytes for eviction if needed (optional)
+      // 8 bytes for linked pointer
       int headerOffset = evictionEnabled ? 24 : 8;
+      byte type = MEMORY.getByte(address, headerOffset);
+      headerOffset++;
+      // First if hashCode doesn't match then the key can't be equal
       int hashCode = wrappedBytes.hashCode();
       if (hashCode != MEMORY.getInt(address, headerOffset)) {
          return false;
       }
-      int keyLength = MEMORY.getInt(address, headerOffset + 4);
+      headerOffset += 4;
+      // If the length of the key is not the same it can't match either!
+      int keyLength = MEMORY.getInt(address, headerOffset);
       if (keyLength != wrappedBytes.getLength()) {
          return false;
       }
+      headerOffset += 4;
+      if (requiresMetadataSize(type)) {
+         headerOffset += 4;
+      }
+      // This is for the value size which we don't need to read
+      headerOffset += 4;
+      // Finally read each byte individually so we don't have to copy them into a byte[]
       for (int i = 0; i < keyLength; i++) {
-         byte b = MEMORY.getByte(address, headerOffset + HEADER_LENGTH + i);
+         byte b = MEMORY.getByte(address, headerOffset + i);
          if (b != wrappedBytes.getByte(i))
             return false;
       }
 
       return true;
+   }
+
+   static private boolean requiresMetadataSize(byte type) {
+      return (type & (CUSTOM | HAS_VERSION)) != 0;
    }
 }
