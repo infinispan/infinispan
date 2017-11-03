@@ -13,10 +13,13 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
@@ -31,6 +34,22 @@ import org.testng.annotations.Test;
 public abstract class AbstractClusterListenerDistAddListenerTest extends AbstractClusterListenerUtilTest {
    protected AbstractClusterListenerDistAddListenerTest(boolean tx) {
       super(tx, CacheMode.DIST_SYNC);
+   }
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      builderUsed = new ConfigurationBuilder();
+      // Disable conflict resolution on merge as StateProvider mocks are used in this#waitUntilRequestingListeners
+      builderUsed.clustering().cacheMode(cacheMode).partitionHandling().mergePolicy(null);
+      if (tx) {
+         builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+         builderUsed.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
+      }
+      // Due to ISPN-5507 we can end up waiting 30 seconds for the test to complete with expiration tests
+      builderUsed.transaction().cacheStopTimeout(100, TimeUnit.MILLISECONDS);
+      builderUsed.expiration().disableReaper();
+      createClusteredCaches(3, CACHE_NAME, builderUsed);
+      injectTimeServices();
    }
 
    /**

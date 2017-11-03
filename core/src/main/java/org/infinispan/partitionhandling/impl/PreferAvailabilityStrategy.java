@@ -4,9 +4,11 @@ import static org.infinispan.util.logging.events.Messages.MESSAGES;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -185,16 +187,36 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       // Also cancel any pending rebalance by removing the pending CH, because we don't recover the rebalance
       // confirmation status (yet).
       CacheTopology mergedTopology = null;
-      boolean resolveConflicts = resolveConflictsOnMerge && isSplitBrainHealing(context, maxTopology, maxStableTopology);
+      boolean resolveConflicts = false;
       if (maxTopology != null) {
-         // If we are required to resolveConflicts, then we utilise the CH of the expected members. This is necessary
-         // so that during conflict resolution, writes go to all owners
+
+         // Record all distinct read owners and hashes
+         Set<Address> possibleOwners = new HashSet<>();
+         Set<ConsistentHash> distinctHashes = new HashSet<>();
+         for (CacheStatusResponse response : statusResponses) {
+            CacheTopology cacheTopology = response.getCacheTopology();
+            if (cacheTopology != null) {
+               ConsistentHash hash = cacheTopology.getCurrentCH();
+               if (hash != null && !hash.getMembers().isEmpty()) {
+                  possibleOwners.addAll(hash.getMembers());
+                  distinctHashes.add(hash);
+               }
+            }
+         }
+
+         resolveConflicts = resolveConflictsOnMerge && !possibleOwners.isEmpty() && possibleOwners.size() > 1 && !maxTopology.getMembers().containsAll(possibleOwners);
          if (resolveConflicts) {
+            // If we are required to resolveConflicts, then we utilise a union of all distinct CHs. This is necessary
+            // to ensure that we read the entries associated with all possible read owners before the rebalance occurs
+            List<Address> members = new ArrayList<>(possibleOwners);
             CacheJoinInfo joinInfo = context.getJoinInfo();
             ConsistentHashFactory chf = joinInfo.getConsistentHashFactory();
-            ConsistentHash mergehash = chf.create(joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(), newMembers, context.getCapacityFactors());
+            ConsistentHash mergehash = chf.create(joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(), members, context.getCapacityFactors());
+            for (ConsistentHash hash : distinctHashes)
+               mergehash = chf.union(mergehash, hash);
+
             mergedTopology = new CacheTopology(maxTopologyId + 1, maxRebalanceId + 1, maxTopology.getCurrentCH(),
-                  mergehash, mergehash, CacheTopology.Phase.CONFLICT_RESOLUTION, newMembers, persistentUUIDManager.mapAddresses(newMembers));
+                  mergehash, mergehash, CacheTopology.Phase.CONFLICT_RESOLUTION, members, persistentUUIDManager.mapAddresses(members));
          } else {
             // TODO If maxTopology.getPhase() == READ_NEW_WRITE_ALL, the pending CH would be more appropriate
             // The best approach may be to collect the read owners from all the topologies and use their union as the current CH
@@ -219,14 +241,6 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
       // Then start a rebalance with the merged members
       context.queueRebalance(newMembers);
-   }
-
-   // If we have more expected members than stable members, then we know that a split brain heal is occurring
-   // However if the maxTopologySize == 1, then we know that we have a new coordinator
-   private boolean isSplitBrainHealing(AvailabilityStrategyContext context, CacheTopology maxTopology, CacheTopology maxStableTopology) {
-      boolean isNewCoordinator = maxTopology != null && maxTopology.getMembers().size() == 1;
-      boolean membershipIncreased = !isNewCoordinator && maxStableTopology != null && context.getExpectedMembers().size() > maxStableTopology.getMembers().size();
-      return !isNewCoordinator && membershipIncreased;
    }
 
    @Override
