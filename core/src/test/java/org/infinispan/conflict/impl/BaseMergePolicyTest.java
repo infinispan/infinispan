@@ -2,9 +2,8 @@ package org.infinispan.conflict.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -13,9 +12,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.conflict.ConflictManager;
 import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.distribution.MagicKey;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
@@ -33,25 +34,74 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    private static Log log = LogFactory.getLog(BaseMergePolicyTest.class);
    private static boolean trace = log.isTraceEnabled();
 
+   protected MagicKey conflictKey;
+   protected Object valueAfterMerge;
+   protected PartitionDescriptor p0;
+   protected PartitionDescriptor p1;
+   protected int numberOfOwners;
+
    BaseMergePolicyTest() {
       this.partitionHandling = PartitionHandling.ALLOW_READ_WRITES;
+      this.numberOfOwners = 2;
+      this.valueAfterMerge = "DURING SPLIT";
    }
 
-   abstract void beforeSplit();
-   abstract void duringSplit();
-   abstract void afterMerge();
+   protected BaseMergePolicyTest setValueAfterMerge(Object val) {
+      valueAfterMerge = val;
+      return this;
+   }
+
+   protected BaseMergePolicyTest setPartitions(int[] partition1, int[] partition2) {
+      p0 = new PartitionDescriptor(partition1);
+      p1 = new PartitionDescriptor(partition2);
+      numMembersInCluster = p0.getNodes().length + p1.getNodes().length;
+      return this;
+   }
+
+   protected void beforeSplit() {
+      conflictKey = new MagicKey(cache(p0.node(0)), cache(p1.node(0)));
+      cache(p0.node(0)).put(conflictKey, "BEFORE SPLIT");
+   }
+
+   protected void duringSplit(AdvancedCache preferredPartitionCache, AdvancedCache otherCache) {
+      preferredPartitionCache.put(conflictKey, "DURING SPLIT");
+   }
+
+   protected void performMerge() {
+      partition(0).merge(partition(1));
+   }
+
+   protected void afterMerge() {
+      ConflictManager cm = conflictManager(0);
+      assert !cm.isConflictResolutionInProgress();
+      Map<Address, InternalCacheValue> versionMap = cm.getAllVersions(conflictKey);
+      assertNotNull(versionMap);
+      assertEquals("Versions: " + versionMap, numberOfOwners, versionMap.size());
+      String message = String.format("Key=%s. VersionMap: %s", conflictKey, versionMap);
+      for (InternalCacheValue icv : versionMap.values()) {
+         if (valueAfterMerge != null) {
+            assertNotNull(message, icv);
+            assertNotNull(message, icv.getValue());
+            assertEquals(message, valueAfterMerge, icv.getValue());
+         } else {
+            assertNull(icv);
+         }
+      }
+      assertEquals(0, cm.getConflicts().count());
+   }
 
    public void testPartitionMergePolicy() throws Throwable {
       if (trace) log.tracef("beforeSplit()");
       beforeSplit();
 
       if (trace) log.tracef("splitCluster");
-      splitCluster(new int[]{0, 1}, new int[]{2, 3});
-      TestingUtil.waitForNoRebalance(cache(0), cache(1));
-      TestingUtil.waitForNoRebalance(cache(2), cache(3));
+      splitCluster(p0.getNodes(), p1.getNodes());
+      TestingUtil.waitForNoRebalance(getPartitionCaches(p0));
+      TestingUtil.waitForNoRebalance(getPartitionCaches(p1));
 
       if (trace) log.tracef("duringSplit()");
-      duringSplit();
+      AdvancedCache preferredPartitionCache = getCacheFromPreferredPartition();
+      duringSplit(preferredPartitionCache, getCacheFromNonPreferredPartition(preferredPartitionCache));
 
       if (trace) log.tracef("performMerge()");
       performMerge();
@@ -60,20 +110,26 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       afterMerge();
    }
 
-   protected void performMerge() {
-      partition(0).merge(partition(1));
-      assertTrue(clusterAndChFormed(0, 4));
-      assertTrue(clusterAndChFormed(1, 4));
-      assertTrue(clusterAndChFormed(2, 4));
-      assertTrue(clusterAndChFormed(3, 4));
-      TestingUtil.waitForNoRebalance(caches());
+   protected AdvancedCache[] getPartitionCaches(PartitionDescriptor descriptor) {
+      int[] nodes = descriptor.getNodes();
+      AdvancedCache[] caches = new AdvancedCache[nodes.length];
+      for (int i = 0; i < nodes.length; i++)
+         caches[i] = advancedCache(nodes[i]);
+      return caches;
    }
 
-   protected <A, B> AdvancedCache<A, B> getCacheFromNonPreferredPartition(AdvancedCache... caches) {
-      AdvancedCache<A, B> preferredCache = getCacheFromPreferredPartition(caches);
-      List<AdvancedCache> cacheList = new ArrayList<>(Arrays.asList(caches));
-      cacheList.remove(preferredCache);
-      return cacheList.get(0);
+   protected <A, B> AdvancedCache<A, B> getCacheFromNonPreferredPartition(AdvancedCache preferredCache) {
+      for (Cache c : caches()) {
+         AdvancedCache cache = (AdvancedCache) c;
+         if (!cache.getDistributionManager().getWriteConsistentHash().equals(preferredCache.getDistributionManager().getWriteConsistentHash()))
+            return cache;
+      }
+      return null;
+   }
+
+   protected <A, B> AdvancedCache<A, B> getCacheFromPreferredPartition() {
+      List<AdvancedCache> caches = caches().stream().map(AdvancedCache.class::cast).collect(Collectors.toList());
+      return getCacheFromPreferredPartition(caches.toArray(new AdvancedCache[caches.size()]));
    }
 
    protected <A, B> AdvancedCache<A, B> getCacheFromPreferredPartition(AdvancedCache... caches) {
@@ -137,20 +193,11 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       return ConflictManagerFactory.get(advancedCache(index));
    }
 
-   protected void assertSameVersionAndNoConflicts(int cacheIndex, int numberOfVersions, Object key, Object expectedValue) {
-      ConflictManager cm = conflictManager(cacheIndex);
-      assert !cm.isConflictResolutionInProgress();
-      Map<Address, InternalCacheValue> versionMap = cm.getAllVersions(key);
-      assertNotNull(versionMap);
-      assertEquals("Versions: " + versionMap, numberOfVersions, versionMap.size());
-      String message = String.format("Key=%s. VersionMap: %s", key, versionMap);
-      for (InternalCacheValue icv : versionMap.values()) {
-         if (expectedValue != null) {
-            assertNotNull(message, icv);
-            assertNotNull(message, icv.getValue());
-         }
-         assertEquals(message, expectedValue, icv.getValue());
-      }
-      assertEquals(0, cm.getConflicts().count());
+   protected int[] cacheIndexes() {
+      int[] indexes = new int[numMembersInCluster];
+      int count = 0;
+      for (int i : p0.getNodes())
+         indexes[count++] = i;
+      return indexes;
    }
 }

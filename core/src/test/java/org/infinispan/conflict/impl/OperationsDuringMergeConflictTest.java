@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -66,38 +67,38 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
    @Override
    public Object[] factory() {
       return new Object[] {
-            new OperationsDuringMergeConflictTest(),
+            new OperationsDuringMergeConflictTest().mergeAction(MergeAction.NONE),
             new OperationsDuringMergeConflictTest().mergeAction(MergeAction.PUT),
             new OperationsDuringMergeConflictTest().mergeAction(MergeAction.REMOVE)
       };
    }
 
    private MergeAction mergeAction;
-   private MagicKey conflictKey;
 
    public OperationsDuringMergeConflictTest() {
       super();
       this.mergePolicy = ((preferredEntry, otherEntries) -> TestInternalCacheEntryFactory.create(conflictKey, MERGE_RESULT));
-      this.mergeAction = MergeAction.NONE;
+      this.setPartitions(new int[]{0,1}, new int[]{2,3});
    }
 
    OperationsDuringMergeConflictTest mergeAction(MergeAction mergeAction) {
       this.mergeAction = mergeAction;
+      this.valueAfterMerge = mergeAction.value;
       return this;
    }
 
    @Override
-   void beforeSplit() {
-      conflictKey = new MagicKey(cache(2), cache(0));
+   protected void beforeSplit() {
+      conflictKey = new MagicKey(cache(p0.node(0)), cache(p1.node(0)));
    }
 
    @Override
-   void duringSplit() {
-      cache(0).put(conflictKey, PARTITION_0_VAL);
-      cache(2).put(conflictKey, PARTITION_1_VAL);
+   protected void duringSplit(AdvancedCache preferredPartitionCache, AdvancedCache otherCache) {
+      cache(p0.node(0)).put(conflictKey, PARTITION_0_VAL);
+      cache(p1.node(0)).put(conflictKey, PARTITION_1_VAL);
 
-      assertCacheGet(conflictKey, PARTITION_0_VAL, 0, 1);
-      assertCacheGet(conflictKey, PARTITION_1_VAL, 2, 3);
+      assertCacheGet(conflictKey, PARTITION_0_VAL, p0.getNodes());
+      assertCacheGet(conflictKey, PARTITION_1_VAL, p1.getNodes());
    }
 
    @Override
@@ -114,11 +115,11 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
             replaceComponent(manager, InboundInvocationHandler.class, ourHandler, true);
          });
 
-         assertCacheGet(conflictKey, PARTITION_0_VAL, 0, 1);
-         assertCacheGet(conflictKey, PARTITION_1_VAL, 2, 3);
+         assertCacheGet(conflictKey, PARTITION_0_VAL, p0.getNodes());
+         assertCacheGet(conflictKey, PARTITION_1_VAL, p1.getNodes());
          partition(0).merge(partition(1), false);
-         assertCacheGet(conflictKey, PARTITION_0_VAL, 0, 1);
-         assertCacheGet(conflictKey, PARTITION_1_VAL, 2, 3);
+         assertCacheGet(conflictKey, PARTITION_0_VAL, p0.getNodes());
+         assertCacheGet(conflictKey, PARTITION_1_VAL, p1.getNodes());
 
          if (modifyDuringMerge) {
             // Wait for CONFLICT_RESOLUTION topology to have been installed by the coordinator and then proceed
@@ -133,7 +134,7 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
          conflictLatch.countDown();
          stateTransferLatch.countDown();
          TestingUtil.waitForNoRebalance(caches());
-         assertCacheGetVal(mergeAction, 0, 1, 2, 3);
+         assertCacheGetValAllCaches(mergeAction);
       } catch (Throwable t) {
          conflictLatch.countDown();
          stateTransferLatch.countDown();
@@ -141,13 +142,8 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
       }
    }
 
-   @Override
-   void afterMerge() {
-      assertCacheGetVal(mergeAction, 0, 1, 2, 3);
-   }
-
-   private void assertCacheGetVal(MergeAction action, int... caches) {
-      assertCacheGet(conflictKey, action.value, caches);
+   private void assertCacheGetValAllCaches(MergeAction action) {
+      assertCacheGet(conflictKey, action.value, cacheIndexes());
    }
 
    private class BlockingInboundInvocationHandler implements InboundInvocationHandler {
