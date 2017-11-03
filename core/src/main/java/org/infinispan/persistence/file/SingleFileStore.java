@@ -105,6 +105,7 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          if (location == null || location.trim().length() == 0)
             location = "Infinispan-SingleFileStore";
 
+         location = location.replaceFirst("^~", System.getProperty("user.home"));
          file = new File(location, ctx.getCache().getName() + ".dat");
          if (!file.exists()) {
             File dir = file.getParentFile();
