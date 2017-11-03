@@ -1,36 +1,27 @@
 package org.infinispan.conflict.impl;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.conflict.MergePolicies;
-import org.infinispan.distribution.MagicKey;
+import org.testng.annotations.Test;
 
 /**
  * @author Ryan Emerson
  * @since 9.1
  */
+@Test(groups = "functional", testName = "partitionhandling.MergePolicyRemoveAllTest")
 public class MergePolicyRemoveAllTest extends BaseMergePolicyTest {
 
-   private MagicKey conflictKey;
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new MergePolicyRemoveAllTest().setPartitions(new int[]{0,1,2}, new int[]{3,4}),
+            new MergePolicyRemoveAllTest().setPartitions(new int[]{0,1}, new int[]{2,3}),
+            new MergePolicyRemoveAllTest().setPartitions(new int[]{0,1}, new int[]{2})
+      };
+   }
 
    public MergePolicyRemoveAllTest() {
       super();
       this.mergePolicy = MergePolicies.REMOVE_ALL;
-   }
-
-   @Override
-   void beforeSplit() {
-      conflictKey = new MagicKey(cache(2), cache(0));
-      cache(0).put(conflictKey, "BEFORE SPLIT");
-   }
-
-   @Override
-   void duringSplit() {
-      AdvancedCache<Object, Object> cache = getCacheFromPreferredPartition(advancedCache(0), advancedCache(2));
-      cache.put(conflictKey, "DURING SPLIT");
-   }
-
-   @Override
-   void afterMerge() {
-      assertCacheGet(conflictKey, null, 0, 1, 2, 3);
+      this.valueAfterMerge = null;
    }
 }
