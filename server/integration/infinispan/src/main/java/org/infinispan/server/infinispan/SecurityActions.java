@@ -6,12 +6,15 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.counter.EmbeddedCounterManagerFactory;
+import org.infinispan.counter.api.CounterManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -306,5 +309,9 @@ public final class SecurityActions {
         GetSitesViewAction action = new GetSitesViewAction(cacheManager);
         return doPrivileged(action);
     }
+    
+    public static Optional<CounterManager> findCounterManager(EmbeddedCacheManager cacheManager) {
+       return Optional.ofNullable(doPrivileged((PrivilegedAction<CounterManager>) () -> EmbeddedCounterManagerFactory.asCounterManager(cacheManager)));
+   }
 
 }
