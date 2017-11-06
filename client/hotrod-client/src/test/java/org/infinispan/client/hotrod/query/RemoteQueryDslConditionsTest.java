@@ -106,7 +106,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    protected void initProtoSchema(RemoteCacheManager remoteCacheManager) throws IOException {
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader()));
+      metadataCache.put("sample_bank_account/bank.proto", loadSchema());
       metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
       checkSchemaErrors(metadataCache);
 
@@ -115,6 +115,10 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       MarshallerRegistration.registerMarshallers(serCtx);
       serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
       serCtx.registerMarshaller(new NotIndexedMarshaller());
+   }
+
+   protected String loadSchema() throws IOException {
+      return Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader());
    }
 
    /**
