@@ -123,4 +123,9 @@ public class ResponseAssertion {
       Assertions.assertThat(response.getContent()).containsExactly(bytes);
       return this;
    }
+
+   public ResponseAssertion isServiceUnavailable() {
+      Assertions.assertThat(response.getStatus()).isEqualTo(503);
+      return this;
+   }
 }

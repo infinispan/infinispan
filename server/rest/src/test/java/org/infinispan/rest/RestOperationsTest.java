@@ -173,4 +173,21 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
    }
 
+   @Test
+   public void shouldIgnoreDisabledCaches() throws Exception {
+      putStringValueInCache("default", "K", "V");
+      String url = String.format("http://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "K");
+
+      ContentResponse response = client.newRequest(url).send();
+      ResponseAssertion.assertThat(response).isOk();
+
+      restServer.ignoreCache("default");
+      response = client.newRequest(url).send();
+      ResponseAssertion.assertThat(response).isServiceUnavailable();
+
+      restServer.unignoreCache("default");
+      response = client.newRequest(url).send();
+      ResponseAssertion.assertThat(response).isOk();
+   }
+
 }

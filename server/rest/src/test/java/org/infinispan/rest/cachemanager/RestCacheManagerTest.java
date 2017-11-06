@@ -32,7 +32,7 @@ public class RestCacheManagerTest extends SingleCacheManagerTest {
    @Test
    public void testShouldKeepEncodedCachesRegistered() {
       EmbeddedCacheManager embeddedCacheManager = Mockito.spy(cacheManager);
-      RestCacheManager<Object> restCacheManager = new RestCacheManager<>(embeddedCacheManager);
+      RestCacheManager<Object> restCacheManager = new RestCacheManager<>(embeddedCacheManager, c -> Boolean.FALSE);
       Map<String, Cache<String, ?>> knownCaches = TestingUtil.extractField(restCacheManager, "knownCaches");
 
       // Request cache by simple name

@@ -103,4 +103,12 @@ public class RestServerHelper {
    public String getHost() {
       return restServer.getHost();
    }
+
+   public void ignoreCache(String cacheName) {
+      restServer.ignoreCache(cacheName);
+   }
+
+   public void unignoreCache(String cacheName) {
+      restServer.unignore(cacheName);
+   }
 }
