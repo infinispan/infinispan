@@ -3,6 +3,7 @@ package org.infinispan.rest;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_IMPLEMENTED;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.infinispan.rest.operations.CacheOperations;
@@ -14,16 +15,18 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 
 /**
- *  Representation of a HTTP request related to Cache API operations.
+ * Representation of a HTTP request related to Cache API operations.
  *
  * @since 9.2
  */
 public class InfinispanCacheAPIRequest extends InfinispanRequest {
 
    private final Optional<String> key;
+   private final CacheOperations cacheOperations;
 
-   InfinispanCacheAPIRequest(FullHttpRequest request, ChannelHandlerContext ctx, Optional<String> cacheName, Optional<String> key, String context) {
-      super(request, ctx, cacheName.orElse(null), context);
+   InfinispanCacheAPIRequest(CacheOperations operations, FullHttpRequest request, ChannelHandlerContext ctx, Optional<String> cacheName, Optional<String> key, String context, Map<String, List<String>> parameters) {
+      super(request, ctx, cacheName.orElse(null), context, parameters);
+      this.cacheOperations = operations;
       this.key = key;
    }
 
@@ -35,7 +38,7 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
    }
 
    @Override
-   protected InfinispanResponse execute(CacheOperations cacheOperations) {
+   protected InfinispanResponse execute() {
       InfinispanResponse response = InfinispanErrorResponse.asError(this, NOT_IMPLEMENTED, null);
 
       if (request.method() == HttpMethod.GET) {
@@ -73,7 +76,7 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
       if (timeToLiveSeconds != null) {
          try {
             return Optional.of(Long.valueOf(timeToLiveSeconds));
-         } catch (NumberFormatException nfe) {
+         } catch (NumberFormatException ignored) {
          }
       }
       return Optional.empty();
@@ -89,7 +92,7 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
       if (maxIdleTimeSeconds != null) {
          try {
             return Optional.of(Long.valueOf(maxIdleTimeSeconds));
-         } catch (NumberFormatException nfe) {
+         } catch (NumberFormatException ignored) {
          }
       }
       return Optional.empty();
@@ -145,7 +148,7 @@ public class InfinispanCacheAPIRequest extends InfinispanRequest {
     * @return <code>true</code> if client wishes to return 'Extended Headers'.
     */
    public Optional<String> getExtended() {
-      List<String> extendedParameters = queryStringDecoder.parameters().get("extended");
+      List<String> extendedParameters = parameters.get("extended");
       if (extendedParameters != null && extendedParameters.size() > 0) {
          return Optional.ofNullable(extendedParameters.get(0));
       }

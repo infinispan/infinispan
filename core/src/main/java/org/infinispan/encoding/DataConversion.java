@@ -170,7 +170,9 @@ public class DataConversion {
             }
          }
          if (directTranscoder != null) {
-            encoder = IdentityEncoder.INSTANCE;
+            if (encoder.getStorageFormat().equals(MediaType.APPLICATION_OBJECT)) {
+               encoder = IdentityEncoder.INSTANCE;
+            }
             transcoder = directTranscoder;
          } else {
             transcoder = encoderRegistry.getTranscoder(requestMediaType, storageMediaType);

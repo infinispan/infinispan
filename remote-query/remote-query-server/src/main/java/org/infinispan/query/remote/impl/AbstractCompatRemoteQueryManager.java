@@ -6,6 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.protostream.SerializationContext;
@@ -26,8 +27,10 @@ abstract class AbstractCompatRemoteQueryManager implements RemoteQueryManager {
 
    protected final SerializationContext ctx;
    protected final boolean isIndexed;
+   final EncoderRegistry encoderRegistry;
 
    AbstractCompatRemoteQueryManager(ComponentRegistry cr) {
+      this.encoderRegistry = cr.getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
       SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       Configuration cfg = cr.getComponent(Configuration.class);

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeoutException;
 import org.assertj.core.api.Assertions;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.ByteBufferContentProvider;
 import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.client.util.StringContentProvider;
@@ -881,4 +882,22 @@ public abstract class BaseRestOperationsTest {
 
    }
 
+   @Test
+   public void shouldHandleInvalidPath() throws Exception {
+      Request browserRequest = client.newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "asdjsad"))
+            .header(HttpHeader.ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            .method(HttpMethod.GET);
+
+      ContentResponse response = browserRequest.send();
+      ResponseAssertion.assertThat(response).isNotFound();
+   }
+
+   @Test
+   public void shouldHandleIncompletePath() throws Exception {
+      Request req = client.newRequest(String.format("http://localhost:%d/rest/%s?action", restServer.getPort(), "default"))
+            .method(HttpMethod.GET);
+
+      ContentResponse response = req.send();
+      ResponseAssertion.assertThat(response).isBadRequest();
+   }
 }

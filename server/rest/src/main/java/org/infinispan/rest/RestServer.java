@@ -8,6 +8,7 @@ import org.infinispan.rest.authentication.impl.VoidAuthenticator;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.operations.CacheOperations;
+import org.infinispan.rest.operations.SearchOperations;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyInitializers;
 
@@ -25,6 +26,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    private Authenticator authenticator = new VoidAuthenticator();
    private CacheOperations cacheOperations;
+   private SearchOperations searchOperations;
 
    public RestServer() {
       super("REST");
@@ -67,6 +69,10 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       return cacheOperations;
    }
 
+   SearchOperations getSearchOperations() {
+      return searchOperations;
+   }
+
    /**
     * Sets Authentication mechanism.
     *
@@ -79,6 +85,8 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    @Override
    protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       super.startInternal(configuration, cacheManager);
-      this.cacheOperations = new CacheOperations(configuration, new RestCacheManager<>(cacheManager, this::isCacheIgnored));
+      RestCacheManager<Object> restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
+      this.cacheOperations = new CacheOperations(configuration, restCacheManager);
+      this.searchOperations = new SearchOperations(configuration, restCacheManager);
    }
 }

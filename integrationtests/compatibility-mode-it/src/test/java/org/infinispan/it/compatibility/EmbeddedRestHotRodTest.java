@@ -1,5 +1,6 @@
 package org.infinispan.it.compatibility;
 
+import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.testng.AssertJUnit.assertArrayEquals;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -28,6 +29,8 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
 import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -48,6 +51,8 @@ import org.testng.annotations.Test;
 public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
    private static final DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+
+   private static final ObjectMapper MAPPER = new ObjectMapper();
 
    CompatibilityCacheFactory<String, Object> cacheFactory;
 
@@ -170,7 +175,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       getJson.setRequestHeader("Accept", "application/json");
       cacheFactory.getRestClient().executeMethod(getJson);
       assertEquals(getJson.getStatusText(), HttpStatus.SC_OK, getJson.getStatusCode());
-      assertEquals("{\"_type\":\"" + Person.class.getName() + "\",\"name\":\"Anna\"}", getJson.getResponseBodyAsString());
+      assertEquals(asJson(p), getJson.getResponseBodyAsString());
 
       // 3. Get with REST (accept application/xml)
       HttpMethod getXml = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
@@ -193,7 +198,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       getJson.setRequestHeader("Accept", "application/json");
       cacheFactory.getRestClient().executeMethod(getJson);
       assertEquals(getJson.getStatusText(), HttpStatus.SC_OK, getJson.getStatusCode());
-      assertEquals("{\"_type\":\"" + Person.class.getName() + "\",\"name\":\"Jakub\"}", getJson.getResponseBodyAsString());
+      assertEquals(asJson(p), getJson.getResponseBodyAsString());
 
       // 3. Get with REST (accept application/xml)
       HttpMethod getXml = new GetMethod(cacheFactory.getRestUrl() + "/" + key);
@@ -395,6 +400,13 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertTrue(getKey2.getResponseHeader("Cache-Control").getValue().contains("max-age"));
       assertEquals(getKey2.getStatusText(), HttpStatus.SC_OK, getKey2.getStatusCode());
       assertEquals("v2", getKey2.getResponseBodyAsString());
+   }
+
+   private String asJson(Person p) {
+      ObjectNode person = MAPPER.createObjectNode();
+      person.put(TYPE, p.getClass().getName());
+      person.put("name", p.name);
+      return person.toString();
    }
 
    /**

@@ -3,6 +3,7 @@ package org.infinispan.it.compatibility;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
+import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.testng.Assert.assertEquals;
@@ -20,6 +21,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -43,11 +45,12 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
-   protected RestServer restServer;
-   protected HttpClient restClient;
+   RestServer restServer;
+   HttpClient restClient;
    private EmbeddedCacheManager cacheManager;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<String, CryptoCurrency> remoteCache;
+   private static final ObjectMapper MAPPER = new ObjectMapper();
 
    private static final String CACHE_NAME = "indexed";
 
@@ -85,8 +88,11 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
    private void writeCurrencyViaJson(String key, String description, int rank) throws IOException {
       EntityEnclosingMethod put = new PutMethod(restEndpoint + "/" + key);
-      String json = String.format("{\"_type\":\"%s\",\"description\":\"%s\",\"rank\":%d}", getEntityName(), description, rank);
-      put.setRequestEntity(new StringRequestEntity(json, "application/json", "UTF-8"));
+      ObjectNode currency = MAPPER.createObjectNode();
+      currency.put(TYPE, getEntityName());
+      currency.put("description", description);
+      currency.put("rank", rank);
+      put.setRequestEntity(new StringRequestEntity(currency.toString(), "application/json", "UTF-8"));
 
       restClient.executeMethod(put);
       System.out.println(put.getResponseBodyAsString());

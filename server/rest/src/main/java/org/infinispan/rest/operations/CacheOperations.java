@@ -1,20 +1,15 @@
 package org.infinispan.rest.operations;
 
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheSet;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.InfinispanCacheAPIRequest;
@@ -27,7 +22,6 @@ import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.operations.exceptions.NoDataFoundException;
 import org.infinispan.rest.operations.exceptions.NoKeyException;
-import org.infinispan.rest.operations.exceptions.UnacceptableDataFormatException;
 import org.infinispan.rest.operations.mediatypes.Charset;
 import org.infinispan.rest.operations.mediatypes.EntrySetFormatter;
 import org.infinispan.rest.operations.mediatypes.OutputPrinter;
@@ -40,14 +34,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  *
  * @author Sebastian Łaskawiec
  */
-public class CacheOperations {
-
-   private static final MurmurHash3 hashFunc = MurmurHash3.getInstance();
-
-   private final RestCacheManager restCacheManager;
-   private final RestServerConfiguration restServerConfiguration;
-   private final EncoderRegistry encoderRegistry;
-   private final Set<String> supported = new HashSet<>();
+public class CacheOperations extends AbstractOperations {
 
    /**
     * Creates new instance of {@link CacheOperations}.
@@ -56,10 +43,7 @@ public class CacheOperations {
     * @param cacheManager  Embedded Cache Manager for storing data.
     */
    public CacheOperations(RestServerConfiguration configuration, RestCacheManager<Object> cacheManager) {
-      this.restServerConfiguration = configuration;
-      this.restCacheManager = cacheManager;
-      this.encoderRegistry = restCacheManager.encoderRegistry();
-      supported.addAll(encoderRegistry.getSupportedMediaTypes());
+      super(configuration, cacheManager);
    }
 
    /**
@@ -72,8 +56,7 @@ public class CacheOperations {
    public InfinispanResponse getCacheValues(InfinispanCacheAPIRequest request) throws RestResponseException {
       try {
          String cacheName = request.getCacheName().get();
-         MediaType contentType = request.getAcceptContentType().map(MediaType::fromString).orElse(null);
-
+         MediaType contentType = getMediaType(request);
          AdvancedCache<String, Object> cache = restCacheManager.getCache(cacheName, contentType);
          CacheSet<String> keys = cache.keySet();
          MediaType mediaType = getMediaType(request);
@@ -165,12 +148,6 @@ public class CacheOperations {
       }
    }
 
-   private RestResponseException createResponseException(CacheException cacheException) {
-      Throwable rootCauseException = getRootCauseException(cacheException);
-
-      return new RestResponseException(HttpResponseStatus.INTERNAL_SERVER_ERROR, rootCauseException.getMessage(), rootCauseException);
-   }
-
    private void writeValue(Object value, MediaType requested, MediaType configuredMediaType, InfinispanResponse response, boolean returnBody) {
       String returnType;
       if (value instanceof byte[]) {
@@ -187,39 +164,6 @@ public class CacheOperations {
       } else {
          response.contentType(configuredMediaType.toString());
       }
-   }
-
-   private Throwable getRootCauseException(Throwable re) {
-      if (re == null) return null;
-      Throwable cause = re.getCause();
-      if (cause instanceof RuntimeException)
-         return getRootCauseException(cause);
-      else
-         return re;
-   }
-
-   private MediaType getMediaType(InfinispanRequest request) throws UnacceptableDataFormatException {
-      Optional<String> maybeContentType = request.getAcceptContentType();
-      if (maybeContentType.isPresent()) {
-         try {
-            String contents = maybeContentType.get();
-            if (contents.equals("*/*")) return null;
-            for (String content : contents.split(" *, *")) {
-               MediaType mediaType = MediaType.fromString(content);
-               if (supported.contains(mediaType.getTypeSubtype())) {
-                  return mediaType;
-               }
-            }
-            throw new UnacceptableDataFormatException();
-         } catch (EncodingException e) {
-            throw new UnacceptableDataFormatException();
-         }
-      }
-      return null;
-   }
-
-   private Object transcode(Object content, MediaType from, MediaType to) {
-      return encoderRegistry.getTranscoder(from, to).transcode(content, from, to);
    }
 
    /**
@@ -330,8 +274,8 @@ public class CacheOperations {
             Optional<Long> idle = request.getMaxIdleTimeSeconds();
             return putInCache(response, useAsync, cache, key, data, ttl, idle, oldData);
          }
-      } catch (CacheException cacheException) {
-         throw createResponseException(cacheException);
+      } catch (CacheException | IllegalStateException e) {
+         throw createResponseException(e);
       }
    }
 

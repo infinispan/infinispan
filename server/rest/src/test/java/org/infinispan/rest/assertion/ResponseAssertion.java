@@ -114,6 +114,11 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion isBadRequest() {
+      Assertions.assertThat(response.getStatus()).isEqualTo(400);
+      return this;
+   }
+
    public ResponseAssertion hasNoCharset() {
       Assertions.assertThat(response.getHeaders().get("Content-Type")).doesNotContain("charset");
       return this;

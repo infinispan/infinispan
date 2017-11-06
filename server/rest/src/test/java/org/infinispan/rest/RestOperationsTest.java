@@ -1,5 +1,7 @@
 package org.infinispan.rest;
 
+import static org.infinispan.rest.JSONConstants.TYPE;
+
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.http.HttpHeader;
 import org.infinispan.Cache;
@@ -43,7 +45,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       System.out.println(response.getContentAsString());
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/json");
-      ResponseAssertion.assertThat(response).hasReturnedText("{\"_type\":\"" + TestClass.class.getName() + "\",\"name\":\"test\"}");
+      ResponseAssertion.assertThat(response).hasReturnedText("{\"" + TYPE + "\":\"" + TestClass.class.getName() + "\",\"name\":\"test\"}");
    }
 
    @Test
@@ -138,7 +140,7 @@ public class RestOperationsTest extends BaseRestOperationsTest {
       //then
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType(MediaType.APPLICATION_JSON_TYPE);
-      ResponseAssertion.assertThat(response).hasReturnedText("{\"_type\":\"org.infinispan.rest.TestClass\",\"name\":\"test\"}");
+      ResponseAssertion.assertThat(response).hasReturnedText("{\"" + TYPE + "\":\"org.infinispan.rest.TestClass\",\"name\":\"test\"}");
    }
 
    @Test

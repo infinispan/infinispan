@@ -1,10 +1,14 @@
 package org.infinispan.rest.dataconversion;
 
+import static org.infinispan.rest.JSONConstants.TYPE;
+
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.codehaus.jackson.annotate.JsonTypeInfo;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.JavaType;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
@@ -18,7 +22,19 @@ public class JsonObjectTranscoder implements Transcoder {
 
    protected final static Log logger = LogFactory.getLog(JsonObjectTranscoder.class, Log.class);
 
-   private final ObjectMapper jsonMapper = new ObjectMapper().enableDefaultTypingAsProperty(ObjectMapper.DefaultTyping.NON_FINAL, "_type");
+   private final ObjectMapper jsonMapper = new ObjectMapper().setDefaultTyping(
+         new ObjectMapper.DefaultTypeResolverBuilder(ObjectMapper.DefaultTyping.NON_FINAL) {
+            {
+               init(JsonTypeInfo.Id.CLASS, null);
+               inclusion(JsonTypeInfo.As.PROPERTY);
+               typeProperty(TYPE);
+            }
+
+            @Override
+            public boolean useForType(JavaType t) {
+               return !t.isContainerType() && super.useForType(t);
+            }
+         });
 
    private static final Set<MediaType> supportedTypes = new HashSet<>();
 

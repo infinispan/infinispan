@@ -1,14 +1,13 @@
 package org.infinispan.rest;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-
-import org.infinispan.rest.operations.CacheOperations;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.handler.codec.http2.HttpConversionUtil;
 
 /**
@@ -23,18 +22,18 @@ public abstract class InfinispanRequest {
    private final ChannelHandlerContext nettyChannelContext;
    private final String cacheName;
    private final String context;
-   final QueryStringDecoder queryStringDecoder;
+   protected Map<String, List<String>> parameters;
 
-   protected InfinispanRequest(FullHttpRequest request, ChannelHandlerContext ctx, String cacheName, String context) {
+   protected InfinispanRequest(FullHttpRequest request, ChannelHandlerContext ctx, String cacheName, String context, Map<String, List<String>> parameters) {
       this.request = request;
-      this.queryStringDecoder = new QueryStringDecoder(request.uri());
       this.streamId = Optional.ofNullable(request.headers().get(HttpConversionUtil.ExtensionHeaderNames.STREAM_ID.text()));
       this.nettyChannelContext = ctx;
       this.cacheName = cacheName;
       this.context = context;
+      this.parameters = parameters;
    }
 
-   protected abstract InfinispanResponse execute(CacheOperations cacheOperations);
+   protected abstract InfinispanResponse execute();
 
    /**
     * @return cache name.
@@ -46,7 +45,7 @@ public abstract class InfinispanRequest {
    /***
     * @return HTTP/2.0 Stream Id.
     */
-   public Optional<String> getStreamId() {
+   Optional<String> getStreamId() {
       return streamId;
    }
 
@@ -118,5 +117,11 @@ public abstract class InfinispanRequest {
          }
       }
       return Optional.empty();
+   }
+
+   protected String getParameterValue(String name) {
+      List<String> values = parameters.get(name);
+      if(values == null) return null;
+      return values.iterator().next();
    }
 }

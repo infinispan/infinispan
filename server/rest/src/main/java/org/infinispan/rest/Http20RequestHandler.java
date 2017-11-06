@@ -8,7 +8,6 @@ import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.context.WrongContextException;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
-import org.infinispan.rest.operations.CacheOperations;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.channel.ChannelFutureListener;
@@ -28,7 +27,6 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
 
    protected final static Log logger = LogFactory.getLog(Http20RequestHandler.class, Log.class);
 
-   private final CacheOperations cacheOperations;
    private final Authenticator authenticator;
    final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
    protected final RestServer restServer;
@@ -42,18 +40,18 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
    Http20RequestHandler(RestServer restServer) {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
-      this.cacheOperations = restServer.getCacheOperations();
       this.authenticator = restServer.getAuthenticator();
    }
 
    @Override
    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
-      InfinispanRequest infinispanRequest = InfinispanRequestCreator.createRequest(request, ctx);
       InfinispanResponse response;
+      InfinispanRequest infinispanRequest = null;
       try {
+         infinispanRequest = InfinispanRequestFactory.createRequest(restServer, request, ctx);
          this.checkContext(infinispanRequest);
          authenticator.challenge(infinispanRequest);
-         response = infinispanRequest.execute(cacheOperations);
+         response = infinispanRequest.execute();
       } catch (RestResponseException responseException) {
          logger.errorWhileResponding(responseException);
          response = responseException.toResponse(infinispanRequest);
