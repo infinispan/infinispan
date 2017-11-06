@@ -26,6 +26,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.rest.cachemanager.exceptions.CacheUnavailableException;
 import org.infinispan.rest.operations.exceptions.NoCacheFoundException;
+import org.infinispan.rest.operations.exceptions.ServiceUnavailableException;
 import org.infinispan.upgrade.RollingUpgradeManager;
 
 /**
@@ -38,11 +39,7 @@ public class RestCacheManager<V> {
    private final Map<String, AdvancedCache<String, V>> knownCaches =
          CollectionFactory.makeConcurrentMap(4, 0.9f, 16);
 
-   public RestCacheManager(EmbeddedCacheManager instance) {
-      this(instance, s -> Boolean.FALSE);
-   }
-
-   private RestCacheManager(EmbeddedCacheManager instance, Predicate<? super String> isCacheIgnored) {
+   public RestCacheManager(EmbeddedCacheManager instance, Predicate<? super String> isCacheIgnored) {
       this.instance = instance;
       this.isCacheIgnored = isCacheIgnored;
       this.allowInternalCacheAccess = instance.getCacheManagerConfiguration().security().authorization().enabled();
@@ -50,6 +47,7 @@ public class RestCacheManager<V> {
 
    @SuppressWarnings("unchecked")
    public AdvancedCache<String, V> getCache(String name, MediaType mediaType) {
+      checkCacheAvailable(name);
       String cacheKey = mediaType == null ? name : name + mediaType.getTypeSubtype();
       AdvancedCache<String, V> registered = knownCaches.get(cacheKey);
 
@@ -74,11 +72,14 @@ public class RestCacheManager<V> {
       knownCaches.putIfAbsent(cacheKey, decoratedCache);
       return decoratedCache;
    }
+   private void checkCacheAvailable(String cacheName) {
+      if (isCacheIgnored.test(cacheName)) {
+         throw new ServiceUnavailableException("Cache with name '" + cacheName + "' is temporarily unavailable.");
+      }
+   }
 
    private AdvancedCache<String, V> getCache(String name) {
-      if (isCacheIgnored.test(name)) {
-         throw new CacheUnavailableException("Cache with name '" + name + "' is temporarily unavailable.");
-      }
+      checkCacheAvailable(name);
       boolean isKnownCache = knownCaches.containsKey(name);
       if (!BasicCacheContainer.DEFAULT_CACHE_NAME.equals(name) && !isKnownCache && !instance.getCacheNames().contains(name))
          throw new NoCacheFoundException("Cache with name '" + name + "' not found amongst the configured caches");

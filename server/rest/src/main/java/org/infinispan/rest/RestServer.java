@@ -79,6 +79,6 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    @Override
    protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       super.startInternal(configuration, cacheManager);
-      this.cacheOperations = new CacheOperations(configuration, new RestCacheManager<>(cacheManager));
+      this.cacheOperations = new CacheOperations(configuration, new RestCacheManager<>(cacheManager, this::isCacheIgnored));
    }
 }
