@@ -76,7 +76,7 @@
       <version.hikaricp>2.4.6</version.hikaricp>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.cdi>1.2</version.cdi>
-      <version.jboss.marshalling>2.0.0.Beta3</version.jboss.marshalling>
+      <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
       <version.jgroups>4.0.8.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
