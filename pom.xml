@@ -294,7 +294,7 @@
       <version.protostream>4.2.0.Alpha6</version.protostream>
       <version.reactivestreams>1.0.1</version.reactivestreams>
       <version.rxjava>2.1.3</version.rxjava>
-      <version.rocksdb>5.6.1</version.rocksdb>
+      <version.rocksdb>5.8.0</version.rocksdb>
       <version.shrinkwrapResolver>2.2.4</version.shrinkwrapResolver>
       <version.slf4j-jboss-logging>1.1.0.Final</version.slf4j-jboss-logging>
       <version.snappy>1.0.5</version.snappy>
