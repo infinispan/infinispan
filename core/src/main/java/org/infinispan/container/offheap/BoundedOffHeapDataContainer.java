@@ -25,13 +25,13 @@ import org.infinispan.metadata.Metadata;
  * @since 9.0
  */
 public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
-   private final long maxSize;
-   private final Lock lruLock;
-   private final LongUnaryOperator sizeCalculator;
+   protected final long maxSize;
+   protected final Lock lruLock;
+   protected final LongUnaryOperator sizeCalculator;
 
-   private long currentSize;
-   private long firstAddress;
-   private long lastAddress;
+   protected long currentSize;
+   protected long firstAddress;
+   protected long lastAddress;
 
    public BoundedOffHeapDataContainer(int desiredSize, long maxSize, EvictionType type) {
       super(desiredSize);
@@ -40,7 +40,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
          sizeCalculator = i -> 1;
       } else {
          // Use size of entry plus 16 for our LRU pointers
-         sizeCalculator = i -> offHeapEntryFactory.getSize(i) + OffHeapLruNode.getSize();
+         sizeCalculator = i -> offHeapEntryFactory.getSize(i);
       }
       this.lruLock = new ReentrantLock();
       firstAddress = 0;
