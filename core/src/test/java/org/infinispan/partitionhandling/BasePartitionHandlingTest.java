@@ -125,6 +125,10 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          partition.assertAvailabilityMode(expectedMode);
       }
 
+      public AvailabilityMode getExpectedMode() {
+         return expectedMode;
+      }
+
       @Override
       public String toString() {
          return Arrays.toString(nodes);
@@ -335,7 +339,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
             assertKeyNotAvailableForRead(k);
       }
 
-      protected void assertKeyNotAvailableForRead(Object key) {
+      public void assertKeyNotAvailableForRead(Object key) {
          for (Cache<Object, ?> c : cachesInThisPartition()) {
             BasePartitionHandlingTest.this.assertKeyNotAvailableForRead(c, key);
          }

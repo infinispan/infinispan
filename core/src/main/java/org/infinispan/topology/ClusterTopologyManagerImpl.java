@@ -445,14 +445,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             };
          }
          AvailabilityStrategy availabilityStrategy;
-         Configuration cacheConfiguration = cacheManager.getCacheConfiguration(cacheName);
-         PartitionHandling partitionHandling = cacheConfiguration != null ? cacheConfiguration.clustering().partitionHandling().whenSplit() : null;
-         boolean resolveConflictsOnMerge = partitionHandling == PartitionHandling.ALLOW_READ_WRITES && cacheConfiguration.clustering().partitionHandling().mergePolicy() != null;
-         resolveConflictsOnMerge = resolveConflictsOnMerge && !cacheMode.isScattered();
+         Configuration config = cacheManager.getCacheConfiguration(cacheName);
+         PartitionHandling partitionHandling = config != null ? config.clustering().partitionHandling().whenSplit() : null;
+         boolean resolveConflictsOnMerge = resolveConflictsOnMerge(config, cacheMode);
          if (partitionHandling != null && partitionHandling != PartitionHandling.ALLOW_READ_WRITES) {
             availabilityStrategy = new PreferConsistencyStrategy(eventLogManager, persistentUUIDManager, lostDataCheck);
          } else {
-            availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager, lostDataCheck, resolveConflictsOnMerge);
+            availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager, lostDataCheck);
          }
          Optional<GlobalStateManager> globalStateManager = gcr.getOptionalComponent(GlobalStateManager.class);
          Optional<ScopedPersistentState> persistedState = globalStateManager.flatMap(gsm -> gsm.readScopedState(cacheName));
@@ -460,6 +459,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                this, transport,
                persistedState, persistentUUIDManager, resolveConflictsOnMerge);
       });
+   }
+
+   private boolean resolveConflictsOnMerge(Configuration config, CacheMode cacheMode) {
+      if (config == null || cacheMode.isScattered() || cacheMode.isInvalidation())
+         return false;
+
+      return config.clustering().partitionHandling().resolveConflictsOnMerge();
    }
 
    @Override

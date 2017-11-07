@@ -372,7 +372,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             handler.updateConsistentHash(unionTopology);
          }
 
-         if (!updateAvailabilityModeFirst) {
+         if (!updateAvailabilityModeFirst && !startConflictResolution) {
             cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
          }
          return true;

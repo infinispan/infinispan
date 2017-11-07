@@ -53,9 +53,9 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private boolean performPartitionCheck(InvocationContext ctx, FlagAffectedCommand command) {
       // We always perform partition check if this is a remote command
       if (!ctx.isOriginLocal()) {
-         return !command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK);
+         return !command.hasAnyFlag(FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.PUT_FOR_STATE_TRANSFER);
       }
-      return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK);
+      return !command.hasAnyFlag(FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.PUT_FOR_STATE_TRANSFER);
    }
 
    @Override

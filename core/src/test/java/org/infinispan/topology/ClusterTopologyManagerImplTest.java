@@ -46,8 +46,7 @@ public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
 
    private CacheJoinInfo makeJoinInfo() {
       return new CacheJoinInfo(replicatedChf, MurmurHash3.getInstance(), 16, 1, 1000, false,
-                               CacheMode.REPL_SYNC, false, 1.0f, PersistentUUID.randomUUID(),
-                               Optional.empty());
+                               CacheMode.REPL_SYNC, 1.0f, PersistentUUID.randomUUID(), Optional.empty());
    }
 
    /**

@@ -29,7 +29,6 @@ public class CacheJoinInfo {
    private final long timeout;
    private final boolean totalOrder;
    private final CacheMode cacheMode;
-   private final boolean partitionHandling;
 
    // Per-node configuration
    private final float capacityFactor;
@@ -39,7 +38,7 @@ public class CacheJoinInfo {
    private final Optional<Integer> persistentStateChecksum;
 
    public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, Hash hashFunction, int numSegments,
-                        int numOwners, long timeout, boolean totalOrder, CacheMode cacheMode, boolean partitionHandling, float capacityFactor,
+                        int numOwners, long timeout, boolean totalOrder, CacheMode cacheMode, float capacityFactor,
                         PersistentUUID persistentUUID,
                         Optional<Integer> persistentStateChecksum) {
       this.consistentHashFactory = consistentHashFactory;
@@ -49,7 +48,6 @@ public class CacheJoinInfo {
       this.timeout = timeout;
       this.totalOrder = totalOrder;
       this.cacheMode = cacheMode;
-      this.partitionHandling = partitionHandling;
       this.capacityFactor = capacityFactor;
       this.persistentUUID = persistentUUID;
       this.persistentStateChecksum = persistentStateChecksum;
@@ -83,10 +81,6 @@ public class CacheJoinInfo {
       return cacheMode;
    }
 
-   public boolean isPartitionHandling() {
-      return partitionHandling;
-   }
-
    public float getCapacityFactor() {
       return capacityFactor;
    }
@@ -106,7 +100,6 @@ public class CacheJoinInfo {
       result = prime * result + Float.floatToIntBits(capacityFactor);
       result = prime * result + ((consistentHashFactory == null) ? 0 : consistentHashFactory.hashCode());
       result = prime * result + cacheMode.hashCode();
-      result = prime * result + (partitionHandling ? 1231 : 1237);
       result = prime * result + ((hashFunction == null) ? 0 : hashFunction.hashCode());
       result = prime * result + numOwners;
       result = prime * result + numSegments;
@@ -134,8 +127,6 @@ public class CacheJoinInfo {
       } else if (!consistentHashFactory.equals(other.consistentHashFactory))
          return false;
       if (cacheMode != other.cacheMode)
-         return false;
-      if (partitionHandling != other.partitionHandling)
          return false;
       if (hashFunction == null) {
          if (other.hashFunction != null)
@@ -173,7 +164,6 @@ public class CacheJoinInfo {
             ", timeout=" + timeout +
             ", totalOrder=" + totalOrder +
             ", cacheMode=" + cacheMode +
-            ", partitionHandling=" + partitionHandling +
             ", persistentUUID=" + persistentUUID +
             ", persistentStateChecksum=" + persistentStateChecksum +
             '}';
@@ -189,7 +179,6 @@ public class CacheJoinInfo {
          output.writeLong(cacheJoinInfo.timeout);
          output.writeBoolean(cacheJoinInfo.totalOrder);
          MarshallUtil.marshallEnum(cacheJoinInfo.cacheMode, output);
-         output.writeBoolean(cacheJoinInfo.partitionHandling);
          output.writeFloat(cacheJoinInfo.capacityFactor);
          output.writeObject(cacheJoinInfo.persistentUUID);
          output.writeObject(cacheJoinInfo.persistentStateChecksum);
@@ -204,12 +193,11 @@ public class CacheJoinInfo {
          long timeout = unmarshaller.readLong();
          boolean totalOrder = unmarshaller.readBoolean();
          CacheMode cacheMode = MarshallUtil.unmarshallEnum(unmarshaller, CacheMode::valueOf);
-         boolean partitionHandling = unmarshaller.readBoolean();
          float capacityFactor = unmarshaller.readFloat();
          PersistentUUID persistentUUID = (PersistentUUID) unmarshaller.readObject();
          Optional<Integer> persistentStateChecksum = (Optional<Integer>) unmarshaller.readObject();
          return new CacheJoinInfo(consistentHashFactory, hashFunction, numSegments, numOwners, timeout,
-               totalOrder, cacheMode, partitionHandling, capacityFactor, persistentUUID, persistentStateChecksum);
+               totalOrder, cacheMode, capacityFactor, persistentUUID, persistentStateChecksum);
       }
 
       @Override

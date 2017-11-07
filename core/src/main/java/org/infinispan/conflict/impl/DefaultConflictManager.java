@@ -208,7 +208,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    }
 
    private Stream<Map<Address, CacheEntry<K, V>>> getConflicts(LocalizedCacheTopology topology) {
-      if (stateConsumer.isStateTransferInProgress())
+      if (topology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION && stateConsumer.isStateTransferInProgress())
          throw log.getConflictsStateTransferInProgress(cacheName);
 
       if (!streamInProgress.compareAndSet(false, true))
