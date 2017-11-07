@@ -12,10 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUIDManager;
@@ -54,13 +52,11 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    private final EventLogManager eventLogManager;
    private final PersistentUUIDManager persistentUUIDManager;
    private final LostDataCheck lostDataCheck;
-   private final boolean resolveConflictsOnMerge;
 
-   public PreferAvailabilityStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager, LostDataCheck lostDataCheck, boolean resolveConflictsOnMerge) {
+   public PreferAvailabilityStrategy(EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager, LostDataCheck lostDataCheck) {
       this.eventLogManager = eventLogManager;
       this.persistentUUIDManager = persistentUUIDManager;
       this.lostDataCheck = lostDataCheck;
-      this.resolveConflictsOnMerge = resolveConflictsOnMerge;
    }
 
    @Override
@@ -204,19 +200,12 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
             }
          }
 
-         resolveConflicts = resolveConflictsOnMerge && !possibleOwners.isEmpty() && possibleOwners.size() > 1 && !maxTopology.getMembers().containsAll(possibleOwners);
+         resolveConflicts = context.resolveConflictsOnMerge() && !possibleOwners.isEmpty() && possibleOwners.size() > 1 && !maxTopology.getMembers().containsAll(possibleOwners);
          if (resolveConflicts) {
-            // If we are required to resolveConflicts, then we utilise a union of all distinct CHs. This is necessary
-            // to ensure that we read the entries associated with all possible read owners before the rebalance occurs
             List<Address> members = new ArrayList<>(possibleOwners);
-            CacheJoinInfo joinInfo = context.getJoinInfo();
-            ConsistentHashFactory chf = joinInfo.getConsistentHashFactory();
-            ConsistentHash mergehash = chf.create(joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(), members, context.getCapacityFactors());
-            for (ConsistentHash hash : distinctHashes)
-               mergehash = chf.union(mergehash, hash);
-
+            ConsistentHash conflictHash = context.calculateConflictHash(distinctHashes);
             mergedTopology = new CacheTopology(maxTopologyId + 1, maxRebalanceId + 1, maxTopology.getCurrentCH(),
-                  mergehash, mergehash, CacheTopology.Phase.CONFLICT_RESOLUTION, members, persistentUUIDManager.mapAddresses(members));
+                  conflictHash, conflictHash, CacheTopology.Phase.CONFLICT_RESOLUTION, members, persistentUUIDManager.mapAddresses(members));
          } else {
             // TODO If maxTopology.getPhase() == READ_NEW_WRITE_ALL, the pending CH would be more appropriate
             // The best approach may be to collect the read owners from all the topologies and use their union as the current CH

@@ -49,6 +49,10 @@ public class PartitionHandlingConfiguration implements Matchable<PartitionHandli
       return attributes;
    }
 
+   public boolean resolveConflictsOnMerge() {
+      return mergePolicy() != null;
+   }
+
    @Override
    public String toString() {
       return "PartitionHandlingConfiguration [attributes=" + attributes + "]";

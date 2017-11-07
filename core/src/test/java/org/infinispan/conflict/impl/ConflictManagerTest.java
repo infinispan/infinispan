@@ -96,9 +96,8 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       Map<Address, InternalCacheValue<Object>> versionMap = versionFuture.get(60, TimeUnit.SECONDS);
       assertTrue(versionMap != null);
       assertTrue(!versionMap.isEmpty());
+      // mergepolicy == null, so no conflict resolution occurs therefore it's possible that versionMap may contain null entries
       assertEquals(String.format("Returned versionMap %s", versionMap),2, versionMap.size());
-      if (log.isTraceEnabled()) log.tracef("Returned versionMap %s", versionMap);
-      versionMap.values().forEach(icv -> assertEquals(versionMap.toString(), value, icv.getValue()));
    }
 
    public void testGetAllVersionsTimeout() throws Throwable {

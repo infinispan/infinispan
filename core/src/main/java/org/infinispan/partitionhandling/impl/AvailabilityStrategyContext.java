@@ -2,7 +2,10 @@ package org.infinispan.partitionhandling.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
@@ -89,4 +92,15 @@ public interface AvailabilityStrategyContext {
     */
    void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology,
          AvailabilityMode availabilityMode, boolean resolveConflicts);
+
+   /**
+    * @return true if {@link PartitionHandlingConfiguration#mergePolicy()} != null
+    */
+   boolean resolveConflictsOnMerge();
+
+   /**
+    * @param distinctHashes a set of all hashes to be utilised as part of the conflict resolution hash
+    * @return the hash to be utilised as a pending CH during Phase.CONFLICT_RESOLUTION
+    */
+   ConsistentHash calculateConflictHash(Set<ConsistentHash> distinctHashes);
 }

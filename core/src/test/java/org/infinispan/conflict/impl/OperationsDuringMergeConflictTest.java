@@ -78,10 +78,11 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
    public OperationsDuringMergeConflictTest() {
       super();
       this.mergePolicy = ((preferredEntry, otherEntries) -> TestInternalCacheEntryFactory.create(conflictKey, MERGE_RESULT));
-      this.setPartitions(new int[]{0,1}, new int[]{2,3});
+      this.setPartitions(null, new int[]{0,1}, new int[]{2,3});
    }
 
    OperationsDuringMergeConflictTest mergeAction(MergeAction mergeAction) {
+      this.description = mergeAction.toString();
       this.mergeAction = mergeAction;
       this.valueAfterMerge = mergeAction.value;
       return this;

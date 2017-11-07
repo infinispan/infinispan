@@ -241,7 +241,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       if (trace) {
          log.tracef("Check if topology %s is stable. Last stable topology is %s", cacheTopology, stableTopology);
       }
-      return stableTopology != null && cacheTopology.getActualMembers().containsAll(stableTopology.getActualMembers());
+      return stableTopology != null && cacheTopology.getActualMembers().containsAll(stableTopology.getActualMembers()) && cacheTopology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION;
    }
 
    protected void doCheck(Object key, boolean isWrite) {

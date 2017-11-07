@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheStatusResponse;
@@ -116,6 +117,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // One scenario not covered is if two partitions started separately and they have completely different topologies.
       // In that case, there is no way to prevent the two partitions from having inconsistent data.
       int maxTopologyId = 0;
+      int maxRebalanceId = 0;
       CacheTopology maxStableTopology = null;
       CacheTopology maxActiveTopology = null;
       Set<CacheTopology> degradedTopologies = new HashSet<>();
@@ -137,6 +139,9 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          }
          if (partitionTopology.getTopologyId() > maxTopologyId) {
             maxTopologyId = partitionTopology.getTopologyId();
+         }
+         if (partitionTopology.getRebalanceId() > maxRebalanceId) {
+            maxRebalanceId = partitionTopology.getRebalanceId();
          }
          if (response.getAvailabilityMode() == AvailabilityMode.AVAILABLE) {
             if (maxActiveTopology == null || maxActiveTopology.getTopologyId() < partitionTopology.getTopologyId()) {
@@ -192,16 +197,36 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // status request, and then they can't process topology updates from the old view.
       // Also cancel any pending rebalance by removing the pending CH, because we don't recover the rebalance
       // confirmation status (yet).
+      AvailabilityMode newAvailabilityMode = computeAvailabilityAfterMerge(context, maxStableTopology, actualMembers);
       if (mergedTopology != null) {
+
+         boolean resolveConflicts = context.resolveConflictsOnMerge() && !degradedTopologies.isEmpty() && newAvailabilityMode == AvailabilityMode.AVAILABLE;
+         if (resolveConflicts) {
+            // Record all distinct read owners and hashes
+            Set<ConsistentHash> distinctHashes = new HashSet<>();
+            for (CacheStatusResponse response : statusResponseMap.values()) {
+               CacheTopology cacheTopology = response.getCacheTopology();
+               if (cacheTopology != null) {
+                  ConsistentHash hash = cacheTopology.getCurrentCH();
+                  if (hash != null && !hash.getMembers().isEmpty()) {
+                     distinctHashes.add(hash);
+                  }
+               }
+            }
+            ConsistentHash conflictHash = context.calculateConflictHash(distinctHashes);
+            mergedTopology = new CacheTopology(++maxTopologyId, maxRebalanceId + 1, mergedTopology.getCurrentCH(),
+                  conflictHash, conflictHash, CacheTopology.Phase.CONFLICT_RESOLUTION, actualMembers, persistentUUIDManager.mapAddresses(actualMembers));
+
+            // Update the currentTopology and try to resolve conflicts
+            context.updateTopologiesAfterMerge(mergedTopology, null, mergedAvailabilityMode, true);
+         }
          // There's no pendingCH, therefore the topology is in stable phase
          mergedTopology = new CacheTopology(maxTopologyId + 1, mergedTopology.getRebalanceId(),
                mergedTopology.getCurrentCH(), null, CacheTopology.Phase.NO_REBALANCE, actualMembers,
                persistentUUIDManager.mapAddresses(actualMembers));
       }
-      context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode, false);
 
-      // Now check if the availability mode should change
-      AvailabilityMode newAvailabilityMode = computeAvailabilityAfterMerge(context, maxStableTopology, actualMembers);
+      context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, mergedAvailabilityMode, false);
 
       // It shouldn't be possible to recover from unavailable mode without user action
       if (newAvailabilityMode == AvailabilityMode.DEGRADED_MODE) {

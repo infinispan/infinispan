@@ -42,7 +42,6 @@ import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.commons.util.concurrent.ConcurrentHashSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -64,7 +63,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -483,18 +481,13 @@ public class StateConsumerImpl implements StateConsumer {
                stateTransferFuture.complete(null);
          }
 
-         PartitionHandlingConfiguration phConfig = configuration.clustering().partitionHandling();
-         boolean wasMember = previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
-         boolean deletePastMemberVals = wasMember && phConfig.whenSplit() != PartitionHandling.ALLOW_READ_WRITES && phConfig.mergePolicy() == null;
          // Any data for segments we do not own should be removed from data container and cache store
          // We need to discard data from all segments we don't own, not just those we previously owned,
          // when we lose membership (e.g. because there was a merge, the local partition was in degraded mode
          // and the other partition was available) or when L1 is enabled.
-         // The only exception, is if a merge policy has been enabled, in which case we must only perform the removal
-         // when this node is a member of the new topology, otherwise entries updated during conflict resolution can be
-         // removed, resulting in only a subset of the owners hosting the resolved entry.
          Set<Integer> removedSegments;
-         if ((isMember || deletePastMemberVals) && cacheTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
+         boolean wasMember = previousWriteCh != null && previousWriteCh.getMembers().contains(rpcManager.getAddress());
+         if ((isMember || wasMember) && cacheTopology.getPhase() == CacheTopology.Phase.NO_REBALANCE) {
             removedSegments = IntStream.range(0, newWriteCh.getNumSegments()).boxed().collect(Collectors.toSet());
             Set<Integer> newSegments = getOwnedSegments(newWriteCh);
             removedSegments.removeAll(newSegments);

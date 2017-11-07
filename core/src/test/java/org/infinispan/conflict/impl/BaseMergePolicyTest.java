@@ -17,6 +17,7 @@ import org.infinispan.conflict.ConflictManager;
 import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
@@ -39,6 +40,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
    protected PartitionDescriptor p0;
    protected PartitionDescriptor p1;
    protected int numberOfOwners;
+   protected String description;
 
    BaseMergePolicyTest() {
       this.partitionHandling = PartitionHandling.ALLOW_READ_WRITES;
@@ -46,16 +48,31 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       this.valueAfterMerge = "DURING SPLIT";
    }
 
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), new String[]{null});
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), description);
+   }
+
    protected BaseMergePolicyTest setValueAfterMerge(Object val) {
       valueAfterMerge = val;
       return this;
    }
 
-   protected BaseMergePolicyTest setPartitions(int[] partition1, int[] partition2) {
-      p0 = new PartitionDescriptor(partition1);
-      p1 = new PartitionDescriptor(partition2);
+   protected BaseMergePolicyTest setPartitions(String description, AvailabilityMode mode, int[] partition1, int[] partition2) {
+      this.description = description;
+      p0 = new PartitionDescriptor(mode, partition1);
+      p1 = new PartitionDescriptor(mode, partition2);
       numMembersInCluster = p0.getNodes().length + p1.getNodes().length;
       return this;
+   }
+
+   protected BaseMergePolicyTest setPartitions(String description, int[] partition1, int[] partition2) {
+      return setPartitions(description, null, partition1, partition2);
    }
 
    protected void beforeSplit() {
@@ -67,11 +84,17 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       preferredPartitionCache.put(conflictKey, "DURING SPLIT");
    }
 
+   protected void splitCluster() {
+      splitCluster(p0.getNodes(), p1.getNodes());
+      TestingUtil.waitForNoRebalance(getPartitionCaches(p0));
+      TestingUtil.waitForNoRebalance(getPartitionCaches(p1));
+   }
+
    protected void performMerge() {
       partition(0).merge(partition(1));
    }
 
-   protected void afterMerge() {
+   protected void afterConflictResolutionAndMerge() {
       ConflictManager cm = conflictManager(0);
       assert !cm.isConflictResolutionInProgress();
       Map<Address, InternalCacheValue> versionMap = cm.getAllVersions(conflictKey);
@@ -84,7 +107,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
             assertNotNull(message, icv.getValue());
             assertEquals(message, valueAfterMerge, icv.getValue());
          } else {
-            assertNull(icv);
+            assertNull(message, icv);
          }
       }
       assertEquals(0, cm.getConflicts().count());
@@ -95,9 +118,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       beforeSplit();
 
       if (trace) log.tracef("splitCluster");
-      splitCluster(p0.getNodes(), p1.getNodes());
-      TestingUtil.waitForNoRebalance(getPartitionCaches(p0));
-      TestingUtil.waitForNoRebalance(getPartitionCaches(p1));
+      splitCluster();
 
       if (trace) log.tracef("duringSplit()");
       AdvancedCache preferredPartitionCache = getCacheFromPreferredPartition();
@@ -106,8 +127,8 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       if (trace) log.tracef("performMerge()");
       performMerge();
 
-      if (trace) log.tracef("afterMerge()");
-      afterMerge();
+      if (trace) log.tracef("afterConflictResolutionAndMerge()");
+      afterConflictResolutionAndMerge();
    }
 
    protected AdvancedCache[] getPartitionCaches(PartitionDescriptor descriptor) {
