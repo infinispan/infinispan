@@ -1,5 +1,7 @@
 package org.infinispan.tx.totalorder.statetransfer;
 
+import java.lang.reflect.Method;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.statetransfer.StateTransferFunctionalTest;
 import org.infinispan.transaction.TransactionProtocol;
@@ -10,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
  * @since 5.3
  */
-@Test(groups = "functional", testName = "tx.totalorder.statetransfer.TotalOrderStateTransferFunctionalTest")
+@Test(groups = "unstable", testName = "tx.totalorder.statetransfer.TotalOrderStateTransferFunctionalTest", description = "JGRP-2233")
 public class TotalOrderStateTransferFunctionalTest extends StateTransferFunctionalTest {
 
    protected final boolean writeSkew;
@@ -55,4 +57,43 @@ public class TotalOrderStateTransferFunctionalTest extends StateTransferFunction
       configurationBuilder.clustering().stateTransfer().chunkSize(20);
    }
 
+   @Override
+   public void testInitialStateTransfer(Method m) throws Exception {
+      super.testInitialStateTransfer(m);    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testInitialStateTransferCacheNotPresent(Method m) throws Exception {
+      super.testInitialStateTransferCacheNotPresent(m);    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testConcurrentStateTransfer(Method m) throws Exception {
+      super.testConcurrentStateTransfer(m);    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testSTWithThirdWritingNonTxCache(Method m) throws Exception {
+      super.testSTWithThirdWritingNonTxCache(m);    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testSTWithThirdWritingTxCache(Method m) throws Exception {
+      super.testSTWithThirdWritingTxCache(m);    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testSTWithWritingNonTxThread(Method m) throws Exception {
+      super.testSTWithWritingNonTxThread(m);    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testSTWithWritingTxThread(Method m) throws Exception {
+      super.testSTWithWritingTxThread(m);    // TODO: Customise this generated block
+   }
+
+   @Override
+   public void testInitialStateTransferAfterRestart(Method m) throws Exception {
+      super.testInitialStateTransferAfterRestart(m);    // TODO: Customise this generated block
+   }
 }
