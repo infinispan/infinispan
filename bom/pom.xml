@@ -92,7 +92,7 @@
       <version.jgroups>4.0.8.Final</version.jgroups>
       <version.jgroups.kubernetes>1.0.5.Final</version.jgroups.kubernetes>
       <version.jta>1.0.1.Final</version.jta>
-      <version.kryo>4.0.0</version.kryo>
+      <version.kryo>4.0.1</version.kryo>
       <version.lucene>5.5.5</version.lucene>
       <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
       <version.maven.source>3.0.1</version.maven.source>
