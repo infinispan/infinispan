@@ -88,7 +88,7 @@
       <version.java>1.8</version.java>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.jboss.logging>3.3.0.Final</version.jboss.logging>
-      <version.jboss.marshalling>2.0.0.Beta3</version.jboss.marshalling>
+      <version.jboss.marshalling>2.0.2.Final</version.jboss.marshalling>
       <version.jgroups>4.0.8.Final</version.jgroups>
       <version.jgroups.kubernetes>1.0.5.Final</version.jgroups.kubernetes>
       <version.jta>1.0.1.Final</version.jta>
