@@ -122,6 +122,7 @@ import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFi
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
@@ -1115,7 +1116,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             throw new UnsupportedOperationException("Cluster listeners cannot be used with Invalidation Caches!");
          } else if (cacheMode.isDistributed()) {
             clusterListenerIDs.put(listener, generatedId);
-            EmbeddedCacheManager manager = cache.getCacheManager();
+            // This way we only retrieve members of the cache itself
+            RpcManager manager = cache.getAdvancedCache().getRpcManager();
             Address ourAddress = manager.getAddress();
 
             List<Address> members = manager.getMembers();
@@ -1143,8 +1145,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                      throw new CacheListenerException(e);
                   } catch (ExecutionException e) {
                      Throwable cause = e.getCause();
-                     // If we got a SuspectException it means the remote node hasn't started this cache yet.
-                     // Just ignore, when it joins it will retrieve the listener
+                     // If we got a SuspectException it means the node was going away when we submitted
                      if (!(cause instanceof SuspectException)) {
                         throw new CacheListenerException(cause);
                      }
@@ -1172,7 +1173,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                   } catch (InterruptedException e) {
                      throw new CacheListenerException(e);
                   } catch (ExecutionException e) {
-                     throw new CacheListenerException(e);
+                     Throwable cause = e.getCause();
+                     // If we got a SuspectException it means the node was going away when we submitted
+                     if (!(cause instanceof SuspectException)) {
+                        throw new CacheListenerException(e);
+                     }
                   }
                }
             }
