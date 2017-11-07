@@ -190,7 +190,7 @@
         <version.webdav.servlet>2.0.1</version.webdav.servlet>
         <version.weld>2.3.4.Final</version.weld>
         <version.weld-se>2.3.4.Final</version.weld-se>
-        <version.jgroups.kubernetes>1.0.0.Beta1</version.jgroups.kubernetes>
+        <version.jgroups.kubernetes>1.0.5.Final</version.jgroups.kubernetes>
         <version.jmh>1.12</version.jmh>
         <version.oauth.core>20090531</version.oauth.core>
 
