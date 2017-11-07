@@ -42,8 +42,9 @@ import org.infinispan.factories.scopes.Scope;
 public class ComponentMetadata implements Serializable {
    private static final long serialVersionUID = 0xC0119011E7ADA7AL;
    private static final InjectFieldMetadata[] EMPTY_INJECT_FIELDS = {};
-   public static final InjectMetadata[] EMPTY_INJECT_METHODS = {};
-   public static final PrioritizedMethodMetadata[] EMPTY_PRIORITIZED_METHODS = {};
+   private static final InjectMetadata[] EMPTY_INJECT_METHODS = {};
+   private static final PrioritizedMethodMetadata[] EMPTY_PRIORITIZED_METHODS = {};
+   private static final long serialVersionUID = -5383960985588784105L;
 
    private String name;
    private transient Map<String, String> dependencies;
@@ -277,8 +278,6 @@ public class ComponentMetadata implements Serializable {
     * This class encapsulates metadata on an inject method, such as one annotated with {@link Inject}
     */
    public static class InjectMetadata implements Serializable {
-
-      //To avoid mismatches during development like as created by Maven vs IDE compiled classes:
       private static final long serialVersionUID = 4848856551345751894L;
 
       String methodName;
