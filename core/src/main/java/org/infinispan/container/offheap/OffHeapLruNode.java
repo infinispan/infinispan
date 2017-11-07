@@ -12,13 +12,8 @@ class OffHeapLruNode {
 
    private static final int PREVIOUS_NODE_OFFSET = 0;
    private static final int NEXT_NODE_OFFSET = PREVIOUS_NODE_OFFSET + ADDRESS_SIZE;
-   private static final int SIZE = NEXT_NODE_OFFSET + ADDRESS_SIZE;
 
    private OffHeapLruNode() {
-   }
-
-   static int getSize() {
-      return SIZE;
    }
 
    static long getNext(long lruNodeAddress) {
