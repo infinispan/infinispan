@@ -8,6 +8,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Inject;
@@ -357,6 +358,55 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       }
 
       return true;
+   }
+
+   /**
+    * Returns whether entry is expired or not.
+    * @param address the address of the entry's key to check
+    * @return {@code true} if the entry is expired, {@code false} otherwise
+    */
+   @Override
+   public boolean isExpired(long address) {
+      // 16 bytes for eviction if needed (optional)
+      // 8 bytes for linked pointer
+      int offset = evictionEnabled ? 24 : 8;
+
+      byte metadataType = MEMORY.getByte(address, offset);
+      offset += 1;
+      // hashCode
+      offset += 4;
+      // key length
+      int keyLenght = MEMORY.getInt(address, offset);
+      offset += 4;
+      // value length
+      offset += 4;
+      // key
+      offset += keyLenght;
+
+      byte[] metadataBytes;
+      long now = timeService.wallClockTime();
+      switch (metadataType) {
+         case IMMORTAL:
+            return  false;
+         case MORTAL:
+            metadataBytes = new byte[16];
+            MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
+            return ExpiryHelper.isExpiredMortal(Bits.getLong(metadataBytes, offset), Bits.getLong(metadataBytes, offset + 8), now);
+         case TRANSIENT:
+            metadataBytes = new byte[16];
+            MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
+            return ExpiryHelper.isExpiredTransient(Bits.getLong(metadataBytes, offset), Bits.getLong(metadataBytes, offset + 8), now);
+         case TRANSIENT_MORTAL:
+            metadataBytes = new byte[32];
+            MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
+            long lifespan = Bits.getLong(metadataBytes, offset);
+            long maxIdle = Bits.getLong(metadataBytes, offset += 8);
+            long created = Bits.getLong(metadataBytes, offset += 8);
+            long lastUsed = Bits.getLong(metadataBytes, offset + 8);
+            return ExpiryHelper.isExpiredTransientMortal(maxIdle, lastUsed, lifespan, created, now);
+         default:
+            return false;
+      }
    }
 
    static private boolean requiresMetadataSize(byte type) {
