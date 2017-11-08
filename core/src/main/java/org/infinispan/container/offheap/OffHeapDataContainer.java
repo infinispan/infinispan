@@ -316,7 +316,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          if (address == 0) {
             return null;
          }
-         return performRemove(address, key);
+         return performRemove(address, 0, key, true);
       } finally {
          lock.unlock();
       }
@@ -326,18 +326,29 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
     * Performs the actual remove operation removing the new address from the memory lookups.  The write lock for the given
     * key <b>must</b> be held before calling this method.
     * @param bucketHeadAddress the starting address of the address hash
+    * @param actualAddress the actual address if it is known or 0. By passing this != 0 equality checks can be bypassed.
+    *                      If a value of 0 is provided this will use key equality.
     * @param key the key of the entry
+    * @param requireReturn whether this method is forced to return the entry removed (optimizations can be done if
+    *                      the entry is not needed)
     */
-   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performRemove(long bucketHeadAddress, Object key) {
+   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performRemove(long bucketHeadAddress, long actualAddress,
+         Object key, boolean requireReturn) {
       WrappedByteArray wba = toWrapper(key);
       long prevAddress = 0;
       // We only use the head pointer for the first iteration
       long address = bucketHeadAddress;
+      InternalCacheEntry<WrappedBytes, WrappedBytes> ice = null;
 
       while (address != 0) {
          long nextAddress = offHeapEntryFactory.getNext(address);
-         InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
-         if (ice.getKey().equals(wba)) {
+         boolean removeThisAddress;
+         // If the actualAddress was not known, check key equality otherwise just compare with the address
+         removeThisAddress = actualAddress == 0 ? offHeapEntryFactory.equalsKey(address, wba) : actualAddress == address;
+         if (removeThisAddress) {
+            if (requireReturn) {
+               ice = offHeapEntryFactory.fromMemory(address);
+            }
             entryRemoved(address);
             if (prevAddress != 0) {
                offHeapEntryFactory.setNext(prevAddress, nextAddress);
@@ -345,12 +356,12 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
                memoryLookup.putMemoryAddress(key, nextAddress);
             }
             size.decrementAndGet();
-            return ice;
+            break;
          }
          prevAddress = address;
          address = nextAddress;
       }
-      return null;
+      return ice;
    }
 
    @Override
@@ -498,7 +509,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             InternalCacheEntry<WrappedBytes, WrappedBytes> ice = performGet(address, key, true);
             if (ice != null) {
                passivator.passivate(ice);
-               performRemove(address, key);
+               performRemove(address, 0, key, false);
             }
          }
       } finally {
@@ -522,7 +533,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             long newAddress = offHeapEntryFactory.create(key, result.getValue(), result.getMetadata());
             performPut(address, newAddress, key);
          } else {
-            performRemove(address, key);
+            performRemove(address, 0, key, false);
          }
          return result;
       } finally {
