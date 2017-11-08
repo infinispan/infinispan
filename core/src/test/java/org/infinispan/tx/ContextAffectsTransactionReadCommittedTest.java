@@ -12,11 +12,13 @@ import java.util.Set;
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -27,9 +29,27 @@ import org.testng.annotations.Test;
  */
 @Test (groups = "functional", testName = "tx.ContextAffectsTransactionReadCommittedTest")
 public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManagerTest {
+
+   protected StorageType storage;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.BINARY),
+            new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.OBJECT),
+            new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.OFF_HEAP)
+      };
+   }
+
+   public ContextAffectsTransactionReadCommittedTest withStorage(StorageType storage) {
+      this.storage = storage;
+      return this;
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(true);
+      builder.memory().storageType(storage);
       configure(builder);
       return TestCacheManagerFactory.createCacheManager(builder);
    }

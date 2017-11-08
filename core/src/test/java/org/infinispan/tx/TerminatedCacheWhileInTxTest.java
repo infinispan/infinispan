@@ -18,10 +18,12 @@ import javax.transaction.TransactionManager;
 import org.infinispan.Cache;
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -38,11 +40,28 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "tx.TerminatedCacheWhileInTxTest")
 public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
 
+   protected StorageType storage;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new TerminatedCacheWhileInTxTest().withStorage(StorageType.BINARY),
+            new TerminatedCacheWhileInTxTest().withStorage(StorageType.OBJECT),
+            new TerminatedCacheWhileInTxTest().withStorage(StorageType.OFF_HEAP)
+      };
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder c = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       c.transaction().cacheStopTimeout(10000);
+      c.memory().storageType(storage);
       return TestCacheManagerFactory.createCacheManager(c);
+   }
+
+   public TerminatedCacheWhileInTxTest withStorage(StorageType storage) {
+      this.storage = storage;
+      return this;
    }
 
    /**
