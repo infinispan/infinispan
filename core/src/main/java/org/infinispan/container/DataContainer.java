@@ -14,8 +14,18 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.Metadata;
 
 /**
- * The main internal data structure which stores entries
- *
+ * The main internal data structure which stores entries. Care should be taken when using this directly as entries
+ * could be stored in a different way than they were given to a {@link org.infinispan.Cache}. If you wish to convert
+ * entries to the stored format, you should use the provided {@link org.infinispan.encoding.DataConversion} such as
+ * <pre>
+ * cache.getAdvancedCache().getKeyDataConversion().toStorage(key);
+ * </pre>
+ * when dealing with keys or the following when dealing with values
+ * <pre>
+ * cache.getAdvancedCache().getValueDataConversion().toStorage(value);
+ * </pre>
+ * You can also convert from storage to the user provided type by using the
+ * {@link org.infinispan.encoding.DataConversion#fromStorage(Object)} method on any value returned from the DataContainer
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Galder Zamarreño
  * @author Vladimir Blagojevic
