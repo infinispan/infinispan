@@ -9,22 +9,41 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "tx.LocalModeTxTest")
 public class LocalModeTxTest extends SingleCacheManagerTest {
 
+   protected StorageType storage;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new LocalModeTxTest().withStorage(StorageType.BINARY),
+            new LocalModeTxTest().withStorage(StorageType.OBJECT),
+            new LocalModeTxTest().withStorage(StorageType.OFF_HEAP)
+      };
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(true);
+      configuration.memory().storageType(storage);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(configuration);
       cache = cm.getCache();
       return cm;
+   }
+
+   public LocalModeTxTest withStorage(StorageType storage) {
+      this.storage = storage;
+      return this;
    }
 
    public void testTxCommit1() throws Exception {

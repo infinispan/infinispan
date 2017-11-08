@@ -1,6 +1,7 @@
 package org.infinispan.tx.totalorder.statetransfer;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.statetransfer.StateTransferFunctionalTest;
 import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -15,26 +16,32 @@ public class TotalOrderStateTransferFunctionalTest extends StateTransferFunction
 
    protected final boolean writeSkew;
    protected final boolean useSynchronization;
+   protected final StorageType storage;
 
    @Override
    public Object[] factory() {
       return new Object[] {
-         new TotalOrderStateTransferFunctionalTest("dist-to-1pc-nbst", CacheMode.DIST_SYNC, false, false),
-         new TotalOrderStateTransferFunctionalTest("dist-to-2pc-nbst", CacheMode.DIST_SYNC, true, false),
-         new TotalOrderStateTransferFunctionalTest("repl-to-1pc-nbst", CacheMode.REPL_SYNC, true, true),
-         new TotalOrderStateTransferFunctionalTest("repl-to-2pc-nbst", CacheMode.REPL_SYNC, true, false),
+         new TotalOrderStateTransferFunctionalTest("dist-to-1pc-nbst", CacheMode.DIST_SYNC, false, false, StorageType.OBJECT),
+         new TotalOrderStateTransferFunctionalTest("dist-to-2pc-nbst", CacheMode.DIST_SYNC, true, false, StorageType.OBJECT),
+         new TotalOrderStateTransferFunctionalTest("dist-to-1pc-nbst-off-heap", CacheMode.DIST_SYNC, false, false, StorageType.OFF_HEAP),
+         new TotalOrderStateTransferFunctionalTest("dist-to-2pc-nbst-off-heap", CacheMode.DIST_SYNC, false, true, StorageType.OFF_HEAP),
+         new TotalOrderStateTransferFunctionalTest("repl-to-1pc-nbst", CacheMode.REPL_SYNC, true, true, StorageType.OBJECT),
+         new TotalOrderStateTransferFunctionalTest("repl-to-2pc-nbst", CacheMode.REPL_SYNC, true, false, StorageType.OBJECT),
+         new TotalOrderStateTransferFunctionalTest("repl-to-1pc-nbst-off-heap", CacheMode.REPL_SYNC, false, false, StorageType.OFF_HEAP),
+         new TotalOrderStateTransferFunctionalTest("repl-to-1pc-nbst-off-heap", CacheMode.REPL_SYNC, false, true, StorageType.OFF_HEAP)
       };
    }
 
    public TotalOrderStateTransferFunctionalTest() {
-      this(null, null, false, false);
+      this(null, null, false, false, StorageType.OBJECT);
    }
 
-   public TotalOrderStateTransferFunctionalTest(String cacheName, CacheMode mode, boolean writeSkew, boolean useSynchronization) {
+   public TotalOrderStateTransferFunctionalTest(String cacheName, CacheMode mode, boolean writeSkew, boolean useSynchronization, StorageType storage) {
       super(cacheName);
       this.cacheMode = mode;
       this.writeSkew = writeSkew;
       this.useSynchronization = useSynchronization;
+      this.storage = storage;
    }
 
    @Override
@@ -53,6 +60,7 @@ public class TotalOrderStateTransferFunctionalTest extends StateTransferFunction
          configurationBuilder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       }
       configurationBuilder.clustering().stateTransfer().chunkSize(20);
+      configurationBuilder.memory().storageType(storage);
    }
 
 }

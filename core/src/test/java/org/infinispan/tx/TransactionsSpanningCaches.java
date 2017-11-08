@@ -5,32 +5,57 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningCaches")
-public class TransactionsSpanningCaches extends SingleCacheManagerTest {
+public class TransactionsSpanningCaches extends MultipleCacheManagersTest {
+
+   protected StorageType storage1;
+   protected StorageType storage2;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new TransactionsSpanningCaches().withStorage(StorageType.OBJECT, StorageType.OBJECT),
+            new TransactionsSpanningCaches().withStorage(StorageType.OFF_HEAP, StorageType.OFF_HEAP),
+            new TransactionsSpanningCaches().withStorage(StorageType.OBJECT, StorageType.OFF_HEAP)
+      };
+   }
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
-      ConfigurationBuilder defaultCacheConfig = getDefaultStandaloneCacheConfig(true);
+   protected void createCacheManagers() throws Exception {
+      ConfigurationBuilder defaultCacheConfig = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       amendConfig(defaultCacheConfig);
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(defaultCacheConfig);
-      cm.defineConfiguration("c1", cm.getCache().getCacheConfiguration());
-      cm.defineConfiguration("c2", cm.getCache().getCacheConfiguration());
-      return cm;
+      ConfigurationBuilder cb1 = defaultCacheConfig;
+      ConfigurationBuilder cb2 = defaultCacheConfig;
+      cb1.memory().storageType(storage1);
+      cb2.memory().storageType(storage2);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(cb1);
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(cb2);
+      cm1.defineConfiguration("c1", cm1.getCache().getCacheConfiguration());
+      cm2.defineConfiguration("c2", cm2.getCache().getCacheConfiguration());
+      registerCacheManager(cm1, cm2);
    }
 
    protected void amendConfig(ConfigurationBuilder defaultCacheConfig) {
       //ignore
    }
 
+   public TransactionsSpanningCaches withStorage(StorageType storage1, StorageType storage2) {
+      this.storage1 = storage1;
+      this.storage2 = storage2;
+      return this;
+   }
+
    public void testCommitSpanningCaches() throws Exception {
-      Cache c1 = cacheManager.getCache("c1");
-      Cache c2 = cacheManager.getCache("c2");
+      Cache c1 = cacheManagers.get(0).getCache("c1");
+      Cache c2 = cacheManagers.get(1).getCache("c2");
 
       assert c1.isEmpty();
       assert c2.isEmpty();
@@ -68,8 +93,8 @@ public class TransactionsSpanningCaches extends SingleCacheManagerTest {
    }
 
    public void testRollbackSpanningCaches() throws Exception {
-      Cache c1 = cacheManager.getCache("c1");
-      Cache c2 = cacheManager.getCache("c2");
+      Cache c1 = cacheManagers.get(0).getCache("c1");
+      Cache c2 = cacheManagers.get(1).getCache("c2");
 
       assert c1.isEmpty();
       assert c2.isEmpty();
