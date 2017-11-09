@@ -19,7 +19,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.jar.Attributes;
@@ -183,12 +182,6 @@ public class IspnKarafOptions {
    /**
     * Wraps the specified test jars as bundles fragments and attaches them to the specified host bundle. The host bundle
     * must be the one exporting the packages contained in the test jar.
-    *
-    * @param groupId
-    * @param artifactId
-    * @param hostBundle
-    * @return
-    * @throws Exception
     */
    public static WrappedUrlProvisionOption mvnTestsAsFragmentBundle(String groupId, String artifactId, String hostBundle, String... instructions) throws Exception {
       PaxURLUtils.registerURLHandlers();
@@ -224,9 +217,6 @@ public class IspnKarafOptions {
    /**
     * Some test packages are split across several Maven modules this option repackages them and exposes them through a
     * single bundle.
-    *
-    * @return
-    * @throws Exception
     */
    public static Option bundleSplitTestPackages() throws Exception {
       PaxURLUtils.registerURLHandlers();
@@ -255,32 +245,26 @@ public class IspnKarafOptions {
                        wrappedSplitTestBundle);
    }
 
-   public static UrlProvisionOption asStreamBundle(AbstractUrlProvisionOption<?> option, String newURLFormat, String... args) throws MalformedURLException, IOException {
-      return asStreamBundle(option.getURL(), newURLFormat, args);
+   public static UrlProvisionOption asStreamBundle(AbstractUrlProvisionOption<?> option, String newURLFormat, String... args) throws IOException {
+      return asStreamBundle(option.getURL(), newURLFormat);
    }
 
-   public static UrlProvisionOption asStreamBundle(String url) throws MalformedURLException, IOException {
+   public static UrlProvisionOption asStreamBundle(String url) throws IOException {
       return asStreamBundle(url, "%s");
    }
 
    /**
     * Some PAX-URL protocols are not supported by Karaf. This method can be used when one of the unsupported protocol is
     * required. The URLs are resolved outside Karaf and the bundles are provided as stream bundles.
-    *
-    * @param newURLFormat
-    * @param args
-    * @return
-    * @throws MalformedURLException
-    * @throws IOException
     */
-   public static UrlProvisionOption asStreamBundle(String url, String newURLFormat, String... args) throws MalformedURLException, IOException {
-      InputStream in = new URL(String.format(newURLFormat, url, args)).openStream();
+   public static UrlProvisionOption asStreamBundle(String url, String newURLFormat) throws IOException {
+      InputStream in = new URL(String.format(newURLFormat, url)).openStream();
       try {
          return streamBundle(in);
       } finally {
          try {
             in.close();
-         } catch (IOException ex) {
+         } catch (IOException ignored) {
          }
       }
    }
@@ -294,7 +278,6 @@ public class IspnKarafOptions {
     * container.
     *
     * @return an Option or null if no custom repo location is specified by the maven build.
-    * @throws Exception
     */
    public static Option localRepoForPAXUrl() throws Exception {
       String localRepo = MavenUtils.getLocalRepository();
@@ -333,7 +316,7 @@ public class IspnKarafOptions {
       return composite(karafContainer(),
                        vmOptions("-Djava.net.preferIPv4Stack=true", "-Djgroups.bind_addr=127.0.0.1"),
                        vmOptions("-Xmx500m", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=" + System.getProperty("user.dir")),
-//                       vmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000"),
+//                       vmOptions("-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=5006"),
                        verboseKaraf(),
                        runWithoutConsole(),
                        junitBundles(),
@@ -374,9 +357,9 @@ public class IspnKarafOptions {
    }
 
    /* Run tests with uberjar by default */
-   private static boolean useUberJar() throws Exception {
+   private static boolean useUberJar() {
       String uberJar = System.getProperty(PROP_UBER_JAR);
-      return uberJar == null ? true : Boolean.parseBoolean(uberJar);
+      return uberJar == null || Boolean.parseBoolean(uberJar);
    }
 
 }
