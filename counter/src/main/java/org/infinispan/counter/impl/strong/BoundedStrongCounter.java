@@ -39,12 +39,12 @@ public class BoundedStrongCounter extends AbstractStrongCounter {
       return counterValue.getValue();
    }
 
-   protected Boolean handleCASResult(Object state) {
+   protected Long handleCASResult(Object state) {
       if (state instanceof CounterState) {
          throwOutOfBoundExceptionIfNeeded((CounterState) state);
       }
-      //noinspection ConstantConditions
-      return (Boolean) state;
+      assert state instanceof Long;
+      return (Long) state;
    }
 
    private void throwOutOfBoundExceptionIfNeeded(CounterState state) {

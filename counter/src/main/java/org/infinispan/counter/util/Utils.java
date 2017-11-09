@@ -1,13 +1,8 @@
 package org.infinispan.counter.util;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-
-import org.infinispan.functional.Param;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.counter.exception.CounterException;
+import org.infinispan.functional.Param;
 
 /**
  * Utility methods.
@@ -51,33 +46,6 @@ public final class Utils {
          return CounterState.UPPER_BOUND_REACHED;
       }
       return CounterState.VALID;
-   }
-
-   /**
-    * Returns a {@link CounterException} with the throwable.
-    */
-   public static CounterException rethrowAsCounterException(Throwable throwable) {
-      if (throwable instanceof CounterException) {
-         return (CounterException) throwable;
-      } else if (throwable instanceof ExecutionException || throwable instanceof CompletionException) {
-         return rethrowAsCounterException(throwable.getCause());
-      } else {
-         return new CounterException(throwable);
-      }
-   }
-
-   /**
-    * Awaits for the counter operation and throws any exception as {@link CounterException}.
-    */
-   public static <T> T awaitCounterOperation(CompletableFuture<T> future) {
-      try {
-         return future.get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw rethrowAsCounterException(e);
-      } catch (ExecutionException e) {
-         throw rethrowAsCounterException(e);
-      }
    }
 
    public static Param.PersistenceMode getPersistenceMode(Storage storage) {

@@ -1,5 +1,7 @@
 package org.infinispan.counter.impl.entries;
 
+import static org.infinispan.counter.util.Utils.calculateState;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -12,7 +14,6 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterState;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.impl.externalizers.ExternalizerIds;
-import org.infinispan.counter.util.Utils;
 
 import jdk.nashorn.internal.ir.annotations.Immutable;
 
@@ -59,7 +60,7 @@ public class CounterValue {
     * @return the {@link CounterValue}.
     */
    public static CounterValue newCounterValue(long value, long lowerBound, long upperBound) {
-      return new CounterValue(value, Utils.calculateState(value, lowerBound, upperBound));
+      return new CounterValue(value, calculateState(value, lowerBound, upperBound));
    }
 
    /**

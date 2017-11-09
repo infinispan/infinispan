@@ -1,12 +1,12 @@
 package org.infinispan.counter.impl.weak;
 
 import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater;
-import static org.infinispan.counter.util.Utils.rethrowAsCounterException;
+import static org.infinispan.counter.impl.Util.awaitCounterOperation;
+import static org.infinispan.counter.util.Utils.getPersistenceMode;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.AdvancedCache;
@@ -17,8 +17,9 @@ import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Handle;
+import org.infinispan.counter.api.SyncWeakCounter;
 import org.infinispan.counter.api.WeakCounter;
-import org.infinispan.counter.exception.CounterException;
+import org.infinispan.counter.impl.SyncWeakCounterAdapter;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.function.AddFunction;
@@ -30,7 +31,6 @@ import org.infinispan.counter.impl.listener.CounterEventGenerator;
 import org.infinispan.counter.impl.listener.CounterEventImpl;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
 import org.infinispan.counter.impl.listener.TopologyChangeListener;
-import org.infinispan.counter.util.Utils;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
@@ -77,7 +77,7 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       this.cache = cache;
       this.notificationManager = notificationManager;
       FunctionalMapImpl<WeakCounterKey, CounterValue> functionalMap = FunctionalMapImpl.create(cache)
-            .withParams(Utils.getPersistenceMode(configuration.storage()));
+            .withParams(getPersistenceMode(configuration.storage()));
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
       this.readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
       this.entries = initKeys(counterName, configuration.concurrencyLevel());
@@ -126,15 +126,8 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       registerListener();
       for (int i = 0; i < entries.length; ++i) {
          final int index = i;
-         try {
-            readOnlyMap.eval(entries[index].key, ReadFunction.getInstance())
-                  .thenAccept(value -> initEntry(index, value)).get();
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new CounterException(e);
-         } catch (ExecutionException e) {
-            throw rethrowAsCounterException(e);
-         }
+         awaitCounterOperation(readOnlyMap.eval(entries[index].key, ReadFunction.getInstance())
+               .thenAccept(value -> initEntry(index, value)));
       }
       selector.updatePreferredKeys();
    }
@@ -188,6 +181,8 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       return CounterEventImpl.create(base + oldValue, base + newValue);
    }
 
+
+   @Override
    public CompletableFuture<Void> remove() {
       final int size = entries.length;
       CompletableFuture[] futures = new CompletableFuture[size];
@@ -197,15 +192,14 @@ public class WeakCounterImpl implements WeakCounter, CounterEventGenerator, Topo
       return CompletableFuture.allOf(futures);
    }
 
+   @Override
+   public SyncWeakCounter sync() {
+      return new SyncWeakCounterAdapter(this);
+   }
+
    public void destroyAndRemove() {
       removeListener();
-      try {
-         remove().get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-         throw rethrowAsCounterException(e);
-      }
+      awaitCounterOperation(remove());
    }
 
    @Override

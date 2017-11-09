@@ -1,6 +1,6 @@
 package org.infinispan.counter.util;
 
-import org.infinispan.counter.SyncStrongCounter;
+import org.infinispan.counter.api.SyncStrongCounter;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
@@ -17,7 +17,7 @@ public class StrongTestCounter implements TestCounter {
 
    public StrongTestCounter(StrongCounter counter) {
       this.counter = counter;
-      this.syncCounter = new SyncStrongCounter(counter);
+      this.syncCounter = counter.sync();
    }
 
    @Override
@@ -76,5 +76,9 @@ public class StrongTestCounter implements TestCounter {
 
    public boolean compareAndSet(long expect, long value) {
       return syncCounter.compareAndSet(expect, value);
+   }
+
+   public long compareAndSwap(long expect, long value) {
+      return syncCounter.compareAndSwap(expect, value);
    }
 }

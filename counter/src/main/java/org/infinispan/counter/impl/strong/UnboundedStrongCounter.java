@@ -20,8 +20,9 @@ public class UnboundedStrongCounter extends AbstractStrongCounter {
    }
 
    @Override
-   protected Boolean handleCASResult(Object state) {
-      return (Boolean) state;
+   protected Long handleCASResult(Object state) {
+      assert state instanceof Long;
+      return (Long) state;
    }
 
    @Override

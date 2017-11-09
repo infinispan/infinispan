@@ -15,13 +15,13 @@ import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
 import org.infinispan.functional.EntryView;
 
 /**
- * The compare-and-set function to update the {@link CounterValue}.
+ * The compare-and-swap function to update the {@link CounterValue}.
  * <p>
- * It has the same semantic as {@link CompareAndSetFunction} but it creates the {@link CounterValue} if it doesn't
+ * It has the same semantic as {@link CompareAndSwapFunction} but it creates the {@link CounterValue} if it doesn't
  * exist.
  *
  * @author Pedro Ruivo
- * @see CompareAndSetFunction
+ * @see CompareAndSwapFunction
  * @since 9.2
  */
 public class CreateAndCASFunction<K extends CounterKey> extends BaseCreateFunction<K, Object> {
@@ -39,7 +39,7 @@ public class CreateAndCASFunction<K extends CounterKey> extends BaseCreateFuncti
    @Override
    Object apply(EntryView.ReadWriteEntryView<K, CounterValue> entryView, CounterValue currentValue,
          ConfigurationMetadata metadata) {
-      return FunctionHelper.compareAndSet(entryView, currentValue, metadata, expect, value);
+      return FunctionHelper.compareAndSwap(entryView, currentValue, metadata, expect, value);
    }
 
    private static class Externalizer implements AdvancedExternalizer<CreateAndCASFunction> {
