@@ -58,7 +58,7 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.persistence.sfis.*;version=${project.version};-split-package:=error
+                     ${project.groupId}.persistence.sifs.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
