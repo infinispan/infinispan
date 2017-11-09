@@ -141,32 +141,43 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       lock.lock();
       try {
          checkDeallocation();
-         long address = memoryLookup.getMemoryAddress(k);
-         if (address == 0) {
+         long bucketAddress = memoryLookup.getMemoryAddress(k);
+         if (bucketAddress == 0) {
             return null;
          }
 
-         return performGet(address, k, peek);
+         long actualAddress = performGet(bucketAddress, k);
+         if (actualAddress != 0) {
+            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(actualAddress);
+            if (!peek) {
+               entryRetrieved(actualAddress);
+            }
+            return ice;
+         }
       } finally {
          lock.unlock();
       }
+      return null;
    }
 
-   protected InternalCacheEntry<WrappedBytes, WrappedBytes> performGet(long address, Object k, boolean peek) {
+   /**
+    * Gets the actual address for the given key in the given bucket or 0 if it isn't present
+    * @param bucketHeadAddress the starting address of the address hash
+    * @param k the key to retrieve the address for it if matches
+    * @return the address matching the key or 0
+    */
+   protected long performGet(long bucketHeadAddress, Object k) {
       WrappedBytes wrappedKey = toWrapper(k);
+      long address = bucketHeadAddress;
       while (address != 0) {
          long nextAddress = offHeapEntryFactory.getNext(address);
-         InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
-         if (wrappedKey.equalsWrappedBytes(ice.getKey())) {
-            if (!peek) {
-               entryRetrieved(address);
-            }
-            return ice;
+         if (offHeapEntryFactory.equalsKey(address, wrappedKey)) {
+            return address;
          } else {
             address = nextAddress;
          }
       }
-      return null;
+      return 0;
    }
 
    @Override
@@ -177,7 +188,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          checkDeallocation();
          long newAddress = offHeapEntryFactory.create(key, value, metadata);
          long address = memoryLookup.getMemoryAddress(key);
-         boolean newEntry = performPut(address, newAddress, key);
+         boolean newEntry = performPut(address, 0, newAddress, key);
          activator.onUpdate(key, newEntry);
       } finally {
          lock.unlock();
@@ -187,14 +198,16 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    /**
     * Performs the actual put operation putting the new address into the memory lookups.  The write lock for the given
     * key <b>must</b> be held before calling this method.
-    * @param address the entry address of the first element in the lookup
+    * @param bucketHeadAddress the entry address of the first element in the lookup
+    * @param actualAddress the actual address if it is known or 0. By passing this != 0 equality checks can be bypassed.
+    *                      If a value of 0 is provided this will use key equality.
     * @param newAddress the address of the new entry
     * @param key the key of the entry
     * @return {@code true} if the entry doesn't exists in memory and was newly create, {@code false} otherwise
     */
-   protected boolean performPut(long address, long newAddress, WrappedBytes key) {
+   protected boolean performPut(long bucketHeadAddress, long actualAddress, long newAddress, WrappedBytes key) {
       // Have to start new linked node list
-      if (address == 0) {
+      if (bucketHeadAddress == 0) {
          memoryLookup.putMemoryAddress(key, newAddress);
          entryCreated(newAddress);
          size.incrementAndGet();
@@ -203,13 +216,15 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          boolean replaceHead = false;
          // Whether the key was found or not - short circuit equality checks
          boolean foundKey = false;
+         long address = bucketHeadAddress;
          // Holds the previous linked list address
          long prevAddress = 0;
          // Keep looping until we get the tail end - we always append the put to the end
          while (address != 0) {
             long nextAddress = offHeapEntryFactory.getNext(address);
             if (!foundKey) {
-               if (offHeapEntryFactory.equalsKey(address, key)) {
+               // If the actualAddress was not known check key equality otherwise just compare with the address
+               if (actualAddress == 0 ? offHeapEntryFactory.equalsKey(address, key) : actualAddress == address) {
                   entryReplaced(newAddress, address);
                   foundKey = true;
                   // If this is true it means this was the first node in the linked list
@@ -514,13 +529,13 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       lock.lock();
       try {
          checkDeallocation();
-         long address = memoryLookup.getMemoryAddress(key);
-         if (address != 0) {
-            // TODO: this could be more efficient
-            InternalCacheEntry<WrappedBytes, WrappedBytes> ice = performGet(address, key, true);
-            if (ice != null) {
+         long bucketAddress = memoryLookup.getMemoryAddress(key);
+         if (bucketAddress != 0) {
+            long actualAddress = performGet(bucketAddress, key);
+            if (actualAddress != 0) {
+               InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(actualAddress);
                passivator.passivate(ice);
-               performRemove(address, 0, key, false);
+               performRemove(bucketAddress, actualAddress, key, false);
             }
          }
       } finally {
@@ -535,17 +550,25 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       lock.lock();
       try {
          checkDeallocation();
-         long address = memoryLookup.getMemoryAddress(key);
-         InternalCacheEntry<WrappedBytes, WrappedBytes> prev = address == 0 ? null : performGet(address, key, true);
+         long bucketAddress = memoryLookup.getMemoryAddress(key);
+         long actualAddress = bucketAddress == 0 ? 0 : performGet(bucketAddress, key);
+         InternalCacheEntry<WrappedBytes, WrappedBytes> prev;
+         if (actualAddress != 0) {
+            prev = offHeapEntryFactory.fromMemory(actualAddress);
+         } else {
+            prev = null;
+         }
          InternalCacheEntry<WrappedBytes, WrappedBytes> result = action.compute(key, prev, internalEntryFactory);
          if (prev == result) {
             // noop
          } else if (result != null) {
             long newAddress = offHeapEntryFactory.create(key, result.getValue(), result.getMetadata());
-            performPut(address, newAddress, key);
+            // TODO: Technically actualAddress could be a 0 and bucketAddress != 0, which means we will loop through
+            // entire bucket for no reason as it will never match (doing key equality checks)
+            performPut(bucketAddress, actualAddress, newAddress, key);
             activator.onUpdate(key, prev == null);
          } else {
-            performRemove(address, 0, key, false);
+            performRemove(bucketAddress, actualAddress, key, false);
             activator.onRemove(key, false);
          }
          return result;
