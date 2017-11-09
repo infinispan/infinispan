@@ -21,9 +21,18 @@ final class FunctionHelper {
    private FunctionHelper() {
    }
 
-   static Object compareAndSet(EntryView.ReadWriteEntryView<?, CounterValue> entry,
+   /**
+    * Performs a compare-and-swap and return the previous value.
+    * <p>
+    * The compare-and-swap is successful if the return value is equals to the {@code expected}.
+    *
+    * @return the previous value or {@link CounterState#UPPER_BOUND_REACHED}/{@link CounterState#LOWER_BOUND_REACHED} if
+    * it reaches the boundaries of a bounded counter.
+    */
+   static Object compareAndSwap(EntryView.ReadWriteEntryView<?, CounterValue> entry,
          CounterValue value, ConfigurationMetadata metadata, long expected, long update) {
-      if (expected == value.getValue()) {
+      long retVal = value.getValue();
+      if (expected == retVal) {
          if (metadata.get().type() == CounterType.BOUNDED_STRONG) {
             if (update < metadata.get().lowerBound()) {
                return CounterState.LOWER_BOUND_REACHED;
@@ -32,10 +41,10 @@ final class FunctionHelper {
             }
          }
          entry.set(CounterValue.newCounterValue(update, CounterState.VALID), metadata);
-         return Boolean.TRUE;
+         return retVal;
 
       } else {
-         return Boolean.FALSE;
+         return retVal;
       }
    }
 

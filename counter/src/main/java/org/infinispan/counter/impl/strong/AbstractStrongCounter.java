@@ -1,13 +1,12 @@
 package org.infinispan.counter.impl.strong;
 
+import static org.infinispan.counter.impl.Util.awaitCounterOperation;
 import static org.infinispan.counter.impl.entries.CounterValue.newCounterValue;
 import static org.infinispan.counter.util.Utils.getPersistenceMode;
-import static org.infinispan.counter.util.Utils.rethrowAsCounterException;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -16,11 +15,12 @@ import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.api.StrongCounter;
-import org.infinispan.counter.exception.CounterException;
+import org.infinispan.counter.api.SyncStrongCounter;
+import org.infinispan.counter.impl.SyncStrongCounterAdapter;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.function.AddFunction;
-import org.infinispan.counter.impl.function.CompareAndSetFunction;
+import org.infinispan.counter.impl.function.CompareAndSwapFunction;
 import org.infinispan.counter.impl.function.CreateAndAddFunction;
 import org.infinispan.counter.impl.function.CreateAndCASFunction;
 import org.infinispan.counter.impl.function.ReadFunction;
@@ -87,14 +87,7 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
 
    public final void init() {
       registerListener();
-      try {
-         readOnlyMap.eval(key, ReadFunction.getInstance()).thenAccept(this::initCounterState).get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CounterException(e);
-      } catch (ExecutionException e) {
-         throw rethrowAsCounterException(e);
-      }
+      awaitCounterOperation(readOnlyMap.eval(key, ReadFunction.getInstance()).thenAccept(this::initCounterState));
    }
 
    @Override
@@ -123,8 +116,8 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
    }
 
    @Override
-   public CompletableFuture<Boolean> compareAndSet(long expect, long update) {
-      return readWriteMap.eval(key, new CompareAndSetFunction<>(expect, update))
+   public CompletableFuture<Long> compareAndSwap(long expect, long update) {
+      return readWriteMap.eval(key, new CompareAndSwapFunction<>(expect, update))
             .thenCompose(result -> checkCasResult(result, expect, update));
    }
 
@@ -147,18 +140,17 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
       return configuration;
    }
 
-   public void destroyAndRemove() {
-      removeListener();
-      try {
-         remove().get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-         throw rethrowAsCounterException(e);
-      }
+   @Override
+   public SyncStrongCounter sync() {
+      return new SyncStrongCounterAdapter(this);
    }
 
-   protected abstract Boolean handleCASResult(Object state);
+   public void destroyAndRemove() {
+      removeListener();
+      awaitCounterOperation(remove());
+   }
+
+   protected abstract Long handleCASResult(Object state);
 
    /**
     * Extracts and validates the value after a read.
@@ -221,7 +213,7 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
       }
    }
 
-   private CompletionStage<Boolean> checkCasResult(Object result, long expect, long update) {
+   private CompletionStage<Long> checkCasResult(Object result, long expect, long update) {
       if (result == null) {
          //key doesn't exist in the cache. create and CAS
          return readWriteMap.eval(key, new CreateAndCASFunction<>(configuration, expect, update))

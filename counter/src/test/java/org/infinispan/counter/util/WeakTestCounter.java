@@ -1,6 +1,6 @@
 package org.infinispan.counter.util;
 
-import org.infinispan.counter.SyncWeakCounter;
+import org.infinispan.counter.api.SyncWeakCounter;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
@@ -17,7 +17,7 @@ public class WeakTestCounter implements TestCounter {
 
    public WeakTestCounter(WeakCounter counter) {
       this.counter = counter;
-      this.syncCounter = new SyncWeakCounter(counter);
+      this.syncCounter = counter.sync();
    }
 
    @Override

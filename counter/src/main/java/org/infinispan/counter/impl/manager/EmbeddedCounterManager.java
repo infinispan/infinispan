@@ -1,6 +1,7 @@
 package org.infinispan.counter.impl.manager;
 
-import static org.infinispan.counter.util.Utils.awaitCounterOperation;
+import static org.infinispan.counter.impl.Util.awaitCounterOperation;
+import static org.infinispan.counter.util.Utils.isValid;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +28,6 @@ import org.infinispan.counter.impl.strong.BoundedStrongCounter;
 import org.infinispan.counter.impl.strong.UnboundedStrongCounter;
 import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.logging.Log;
-import org.infinispan.counter.util.Utils;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -272,8 +272,7 @@ public class EmbeddedCounterManager implements CounterManager {
       }
       switch (configuration.type()) {
          case BOUNDED_STRONG:
-            if (Utils
-                  .isValid(configuration.lowerBound(), configuration.initialValue(), configuration.upperBound())) {
+            if (isValid(configuration.lowerBound(), configuration.initialValue(), configuration.upperBound())) {
                throw log.invalidInitialValueForBoundedCounter(configuration.lowerBound(), configuration.upperBound(),
                      configuration.initialValue());
             }

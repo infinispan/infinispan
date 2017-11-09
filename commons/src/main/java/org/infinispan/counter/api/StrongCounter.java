@@ -73,11 +73,26 @@ public interface StrongCounter {
    /**
     * Atomically sets the value to the given updated value if the current value {@code ==} the expected value.
     *
+    * It is the same as {@code return compareAndSwap(expect, update).thenApply(value -> value == expect);}
+    *
     * @param expect the expected value
     * @param update the new value
     * @return {@code true} if successful, {@code false} otherwise.
     */
-   CompletableFuture<Boolean> compareAndSet(long expect, long update);
+   default CompletableFuture<Boolean> compareAndSet(long expect, long update) {
+      return compareAndSwap(expect, update).thenApply(value -> value == expect);
+   }
+
+   /**
+    * Atomically sets the value to the given updated value if the current value {@code ==} the expected value.
+    *
+    * The operation is successful if the return value is equals to the expected value.
+    *
+    * @param expect the expected value.
+    * @param update the new value.
+    * @return the previous counter's value.
+    */
+   CompletableFuture<Long> compareAndSwap(long expect, long update);
 
    /**
     * @return the {@link CounterConfiguration} used by this counter.
@@ -93,4 +108,11 @@ public interface StrongCounter {
     * @return The {@link CompletableFuture} that is completed when the counter is removed from the cluster.
     */
    CompletableFuture<Void> remove();
+
+   /**
+    * It returns a synchronous strong counter for this instance.
+    *
+    * @return a {@link SyncStrongCounter}.
+    */
+   SyncStrongCounter sync();
 }

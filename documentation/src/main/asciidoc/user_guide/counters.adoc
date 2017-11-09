@@ -132,14 +132,19 @@ Default value is `Long.MAX_VALUE`.
 
 NOTE: If neither the `lower-bound` or `upper-bound` are configured, the strong counter is set as unbounded.
 
-WARN: the `initial-value` must be between `lower-bound` and `upper-bound` inclusive.
+WARNING: The `initial-value` must be between `lower-bound` and `upper-bound` inclusive.
 
 * `concurrency-level` [weak]: Sets the number of concurrent updates.
 Its value *must be positive* and the default value is `16`.
 
+==== List counter names
+
+To list all the counters defined, the method `CounterManager.getCounterNames()` returns a collection of all counter
+names created cluster-wide.
+
 === The `CounterManager` interface.
 
-The `CounterManager` interface is the entry point to define and retrieve a counter.
+The `CounterManager` interface is the entry point to define, retrieve and remove a counter.
 It automatically listen to the creation of `EmbeddedCacheManager` and proceeds with the registration  of an
 instance of it per `EmbeddedCacheManager`.
 It starts the caches needed to store the counter state and configures the default counters.
@@ -157,11 +162,28 @@ EmbeddedCacheManager manager = ...;
 CounterManager counterManager = EmbeddedCounterManagerFactory.asCounterManager(manager);
 ----
 
+==== Remove a counter via CounterManager
+
+WARNING: use with caution.
+
+There is a difference between remove a counter via the `Strong/WeakCounter` interfaces and the `CounterManager`.
+The `CounterManager.remove(String)` removes the counter value from the cluster and removes all the listeners registered
+in the counter in the local counter instance.
+In addition, the counter instance is no longer reusable and it may return an invalid results.
+
+On the other side, the `Strong/WeakCounter` removal only removes the counter value.
+The instance can still be reused and the listeners still works.
+
+NOTE: The counter is re-created if it is accessed after a removal.
+
 === The Counter
 
 A counter can be strong (`StrongCounter`) or weakly consistent (``WeakCounter``) and both is identified by a name.
 They have a specific interface but they share some logic, namely, both of them are asynchronous
 ( a `CompletableFuture` is returned by each operation), provide an update event and can be reset to its initial value.
+
+If you don't want to use the async API, it is possible to return a synchronous counter via `sync()` method.
+The API is the same but without the `CompletableFuture` return value.
 
 The following methods are common to both interfaces:
 
@@ -169,34 +191,31 @@ The following methods are common to both interfaces:
 ----
 String getName();
 CompletableFuture<Long> getValue();
-long weakGetValue()
 CompletableFuture<Void> reset();
 <T extends CounterListener> Handle<T> addListener(T listener);
 CounterConfiguration getConfiguration();
+CompletableFuture<Void> remove();
+SyncStrongCounter sync(); //SyncWeakCounter for WeakCounter
 ----
 
 * `getName()` returns the counter name (identifier).
 * `getValue()` returns the current counter's value.
 * `reset()` allows to reset the counter's value to its initial value.
-* `weakGetValue()` is a weak version of ``getValue()`` and it uses a local copy (like a L1 cache)
-of the counter's value as return.
-Since the counter is distributed, `getValue()` may go remote and the `weakGetValue() always used the local copy.
-The local copy is updated asynchronously via events.
-
-NOTE: The `weakGetValue()` will return an old snapshot of the counter value and it may no include the most recent
-operations performed locally. On other hand, the `getValue()` may not return concurrent unfinished update
-operations.
-
 * `addListener()` register a listener to receive update events.
-More details about it in the <<Notifications,Notification section>>.
+More details about it in the <<_notifications_and_events,Notification section>>.
 * `getConfiguration()` returns the configuration used by the counter.
+* `remove()` removes the counter value from the cluster. The instance can still be used and the listeners are kept.
+* `sync()` creates a synchronous counter.
+
+NOTE: The counter is re-created if it is accessed after a removal.
+
 
 ==== The `StrongCounter` interface: when the consistency or bounds matters.
 
 The strong counter provides uses a single key stored in Infinispan cache to provide the consistency needed.
 All the updates are performed under the key lock to updates its values.
 On other hand, the reads don't acquire any locks and reads the current value.
-Also, with this scheme, it allows to bound the counter value and provide atomic operations like compare-and-set.
+Also, with this scheme, it allows to bound the counter value and provide atomic operations like compare-and-set/swap.
 
 A `StrongCounter` can be retrieved from the `CounterManager` by using the `getStrongCounter()` method.
 As an example:
@@ -207,7 +226,7 @@ CounterManager counterManager = ...
 StrongCounter aCounter = counterManager.getStrongCounter("my-counter);
 ----
 
-WARN: Since every operation will hit a single key, the `StrongCounter` has a higher contention rate.
+WARNING: Since every operation will hit a single key, the `StrongCounter` has a higher contention rate.
 
 The `StrongCounter` interface adds the following method:
 
@@ -224,14 +243,20 @@ default CompletableFuture<Long> decrementAndGet() {
 CompletableFuture<Long> addAndGet(long delta);
 
 CompletableFuture<Boolean> compareAndSet(long expect, long update);
+
+CompletableFuture<Long> compareAndSwap(long expect, long update);
 ----
 
 * `incrementAndGet()` increments the counter by one and returns the new value.
 * `decrementAndGet()` decrements the counter by one and returns the new value.
 * `addAndGet()` adds a delta to the counter's value and returns the new value.
-* `compareAndSet()` atomically sets the counter's value if the current value is the expected.
+* `compareAndSet()` and `compareAndSwap()` atomically set the counter's value if the current value is the expected.
 
 NOTE: A operation is considered completed when the ``CompletableFuture`` is completed.
+
+NOTE: The difference between compare-and-set and compare-and-swap is that the former returns true if the operation succeeds
+while the later returns the previous value.
+The compare-and-swap is successful if the return value is the same as the expected.
 
 ===== Bounded `StrongCounter`
 
@@ -321,6 +346,31 @@ counter.addAndGet(-100).handle((v, throwable) -> {
 }).get();
 ----
 
+Compare-and-set vs Compare-and-swap examples:
+
+[source,java]
+----
+StrongCounter counter = counterManager.getStrongCounter("my-counter");
+long oldValue, newValue;
+do {
+   oldValue = counter.getValue().get();
+   newValue = someLogic(oldValue);
+} while (!counter.compareAndSet(oldValue, newValue).get());
+----
+
+With compare-and-swap, it saves one invocation counter invocation (`counter.getValue()`)
+
+[source,java]
+----
+StrongCounter counter = counterManager.getStrongCounter("my-counter");
+long oldValue = counter.getValue().get();
+long currentValue, newValue;
+do {
+   currentValue = oldValue;
+   newValue = someLogic(oldValue);
+} while ((oldValue = counter.compareAndSwap(oldValue, newValue).get()) != currentValue);
+----
+
 ==== The `WeakCounter` interface: when speed is needed
 
 The `WeakCounter` stores the counter's value in multiple keys in Infinispan cache.
@@ -329,7 +379,7 @@ Each key stores a partial state of the counter's value and it can be updated con
 It main advantage over the `StrongCounter` is the lower contention in the cache.
 On other hand, the read of its value is more expensive and bounds are not allowed.
 
-WARN: The reset operation should be handled with caution.
+WARNING: The reset operation should be handled with caution.
 It is *not* atomic and it produces intermediates values.
 These value may be seen by a read operation and by any listener registered.
 
@@ -436,4 +486,5 @@ public interface CounterEvent {
 NOTE: The state is always `State.VALID` for unbounded strong counter and weak counter.
 `State.LOWER_BOUND_REACHED` and `State.UPPER_BOUND_REACHED` are only valid for bounded strong counters.
 
-WARN: The weak counter `reset()` operation will trigger multiple notification with intermediate values.
+WARNING: The weak counter `reset()` operation will trigger multiple notification with intermediate values.
+

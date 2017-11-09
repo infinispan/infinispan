@@ -80,4 +80,11 @@ public interface WeakCounter {
     * @return The {@link CompletableFuture} that is completed when the counter is removed from the cluster.
     */
    CompletableFuture<Void> remove();
+
+   /**
+    * It returns a synchronous weak counter for this instance.
+    *
+    * @return a {@link SyncWeakCounter}.
+    */
+   SyncWeakCounter sync();
 }

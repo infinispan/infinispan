@@ -189,10 +189,10 @@ public class RestartCounterTest extends BaseCounterTest {
          switch (type) {
             case UNBOUNDED_STRONG:
             case BOUNDED_STRONG:
-               counterManager.getStrongCounter(name).incrementAndGet();
+               counterManager.getStrongCounter(name).sync().incrementAndGet();
                break;
             case WEAK:
-               counterManager.getWeakCounter(name).increment();
+               counterManager.getWeakCounter(name).sync().increment();
                break;
          }
       }
@@ -203,7 +203,7 @@ public class RestartCounterTest extends BaseCounterTest {
                return counterManager.getWeakCounter(name).getValue();
             case BOUNDED_STRONG:
             case UNBOUNDED_STRONG:
-               return new SyncStrongCounter(counterManager.getStrongCounter(name)).getValue();
+               return counterManager.getStrongCounter(name).sync().getValue();
          }
          throw new IllegalStateException();
       }

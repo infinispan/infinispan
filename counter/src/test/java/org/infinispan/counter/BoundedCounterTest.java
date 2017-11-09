@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
+import org.infinispan.counter.api.SyncStrongCounter;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.util.StrongTestCounter;
 import org.testng.annotations.Test;
@@ -47,17 +48,34 @@ public class BoundedCounterTest extends StrongCounterTest {
       CounterManager counterManager = counterManager(0);
       counterManager.defineCounter(method.getName(),
             CounterConfiguration.builder(CounterType.BOUNDED_STRONG).lowerBound(-2).upperBound(2).build());
-      SyncStrongCounter counter = new SyncStrongCounter(counterManager.getStrongCounter(method.getName()));
+      SyncStrongCounter counter = counterManager.getStrongCounter(method.getName()).sync();
       assertTrue(counter.compareAndSet(0, 2));
       assertEquals(2, counter.getValue());
-      assertOutOfBoundCas(counter, 2, 3);
+      assertOutOfBoundCompareAndSet(counter, 2, 3);
       counter.reset();
       assertTrue(counter.compareAndSet(0, -2));
       assertEquals(-2, counter.getValue());
-      assertOutOfBoundCas(counter, -2, -3);
+      assertOutOfBoundCompareAndSet(counter, -2, -3);
       counter.reset();
       assertFalse(counter.compareAndSet(1, 3));
       assertFalse(counter.compareAndSet(1, -3));
+   }
+
+   public void testCompareAndSwapBounds(Method method) {
+      CounterManager counterManager = counterManager(0);
+      counterManager.defineCounter(method.getName(),
+            CounterConfiguration.builder(CounterType.BOUNDED_STRONG).lowerBound(-2).upperBound(2).build());
+      SyncStrongCounter counter = counterManager.getStrongCounter(method.getName()).sync();
+      assertEquals(0, counter.compareAndSwap(0, 2));
+      assertEquals(2, counter.getValue());
+      assertOutOfBoundCompareAndSwap(counter, 2, 3);
+      counter.reset();
+      assertEquals(0, counter.compareAndSwap(0, -2));
+      assertEquals(-2, counter.getValue());
+      assertOutOfBoundCompareAndSwap(counter, -2, -3);
+      counter.reset();
+      assertEquals(0, counter.compareAndSwap(1, 3));
+      assertEquals(0, counter.compareAndSwap(1, -3));
    }
 
    @Override
@@ -99,9 +117,19 @@ public class BoundedCounterTest extends StrongCounterTest {
       assertEquals("Wrong return value of counter.getNewValue()", expected, counter.getValue());
    }
 
-   private void assertOutOfBoundCas(SyncStrongCounter counter, long expect, long value) {
+   private void assertOutOfBoundCompareAndSet(SyncStrongCounter counter, long expect, long value) {
       try {
          counter.compareAndSet(expect, value);
+         fail("Threshold should have been reached!");
+      } catch (CounterOutOfBoundsException e) {
+         log.debug("Expected exception", e);
+      }
+      assertEquals("Wrong return value of counter.getNewValue()", expect, counter.getValue());
+   }
+
+   private void assertOutOfBoundCompareAndSwap(SyncStrongCounter counter, long expect, long value) {
+      try {
+         counter.compareAndSwap(expect, value);
          fail("Threshold should have been reached!");
       } catch (CounterOutOfBoundsException e) {
          log.debug("Expected exception", e);

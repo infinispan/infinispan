@@ -1,6 +1,7 @@
 package org.infinispan.counter.jmx;
 
 import static org.infinispan.counter.api.CounterConfiguration.builder;
+import static org.infinispan.counter.impl.Util.awaitCounterOperation;
 import static org.infinispan.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -32,7 +33,6 @@ import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
-import org.infinispan.counter.util.Utils;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
@@ -125,7 +125,7 @@ public class CounterJmxTest extends BaseCounterTest {
    }
 
    private long getStrongCounterValue(String name) {
-      return Utils.awaitCounterOperation(counterManager(0).getStrongCounter(name).getValue());
+      return awaitCounterOperation(counterManager(0).getStrongCounter(name).getValue());
    }
 
    private long getWeakCounterValue(String name) {
@@ -142,24 +142,24 @@ public class CounterJmxTest extends BaseCounterTest {
    }
 
    private void resetStrongCounter(String name) {
-      Utils.awaitCounterOperation(counterManager(0).getStrongCounter(name).reset());
+      awaitCounterOperation(counterManager(0).getStrongCounter(name).reset());
    }
 
    private void addToStrongCounter(String name, long delta, boolean exception) {
       CompletableFuture<Long> result = counterManager(0).getStrongCounter(name).addAndGet(delta);
       if (exception) {
-         expectException(CounterOutOfBoundsException.class, () -> Utils.awaitCounterOperation(result));
+         expectException(CounterOutOfBoundsException.class, () -> awaitCounterOperation(result));
       } else {
-         Utils.awaitCounterOperation(result);
+         awaitCounterOperation(result);
       }
    }
 
    private void addToWeakCounter(String name, long delta) {
-      Utils.awaitCounterOperation(counterManager(0).getWeakCounter(name).add(delta));
+      awaitCounterOperation(counterManager(0).getWeakCounter(name).add(delta));
    }
 
    private void resetWeakCounter(String name) {
-      Utils.awaitCounterOperation(counterManager(0).getWeakCounter(name).reset());
+      awaitCounterOperation(counterManager(0).getWeakCounter(name).reset());
    }
 
    private void checkValueAndReset(String name, CounterConfiguration config, long addResult, Consumer<String> add,
