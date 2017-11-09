@@ -7,8 +7,6 @@ import java.net.URI;
 import java.util.Properties;
 
 import org.apache.karaf.features.FeaturesService;
-import org.infinispan.commons.test.skip.OS;
-import org.infinispan.commons.test.skip.SkipJunit;
 import org.infinispan.it.osgi.util.CustomPaxExamRunner;
 import org.infinispan.it.osgi.util.MavenUtils;
 import org.infinispan.it.osgi.util.PaxExamUtils;
@@ -57,8 +55,6 @@ public class OSGiKarafFeaturesTest {
     */
    @Test
    public void testCleanInstall() throws Exception {
-      SkipJunit.skipOnOS(OS.SOLARIS, OS.WINDOWS);
-
       Bundle bundle = FrameworkUtil.getBundle(getClass());
       Assert.assertNotNull("Failed to find class bundle.", bundle);
 
@@ -95,7 +91,7 @@ public class OSGiKarafFeaturesTest {
       try {
          service.installFeature(feature, version);
          Assert.fail("Feature install should fail before the repository is added.");
-      } catch (Exception ex) {
+      } catch (Exception ignored) {
       }
 
       URI repoUri = new URI(String.format("mvn:org.infinispan/%s/%s/xml/features", artifactId, version));

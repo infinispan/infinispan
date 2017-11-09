@@ -40,7 +40,7 @@ public class BasicInfinispanOSGiTest extends BaseInfinispanCoreOSGiTest {
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected void createCacheManagers() {
       //not used
    }
 
