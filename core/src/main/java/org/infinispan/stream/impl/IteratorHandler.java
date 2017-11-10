@@ -41,7 +41,7 @@ public class IteratorHandler {
    private final Map<Object, CloseableIterator<?>> currentRequests = new ConcurrentHashMap<>();
    private final Map<Address, Set<Object>> ownerRequests = new ConcurrentHashMap<>();
 
-   private EmbeddedCacheManager manager;
+   @Inject private EmbeddedCacheManager manager;
 
    /**
     * A {@link CloseableIterator} that also allows callers to attach {@link Runnable} instances to it, so that when
@@ -74,11 +74,6 @@ public class IteratorHandler {
             iter.remove();
          }
       }
-   }
-
-   @Inject
-   public void inject(EmbeddedCacheManager manager) {
-      this.manager = manager;
    }
 
    @Start

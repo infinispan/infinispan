@@ -33,20 +33,15 @@ public class ActivationManagerImpl implements ActivationManager {
    private static final Log log = LogFactory.getLog(ActivationManagerImpl.class);
 
    private final AtomicLong activations = new AtomicLong(0);
-   private PersistenceManager persistenceManager;
-   private Configuration cfg;
-   private ClusteringDependentLogic clusteringDependentLogic;
+
+   @Inject private PersistenceManager persistenceManager;
+   @Inject private Configuration cfg;
+   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+
    private boolean passivation;
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", displayName = "Statistics enabled", writable = true)
    private boolean statisticsEnabled = false;
-
-   @Inject
-   public void inject(PersistenceManager clm, Configuration cfg, ClusteringDependentLogic cdl) {
-      this.persistenceManager = clm;
-      this.cfg = cfg;
-      this.clusteringDependentLogic = cdl;
-   }
 
    @Start(priority = 11) // After the cache loader manager, before the passivation manager
    public void start() {

@@ -26,14 +26,9 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class InternalCacheRegistryImpl implements InternalCacheRegistry {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private EmbeddedCacheManager cacheManager;
+   @Inject private EmbeddedCacheManager cacheManager;
    private final ConcurrentMap<String, EnumSet<Flag>> internalCaches = new ConcurrentHashMap<>();
    private final Set<String> privateCaches = new ConcurrentHashSet<>();
-
-   @Inject
-   public void init(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
-   }
 
    @Override
    public void registerInternalCache(String name, Configuration configuration) {

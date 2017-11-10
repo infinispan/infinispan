@@ -28,18 +28,9 @@ import org.infinispan.util.logging.Log;
 public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor {
    protected final boolean trace = getLog().isTraceEnabled();
 
-   protected RpcManager rpcManager;
-   private PartitionHandlingManager partitionHandlingManager;
-   private PendingLockManager pendingLockManager;
-
-   @Inject
-   public void setDependencies(RpcManager rpcManager,
-                               PartitionHandlingManager partitionHandlingManager,
-                               PendingLockManager pendingLockManager) {
-      this.rpcManager = rpcManager;
-      this.partitionHandlingManager = partitionHandlingManager;
-      this.pendingLockManager = pendingLockManager;
-   }
+   @Inject protected RpcManager rpcManager;
+   @Inject private PartitionHandlingManager partitionHandlingManager;
+   @Inject private PendingLockManager pendingLockManager;
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {

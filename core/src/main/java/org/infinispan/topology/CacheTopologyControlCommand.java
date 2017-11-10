@@ -76,8 +76,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
    public static final byte COMMAND_ID = 17;
 
-   private transient LocalTopologyManager localTopologyManager;
-   private transient ClusterTopologyManager clusterTopologyManager;
+   @Inject private transient LocalTopologyManager localTopologyManager;
+   @Inject private transient ClusterTopologyManager clusterTopologyManager;
 
    private String cacheName;
    private Type type;
@@ -150,12 +150,6 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
       this.viewId = viewId;
-   }
-
-   @Inject
-   public void init(LocalTopologyManager localTopologyManager, ClusterTopologyManager clusterTopologyManager) {
-      this.localTopologyManager = localTopologyManager;
-      this.clusterTopologyManager = clusterTopologyManager;
    }
 
    @Override

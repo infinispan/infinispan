@@ -19,7 +19,7 @@ import org.kohsuke.MetaInfServices;
 public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider extends IckleContinuousQueryFilterIndexingServiceProvider {
 
    private RemoteQueryManager remoteQueryManager;
-   private Cache cache;
+   @Inject private Cache cache;
 
    public IckleContinuousQueryProtobufFilterIndexingServiceProvider() {
       super(ContinuousQueryResult.ResultType.JOINING, ContinuousQueryResult.ResultType.UPDATED, ContinuousQueryResult.ResultType.LEAVING);
@@ -30,11 +30,6 @@ public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider ext
          remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
       }
       return remoteQueryManager;
-   }
-
-   @Inject
-   protected void injectDependencies(Cache cache) {
-      this.cache = cache;
    }
 
    @Override

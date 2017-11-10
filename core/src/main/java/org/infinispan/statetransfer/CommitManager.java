@@ -33,18 +33,13 @@ public class CommitManager {
    private static final Log log = LogFactory.getLog(CommitManager.class);
    private static final boolean trace = log.isTraceEnabled();
    private final ConcurrentMap<Object, DiscardPolicy> tracker = new ConcurrentHashMap<>();
-   private DataContainer dataContainer;
-   private PersistenceManager persistenceManager;
-   private TimeService timeService;
+
+   @Inject private DataContainer dataContainer;
+   @Inject private PersistenceManager persistenceManager;
+   @Inject private TimeService timeService;
+
    private volatile boolean trackStateTransfer;
    private volatile boolean trackXSiteStateTransfer;
-
-   @Inject
-   public final void inject(DataContainer dataContainer, PersistenceManager persistenceManager, TimeService timeService) {
-      this.dataContainer = dataContainer;
-      this.persistenceManager = persistenceManager;
-      this.timeService = timeService;
-   }
 
    /**
     * It starts tracking keys committed. All the keys committed will be flagged with this flag. State transfer received

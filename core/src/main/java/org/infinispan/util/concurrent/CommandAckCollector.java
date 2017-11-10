@@ -26,6 +26,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.distribution.Collector;
@@ -60,8 +61,11 @@ public class CommandAckCollector {
    private static final Log log = LogFactory.getLog(CommandAckCollector.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final ConcurrentHashMap<Long, BaseAckTarget> collectorMap;
+   @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    private ScheduledExecutorService timeoutExecutor;
+   @Inject private Configuration configuration;
+
+   private final ConcurrentHashMap<Long, BaseAckTarget> collectorMap;
    private long timeoutNanoSeconds;
    private Collection<Address> currentMembers;
 
@@ -69,11 +73,8 @@ public class CommandAckCollector {
       collectorMap = new ConcurrentHashMap<>();
    }
 
-   @Inject
-   public void inject(
-         @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-         Configuration configuration) {
-      this.timeoutExecutor = timeoutExecutor;
+   @Start
+   public void start() {
       this.timeoutNanoSeconds = TimeUnit.MILLISECONDS.toNanos(configuration.clustering().remoteTimeout());
    }
 

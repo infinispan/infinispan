@@ -26,7 +26,7 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
 
    public static final long DEFAULT_STALE_STATS_THRESHOLD = 3000;
 
-   private TimeService timeService;
+   @Inject private TimeService timeService;
    private volatile long staleStatsThreshold = DEFAULT_STALE_STATS_THRESHOLD;
    private volatile long statsUpdateTimestamp = 0;
    volatile boolean statisticsEnabled = false;
@@ -40,11 +40,6 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
    }
 
    abstract void updateStats() throws Exception;
-
-   @Inject
-   void init(TimeService timeService) {
-      this.timeService = timeService;
-   }
 
    @Start
    void start() {

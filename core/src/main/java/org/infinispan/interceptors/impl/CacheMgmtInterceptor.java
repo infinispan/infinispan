@@ -48,23 +48,14 @@ import org.infinispan.util.concurrent.StripedCounters;
  */
 @MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
-   private AdvancedCache cache;
-   private DataContainer dataContainer;
-   private TimeService timeService;
-   private OffHeapMemoryAllocator allocator;
+   @Inject private AdvancedCache cache;
+   @Inject private DataContainer dataContainer;
+   @Inject private TimeService timeService;
+   @Inject private OffHeapMemoryAllocator allocator;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private volatile AtomicLong resetNanoseconds = new AtomicLong(0);
    private StripedCounters<StripeB> counters = new StripedCounters<>(StripeC::new);
-
-   @Inject
-   @SuppressWarnings("unused")
-   public void setDependencies(AdvancedCache cache, DataContainer dataContainer, TimeService timeService, OffHeapMemoryAllocator allocator) {
-      this.cache = cache;
-      this.dataContainer = dataContainer;
-      this.timeService = timeService;
-      this.allocator = allocator;
-   }
 
    @Start
    public void start() {

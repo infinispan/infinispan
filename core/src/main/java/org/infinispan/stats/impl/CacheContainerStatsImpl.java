@@ -34,18 +34,13 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    private EmbeddedCacheManager cm;
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
    private boolean statisticsEnabled = false;
-   private TimeService timeService;
+   @Inject private TimeService timeService;
 
    public CacheContainerStatsImpl(EmbeddedCacheManager cm) {
       this.cm = cm;
       cm.getGlobalComponentRegistry().registerComponent(this, CacheContainerStats.class);
       boolean globalJmxStatsEnabled = cm.getCacheManagerConfiguration().globalJmxStatistics().enabled();
       setStatisticsEnabled(globalJmxStatsEnabled);
-   }
-
-   @Inject
-   public void setDependencies(TimeService timeService) {
-      this.timeService = timeService;
    }
 
    @Override

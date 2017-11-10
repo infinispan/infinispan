@@ -26,15 +26,10 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    private static final Log log = LogFactory.getLog(ClusteredCacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private boolean transactional;
-   private StateTransferManager stateTransferManager;
-   private DistributionManager distributionManager;
+   @Inject private StateTransferManager stateTransferManager;
+   @Inject private DistributionManager distributionManager;
 
-   @Inject
-   private void injectDependencies(StateTransferManager stateTransferManager, DistributionManager distributionManager) {
-      this.stateTransferManager = stateTransferManager;
-      this.distributionManager = distributionManager;
-   }
+   private boolean transactional;
 
    @Start(priority = 15)
    private void startClusteredCacheLoaderInterceptor() {

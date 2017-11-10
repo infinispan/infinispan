@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -92,58 +91,36 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private static final Log log = LogFactory.getLog(PersistenceManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   Configuration configuration;
-   AdvancedCache<Object, Object> cache;
-   StreamingMarshaller m;
+   @Inject private Configuration configuration;
+   @Inject private AdvancedCache<Object, Object> cache;
+   @Inject private StreamingMarshaller m;
+   @Inject private TransactionManager transactionManager;
+   @Inject private TimeService timeService;
+   @Inject @ComponentName(PERSISTENCE_EXECUTOR)
+   private Executor persistenceExecutor;
+   @Inject private ByteBufferFactory byteBufferFactory;
+   @Inject private MarshalledEntryFactory marshalledEntryFactory;
+   @Inject private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
+   @Inject private ExpirationManager expirationManager;
 
-   TransactionManager transactionManager;
-   private TimeService timeService;
    private final List<CacheLoader> loaders = new ArrayList<>();
    private final List<CacheWriter> nonTxWriters = new ArrayList<>();
    private final List<TransactionalCacheWriter> txWriters = new ArrayList<>();
-
    private final ReadWriteLock storesMutex = new ReentrantReadWriteLock();
    private final Map<Object, StoreConfiguration> configMap = new HashMap<>();
-
-   private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
-   private ExpirationManager expirationManager;
-
    private AdvancedPurgeListener advancedListener;
-
 
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
     */
    volatile boolean enabled;
-   private Executor persistenceExecutor;
-   private ByteBufferFactory byteBufferFactory;
-   private MarshalledEntryFactory marshalledEntryFactory;
    private volatile boolean clearOnStop;
    private boolean preloaded;
-
-   @Inject
-   public void inject(AdvancedCache<Object, Object> cache, StreamingMarshaller marshaller,
-                      Configuration configuration, TransactionManager transactionManager,
-                      TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
-                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory,
-                      CacheStoreFactoryRegistry cacheStoreFactoryRegistry, ExpirationManager expirationManager) {
-      this.cache = cache;
-      this.m = marshaller;
-      this.configuration = configuration;
-      this.transactionManager = transactionManager;
-      this.timeService = timeService;
-      this.persistenceExecutor = persistenceExecutor;
-      this.byteBufferFactory = byteBufferFactory;
-      this.marshalledEntryFactory = marshalledEntryFactory;
-      this.cacheStoreFactoryRegistry = cacheStoreFactoryRegistry;
-      this.expirationManager = expirationManager;
-
-      this.advancedListener = new AdvancedPurgeListener(expirationManager);
-   }
 
    @Override
    @Start(priority = 10)
    public void start() {
+      advancedListener = new AdvancedPurgeListener(expirationManager);
       preloaded = false;
       enabled = configuration.persistence().usingStores();
       if (!enabled)

@@ -35,37 +35,26 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
-
    private static final Log log = LogFactory.getLog(L1ManagerImpl.class);
-   private final boolean trace = log.isTraceEnabled();
+   private static final boolean trace = log.isTraceEnabled();
 
-   private Configuration configuration;
-   private RpcManager rpcManager;
-   private CommandsFactory commandsFactory;
+   @Inject private Configuration configuration;
+   @Inject private RpcManager rpcManager;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private TimeService timeService;
+   @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
+   private ScheduledExecutorService scheduledExecutor;
+
    private int threshold;
    private long l1Lifespan;
-
    // TODO replace this with a custom, expirable collection
    private final ConcurrentMap<Object, ConcurrentMap<Address, Long>> requestors;
    private final ConcurrentMap<Object, L1WriteSynchronizer> synchronizers;
-   private ScheduledExecutorService scheduledExecutor;
    private ScheduledFuture<?> scheduledRequestorsCleanupTask;
-   private TimeService timeService;
 
    public L1ManagerImpl() {
       requestors = CollectionFactory.makeConcurrentMap();
       synchronizers = CollectionFactory.makeConcurrentMap();
-   }
-
-   @Inject
-   public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory commandsFactory,
-                    @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR) ScheduledExecutorService scheduledExecutor,
-                    TimeService timeService) {
-      this.rpcManager = rpcManager;
-      this.commandsFactory = commandsFactory;
-      this.configuration = configuration;
-      this.scheduledExecutor = scheduledExecutor;
-      this.timeService = timeService;
    }
 
    @Start (priority = 3)

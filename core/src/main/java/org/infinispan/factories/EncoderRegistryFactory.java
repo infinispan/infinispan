@@ -26,7 +26,7 @@ import org.infinispan.marshall.core.EncoderRegistryImpl;
 @DefaultFactoryFor(classes = {EncoderRegistry.class})
 public class EncoderRegistryFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
-   private StreamingMarshaller globalMarshaller;
+   @Inject private StreamingMarshaller globalMarshaller;
 
    @Override
    public <T> T construct(Class<T> componentType) {
@@ -48,10 +48,4 @@ public class EncoderRegistryFactory extends AbstractComponentFactory implements 
       encoderRegistry.registerWrapper(IdentityWrapper.INSTANCE);
       return componentType.cast(encoderRegistry);
    }
-
-   @Inject
-   public void injectDependencies(StreamingMarshaller globalMarshaller) {
-      this.globalMarshaller = globalMarshaller;
-   }
-
 }

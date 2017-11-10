@@ -92,15 +92,9 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
  */
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandsFactory {
-   private EmbeddedCacheManager cacheManager;
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES)
    private Map<Byte,ModuleCommandFactory> commandFactories;
-
-   @Inject
-   public void inject(EmbeddedCacheManager cacheManager,
-                      @ComponentName(KnownComponentNames.MODULE_COMMAND_FACTORIES) Map<Byte, ModuleCommandFactory> commandFactories) {
-      this.cacheManager = cacheManager;
-      this.commandFactories = commandFactories;
-   }
 
    /**
     * Creates an un-initialized command.  Un-initialized in the sense that parameters will be set, but any components

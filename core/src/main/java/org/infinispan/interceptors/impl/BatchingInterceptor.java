@@ -21,19 +21,11 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class BatchingInterceptor extends DDAsyncInterceptor {
-   private BatchContainer batchContainer;
-   private TransactionManager transactionManager;
-   private InvocationContextFactory invocationContextFactory;
+   @Inject private BatchContainer batchContainer;
+   @Inject private TransactionManager transactionManager;
+   @Inject private InvocationContextFactory invocationContextFactory;
 
    private static final Log log = LogFactory.getLog(BatchingInterceptor.class);
-
-   @Inject
-   private void inject(BatchContainer batchContainer, TransactionManager transactionManager,
-         InvocationContextFactory invocationContextFactory) {
-      this.batchContainer = batchContainer;
-      this.transactionManager = transactionManager;
-      this.invocationContextFactory = invocationContextFactory;
-   }
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {

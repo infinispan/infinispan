@@ -54,21 +54,14 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class CommandInterceptor extends AbstractVisitor implements AsyncInterceptor {
 
-   private AsyncInterceptorChain interceptorChain;
-
-   protected Configuration cacheConfiguration;
+   @Inject private AsyncInterceptorChain interceptorChain;
+   @Inject protected Configuration cacheConfiguration;
 
    private static final Log log = LogFactory.getLog(CommandInterceptor.class);
    private AsyncInterceptor nextInterceptor;
 
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void injectConfiguration(Configuration configuration, AsyncInterceptorChain interceptorChain) {
-      this.cacheConfiguration = configuration;
-      this.interceptorChain = interceptorChain;
    }
 
    /**

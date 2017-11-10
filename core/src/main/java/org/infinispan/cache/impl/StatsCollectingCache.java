@@ -23,8 +23,8 @@ import org.infinispan.util.TimeService;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
-   private StatsCollector statsCollector;
-   private TimeService timeService;
+   @Inject private StatsCollector statsCollector;
+   @Inject private TimeService timeService;
 
    public StatsCollectingCache(String cacheName) {
       super(cacheName);
@@ -32,12 +32,6 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
 
    public StatsCollectingCache(String cacheName, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       super(cacheName, keyDataConversion, valueDataConversion);
-   }
-
-   @Inject
-   public void injectDependencies(StatsCollector statsCollector, TimeService timeService) {
-      this.statsCollector = statsCollector;
-      this.timeService = timeService;
    }
 
    @Override

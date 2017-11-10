@@ -18,12 +18,7 @@ import org.kohsuke.MetaInfServices;
 public final class IckleProtobufFilterIndexingServiceProvider extends IckleFilterIndexingServiceProvider {
 
    private RemoteQueryManager remoteQueryManager;
-   private Cache cache;
-
-   @Inject
-   protected void injectDependencies(Cache cache) {
-      this.cache = cache;
-   }
+   @Inject private Cache cache;
 
    private RemoteQueryManager getRemoteQueryManager() {
       if (remoteQueryManager == null) {

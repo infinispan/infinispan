@@ -16,6 +16,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.TransactionalInvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
@@ -49,8 +50,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       txCoordinator = new TransactionCoordinator();
 
 
-      txTable.initialize(null, configuration, null, null,
-                         txCoordinator, null, null, null, mockCache, null, null, null, null, TransactionOriginatorChecker.LOCAL);
+      TestingUtil.inject(txTable, configuration, txCoordinator, mockCache, TransactionOriginatorChecker.LOCAL);
       txTable.start();
       txTable.startXidMapping();
       TransactionFactory gtf = new TransactionFactory();
@@ -64,7 +64,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
       InterceptorChain invoker = mock(InterceptorChain.class);
 
-      txCoordinator.init(commandsFactory, icf, invoker, txTable, null, configuration);
+      TestingUtil.inject(txCoordinator, commandsFactory, icf, invoker, txTable, configuration);
       xaAdapter = new TransactionXaAdapter(localTx, txTable);
 
       xaAdapter.start(xid, 0);
@@ -112,13 +112,14 @@ public class TransactionXaAdapterTmIntegrationTest {
 
    public void testOnePhaseCommitConfigured() throws XAException {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).build();
-      txCoordinator.init(null, null, null, null, null, configuration);
+      TestingUtil.inject(txCoordinator, configuration);
+      txCoordinator.start();
       assert XAResource.XA_OK == xaAdapter.prepare(xid);
    }
 
    public void test1PcAndNonExistentXid() {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.INVALIDATION_ASYNC).build();
-      txCoordinator.init(null, null, null, null, null, configuration);
+      TestingUtil.inject(txCoordinator, configuration);
       try {
          EmbeddedXid doesNotExists = new EmbeddedXid(uuid);
          xaAdapter.commit(doesNotExists, false);
@@ -130,7 +131,7 @@ public class TransactionXaAdapterTmIntegrationTest {
 
    public void test1PcAndNonExistentXid2() {
       Configuration configuration = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
-      txCoordinator.init(null, null, null, null, null, configuration);
+      TestingUtil.inject(txCoordinator, configuration);
       try {
          EmbeddedXid doesNotExists = new EmbeddedXid(uuid);
          xaAdapter.commit(doesNotExists, true);

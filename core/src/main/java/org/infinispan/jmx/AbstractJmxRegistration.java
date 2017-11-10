@@ -6,6 +6,7 @@ import javax.management.MBeanServer;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 
 /**
  * Parent class for top level JMX component registration.
@@ -16,7 +17,7 @@ import org.infinispan.factories.AbstractComponentRegistry;
 public abstract class AbstractJmxRegistration {
    String jmxDomain;
    MBeanServer mBeanServer;
-   GlobalConfiguration globalConfig;
+   @Inject GlobalConfiguration globalConfig;
 
    protected abstract ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components);
 

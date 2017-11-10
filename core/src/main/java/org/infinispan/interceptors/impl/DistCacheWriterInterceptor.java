@@ -39,18 +39,13 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    private static final Log log = LogFactory.getLog(DistCacheWriterInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private DistributionManager dm;
+   @Inject private DistributionManager dm;
 
    private boolean isUsingLockDelegation;
 
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void inject(DistributionManager dm) {
-      this.dm = dm;
    }
 
    @Start(priority = 25) // after the distribution manager!

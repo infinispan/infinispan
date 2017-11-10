@@ -21,6 +21,7 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
@@ -48,7 +49,7 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null);
-      n.injectDependencies(mockCache, cdl, null, config,
+      TestingUtil.inject(n, mockCache, cdl, config,
             mock(DistributionManager.class), mock(InternalEntryFactory.class),
             mock(ClusterEventManager.class), mock(ComponentRegistry.class));
       cl = new CacheListener();

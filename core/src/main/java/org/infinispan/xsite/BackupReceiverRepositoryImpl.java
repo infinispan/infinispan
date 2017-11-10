@@ -27,12 +27,7 @@ public class BackupReceiverRepositoryImpl implements BackupReceiverRepository {
 
    private final ConcurrentMap<SiteCachePair, BackupReceiver> backupReceivers = new ConcurrentHashMap<>();
 
-   public EmbeddedCacheManager cacheManager;
-
-   @Inject
-   public void setup(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
-   }
+   @Inject public EmbeddedCacheManager cacheManager;
 
    @Start
    public void start() {

@@ -71,14 +71,15 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    private final ConcurrentMap<K, InternalCacheEntry<K, V>> entries;
    private final Cache<K, InternalCacheEntry<K, V>> evictionCache;
-   protected InternalEntryFactory entryFactory;
-   private EvictionManager evictionManager;
-   private PassivationManager passivator;
-   private ActivationManager activator;
-   private PersistenceManager pm;
-   private TimeService timeService;
-   private CacheNotifier cacheNotifier;
-   private ExpirationManager<K, V> expirationManager;
+
+   @Inject protected InternalEntryFactory entryFactory;
+   @Inject private EvictionManager evictionManager;
+   @Inject private PassivationManager passivator;
+   @Inject private ActivationManager activator;
+   @Inject private PersistenceManager pm;
+   @Inject private TimeService timeService;
+   @Inject private CacheNotifier cacheNotifier;
+   @Inject private ExpirationManager<K, V> expirationManager;
 
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM
@@ -156,20 +157,6 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
             .build();
 
       entries = evictionCache.asMap();
-   }
-
-   @Inject
-   public void initialize(EvictionManager evictionManager, PassivationManager passivator,
-                          InternalEntryFactory entryFactory, ActivationManager activator, PersistenceManager clm,
-                          TimeService timeService, CacheNotifier cacheNotifier, ExpirationManager<K, V> expirationManager) {
-      this.evictionManager = evictionManager;
-      this.passivator = passivator;
-      this.entryFactory = entryFactory;
-      this.activator = activator;
-      this.pm = clm;
-      this.timeService = timeService;
-      this.cacheNotifier = cacheNotifier;
-      this.expirationManager = expirationManager;
    }
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,

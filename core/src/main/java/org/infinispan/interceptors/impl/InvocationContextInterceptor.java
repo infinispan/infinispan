@@ -41,12 +41,12 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class InvocationContextInterceptor extends BaseAsyncInterceptor {
-
-   private ComponentRegistry componentRegistry;
-   private TransactionTable txTable;
-
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   @Inject private ComponentRegistry componentRegistry;
+   @Inject private TransactionTable txTable;
+
    private volatile boolean shuttingDown = false;
 
    private final InvocationExceptionFunction suppressExceptionsHandler = (rCtx, rCommand, throwable) -> {
@@ -74,13 +74,6 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private void setStopStatus() {
       shuttingDown = true;
    }
-
-   @Inject
-   public void init(ComponentRegistry componentRegistry, TransactionTable txTable) {
-      this.componentRegistry = componentRegistry;
-      this.txTable = txTable;
-   }
-
 
    @Override
    public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {

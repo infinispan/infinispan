@@ -17,7 +17,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 public class StreamIteratorCloseCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 72;
 
-   protected IteratorHandler handler;
+   @Inject protected IteratorHandler handler;
 
    protected Object id;
 
@@ -38,7 +38,6 @@ public class StreamIteratorCloseCommand extends BaseRpcCommand {
       this.id = id;
    }
 
-   @Inject
    public void inject(IteratorHandler handler) {
       this.handler = handler;
    }

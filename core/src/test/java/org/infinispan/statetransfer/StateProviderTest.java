@@ -153,9 +153,10 @@ public class StateProviderTest {
 
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
-      stateProvider.init(cache, mockExecutorService,
+      TestingUtil.inject(stateProvider, cache, mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
             dataContainer, transactionTable, stateTransferLock, stateConsumer, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
+      stateProvider.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
       Object key1 = new TestKey("key1", 0, ch1);
@@ -253,9 +254,10 @@ public class StateProviderTest {
 
       // create state provider
       StateProviderImpl stateProvider = new StateProviderImpl();
-      stateProvider.init(cache, mockExecutorService,
+      TestingUtil.inject(stateProvider, cache, mockExecutorService,
             configuration, rpcManager, commandsFactory, cacheNotifier, persistenceManager,
             dataContainer, transactionTable, stateTransferLock, stateConsumer, ef, keyPartitioner, TransactionOriginatorChecker.LOCAL);
+      stateProvider.start();
 
       final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
       Object key1 = new TestKey("key1", 0, ch1);

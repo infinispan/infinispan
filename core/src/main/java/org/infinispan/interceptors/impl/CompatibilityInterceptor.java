@@ -15,12 +15,7 @@ import org.infinispan.metadata.Metadata;
  */
 public class CompatibilityInterceptor extends DDAsyncInterceptor {
 
-   protected VersionGenerator versionGenerator;
-
-   @Inject
-   protected void init(VersionGenerator versionGenerator) {
-      this.versionGenerator = versionGenerator;
-   }
+   @Inject protected VersionGenerator versionGenerator;
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {

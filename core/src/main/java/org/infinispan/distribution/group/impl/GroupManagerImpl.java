@@ -62,9 +62,10 @@ public class GroupManagerImpl implements GroupManager {
             throw new IllegalStateException(Util.formatString("Cannot define more that one @Group method for class hierarchy rooted at %s", clazz.getName()));
     }
 
+    @Inject private DistributionManager distributionManager;
+
     private final ConcurrentMap<Class<?>, GroupMetadata> groupMetadataCache;
     private final List<Grouper<?>> groupers;
-    private DistributionManager distributionManager;
 
     public GroupManagerImpl(List<Grouper<?>> groupers) {
         this.groupMetadataCache = CollectionFactory.makeConcurrentMap();
@@ -72,11 +73,6 @@ public class GroupManagerImpl implements GroupManager {
             this.groupers = groupers;
         else
             this.groupers = Collections.emptyList();
-    }
-
-    @Inject
-    public void injectDependencies(DistributionManager distributionManager) {
-        this.distributionManager = distributionManager;
     }
 
     @Override

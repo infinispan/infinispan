@@ -32,7 +32,7 @@ public class ExpirationManagerTest extends AbstractInfinispanTest {
       Configuration cfg = getCfg().expiration().wakeUpInterval(0L).build();
 
       ScheduledExecutorService mockService = mock(ScheduledExecutorService.class);
-      em.initialize(mockService, "", cfg, null, null, null, null);
+      em.initialize(mockService, "", cfg);
       em.start();
 
       assertNull("Expiration task is not null!  Should not have scheduled anything!", em.expirationTask);
@@ -43,7 +43,7 @@ public class ExpirationManagerTest extends AbstractInfinispanTest {
       Configuration cfg = getCfg().expiration().wakeUpInterval(789L).build();
 
       ScheduledExecutorService mockService = mock(ScheduledExecutorService.class);
-      em.initialize(mockService, "", cfg, null, null, null, null);
+      em.initialize(mockService, "", cfg);
 
       ScheduledFuture mockFuture = mock(ScheduledFuture.class);
       when(mockService.scheduleWithFixedDelay(isA(ExpirationManagerImpl.ScheduledTask.class), eq(789l),

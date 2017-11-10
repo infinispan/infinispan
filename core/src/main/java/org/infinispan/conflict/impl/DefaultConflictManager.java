@@ -78,52 +78,29 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private static final Flag[] userMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES};
    private static final Flag[] autoMergeFlags = new Flag[] {Flag.IGNORE_RETURN_VALUES, Flag.PUT_FOR_STATE_TRANSFER};
 
-   private AsyncInterceptorChain interceptorChain;
-   private AdvancedCache<K, V> cache;
-   private CommandsFactory commandsFactory;
-   private DistributionManager distributionManager;
-   private EntryMergePolicy<K, V> entryMergePolicy;
+   @Inject private AsyncInterceptorChain interceptorChain;
+   @Inject private AdvancedCache<K, V> cache;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private DistributionManager distributionManager;
+   @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
    private ExecutorService stateTransferExecutor;
-   private InvocationContextFactory invocationContextFactory;
-   private RpcManager rpcManager;
-   private StateConsumer stateConsumer;
-   private StateReceiver<K, V> stateReceiver;
-   private EntryMergePolicyFactoryRegistry mergePolicyRegistry;
+   @Inject private InvocationContextFactory invocationContextFactory;
+   @Inject private RpcManager rpcManager;
+   @Inject private StateConsumer stateConsumer;
+   @Inject private StateReceiver<K, V> stateReceiver;
+   @Inject private EntryMergePolicyFactoryRegistry mergePolicyRegistry;
+   @Inject private TimeService timeService;
+
    private String cacheName;
    private Address localAddress;
-   private TimeService timeService;
    private long conflictTimeout;
+   private EntryMergePolicy<K, V> entryMergePolicy;
    private final AtomicBoolean streamInProgress = new AtomicBoolean();
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
    private volatile LocalizedCacheTopology installedTopology;
    private volatile boolean running = false;
    private volatile ReplicaSpliterator conflictSpliterator;
-
-   @Inject
-   public void init(AsyncInterceptorChain interceptorChain,
-                    AdvancedCache<K, V> cache,
-                    CommandsFactory commandsFactory,
-                    DistributionManager distributionManager,
-                    @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService stateTransferExecutor,
-                    InvocationContextFactory invocationContextFactory,
-                    RpcManager rpcManager,
-                    StateConsumer stateConsumer,
-                    StateReceiver<K, V> stateReceiver,
-                    EntryMergePolicyFactoryRegistry mergePolicyRegistry,
-                    TimeService timeService) {
-      this.interceptorChain = interceptorChain;
-      this.cache = cache;
-      this.commandsFactory = commandsFactory;
-      this.distributionManager = distributionManager;
-      this.stateTransferExecutor = stateTransferExecutor;
-      this.invocationContextFactory = invocationContextFactory;
-      this.rpcManager = rpcManager;
-      this.stateConsumer = stateConsumer;
-      this.stateReceiver = stateReceiver;
-      this.mergePolicyRegistry = mergePolicyRegistry;
-      this.timeService = timeService;
-   }
 
    @Start
    public void start() {

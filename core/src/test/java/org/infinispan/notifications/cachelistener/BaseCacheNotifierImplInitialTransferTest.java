@@ -52,6 +52,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mockito.Mockito;
@@ -128,7 +129,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null);
-      n.injectDependencies(mockCache, cdl, null, config,
+      TestingUtil.inject(n, mockCache, cdl, config,
             mock(DistributionManager.class), new InternalEntryFactoryImpl(),
             mock(ClusterEventManager.class), mock(ComponentRegistry.class));
       n.start();

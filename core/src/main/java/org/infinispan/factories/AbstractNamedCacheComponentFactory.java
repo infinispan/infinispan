@@ -13,12 +13,6 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractNamedCacheComponentFactory extends AbstractComponentFactory {
-   protected Configuration configuration;
-   protected ComponentRegistry componentRegistry;
-
-   @Inject
-   private void injectGlobalDependencies(Configuration configuration, ComponentRegistry componentRegistry) {
-      this.componentRegistry = componentRegistry;
-      this.configuration = configuration;
-   }
+   @Inject protected Configuration configuration;
+   @Inject protected ComponentRegistry componentRegistry;
 }

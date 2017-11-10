@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -14,6 +13,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.impl.GroupFilter;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -29,21 +29,16 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
  */
 public class GroupingInterceptor extends DDAsyncInterceptor {
 
-   private CacheNotifier<?, ?> cacheNotifier;
-   private GroupManager groupManager;
-   private InternalEntryFactory factory;
-   private boolean isPassivationEnabled;
-   private DistributionManager distributionManager;
+   @Inject private CacheNotifier<?, ?> cacheNotifier;
+   @Inject private GroupManager groupManager;
+   @Inject private InternalEntryFactory factory;
+   @Inject private DistributionManager distributionManager;
 
-   @Inject
-   public void injectDependencies(CacheNotifier<?, ?> cacheNotifier, GroupManager groupManager,
-                                  InternalEntryFactory factory, Configuration configuration,
-                                  DistributionManager distributionManager) {
-      this.cacheNotifier = cacheNotifier;
-      this.groupManager = groupManager;
-      this.factory = factory;
-      this.isPassivationEnabled = configuration.persistence().passivation();
-      this.distributionManager = distributionManager;
+   private boolean isPassivationEnabled;
+
+   @Start
+   public void start() {
+      this.isPassivationEnabled = cacheConfiguration.persistence().passivation();
    }
 
    @Override

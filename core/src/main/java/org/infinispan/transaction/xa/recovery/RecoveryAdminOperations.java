@@ -29,12 +29,7 @@ public class RecoveryAdminOperations {
 
    private static final String SEPARATOR = ", ";
 
-   private RecoveryManager recoveryManager;
-
-   @Inject
-   public void init(RecoveryManager recoveryManager) {
-      this.recoveryManager = recoveryManager;
-   }
+   @Inject private RecoveryManager recoveryManager;
 
    @ManagedOperation(description = "Shows all the prepared transactions for which the originating node crashed", displayName="Show in doubt transactions")
    public String showInDoubtTransactions() {

@@ -95,8 +95,8 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    private final MarshallableTypeHints marshallableTypeHints = new MarshallableTypeHints();
 
-   private GlobalComponentRegistry gcr;
-   private RemoteCommandsFactory cmdFactory;
+   @Inject private GlobalComponentRegistry gcr;
+   @Inject private RemoteCommandsFactory cmdFactory;
 
    private ClassToExternalizerMap internalExts;
    private IdToExternalizerMap reverseInternalExts;
@@ -111,12 +111,6 @@ public class GlobalMarshaller implements StreamingMarshaller {
 
    public GlobalMarshaller(Marshaller external) {
       this.external = external;
-   }
-
-   @Inject
-   public void inject(GlobalComponentRegistry gcr, RemoteCommandsFactory cmdFactory) {
-      this.gcr = gcr;
-      this.cmdFactory = cmdFactory;
    }
 
    @Override

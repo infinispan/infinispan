@@ -23,7 +23,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 47;
 
-   private LocalStreamManager lsm;
+   @Inject private LocalStreamManager lsm;
 
    private Object id;
    private Type type;
@@ -80,7 +80,6 @@ public class StreamRequestCommand<K> extends BaseRpcCommand implements TopologyA
       this.terminalOperation = terminalOperation;
    }
 
-   @Inject
    public void inject(LocalStreamManager lsm) {
       this.lsm = lsm;
    }

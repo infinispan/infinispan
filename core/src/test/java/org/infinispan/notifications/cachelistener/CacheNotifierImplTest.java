@@ -36,6 +36,7 @@ import org.infinispan.notifications.cachelistener.event.Event.Type;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.mockito.Mockito;
@@ -64,7 +65,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
             .then(answer);
       ClusteringDependentLogic.LocalLogic cdl = new ClusteringDependentLogic.LocalLogic();
       cdl.init(null);
-      n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class),
+      TestingUtil.inject(n, mockCache, cdl, config, mock(DistributionManager.class),
             mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(ComponentRegistry.class));
       cl = new CacheListener();
       n.start();

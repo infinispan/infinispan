@@ -28,18 +28,10 @@ import org.infinispan.stream.impl.intops.IntermediateOperation;
  * exceptions when the availability mode changes.
  */
 public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerImpl<K> {
-   protected final PartitionListener listener;
-   protected Cache<?, ?> cache;
+   protected final PartitionListener listener = new PartitionListener();
+   @Inject protected Cache<?, ?> cache;
+   @Inject protected Configuration configuration;
    private PartitionHandling partitionHandling;
-
-   public PartitionAwareClusterStreamManager() {
-      this.listener = new PartitionListener();
-   }
-
-   @Inject
-   public void init(Configuration configuration) {
-      this.partitionHandling = configuration.clustering().partitionHandling().whenSplit();
-   }
 
    @Listener
    private class PartitionListener {
@@ -58,14 +50,10 @@ public class PartitionAwareClusterStreamManager<K> extends ClusterStreamManagerI
       }
    }
 
-   @Inject
-   public void inject(Cache<?, ?> cache) {
-      this.cache = cache;
-   }
-
    @Start
    public void start() {
       super.start();
+      partitionHandling = configuration.clustering().partitionHandling().whenSplit();
       cache.addListener(listener);
    }
 

@@ -125,6 +125,7 @@ public class ComponentMetadataPersister {
       isGlobal = ScopeDetector.detectScope(clazz) == Scopes.GLOBAL;
       survivesRestarts = ReflectionUtil.getAnnotation(clazz, SurvivesRestarts.class) != null;
 
+      List<Field> injectFields = ReflectionUtil.getAllFields(clazz, Inject.class);
       List<Method> injectMethods = ReflectionUtil.getAllMethods(clazz, Inject.class);
       List<Method> startMethods = ReflectionUtil.getAllMethods(clazz, Start.class);
       List<Method> postStartMethods = ReflectionUtil.getAllMethods(clazz, PostStart.class);
@@ -136,13 +137,13 @@ public class ComponentMetadataPersister {
          List<Method> managedAttributeMethods = ReflectionUtil.getAllMethods(clazz, ManagedAttribute.class);
          List<Field> managedAttributeFields = ReflectionUtil.getAnnotatedFields(clazz, ManagedAttribute.class);
          List<Method> managedOperationMethods = ReflectionUtil.getAllMethods(clazz, ManagedOperation.class);
-         metadata = new ManageableComponentMetadata(clazz, injectMethods, startMethods, postStartMethods, stopMethods, isGlobal,
+         metadata = new ManageableComponentMetadata(clazz, injectFields, injectMethods, startMethods, postStartMethods, stopMethods, isGlobal,
                                                     survivesRestarts, managedAttributeFields, managedAttributeMethods,
                                                     managedOperationMethods, mbean);
-      } else if (!injectMethods.isEmpty() || !startMethods.isEmpty() || !stopMethods.isEmpty()
+      } else if (!injectFields.isEmpty() || !injectMethods.isEmpty() || !startMethods.isEmpty() || !stopMethods.isEmpty()
             || isGlobal || survivesRestarts || ReflectionUtil.isAnnotationPresent(clazz, Scope.class)) {
          // Then this still is a component!
-         metadata = new ComponentMetadata(clazz, injectMethods, startMethods, postStartMethods, stopMethods, isGlobal, survivesRestarts);
+         metadata = new ComponentMetadata(clazz, injectFields, injectMethods, startMethods, postStartMethods, stopMethods, isGlobal, survivesRestarts);
       }
 
       if (metadata != null) {

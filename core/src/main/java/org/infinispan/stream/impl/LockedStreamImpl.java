@@ -195,7 +195,7 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
 
    private static abstract class LockHelper<K, V, R> {
       protected final Predicate<? super CacheEntry<K, V>> predicate;
-      protected transient LockManager lockManager;
+      @Inject protected transient LockManager lockManager;
 
       protected LockHelper(Predicate<? super CacheEntry<K, V>> predicate) {
          this.predicate = predicate;
@@ -241,17 +241,12 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
             }
          }
       }
-
-      @Inject
-      public void injectLockManager(LockManager manager) {
-         this.lockManager = manager;
-      }
    }
 
    @SerializeWith(value = CacheEntryFunction.Externalizer.class)
    private static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, KeyValuePair<K, R>> {
       private final BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction;
-      protected transient Cache<K, V> cache;
+      @Inject protected transient Cache<K, V> cache;
 
       protected CacheEntryFunction(BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction,
             Predicate<? super CacheEntry<K, V>> predicate) {
@@ -267,11 +262,6 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       @Override
       protected KeyValuePair<K, R> actualPerform(Cache<K, V> cache, CacheEntry<K, V> entry) {
          return new KeyValuePair<>(entry.getKey(), biFunction.apply(cache, entry));
-      }
-
-      @Inject
-      public void injectCache(Cache<K, V> cache) {
-         this.cache = cache;
       }
 
       public static final class Externalizer implements org.infinispan.commons.marshall.Externalizer<CacheEntryFunction> {

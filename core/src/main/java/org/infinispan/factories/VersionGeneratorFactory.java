@@ -21,8 +21,7 @@ import org.infinispan.factories.scopes.Scopes;
 @DefaultFactoryFor(classes = VersionGenerator.class)
 @Scope(Scopes.NAMED_CACHE)
 public class VersionGeneratorFactory extends NamedComponentFactory implements AutoInstantiableFactory {
-
-   private Configuration configuration;
+   @Inject private Configuration configuration;
 
    @Override
    public <T> T construct(Class<T> componentType, String componentName) {
@@ -37,10 +36,4 @@ public class VersionGeneratorFactory extends NamedComponentFactory implements Au
          return componentType.cast(new NumericVersionGenerator());
       }
    }
-
-   @Inject
-   private void injectGlobalDependencies(Configuration configuration) {
-      this.configuration = configuration;
-   }
-
 }

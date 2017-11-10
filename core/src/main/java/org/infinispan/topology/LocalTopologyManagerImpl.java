@@ -62,12 +62,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private static Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Transport transport;
+   @Inject private Transport transport;
+   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
    private ExecutorService asyncTransportExecutor;
-   private GlobalComponentRegistry gcr;
-   private TimeService timeService;
-   private GlobalStateManager globalStateManager;
-   private PersistentUUIDManager persistentUUIDManager;
+   @Inject private GlobalComponentRegistry gcr;
+   @Inject private TimeService timeService;
+   @Inject private GlobalStateManager globalStateManager;
+   @Inject private PersistentUUIDManager persistentUUIDManager;
 
    private final WithinThreadExecutor withinThreadExecutor = new WithinThreadExecutor();
 
@@ -80,20 +81,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private int latestStatusResponseViewId;
    private PersistentUUID persistentUUID;
 
-   @Inject
-   public void inject(Transport transport,
-                      @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                      GlobalComponentRegistry gcr, TimeService timeService, GlobalStateManager globalStateManager,
-                      PersistentUUIDManager persistentUUIDManager) {
-      this.transport = transport;
-      this.asyncTransportExecutor = asyncTransportExecutor;
-      this.gcr = gcr;
-      this.timeService = timeService;
+   // This must be invoked before GlobalStateManagerImpl.start
+   @Start(priority = 0)
+   public void preStart() {
       if (globalStateManager != null) {
-         this.globalStateManager = globalStateManager;
          globalStateManager.registerStateProvider(this);
       }
-      this.persistentUUIDManager = persistentUUIDManager;
    }
 
    // Arbitrary value, only need to start after the (optional) GlobalStateManager and JGroupsTransport

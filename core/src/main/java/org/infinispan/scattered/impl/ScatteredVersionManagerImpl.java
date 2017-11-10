@@ -62,19 +62,21 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
 
    private static final Log log = LogFactory.getLog(ScatteredVersionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   private Configuration configuration;
+
+   @Inject private Configuration configuration;
+   @Inject private ComponentRegistry componentRegistry;
+   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
+   private ExecutorService executorService;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private RpcManager rpcManager;
+   @Inject private DataContainer<K, ?> dataContainer;
+   @Inject private PersistenceManager persistenceManager;
+   @Inject private StateConsumer stateConsumer;
+   @Inject private ClusterTopologyManager clusterTopologyManager;
+   @Inject private OrderedUpdatesManager orderedUpdatesManager;
+
    private int invalidationBatchSize;
    private int numSegments;
-   private ComponentRegistry componentRegistry;
-   private ExecutorService executorService;
-   private CommandsFactory commandsFactory;
-   private RpcManager rpcManager;
-   private DataContainer<K, ?> dataContainer;
-   private PersistenceManager persistenceManager;
-   private StateConsumer stateConsumer;
-   private ClusterTopologyManager clusterTopologyManager;
-   private OrderedUpdatesManager orderedUpdatesManager;
-
    private int preloadedTopologyId = 0;
    private volatile int topologyId = 0;
    private AtomicReferenceArray<SegmentState> segmentStates;
@@ -89,29 +91,6 @@ public class ScatteredVersionManagerImpl<K> implements ScatteredVersionManager<K
    private volatile int valuesTopology = -1;
    private CompletableFuture<Void> valuesFuture = CompletableFutures.completedNull();
    private final Object valuesLock = new Object();
-
-   @Inject
-   public void init(Configuration configuration,
-                    ComponentRegistry componentRegistry,
-                    @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService,
-                    CommandsFactory commandsFactory,
-                    RpcManager rpcManager,
-                    DataContainer<K, ?> dataContainer,
-                    PersistenceManager persistenceManager,
-                    StateConsumer stateConsumer,
-                    ClusterTopologyManager clusterTopologyManager,
-                    OrderedUpdatesManager orderedUpdatesManager) {
-      this.componentRegistry = componentRegistry;
-      this.configuration = configuration;
-      this.executorService = executorService;
-      this.commandsFactory = commandsFactory;
-      this.rpcManager = rpcManager;
-      this.dataContainer = dataContainer;
-      this.persistenceManager = persistenceManager;
-      this.stateConsumer = stateConsumer;
-      this.clusterTopologyManager = clusterTopologyManager;
-      this.orderedUpdatesManager = orderedUpdatesManager;
-   }
 
    @Start(priority = 15) // before StateConsumerImpl and StateTransferManagerImpl
    public void start() {

@@ -21,6 +21,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -71,14 +72,9 @@ public class DataContainerStressTest {
    private void initializeDefaultDataContainer(DefaultDataContainer dc) {
       InternalEntryFactoryImpl entryFactory = new InternalEntryFactoryImpl();
       TimeService timeService = new DefaultTimeService();
-      entryFactory.injectTimeService(timeService);
+      TestingUtil.inject(entryFactory, timeService);
       // Mockito cannot be used as it will run out of memory from keeping all the invocations, thus we use blank impls
-      dc.initialize(new EvictionManager() {
-                       @Override
-                       public void onEntryEviction(Map evicted) {
-
-                       }
-                    }, new PassivationManager() {
+      TestingUtil.inject(dc, (EvictionManager) evicted -> {}, new PassivationManager() {
                        @Override
                        public boolean isEnabled() {
                           return false;

@@ -56,17 +56,10 @@ public class QueryCache {
     */
    private static final long ENTRY_LIFESPAN = 300;  // seconds
 
-   private EmbeddedCacheManager cacheManager;
-
-   private InternalCacheRegistry internalCacheRegistry;
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private InternalCacheRegistry internalCacheRegistry;
 
    private volatile Cache<QueryCacheKey, Object> lazyCache;
-
-   @Inject
-   public void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
-      this.cacheManager = cacheManager;
-      this.internalCacheRegistry = internalCacheRegistry;
-   }
 
    /**
     * Gets the cached query object. The key used for lookup is an object pair containing the query string and a

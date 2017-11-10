@@ -18,7 +18,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @since 9.0
  */
 public class NotificationInterceptor extends DDAsyncInterceptor {
-   private CacheNotifier notifier;
+   @Inject private CacheNotifier notifier;
    private final InvocationSuccessAction commitSuccessAction = new InvocationSuccessAction() {
       @Override
       public void accept(InvocationContext rCtx, VisitableCommand rCommand, Object rv)
@@ -33,11 +33,6 @@ public class NotificationInterceptor extends DDAsyncInterceptor {
          notifier.notifyTransactionCompleted(((TxInvocationContext) rCtx).getGlobalTransaction(), false, rCtx);
       }
    };
-
-   @Inject
-   public void injectDependencies(CacheNotifier notifier) {
-      this.notifier = notifier;
-   }
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

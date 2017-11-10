@@ -56,22 +56,25 @@ public class StateProviderImpl implements StateProvider {
    private static final Log log = LogFactory.getLog(StateProviderImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   protected String cacheName;
-   private Configuration configuration;
-   protected RpcManager rpcManager;
-   protected CommandsFactory commandsFactory;
-   private ClusterCacheNotifier clusterCacheNotifier;
-   private TransactionTable transactionTable;     // optional
-   protected DataContainer dataContainer;
-   protected PersistenceManager persistenceManager; // optional
+   @Inject private Cache cache;
+   @Inject private Configuration configuration;
+   @Inject protected RpcManager rpcManager;
+   @Inject protected CommandsFactory commandsFactory;
+   @Inject private ClusterCacheNotifier clusterCacheNotifier;
+   @Inject private TransactionTable transactionTable;     // optional
+   @Inject protected DataContainer dataContainer;
+   @Inject protected PersistenceManager persistenceManager; // optional
+   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
    protected ExecutorService executorService;
-   protected StateTransferLock stateTransferLock;
-   protected InternalEntryFactory entryFactory;
+   @Inject protected StateTransferLock stateTransferLock;
+   @Inject protected InternalEntryFactory entryFactory;
+   @Inject protected KeyPartitioner keyPartitioner;
+   @Inject protected StateConsumer stateConsumer;
+   @Inject private TransactionOriginatorChecker transactionOriginatorChecker;
+
+   protected String cacheName;
    protected long timeout;
    protected int chunkSize;
-   protected KeyPartitioner keyPartitioner;
-   protected StateConsumer stateConsumer;
-   private TransactionOriginatorChecker transactionOriginatorChecker;
 
    /**
     * A map that keeps track of current outbound state transfers by destination address. There could be multiple transfers
@@ -80,40 +83,6 @@ public class StateProviderImpl implements StateProvider {
    private final Map<Address, List<OutboundTransferTask>> transfersByDestination = new HashMap<>();
 
    public StateProviderImpl() {
-   }
-
-   @Inject
-   public void init(Cache cache,
-                    @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService, //TODO Use a dedicated ExecutorService
-                    Configuration configuration,
-                    RpcManager rpcManager,
-                    CommandsFactory commandsFactory,
-                    ClusterCacheNotifier clusterCacheNotifier,
-                    PersistenceManager persistenceManager,
-                    DataContainer dataContainer,
-                    TransactionTable transactionTable,
-                    StateTransferLock stateTransferLock,
-                    StateConsumer stateConsumer, InternalEntryFactory entryFactory,
-                    KeyPartitioner keyPartitioner,
-                    TransactionOriginatorChecker transactionOriginatorChecker) {
-      this.cacheName = cache.getName();
-      this.executorService = executorService;
-      this.configuration = configuration;
-      this.rpcManager = rpcManager;
-      this.commandsFactory = commandsFactory;
-      this.clusterCacheNotifier = clusterCacheNotifier;
-      this.persistenceManager = persistenceManager;
-      this.dataContainer = dataContainer;
-      this.transactionTable = transactionTable;
-      this.stateTransferLock = stateTransferLock;
-      this.stateConsumer = stateConsumer;
-      this.entryFactory = entryFactory;
-      this.transactionOriginatorChecker = transactionOriginatorChecker;
-
-      timeout = configuration.clustering().stateTransfer().timeout();
-
-      this.chunkSize = configuration.clustering().stateTransfer().chunkSize();
-      this.keyPartitioner = keyPartitioner;
    }
 
    public boolean isStateTransferInProgress() {
@@ -146,6 +115,9 @@ public class StateProviderImpl implements StateProvider {
    @Start(priority = 60)
    @Override
    public void start() {
+      this.cacheName = cache.getName();
+      timeout = configuration.clustering().stateTransfer().timeout();
+      chunkSize = configuration.clustering().stateTransfer().chunkSize();
    }
 
    @Stop(priority = 0)

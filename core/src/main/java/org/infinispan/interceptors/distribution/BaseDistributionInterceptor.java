@@ -83,9 +83,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    private static final boolean trace = log.isTraceEnabled();
    private static final Object LOST_PLACEHOLDER = new Object();
 
-   protected DistributionManager dm;
-   protected RemoteValueRetrievedListener rvrl;
-   protected KeyPartitioner keyPartitioner;
+   @Inject protected DistributionManager dm;
+   @Inject protected RemoteValueRetrievedListener rvrl;
+   @Inject protected KeyPartitioner keyPartitioner;
 
    protected boolean isL1Enabled;
    protected boolean isReplicated;
@@ -97,15 +97,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    protected Log getLog() {
       return log;
    }
-
-   @Inject
-   public void injectDependencies(DistributionManager distributionManager, RemoteValueRetrievedListener rvrl,
-                                  KeyPartitioner keyPartitioner) {
-      this.dm = distributionManager;
-      this.rvrl = rvrl;
-      this.keyPartitioner = keyPartitioner;
-   }
-
 
    @Start
    public void configure() {

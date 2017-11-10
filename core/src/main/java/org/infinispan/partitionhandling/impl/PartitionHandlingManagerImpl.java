@@ -45,17 +45,18 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private final Map<GlobalTransaction, TransactionInfo> partialTransactions;
    private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
 
-   private DistributionManager distributionManager;
-   private LocalTopologyManager localTopologyManager;
-   private StateTransferManager stateTransferManager;
-   private String cacheName;
-   private CacheNotifier notifier;
-   private CommandsFactory commandsFactory;
-   private Configuration configuration;
-   private RpcManager rpcManager;
-   private LockManager lockManager;
-   private Transport transport;
+   @Inject private Cache cache;
+   @Inject private DistributionManager distributionManager;
+   @Inject private LocalTopologyManager localTopologyManager;
+   @Inject private StateTransferManager stateTransferManager;
+   @Inject private CacheNotifier notifier;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private Configuration configuration;
+   @Inject private RpcManager rpcManager;
+   @Inject private LockManager lockManager;
+   @Inject private Transport transport;
 
+   private String cacheName;
    private boolean isVersioned;
    private PartitionHandling partitionHandling;
 
@@ -63,24 +64,9 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
       partialTransactions = CollectionFactory.makeConcurrentMap();
    }
 
-   @Inject
-   public void init(DistributionManager distributionManager, LocalTopologyManager localTopologyManager,
-                    StateTransferManager stateTransferManager, Cache cache, CacheNotifier notifier, CommandsFactory commandsFactory,
-                    Configuration configuration, RpcManager rpcManager, LockManager lockManager, Transport transport) {
-      this.distributionManager = distributionManager;
-      this.localTopologyManager = localTopologyManager;
-      this.stateTransferManager = stateTransferManager;
-      this.cacheName = cache.getName();
-      this.notifier = notifier;
-      this.commandsFactory = commandsFactory;
-      this.configuration = configuration;
-      this.rpcManager = rpcManager;
-      this.lockManager = lockManager;
-      this.transport = transport;
-   }
-
    @Start
    public void start() {
+      cacheName = cache.getName();
       isVersioned = Configurations.isTxVersioned(configuration);
       partitionHandling = configuration.clustering().partitionHandling().whenSplit();
    }

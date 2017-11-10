@@ -21,7 +21,7 @@ import org.infinispan.util.function.RemovableFunction;
  * the requested format.
  */
 public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K, V>, CacheEntry<K, V>> {
-   private transient InternalEntryFactory entryFactory;
+   @Inject private transient InternalEntryFactory entryFactory;
 
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
@@ -32,8 +32,7 @@ public class EncoderEntryMapper<K, V> implements RemovableFunction<CacheEntry<K,
    }
 
    @Inject
-   public void injectDependencies(ComponentRegistry registry, InternalEntryFactory factory) {
-      this.entryFactory = factory;
+   public void injectDependencies(ComponentRegistry registry) {
       registry.wireDependencies(keyDataConversion);
       registry.wireDependencies(valueDataConversion);
    }

@@ -50,7 +50,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -58,6 +57,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
@@ -99,29 +99,22 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private final AtomicLong commits = new AtomicLong(0);
    private final AtomicLong rollbacks = new AtomicLong(0);
 
-   private CommandsFactory commandsFactory;
-   private Cache<K, V> cache;
-   private RecoveryManager recoveryManager;
-   private TransactionTable txTable;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private Cache<K, V> cache;
+   @Inject private RecoveryManager recoveryManager;
+   @Inject private TransactionTable txTable;
 
    private boolean isTotalOrder;
    private boolean useOnePhaseForAutoCommitTx;
    private boolean useVersioning;
    private boolean statisticsEnabled;
 
-   @Inject
-   public void init(TransactionTable txTable, Configuration configuration, RecoveryManager recoveryManager,
-         CommandsFactory commandsFactory, Cache<K, V> cache) {
-      this.cacheConfiguration = configuration;
-      this.txTable = txTable;
-      this.recoveryManager = recoveryManager;
-      this.commandsFactory = commandsFactory;
-      this.cache = cache;
-
+   @Start
+   public void start() {
       statisticsEnabled = cacheConfiguration.jmxStatistics().enabled();
-      isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+      isTotalOrder = cacheConfiguration.transaction().transactionProtocol().isTotalOrder();
       useOnePhaseForAutoCommitTx = cacheConfiguration.transaction().use1PcForAutoCommitTransactions();
-      useVersioning = Configurations.isTxVersioned(configuration);
+      useVersioning = Configurations.isTxVersioned(cacheConfiguration);
    }
 
    @Override

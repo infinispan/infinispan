@@ -65,6 +65,12 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   @Inject private Transport t;
+   @Inject private Configuration configuration;
+   @Inject private CommandsFactory cf;
+   @Inject private StateTransferManager stateTransferManager;
+   @Inject private TimeService timeService;
+
    private final Function<ReplicableCommand, ReplicableCommand> toCacheRpcCommand = this::toCacheRpcCommand;
    private final AttributeListener<Long> updateRpcOptions = this::updateRpcOptions;
 
@@ -72,25 +78,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private final AtomicLong replicationFailures = new AtomicLong(0);
    private final AtomicLong totalReplicationTime = new AtomicLong(0);
 
-   private Transport t;
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
-   private Configuration configuration;
-   private CommandsFactory cf;
-   private StateTransferManager stateTransferManager;
-   private TimeService timeService;
 
    private volatile RpcOptions syncRpcOptions;
    private volatile RpcOptions totalSyncRpcOptions;
 
-   @Inject
-   public void injectDependencies(Transport t, Configuration cfg, CommandsFactory cf,
-                                  StateTransferManager stateTransferManager, TimeService timeService) {
-      this.t = t;
-      this.configuration = cfg;
-      this.cf = cf;
-      this.stateTransferManager = stateTransferManager;
-      this.timeService = timeService;
-   }
 
    @Start(priority = 9)
    private void start() {

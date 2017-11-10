@@ -33,22 +33,14 @@ public class EntryFactoryImpl implements EntryFactory {
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
    private final static boolean trace = log.isTraceEnabled();
 
-   private boolean useRepeatableRead;
-   private DataContainer container;
-   private boolean isL1Enabled;
-   private Configuration configuration;
-   private TimeService timeService;
-   private VersionGenerator versionGenerator;
-   private boolean useVersioning;
+   @Inject private DataContainer container;
+   @Inject private Configuration configuration;
+   @Inject private TimeService timeService;
+   @Inject private VersionGenerator versionGenerator;
 
-   @Inject
-   public void injectDependencies(DataContainer dataContainer, Configuration configuration,
-                                  TimeService timeService, VersionGenerator versionGenerator) {
-      this.container = dataContainer;
-      this.configuration = configuration;
-      this.timeService = timeService;
-      this.versionGenerator = versionGenerator;
-   }
+   private boolean isL1Enabled;
+   private boolean useRepeatableRead;
+   private boolean useVersioning;
 
    @Start (priority = 8)
    public void init() {

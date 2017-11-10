@@ -25,6 +25,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.remoting.RemoteException;
@@ -52,26 +53,21 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
    private final InvocationFinallyFunction handleReadCommandReturn = this::handleReadCommandReturn;
 
-   private StateTransferManager stateTransferManager;
-   protected StateTransferLock stateTransferLock;
+   @Inject private Configuration configuration;
+   @Inject private StateTransferManager stateTransferManager;
+   @Inject protected StateTransferLock stateTransferLock;
+   @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
    private Executor remoteExecutor;
-   private DistributionManager distributionManager;
+   @Inject private DistributionManager distributionManager;
+   @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    private ScheduledExecutorService timeoutExecutor;
 
    private long transactionDataTimeout;
 
    private final InvocationFinallyFunction handleLocalGetKeysInGroupReturn = this::handleLocalGetKeysInGroupReturn;
 
-   @Inject
-   public void init(StateTransferLock stateTransferLock, Configuration configuration,
-                    StateTransferManager stateTransferManager, DistributionManager distributionManager,
-                    @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-                    @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) Executor remoteExecutor) {
-      this.stateTransferLock = stateTransferLock;
-      this.stateTransferManager = stateTransferManager;
-      this.distributionManager = distributionManager;
-      this.timeoutExecutor = timeoutExecutor;
-      this.remoteExecutor = remoteExecutor;
+   @Start
+   public void start() {
       transactionDataTimeout = configuration.clustering().remoteTimeout();
    }
 

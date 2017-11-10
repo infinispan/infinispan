@@ -52,23 +52,17 @@ class TxPutFromLoadInterceptor extends BaseRpcInterceptor {
    private static final Log ispnLog = LogFactory.getLog(TxPutFromLoadInterceptor.class);
 	private PutFromLoadValidator putFromLoadValidator;
 	private final ByteString cacheName;
-	private RpcManager rpcManager;
-	private CacheCommandInitializer cacheCommandInitializer;
-	private DataContainer dataContainer;
-	private StateTransferManager stateTransferManager;
+
+	@Inject private RpcManager rpcManager;
+	@Inject private CacheCommandInitializer cacheCommandInitializer;
+	@Inject private DataContainer dataContainer;
+	@Inject private StateTransferManager stateTransferManager;
+
 	private RpcOptions asyncUnordered;
 
 	public TxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
 		this.putFromLoadValidator = putFromLoadValidator;
 		this.cacheName = cacheName;
-	}
-
-	@Inject
-	public void injectDependencies(RpcManager rpcManager, CacheCommandInitializer cacheCommandInitializer, DataContainer dataContainer, StateTransferManager stateTransferManager) {
-		this.rpcManager = rpcManager;
-		this.cacheCommandInitializer = cacheCommandInitializer;
-		this.dataContainer = dataContainer;
-		this.stateTransferManager = stateTransferManager;
 	}
 
 	@Start

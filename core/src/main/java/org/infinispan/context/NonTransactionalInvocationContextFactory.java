@@ -2,13 +2,10 @@ package org.infinispan.context;
 
 import javax.transaction.Transaction;
 
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -22,12 +19,6 @@ import org.infinispan.transaction.impl.RemoteTransaction;
 @Deprecated
 @SurvivesRestarts
 public class NonTransactionalInvocationContextFactory extends AbstractInvocationContextFactory {
-
-   @Override
-   @Inject
-   public void init(Configuration config, AsyncInterceptorChain interceptorChain) {
-      super.init(config, interceptorChain);
-   }
 
    @Override
    public InvocationContext createInvocationContext(boolean isWrite, int keyCount) {

@@ -12,6 +12,7 @@ import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.TimeService;
@@ -26,10 +27,12 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final OffHeapMemory MEMORY = OffHeapMemory.INSTANCE;
    private static final byte[] EMPTY_BYTES = new byte[0];
 
-   private Marshaller marshaller;
-   private OffHeapMemoryAllocator allocator;
-   private TimeService timeService;
-   private InternalEntryFactory internalEntryFactory;
+   @Inject private Marshaller marshaller;
+   @Inject private OffHeapMemoryAllocator allocator;
+   @Inject private TimeService timeService;
+   @Inject private InternalEntryFactory internalEntryFactory;
+   @Inject private Configuration configuration;
+
    private boolean evictionEnabled;
 
    // If custom than we just store the metadata as is (no other bits should be used)
@@ -48,13 +51,8 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
     */
    private static final int HEADER_LENGTH = 1 + 4 + 4 + 4;
 
-   @Inject
-   public void inject(Marshaller marshaller, OffHeapMemoryAllocator allocator, TimeService timeService,
-         InternalEntryFactory internalEntryFactory, Configuration configuration) {
-      this.marshaller = marshaller;
-      this.allocator = allocator;
-      this.timeService = timeService;
-      this.internalEntryFactory = internalEntryFactory;
+   @Start
+   public void start() {
       this.evictionEnabled = configuration.memory().isEvictionEnabled();
    }
 

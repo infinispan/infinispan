@@ -29,21 +29,17 @@ public class XaTransactionTable extends TransactionTable {
    private static final Log log = LogFactory.getLog(XaTransactionTable.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   @Inject protected RecoveryManager recoveryManager;
+   @Inject private Cache<?, ?> cache;
+
    protected ConcurrentMap<Xid, LocalXaTransaction> xid2LocalTx;
-   protected RecoveryManager recoveryManager;
    private String cacheName;
-
    private boolean onePhaseTotalOrder;
-
-   @Inject
-   public void init(RecoveryManager recoveryManager, Cache cache) {
-      this.recoveryManager = recoveryManager;
-      this.cacheName = cache.getName();
-   }
 
    @Start(priority = 9) // Start before cache loader manager
    @SuppressWarnings("unused")
    public void startXidMapping() {
+      this.cacheName = cache.getName();
       //in distributed mode with write skew check, we only allow 2 phases!!
       this.onePhaseTotalOrder = Configurations.isOnePhaseTotalOrderCommit(configuration);
 

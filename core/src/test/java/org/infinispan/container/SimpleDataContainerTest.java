@@ -23,6 +23,7 @@ import org.infinispan.eviction.ActivationManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.CoreImmutables;
 import org.mockito.Mockito;
@@ -50,11 +51,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       DefaultDataContainer<String, String> dc = new DefaultDataContainer<>(16);
       InternalEntryFactoryImpl internalEntryFactory = new InternalEntryFactoryImpl();
       timeService = new ControlledTimeService();
-      internalEntryFactory.injectTimeService(timeService);
+      TestingUtil.inject(internalEntryFactory, timeService);
       ActivationManager activationManager = mock(ActivationManager.class);
       doNothing().when(activationManager).onUpdate(Mockito.any(), Mockito.anyBoolean());
-      dc.initialize(null, null, internalEntryFactory, activationManager, null, timeService, null, mock(
-              ExpirationManager.class));
+      TestingUtil.inject(dc, internalEntryFactory, activationManager, timeService, mock(ExpirationManager.class));
       return dc;
    }
 

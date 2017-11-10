@@ -42,20 +42,16 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    public static final String TIMESTAMP = "@timestamp";
    public static final String VERSION_MAJOR = "version-major";
    private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private GlobalConfiguration globalConfiguration;
-   private List<GlobalStateProvider> stateProviders = new ArrayList<>();
-   private TimeService timeService;
-   private boolean persistentState;
 
-   @Inject
-   public void inject(GlobalConfiguration globalConfiguration, TimeService timeService) {
-      this.globalConfiguration = globalConfiguration;
-      this.timeService = timeService;
-      this.persistentState = globalConfiguration.globalState().enabled();
-   }
+   @Inject private GlobalConfiguration globalConfiguration;
+   @Inject private TimeService timeService;
+
+   private List<GlobalStateProvider> stateProviders = new ArrayList<>();
+   private boolean persistentState;
 
    @Start(priority = 1) // Must start before everything else
    public void start() {
+      persistentState = globalConfiguration.globalState().enabled();
       if (persistentState) {
          loadGlobalState();
       }

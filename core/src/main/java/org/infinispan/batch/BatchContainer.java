@@ -14,13 +14,8 @@ import org.infinispan.factories.annotations.Inject;
  * @since 4.0
  */
 public class BatchContainer {
-   TransactionManager transactionManager;
+   @Inject TransactionManager transactionManager;
    private final ThreadLocal<BatchDetails> batchDetailsTl = new ThreadLocal<BatchDetails>();
-
-   @Inject
-   void inject(TransactionManager transactionManager) {
-      this.transactionManager = transactionManager;
-   }
 
    /**
     * Starts a batch

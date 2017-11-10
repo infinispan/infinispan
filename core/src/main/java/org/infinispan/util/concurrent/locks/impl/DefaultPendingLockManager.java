@@ -50,23 +50,14 @@ public class DefaultPendingLockManager implements PendingLockManager {
    private static final boolean trace = log.isTraceEnabled();
    private static final int NO_PENDING_CHECK = -2;
    private final Map<GlobalTransaction, PendingLockPromise> pendingLockPromiseMap;
-   private TransactionTable transactionTable;
-   private TimeService timeService;
+   @Inject private TransactionTable transactionTable;
+   @Inject private TimeService timeService;
+   @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    private ScheduledExecutorService timeoutExecutor;
-   private StateTransferManager stateTransferManager;
+   @Inject private StateTransferManager stateTransferManager;
 
    public DefaultPendingLockManager() {
       pendingLockPromiseMap = new ConcurrentHashMap<>();
-   }
-
-   @Inject
-   public void inject(TransactionTable transactionTable, TimeService timeService,
-                      @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-                      StateTransferManager stateTransferManager) {
-      this.transactionTable = transactionTable;
-      this.timeService = timeService;
-      this.timeoutExecutor = timeoutExecutor;
-      this.stateTransferManager = stateTransferManager;
    }
 
    @Override

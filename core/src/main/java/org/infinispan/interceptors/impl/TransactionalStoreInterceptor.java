@@ -25,18 +25,9 @@ import org.infinispan.persistence.manager.PersistenceManager;
  * @since 9.0
  */
 public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
-
-   private PersistenceManager persistenceManager;
-   private InternalEntryFactory entryFactory;
-   private StreamingMarshaller marshaller;
-
-   @Inject
-   protected void init(PersistenceManager persistenceManager, InternalEntryFactory entryFactory,
-                       StreamingMarshaller marshaller) {
-      this.persistenceManager = persistenceManager;
-      this.entryFactory = entryFactory;
-      this.marshaller = marshaller;
-   }
+   @Inject private PersistenceManager persistenceManager;
+   @Inject private InternalEntryFactory entryFactory;
+   @Inject private StreamingMarshaller marshaller;
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {

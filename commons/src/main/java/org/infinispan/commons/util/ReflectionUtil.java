@@ -30,7 +30,6 @@ public class ReflectionUtil {
                                                       float[].class, double[].class, boolean[].class, char[].class};
    public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class[0];
 
-
    /**
     * Returns a set of Methods that contain the given method annotation.  This includes all public, protected, package
     * and private methods, as well as those of superclasses.  Note that this does *not* include overridden methods.
@@ -60,6 +59,12 @@ public class ReflectionUtil {
             annotated.add(m);
       }
 
+      return annotated;
+   }
+
+   public static List<Field> getAllFields(Class<?> c, Class<? extends Annotation> annotationType) {
+      List<Field> annotated = new LinkedList<>();
+      inspectFieldsRecursively(c, annotated, annotationType);
       return annotated;
    }
 
@@ -128,6 +133,21 @@ public class ReflectionUtil {
       }
    }
 
+   private static void inspectFieldsRecursively(Class<?> c, List<Field> s, Class<? extends Annotation> annotationType) {
+      if (c == null || c.isInterface()) {
+         return;
+      }
+      for (Field f : c.getDeclaredFields()) {
+         if (f.isAnnotationPresent(annotationType)) {
+            s.add(f);
+         }
+      }
+
+      if (!c.equals(Object.class)) {
+         inspectFieldsRecursively(c.getSuperclass(), s, annotationType);
+      }
+   }
+
    /**
     * Tests whether a method has already been found, i.e., overridden.
     *
@@ -163,6 +183,16 @@ public class ReflectionUtil {
     */
    public static Object invokeAccessibly(Object instance, Method method, Object[] parameters) {
       return SecurityActions.invokeAccessibly(instance, method, parameters);
+   }
+
+   public static void setAccessibly(Object instance, Field field, Object value) {
+      try {
+         field.setAccessible(true);
+         field.set(instance, value);
+      } catch (Exception e) {
+         throw new CacheException("Unable to set field " + field + " on object of type " +
+               (instance == null ? "null" : instance.getClass().getSimpleName()) + "to " + value, e);
+      }
    }
 
    public static Method findGetterForField(Class<?> c, String fieldName) {

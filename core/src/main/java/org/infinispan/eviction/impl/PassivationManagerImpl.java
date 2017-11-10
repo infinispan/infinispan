@@ -28,34 +28,23 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class PassivationManagerImpl implements PassivationManager {
+   private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
-   PersistenceManager persistenceManager;
-   CacheNotifier notifier;
-   Configuration cfg;
+   @Inject private PersistenceManager persistenceManager;
+   @Inject private CacheNotifier notifier;
+   @Inject private Configuration cfg;
+   @Inject private DataContainer<Object, Object> container;
+   @Inject private TimeService timeService;
+   @Inject private MarshalledEntryFactory marshalledEntryFactory;
+   @Inject private DistributionManager distributionManager;
+
    private volatile boolean skipOnStop = false;
 
    boolean statsEnabled = false;
    boolean enabled = false;
-   private static final Log log = LogFactory.getLog(PassivationManagerImpl.class);
-   private final AtomicLong passivations = new AtomicLong(0);
-   private DataContainer<Object, Object> container;
-   private TimeService timeService;
-   private static final boolean trace = log.isTraceEnabled();
-   private MarshalledEntryFactory marshalledEntryFactory;
-   private DistributionManager distributionManager;
 
-   @Inject
-   public void inject(PersistenceManager persistenceManager,CacheNotifier notifier, Configuration cfg, DataContainer container,
-                      TimeService timeService, MarshalledEntryFactory marshalledEntryFactory,
-                      DistributionManager distributionManager) {
-      this.persistenceManager = persistenceManager;
-      this.notifier = notifier;
-      this.cfg = cfg;
-      this.container = container;
-      this.timeService = timeService;
-      this.marshalledEntryFactory = marshalledEntryFactory;
-      this.distributionManager = distributionManager;
-   }
+   private final AtomicLong passivations = new AtomicLong(0);
 
    @Start(priority = 12)
    public void start() {

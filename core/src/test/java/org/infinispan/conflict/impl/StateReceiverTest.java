@@ -47,6 +47,7 @@ import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Exceptions;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
@@ -134,7 +135,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       when(cache.getCacheConfiguration()).thenReturn(cb.build());
 
       StateReceiverImpl stateReceiver = new StateReceiverImpl();
-      stateReceiver.init(cache, commandsFactory, dataContainer, rpcManager);
+      TestingUtil.inject(stateReceiver, cache, commandsFactory, dataContainer, rpcManager);
       stateReceiver.onDataRehash(createEventImpl(2, 4, Event.Type.DATA_REHASHED));
       this.localizedCacheTopology = createLocalizedCacheTopology(4);
       this.stateReceiver = spy(stateReceiver);

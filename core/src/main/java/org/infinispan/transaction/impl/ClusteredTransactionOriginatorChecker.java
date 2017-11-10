@@ -17,12 +17,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  */
 public class ClusteredTransactionOriginatorChecker implements TransactionOriginatorChecker {
 
-   private RpcManager rpcManager;
-
-   @Inject
-   public void injectRpcManager(RpcManager rpcManager) {
-      this.rpcManager = rpcManager;
-   }
+   @Inject private RpcManager rpcManager;
 
    @Override
    public boolean isOriginatorMissing(GlobalTransaction gtx) {

@@ -47,14 +47,16 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    protected final int lockCount;
    protected final int memoryAddressCount;
    protected final StripedLock locks;
+
+   @Inject protected OffHeapMemoryAllocator allocator;
+   @Inject protected OffHeapEntryFactory offHeapEntryFactory;
+   @Inject protected InternalEntryFactory internalEntryFactory;
+   @Inject protected TimeService timeService;
+   @Inject protected EvictionManager evictionManager;
+   @Inject protected ActivationManager activator;
+   @Inject protected PassivationManager passivator;
+
    protected MemoryAddressHash memoryLookup;
-   protected OffHeapMemoryAllocator allocator;
-   protected OffHeapEntryFactory offHeapEntryFactory;
-   protected InternalEntryFactory internalEntryFactory;
-   protected TimeService timeService;
-   protected EvictionManager evictionManager;
-   protected ActivationManager activator;
-   protected PassivationManager passivator;
    // Variable to make sure memory locations aren't read after being deallocated
    // This variable should always be read first after acquiring either the read or write lock
    private boolean dellocated = false;
@@ -89,18 +91,6 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          memoryAddresses <<= 1;
       }
       return memoryAddresses;
-   }
-
-   @Inject
-   public void inject(EvictionManager evictionManager, ActivationManager activator, PassivationManager passivator, OffHeapEntryFactory offHeapEntryFactory,
-                      OffHeapMemoryAllocator allocator, TimeService timeService, InternalEntryFactory internalEntryFactory) {
-      this.evictionManager = evictionManager;
-      this.activator = activator;
-      this.passivator = passivator;
-      this.internalEntryFactory = internalEntryFactory;
-      this.allocator = allocator;
-      this.offHeapEntryFactory = offHeapEntryFactory;
-      this.timeService = timeService;
    }
 
    @Start

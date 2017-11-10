@@ -106,30 +106,18 @@ public class PrefetchInterceptor extends DDAsyncInterceptor {
    protected static final long STATE_TRANSFER_FLAGS = FlagBitSets.PUT_FOR_STATE_TRANSFER |
          FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.IGNORE_RETURN_VALUES | FlagBitSets.SKIP_REMOTE_LOOKUP |
          FlagBitSets.SKIP_SHARED_CACHE_STORE | SKIP_OWNERSHIP_CHECK | FlagBitSets.SKIP_XSITE_BACKUP;
-   protected ScatteredVersionManager svm;
-   protected StateTransferManager stm;
-   protected DistributionManager dm;
-   protected KeyPartitioner keyPartitioner;
-   protected CommandsFactory commandsFactory;
-   protected RpcManager rpcManager;
-   protected Cache cache;
+   @Inject protected ScatteredVersionManager svm;
+   @Inject protected StateTransferManager stm;
+   @Inject protected DistributionManager dm;
+   @Inject protected KeyPartitioner keyPartitioner;
+   @Inject protected CommandsFactory commandsFactory;
+   @Inject protected RpcManager rpcManager;
+   @Inject protected Cache cache;
+
    protected int numSegments;
 
    private final InvocationSuccessFunction handleLocallyLookedUpEntry = this::handleLocallyLookedUpEntry;
    private final Function<Map<Address, Response>, InternalCacheValue> handleRemotelyPrefetchedEntry = this::handleRemotelyPrefetchedEntry;
-
-   @Inject
-   public void injectDependencies(ScatteredVersionManager svm, StateTransferManager stm,
-                                  DistributionManager dm, KeyPartitioner keyPartitioner, CommandsFactory commandsFactory,
-                                  RpcManager rpcManager, Cache cache) {
-      this.svm = svm;
-      this.stm = stm;
-      this.dm = dm;
-      this.keyPartitioner = keyPartitioner;
-      this.commandsFactory = commandsFactory;
-      this.rpcManager = rpcManager;
-      this.cache = cache;
-   }
 
    @Start
    public void start() {

@@ -13,6 +13,7 @@ import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
@@ -37,11 +38,15 @@ import org.infinispan.util.logging.Log;
  */
 public abstract class BasePerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
    private static final int NO_TOPOLOGY_COMMAND = Integer.MIN_VALUE;
+
+   @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
-   private StateTransferLock stateTransferLock;
-   protected StateTransferManager stateTransferManager;
-   private ResponseGenerator responseGenerator;
-   private CancellationService cancellationService;
+   @Inject private StateTransferLock stateTransferLock;
+   @Inject protected StateTransferManager stateTransferManager;
+   @Inject private ResponseGenerator responseGenerator;
+   @Inject private CancellationService cancellationService;
+   @Inject protected Configuration configuration;
+
    private volatile boolean stopped = false;
 
    private static int extractCommandTopologyId(SingleRpcCommand command) {
@@ -67,19 +72,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
             }
       }
       return NO_TOPOLOGY_COMMAND;
-   }
-
-   @Inject
-   public void injectDependencies(@ComponentName(REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
-                                  ResponseGenerator responseGenerator,
-                                  CancellationService cancellationService,
-                                  StateTransferLock stateTransferLock,
-                                  StateTransferManager stateTransferManager) {
-      this.remoteCommandsExecutor = remoteCommandsExecutor;
-      this.responseGenerator = responseGenerator;
-      this.cancellationService = cancellationService;
-      this.stateTransferLock = stateTransferLock;
-      this.stateTransferManager = stateTransferManager;
    }
 
    @Stop

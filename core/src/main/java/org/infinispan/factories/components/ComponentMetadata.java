@@ -2,6 +2,7 @@ package org.infinispan.factories.components;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,11 +40,13 @@ import org.infinispan.factories.scopes.Scope;
  * @see ComponentMetadataRepo
  */
 public class ComponentMetadata implements Serializable {
+   private static final InjectFieldMetadata[] EMPTY_INJECT_FIELDS = {};
    public static final InjectMetadata[] EMPTY_INJECT_METHODS = {};
    public static final PrioritizedMethodMetadata[] EMPTY_PRIORITIZED_METHODS = {};
 
    private String name;
    private transient Map<String, String> dependencies;
+   private InjectFieldMetadata[] injectFields;
    private InjectMetadata[] injectMetadata;
    private PrioritizedMethodMetadata[] startMethods;
    private PrioritizedMethodMetadata[] postStartMethods;
@@ -57,7 +60,7 @@ public class ComponentMetadata implements Serializable {
       survivesRestarts = true;
    }
 
-   public ComponentMetadata(Class<?> component, List<Method> injectMethods, List<Method> startMethods,
+   public ComponentMetadata(Class<?> component, List<Field> injectFields, List<Method> injectMethods, List<Method> startMethods,
                             List<Method> postStartMethods, List<Method> stopMethods, boolean global,
                             boolean survivesRestarts) {
       clazz = component;
@@ -92,9 +95,36 @@ public class ComponentMetadata implements Serializable {
          }
       }
 
+      int deps = (injectFields == null ? 0 : injectFields.size()) + (injectMethods == null ? 0 : injectMethods.size());
+      if (deps > 0) {
+         this.dependencies = new HashMap<>(deps * 2);
+      }
+
+      if (injectFields != null && !injectFields.isEmpty()) {
+         this.injectFields = new InjectFieldMetadata[injectFields.size()];
+         int j = 0;
+         for (Field f : injectFields) {
+            ComponentName[] cn = f.getAnnotationsByType(ComponentName.class);
+            String componentType = f.getType().getName();
+            String componentName = null;
+            if (cn.length > 1) {
+               throw new IllegalStateException("Only one name expected");
+            } else if (cn.length == 1) {
+               componentName = cn[0].value();
+            }
+            if (componentName == null) {
+               dependencies.put(componentType, componentType);
+            } else {
+               dependencies.put(componentName, componentType);
+            }
+
+            this.injectFields[j++] = new InjectFieldMetadata(
+                  f.getDeclaringClass().getName(), f.getName(), componentType, componentName);
+         }
+      }
+
       if (injectMethods != null && !injectMethods.isEmpty()) {
          this.injectMetadata = new InjectMetadata[injectMethods.size()];
-         this.dependencies = new HashMap<String, String>(injectMethods.size() * 2);
          int j=0;
          for (Method m : injectMethods) {
 
@@ -146,6 +176,10 @@ public class ComponentMetadata implements Serializable {
 
    public Map<String, String> getDependencies() {
       return dependencies;
+   }
+
+   public InjectFieldMetadata[] getInjectFields() {
+      return injectFields == null ? EMPTY_INJECT_FIELDS : injectFields;
    }
 
    public InjectMetadata[] getInjectMethods() {
@@ -291,6 +325,55 @@ public class ComponentMetadata implements Serializable {
       @Override
       public String toString() {
          return methodName + "(" + String.join(", ", parameters) + ")";
+      }
+   }
+
+   public class InjectFieldMetadata implements Serializable {
+      private static final long serialVersionUID = 7523698423843422884L;
+      private final String fieldClassName;
+      private final String fieldName;
+      private final String componentName;
+      private final String componentType;
+      private transient Field field;
+      private transient Class<?> componentClass;
+
+      public InjectFieldMetadata(String fieldClassName, String fieldName, String componentType, String componentName) {
+         this.fieldClassName = fieldClassName;
+         this.fieldName = fieldName;
+         this.componentName = componentName;
+         this.componentType = componentType;
+      }
+
+      public Field getField() {
+         return field;
+      }
+
+      public void setField(Field field) {
+         this.field = field;
+      }
+
+      public String getFieldClassName() {
+         return fieldClassName;
+      }
+
+      public String getFieldName() {
+         return fieldName;
+      }
+
+      public Class<?> getComponentClass() {
+         return componentClass;
+      }
+
+      public void setComponentClass(Class<?> componentClass) {
+         this.componentClass = componentClass;
+      }
+
+      public String getComponentType() {
+         return componentType;
+      }
+
+      public String getComponentName() {
+         return componentName;
       }
    }
 }

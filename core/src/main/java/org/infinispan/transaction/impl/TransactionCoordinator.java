@@ -39,35 +39,19 @@ public class TransactionCoordinator {
    private static final Log log = LogFactory.getLog(TransactionCoordinator.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private CommandsFactory commandsFactory;
-   private InvocationContextFactory icf;
-   private InterceptorChain invoker;
-   private TransactionTable txTable;
-   private RecoveryManager recoveryManager;
-   private Configuration configuration;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private InvocationContextFactory icf;
+   @Inject private InterceptorChain invoker;
+   @Inject private TransactionTable txTable;
+   @Inject private RecoveryManager recoveryManager;
+   @Inject private Configuration configuration;
+
    private CommandCreator commandCreator;
    private volatile boolean shuttingDown = false;
 
    private boolean totalOrder;
    private boolean defaultOnePhaseCommit;
    private boolean use1PcForAutoCommitTransactions;
-
-   @Inject
-   public void init(CommandsFactory commandsFactory, InvocationContextFactory icf, InterceptorChain invoker,
-                    TransactionTable txTable, RecoveryManager recoveryManager, Configuration configuration) {
-      this.commandsFactory = commandsFactory;
-      this.icf = icf;
-      this.invoker = invoker;
-      this.txTable = txTable;
-      this.recoveryManager = recoveryManager;
-      this.configuration = configuration;
-
-      use1PcForAutoCommitTransactions = configuration.transaction().use1PcForAutoCommitTransactions();
-      totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-      defaultOnePhaseCommit = Configurations.isOnePhaseCommit(configuration) ||
-            Configurations.isOnePhaseTotalOrderCommit(configuration);
-
-   }
 
    @Start(priority = 1)
    private void setStartStatus() {
@@ -81,6 +65,11 @@ public class TransactionCoordinator {
 
    @Start
    public void start() {
+      use1PcForAutoCommitTransactions = configuration.transaction().use1PcForAutoCommitTransactions();
+      totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+      defaultOnePhaseCommit = Configurations.isOnePhaseCommit(configuration) ||
+            Configurations.isOnePhaseTotalOrderCommit(configuration);
+
       if (Configurations.isTxVersioned(configuration)) {
          // We need to create versioned variants of PrepareCommand and CommitCommand
          commandCreator = new CommandCreator() {

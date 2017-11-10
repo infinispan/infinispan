@@ -52,12 +52,7 @@ import org.infinispan.util.function.RemovableFunction;
  * @param <V> The value type of entries
  */
 public class DistributionBulkInterceptor<K, V> extends DDAsyncInterceptor {
-   private Cache<K, V> cache;
-
-   @Inject
-   public void inject(Cache<K, V> cache) {
-      this.cache = cache;
-   }
+   @Inject private Cache<K, V> cache;
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {

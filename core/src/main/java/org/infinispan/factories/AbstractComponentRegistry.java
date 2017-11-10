@@ -1,7 +1,9 @@
 package org.infinispan.factories;
 
 import static org.infinispan.commons.util.ReflectionUtil.invokeAccessibly;
+import static org.infinispan.commons.util.ReflectionUtil.setAccessibly;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -122,30 +124,63 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       try {
          Class<?> targetClass = target.getClass();
          ComponentMetadata metadata = getComponentMetadataRepo().findComponentMetadata(targetClass);
-         if (metadata != null && metadata.getInjectMethods() != null && metadata.getInjectMethods().length != 0) {
-            // search for anything we need to inject
-            for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
-               Class<?>[] methodParameters = injectMetadata.getParameterClasses();
-               if (methodParameters == null) {
-                  if (System.getSecurityManager() == null) {
-                     methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader());
-                  } else {
-                     methodParameters = AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>[]>) () -> ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader()));
+         if (metadata == null) {
+            return;
+         }
+         for (ComponentMetadata.InjectFieldMetadata injectFieldMetadata : metadata.getInjectFields()) {
+            Field field = injectFieldMetadata.getField();
+            if (field == null) {
+               if (System.getSecurityManager() == null) {
+                  Class<?> fieldClass = ReflectionUtil.getClassForName(injectFieldMetadata.getFieldClassName(), getClassLoader());
+                  try {
+                     field = fieldClass.getDeclaredField(injectFieldMetadata.getFieldName());
+                  } catch (NoSuchFieldException e) {
+                     throw new CacheException(e);
                   }
-                  injectMetadata.setParameterClasses(methodParameters);
+               } else {
+                  field = AccessController.doPrivileged((PrivilegedExceptionAction<Field>) () -> {
+                     Class<?> fieldClass = ReflectionUtil.getClassForName(injectFieldMetadata.getFieldClassName(), getClassLoader());
+                     try {
+                        return fieldClass.getDeclaredField(injectFieldMetadata.getFieldName());
+                     } catch (NoSuchFieldException e) {
+                        throw new CacheException(e);
+                     }
+                  });
                }
-
-               Method method = injectMetadata.getMethod();
-               if (method == null) {
-                  if (System.getSecurityManager() == null) {
-                     method = ReflectionUtil.findMethod(targetClass, injectMetadata.getMethodName(), injectMetadata.getParameterClasses());
-                  } else {
-                     method = AccessController.doPrivileged((PrivilegedExceptionAction<Method>) () -> ReflectionUtil.findMethod(targetClass, injectMetadata.getMethodName(), injectMetadata.getParameterClasses()));
-                  }
-                  injectMetadata.setMethod(method);
-               }
-               invokeInjectionMethod(target, injectMetadata);
+               injectFieldMetadata.setField(field);
             }
+            Class<?> componentClass = injectFieldMetadata.getComponentClass();
+            if (componentClass == null) {
+               if (System.getSecurityManager() == null) {
+                  componentClass = ReflectionUtil.getClassForName(injectFieldMetadata.getComponentType(), getClassLoader());
+               } else {
+                  componentClass = AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>>)() -> ReflectionUtil.getClassForName(injectFieldMetadata.getComponentType(), getClassLoader()));
+               }
+               injectFieldMetadata.setComponentClass(componentClass);
+            }
+            setInjectionField(target, injectFieldMetadata);
+         }
+         for (ComponentMetadata.InjectMetadata injectMetadata : metadata.getInjectMethods()) {
+            Class<?>[] methodParameters = injectMetadata.getParameterClasses();
+            if (methodParameters == null) {
+               if (System.getSecurityManager() == null) {
+                  methodParameters = ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader());
+               } else {
+                  methodParameters = AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>[]>) () -> ReflectionUtil.toClassArray(injectMetadata.getParameters(), getClassLoader()));
+               }
+               injectMetadata.setParameterClasses(methodParameters);
+            }
+
+            Method method = injectMetadata.getMethod();
+            if (method == null) {
+               if (System.getSecurityManager() == null) {
+                  method = ReflectionUtil.findMethod(targetClass, injectMetadata.getMethodName(), injectMetadata.getParameterClasses());
+               } else {
+                  method = AccessController.doPrivileged((PrivilegedExceptionAction<Method>) () -> ReflectionUtil.findMethod(targetClass, injectMetadata.getMethodName(), injectMetadata.getParameterClasses()));
+               }
+               injectMetadata.setMethod(method);
+            }
+            invokeInjectionMethod(target, injectMetadata);
          }
       } catch (IllegalLifecycleStateException e) {
         throw e;
@@ -212,6 +247,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
       c.metadata = getComponentMetadataRepo().findComponentMetadata(component.getClass());
       try {
+         c.buildInjectionFieldsList();
          c.buildInjectionMethodsList();
       } catch (ClassNotFoundException cnfe) {
          throw new CacheException("Error injecting dependencies for component " + name, cnfe);
@@ -237,21 +273,41 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    @SuppressWarnings("unchecked")
    private void invokeInjectionMethod(Object o, ComponentMetadata.InjectMetadata injectMetadata) {
       Class<?>[] dependencies = injectMetadata.getParameterClasses();
-      if (dependencies.length > 0) {
-         Object[] params = new Object[dependencies.length];
-         if (trace)
-            getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].", injectMetadata,
-                  o.getClass().getName());
-         for (int i = 0; i < dependencies.length; i++) {
-            String name = injectMetadata.getParameterName(i);
-            boolean nameIsFQCN = !injectMetadata.isParameterNameSet(i);
-            params[i] = getOrCreateComponent(dependencies[i], name, nameIsFQCN);
-         }
-         if (System.getSecurityManager() == null) {
-            invokeAccessibly(o, injectMetadata.getMethod(), params);
-         } else {
-            AccessController.doPrivileged((PrivilegedAction<Object>) () -> invokeAccessibly(o, injectMetadata.getMethod(), params));
-         }
+      Object[] params = new Object[dependencies.length];
+      if (trace)
+         getLog().tracef("Injecting dependencies for method [%s] on an instance of [%s].", injectMetadata,
+               o.getClass().getName());
+      for (int i = 0; i < dependencies.length; i++) {
+         String name = injectMetadata.getParameterName(i);
+         boolean nameIsFQCN = !injectMetadata.isParameterNameSet(i);
+         params[i] = getOrCreateComponent(dependencies[i], name, nameIsFQCN);
+      }
+      if (System.getSecurityManager() == null) {
+         invokeAccessibly(o, injectMetadata.getMethod(), params);
+      } else {
+         AccessController.doPrivileged((PrivilegedAction<Object>) () -> invokeAccessibly(o, injectMetadata.getMethod(), params));
+      }
+   }
+
+   private void setInjectionField(Object o, ComponentMetadata.InjectFieldMetadata injectFieldMetadata) {
+      if (trace) {
+         getLog().tracef("Injecting dependency for field [%s.%s] on an instance of [%s]",
+               injectFieldMetadata.getFieldClassName(), injectFieldMetadata.getFieldName(), o.getClass().getName());
+      }
+      String name = injectFieldMetadata.getComponentName();
+      boolean isFQCN = false;
+      if (name == null) {
+         isFQCN = true;
+         name = injectFieldMetadata.getComponentType();
+      }
+      Object component = getOrCreateComponent(injectFieldMetadata.getComponentClass(), name, isFQCN);
+      if (System.getSecurityManager() == null) {
+         setAccessibly(o, injectFieldMetadata.getField(), component);
+      } else {
+         AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            setAccessibly(o, injectFieldMetadata.getField(), component);
+            return null;
+         });
       }
    }
 
@@ -789,6 +845,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
        * List of injection methods used to inject dependencies into the component
        */
       ComponentMetadata.InjectMetadata[] injectionMethods;
+      ComponentMetadata.InjectFieldMetadata[] injectionFields;
       PrioritizedMethod[] startMethods;
       PrioritizedMethod[] postStartMethods;
       PrioritizedMethod[] stopMethods;
@@ -806,8 +863,13 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
        * Injects dependencies into this component.
        */
       public void injectDependencies() {
+         if (injectionFields != null && injectionFields.length > 0) {
+            for (ComponentMetadata.InjectFieldMetadata injectFieldMetadata : injectionFields)
+               setInjectionField(instance, injectFieldMetadata);
+         }
          if (injectionMethods != null && injectionMethods.length > 0) {
-            for (ComponentMetadata.InjectMetadata injectMetadata : injectionMethods) invokeInjectionMethod(instance, injectMetadata);
+            for (ComponentMetadata.InjectMetadata injectMetadata : injectionMethods)
+               invokeInjectionMethod(instance, injectMetadata);
          }
       }
 
@@ -841,6 +903,27 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
                      throw new CacheException("Injection method not found in class " + clazz + ": " + meta.getMethodName() + Arrays.toString(parameterClasses), e);
                   }
                   meta.setMethod(m);
+               }
+            }
+         }
+      }
+
+      public void buildInjectionFieldsList() throws ClassNotFoundException {
+         injectionFields = metadata.getInjectFields();
+         if (injectionFields == null || injectionFields.length == 0) {
+            return;
+         }
+         Class<?> clazz = instance.getClass();
+         for (ComponentMetadata.InjectFieldMetadata meta: injectionFields) {
+            if (meta.getComponentClass() == null) {
+               meta.setComponentClass(ReflectionUtil.getClassForName(meta.getComponentType(), getClassLoader()));
+            }
+            if (meta.getField() == null) {
+               Class<?> fieldClass = ReflectionUtil.getClassForName(meta.getFieldClassName(), getClassLoader());
+               try {
+                  meta.setField(fieldClass.getDeclaredField(meta.getFieldName()));
+               } catch (NoSuchFieldException e) {
+                  throw new CacheException("Injection field " + meta.getFieldClassName() + "." + meta.getFieldName() + " not found in " + clazz, e);
                }
             }
          }

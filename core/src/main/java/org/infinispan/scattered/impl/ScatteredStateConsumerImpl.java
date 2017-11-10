@@ -64,9 +64,10 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
 
    protected static final long SKIP_OWNERSHIP_FLAGS = FlagBitSets.SKIP_OWNERSHIP_CHECK;
 
-   protected InternalEntryFactory entryFactory;
+   @Inject protected InternalEntryFactory entryFactory;
+   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
    protected ExecutorService asyncExecutor;
-   protected ScatteredVersionManager svm;
+   @Inject protected ScatteredVersionManager svm;
 
    @GuardedBy("transferMapsLock")
    protected Set<Integer> inboundSegments;
@@ -79,15 +80,6 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    protected Collection<Address> backupAddress;
    protected Collection<Address> nonBackupAddresses;
    private int chunkSize;
-
-   @Inject
-   public void inject(InternalEntryFactory entryFactory,
-                      @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService, // the same executor as in StateProviderImpl
-                      ScatteredVersionManager svm) {
-      this.entryFactory = entryFactory;
-      this.asyncExecutor = executorService;
-      this.svm = svm;
-   }
 
    @Override
    public void start() {
