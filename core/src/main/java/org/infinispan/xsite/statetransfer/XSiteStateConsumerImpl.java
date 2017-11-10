@@ -39,23 +39,13 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
 
-   private TransactionManager transactionManager;
-   private InvocationContextFactory invocationContextFactory;
-   private CommandsFactory commandsFactory;
-   private AsyncInterceptorChain interceptorChain;
-   private CommitManager commitManager;
-   private AtomicReference<String> sendingSite = new AtomicReference<>(null);
+   @Inject private TransactionManager transactionManager;
+   @Inject private InvocationContextFactory invocationContextFactory;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private AsyncInterceptorChain interceptorChain;
+   @Inject private CommitManager commitManager;
 
-   @Inject
-   public void inject(TransactionManager transactionManager, InvocationContextFactory invocationContextFactory,
-                      CommandsFactory commandsFactory, AsyncInterceptorChain interceptorChain,
-                      CommitManager commitManager) {
-      this.transactionManager = transactionManager;
-      this.invocationContextFactory = invocationContextFactory;
-      this.commandsFactory = commandsFactory;
-      this.interceptorChain = interceptorChain;
-      this.commitManager = commitManager;
-   }
+   private AtomicReference<String> sendingSite = new AtomicReference<>(null);
 
    @Override
    public void startStateTransfer(String sendingSite) {

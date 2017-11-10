@@ -82,24 +82,23 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          return "<UNKNOWN>";
       }
    };
+
+   @Inject private DistributionManager distributionManager;
+   @Inject private RpcManager rpcManager;
+   @Inject @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)
+   private ExecutorService asyncExecutor;
+   @Inject private InternalCacheRegistry internalCacheRegistry;
+
    private final IndexModificationStrategy indexingMode;
    private final SearchIntegrator searchFactory;
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
    private final AtomicBoolean stopping = new AtomicBoolean(false);
    private final ConcurrentMap<GlobalTransaction, Map<Object, Object>> txOldValues;
-
    private QueryKnownClasses queryKnownClasses;
-
    private SearchWorkCreator searchWorkCreator = new DefaultSearchWorkCreator();
-
    private SearchFactoryHandler searchFactoryHandler;
-
    private final DataConversion valueDataConversion;
    private final DataConversion keyDataConversion;
-   private DistributionManager distributionManager;
-   private RpcManager rpcManager;
-   private ExecutorService asyncExecutor;
-   private InternalCacheRegistry internalCacheRegistry;
    private boolean isPersistenceEnabled;
 
    /**
@@ -118,18 +117,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.cache = cache;
       this.valueDataConversion = cache.getAdvancedCache().getValueDataConversion();
       this.keyDataConversion = cache.getAdvancedCache().getKeyDataConversion();
-   }
-
-   @Inject
-   @SuppressWarnings("unused")
-   protected void injectDependencies(InternalCacheRegistry internalCacheRegistry,
-                                     DistributionManager distributionManager,
-                                     RpcManager rpcManager,
-                                     @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
-      this.distributionManager = distributionManager;
-      this.rpcManager = rpcManager;
-      this.asyncExecutor = e;
-      this.internalCacheRegistry = internalCacheRegistry;
    }
 
    @Start

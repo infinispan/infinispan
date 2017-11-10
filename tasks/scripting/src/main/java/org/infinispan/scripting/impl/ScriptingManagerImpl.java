@@ -55,8 +55,11 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 public class ScriptingManagerImpl implements ScriptingManager {
    private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
-   private EmbeddedCacheManager cacheManager;
-   private TaskManager taskManager;
+
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private TaskManager taskManager;
+   @Inject private InternalCacheRegistry internalCacheRegistry;
+
    private ScriptEngineManager scriptEngineManager;
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = CollectionFactory.makeConcurrentMap(2);
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = CollectionFactory.makeConcurrentMap(2);
@@ -66,18 +69,9 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    private final Function<String, ScriptEngine> getEngineByName = this::getEngineByName;
    private final Function<String, ScriptEngine> getEngineByExtension = this::getEngineByExtension;
-   private InternalCacheRegistry internalCacheRegistry;
 
    public ScriptingManagerImpl() {
    }
-
-   @Inject
-   public void initialize(final EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry, TaskManager taskManager) {
-      this.cacheManager = cacheManager;
-      this.taskManager = taskManager;
-      this.internalCacheRegistry = internalCacheRegistry;
-   }
-
 
    @Start
    public void start() {

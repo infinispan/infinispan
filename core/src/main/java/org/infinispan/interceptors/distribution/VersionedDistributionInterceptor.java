@@ -37,12 +37,7 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
 
    private static final Log log = LogFactory.getLog(VersionedDistributionInterceptor.class);
 
-   private VersionGenerator versionGenerator;
-
-   @Inject
-   public void init(VersionGenerator versionGenerator) {
-      this.versionGenerator = versionGenerator;
-   }
+   @Inject private VersionGenerator versionGenerator;
 
    @Override
    protected Log getLog() {

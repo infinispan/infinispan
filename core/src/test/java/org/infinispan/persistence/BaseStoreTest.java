@@ -72,7 +72,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       marshaller = new TestObjectStreamMarshaller();
       timeService = getTimeService();
       factory = new InternalEntryFactoryImpl();
-      ((InternalEntryFactoryImpl) factory).injectTimeService(timeService);
+      TestingUtil.inject(factory, timeService);
       try {
          //noinspection unchecked
          cl = createStore();

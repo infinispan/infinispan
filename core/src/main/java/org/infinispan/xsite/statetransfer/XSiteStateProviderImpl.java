@@ -58,35 +58,19 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private final ConcurrentMap<String, StatePushTask> runningStateTransfer;
 
-   private DataContainer<?, ?> dataContainer;
-   private PersistenceManager persistenceManager;
-   private ClusteringDependentLogic clusteringDependentLogic;
-   private CommandsFactory commandsFactory;
-   private RpcManager rpcManager;
+   @Inject private DataContainer<?, ?> dataContainer;
+   @Inject private PersistenceManager persistenceManager;
+   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private RpcManager rpcManager;
+   @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
    private ExecutorService executorService;
-   private Configuration configuration;
-   private XSiteStateTransferManager stateTransferManager;
-   private StateTransferLock stateTransferLock;
+   @Inject private Configuration configuration;
+   @Inject private XSiteStateTransferManager stateTransferManager;
+   @Inject private StateTransferLock stateTransferLock;
 
    public XSiteStateProviderImpl() {
       runningStateTransfer = CollectionFactory.makeConcurrentMap();
-   }
-
-   @Inject
-   public void inject(DataContainer dataContainer, PersistenceManager persistenceManager, RpcManager rpcManager,
-                      ClusteringDependentLogic clusteringDependentLogic, CommandsFactory commandsFactory,
-                      @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService,
-                      Configuration configuration, XSiteStateTransferManager xSiteStateTransferManager,
-                      StateTransferLock stateTransferLock) {
-      this.dataContainer = dataContainer;
-      this.persistenceManager = persistenceManager;
-      this.clusteringDependentLogic = clusteringDependentLogic;
-      this.commandsFactory = commandsFactory;
-      this.rpcManager = rpcManager;
-      this.executorService = executorService;
-      this.configuration = configuration;
-      this.stateTransferManager = xSiteStateTransferManager;
-      this.stateTransferLock = stateTransferLock;
    }
 
    @Override

@@ -31,22 +31,19 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class BaseInvalidationInterceptor extends BaseRpcInterceptor implements JmxStatisticsExposer {
 	private final AtomicLong invalidations = new AtomicLong(0);
-	protected CommandsFactory commandsFactory;
-	protected StateTransferManager stateTransferManager;
+
+	@Inject protected CommandsFactory commandsFactory;
+	@Inject protected StateTransferManager stateTransferManager;
+	@Inject protected Cache cache;
+
 	protected ByteString cacheName;
 	protected boolean statisticsEnabled;
 	protected RpcOptions syncRpcOptions;
 	protected RpcOptions asyncRpcOptions;
 
-	@Inject
-	public void injectDependencies(CommandsFactory commandsFactory, StateTransferManager stateTransferManager, Cache cache) {
-		this.commandsFactory = commandsFactory;
-		this.stateTransferManager = stateTransferManager;
-		this.cacheName = ByteString.fromString(cache.getName());
-	}
-
 	@Start
 	private void start() {
+		this.cacheName = ByteString.fromString(cache.getName());
 		this.setStatisticsEnabled(cacheConfiguration.jmxStatistics().enabled());
 		syncRpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
 		asyncRpcOptions = rpcManager.getDefaultRpcOptions(false);

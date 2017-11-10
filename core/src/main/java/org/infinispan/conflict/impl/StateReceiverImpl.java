@@ -41,25 +41,15 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
    private static final Log log = LogFactory.getLog(StateReceiverImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   @Inject private Cache<K, V> cache;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private DataContainer<K, V> dataContainer;
+   @Inject private RpcManager rpcManager;
+
    private String cacheName;
-   private Cache<K, V> cache;
-   private CommandsFactory commandsFactory;
-   private DataContainer<K, V> dataContainer;
-   private RpcManager rpcManager;
    private long transferTimeout;
 
    private final ConcurrentHashMap<Integer, SegmentRequest> requestMap = new ConcurrentHashMap<>();
-
-   @Inject
-   public void init(Cache<K, V> cache,
-                    CommandsFactory commandsFactory,
-                    DataContainer<K, V> dataContainer,
-                    RpcManager rpcManager) {
-      this.cache = cache;
-      this.commandsFactory = commandsFactory;
-      this.dataContainer = dataContainer;
-      this.rpcManager = rpcManager;
-   }
 
    @Start
    public void start() {

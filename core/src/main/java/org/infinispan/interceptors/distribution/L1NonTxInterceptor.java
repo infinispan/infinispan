@@ -63,12 +63,12 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    private static final Log log = LogFactory.getLog(L1NonTxInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   protected L1Manager l1Manager;
-   protected ClusteringDependentLogic cdl;
-   protected EntryFactory entryFactory;
-   protected CommandsFactory commandsFactory;
-   protected DataContainer dataContainer;
-   protected StateTransferLock stateTransferLock;
+   @Inject protected L1Manager l1Manager;
+   @Inject protected ClusteringDependentLogic cdl;
+   @Inject protected EntryFactory entryFactory;
+   @Inject protected CommandsFactory commandsFactory;
+   @Inject protected DataContainer dataContainer;
+   @Inject protected StateTransferLock stateTransferLock;
 
    private long l1Lifespan;
    private long replicationTimeout;
@@ -97,18 +97,6 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
     * invalidation may not invalidate the new value.
     */
    private final ConcurrentMap<Object, L1WriteSynchronizer> concurrentWrites = CollectionFactory.makeConcurrentMap();
-
-   @Inject
-   public void init(L1Manager l1Manager, ClusteringDependentLogic cdl, EntryFactory entryFactory,
-                    DataContainer dataContainer, StateTransferLock stateTransferLock,
-                    CommandsFactory commandsFactory) {
-      this.l1Manager = l1Manager;
-      this.cdl = cdl;
-      this.entryFactory = entryFactory;
-      this.dataContainer = dataContainer;
-      this.stateTransferLock = stateTransferLock;
-      this.commandsFactory = commandsFactory;
-   }
 
    @Start
    public void start() {

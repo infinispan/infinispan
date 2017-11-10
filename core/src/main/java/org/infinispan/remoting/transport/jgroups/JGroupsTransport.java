@@ -20,7 +20,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -139,19 +138,22 @@ public class JGroupsTransport implements Transport {
    private static final byte RESPONSE = 1;
    private static final byte SINGLE_MESSAGE = 2;
 
+   @Inject protected GlobalConfiguration configuration;
+   @Inject protected StreamingMarshaller marshaller;
+   @Inject protected CacheManagerNotifier notifier;
+   @Inject protected TimeService timeService;
+   @Inject protected InboundInvocationHandler invocationHandler;
+   @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
+   protected ScheduledExecutorService timeoutExecutor;
+   @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
+   protected ExecutorService remoteExecutor;
+
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
    private final ThreadPoolProbeHandler probeHandler;
    private final ChannelCallbacks channelCallbacks = new ChannelCallbacks();
    protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
-   protected GlobalConfiguration configuration;
    protected TypedProperties props;
-   protected StreamingMarshaller marshaller;
-   protected CacheManagerNotifier notifier;
-   protected TimeService timeService;
-   protected InboundInvocationHandler invocationHandler;
-   protected ScheduledExecutorService timeoutExecutor;
-   protected Executor remoteExecutor;
    protected JChannel channel;
    protected Address address;
    protected Address physicalAddress;
@@ -193,26 +195,6 @@ public class JGroupsTransport implements Transport {
       if (addresses == null)
          return null;
       return addresses.stream().map(JGroupsTransport::toJGroupsAddress).collect(Collectors.toList());
-   }
-
-   /**
-    * Initializes the transport with global cache configuration and transport-specific properties.
-    */
-   @Inject
-   public void initialize(GlobalConfiguration configuration, StreamingMarshaller marshaller,
-                          CacheManagerNotifier notifier, TimeService timeService,
-                          InboundInvocationHandler globalHandler,
-                          @ComponentName(
-                                KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-                          @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteExecutor) {
-      this.configuration = configuration;
-      this.marshaller = marshaller;
-      this.notifier = notifier;
-      this.timeService = timeService;
-      this.invocationHandler = globalHandler;
-      this.timeoutExecutor = timeoutExecutor;
-      this.remoteExecutor = remoteExecutor;
-      this.probeHandler.updateThreadPool(remoteExecutor);
    }
 
    @Override
@@ -394,6 +376,7 @@ public class JGroupsTransport implements Transport {
 
    @Override
    public void start() {
+      probeHandler.updateThreadPool(remoteExecutor);
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
       requests = new RequestRepository();
 

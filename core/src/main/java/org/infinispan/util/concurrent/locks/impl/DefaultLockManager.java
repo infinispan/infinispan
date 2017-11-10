@@ -52,18 +52,10 @@ public class DefaultLockManager implements LockManager {
    private static final AtomicReferenceFieldUpdater<CompositeLockPromise, LockState> UPDATER =
          newUpdater(CompositeLockPromise.class, LockState.class, "lockState");
 
-   private LockContainer lockContainer;
-   private Configuration configuration;
+   @Inject private LockContainer lockContainer;
+   @Inject private Configuration configuration;
+   @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    private ScheduledExecutorService scheduler;
-
-   @Inject
-   public void inject(LockContainer container, Configuration configuration,
-                      @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService executorService) {
-      this.lockContainer = container;
-      this.configuration = configuration;
-      this.scheduler = executorService;
-   }
-
 
    @Override
    public KeyAwareLockPromise lock(Object key, Object lockOwner, long time, TimeUnit unit) {

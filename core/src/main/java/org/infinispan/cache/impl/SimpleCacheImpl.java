@@ -118,12 +118,12 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    private DataConversion keyDataConversion;
    private DataConversion valueDataConversion;
 
-   private ComponentRegistry componentRegistry;
-   private Configuration configuration;
-   private EmbeddedCacheManager cacheManager;
-   private DataContainer<K, V> dataContainer;
-   private CacheNotifier<K, V> cacheNotifier;
-   private TimeService timeService;
+   @Inject private ComponentRegistry componentRegistry;
+   @Inject private Configuration configuration;
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private DataContainer<K, V> dataContainer;
+   @Inject private CacheNotifier<K, V> cacheNotifier;
+   @Inject private TimeService timeService;
 
    private Metadata defaultMetadata;
 
@@ -140,18 +140,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Inject
-   public void injectDependencies(ComponentRegistry componentRegistry,
-                                  Configuration configuration,
-                                  EmbeddedCacheManager cacheManager,
-                                  DataContainer dataContainer,
-                                  CacheNotifier cacheNotifier,
-                                  TimeService timeService) {
-      this.componentRegistry = componentRegistry;
-      this.configuration = configuration;
-      this.cacheManager = cacheManager;
-      this.dataContainer = dataContainer;
-      this.cacheNotifier = cacheNotifier;
-      this.timeService = timeService;
+   public void injectDependencies() {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
    }

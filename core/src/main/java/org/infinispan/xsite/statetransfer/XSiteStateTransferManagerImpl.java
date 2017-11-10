@@ -64,37 +64,24 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    private static final Log log = LogFactory.getLog(XSiteStateTransferManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
+
+   @Inject private RpcManager rpcManager;
+   @Inject private Configuration configuration;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private ResponseGenerator responseGenerator;
+   @Inject @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR)
+   private ExecutorService asyncExecutor;
+   @Inject private StateTransferManager stateTransferManager;
+   @Inject private CacheNotifier cacheNotifier;
+   @Inject private XSiteStateConsumer consumer;
+   @Inject private XSiteStateProvider provider;
+
    private final ConcurrentMap<String, XSiteStateTransferCollector> siteCollector;
    private final ConcurrentMap<String, String> status;
-   private RpcManager rpcManager;
-   private Configuration configuration;
-   private CommandsFactory commandsFactory;
-   private ResponseGenerator responseGenerator;
-   private ExecutorService asyncExecutor;
-   private StateTransferManager stateTransferManager;
-   private CacheNotifier cacheNotifier;
-   private XSiteStateConsumer consumer;
-   private XSiteStateProvider provider;
 
    public XSiteStateTransferManagerImpl() {
       siteCollector = CollectionFactory.makeConcurrentMap();
       status = CollectionFactory.makeConcurrentMap();
-   }
-
-   @Inject
-   public void inject(RpcManager rpcManager, Configuration configuration, CommandsFactory commandsFactory,
-                      ResponseGenerator responseGenerator, StateTransferManager stateTransferManager,
-                      CacheNotifier cacheNotifier, XSiteStateConsumer consumer, XSiteStateProvider provider,
-                      @ComponentName(value = ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor) {
-      this.rpcManager = rpcManager;
-      this.configuration = configuration;
-      this.commandsFactory = commandsFactory;
-      this.responseGenerator = responseGenerator;
-      this.asyncExecutor = asyncExecutor;
-      this.stateTransferManager = stateTransferManager;
-      this.cacheNotifier = cacheNotifier;
-      this.consumer = consumer;
-      this.provider = provider;
    }
 
    @Start

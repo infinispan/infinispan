@@ -6,8 +6,8 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.CheckTopologyAction;
@@ -37,9 +37,10 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
 
    private final CheckTopologyAction checkTopologyAction;
 
-   private LockManager lockManager;
-   private ClusteringDependentLogic clusteringDependentLogic;
-   private PendingLockManager pendingLockManager;
+   @Inject private LockManager lockManager;
+   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private PendingLockManager pendingLockManager;
+
    private boolean pessimisticLocking;
    private long lockAcquisitionTimeout;
 
@@ -47,12 +48,8 @@ public class NonTotalOrderTxPerCacheInboundInvocationHandler extends BasePerCach
       checkTopologyAction = new CheckTopologyAction(this);
    }
 
-   @Inject
-   public void inject(LockManager lockManager, ClusteringDependentLogic clusteringDependentLogic, Configuration configuration,
-                      PendingLockManager pendingLockManager) {
-      this.lockManager = lockManager;
-      this.clusteringDependentLogic = clusteringDependentLogic;
-      this.pendingLockManager = pendingLockManager;
+   @Start
+   public void start() {
       this.pessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.lockAcquisitionTimeout = configuration.locking().lockAcquisitionTimeout();
    }

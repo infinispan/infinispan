@@ -54,6 +54,6 @@ import org.infinispan.factories.ComponentRegistry;
 @Retention(RetentionPolicy.RUNTIME)
 
 // only applies to fields.
-@Target(ElementType.METHOD)
+@Target({ ElementType.METHOD, ElementType.FIELD })
 public @interface Inject {
 }

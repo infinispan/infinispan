@@ -19,7 +19,7 @@ import org.infinispan.util.concurrent.CompletableFutures;
 public class StreamResponseCommand<R> extends BaseRpcCommand {
    public static final byte COMMAND_ID = 48;
 
-   protected ClusterStreamManager csm;
+   @Inject protected ClusterStreamManager csm;
 
    protected Object id;
    protected boolean complete;
@@ -40,7 +40,6 @@ public class StreamResponseCommand<R> extends BaseRpcCommand {
       this.response = response;
    }
 
-   @Inject
    public void inject(ClusterStreamManager csm) {
       this.csm = csm;
    }

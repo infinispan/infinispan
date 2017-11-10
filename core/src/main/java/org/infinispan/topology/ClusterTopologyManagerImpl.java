@@ -104,15 +104,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Transport transport;
-   private GlobalConfiguration globalConfiguration;
-   private GlobalComponentRegistry gcr;
-   private CacheManagerNotifier cacheManagerNotifier;
-   private EmbeddedCacheManager cacheManager;
+   @Inject private Transport transport;
+   @Inject private GlobalConfiguration globalConfiguration;
+   @Inject private GlobalComponentRegistry gcr;
+   @Inject private CacheManagerNotifier cacheManagerNotifier;
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject @ComponentName(ASYNC_TRANSPORT_EXECUTOR)
    private ExecutorService asyncTransportExecutor;
-   private LimitedExecutor viewHandlingExecutor;
-   private EventLogManager eventLogManager;
-   private PersistentUUIDManager persistentUUIDManager;
+   @Inject private EventLogManager eventLogManager;
+   @Inject private PersistentUUIDManager persistentUUIDManager;
 
    // These need to be volatile because they are sometimes read without holding the view handling lock.
    private volatile int viewId = -1;
@@ -120,28 +120,12 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private final Lock clusterManagerLock = new ReentrantLock();
    private final Condition clusterStateChanged = clusterManagerLock.newCondition();
 
-
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = CollectionFactory.makeConcurrentMap();
    private ClusterViewListener viewListener;
+   private LimitedExecutor viewHandlingExecutor;
 
    // The global rebalancing status
    private volatile boolean globalRebalancingEnabled = true;
-
-   @Inject
-   public void inject(Transport transport,
-                      @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                      GlobalConfiguration globalConfiguration, GlobalComponentRegistry gcr,
-                      CacheManagerNotifier cacheManagerNotifier, EmbeddedCacheManager cacheManager,
-                      EventLogManager eventLogManager, PersistentUUIDManager persistentUUIDManager) {
-      this.transport = transport;
-      this.asyncTransportExecutor = asyncTransportExecutor;
-      this.globalConfiguration = globalConfiguration;
-      this.gcr = gcr;
-      this.cacheManagerNotifier = cacheManagerNotifier;
-      this.cacheManager = cacheManager;
-      this.eventLogManager = eventLogManager;
-      this.persistentUUIDManager = persistentUUIDManager;
-   }
 
    @Start(priority = 100)
    public void start() {

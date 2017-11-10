@@ -27,20 +27,15 @@ import org.infinispan.util.logging.LogFactory;
  * @since 9.0
  */
 public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor {
-
-   protected VersionGenerator versionGenerator;
    private static final Log log = LogFactory.getLog(VersionedEntryWrappingInterceptor.class);
+
+   @Inject protected VersionGenerator versionGenerator;
 
    private final InvocationSuccessFunction prepareHandler = this::prepareHandler;
 
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void initialize(VersionGenerator versionGenerator) {
-      this.versionGenerator = versionGenerator;
    }
 
    @Override

@@ -112,13 +112,8 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
 
    // two separate executor services, one for sync and one for async listeners
    protected ExecutorService syncProcessor;
+   @Inject @ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)
    protected ExecutorService asyncProcessor;
-
-   @Inject
-   @SuppressWarnings("unused")
-   void injectExecutor(@ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR) ExecutorService executor) {
-      this.asyncProcessor = executor;
-   }
 
    @Start(priority = 9)
    public void start() {

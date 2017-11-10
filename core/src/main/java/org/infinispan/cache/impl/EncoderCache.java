@@ -60,11 +60,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
 
    private static Log log = LogFactory.getLog(EncoderCache.class);
 
+   @Inject private InternalEntryFactory entryFactory;
+   @Inject private ComponentRegistry componentRegistry;
+
    private final DataConversion keyDataConversion;
    private final DataConversion valueDataConversion;
-
-   private InternalEntryFactory entryFactory;
-   private ComponentRegistry componentRegistry;
 
    private final Function<V, V> decodedValueForRead = this::valueFromStorage;
 
@@ -109,12 +109,10 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Inject
-   public void wireRealCache(ComponentRegistry registry, InternalEntryFactory entryFactory) {
-      this.entryFactory = entryFactory;
-      this.componentRegistry = registry;
-      registry.wireDependencies(keyDataConversion);
-      registry.wireDependencies(valueDataConversion);
-      registry.wireDependencies(cache);
+   public void wireRealCache() {
+      componentRegistry.wireDependencies(keyDataConversion);
+      componentRegistry.wireDependencies(valueDataConversion);
+      componentRegistry.wireDependencies(cache);
    }
 
    private Map<K, V> encodeMapForWrite(Map<? extends K, ? extends V> map) {

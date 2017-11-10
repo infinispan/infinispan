@@ -22,12 +22,7 @@ public class SimpleClusteredVersionGenerator implements VersionGenerator {
 
    private static final SimpleClusteredVersion NON_EXISTING = new SimpleClusteredVersion(0, 0);
 
-   private Cache<?, ?> cache;
-
-   @Inject
-   public void init(Cache<?, ?> cache) {
-      this.cache = cache;
-   }
+   @Inject private Cache<?, ?> cache;
 
    @Start(priority = 11)
    public void start() {

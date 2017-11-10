@@ -52,7 +52,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
    final List<ListenerInvocation<Event>> viewChangedListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
    final List<ListenerInvocation<Event>> mergeListeners = new CopyOnWriteArrayList<ListenerInvocation<Event>>();
 
-   private EmbeddedCacheManager cacheManager;
+   @Inject private EmbeddedCacheManager cacheManager;
 
    public CacheManagerNotifierImpl() {
       listenersMap.put(CacheStarted.class, cacheStartedListeners);
@@ -67,11 +67,6 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       public ListenerInvocation<Event> build() {
          return new ListenerInvocationImpl(target, method, sync, classLoader, subject);
       }
-   }
-
-   @Inject
-   public void injectCacheManager(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
    }
 
    @Override

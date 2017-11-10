@@ -31,12 +31,7 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
 
    private static final Log log = LogFactory.getLog(TotalOrderTxPerCacheInboundInvocationHandler.class);
    private static final boolean trace = log.isTraceEnabled();
-   private TotalOrderManager totalOrderManager;
-
-   @Inject
-   public void injectTotalOrderManager(TotalOrderManager totalOrderManager) {
-      this.totalOrderManager = totalOrderManager;
-   }
+   @Inject private TotalOrderManager totalOrderManager;
 
    @Override
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {

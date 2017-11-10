@@ -48,16 +48,11 @@ public class TombstoneCallInterceptor extends DDAsyncInterceptor {
 	private final BaseTransactionalDataRegion region;
 	private final Metadata expiringMetadata;
 	private Metadata defaultMetadata;
-	private AdvancedCache cache;
+	@Inject private AdvancedCache cache;
 
 	public TombstoneCallInterceptor(BaseTransactionalDataRegion region) {
 		this.region = region;
 		expiringMetadata = new EmbeddedMetadata.Builder().lifespan(region.getTombstoneExpiration(), TimeUnit.MILLISECONDS).build();
-	}
-
-	@Inject
-	public void injectDependencies(AdvancedCache cache) {
-		this.cache = cache;
 	}
 
 	@Start

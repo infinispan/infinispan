@@ -78,12 +78,7 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     */
    private static final String WS_FACTORY_CLASS_4 = "com.ibm.ejs.jts.jta.JTSXA";
 
-   private GlobalConfiguration globalCfg;
-
-   @Inject
-   public void init(GlobalConfiguration globalCfg) {
-      this.globalCfg = globalCfg;
-   }
+   @Inject private GlobalConfiguration globalCfg;
 
    /**
     * Get the system-wide used TransactionManager

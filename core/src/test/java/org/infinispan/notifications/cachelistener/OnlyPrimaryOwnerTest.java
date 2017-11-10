@@ -39,6 +39,7 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
@@ -67,7 +68,7 @@ public class OnlyPrimaryOwnerTest {
             invocationOnMock -> Mockito.mock((Class<?>) invocationOnMock.getArguments()[0]));
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(Encoder.class)).thenReturn(new IdentityEncoder());
 
-      n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class),
+      TestingUtil.inject(n, mockCache, cdl, config, mock(DistributionManager.class),
             mock(InternalEntryFactory.class), mock(ClusterEventManager.class), mock(ComponentRegistry.class));
       cl = new PrimaryOwnerCacheListener();
       n.start();

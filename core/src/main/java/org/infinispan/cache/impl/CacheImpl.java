@@ -140,34 +140,35 @@ import org.infinispan.util.logging.LogFactory;
 @SurvivesRestarts
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {
+   private static final Log log = LogFactory.getLog(CacheImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
    public static final String OBJECT_NAME = "Cache";
    private static final long PFER_FLAGS = EnumUtil.bitSetOf(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ, IGNORE_RETURN_VALUES);
 
-   protected InvocationContextFactory invocationContextFactory;
-   protected CommandsFactory commandsFactory;
-   protected AsyncInterceptorChain invoker;
-   protected Configuration config;
-   protected CacheNotifier notifier;
-   protected BatchContainer batchContainer;
-   protected ComponentRegistry componentRegistry;
-   protected TransactionManager transactionManager;
-   protected RpcManager rpcManager;
-   protected StreamingMarshaller marshaller;
+   @Inject protected InvocationContextFactory invocationContextFactory;
+   @Inject protected CommandsFactory commandsFactory;
+   @Inject protected AsyncInterceptorChain invoker;
+   @Inject protected Configuration config;
+   @Inject protected CacheNotifier notifier;
+   @Inject protected BatchContainer batchContainer;
+   @Inject protected ComponentRegistry componentRegistry;
+   @Inject protected TransactionManager transactionManager;
+   @Inject protected RpcManager rpcManager;
+   @Inject protected StreamingMarshaller marshaller;
+   @Inject private EvictionManager evictionManager;
+   @Inject private ExpirationManager<K, V> expirationManager;
+   @Inject private DataContainer dataContainer;
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private LockManager lockManager;
+   @Inject private DistributionManager distributionManager;
+   @Inject private TransactionTable txTable;
+   @Inject private AuthorizationManager authorizationManager;
+   @Inject private PartitionHandlingManager partitionHandlingManager;
+   @Inject private GlobalConfiguration globalCfg;
+   @Inject private LocalTopologyManager localTopologyManager;
+
    protected Metadata defaultMetadata;
    private final String name;
-   private EvictionManager evictionManager;
-   private ExpirationManager<K, V> expirationManager;
-   private DataContainer dataContainer;
-   private static final Log log = LogFactory.getLog(CacheImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
-   private EmbeddedCacheManager cacheManager;
-   private LockManager lockManager;
-   private DistributionManager distributionManager;
-   private TransactionTable txTable;
-   private AuthorizationManager authorizationManager;
-   private PartitionHandlingManager partitionHandlingManager;
-   private GlobalConfiguration globalCfg;
-   private LocalTopologyManager localTopologyManager;
    private volatile boolean stopping = false;
    private boolean transactional;
    private boolean batchingEnabled;
@@ -176,49 +177,10 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.name = name;
    }
 
+   // This should rather be a @Start method but CacheImpl may be not an actual component but a delegate
+   // of EncoderCache. ATM there's not method to invoke @Start method, just wireDependencies
    @Inject
-   public void injectDependencies(EvictionManager evictionManager,
-                                  ExpirationManager expirationManager,
-                                  InvocationContextFactory invocationContextFactory,
-                                  CommandsFactory commandsFactory,
-                                  AsyncInterceptorChain interceptorChain,
-                                  Configuration configuration,
-                                  CacheNotifier notifier,
-                                  ComponentRegistry componentRegistry,
-                                  TransactionManager transactionManager,
-                                  BatchContainer batchContainer,
-                                  RpcManager rpcManager, DataContainer dataContainer,
-                                  StreamingMarshaller marshaller,
-                                  DistributionManager distributionManager,
-                                  EmbeddedCacheManager cacheManager,
-                                  TransactionTable txTable,
-                                  LockManager lockManager,
-                                  AuthorizationManager authorizationManager,
-                                  GlobalConfiguration globalCfg,
-                                  PartitionHandlingManager partitionHandlingManager,
-                                  LocalTopologyManager localTopologyManager) {
-      this.commandsFactory = commandsFactory;
-      this.invoker = interceptorChain;
-      this.config = configuration;
-      this.notifier = notifier;
-      this.componentRegistry = componentRegistry;
-      this.transactionManager = transactionManager;
-      this.batchContainer = batchContainer;
-      this.rpcManager = rpcManager;
-      this.evictionManager = evictionManager;
-      this.expirationManager = expirationManager;
-      this.dataContainer = dataContainer;
-      this.marshaller = marshaller;
-      this.cacheManager = cacheManager;
-      this.invocationContextFactory = invocationContextFactory;
-      this.distributionManager = distributionManager;
-      this.txTable = txTable;
-      this.lockManager = lockManager;
-      this.authorizationManager = authorizationManager;
-      this.globalCfg = globalCfg;
-      this.partitionHandlingManager = partitionHandlingManager;
-      this.localTopologyManager = localTopologyManager;
-
+   public void preStart() {
       // We have to do this before start, since some components may start before the actual cache and they
       // have to have access to the default metadata on some operations
       defaultMetadata = new EmbeddedMetadata.Builder()

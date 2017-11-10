@@ -43,7 +43,8 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private final GlobalComponentRegistry globalComponents;
    private final String cacheName;
    private static final Log log = LogFactory.getLog(ComponentRegistry.class);
-   private CacheManagerNotifier cacheManagerNotifier;
+
+   @Inject private CacheManagerNotifier cacheManagerNotifier;
 
    //Cached fields:
    private StateTransferManager stateTransferManager;
@@ -54,11 +55,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private VersionGenerator versionGenerator;
 
    protected final WeakReference<ClassLoader> defaultClassLoader;
-
-   @Inject
-   public void setCacheManagerNotifier(CacheManagerNotifier cacheManagerNotifier) {
-      this.cacheManagerNotifier = cacheManagerNotifier;
-   }
 
    /**
     * Creates an instance of the component registry.  The configuration passed in is automatically registered.

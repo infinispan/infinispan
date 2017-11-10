@@ -21,17 +21,12 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class PassivationWriterInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
-   protected PersistenceManager persistenceManager;
+   @Inject protected PersistenceManager persistenceManager;
 
    private static final Log log = LogFactory.getLog(PassivationWriterInterceptor.class);
 
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   protected void init(PersistenceManager pm) {
-      this.persistenceManager = pm;
    }
 
    @Override

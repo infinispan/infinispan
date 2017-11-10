@@ -17,7 +17,7 @@ import org.infinispan.util.ByteString;
 public class StreamIteratorNextCommand extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 71;
 
-   protected LocalStreamManager lsm;
+   @Inject protected LocalStreamManager lsm;
 
    protected Object id;
    protected long batchSize;
@@ -50,7 +50,6 @@ public class StreamIteratorNextCommand extends BaseRpcCommand implements Topolog
       this.batchSize = batchSize;
    }
 
-   @Inject
    public void inject(LocalStreamManager lsm) {
       this.lsm = lsm;
    }

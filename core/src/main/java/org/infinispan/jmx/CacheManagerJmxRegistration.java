@@ -5,7 +5,6 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -24,15 +23,10 @@ import org.infinispan.util.logging.LogFactory;
 public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheManagerJmxRegistration.class);
    public static final String CACHE_MANAGER_JMX_GROUP = "type=CacheManager";
-   private GlobalComponentRegistry globalReg;
+
+   @Inject private GlobalComponentRegistry globalReg;
    private boolean needToUnregister = false;
    private boolean stopped;
-
-   @Inject
-   public void init(GlobalComponentRegistry registry, GlobalConfiguration configuration) {
-      this.globalReg = registry;
-      this.globalConfig = configuration;
-   }
 
    /**
     * On start, the mbeans are registered.

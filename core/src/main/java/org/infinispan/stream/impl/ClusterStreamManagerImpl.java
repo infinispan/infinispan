@@ -59,8 +59,8 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    protected final Map<String, RequestTracker> currentlyRunning = new ConcurrentHashMap<>();
    protected final Set<Subscriber> iteratorsRunning = new ConcurrentHashSet<>();
    protected final AtomicInteger requestId = new AtomicInteger();
-   protected RpcManager rpc;
-   protected CommandsFactory factory;
+   @Inject protected RpcManager rpc;
+   @Inject protected CommandsFactory factory;
 
    protected RpcOptions rpcOptions;
 
@@ -68,12 +68,6 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
 
    protected final static Log log = LogFactory.getLog(ClusterStreamManagerImpl.class);
    protected final static boolean trace = log.isTraceEnabled();
-
-   @Inject
-   public void inject(RpcManager rpc, CommandsFactory factory) {
-      this.rpc = rpc;
-      this.factory = factory;
-   }
 
    @Start
    public void start() {

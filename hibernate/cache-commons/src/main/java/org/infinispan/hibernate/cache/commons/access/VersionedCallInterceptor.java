@@ -37,17 +37,12 @@ import java.util.concurrent.TimeUnit;
 public class VersionedCallInterceptor extends DDAsyncInterceptor {
 	private final Comparator<Object> versionComparator;
 	private final Metadata expiringMetadata;
-	private AdvancedCache cache;
+	@Inject private AdvancedCache cache;
 	private Metadata defaultMetadata;
 
 	public VersionedCallInterceptor(BaseTransactionalDataRegion region, Comparator<Object> versionComparator) {
 		this.versionComparator = versionComparator;
 		expiringMetadata = new EmbeddedMetadata.Builder().lifespan(region.getTombstoneExpiration(), TimeUnit.MILLISECONDS).build();
-	}
-
-	@Inject
-	public void injectDependencies(AdvancedCache cache) {
-		this.cache = cache;
 	}
 
 	@Start

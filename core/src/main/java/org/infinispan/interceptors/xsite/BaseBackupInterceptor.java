@@ -26,18 +26,12 @@ import org.infinispan.xsite.BackupSender;
  */
 public class BaseBackupInterceptor extends DDAsyncInterceptor {
 
-   protected BackupSender backupSender;
-   protected TransactionTable txTable;
+   @Inject protected BackupSender backupSender;
+   @Inject protected TransactionTable txTable;
 
    protected static final Log log = LogFactory.getLog(BaseBackupInterceptor.class);
    protected static final boolean trace = log.isTraceEnabled();
    private final InvocationSuccessAction handleClearReturn = this::handleClearReturn;
-
-   @Inject
-   void init(BackupSender sender, TransactionTable txTable) {
-      this.backupSender = sender;
-      this.txTable = txTable;
-   }
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {

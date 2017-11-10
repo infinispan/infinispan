@@ -41,18 +41,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    private final InvocationSuccessFunction localLockCommandWork =
          (rCtx, rCommand, rv) -> localLockCommandWork(rCtx, (LockControlCommand) rCommand);
 
-   private CommandsFactory cf;
-   private StateTransferManager stateTransferManager;
+   @Inject private CommandsFactory cf;
+   @Inject private StateTransferManager stateTransferManager;
 
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void init(CommandsFactory factory, StateTransferManager stateTransferManager) {
-      this.cf = factory;
-      this.stateTransferManager = stateTransferManager;
    }
 
    @Override

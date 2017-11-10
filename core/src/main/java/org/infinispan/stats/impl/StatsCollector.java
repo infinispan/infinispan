@@ -44,21 +44,11 @@ public class StatsCollector implements Stats, JmxStatisticsExposer {
    private final LongAdder removeHits = new LongAdder();
    private final LongAdder removeMisses = new LongAdder();
 
-   private AdvancedCache cache;
-   private TimeService timeService;
-   private DataContainer dataContainer;
-   private OffHeapMemoryAllocator allocator;
-   private Configuration configuration;
-
-   @Inject
-   public void injectDependencies(AdvancedCache cache, TimeService timeService, DataContainer dataContainer,
-                                  OffHeapMemoryAllocator allocator, Configuration configuration) {
-      this.cache = cache;
-      this.timeService = timeService;
-      this.dataContainer = dataContainer;
-      this.allocator = allocator;
-      this.configuration = configuration;
-   }
+   @Inject private AdvancedCache cache;
+   @Inject private TimeService timeService;
+   @Inject private DataContainer dataContainer;
+   @Inject private OffHeapMemoryAllocator allocator;
+   @Inject private Configuration configuration;
 
    @Start
    public void start() {

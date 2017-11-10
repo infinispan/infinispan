@@ -62,20 +62,15 @@ import org.infinispan.util.logging.LogFactory;
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote" +
       " caches when entries are written to locally.")
 public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxStatisticsExposer {
-   private final AtomicLong invalidations = new AtomicLong(0);
-   private CommandsFactory commandsFactory;
-   private boolean statisticsEnabled;
-
    private static final Log log = LogFactory.getLog(InvalidationInterceptor.class);
+
+   private final AtomicLong invalidations = new AtomicLong(0);
+   @Inject private CommandsFactory commandsFactory;
+   private boolean statisticsEnabled;
 
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void injectDependencies(CommandsFactory commandsFactory) {
-      this.commandsFactory = commandsFactory;
    }
 
    @Start

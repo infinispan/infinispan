@@ -26,11 +26,11 @@ import org.infinispan.util.concurrent.locks.LockManager;
  */
 public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
-   protected CommandsFactory cf;
-   protected EntryFactory entryFactory;
-   protected LockManager lockManager;
-   protected DataContainer dataContainer;
-   protected StateTransferManager stateTransferManager;
+   @Inject protected CommandsFactory cf;
+   @Inject protected EntryFactory entryFactory;
+   @Inject protected LockManager lockManager;
+   @Inject protected DataContainer dataContainer;
+   @Inject protected StateTransferManager stateTransferManager;
 
    protected static Response getSingleResponse(Map<Address, Response> responseMap) {
       Iterator<Response> it = responseMap.values().iterator();
@@ -73,16 +73,6 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
    protected static IllegalArgumentException unexpected(Response response) {
       return new IllegalArgumentException("Unexpected response " + response);
-   }
-
-   @Inject
-   public void injectDependencies(CommandsFactory cf, EntryFactory entryFactory, LockManager lockManager,
-         DataContainer dataContainer, StateTransferManager stateTransferManager) {
-      this.cf = cf;
-      this.entryFactory = entryFactory;
-      this.lockManager = lockManager;
-      this.dataContainer = dataContainer;
-      this.stateTransferManager = stateTransferManager;
    }
 
    /**

@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * @author Manik Surtani
  * @since 4.0
  */
-@Target(ElementType.PARAMETER)
+@Target({ ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ComponentName {
    String value();

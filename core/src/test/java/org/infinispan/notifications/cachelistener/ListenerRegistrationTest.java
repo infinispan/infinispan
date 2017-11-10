@@ -25,6 +25,7 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "notifications.cachelistener.ListenerRegistrationTest")
@@ -37,7 +38,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(CacheMode.LOCAL);
       when(config.memory().storageType()).thenReturn(StorageType.OBJECT);
-      notifier.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
+      TestingUtil.inject(notifier, mockCache, new ClusteringDependentLogic.LocalLogic(), config,
             mock(DistributionManager.class), new InternalEntryFactoryImpl(),
             mock(ClusterEventManager.class), mock(ComponentRegistry.class));
       return notifier;

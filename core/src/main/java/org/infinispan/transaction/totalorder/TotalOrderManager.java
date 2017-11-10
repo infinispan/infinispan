@@ -41,21 +41,19 @@ public class TotalOrderManager {
 
    private static final Log log = LogFactory.getLog(TotalOrderManager.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
+   private BlockingTaskAwareExecutorService totalOrderExecutor;
+
    /**
     * this map is used to keep track of concurrent transactions.
     */
    private final ConcurrentMap<Object, TotalOrderLatch> keysLocked;
    private final AtomicReference<TotalOrderLatch> stateTransferInProgress;
-   private BlockingTaskAwareExecutorService totalOrderExecutor;
 
    public TotalOrderManager() {
       keysLocked = CollectionFactory.makeConcurrentMap();
       stateTransferInProgress = new AtomicReference<>(null);
-   }
-
-   @Inject
-   public void inject(@ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService totalOrderExecutor) {
-      this.totalOrderExecutor = totalOrderExecutor;
    }
 
    /**

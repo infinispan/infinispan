@@ -74,19 +74,19 @@ public class BackupSenderImpl implements BackupSender {
    private static Log log = LogFactory.getLog(BackupSenderImpl.class);
    private static final BackupResponse EMPTY_RESPONSE = new EmptyBackupResponse();
 
-   private Cache cache;
-   private Transport transport;
-   private Configuration config;
-   private TransactionTable txTable;
-   private TimeService timeService;
-   private CommandsFactory commandsFactory;
+   @Inject private Cache cache;
+   @Inject private Transport transport;
+   @Inject private Configuration config;
+   @Inject private TransactionTable txTable;
+   @Inject private TimeService timeService;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private EventLogManager eventLogManager;
+   @Inject private GlobalConfiguration globalConfig;
+
    private final Map<String, CustomFailurePolicy> siteFailurePolicy = new HashMap<>();
    private final ConcurrentMap<String, OfflineStatus> offlineStatus = CollectionFactory.makeConcurrentMap();
-   private EventLogManager eventLogManager;
-
    private final String localSiteName;
    private String cacheName;
-   private GlobalConfiguration globalConfig;
 
    private enum BackupFilter {KEEP_1PC_ONLY, KEEP_2PC_ONLY, KEEP_ALL}
 
@@ -94,21 +94,8 @@ public class BackupSenderImpl implements BackupSender {
       this.localSiteName = localSiteName;
    }
 
-   @Inject
-   public void init(Cache cache, Transport transport, TransactionTable txTable, GlobalConfiguration gc,
-                    TimeService timeService, CommandsFactory commandsFactory, EventLogManager eventLogManager) {
-      this.cache = cache;
-      this.transport = transport;
-      this.txTable = txTable;
-      this.globalConfig = gc;
-      this.timeService = timeService;
-      this.commandsFactory = commandsFactory;
-      this.eventLogManager = eventLogManager;
-   }
-
    @Start
    public void start() {
-      this.config = cache.getCacheConfiguration();
       this.cacheName = cache.getName();
       for (BackupConfiguration bc : config.sites().enabledBackups()) {
          final String siteName = bc.site();

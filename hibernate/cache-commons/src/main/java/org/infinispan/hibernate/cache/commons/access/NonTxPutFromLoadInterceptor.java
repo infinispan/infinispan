@@ -38,21 +38,16 @@ public class NonTxPutFromLoadInterceptor extends BaseCustomAsyncInterceptor {
 	private final static InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog(NonTxPutFromLoadInterceptor.class);
 	private final ByteString cacheName;
 	private final PutFromLoadValidator putFromLoadValidator;
-	private CacheCommandInitializer commandInitializer;
-	private RpcManager rpcManager;
-	private StateTransferManager stateTransferManager;
+
+	@Inject private CacheCommandInitializer commandInitializer;
+	@Inject private RpcManager rpcManager;
+	@Inject private StateTransferManager stateTransferManager;
+
 	private RpcOptions asyncUnordered;
 
 	public NonTxPutFromLoadInterceptor(PutFromLoadValidator putFromLoadValidator, ByteString cacheName) {
 		this.putFromLoadValidator = putFromLoadValidator;
 		this.cacheName = cacheName;
-	}
-
-	@Inject
-	public void injectDependencies(CacheCommandInitializer commandInitializer, RpcManager rpcManager, StateTransferManager stateTransferManager) {
-		this.commandInitializer = commandInitializer;
-		this.rpcManager = rpcManager;
-		this.stateTransferManager = stateTransferManager;
 	}
 
 	@Start

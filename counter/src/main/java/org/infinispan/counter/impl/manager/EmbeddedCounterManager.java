@@ -32,6 +32,7 @@ import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -54,7 +55,11 @@ public class EmbeddedCounterManager implements CounterManager {
    private final Map<String, Object> counters;
    private final CompletableFuture<CacheHolder> future;
    private final boolean allowPersistence;
-   private final CounterManagerNotificationManager notificationManager;
+
+   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
+   private Executor asyncExecutor;
+
+   private CounterManagerNotificationManager notificationManager;
 
    public EmbeddedCounterManager(CompletableFuture<CacheHolder> future, boolean allowPersistence) {
       this.allowPersistence = allowPersistence;
@@ -63,9 +68,9 @@ public class EmbeddedCounterManager implements CounterManager {
       this.notificationManager = new CounterManagerNotificationManager();
    }
 
-   @Inject
-   public void injectExecutor(@ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) Executor executor) {
-      notificationManager.useExecutor(executor);
+   @Start
+   public void start() {
+      notificationManager.useExecutor(asyncExecutor);
    }
 
    private static <T> T validateCounter(Class<T> tClass, Object retVal) {

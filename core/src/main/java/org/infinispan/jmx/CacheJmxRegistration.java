@@ -13,7 +13,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.AbstractComponentRegistry.Component;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -38,17 +37,12 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
    public static final String CACHE_JMX_GROUP = "type=Cache";
 
-   private AdvancedCache<?, ?> cache;
+   @Inject private AdvancedCache<?, ?> cache;
    private Set<Component> nonCacheComponents;
+
    private boolean needToUnregister = false;
 
    private volatile boolean unregisterCacheMBean;
-
-   @Inject
-   public void initialize(Cache<?, ?> cache, GlobalConfiguration globalConfig) {
-      this.cache = cache.getAdvancedCache();
-      this.globalConfig = globalConfig;
-   }
 
    /**
     * Here is where the registration is being performed.

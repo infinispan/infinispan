@@ -28,16 +28,8 @@ public class CacheCommandInitializer implements ModuleCommandInitializer {
 
 	private final ConcurrentHashMap<String, PutFromLoadValidator> putFromLoadValidators
 			= new ConcurrentHashMap<String, PutFromLoadValidator>();
-	private CacheNotifier notifier;
-	private Configuration configuration;
-	private ClusteringDependentLogic clusteringDependentLogic;
-
-	@Inject
-	public void injectDependencies(CacheNotifier notifier, Configuration configuration, ClusteringDependentLogic clusteringDependentLogic) {
-		this.notifier = notifier;
-		this.configuration = configuration;
-		this.clusteringDependentLogic = clusteringDependentLogic;
-	}
+	@Inject private CacheNotifier notifier;
+	@Inject private ClusteringDependentLogic clusteringDependentLogic;
 
 	public void addPutFromLoadValidator(String cacheName, PutFromLoadValidator putFromLoadValidator) {
 		// there could be two instances of PutFromLoadValidator bound to the same cache when

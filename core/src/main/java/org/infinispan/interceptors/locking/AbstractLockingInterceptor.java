@@ -53,8 +53,8 @@ import org.infinispan.util.logging.Log;
 public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    private final boolean trace = getLog().isTraceEnabled();
 
-   protected LockManager lockManager;
-   protected ClusteringDependentLogic cdl;
+   @Inject protected LockManager lockManager;
+   @Inject protected ClusteringDependentLogic cdl;
 
    protected final InvocationFinallyAction unlockAllReturnHandler = new InvocationFinallyAction() {
       @Override
@@ -65,12 +65,6 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    };
 
    protected abstract Log getLog();
-
-   @Inject
-   public void setDependencies(LockManager lockManager, ClusteringDependentLogic cdl) {
-      this.lockManager = lockManager;
-      this.cdl = cdl;
-   }
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {

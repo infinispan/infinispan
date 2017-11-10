@@ -86,19 +86,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private static final boolean trace = log.isTraceEnabled();
    private static final long SKIP_REMOTE_FLAGS = FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_REMOTE_LOOKUP;
 
-   private PartitionHandlingManager partitionHandlingManager;
-   private ComponentRegistry componentRegistry;
+   @Inject private PartitionHandlingManager partitionHandlingManager;
+   @Inject private ComponentRegistry componentRegistry;
+
    private boolean forceRemoteReadForFunctionalCommands;
 
    private final TxReadOnlyManyHelper txReadOnlyManyHelper = new TxReadOnlyManyHelper();
    private final ReadWriteManyHelper readWriteManyHelper = new ReadWriteManyHelper();
    private final ReadWriteManyEntriesHelper readWriteManyEntriesHelper = new ReadWriteManyEntriesHelper();
-
-   @Inject
-   public void inject(PartitionHandlingManager partitionHandlingManager, ComponentRegistry componentRegistry) {
-      this.partitionHandlingManager = partitionHandlingManager;
-      this.componentRegistry = componentRegistry;
-   }
 
    @Override
    public void configure() {

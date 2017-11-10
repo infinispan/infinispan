@@ -45,24 +45,19 @@ import org.infinispan.util.logging.events.EventLogger;
 @Scope(Scopes.GLOBAL)
 public class TaskManagerImpl implements TaskManager {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   private EmbeddedCacheManager cacheManager;
+
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private TimeService timeService;
+   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
+   private ExecutorService asyncExecutor;
+
    private List<TaskEngine> engines;
    private ConcurrentMap<UUID, TaskExecution> runningTasks;
-   private TimeService timeService;
    private boolean useSecurity;
-   private ExecutorService asyncExecutor;
 
    public TaskManagerImpl() {
       engines = new ArrayList<>();
       runningTasks = CollectionFactory.makeConcurrentMap();
-   }
-
-   @Inject
-   public void initialize(final EmbeddedCacheManager cacheManager, final TimeService timeService,
-                          @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) ExecutorService asyncExecutor) {
-      this.cacheManager = cacheManager;
-      this.timeService = timeService;
-      this.asyncExecutor = asyncExecutor;
    }
 
    @Start

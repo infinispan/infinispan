@@ -86,25 +86,31 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private static final boolean trace = log.isTraceEnabled();
 
    public static final int CACHE_STOPPED_TOPOLOGY_ID = -1;
+
+   @Inject private Cache cache;
+   @Inject protected Configuration configuration;
+   @Inject protected TransactionCoordinator txCoordinator;
+   @Inject private TransactionFactory txFactory;
+   @Inject protected RpcManager rpcManager;
+   @Inject protected CommandsFactory commandsFactory;
+   @Inject private ClusteringDependentLogic clusteringLogic;
+   @Inject private CacheNotifier notifier;
+   @Inject private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+   @Inject private TimeService timeService;
+   @Inject private CacheManagerNotifier cacheManagerNotifier;
+   @Inject protected PartitionHandlingManager partitionHandlingManager;
+   @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
+   private ScheduledExecutorService timeoutExecutor;
+   @Inject private TransactionOriginatorChecker transactionOriginatorChecker;
+
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
     */
    private volatile int minTxTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private volatile int currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
-   protected Configuration configuration;
-   protected TransactionCoordinator txCoordinator;
-   private TransactionFactory txFactory;
-   protected RpcManager rpcManager;
-   protected CommandsFactory commandsFactory;
-   private ClusteringDependentLogic clusteringLogic;
-   private CacheNotifier notifier;
-   private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
+
    private CompletedTransactionsInfo completedTransactionsInfo;
    private String cacheName;
-   private TimeService timeService;
-   private CacheManagerNotifier cacheManagerNotifier;
-   protected PartitionHandlingManager partitionHandlingManager;
-   private ScheduledExecutorService timeoutExecutor;
 
    private boolean isPessimisticLocking;
    private boolean isTotalOrder;
@@ -115,37 +121,11 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private Lock minTopologyRecalculationLock;
    protected boolean clustered = false;
    protected volatile boolean running = false;
-   private TransactionOriginatorChecker transactionOriginatorChecker;
-
-   @Inject
-   public void initialize(RpcManager rpcManager, Configuration configuration, CacheNotifier notifier,
-                          TransactionFactory gtf, TransactionCoordinator txCoordinator,
-                          TransactionSynchronizationRegistry transactionSynchronizationRegistry,
-                          CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic,
-                          Cache cache, TimeService timeService, CacheManagerNotifier cacheManagerNotifier,
-                          PartitionHandlingManager partitionHandlingManager,
-                          @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-                          TransactionOriginatorChecker transactionOriginatorChecker) {
-      this.rpcManager = rpcManager;
-      this.configuration = configuration;
-      this.notifier = notifier;
-      this.txFactory = gtf;
-      this.txCoordinator = txCoordinator;
-      this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
-      this.commandsFactory = commandsFactory;
-      this.clusteringLogic = clusteringDependentLogic;
-      this.cacheManagerNotifier = cacheManagerNotifier;
-      this.cacheName = cache.getName();
-      this.timeService = timeService;
-      this.partitionHandlingManager = partitionHandlingManager;
-      this.timeoutExecutor = timeoutExecutor;
-      this.transactionOriginatorChecker = transactionOriginatorChecker;
-
-      this.clustered = configuration.clustering().cacheMode().isClustered();
-   }
 
    @Start(priority = 9) // Start before cache loader manager
    public void start() {
+      this.cacheName = cache.getName();
+      this.clustered = configuration.clustering().cacheMode().isClustered();
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
 

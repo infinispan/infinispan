@@ -12,6 +12,7 @@ import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.test.TestingUtil;
 
 /**
  * A factory for internal entries for the test suite
@@ -21,7 +22,7 @@ public class TestInternalCacheEntryFactory {
    private static final InternalEntryFactory FACTORY = new InternalEntryFactoryImpl();
 
    static {
-      ((InternalEntryFactoryImpl) FACTORY).injectTimeService(TIME_SERVICE);
+      TestingUtil.inject(FACTORY, TIME_SERVICE);
    }
 
    public static InternalCacheEntry create(Object key, Object value) {

@@ -18,19 +18,11 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.util.concurrent.CompletableFutures;
 
 public class OrderedUpdatesManagerImpl implements OrderedUpdatesManager {
-   private DataContainer<Object, Object> dataContainer;
-   private DistributionManager distributionManager;
-   private PersistenceManager persistenceManager;
+   @Inject private DataContainer<Object, Object> dataContainer;
+   @Inject private DistributionManager distributionManager;
+   @Inject private PersistenceManager persistenceManager;
 
    private ConcurrentHashMap<Object, CompletableFuture<?>> locks = new ConcurrentHashMap<>();
-
-   @Inject
-   public void inject(DataContainer dataContainer, DistributionManager distributionManager,
-                      PersistenceManager persistenceManager) {
-      this.dataContainer = dataContainer;
-      this.distributionManager = distributionManager;
-      this.persistenceManager = persistenceManager;
-   }
 
    @Override
    public CompletableFuture<?> waitFuture(Object key) {

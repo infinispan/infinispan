@@ -89,20 +89,21 @@ import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
  * @since 9.0
  */
 public class EntryWrappingInterceptor extends DDAsyncInterceptor {
-   private EntryFactory entryFactory;
-   private DataContainer<Object, Object> dataContainer;
-   protected ClusteringDependentLogic cdl;
-   private VersionGenerator versionGenerator;
-   protected DistributionManager distributionManager;
+   @Inject private EntryFactory entryFactory;
+   @Inject private DataContainer<Object, Object> dataContainer;
+   @Inject protected ClusteringDependentLogic cdl;
+   @Inject private VersionGenerator versionGenerator;
+   @Inject protected DistributionManager distributionManager;
+   @Inject private StateConsumer stateConsumer;       // optional
+   @Inject private StateTransferLock stateTransferLock;
+   @Inject private XSiteStateConsumer xSiteStateConsumer;
+   @Inject private GroupManager groupManager;
+   @Inject private CacheNotifier notifier;
+   @Inject private StateTransferManager stateTransferManager;
+
    private final EntryWrappingVisitor entryWrappingVisitor = new EntryWrappingVisitor();
    private boolean isInvalidation;
    private boolean isSync;
-   private StateConsumer stateConsumer;       // optional
-   private StateTransferLock stateTransferLock;
-   private XSiteStateConsumer xSiteStateConsumer;
-   private GroupManager groupManager;
-   private CacheNotifier notifier;
-   private StateTransferManager stateTransferManager;
    private boolean useRepeatableRead;
    private boolean isVersioned;
 
@@ -142,24 +143,6 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
 
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void init(EntryFactory entryFactory, DataContainer<Object, Object> dataContainer, ClusteringDependentLogic cdl,
-                    StateConsumer stateConsumer, StateTransferLock stateTransferLock,
-                    XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager, CacheNotifier notifier,
-                    StateTransferManager stateTransferManager, VersionGenerator versionGenerator, DistributionManager distributionManager) {
-      this.entryFactory = entryFactory;
-      this.dataContainer = dataContainer;
-      this.cdl = cdl;
-      this.stateConsumer = stateConsumer;
-      this.stateTransferLock = stateTransferLock;
-      this.xSiteStateConsumer = xSiteStateConsumer;
-      this.groupManager = groupManager;
-      this.notifier = notifier;
-      this.stateTransferManager = stateTransferManager;
-      this.versionGenerator = versionGenerator;
-      this.distributionManager = distributionManager;
    }
 
    @Start

@@ -25,8 +25,8 @@ public class ManageableComponentMetadata extends ComponentMetadata {
    private Set<JmxAttributeMetadata> attributeMetadata;
    private Set<JmxOperationMetadata> operationMetadata;
 
-   public ManageableComponentMetadata(Class<?> component, List<Method> injectMethods, List<Method> startMethods, List<Method> postStartMethods, List<Method> stopMethods, boolean global, boolean survivesRestarts, List<Field> managedAttributeFields, List<Method> managedAttributeMethods, List<Method> managedOperationMethods, MBean mbean) {
-      super(component, injectMethods, startMethods, postStartMethods, stopMethods, global, survivesRestarts);
+   public ManageableComponentMetadata(Class<?> component, List<Field> injectFields, List<Method> injectMethods, List<Method> startMethods, List<Method> postStartMethods, List<Method> stopMethods, boolean global, boolean survivesRestarts, List<Field> managedAttributeFields, List<Method> managedAttributeMethods, List<Method> managedOperationMethods, MBean mbean) {
+      super(component, injectFields, injectMethods, startMethods, postStartMethods, stopMethods, global, survivesRestarts);
       if ((managedAttributeFields != null && !managedAttributeFields.isEmpty()) || (managedAttributeMethods != null && !managedAttributeMethods.isEmpty())) {
          attributeMetadata =  new HashSet<JmxAttributeMetadata>((managedAttributeFields == null ? 0 : managedAttributeFields.size()) + (managedAttributeMethods == null ? 0 : managedAttributeMethods.size()));
 

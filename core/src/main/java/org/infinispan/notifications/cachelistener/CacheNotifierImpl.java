@@ -188,16 +188,16 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    final List<CacheEntryListenerInvocation<K, V>> topologyChangedListeners = new CopyOnWriteArrayList<>();
    final List<CacheEntryListenerInvocation<K, V>> partitionChangedListeners = new CopyOnWriteArrayList<>();
 
-   private Cache<K, V> cache;
-   private ClusteringDependentLogic clusteringDependentLogic;
-   private TransactionManager transactionManager;
-   private DistributedExecutorService distExecutorService;
-   private Configuration config;
-   private DistributionManager distributionManager;
-   private InternalEntryFactory entryFactory;
-   private ClusterEventManager<K, V> eventManager;
-   private ComponentRegistry componentRegistry;
+   @Inject private Cache<K, V> cache;
+   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private TransactionManager transactionManager;
+   @Inject private Configuration config;
+   @Inject private DistributionManager distributionManager;
+   @Inject private InternalEntryFactory entryFactory;
+   @Inject private ClusterEventManager<K, V> eventManager;
+   @Inject private ComponentRegistry componentRegistry;
 
+   private DistributedExecutorService distExecutorService;
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<>();
 
    private final Encoder defaultEncoder = IdentityEncoder.INSTANCE;
@@ -233,21 +233,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       listenersMap.put(DataRehashed.class, dataRehashedListeners);
       listenersMap.put(TopologyChanged.class, topologyChangedListeners);
       listenersMap.put(PartitionStatusChanged.class, partitionChangedListeners);
-   }
-
-   @Inject
-   void injectDependencies(Cache<K, V> cache, ClusteringDependentLogic clusteringDependentLogic,
-                           TransactionManager transactionManager, Configuration config,
-                           DistributionManager distributionManager, InternalEntryFactory entryFactory,
-                           ClusterEventManager<K, V> eventManager, ComponentRegistry componentRegistry) {
-      this.cache = cache;
-      this.clusteringDependentLogic = clusteringDependentLogic;
-      this.transactionManager = transactionManager;
-      this.config = config;
-      this.distributionManager = distributionManager;
-      this.entryFactory = entryFactory;
-      this.eventManager = eventManager;
-      this.componentRegistry = componentRegistry;
    }
 
    @Override

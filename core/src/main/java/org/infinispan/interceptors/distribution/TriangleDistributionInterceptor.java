@@ -84,23 +84,15 @@ public class TriangleDistributionInterceptor extends NonTxDistributionIntercepto
 
    private static final Log log = LogFactory.getLog(TriangleDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
-   private CommandAckCollector commandAckCollector;
-   private CommandsFactory commandsFactory;
-   private TriangleOrderManager triangleOrderManager;
+   @Inject private CommandAckCollector commandAckCollector;
+   @Inject private CommandsFactory commandsFactory;
+   @Inject private TriangleOrderManager triangleOrderManager;
    private Address localAddress;
 
    private static Map<Object, Object> mergeMaps(ValidResponse response, Map<Object, Object> resultMap) {
       //noinspection unchecked
       Map<Object, Object> remoteMap = (Map<Object, Object>) response.getResponseValue();
       return InfinispanCollections.mergeMaps(resultMap, remoteMap);
-   }
-
-   @Inject
-   public void inject(CommandAckCollector commandAckCollector, CommandsFactory commandsFactory,
-         TriangleOrderManager triangleOrderManager) {
-      this.commandAckCollector = commandAckCollector;
-      this.commandsFactory = commandsFactory;
-      this.triangleOrderManager = triangleOrderManager;
    }
 
    @Start

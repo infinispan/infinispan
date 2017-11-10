@@ -16,12 +16,7 @@ import org.infinispan.notifications.cachelistener.cluster.impl.BatchingClusterEv
 @DefaultFactoryFor(classes = ClusterEventManager.class)
 public class ClusterEventManagerFactory extends AbstractNamedCacheComponentFactory implements
          AutoInstantiableFactory {
-   public Cache<?, ?> cache;
-
-   @Inject
-   public void injectCache(Cache<?, ?> cache) {
-      this.cache = cache;
-   }
+   @Inject public Cache<?, ?> cache;
 
    @Override
    @SuppressWarnings("unchecked")

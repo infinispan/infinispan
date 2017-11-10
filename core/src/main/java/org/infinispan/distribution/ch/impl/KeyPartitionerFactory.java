@@ -20,12 +20,7 @@ import org.infinispan.factories.annotations.Inject;
 @DefaultFactoryFor(classes = KeyPartitioner.class)
 public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
       implements AutoInstantiableFactory {
-   private GroupManager groupManager;
-
-   @Inject
-   public void inject(GroupManager groupManager) {
-      this.groupManager = groupManager;
-   }
+   @Inject private GroupManager groupManager;
 
    @Override
    public <T> T construct(Class<T> componentType) {

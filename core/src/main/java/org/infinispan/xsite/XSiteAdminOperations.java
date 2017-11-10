@@ -39,21 +39,11 @@ public class XSiteAdminOperations {
    public static final String OFFLINE = "offline";
    public static final String SUCCESS = "ok";
    private static Log log = LogFactory.getLog(XSiteAdminOperations.class);
-   private RpcManager rpcManager;
-   private Cache cache;
 
-   private volatile BackupSender backupSender;
-   private XSiteStateTransferManager stateTransferManager;
-
-   @Inject
-   public void init(RpcManager rpcManager, BackupSender backupSender, Cache cache,
-                    XSiteStateTransferManager stateTransferManager) {
-      this.backupSender = backupSender;
-      this.rpcManager = rpcManager;
-      this.backupSender = backupSender;
-      this.cache = cache;
-      this.stateTransferManager = stateTransferManager;
-   }
+   @Inject private RpcManager rpcManager;
+   @Inject private Cache cache;
+   @Inject private volatile BackupSender backupSender;
+   @Inject private XSiteStateTransferManager stateTransferManager;
 
    public Map<String, SiteStatus> clusterStatus()  {
       Map<String, Boolean> localNodeStatus = backupSender.status();

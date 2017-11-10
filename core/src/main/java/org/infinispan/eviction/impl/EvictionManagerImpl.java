@@ -16,17 +16,9 @@ import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
-   // components to be injected
-   private CacheNotifier<K, V> cacheNotifier;
-   private AsyncInterceptorChain interceptorChain;
-   private Configuration cfg;
-
-   @Inject
-   public void initialize(CacheNotifier<K, V> cacheNotifier, Configuration cfg,  AsyncInterceptorChain chain) {
-      this.cacheNotifier = cacheNotifier;
-      this.cfg = cfg;
-      this.interceptorChain = chain;
-   }
+   @Inject private CacheNotifier<K, V> cacheNotifier;
+   @Inject private AsyncInterceptorChain interceptorChain;
+   @Inject private Configuration cfg;
 
    @Override
    public void onEntryEviction(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted) {

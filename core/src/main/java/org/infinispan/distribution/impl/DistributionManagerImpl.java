@@ -42,25 +42,13 @@ public class DistributionManagerImpl implements DistributionManager {
    private static final Log log = LogFactory.getLog(DistributionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   // Injected components
-   private Transport transport;
-   private KeyPartitioner keyPartitioner;
+   @Inject private Transport transport;
+   @Inject private KeyPartitioner keyPartitioner;
+   @Inject private Configuration configuration;
+
    private CacheMode cacheMode;
 
    private volatile LocalizedCacheTopology extendedTopology;
-
-   /**
-    * Default constructor
-    */
-   public DistributionManagerImpl() {
-   }
-
-   @Inject
-   public void init(Transport transport, Configuration configuration, KeyPartitioner keyPartitioner) {
-      this.transport = transport;
-      this.keyPartitioner = keyPartitioner;
-      this.cacheMode = configuration.clustering().cacheMode();
-   }
 
    // Start before RpcManagerImpl
    @Start(priority = 8)
@@ -68,6 +56,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private void start() throws Exception {
       if (trace) log.tracef("starting distribution manager on %s", getAddress());
 
+      cacheMode = configuration.clustering().cacheMode();
       // We need an extended topology for preload, before the start of StateTransferManagerImpl
       Address localAddress = transport == null ? LocalModeAddress.INSTANCE : transport.getAddress();
       extendedTopology = LocalizedCacheTopology.makeSingletonTopology(cacheMode, localAddress);

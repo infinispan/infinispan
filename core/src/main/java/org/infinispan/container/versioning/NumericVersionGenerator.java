@@ -40,13 +40,9 @@ public class NumericVersionGenerator implements VersionGenerator {
    final AtomicLong versionPrefix = new AtomicLong();
    private static final NumericVersion NON_EXISTING = new NumericVersion(0);
 
-   private Cache<?, ?> cache;
-   private boolean isClustered;
+   @Inject private Cache<?, ?> cache;
 
-   @Inject
-   public void init(Cache<?, ?> cache) {
-      this.cache = cache;
-   }
+   private boolean isClustered;
 
    @Start(priority = 11) // after Transport
    public void start() {

@@ -11,13 +11,7 @@ import org.infinispan.metadata.InternalMetadata;
  */
 public class MarshalledEntryFactoryImpl implements MarshalledEntryFactory {
 
-   private StreamingMarshaller marshaller;
-
-
-   @Inject
-   public void init(StreamingMarshaller marshaller) {
-      this.marshaller = marshaller;
-   }
+   @Inject private StreamingMarshaller marshaller;
 
    public MarshalledEntryFactoryImpl() {
    }

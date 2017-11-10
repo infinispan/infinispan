@@ -50,9 +50,10 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    private static final Log log = LogFactory.getLog(GlobalInboundInvocationHandler.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   @Inject @ComponentName(REMOTE_COMMAND_EXECUTOR)
    private ExecutorService remoteCommandsExecutor;
-   private BackupReceiverRepository backupReceiverRepository;
-   private GlobalComponentRegistry globalComponentRegistry;
+   @Inject private BackupReceiverRepository backupReceiverRepository;
+   @Inject private GlobalComponentRegistry globalComponentRegistry;
 
    private static Response shuttingDownResponse() {
       return CacheNotFoundResponse.INSTANCE;
@@ -60,15 +61,6 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
 
    private static ExceptionResponse exceptionHandlingCommand(Throwable throwable) {
       return new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
-   }
-
-   @Inject
-   public void injectDependencies(@ComponentName(REMOTE_COMMAND_EXECUTOR) ExecutorService remoteCommandsExecutor,
-                                  GlobalComponentRegistry globalComponentRegistry,
-                                  BackupReceiverRepository backupReceiverRepository) {
-      this.remoteCommandsExecutor = remoteCommandsExecutor;
-      this.globalComponentRegistry = globalComponentRegistry;
-      this.backupReceiverRepository = backupReceiverRepository;
    }
 
    @Override

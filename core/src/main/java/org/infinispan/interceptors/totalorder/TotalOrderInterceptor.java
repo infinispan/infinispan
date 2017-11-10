@@ -38,21 +38,12 @@ public class TotalOrderInterceptor extends DDAsyncInterceptor {
 
    private static final Log log = LogFactory.getLog(TotalOrderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
-   private TransactionTable transactionTable;
-   private TotalOrderManager totalOrderManager;
-   private ClusteringDependentLogic clusteringDependentLogic;
-   private BlockingTaskAwareExecutorService executorService;
 
-   @Inject
-   public void inject(TransactionTable transactionTable, TotalOrderManager totalOrderManager,
-                      ClusteringDependentLogic clusteringDependentLogic,
-                      @ComponentName(value = KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
-                      BlockingTaskAwareExecutorService executorService) {
-      this.transactionTable = transactionTable;
-      this.totalOrderManager = totalOrderManager;
-      this.clusteringDependentLogic = clusteringDependentLogic;
-      this.executorService = executorService;
-   }
+   @Inject private TransactionTable transactionTable;
+   @Inject private TotalOrderManager totalOrderManager;
+   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject @ComponentName(value = KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
+   private BlockingTaskAwareExecutorService executorService;
 
    @Override
    public final Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)

@@ -104,36 +104,39 @@ public class StateConsumerImpl implements StateConsumer {
                                                                       SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK,
                                                                       SKIP_XSITE_BACKUP);
 
-   protected Cache cache;
-   protected StateTransferManager stateTransferManager;
-   protected LocalTopologyManager localTopologyManager;
-   protected String cacheName;
-   protected Configuration configuration;
-   protected RpcManager rpcManager;
-   protected TransactionManager transactionManager;   // optional
-   protected CommandsFactory commandsFactory;
-   protected TransactionTable transactionTable;       // optional
-   protected DataContainer<Object, Object> dataContainer;
-   protected PersistenceManager persistenceManager;
-   protected AsyncInterceptorChain interceptorChain;
-   protected InvocationContextFactory icf;
-   protected StateTransferLock stateTransferLock;
-   protected CacheNotifier cacheNotifier;
-   protected TotalOrderManager totalOrderManager;
+   @Inject protected Cache cache;
+   @Inject protected StateTransferManager stateTransferManager;
+   @Inject protected LocalTopologyManager localTopologyManager;
+   @Inject protected Configuration configuration;
+   @Inject protected RpcManager rpcManager;
+   @Inject protected TransactionManager transactionManager;   // optional
+   @Inject protected CommandsFactory commandsFactory;
+   @Inject protected TransactionTable transactionTable;       // optional
+   @Inject protected DataContainer<Object, Object> dataContainer;
+   @Inject protected PersistenceManager persistenceManager;
+   @Inject protected AsyncInterceptorChain interceptorChain;
+   @Inject protected InvocationContextFactory icf;
+   @Inject protected StateTransferLock stateTransferLock;
+   @Inject protected CacheNotifier cacheNotifier;
+   @Inject protected TotalOrderManager totalOrderManager;
+   @Inject @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
    protected BlockingTaskAwareExecutorService remoteCommandsExecutor;
+   @Inject protected CommitManager commitManager;
+   @Inject @ComponentName(STATE_TRANSFER_EXECUTOR)
+   protected ExecutorService stateTransferExecutor;
+   @Inject protected CommandAckCollector commandAckCollector;
+   @Inject protected TriangleOrderManager triangleOrderManager;
+   @Inject protected DistributionManager distributionManager;
+   @Inject protected KeyPartitioner keyPartitioner;
+   @Inject private InternalConflictManager conflictManager;
+
+   protected String cacheName;
    protected long timeout;
    protected boolean isFetchEnabled;
    protected boolean isTransactional;
    protected boolean isInvalidationMode;
    protected boolean isTotalOrder;
    protected volatile KeyInvalidationListener keyInvalidationListener; //for test purpose only!
-   protected CommitManager commitManager;
-   protected ExecutorService stateTransferExecutor;
-   protected CommandAckCollector commandAckCollector;
-   protected TriangleOrderManager triangleOrderManager;
-   protected DistributionManager distributionManager;
-   protected KeyPartitioner keyPartitioner;
-   private InternalConflictManager conflictManager;
 
    protected volatile CacheTopology cacheTopology;
 
@@ -191,63 +194,6 @@ public class StateConsumerImpl implements StateConsumer {
    public void stopApplyingState(int topologyId) {
       if (trace) log.tracef("Stop keeping track of changed keys for state transfer in topology %d", topologyId);
       commitManager.stopTrack(PUT_FOR_STATE_TRANSFER);
-   }
-
-   @Inject
-   public void init(Cache cache,
-                    @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService stateTransferExecutor,
-                    StateTransferManager stateTransferManager,
-                    LocalTopologyManager localTopologyManager,
-                    AsyncInterceptorChain interceptorChain,
-                    InvocationContextFactory icf,
-                    Configuration configuration,
-                    RpcManager rpcManager,
-                    TransactionManager transactionManager,
-                    CommandsFactory commandsFactory,
-                    PersistenceManager persistenceManager,
-                    DataContainer<Object, Object> dataContainer,
-                    TransactionTable transactionTable,
-                    StateTransferLock stateTransferLock,
-                    CacheNotifier cacheNotifier,
-                    TotalOrderManager totalOrderManager,
-                    @ComponentName(
-                          KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
-                    CommitManager commitManager,
-                    CommandAckCollector commandAckCollector,
-                    TriangleOrderManager triangleOrderManager,
-                    DistributionManager distributionManager, KeyPartitioner keyPartitioner,
-                    InternalConflictManager conflictManager) {
-      this.cache = cache;
-      this.cacheName = cache.getName();
-      this.stateTransferExecutor = stateTransferExecutor;
-      this.stateTransferManager = stateTransferManager;
-      this.localTopologyManager = localTopologyManager;
-      this.interceptorChain = interceptorChain;
-      this.icf = icf;
-      this.configuration = configuration;
-      this.rpcManager = rpcManager;
-      this.transactionManager = transactionManager;
-      this.commandsFactory = commandsFactory;
-      this.persistenceManager = persistenceManager;
-      this.dataContainer = dataContainer;
-      this.transactionTable = transactionTable;
-      this.stateTransferLock = stateTransferLock;
-      this.cacheNotifier = cacheNotifier;
-      this.totalOrderManager = totalOrderManager;
-      this.remoteCommandsExecutor = remoteCommandsExecutor;
-      this.commitManager = commitManager;
-      this.commandAckCollector = commandAckCollector;
-      this.triangleOrderManager = triangleOrderManager;
-      this.distributionManager = distributionManager;
-      this.keyPartitioner = keyPartitioner;
-      this.conflictManager = conflictManager;
-
-      isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
-
-      isTransactional = configuration.transaction().transactionMode().isTransactional();
-      isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-
-      timeout = configuration.clustering().stateTransfer().timeout();
    }
 
    public boolean hasActiveTransfers() {
@@ -743,6 +689,12 @@ public class StateConsumerImpl implements StateConsumer {
    // Must run after the PersistenceManager
    @Start(priority = 20)
    public void start() {
+      cacheName = cache.getName();
+      isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
+      isTransactional = configuration.transaction().transactionMode().isTransactional();
+      isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+      timeout = configuration.clustering().stateTransfer().timeout();
+
       CacheMode mode = configuration.clustering().cacheMode();
       isFetchEnabled = mode.needsStateTransfer() &&
               (configuration.clustering().stateTransfer().fetchInMemoryState() || configuration.persistence().fetchPersistentState());

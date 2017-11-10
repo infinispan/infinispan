@@ -21,20 +21,8 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 public abstract class AbstractComponentFactory {
-   protected GlobalComponentRegistry globalComponentRegistry;
-   protected GlobalConfiguration globalConfiguration;
-
-   /**
-    * Constructs a new ComponentFactory.
-    */
-   public AbstractComponentFactory() {
-   }
-
-   @Inject
-   private void injectGlobalDependencies(GlobalConfiguration globalConfiguration, GlobalComponentRegistry globalComponentRegistry) {
-      this.globalComponentRegistry = globalComponentRegistry;
-      this.globalConfiguration = globalConfiguration;
-   }
+   @Inject protected GlobalComponentRegistry globalComponentRegistry;
+   @Inject protected GlobalConfiguration globalConfiguration;
 
    /**
     * Constructs a component.

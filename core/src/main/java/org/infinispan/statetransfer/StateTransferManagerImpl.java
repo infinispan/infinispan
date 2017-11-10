@@ -56,52 +56,28 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private StateConsumer stateConsumer;
-   private StateProvider stateProvider;
-   private PartitionHandlingManager partitionHandlingManager;
-   private DistributionManager distributionManager;
+   @Inject private Cache<?, ?> cache;
+   @Inject private StateConsumer stateConsumer;
+   @Inject private StateProvider stateProvider;
+   @Inject private PartitionHandlingManager partitionHandlingManager;
+   @Inject private DistributionManager distributionManager;
+   @Inject private CacheNotifier cacheNotifier;
+   @Inject private Configuration configuration;
+   @Inject private GlobalConfiguration globalConfiguration;
+   @Inject private RpcManager rpcManager;
+   @Inject private LocalTopologyManager localTopologyManager;
+   @Inject private KeyPartitioner keyPartitioner;
+   @Inject private GlobalStateManager globalStateManager;
+
    private String cacheName;
-   private CacheNotifier cacheNotifier;
-   private Configuration configuration;
-   private GlobalConfiguration globalConfiguration;
-   private RpcManager rpcManager;
-   private LocalTopologyManager localTopologyManager;
    private Optional<Integer> persistentStateChecksum;
 
    private final CountDownLatch initialStateTransferComplete = new CountDownLatch(1);
    // The first topology in which the local node was a member. Any command with a lower
    // topology id will be ignored.
    private volatile int firstTopologyAsMember = Integer.MAX_VALUE;
-   private KeyPartitioner keyPartitioner;
 
    public StateTransferManagerImpl() {
-   }
-
-   @Inject
-   public void init(StateConsumer stateConsumer,
-                    StateProvider stateProvider,
-                    Cache cache,
-                    CacheNotifier cacheNotifier,
-                    Configuration configuration,
-                    GlobalConfiguration globalConfiguration,
-                    RpcManager rpcManager,
-                    KeyPartitioner keyPartitioner,
-                    LocalTopologyManager localTopologyManager,
-                    PartitionHandlingManager partitionHandlingManager,
-                    GlobalStateManager globalStateManager,
-                    DistributionManager distributionManager) {
-      this.stateConsumer = stateConsumer;
-      this.stateProvider = stateProvider;
-      this.cacheName = cache.getName();
-      this.cacheNotifier = cacheNotifier;
-      this.configuration = configuration;
-      this.globalConfiguration = globalConfiguration;
-      this.rpcManager = rpcManager;
-      this.keyPartitioner = keyPartitioner;
-      this.localTopologyManager = localTopologyManager;
-      this.partitionHandlingManager = partitionHandlingManager;
-      this.distributionManager = distributionManager;
-      persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(ScopedPersistentState::getChecksum);
    }
 
    // needs to be AFTER the DistributionManager and *after* the cache loader manager (if any) inits and preloads
@@ -110,6 +86,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
    public void start() throws Exception {
       if (trace) {
          log.tracef("Starting StateTransferManager of cache %s on node %s", cacheName, rpcManager.getAddress());
+      }
+
+      this.cacheName = cache.getName();
+      if (globalStateManager != null) {
+         persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(ScopedPersistentState::getChecksum);
+      } else {
+         persistentStateChecksum = Optional.empty();
       }
 
       CacheJoinInfo joinInfo = new CacheJoinInfo(pickConsistentHashFactory(),

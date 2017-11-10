@@ -73,30 +73,23 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
+   private static final Log log = LogFactory.getLog(CacheWriterInterceptor.class);
    private final boolean trace = getLog().isTraceEnabled();
+
+   @Inject protected PersistenceManager persistenceManager;
+   @Inject private InternalEntryFactory entryFactory;
+   @Inject private TransactionManager transactionManager;
+   @Inject private StreamingMarshaller marshaller;
+
    PersistenceConfiguration loaderConfig = null;
    final AtomicLong cacheStores = new AtomicLong(0);
-   protected PersistenceManager persistenceManager;
-   private InternalEntryFactory entryFactory;
-   private TransactionManager transactionManager;
-   private StreamingMarshaller marshaller;
 
    protected InvocationSuccessAction handlePutMapCommandReturn = this::handlePutMapCommandReturn;
-
-   private static final Log log = LogFactory.getLog(CacheWriterInterceptor.class);
 
    protected Log getLog() {
       return log;
    }
 
-   @Inject
-   protected void init(PersistenceManager pm, InternalEntryFactory entryFactory, TransactionManager transactionManager,
-                       StreamingMarshaller marshaller) {
-      this.persistenceManager = pm;
-      this.entryFactory = entryFactory;
-      this.transactionManager = transactionManager;
-      this.marshaller = marshaller;
-   }
 
    @Start(priority = 15)
    protected void start() {

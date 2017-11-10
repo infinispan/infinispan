@@ -39,16 +39,11 @@ import org.infinispan.util.logging.LogFactory;
 public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(PartitionHandlingInterceptor.class);
 
-   private PartitionHandlingManager partitionHandlingManager;
+   @Inject private PartitionHandlingManager partitionHandlingManager;
 
    private InvocationFinallyAction handleDataReadReturn = this::handleDataReadReturn;
    private InvocationFinallyAction handleGetAllCommandReturn = this::handleGetAllCommandReturn;
    private InvocationSuccessAction postTxCommandCheck = this::postTxCommandCheck;
-
-   @Inject
-   void init(PartitionHandlingManager partitionHandlingManager) {
-      this.partitionHandlingManager = partitionHandlingManager;
-   }
 
    private boolean performPartitionCheck(InvocationContext ctx, FlagAffectedCommand command) {
       // We always perform partition check if this is a remote command

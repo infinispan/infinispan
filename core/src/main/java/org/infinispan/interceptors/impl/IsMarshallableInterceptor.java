@@ -31,13 +31,8 @@ import org.infinispan.interceptors.DDAsyncInterceptor;
  */
 public class IsMarshallableInterceptor extends DDAsyncInterceptor {
 
-   private StreamingMarshaller marshaller;
+   @Inject private StreamingMarshaller marshaller;
    private boolean usingAsyncStore;
-
-   @Inject
-   protected void injectMarshaller(StreamingMarshaller marshaller) {
-      this.marshaller = marshaller;
-   }
 
    @Start
    protected void start() {

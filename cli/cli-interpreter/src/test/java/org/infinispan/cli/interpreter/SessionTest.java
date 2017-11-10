@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -12,7 +13,7 @@ public class SessionTest extends SingleCacheManagerTest {
 
    public void testSessionExpiration() throws Exception {
       Interpreter interpreter = new Interpreter();
-      interpreter.initialize(this.cacheManager, TIME_SERVICE);
+      TestingUtil.inject(interpreter, cacheManager, TIME_SERVICE);
       interpreter.setSessionTimeout(500);
       interpreter.setSessionReaperWakeupInterval(1000);
       interpreter.start();

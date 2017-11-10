@@ -16,15 +16,9 @@ import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
  */
 public class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshaller {
 
-   protected EmbeddedCacheManager cacheManager;
+   @Inject protected EmbeddedCacheManager cacheManager;
 
    public CompatibilityProtoStreamMarshaller() {
-   }
-
-   @Inject
-   @SuppressWarnings("unused")
-   protected void injectDependencies(EmbeddedCacheManager cacheManager) {
-      this.cacheManager = cacheManager;
    }
 
    @Override

@@ -17,7 +17,6 @@ import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.PrimaryAckCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.BiasAcquisition;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -56,34 +55,22 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
    private static final Log log = LogFactory.getLog(TrianglePerCacheInboundInvocationHandler.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private LockManager lockManager;
-   private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private LockManager lockManager;
+   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private TriangleOrderManager triangleOrderManager;
+   @Inject private RpcManager rpcManager;
+   @Inject private CommandAckCollector commandAckCollector;
+   @Inject private CommandsFactory commandsFactory;
+
    private long lockTimeout;
-   private TriangleOrderManager triangleOrderManager;
-   private RpcManager rpcManager;
-   private CommandAckCollector commandAckCollector;
-   private CommandsFactory commandsFactory;
    private Address localAddress;
    private boolean indirectRpc;
 
-   @Inject
-   public void inject(LockManager lockManager,
-         ClusteringDependentLogic clusteringDependentLogic,
-         Configuration configuration, TriangleOrderManager anotherTriangleOrderManager, RpcManager rpcManager,
-         CommandAckCollector commandAckCollector, CommandsFactory commandsFactory) {
-      this.lockManager = lockManager;
-      this.clusteringDependentLogic = clusteringDependentLogic;
-      lockTimeout = configuration.locking().lockAcquisitionTimeout();
-      this.triangleOrderManager = anotherTriangleOrderManager;
-      this.rpcManager = rpcManager;
-      this.commandAckCollector = commandAckCollector;
-      this.commandsFactory = commandsFactory;
-      this.indirectRpc = configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER;
-   }
-
    @Start
    public void start() {
+      lockTimeout = configuration.locking().lockAcquisitionTimeout();
       localAddress = rpcManager.getAddress();
+      this.indirectRpc = configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER;
    }
 
    @Override

@@ -34,18 +34,12 @@ import org.infinispan.util.logging.Log;
 public abstract class BaseRpcInterceptor extends DDAsyncInterceptor {
    protected final boolean trace = getLog().isTraceEnabled();
 
-   protected RpcManager rpcManager;
-   protected ComponentRegistry componentRegistry;
+   @Inject protected RpcManager rpcManager;
+   @Inject protected ComponentRegistry componentRegistry;
 
    protected boolean defaultSynchronous;
 
    protected abstract Log getLog();
-
-   @Inject
-   public void inject(RpcManager rpcManager, ComponentRegistry componentRegistry) {
-      this.rpcManager = rpcManager;
-      this.componentRegistry = componentRegistry;
-   }
 
    @Start
    public void init() {

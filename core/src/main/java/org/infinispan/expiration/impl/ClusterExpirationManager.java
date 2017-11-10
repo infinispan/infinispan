@@ -18,12 +18,12 @@ import javax.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.util.logging.Log;
@@ -50,19 +50,17 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
    private static final Log log = LogFactory.getLog(ClusterExpirationManager.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   @Inject @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR)
    private ExecutorService asyncExecutor;
-   private AdvancedCache<K, V> cache;
+   @Inject private AdvancedCache<K, V> cache;
    private boolean needTransaction;
 
    public ExecutorService getAsyncExecutor() {
       return asyncExecutor;
    }
 
-   @Inject
-   public void inject(AdvancedCache<K, V> cache, Configuration configuration,
-           @ComponentName(KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR) ExecutorService asyncExecutor) {
-      this.cache = cache;
-      this.asyncExecutor = asyncExecutor;
+   @Start
+   public void start() {
       needTransaction = configuration.transaction().transactionMode().isTransactional();
    }
 

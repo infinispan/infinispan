@@ -112,13 +112,13 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    private final static Log log = LogFactory.getLog(ScatteredDistributionInterceptor.class);
    private final static boolean trace = log.isTraceEnabled();
 
-   protected ScatteredVersionManager<Object> svm;
-   protected GroupManager groupManager;
-   protected TimeService timeService;
-   protected CacheNotifier cacheNotifier;
-   protected FunctionalNotifier functionalNotifier;
-   protected KeyPartitioner keyPartitioner;
-   protected DistributionManager distributionManager;
+   @Inject protected ScatteredVersionManager<Object> svm;
+   @Inject protected GroupManager groupManager;
+   @Inject protected TimeService timeService;
+   @Inject protected CacheNotifier cacheNotifier;
+   @Inject protected FunctionalNotifier functionalNotifier;
+   @Inject protected KeyPartitioner keyPartitioner;
+   @Inject protected DistributionManager distributionManager;
 
    private volatile Address cachedNextMember;
    private volatile int cachedNextMemberTopology = -1;
@@ -141,20 +141,6 @@ public class ScatteredDistributionInterceptor extends ClusteringInterceptor {
    private ReadWriteManyEntriesHelper readWriteManyEntriesHelper = new ReadWriteManyEntriesHelper(helper -> null);
    private WriteOnlyManyHelper writeOnlyManyHelper = new WriteOnlyManyHelper(helper -> null);
    private WriteOnlyManyEntriesHelper writeOnlyManyEntriesHelper = new WriteOnlyManyEntriesHelper(helper -> null);
-
-
-   @Inject
-   public void injectDependencies(GroupManager groupManager, ScatteredVersionManager svm, TimeService timeService,
-                                  CacheNotifier cacheNotifier, FunctionalNotifier functionalNotifier, KeyPartitioner keyPartitioner,
-                                  DistributionManager distributionManager) {
-      this.groupManager = groupManager;
-      this.svm = svm;
-      this.timeService = timeService;
-      this.cacheNotifier = cacheNotifier;
-      this.functionalNotifier = functionalNotifier;
-      this.keyPartitioner = keyPartitioner;
-      this.distributionManager = distributionManager;
-   }
 
    private Object handleWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       RepeatableReadEntry cacheEntry = (RepeatableReadEntry) ctx.lookupEntry(command.getKey());

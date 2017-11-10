@@ -34,12 +34,7 @@ public class ScatteredStateProviderImpl extends StateProviderImpl implements Sca
    private static final Log log = LogFactory.getLog(ScatteredStateProviderImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   protected ScatteredVersionManager svm;
-
-   @Inject
-   public void init(ScatteredVersionManager svm) {
-      this.svm = svm;
-   }
+   @Inject protected ScatteredVersionManager svm;
 
    @Override
    public void start() {

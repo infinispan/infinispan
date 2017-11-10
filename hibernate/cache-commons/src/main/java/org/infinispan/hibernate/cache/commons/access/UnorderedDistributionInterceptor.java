@@ -35,13 +35,8 @@ public class UnorderedDistributionInterceptor extends NonTxDistributionIntercept
 	private static Log log = LogFactory.getLog(UnorderedDistributionInterceptor.class);
 	private static final boolean trace = log.isTraceEnabled();
 
-	private DistributionManager distributionManager;
+	@Inject private DistributionManager distributionManager;
 	private boolean isReplicated;
-
-	@Inject
-	public void inject(DistributionManager distributionManager) {
-		this.distributionManager = distributionManager;
-	}
 
 	@Start
 	public void start() {

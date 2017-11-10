@@ -28,6 +28,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.functional.impl.FunctionalNotifier;
@@ -141,29 +142,22 @@ public interface ClusteringDependentLogic {
    Address getAddress();
 
    abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
-      protected DistributionManager distributionManager;
-      protected DataContainer<Object, Object> dataContainer;
-      protected CacheNotifier<Object, Object> notifier;
+      @Inject protected DistributionManager distributionManager;
+      @Inject protected DataContainer<Object, Object> dataContainer;
+      @Inject protected CacheNotifier<Object, Object> notifier;
+      @Inject protected CommitManager commitManager;
+      @Inject protected PersistenceManager persistenceManager;
+      @Inject protected TimeService timeService;
+      @Inject protected FunctionalNotifier<Object, Object> functionalNotifier;
+      @Inject protected Configuration configuration;
+
       protected boolean totalOrder;
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
-      protected CommitManager commitManager;
-      protected PersistenceManager persistenceManager;
-      protected TimeService timeService;
-      protected FunctionalNotifier<Object, Object> functionalNotifier;
 
-      @Inject
-      public void init(DataContainer<Object, Object> dataContainer, CacheNotifier<Object, Object> notifier, Configuration configuration,
-                       CommitManager commitManager, PersistenceManager persistenceManager, TimeService timeService,
-                       FunctionalNotifier<Object, Object> functionalNotifier, DistributionManager distributionManager) {
-         this.dataContainer = dataContainer;
-         this.notifier = notifier;
+      @Start
+      public void start() {
          this.totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-         this.distributionManager = distributionManager;
          this.keySpecificLogic = initKeySpecificLogic(totalOrder);
-         this.commitManager = commitManager;
-         this.persistenceManager = persistenceManager;
-         this.timeService = timeService;
-         this.functionalNotifier = functionalNotifier;
       }
 
       @Override
@@ -383,15 +377,10 @@ public interface ClusteringDependentLogic {
     * This logic is used in replicated mode caches.
     */
    class ReplicationLogic extends InvalidationLogic {
-      private StateTransferLock stateTransferLock;
+      @Inject private StateTransferLock stateTransferLock;
 
       private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner =
             (key) -> getCacheTopology().getDistribution(key).isPrimary();
-
-      @Inject
-      public void init(StateTransferLock stateTransferLock) {
-         this.stateTransferLock = stateTransferLock;
-      }
 
       @Override
       public Collection<Address> getOwners(Object key) {
@@ -458,18 +447,11 @@ public interface ClusteringDependentLogic {
     * This logic is used in distributed mode caches.
     */
    class DistributionLogic extends AbstractClusteringDependentLogic {
-      private Configuration configuration;
-      private StateTransferLock stateTransferLock;
+      @Inject private StateTransferLock stateTransferLock;
 
       private final WriteSkewHelper.KeySpecificLogic localNodeIsOwner = (key) -> getCacheTopology().isWriteOwner(key);
       private final WriteSkewHelper.KeySpecificLogic localNodeIsPrimaryOwner =
             (key) -> getCacheTopology().getDistribution(key).isPrimary();
-
-      @Inject
-      public void init(Configuration configuration, StateTransferLock stateTransferLock) {
-         this.configuration = configuration;
-         this.stateTransferLock = stateTransferLock;
-      }
 
       @Override
       protected void commitSingleEntry(CacheEntry entry, FlagAffectedCommand command,

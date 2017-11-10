@@ -21,14 +21,9 @@ import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    private final InvocationSuccessFunction invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
 
-   protected Configuration cacheConfiguration;
+   @Inject protected Configuration cacheConfiguration;
    private AsyncInterceptor nextInterceptor;
    private DDAsyncInterceptor nextDDInterceptor;
-
-   @Inject
-   public void inject(Configuration cacheConfiguration) {
-      this.cacheConfiguration = cacheConfiguration;
-   }
 
    /**
     * Used internally to set up the interceptor.

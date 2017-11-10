@@ -7,7 +7,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -32,15 +31,15 @@ import net.jcip.annotations.ThreadSafe;
 public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    private static final Log log = LogFactory.getLog(ExpirationManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   protected ScheduledFuture<?> expirationTask;
 
-   // components to be injected
+   @Inject @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
    protected ScheduledExecutorService executor;
-   protected Configuration configuration;
-   protected PersistenceManager persistenceManager;
-   protected DataContainer<K, V> dataContainer;
-   protected CacheNotifier<K, V> cacheNotifier;
-   protected TimeService timeService;
+   @Inject protected Configuration configuration;
+   @Inject protected PersistenceManager persistenceManager;
+   @Inject protected DataContainer<K, V> dataContainer;
+   @Inject protected CacheNotifier<K, V> cacheNotifier;
+   @Inject protected TimeService timeService;
+
    protected boolean enabled;
    protected String cacheName;
 
@@ -50,30 +49,15 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
     * key will be removed or updated.  In the latter case we don't want to send an expiration event and then a remove
     * event when we could do just the removal.
     */
-   protected ConcurrentMap<K, Object> expiring;
+   protected ConcurrentMap<K, Object> expiring = new ConcurrentHashMap<>();
+   protected ScheduledFuture<?> expirationTask;
 
-   @Inject
-   public void initialize(@ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
-         ScheduledExecutorService executor, Cache<K, V> cache, Configuration cfg, DataContainer<K, V> dataContainer,
-         PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier, TimeService timeService) {
-      initialize(executor, cache.getName(), cfg, dataContainer,
-                 persistenceManager, cacheNotifier, timeService);
-   }
-
-   void initialize(ScheduledExecutorService executor, String cacheName, Configuration cfg,
-           DataContainer<K, V> dataContainer, PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier,
-           TimeService timeService) {
+   // used only for testing
+   void initialize(ScheduledExecutorService executor, String cacheName, Configuration cfg) {
       this.executor = executor;
       this.configuration = cfg;
       this.cacheName = cacheName;
-      this.dataContainer = dataContainer;
-      this.persistenceManager = persistenceManager;
-      this.cacheNotifier = cacheNotifier;
-      this.timeService = timeService;
-
-      this.expiring = new ConcurrentHashMap<>();
    }
-
 
    @Start(priority = 55)
    // make sure this starts after the PersistenceManager

@@ -45,23 +45,18 @@ public class Interpreter {
    private static final long DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL = 60000l; // in millis
    private static final long DEFAULT_SESSION_TIMEOUT = 360000l; // in millis
 
-   private EmbeddedCacheManager cacheManager;
+   @Inject private EmbeddedCacheManager cacheManager;
+   @Inject private TimeService timeService;
+
    private ScheduledExecutorService executor;
    private long sessionReaperWakeupInterval = DEFAULT_SESSION_REAPER_WAKEUP_INTERVAL;
    private long sessionTimeout = DEFAULT_SESSION_TIMEOUT;
    private CodecRegistry codecRegistry;
-   private TimeService timeService;
 
    private final Map<String, Session> sessions = new ConcurrentHashMap<>();
    private ScheduledFuture<?> sessionReaperTask;
 
    public Interpreter() {
-   }
-
-   @Inject
-   public void initialize(final EmbeddedCacheManager cacheManager, TimeService timeService) {
-      this.cacheManager = cacheManager;
-      this.timeService = timeService;
    }
 
    @Start

@@ -156,103 +156,47 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
  * @since 4.0
  */
 public class CommandsFactoryImpl implements CommandsFactory {
-
    private static final Log log = LogFactory.getLog(CommandsFactoryImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   @Inject private DataContainer dataContainer;
+   @Inject private CacheNotifier<Object, Object> notifier;
+   @Inject private Cache<Object, Object> cache;
+   @Inject private AsyncInterceptorChain interceptorChain;
+   @Inject private DistributionManager distributionManager;
+   @Inject private InvocationContextFactory icf;
+   @Inject private TransactionTable txTable;
+   @Inject private Configuration configuration;
+   @Inject private RecoveryManager recoveryManager;
+   @Inject private StateProvider stateProvider;
+   @Inject private StateConsumer stateConsumer;
+   @Inject private LockManager lockManager;
+   @Inject private InternalEntryFactory entryFactory;
+   @Inject private StateTransferManager stateTransferManager;
+   @Inject private BackupSender backupSender;
+   @Inject private CancellationService cancellationService;
+   @Inject private XSiteStateProvider xSiteStateProvider;
+   @Inject private XSiteStateConsumer xSiteStateConsumer;
+   @Inject private XSiteStateTransferManager xSiteStateTransferManager;
+   @Inject private GroupManager groupManager;
+   @Inject private LocalStreamManager localStreamManager;
+   @Inject private IteratorHandler iteratorHandler;
+   @Inject private ClusterStreamManager clusterStreamManager;
+   @Inject private ClusteringDependentLogic clusteringDependentLogic;
+   @Inject private CommandAckCollector commandAckCollector;
+   @Inject private StateReceiver stateReceiver;
+   @Inject private ComponentRegistry componentRegistry;
+   @Inject private OrderedUpdatesManager orderedUpdatesManager;
+   @Inject private StateTransferLock stateTransferLock;
+   @Inject private StreamingMarshaller marshaller;
+   @Inject private BiasManager biasManager;
+   @Inject private RpcManager rpcManager;
+   @Inject @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS)
+   private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
-   private DataContainer dataContainer;
-   private CacheNotifier<Object, Object> notifier;
-   private Cache<Object, Object> cache;
    private ByteString cacheName;
    private boolean transactional;
    private boolean totalOrderProtocol;
-
-   private AsyncInterceptorChain interceptorChain;
-   private DistributionManager distributionManager;
-   private InvocationContextFactory icf;
-   private TransactionTable txTable;
-   private Configuration configuration;
-   private RecoveryManager recoveryManager;
-   private StateProvider stateProvider;
-   private StateConsumer stateConsumer;
-   private LockManager lockManager;
-   private InternalEntryFactory entryFactory;
-   private StateTransferManager stateTransferManager;
-   private BackupSender backupSender;
-   private CancellationService cancellationService;
-   private XSiteStateProvider xSiteStateProvider;
-   private XSiteStateConsumer xSiteStateConsumer;
-   private XSiteStateTransferManager xSiteStateTransferManager;
-   private GroupManager groupManager;
-   private LocalStreamManager localStreamManager;
-   private IteratorHandler iteratorHandler;
-   private ClusterStreamManager clusterStreamManager;
-   private ClusteringDependentLogic clusteringDependentLogic;
-   private CommandAckCollector commandAckCollector;
-   private StateReceiver stateReceiver;
-   private ComponentRegistry componentRegistry;
-   private OrderedUpdatesManager orderedUpdatesManager;
-   private StateTransferLock stateTransferLock;
-   private BiasManager biasManager;
-   private RpcManager rpcManager;
-
-   private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
-   private StreamingMarshaller marshaller;
-
-   @Inject
-   public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
-                                 AsyncInterceptorChain interceptorChain, DistributionManager distributionManager,
-                                 InvocationContextFactory icf, TransactionTable txTable, Configuration configuration,
-                                 @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
-                                 RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
-                                 LockManager lockManager, InternalEntryFactory entryFactory,
-                                 StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
-                                 XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
-                                 XSiteStateTransferManager xSiteStateTransferManager,
-                                 GroupManager groupManager,
-                                 LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 ClusteringDependentLogic clusteringDependentLogic, StreamingMarshaller marshaller,
-                                 CommandAckCollector commandAckCollector,
-                                 StateReceiver stateReceiver,
-                                 ComponentRegistry componentRegistry,
-                                 OrderedUpdatesManager orderedUpdatesManager, StateTransferLock stateTransferLock,
-                                 IteratorHandler iteratorHandler,
-                                 BiasManager biasManager, RpcManager rpcManager) {
-      this.dataContainer = container;
-      this.notifier = notifier;
-      this.cache = cache;
-      this.interceptorChain = interceptorChain;
-      this.distributionManager = distributionManager;
-      this.icf = icf;
-      this.txTable = txTable;
-      this.configuration = configuration;
-      this.moduleCommandInitializers = moduleCommandInitializers;
-      this.recoveryManager = recoveryManager;
-      this.stateProvider = stateProvider;
-      this.stateConsumer = stateConsumer;
-      this.lockManager = lockManager;
-      this.entryFactory = entryFactory;
-      this.stateTransferManager = stm;
-      this.backupSender = backupSender;
-      this.cancellationService = cancellationService;
-      this.xSiteStateConsumer = xSiteStateConsumer;
-      this.xSiteStateProvider = xSiteStateProvider;
-      this.xSiteStateTransferManager = xSiteStateTransferManager;
-      this.groupManager = groupManager;
-      this.localStreamManager = localStreamManager;
-      this.iteratorHandler = iteratorHandler;
-      this.clusterStreamManager = clusterStreamManager;
-      this.clusteringDependentLogic = clusteringDependentLogic;
-      this.marshaller = marshaller;
-      this.commandAckCollector = commandAckCollector;
-      this.stateReceiver = stateReceiver;
-      this.componentRegistry = componentRegistry;
-      this.orderedUpdatesManager = orderedUpdatesManager;
-      this.stateTransferLock = stateTransferLock;
-      this.biasManager = biasManager;
-      this.rpcManager = rpcManager;
-   }
 
    @Start(priority = 1)
    // needs to happen early on

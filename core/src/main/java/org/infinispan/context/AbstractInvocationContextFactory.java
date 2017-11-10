@@ -5,13 +5,12 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.ClearInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.remoting.transport.Address;
-
 
 /**
  * Base class for InvocationContextFactory implementations.
@@ -23,16 +22,8 @@ import org.infinispan.remoting.transport.Address;
 @Deprecated
 public abstract class AbstractInvocationContextFactory implements InvocationContextFactory {
 
-   protected Configuration config;
-   protected AsyncInterceptorChain interceptorChain;
-   protected Equivalence keyEq;
-
-   // Derived classes must call init() in their @Inject methods, to keep only one @Inject method per class.
-   public void init(Configuration config, AsyncInterceptorChain interceptorChain) {
-      this.config = config;
-      this.interceptorChain = interceptorChain;
-      keyEq = config.dataContainer().keyEquivalence();
-   }
+   @Inject protected Configuration config;
+   @Inject protected AsyncInterceptorChain interceptorChain;
 
    @Override
    public InvocationContext createRemoteInvocationContextForCommand(

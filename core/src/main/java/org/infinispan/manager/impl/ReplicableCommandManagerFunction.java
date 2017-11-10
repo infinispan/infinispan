@@ -21,7 +21,7 @@ public class ReplicableCommandManagerFunction implements ReplicableCommand {
    public static final byte COMMAND_ID = 60;
 
    private Function<? super EmbeddedCacheManager, ?> function;
-   private EmbeddedCacheManager manager;
+   @Inject private EmbeddedCacheManager manager;
 
    public ReplicableCommandManagerFunction() {
 
@@ -29,11 +29,6 @@ public class ReplicableCommandManagerFunction implements ReplicableCommand {
 
    public ReplicableCommandManagerFunction(Function<? super EmbeddedCacheManager, ?> function) {
       this.function = function;
-   }
-
-   @Inject
-   public void inject(EmbeddedCacheManager manager) {
-      this.manager = manager;
    }
 
    @Override

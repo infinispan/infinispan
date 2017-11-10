@@ -62,6 +62,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -75,6 +76,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -1771,5 +1774,52 @@ public class TestingUtil {
 
    public static <K,V> Map.Entry<K,V> createMapEntry(K key, V value) {
       return new AbstractMap.SimpleEntry<>(key, value);
+   }
+
+   /**
+    * This method sets only fields annotated with <code>@Inject</code>, it does not invoke any injecting methods.
+    * Named setters are not handled either.
+    */
+   public static void inject(Object instance, Object... components) {
+      List<Field> fields = ReflectionUtil.getAllFields(instance.getClass(), Inject.class);
+      for (Field f : fields) {
+         Object matching = null;
+         for (Object component : components) {
+            Object currentMatch = null;
+            if (component instanceof NamedComponent) {
+               NamedComponent nc = (NamedComponent) component;
+               if (!f.getType().isInstance(nc.component)) {
+                  continue;
+               }
+               ComponentName componentName = f.getAnnotation(ComponentName.class);
+               if (componentName != null && componentName.value().equals(nc.name)) {
+                  currentMatch = nc.component;
+               }
+            } else if (f.getType().isInstance(component)) {
+               currentMatch = component;
+            }
+            if (currentMatch != null) {
+               if (matching != null) {
+                  throw new IllegalArgumentException("Two components match the field " + f + ": " + matching + " and " + component);
+               }
+               ReflectionUtil.setAccessibly(instance, f, currentMatch);
+               matching = currentMatch;
+            }
+         }
+      }
+   }
+
+   public static Object named(String name, Object instance) {
+      return new NamedComponent(name, instance);
+   }
+
+   private static class NamedComponent {
+      private final String name;
+      private final Object component;
+
+      private NamedComponent(String name, Object component) {
+         this.name = name;
+         this.component = component;
+      }
    }
 }

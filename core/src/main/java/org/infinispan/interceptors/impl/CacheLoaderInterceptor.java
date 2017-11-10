@@ -84,38 +84,24 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
-   private final AtomicLong cacheLoads = new AtomicLong(0);
-   private final AtomicLong cacheMisses = new AtomicLong(0);
-
-   protected PersistenceManager persistenceManager;
-   protected CacheNotifier notifier;
-   protected EntryFactory entryFactory;
-   private TimeService timeService;
-   private InternalEntryFactory iceFactory;
-   private DataContainer<K, V> dataContainer;
-   private GroupManager groupManager;
-   private ExecutorService executorService;
-   private Cache<K, V> cache;
-   private boolean activation;
-
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   @Inject
-   protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier,
-                                     TimeService timeService, InternalEntryFactory iceFactory, DataContainer<K, V> dataContainer,
-                                     GroupManager groupManager, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
-                                     Cache<K, V> cache) {
-      this.persistenceManager = clm;
-      this.notifier = notifier;
-      this.entryFactory = entryFactory;
-      this.timeService = timeService;
-      this.iceFactory = iceFactory;
-      this.dataContainer = dataContainer;
-      this.groupManager = groupManager;
-      this.executorService = persistenceExecutor;
-      this.cache = cache;
-   }
+   private final AtomicLong cacheLoads = new AtomicLong(0);
+   private final AtomicLong cacheMisses = new AtomicLong(0);
+
+   @Inject protected PersistenceManager persistenceManager;
+   @Inject protected CacheNotifier notifier;
+   @Inject protected EntryFactory entryFactory;
+   @Inject private TimeService timeService;
+   @Inject private InternalEntryFactory iceFactory;
+   @Inject private DataContainer<K, V> dataContainer;
+   @Inject private GroupManager groupManager;
+   @Inject @ComponentName(PERSISTENCE_EXECUTOR)
+   private ExecutorService executorService;
+   @Inject private Cache<K, V> cache;
+
+   private boolean activation;
 
    @Start
    public void start() {

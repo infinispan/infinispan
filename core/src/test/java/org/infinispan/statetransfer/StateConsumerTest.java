@@ -1,5 +1,7 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -186,9 +188,11 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
-      stateConsumer.init(cache, pooledExecutorService, stateTransferManager, localTopologyManager, interceptorChain, icf, configuration, rpcManager, null,
+      TestingUtil.inject(stateConsumer, cache, TestingUtil.named(STATE_TRANSFER_EXECUTOR, pooledExecutorService),
+                         stateTransferManager, localTopologyManager, interceptorChain, icf, configuration, rpcManager, null,
                          commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
-                         totalOrderManager, remoteCommandsExecutor, new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0), null,
+                         totalOrderManager, TestingUtil.named(REMOTE_COMMAND_EXECUTOR, remoteCommandsExecutor),
+                         new CommitManager(), new CommandAckCollector(), new TriangleOrderManager(0),
                          new HashFunctionPartitioner(), conflictManager);
       stateConsumer.start();
 

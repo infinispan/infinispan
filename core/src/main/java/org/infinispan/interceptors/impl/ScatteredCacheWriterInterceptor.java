@@ -77,10 +77,11 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
 
    private static final Log log = LogFactory.getLog(DistCacheWriterInterceptor.class);
 
-   private DistributionManager dm;
-   private TimeService timeService;
+   @Inject private DistributionManager dm;
+   @Inject private TimeService timeService;
+   @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    private ScheduledExecutorService timeoutExecutor;
-   private OrderedUpdatesManager orderedUpdatesManager;
+   @Inject private OrderedUpdatesManager orderedUpdatesManager;
 
    private long lockTimeout;
 
@@ -90,16 +91,6 @@ public class ScatteredCacheWriterInterceptor extends CacheWriterInterceptor {
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Inject
-   public void inject(DistributionManager dm, TimeService timeService,
-                      @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor,
-                      OrderedUpdatesManager orderedUpdatesManager) {
-      this.dm = dm;
-      this.timeService = timeService;
-      this.timeoutExecutor = timeoutExecutor;
-      this.orderedUpdatesManager = orderedUpdatesManager;
    }
 
    @Override
