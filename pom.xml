@@ -188,7 +188,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <testNGListeners>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</testNGListeners>
-      <uberjar.deps.optional>false</uberjar.deps.optional>
+      <uberjar.deps.optional>true</uberjar.deps.optional>
       <!-- Versions for dependencies -->
       <version.ant>1.10.1</version.ant>
       <version.ant-contrib>1.0b3</version.ant-contrib>
