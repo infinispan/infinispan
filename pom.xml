@@ -172,6 +172,7 @@
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
       <forkJvmArgs>-Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir}</forkJvmArgs>
       <infinispan.codename>Bastille</infinispan.codename>
+      <infinispan.core.schema.version>9.2</infinispan.core.schema.version>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
