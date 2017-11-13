@@ -1,22 +1,26 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.ClusterSwitchStatus;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.DecoderException;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -25,74 +29,68 @@ import net.jcip.annotations.Immutable;
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
- * @param T the return type of this operation
  */
 @Immutable
-public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
+public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> implements ChannelOperation {
 
-   private static final Log log = LogFactory.getLog(RetryOnFailureOperation.class, Log.class);
-   private static final boolean trace = log.isTraceEnabled();
+   protected static final Log log = LogFactory.getLog(RetryOnFailureOperation.class, Log.class);
+   protected static final boolean trace = log.isTraceEnabled();
 
-   protected final TransportFactory transportFactory;
-
+   private int retryCount = 0;
+   private Set<SocketAddress> failedServers = null;
    private boolean triedCompleteRestart = false;
+   private String currentClusterName;
 
-   protected RetryOnFailureOperation(Codec codec, TransportFactory transportFactory,
+   protected RetryOnFailureOperation(Codec codec, ChannelFactory channelFactory,
                                      byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, flags, cfg, cacheName, topologyId);
-      this.transportFactory = transportFactory;
+      super(codec, flags, cfg, cacheName, topologyId, channelFactory);
    }
 
    @Override
-   public T execute() {
-      int retryCount = 0;
-      Set<SocketAddress> failedServers = null;
-      while (shouldRetry(retryCount)) {
-         Transport transport = null;
-         String currentClusterName = transportFactory.getCurrentClusterName();
-         try {
-            // Transport retrieval should be retried
-            transport = getTransport(retryCount, failedServers);
-            return executeOperation(transport);
-         } catch (TransportException te) {
-            SocketAddress address = te.getServerAddress();
-            failedServers = updateFailedServers(address, failedServers);
-            // Invalidate transport since this exception means that this
-            // instance is no longer usable and should be destroyed.
-            invalidateTransport(transport, address);
-            retryCount = logTransportErrorAndThrowExceptionIfNeeded(retryCount, currentClusterName, te);
-         } catch (RemoteIllegalLifecycleStateException e) {
-            SocketAddress address = e.getServerAddress();
-            failedServers = updateFailedServers(address, failedServers);
-            // Invalidate transport since this exception means that this
-            // instance is no longer usable and should be destroyed.
-            invalidateTransport(transport, address);
-            retryCount = logTransportErrorAndThrowExceptionIfNeeded(retryCount, currentClusterName, e);
-         } catch (RemoteNodeSuspectException e) {
-            // Do not invalidate transport because this exception is caused
-            // as a result of a server finding out that another node has
-            // been suspected, so there's nothing really wrong with the server
-            // from which this node was received.
-            logErrorAndThrowExceptionIfNeeded(retryCount, e);
-         } finally {
-            releaseTransport(transport);
+   public CompletableFuture<T> execute() {
+      assert !isDone();
+      currentClusterName = channelFactory.getCurrentClusterName();
+      if (trace) {
+         log.tracef("Requesting channel for operation %s", this);
+      }
+      fetchChannelAndInvoke(retryCount, failedServers);
+      return this;
+   }
+
+   @Override
+   public void invoke(Channel channel) {
+      assert channel.isActive();
+      try {
+         if (trace) {
+            log.tracef("About to start executing operation %s on %s", this, channel);
          }
-
-         retryCount++;
-      }
-      throw new IllegalStateException("We should not reach here!");
-   }
-
-   private void invalidateTransport(Transport transport, SocketAddress address) {
-      if (transport != null) {
-         if (trace)
-            log.tracef("Invalidating transport %s as a result of transport exception", transport);
-
-         transportFactory.invalidateTransport(address, transport);
+         executeOperation(channel);
+      } catch (Throwable t) {
+         completeExceptionally(t);
       }
    }
 
-   private Set<SocketAddress> updateFailedServers(SocketAddress address, Set<SocketAddress> failedServers) {
+   @Override
+   public void cancel(SocketAddress address, Throwable cause) {
+      cause = handleException(cause, null, address);
+      if (cause != null) {
+         completeExceptionally(cause);
+      }
+   }
+
+   private void retryIfNotDone() {
+      if (!isDone()) {
+         reset();
+         currentClusterName = channelFactory.getCurrentClusterName();
+         fetchChannelAndInvoke(retryCount, failedServers);
+      }
+   }
+
+   protected void reset() {
+      // hook for stateful operations
+   }
+
+   private Set<SocketAddress> updateFailedServers(SocketAddress address) {
       if (failedServers == null) {
          failedServers = new HashSet<>();
       }
@@ -104,56 +102,107 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
       return failedServers;
    }
 
-   protected boolean shouldRetry(int retryCount) {
-      return retryCount <= transportFactory.getMaxRetries();
+   @Override
+   public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+      if (isDone()) {
+         return;
+      }
+      SocketAddress address = ChannelRecord.of(ctx.channel()).getUnresolvedAddress();
+      updateFailedServers(address);
+      logAndRetryOrFail(log.connectionClosed(address, address), true);
    }
 
-   protected int logTransportErrorAndThrowExceptionIfNeeded(int i, String failedClusterName, HotRodClientException e) {
-      String message = "Exception encountered. Retry %d out of %d";
-      if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
-         ClusterSwitchStatus status = transportFactory.trySwitchCluster(failedClusterName, cacheName);
-         switch (status) {
-            case SWITCHED:
-               triedCompleteRestart = true;
-               return -1; // reset retry count
-            case NOT_SWITCHED:
-               if (!triedCompleteRestart) {
-                  log.debug("Cluster might have completely shut down, try resetting transport layer and topology id", e);
-                  transportFactory.reset(cacheName);
-                  triedCompleteRestart = true;
-                  return -1; // reset retry count
-               } else {
-                  log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(), e);
-                  throw e;
-               }
-            case IN_PROGRESS:
-               log.trace("Cluster switch in progress, retry operation without increasing retry count");
-               return i - 1;
-            default:
-               throw new IllegalStateException("Unknown cluster switch status: " + status);
+   @Override
+   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+      SocketAddress address = ctx == null ? null : ChannelRecord.of(ctx.channel()).getUnresolvedAddress();
+      cause = handleException(cause, ctx, address);
+      if (cause != null) {
+         // ctx.close() triggers channelInactive; we want to complete this to signal that no retries are expected
+         try {
+            completeExceptionally(cause);
+         } finally {
+            if (ctx != null) {
+               ctx.pipeline().remove(this);
+               ctx.close();
+            }
          }
-      } else {
-         log.tracef(e, message, i, transportFactory.getMaxRetries());
-         return i;
       }
    }
 
-   protected void logErrorAndThrowExceptionIfNeeded(int i, HotRodClientException e) {
-      String message = "Exception encountered. Retry %d out of %d";
-      if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
-         log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(), e);
-         throw e;
+   protected Throwable handleException(Throwable cause, ChannelHandlerContext ctx, SocketAddress address) {
+      while (cause instanceof DecoderException && cause.getCause() != null) {
+         cause = cause.getCause();
+      }
+      if (cause instanceof RemoteIllegalLifecycleStateException || cause instanceof IOException || cause instanceof TransportException) {
+         if (address != null) {
+            updateFailedServers(address);
+         }
+         if (ctx != null) {
+            // We need to remove self even if we're about to close the channel
+            // because otherwise we would be notified through channelInactive and we would retry (again).
+            ctx.pipeline().remove(this);
+            ctx.close();
+         }
+         logAndRetryOrFail(cause, true);
+         return null;
+      } else if (cause instanceof RemoteNodeSuspectException) {
+         if (ctx != null) {
+            ctx.pipeline().remove(this);
+            releaseChannel(ctx.channel());
+         }
+         logAndRetryOrFail(cause, false);
+         return null;
       } else {
-         log.tracef(e, message, i, transportFactory.getMaxRetries());
+         return cause;
       }
    }
 
-   protected void releaseTransport(Transport transport) {
-      if (transport != null)
-         transportFactory.releaseTransport(transport);
+   protected void logAndRetryOrFail(Throwable e, boolean canSwitchCluster) {
+      if (retryCount < channelFactory.getMaxRetries() && channelFactory.getMaxRetries() >= 0) {
+         String message = "Exception encountered. Retry %d out of %d";
+         log.tracef(e, message, retryCount, channelFactory.getMaxRetries());
+         retryCount++;
+         retryIfNotDone();
+      } else if (canSwitchCluster) {
+         channelFactory.trySwitchCluster(currentClusterName, cacheName).whenComplete((status, throwable) -> {
+            if (throwable != null) {
+               completeExceptionally(throwable);
+               return;
+            }
+            switch (status) {
+               case SWITCHED:
+                  triedCompleteRestart = true;
+                  retryCount = 0;
+                  break;
+               case NOT_SWITCHED:
+                  if (!triedCompleteRestart) {
+                     log.debug("Cluster might have completely shut down, try resetting transport layer and topology id", e);
+                     channelFactory.reset(cacheName);
+                     triedCompleteRestart = true;
+                     retryCount = 0;
+                  } else {
+                     log.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
+                     completeExceptionally(e);
+                  }
+                  break;
+               case IN_PROGRESS:
+                  log.trace("Cluster switch in progress, retry operation without increasing retry count");
+                  break;
+               default:
+                  completeExceptionally(new IllegalStateException("Unknown cluster switch status: " + status));
+            }
+            retryIfNotDone();
+         });
+      } else {
+         log.exceptionAndNoRetriesLeft(retryCount, channelFactory.getMaxRetries(), e);
+         completeExceptionally(e);
+      }
    }
 
-   protected abstract Transport getTransport(int retryCount, Set<SocketAddress> failedServers);
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      channelFactory.fetchChannelAndInvoke(failedServers, cacheName, this);
+   }
 
-   protected abstract T executeOperation(Transport transport);
+   protected abstract void executeOperation(Channel channel);
+
 }

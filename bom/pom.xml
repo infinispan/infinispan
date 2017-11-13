@@ -73,7 +73,6 @@
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.caffeine>2.4.0</version.caffeine>
       <version.cdi>1.2</version.cdi>
-      <version.commons.pool>1.6</version.commons.pool>
       <version.groovy>2.4.8</version.groovy>
       <version.hibernate.core>5.2.11.Final</version.hibernate.core>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
@@ -732,11 +731,6 @@
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
             <version>${version.xstream}</version>
-         </dependency>
-         <dependency>
-            <groupId>commons-pool</groupId>
-            <artifactId>commons-pool</artifactId>
-            <version>${version.commons.pool}</version>
          </dependency>
          <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>

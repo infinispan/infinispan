@@ -7,7 +7,9 @@ import java.net.SocketAddress;
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
+ * @deprecated since 9.2
  */
+@Deprecated
 public interface Transport {
 
    TransportFactory getTransportFactory();

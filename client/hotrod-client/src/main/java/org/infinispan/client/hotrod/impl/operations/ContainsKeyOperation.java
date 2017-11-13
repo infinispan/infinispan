@@ -4,10 +4,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -19,20 +21,20 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class ContainsKeyOperation extends AbstractKeyOperation<Boolean> {
 
-   public ContainsKeyOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes,
+   public ContainsKeyOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, transportFactory, key, keyBytes,cacheName, topologyId, flags, cfg);
+      super(codec, channelFactory, key, keyBytes,cacheName, topologyId, flags, cfg);
    }
 
    @Override
-   protected Boolean executeOperation(Transport transport) {
-      boolean containsKey = false;
-      short status = sendKeyOperation(keyBytes, transport, CONTAINS_KEY_REQUEST, CONTAINS_KEY_RESPONSE);
-      if (HotRodConstants.isNotExist(status)) {
-         containsKey = false;
-      } else if (HotRodConstants.isSuccess(status)) {
-         containsKey = true;
-      }
-      return containsKey;
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(CONTAINS_KEY_REQUEST);
+      scheduleRead(channel, header);
+      sendArrayOperation(channel, header, keyBytes);
+   }
+
+   @Override
+   public Boolean decodePayload(ByteBuf buf, short status) {
+      return !HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status);
    }
 }

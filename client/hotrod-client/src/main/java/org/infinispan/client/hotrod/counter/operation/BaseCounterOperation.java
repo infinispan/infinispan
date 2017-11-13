@@ -9,11 +9,15 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.counter.exception.CounterException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A base operation class for the counter's operation.
@@ -28,9 +32,9 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
    private static final byte[] COUNTER_CACHE_NAME = RemoteCacheManager.cacheNameBytes("org.infinispan.counter");
    private final String counterName;
 
-   BaseCounterOperation(Codec codec, TransportFactory transportFactory, AtomicInteger topologyId, Configuration cfg,
-         String counterName) {
-      super(codec, transportFactory, EMPTY_CACHE_NAME, topologyId, 0, cfg);
+   BaseCounterOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
+                        String counterName) {
+      super(codec, channelFactory, EMPTY_CACHE_NAME, topologyId, 0, cfg);
       this.counterName = counterName;
    }
 
@@ -39,27 +43,35 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
     *
     * @return the {@link HeaderParams}.
     */
-   HeaderParams writeHeaderAndCounterName(Transport transport, short opCode) {
-      HeaderParams params = writeHeader(transport, opCode);
-      transport.writeString(counterName);
-      return params;
+   void sendHeaderAndCounterNameAndRead(Channel channel, short opCode) {
+      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, opCode, 0);
+      channel.writeAndFlush(buf);
+   }
+
+   ByteBuf getHeaderAndCounterNameBufferAndRead(Channel channel, short opCode, int extraBytes) {
+      HeaderParams header = headerParams(opCode);
+      scheduleRead(channel, header);
+
+      // counterName should never be null/empty
+      byte[] counterBytes = counterName.getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
+      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(counterBytes) + extraBytes);
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeString(buf, counterName);
+
+      setCacheName(header);
+      return buf;
    }
 
    /**
-    * Reads the reply header and return the operation status.
-    * <p>
     * If the status is {@link #KEY_DOES_NOT_EXIST_STATUS}, the counter is undefined and a {@link CounterException} is
     * thrown.
     *
     * @return the operation's status.
     */
-   short readHeaderAndValidateCounter(Transport transport, HeaderParams headerParams) {
-      setCacheName(headerParams);
-      short status = readHeaderAndValidate(transport, headerParams);
+   void checkStatus(short status) {
       if (status == KEY_DOES_NOT_EXIST_STATUS) {
          throw commonsLog.undefinedCounter(counterName);
       }
-      return status;
    }
 
    void setCacheName(HeaderParams params) {
@@ -67,7 +79,12 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
    }
 
    @Override
-   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(failedServers, COUNTER_CACHE_NAME);
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      channelFactory.fetchChannelAndInvoke(failedServers, COUNTER_CACHE_NAME, this);
+   }
+
+   @Override
+   protected void addParams(StringBuilder sb) {
+      sb.append("counter=").append(counterName);
    }
 }

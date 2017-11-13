@@ -44,7 +44,10 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * idle object in a pool (if there are idle instances available). False means that pools behave
     * as FIFO queues - objects are taken from idle object pools in the order that they are returned.
     * The default setting is true
+    *
+    * @deprecated Always LIFO.
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder lifo(boolean enabled) {
       this.lifo = enabled;
       return this;
@@ -67,7 +70,14 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * combined set of servers. When non-positive, there is no limit to the total number of
     * persistent connections in circulation. When maxTotal is exceeded, all connections pools are
     * exhausted. The default setting for this parameter is -1 (no limit).
+    *
+    * @deprecated Since with Netty implementation we keep a pool-per-server we can't limit totals.
+    * While setting a total number of connections may seem convenient, it leads to port exhaustion
+    * under heavy load: the pool keeps closing and opening connections in a fast succession and
+    * since port is not freed by operating system immediately after closing that (it's in TIME_WAIT
+    * state), the client runs out of available ports (<64k) soon.
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder maxTotal(int maxTotal) {
       this.maxTotal = maxTotal;
       return this;
@@ -87,7 +97,10 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * Controls the maximum number of idle persistent connections, per server, at any time. When
     * negative, there is no limit to the number of connections that may be idle per server. The
     * default setting for this parameter is -1.
+    *
+    * @deprecated Unsupported with Netty pool implementation.
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder maxIdle(int maxIdle) {
       this.maxIdle = maxIdle;
       return this;
@@ -108,7 +121,10 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    /**
     * Indicates the maximum number of connections to test during idle eviction runs. The default
     * setting is 3.
+    *
+    * @deprecated Unsupported with Netty pool implementation.
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder numTestsPerEvictionRun(int numTestsPerEvictionRun) {
       this.numTestsPerEvictionRun = numTestsPerEvictionRun;
       return this;
@@ -118,7 +134,10 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * Indicates how long the eviction thread should sleep before "runs" of examining idle
     * connections. When non-positive, no eviction thread will be launched. The default setting for
     * this parameter is 2 minutes.
+    *
+    * @deprecated Connection eviction uses the event-loop executor thread.
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder timeBetweenEvictionRuns(long timeBetweenEvictionRuns) {
       this.timeBetweenEvictionRuns = timeBetweenEvictionRuns;
       return this;
@@ -141,6 +160,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * an TCP packet to the server. Connections that fail to validate will be dropped from the pool.
     * The default setting for this parameter is false.
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder testOnBorrow(boolean testOnBorrow) {
       this.testOnBorrow = testOnBorrow;
       return this;
@@ -151,6 +171,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * TCP packet to the server. Connections that fail to validate will be dropped from the pool. The
     * default setting for this parameter is false.
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder testOnReturn(boolean testOnReturn) {
       this.testOnReturn = testOnReturn;
       return this;
@@ -162,6 +183,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
     * dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0.
     * The default setting for this parameter is true.
     */
+   @Deprecated
    public ConnectionPoolConfigurationBuilder testWhileIdle(boolean testWhileIdle) {
       this.testWhileIdle = testWhileIdle;
       return this;

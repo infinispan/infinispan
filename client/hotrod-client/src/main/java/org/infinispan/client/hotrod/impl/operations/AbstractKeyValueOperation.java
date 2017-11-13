@@ -1,14 +1,18 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import static org.infinispan.commons.util.Util.printArray;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -30,10 +34,10 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
 
    protected final TimeUnit maxIdleTimeUnit;
 
-   protected AbstractKeyValueOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes, byte[] cacheName,
+   protected AbstractKeyValueOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
                                        AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
@@ -41,20 +45,20 @@ public abstract class AbstractKeyValueOperation<T> extends AbstractKeyOperation<
       this.maxIdleTimeUnit = maxIdleTimeUnit;
    }
 
-   //[header][key length][key][lifespan][max idle][value length][value]
-   protected short sendKeyValueOperation(Transport transport, short opCode, byte opRespCode) {
-      // 1) write header
-      HeaderParams params = writeHeader(transport, opCode);
+   protected void sendKeyValueOperation(Channel channel, HeaderParams header) {
+      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + keyBytes.length +
+            codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) + value.length);
 
-      // 2) write key and value
-      transport.writeArray(keyBytes);
-      codec.writeExpirationParams(transport, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
-      transport.writeArray(value);
-      transport.flush();
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeArray(buf, keyBytes);
+      codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      ByteBufUtil.writeArray(buf, value);
+      channel.writeAndFlush(buf);
+   }
 
-      // 3) now read header
-
-      //return status (not error status for sure)
-      return readHeaderAndValidate(transport, params);
+   @Override
+   protected void addParams(StringBuilder sb) {
+      super.addParams(sb);
+      sb.append(", value=").append(printArray(value));
    }
 }

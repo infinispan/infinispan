@@ -22,7 +22,6 @@ import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
@@ -66,7 +65,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private final SecurityConfigurationBuilder security;
    private boolean tcpNoDelay = true;
    private boolean tcpKeepAlive = false;
-   private Class<? extends TransportFactory> transportFactory = TcpTransportFactory.class;
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
    private final NearCacheConfigurationBuilder nearCache;
@@ -263,13 +261,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder transportFactory(String transportFactory) {
-      this.transportFactory = Util.loadClass(transportFactory, this.classLoader());
+      log.transportFactoryDeprecated();
       return this;
    }
 
    @Override
    public ConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory) {
-      this.transportFactory = transportFactory;
+      log.transportFactoryDeprecated();
       return this;
    }
 
@@ -392,7 +390,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
 
       return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), clientIntelligence, connectionPool.create(), connectionTimeout,
-            consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
+            consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, marshallerClass, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive,
             valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs, whiteListRegExs, batchSize);
    }
 
@@ -434,7 +432,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.security.read(template.security());
       this.tcpNoDelay = template.tcpNoDelay();
       this.tcpKeepAlive = template.tcpKeepAlive();
-      this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();
       this.maxRetries = template.maxRetries();
       this.nearCache.read(template.nearCache());

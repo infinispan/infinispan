@@ -1,11 +1,10 @@
 package org.infinispan.client.hotrod.counter.impl;
 
+import static org.infinispan.client.hotrod.impl.Util.await;
+
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 import org.infinispan.counter.api.CounterConfiguration;
-import org.infinispan.counter.api.CounterListener;
-import org.infinispan.counter.api.Handle;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.SyncStrongCounter;
 
@@ -15,63 +14,26 @@ import org.infinispan.counter.api.SyncStrongCounter;
  * @author Pedro Ruivo
  * @since 9.2
  */
-class StrongCounterImpl implements StrongCounter {
-
-   private final String name;
-   private final CounterConfiguration configuration;
-   private final ExecutorService executorService;
-   private final CounterHelper counterHelper;
+class StrongCounterImpl extends BaseCounter implements StrongCounter {
    private final SyncStrongCounter syncCounter;
-   private final NotificationManager notificationManager;
 
-   StrongCounterImpl(String name, CounterConfiguration configuration, ExecutorService executorService,
-         CounterHelper counterHelper, NotificationManager notificationManager) {
-      this.name = name;
-      this.configuration = configuration;
-      this.executorService = executorService;
-      this.counterHelper = counterHelper;
-      this.notificationManager = notificationManager;
+   StrongCounterImpl(String name, CounterConfiguration configuration, CounterOperationFactory operationFactory,
+                     NotificationManager notificationManager) {
+      super(configuration, name, operationFactory, notificationManager);
       this.syncCounter = new Sync();
    }
 
-   @Override
-   public String getName() {
-      return name;
-   }
-
-   @Override
    public CompletableFuture<Long> getValue() {
-      return CompletableFuture.supplyAsync(syncCounter::getValue, executorService);
+      return factory.newGetValueOperation(name).execute();
    }
 
-   @Override
    public CompletableFuture<Long> addAndGet(long delta) {
-      return CompletableFuture.supplyAsync(() -> syncCounter.addAndGet(delta), executorService);
-   }
-
-   @Override
-   public CompletableFuture<Void> reset() {
-      return CompletableFuture.runAsync(syncCounter::reset, executorService);
-   }
-
-   @Override
-   public <T extends CounterListener> Handle<T> addListener(T listener) {
-      return notificationManager.addListener(name, listener);
+      return factory.newAddOperation(name, delta).execute();
    }
 
    @Override
    public CompletableFuture<Long> compareAndSwap(long expect, long update) {
-      return CompletableFuture.supplyAsync(() -> syncCounter.compareAndSwap(expect, update), executorService);
-   }
-
-   @Override
-   public CounterConfiguration getConfiguration() {
-      return configuration;
-   }
-
-   @Override
-   public CompletableFuture<Void> remove() {
-      return CompletableFuture.runAsync(syncCounter::remove, executorService);
+      return factory.newCompareAndSwapOperation(name, expect, update, super.getConfiguration()).execute();
    }
 
    @Override
@@ -83,22 +45,22 @@ class StrongCounterImpl implements StrongCounter {
 
       @Override
       public long addAndGet(long delta) {
-         return counterHelper.addAndGet(name, delta);
+         return await(StrongCounterImpl.this.addAndGet(delta));
       }
 
       @Override
       public void reset() {
-         counterHelper.reset(name);
+         await(StrongCounterImpl.this.reset());
       }
 
       @Override
       public long getValue() {
-         return counterHelper.getValue(name);
+         return await(StrongCounterImpl.this.getValue());
       }
 
       @Override
       public long compareAndSwap(long expect, long update) {
-         return counterHelper.compareAndSwap(name, expect, update, configuration);
+         return await(StrongCounterImpl.this.compareAndSwap(expect, update));
       }
 
       @Override
@@ -113,7 +75,7 @@ class StrongCounterImpl implements StrongCounter {
 
       @Override
       public void remove() {
-         counterHelper.remove(name);
+         await(StrongCounterImpl.this.remove());
       }
    }
 }

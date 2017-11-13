@@ -4,7 +4,7 @@ import java.util.concurrent.BlockingQueue;
 
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
-import org.infinispan.client.hotrod.event.ClientListenerNotifier;
+import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 
 public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
    final BlockingQueue<MockEvent> events;

@@ -52,32 +52,13 @@ public class SslContextFactory {
       try {
          KeyManager[] keyManagers = null;
          if (keyStoreFileName != null) {
-            KeyStore ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
-            loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
-            char[] keyPassword = keyStoreCertificatePassword == null ? keyStorePassword : keyStoreCertificatePassword;
-            if (keyAlias != null) {
-               if (ks.containsAlias(keyAlias) && ks.isKeyEntry(keyAlias)) {
-                  KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyPassword);
-                  KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
-                  // Recreate the keystore with just one key
-                  ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
-                  ks.load(null);
-                  ks.setEntry(keyAlias, entry, passParam);
-               } else {
-                  throw log.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
-               }
-            }
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(ks, keyPassword);
+            KeyManagerFactory kmf = getKeyManagerFactory(keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias, classLoader);
             keyManagers = kmf.getKeyManagers();
          }
 
          TrustManager[] trustManagers = null;
          if (trustStoreFileName != null) {
-            KeyStore ks = KeyStore.getInstance(trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE);
-            loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            tmf.init(ks);
+            TrustManagerFactory tmf = getTrustManagerFactory(trustStoreFileName, trustStoreType, trustStorePassword, classLoader);
             trustManagers = tmf.getTrustManagers();
          }
 
@@ -88,6 +69,36 @@ public class SslContextFactory {
          throw log.sslInitializationException(e);
       }
    }
+
+   public static KeyManagerFactory getKeyManagerFactory(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias, ClassLoader classLoader) throws IOException, GeneralSecurityException {
+      KeyStore ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
+      loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
+      char[] keyPassword = keyStoreCertificatePassword == null ? keyStorePassword : keyStoreCertificatePassword;
+      if (keyAlias != null) {
+         if (ks.containsAlias(keyAlias) && ks.isKeyEntry(keyAlias)) {
+            KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyPassword);
+            KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
+            // Recreate the keystore with just one key
+            ks = KeyStore.getInstance(keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE);
+            ks.load(null);
+            ks.setEntry(keyAlias, entry, passParam);
+         } else {
+            throw log.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
+         }
+      }
+      KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      kmf.init(ks, keyPassword);
+      return kmf;
+   }
+
+   public static TrustManagerFactory getTrustManagerFactory(String trustStoreFileName, String trustStoreType, char[] trustStorePassword, ClassLoader classLoader) throws IOException, GeneralSecurityException {
+      KeyStore ks = KeyStore.getInstance(trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE);
+      loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
+      TrustManagerFactory tmf = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      tmf.init(ks);
+      return tmf;
+   }
+
 
    public static SSLEngine getEngine(SSLContext sslContext, boolean useClientMode, boolean needClientAuth) {
       SSLEngine sslEngine = sslContext.createSSLEngine();

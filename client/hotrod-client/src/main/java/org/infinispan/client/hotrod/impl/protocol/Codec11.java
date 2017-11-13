@@ -8,9 +8,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * A Hot Rod encoder/decoder for version 1.1 of the protocol.
@@ -23,16 +26,16 @@ public class Codec11 extends Codec10 {
    private static final Log log = LogFactory.getLog(Codec11.class, Log.class);
 
    @Override
-   public HeaderParams writeHeader(Transport transport, HeaderParams params) {
-      return writeHeader(transport, params, HotRodConstants.VERSION_11);
+   public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
+      return writeHeader(buf, params, HotRodConstants.VERSION_11);
    }
 
    @Override
-   protected Map<SocketAddress, Set<Integer>> computeNewHashes(Transport transport,
-         Log localLog, int newTopologyId, int numKeyOwners,
-         short hashFunctionVersion, int hashSpace, int clusterSize) {
+   protected Map<SocketAddress, Set<Integer>> computeNewHashes(ByteBuf buf, ChannelFactory channelFactory,
+                                                               Log localLog, int newTopologyId, int numKeyOwners,
+                                                               short hashFunctionVersion, int hashSpace, int clusterSize) {
       // New in 1.1
-      int numVirtualNodes = transport.readVInt();
+      int numVirtualNodes = ByteBufUtil.readVInt(buf);
 
       if (trace) {
          localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
@@ -50,15 +53,14 @@ public class Codec11 extends Codec10 {
       } else if (hashFunctionVersion == 1) {
          localLog.trace("Ignoring obsolete consistent hash function (version 1)");
       } else {
-         ch = transport.getTransportFactory().getConsistentHashFactory()
-               .newConsistentHash(hashFunctionVersion);
+         ch = channelFactory.getConsistentHashFactory().newConsistentHash(hashFunctionVersion);
       }
 
       for (int i = 0; i < clusterSize; i++) {
-         String host = transport.readString();
-         int port = transport.readUnsignedShort();
+         String host = ByteBufUtil.readString(buf);
+         int port = buf.readUnsignedShort();
          // TODO: Performance improvement, since hash positions are fixed, we could maybe only calculate for those nodes that the client is not aware of?
-         int baseHashCode = transport.read4ByteInt();
+         int baseHashCode = buf.readIntLE();
          int normalizedHashCode = getNormalizedHash(baseHashCode, ch);
          if (trace) localLog.tracef("Server(%s:%d) read with base hash code %d, and normalized hash code %d",
                host, port, baseHashCode, normalizedHashCode);

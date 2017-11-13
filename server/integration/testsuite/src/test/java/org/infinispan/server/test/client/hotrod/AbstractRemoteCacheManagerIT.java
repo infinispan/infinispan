@@ -15,6 +15,7 @@ import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,14 +29,15 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.junit.Test;
+
+import io.netty.channel.Channel;
 
 /**
  * Tests for HotRod client and its RemoteCacheManager API. Subclasses must provide
@@ -67,7 +69,6 @@ public abstract class AbstractRemoteCacheManagerIT {
                 .forceReturnValues(true)
                 .tcpNoDelay(false)
                 .tcpKeepAlive(true)
-                .transportFactory("org.infinispan.server.test.client.hotrod.HotRodTestTransportFactory")
                 .marshaller("org.infinispan.server.test.client.hotrod.HotRodTestMarshaller")
                 .asyncExecutorFactory().factoryClass("org.infinispan.server.test.client.hotrod.HotRodTestExecutorFactory")
                 .addExecutorProperty("infinispan.client.hotrod.default_executor_factory.pool_size", "20")
@@ -193,7 +194,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         InetSocketAddress hostport1 = new InetSocketAddress(getServers().get(1).getHotrodEndpoint().getInetAddress().getHostName(), getServers().get(1)
                 .getHotrodEndpoint().getPort());
 
-        TcpTransport tt = null;
+        Channel tt = null;
         InetSocketAddress sock_addr = null;
 
         StringBuilder serverAddrSequence = new StringBuilder();
@@ -211,23 +212,23 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         // the factory used to create all remote operations for this class
         OperationsFactory of = getOperationsFactoryField(rci);
-        TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
+        ChannelFactory ttf = getChannelFactoryField(of);
 
         // perform first simulated operation
-        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
-        ttf.releaseTransport(tt);
-        serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
+        tt = ttf.fetchChannelAndInvoke(null, rci.getName().getBytes(), new NoopChannelOperation()).join();
+        sock_addr = resolve((InetSocketAddress) tt.remoteAddress());
+        ttf.releaseChannel(tt);
+        serverAddrSequence.append(sock_addr.getAddress().getHostAddress()).append(":").append(sock_addr.getPort()).append(" ");
 
-        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
-        ttf.releaseTransport(tt);
-        serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort()).append(" ");
+        tt = ttf.fetchChannelAndInvoke(null, rci.getName().getBytes(), new NoopChannelOperation()).join();
+        sock_addr = resolve((InetSocketAddress) tt.remoteAddress());
+        ttf.releaseChannel(tt);
+        serverAddrSequence.append(sock_addr.getAddress().getHostAddress()).append(":").append(sock_addr.getPort()).append(" ");
 
-        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
-        ttf.releaseTransport(tt);
-        serverAddrSequence.append(sock_addr.getAddress().getHostAddress() + ":" + sock_addr.getPort());
+        tt = ttf.fetchChannelAndInvoke(null, rci.getName().getBytes(), new NoopChannelOperation()).join();
+        sock_addr = resolve((InetSocketAddress) tt.remoteAddress());
+        ttf.releaseChannel(tt);
+        serverAddrSequence.append(sock_addr.getAddress().getHostAddress()).append(":").append(sock_addr.getPort());
 
         if (!isLocalMode()) {
             assertTrue(
@@ -263,7 +264,7 @@ public abstract class AbstractRemoteCacheManagerIT {
         InetSocketAddress hostport1 = new InetSocketAddress(getServers().get(1).getHotrodEndpoint().getInetAddress().getHostName(), getServers().get(1)
                 .getHotrodEndpoint().getPort());
 
-        TcpTransport tt = null;
+        Channel tt = null;
         InetSocketAddress sock_addr = null;
 
         // create configuration with the custom balancing strategy
@@ -276,17 +277,17 @@ public abstract class AbstractRemoteCacheManagerIT {
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         // the factory used to create all remote operations for this class
         OperationsFactory of = getOperationsFactoryField(rci);
-        TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
+        ChannelFactory ttf = getChannelFactoryField(of);
         // perform first simulated operation
-        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
-        ttf.releaseTransport(tt);
+        tt = ttf.fetchChannelAndInvoke(null, rci.getName().getBytes(), new NoopChannelOperation()).join();
+        sock_addr = resolve((InetSocketAddress) tt.remoteAddress());
+        ttf.releaseChannel(tt);
         assertEquals("load balancing first request: server address expected " + hostport0 + ", actual server address "
                 + sock_addr, sock_addr, hostport0);
 
-        tt = (TcpTransport) ttf.getTransport(null, rci.getName().getBytes());
-        sock_addr = resolve((InetSocketAddress) tt.getServerAddress());
-        ttf.releaseTransport(tt);
+        tt = ttf.fetchChannelAndInvoke(null, rci.getName().getBytes(), new NoopChannelOperation()).join();
+        sock_addr = resolve((InetSocketAddress) tt.remoteAddress());
+        ttf.releaseChannel(tt);
         assertEquals("load balancing second request: server address expected " + hostport0 + ", actual server address"
                 + sock_addr, sock_addr, hostport0);
     }
@@ -331,7 +332,6 @@ public abstract class AbstractRemoteCacheManagerIT {
         assertEquals(config.asyncExecutorFactory().factoryClass().getName(),
                 rc.getRemoteCacheManager().getConfiguration().asyncExecutorFactory().factoryClass().getName());
 
-        assertEquals(config.transportFactory().getName(), getTransportFactoryProperty(rc));
         // either marshaller or marshallerClass is set
         if (config.marshaller() != null) {
             assertEquals(config.marshaller().getClass().getName(), getMarshallerProperty(rc));
@@ -353,7 +353,7 @@ public abstract class AbstractRemoteCacheManagerIT {
     private String getRequestBalancingStrategyProperty(RemoteCache rc) throws Exception {
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         OperationsFactory of = getOperationsFactoryField(rci);
-        TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
+        ChannelFactory ttf = getChannelFactoryField(of);
         FailoverRequestBalancingStrategy rbs = ttf.getBalancer(RemoteCacheManager.cacheNameBytes());
         return rbs.getClass().getName();
     }
@@ -362,7 +362,7 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         OperationsFactory of = getOperationsFactoryField(rci);
-        TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
+        ChannelFactory ttf = getChannelFactoryField(of);
         Collection<SocketAddress> servers = ttf.getServers();
         // create a list of IP address:port to return
         StringBuilder serverList = new StringBuilder();
@@ -396,7 +396,7 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         OperationsFactory of = getOperationsFactoryField(rci);
-        TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
+        ChannelFactory ttf = getChannelFactoryField(of);
         boolean tcpNoDelay = ttf.isTcpNoDelay();
         return Boolean.toString(tcpNoDelay);
     }
@@ -405,7 +405,7 @@ public abstract class AbstractRemoteCacheManagerIT {
 
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         OperationsFactory of = getOperationsFactoryField(rci);
-        TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
+        ChannelFactory ttf = getChannelFactoryField(of);
         boolean tcpKeepAlive = ttf.isTcpKeepAlive();
         return Boolean.toString(tcpKeepAlive);
     }
@@ -413,17 +413,8 @@ public abstract class AbstractRemoteCacheManagerIT {
     private String getMaxRetries(RemoteCache rc) throws Exception {
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         OperationsFactory of = getOperationsFactoryField(rci);
-        TransportFactory ttf = getTransportFactoryField(of);
+        ChannelFactory ttf = getChannelFactoryField(of);
         return Integer.toString(ttf.getMaxRetries());
-    }
-
-    private String getTransportFactoryProperty(RemoteCache rc) throws Exception {
-
-        RemoteCacheImpl rci = (RemoteCacheImpl) rc;
-        OperationsFactory of = getOperationsFactoryField(rci);
-        TransportFactory tf = getTransportFactoryField(of);
-        // need to check instance type
-        return tf.getClass().getName();
     }
 
     private String getMarshallerProperty(RemoteCache rc) throws Exception {
@@ -437,8 +428,8 @@ public abstract class AbstractRemoteCacheManagerIT {
     private String getHashFunctionImplProperty(RemoteCache rc) throws Exception {
         RemoteCacheImpl rci = (RemoteCacheImpl) rc;
         OperationsFactory of = getOperationsFactoryField(rci);
-        TcpTransportFactory ttf = (TcpTransportFactory) getTransportFactoryField(of);
-        ConsistentHash ch = ttf.getConsistentHash(((RemoteCacheImpl) rc).getName().getBytes());
+        ChannelFactory ttf = getChannelFactoryField(of);
+        ConsistentHash ch = ttf.getConsistentHash(rc.getName().getBytes());
         return ch.getClass().getName();
     }
 
@@ -544,18 +535,18 @@ public abstract class AbstractRemoteCacheManagerIT {
         return fieldValue;
     }
 
-    private TransportFactory getTransportFactoryField(OperationsFactory of) throws Exception {
+    private ChannelFactory getChannelFactoryField(OperationsFactory of) throws Exception {
 
         Field field = null;
         try {
-            field = OperationsFactory.class.getDeclaredField("transportFactory");
+            field = OperationsFactory.class.getDeclaredField("channelFactory");
         } catch (NoSuchFieldException e) {
             throw new Exception("Could not access transportFactory field", e);
         }
         field.setAccessible(true);
-        TransportFactory fieldValue = null;
+        ChannelFactory fieldValue = null;
         try {
-            fieldValue = (TransportFactory) field.get(of);
+            fieldValue = (ChannelFactory) field.get(of);
         } catch (IllegalAccessException e) {
             throw new Exception("Could not access transportFactory field", e);
         }
@@ -567,5 +558,17 @@ public abstract class AbstractRemoteCacheManagerIT {
             return new InetSocketAddress(address.getHostString(), address.getPort());
         else
             return address;
+    }
+
+    private static class NoopChannelOperation extends CompletableFuture<Channel> implements ChannelOperation {
+        @Override
+        public void invoke(Channel channel) {
+            complete(channel);
+        }
+
+        @Override
+        public void cancel(SocketAddress address, Throwable cause) {
+            completeExceptionally(cause);
+        }
     }
 }

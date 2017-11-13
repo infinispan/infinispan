@@ -1,17 +1,22 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.net.SocketAddress;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.jboss.logging.BasicLogger;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -21,53 +26,65 @@ import net.jcip.annotations.Immutable;
  * @since 4.1
  */
 @Immutable
-public class PingOperation extends HotRodOperation {
-
-   private static final BasicLogger log = LogFactory.getLog(PingOperation.class);
+public class PingOperation extends HotRodOperation<PingOperation.PingResult> implements ChannelOperation {
+   private static final Log log = LogFactory.getLog(PingOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private final Transport transport;
+   private final boolean releaseChannel;
 
-   public PingOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, Transport transport) {
-      this(codec, topologyId, cfg, transport, DEFAULT_CACHE_NAME_BYTES);
-   }
-
-   public PingOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, Transport transport, byte[] cacheName) {
-      super(codec, 0, cfg, cacheName, topologyId);
-      this.transport = transport;
+   public PingOperation(Codec codec, AtomicInteger topologyId, Configuration cfg, byte[] cacheName, ChannelFactory channelFactory, boolean releaseChannel) {
+      super(codec, 0, cfg, cacheName, topologyId, channelFactory);
+      this.releaseChannel = releaseChannel;
    }
 
    @Override
-   public PingResult execute() {
-      try {
-         HeaderParams params = writeHeader(transport, HotRodConstants.PING_REQUEST);
-         transport.flush();
+   public void invoke(Channel channel) {
+      sendHeaderAndRead(channel, HotRodConstants.PING_REQUEST);
+   }
 
-         short respStatus = readHeaderAndValidate(transport, params);
-         if (HotRodConstants.isSuccess(respStatus)) {
-            if (trace)
-               log.tracef("Successfully validated transport: %s", transport);
-            return HotRodConstants.hasCompatibility(respStatus)
+   @Override
+   public void cancel(SocketAddress address, Throwable cause) {
+      completeExceptionally(cause);
+   }
+
+   @Override
+   public CompletableFuture<PingResult> execute() {
+      throw new UnsupportedOperationException("Cannot execute directly");
+   }
+
+   @Override
+   public PingResult decodePayload(ByteBuf buf, short status) {
+      if (HotRodConstants.isSuccess(status)) {
+         return HotRodConstants.hasCompatibility(status)
                ? PingResult.SUCCESS_WITH_COMPAT
                : PingResult.SUCCESS;
-         } else {
-            String hexStatus = Integer.toHexString(respStatus);
-            if (trace)
-               log.tracef("Unknown response status: %s", hexStatus);
+      } else {
+         String hexStatus = Integer.toHexString(status);
+         if (trace)
+            log.tracef("Unknown response status: %s", hexStatus);
 
-            throw new InvalidResponseException(
-                  "Unexpected response status: " + hexStatus);
-         }
-      } catch (HotRodClientException e) {
-         if (e.getMessage().contains("CacheNotFoundException"))
-            return PingResult.CACHE_DOES_NOT_EXIST;
-
-         // Any other situation, rethrow the exception
-         throw e;
+         throw new InvalidResponseException(
+               "Unexpected response status: " + hexStatus);
       }
    }
 
-   public static enum PingResult {
+   @Override
+   public void releaseChannel(Channel channel) {
+      if (releaseChannel) {
+         super.releaseChannel(channel);
+      }
+   }
+
+   @Override
+   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+      if (cause instanceof HotRodClientException && cause.getMessage().contains("CacheNotFoundException")) {
+         complete(PingResult.CACHE_DOES_NOT_EXIST);
+         return;
+      }
+      super.exceptionCaught(ctx, cause);
+   }
+
+   public enum PingResult {
       // Success if the ping request was responded correctly
       SUCCESS,
       // Success with compatibility enabled

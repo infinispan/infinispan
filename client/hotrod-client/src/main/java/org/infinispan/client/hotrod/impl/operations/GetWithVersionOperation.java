@@ -6,12 +6,15 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedValueImpl;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -28,26 +31,29 @@ public class GetWithVersionOperation<V> extends AbstractKeyOperation<VersionedVa
    private static final Log log = LogFactory.getLog(GetWithVersionOperation.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   public GetWithVersionOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes,
+   public GetWithVersionOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes,
                                   byte[] cacheName, AtomicInteger topologyId, int flags,
                                   Configuration cfg) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
-   protected VersionedValue<V> executeOperation(Transport transport) {
-      short status = sendKeyOperation(keyBytes, transport, GET_WITH_VERSION, GET_WITH_VERSION_RESPONSE);
-      VersionedValue<V> result = null;
-      if (HotRodConstants.isNotExist(status)) {
-         result = null;
-      } else if (HotRodConstants.isSuccess(status)) {
-         long version = transport.readLong();
-         if (trace) {
-            log.tracef("Received version: %d", version);
-         }
-         V value = codec.readUnmarshallByteArray(transport, status, cfg.serialWhitelist());
-         result = new VersionedValueImpl<V>(version, value);
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(GET_WITH_VERSION);
+      scheduleRead(channel, header);
+      sendArrayOperation(channel, header, keyBytes);
+   }
+
+   @Override
+   public VersionedValue<V> decodePayload(ByteBuf buf, short status) {
+      if (HotRodConstants.isNotExist(status) || !HotRodConstants.isSuccess(status)) {
+         return null;
       }
-      return result;
+      long version = ByteBufUtil.readVLong(buf);
+      if (trace) {
+         log.tracef("Received version: %d", version);
+      }
+      V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+      return new VersionedValueImpl<V>(version, value);
    }
 }

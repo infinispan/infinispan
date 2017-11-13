@@ -106,13 +106,23 @@ public class Exceptions {
       assertException(exceptionClass, t.getCause());
    }
 
+   public static void expectExceptionNonStrict(Class<? extends Throwable> e, ExceptionRunnable runnable) {
+      Throwable t = extractException(runnable);
+      assertExceptionNonStrict(e, t);
+   }
+
+   public static void expectExceptionNonStrict(Class<? extends Throwable> we1, Class<? extends Throwable> e, ExceptionRunnable runnable) {
+      Throwable t = extractException(runnable);
+      assertExceptionNonStrict(we1, t);
+      assertExceptionNonStrict(e, t.getCause());
+   }
+
    public static void expectExceptionNonStrict(Class<? extends Throwable> we2, Class<? extends Throwable> we1, Class<? extends Throwable> e, ExceptionRunnable runnable) {
       Throwable t = extractException(runnable);
       assertExceptionNonStrict(we2, t);
       assertExceptionNonStrict(we1, t.getCause());
       assertExceptionNonStrict(e, t.getCause().getCause());
    }
-
 
    public static void expectExecutionException(Class<? extends Throwable> exceptionClass, String messageRegex,
          Future<?> future) {

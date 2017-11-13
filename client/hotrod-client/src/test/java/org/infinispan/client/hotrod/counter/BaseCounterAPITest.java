@@ -4,6 +4,7 @@ import static org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest.asse
 import static org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest.assertNoEvents;
 import static org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest.assertValidEvent;
 import static org.infinispan.test.TestingUtil.extractField;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -13,16 +14,16 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import org.infinispan.client.hotrod.counter.impl.ConnectionManager;
 import org.infinispan.client.hotrod.counter.impl.NotificationManager;
 import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
-import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.counter.api.CounterEvent;
 import org.infinispan.counter.api.CounterListener;
 import org.infinispan.counter.api.Handle;
 import org.infinispan.server.hotrod.counter.impl.BaseCounterImplTest;
 import org.infinispan.test.ExceptionRunnable;
 import org.testng.annotations.Test;
+
+import io.netty.channel.Channel;
 
 /**
  * A base test class for {@link org.infinispan.counter.api.StrongCounter} and {@link
@@ -123,22 +124,27 @@ public abstract class BaseCounterAPITest<T> extends AbstractCounterTest {
 
       assert killIndex != -1;
 
-      killServer(killIndex);
+      try {
+         killServer(killIndex);
 
-      add(counter, 1, 4);
-      add(counter, 1, 5);
+         add(counter, 1, 4);
+         add(counter, 1, 5);
 
-      //sometimes, it takes some time to reconnect.
-      //In any case, the first operation triggers a new topology and it should be reconnect after it!
-      CounterEvent event = handle.getCounterListener().waitingPoll();
-      if (event.getOldValue() == 3) {
-         assertValidEvent(event, 3, 4);
-         assertNextValidEvent(handle, 4, 5);
-      } else {
-         assertValidEvent(event, 4, 5);
+         //sometimes, it takes some time to reconnect.
+         //In any case, the first operation triggers a new topology and it should be reconnect after it!
+         CounterEvent event = handle.getCounterListener().waitingPoll();
+         if (event.getOldValue() == 3) {
+            assertValidEvent(event, 3, 4);
+            assertNextValidEvent(handle, 4, 5);
+         } else {
+            assertValidEvent(event, 4, 5);
+         }
+
+         handle.remove();
+      } finally {
+         // Make sure that we don't disturb other tests by ongoing rebalance
+         waitForNoRebalance(caches("___counters"));
       }
-
-      handle.remove();
    }
 
    abstract void increment(T counter);
@@ -153,10 +159,9 @@ public abstract class BaseCounterAPITest<T> extends AbstractCounterTest {
 
    private InetSocketAddress findEventServer() throws InvocationTargetException, IllegalAccessException {
       Object notificationManager = extractField(RemoteCounterManager.class, counterManager(), "notificationManager");
-      Object connectionManager = extractField(NotificationManager.class, notificationManager, "connectionManager");
-      Method method = ReflectionUtil.findMethod(ConnectionManager.class, "getServerInUse");
-      method.setAccessible(true);
-      return (InetSocketAddress) method.invoke(connectionManager);
+      Object dispatcher = extractField(NotificationManager.class, notificationManager, "dispatcher");
+      Channel channel = extractField(dispatcher, "channel");
+      return (InetSocketAddress) channel.remoteAddress();
    }
 
    private void awaitFuture(Future<?> future) {

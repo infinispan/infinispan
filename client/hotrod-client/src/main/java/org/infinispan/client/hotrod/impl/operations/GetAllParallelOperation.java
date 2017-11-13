@@ -6,13 +6,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
 /**
  * @author Guillaume Darmont / guillaume@dropinocean.com
@@ -21,9 +20,9 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
 
    private final Set<byte[]> keys;
 
-   protected GetAllParallelOperation(Codec codec, TransportFactory transportFactory, Set<byte[]> keys, byte[]
-         cacheName, AtomicInteger topologyId, int flags, Configuration cfg, ExecutorService executorService) {
-      super(codec, transportFactory, cacheName, topologyId, flags, cfg, executorService);
+   protected GetAllParallelOperation(Codec codec, ChannelFactory channelFactory, Set<byte[]> keys, byte[]
+         cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.keys = keys;
    }
 
@@ -32,7 +31,7 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
       Map<SocketAddress, Set<byte[]>> splittedKeys = new HashMap<>();
 
       for (byte[] key : keys) {
-         SocketAddress socketAddress = transportFactory.getSocketAddress(key, cacheName);
+         SocketAddress socketAddress = channelFactory.getSocketAddress(key, cacheName);
          Set<byte[]> keys = splittedKeys.get(socketAddress);
          if (keys == null) {
             keys = new HashSet<>();
@@ -42,7 +41,7 @@ public class GetAllParallelOperation<K, V> extends ParallelHotRodOperation<Map<K
       }
 
       return splittedKeys.values().stream().map(
-            keysSubset -> new GetAllOperation<K, V>(codec, transportFactory, keysSubset, cacheName, topologyId,
+            keysSubset -> new GetAllOperation<K, V>(codec, channelFactory, keysSubset, cacheName, topologyId,
                   flags, cfg)).collect(Collectors.toList());
    }
 

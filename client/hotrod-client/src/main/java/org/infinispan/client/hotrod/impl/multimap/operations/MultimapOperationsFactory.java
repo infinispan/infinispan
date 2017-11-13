@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
 import net.jcip.annotations.Immutable;
 
@@ -23,7 +23,7 @@ public class MultimapOperationsFactory {
 
    private final ThreadLocal<Integer> flagsMap = new ThreadLocal<>();
 
-   private final TransportFactory transportFactory;
+   private final ChannelFactory transportFactory;
 
    private final byte[] cacheNameBytes;
 
@@ -35,11 +35,11 @@ public class MultimapOperationsFactory {
 
    private final Configuration cfg;
 
-   public MultimapOperationsFactory(TransportFactory transportFactory, String cacheName, Codec codec, Configuration cfg) {
-      this.transportFactory = transportFactory;
+   public MultimapOperationsFactory(ChannelFactory channelFactory, String cacheName, Codec codec, Configuration cfg) {
+      this.transportFactory = channelFactory;
       this.cacheNameBytes = cacheName == null ? null : RemoteCacheManager.cacheNameBytes(cacheName);
-      this.topologyId = transportFactory != null
-            ? transportFactory.createTopologyId(cacheNameBytes)
+      this.topologyId = channelFactory != null
+            ? channelFactory.createTopologyId(cacheNameBytes)
             : new AtomicInteger(-1);
       this.forceReturnValue = cfg.forceReturnValues();
       this.codec = codec;
@@ -56,9 +56,9 @@ public class MultimapOperationsFactory {
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg);
    }
 
-   public <K> PutKeyValueMultimapOperation<Void> newPutKeyValueOperation(K key, byte[] keyBytes, byte[] value,
+   public <K> PutKeyValueMultimapOperation newPutKeyValueOperation(K key, byte[] keyBytes, byte[] value,
                                                                          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      return new PutKeyValueMultimapOperation<>(
+      return new PutKeyValueMultimapOperation(
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(lifespan, maxIdle),
             cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
@@ -68,12 +68,12 @@ public class MultimapOperationsFactory {
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg);
    }
 
-   public <K, V> RemoveEntryMultimapOperation newRemoveEntryOperation(K key, byte[] keyBytes, byte[] value) {
+   public <K> RemoveEntryMultimapOperation newRemoveEntryOperation(K key, byte[] keyBytes, byte[] value) {
       return new RemoveEntryMultimapOperation(
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value);
    }
 
-   public <K, V> ContainsEntryMultimapOperation newContainsEntryOperation(K key, byte[] keyBytes, byte[] value) {
+   public <K> ContainsEntryMultimapOperation newContainsEntryOperation(K key, byte[] keyBytes, byte[] value) {
       return new ContainsEntryMultimapOperation(
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg, value);
    }
@@ -83,7 +83,7 @@ public class MultimapOperationsFactory {
             codec, transportFactory, key, keyBytes, cacheNameBytes, topologyId, flags(), cfg);
    }
 
-   public <V> ContainsValueMultimapOperation newContainsValueOperation(byte[] value) {
+   public ContainsValueMultimapOperation newContainsValueOperation(byte[] value) {
       return new ContainsValueMultimapOperation(
             codec, transportFactory, cacheNameBytes, topologyId, flags(), cfg, value, -1, TimeUnit.MILLISECONDS, -1, TimeUnit.MILLISECONDS);
    }

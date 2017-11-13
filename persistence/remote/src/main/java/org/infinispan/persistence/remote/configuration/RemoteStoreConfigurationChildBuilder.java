@@ -2,7 +2,7 @@ package org.infinispan.persistence.remote.configuration;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -115,7 +115,7 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    /**
     * Controls which transport to use. Currently only the TcpTransport is supported.
     */
-   RemoteStoreConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory);
+   RemoteStoreConfigurationBuilder transportFactory(Class<? extends ChannelFactory> transportFactory);
 
    /**
     * This hint allows sizing of byte buffers when serializing and deserializing values, to minimize

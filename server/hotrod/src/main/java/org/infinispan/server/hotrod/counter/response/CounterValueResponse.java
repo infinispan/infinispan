@@ -26,4 +26,18 @@ public class CounterValueResponse extends Response implements CounterResponse {
    public void writeTo(ByteBuf buffer) {
       buffer.writeLong(value);
    }
+
+   @Override
+   public String toString() {
+      return "CounterValueResponse{" +
+            "version=" + version +
+            ", messageId=" + messageId +
+            ", cacheName='" + cacheName + '\'' +
+            ", clientIntel=" + clientIntel +
+            ", operation=" + operation +
+            ", status=" + status +
+            ", topologyId=" + topologyId +
+            ", value=" + value +
+            '}';
+   }
 }

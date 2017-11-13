@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import org.infinispan.client.hotrod.impl.transport.Transport;
+import io.netty.buffer.ByteBuf;
 
 /**
  * @since 9.2
@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 public class Codec27 extends Codec26 {
 
    @Override
-   public HeaderParams writeHeader(Transport transport, HeaderParams params) {
-      return writeHeader(transport, params, HotRodConstants.VERSION_27);
+   public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
+      return writeHeader(buf, params, HotRodConstants.VERSION_27);
    }
 }

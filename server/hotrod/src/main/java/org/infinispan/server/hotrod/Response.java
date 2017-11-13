@@ -261,6 +261,7 @@ class IterationNextResponse extends Response {
             ", operation=" + operation +
             ", status=" + status +
             ", topologyId=" + topologyId +
+            ", iterationResult=" + iterationResult +
             '}';
    }
 }

@@ -12,8 +12,8 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -218,8 +218,8 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
    }
 
    private RoundRobinBalancingStrategy getBalancer() {
-      TcpTransportFactory transportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
-      return (RoundRobinBalancingStrategy) transportFactory.getBalancer(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
+      ChannelFactory channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
+      return (RoundRobinBalancingStrategy) channelFactory.getBalancer(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
    }
 
 }

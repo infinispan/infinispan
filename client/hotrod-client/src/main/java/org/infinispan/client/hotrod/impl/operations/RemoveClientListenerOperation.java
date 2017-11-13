@@ -1,15 +1,19 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.net.SocketAddress;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.event.ClientListenerNotifier;
+import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelOperation;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * Remove client listener operation. In order to avoid issues with concurrent
@@ -19,42 +23,53 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
  *
  * @author Galder Zamarreño
  */
-public class RemoveClientListenerOperation extends HotRodOperation {
+public class RemoveClientListenerOperation extends HotRodOperation<Void> implements ChannelOperation {
 
    private final ClientListenerNotifier listenerNotifier;
-
    private final Object listener;
+   private byte[] listenerId;
 
-   protected final TransportFactory transportFactory;
-
-   protected RemoveClientListenerOperation(Codec codec, TransportFactory transportFactory,
+   protected RemoveClientListenerOperation(Codec codec, ChannelFactory channelFactory,
                                            byte[] cacheName, AtomicInteger topologyId, int flags,
                                            Configuration cfg,
                                            ClientListenerNotifier listenerNotifier, Object listener) {
-      super(codec, flags, cfg, cacheName, topologyId);
-      this.transportFactory = transportFactory;
+      super(codec, flags, cfg, cacheName, topologyId, channelFactory);
       this.listenerNotifier = listenerNotifier;
       this.listener = listener;
    }
 
-   @Override
-   public Object execute() {
-      byte[] listenerId = listenerNotifier.findListenerId(listener);
+   protected void fetchChannelAndInvoke() {
+      listenerId = listenerNotifier.findListenerId(listener);
       if (listenerId != null) {
-         SocketAddress address = listenerNotifier.findTransport(listenerId).getRemoteSocketAddress();
-         Transport transport = transportFactory.getAddressTransport(address);
-         try {
-            HeaderParams params = writeHeader(transport, REMOVE_CLIENT_LISTENER_REQUEST);
-            transport.writeArray(listenerId);
-            transport.flush();
-            short status = readHeaderAndValidate(transport, params);
-            if (HotRodConstants.isSuccess(status) || HotRodConstants.isNotExecuted(status))
-               listenerNotifier.removeClientListener(listenerId);
-         } finally {
-            transportFactory.releaseTransport(transport);
-         }
+         SocketAddress address = listenerNotifier.findAddress(listenerId);
+         channelFactory.fetchChannelAndInvoke(address, this);
+      } else {
+         complete(null);
       }
+   }
 
+   @Override
+   public void invoke(Channel channel) {
+      HeaderParams header = headerParams(REMOVE_CLIENT_LISTENER_REQUEST);
+      scheduleRead(channel, header);
+      sendArrayOperation(channel, header, listenerId);
+   }
+
+   @Override
+   public void cancel(SocketAddress address, Throwable cause) {
+      completeExceptionally(cause);
+   }
+
+   @Override
+   public Void decodePayload(ByteBuf buf, short status) {
+      if (HotRodConstants.isSuccess(status) || HotRodConstants.isNotExecuted(status))
+         listenerNotifier.removeClientListener(listenerId);
       return null;
+   }
+
+   @Override
+   public CompletableFuture<Void> execute() {
+      fetchChannelAndInvoke();
+      return this;
    }
 }

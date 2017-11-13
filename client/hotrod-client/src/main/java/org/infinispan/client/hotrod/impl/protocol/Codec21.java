@@ -2,17 +2,20 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import static org.infinispan.commons.util.Util.printArray;
 
+import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.List;
 
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryExpiredEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
-import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
+
+import io.netty.buffer.ByteBuf;
 
 public class Codec21 extends Codec20 {
 
@@ -24,20 +27,20 @@ public class Codec21 extends Codec20 {
    }
 
    @Override
-   public HeaderParams writeHeader(Transport transport, HeaderParams params) {
-      return writeHeader(transport, params, HotRodConstants.VERSION_21);
+   public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
+      return writeHeader(buf, params, HotRodConstants.VERSION_21);
    }
 
    @Override
-   public void writeClientListenerParams(Transport transport, ClientListener clientListener, byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
-      super.writeClientListenerParams(transport, clientListener, filterFactoryParams, converterFactoryParams);
-      transport.writeByte((short)(clientListener.useRawData() ? 1 : 0));
+   public void writeClientListenerParams(ByteBuf buf, ClientListener clientListener, byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+      super.writeClientListenerParams(buf, clientListener, filterFactoryParams, converterFactoryParams);
+      buf.writeByte((short)(clientListener.useRawData() ? 1 : 0));
    }
 
    @Override
-   protected ClientEvent readPartialEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller, short eventTypeId, List<String> whitelist) {
-      short status = transport.readByte();
-      transport.readByte(); // ignore, no topology expected
+   protected ClientEvent readPartialEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, short eventTypeId, List<String> whitelist, SocketAddress serverAddress) {
+      short status = buf.readUnsignedByte();
+      buf.readUnsignedByte(); // ignore, no topology expected
       ClientEvent.Type eventType;
       switch (eventTypeId) {
          case CACHE_ENTRY_CREATED_EVENT_RESPONSE:
@@ -53,38 +56,38 @@ public class Codec21 extends Codec20 {
             eventType = ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED;
             break;
          case ERROR_RESPONSE:
-            checkForErrorsInResponseStatus(transport, null, status);
+            checkForErrorsInResponseStatus(buf, null, status, serverAddress);
          default:
             throw log.unknownEvent(eventTypeId);
       }
 
-      byte[] listenerId = transport.readArray();
+      byte[] listenerId = ByteBufUtil.readArray(buf);
       if (!Arrays.equals(listenerId, expectedListenerId))
          throw log.unexpectedListenerId(printArray(listenerId), printArray(expectedListenerId));
 
-      short isCustom = transport.readByte();
-      boolean isRetried = transport.readByte() == 1 ? true : false;
+      short isCustom = buf.readUnsignedByte();
+      boolean isRetried = buf.readUnsignedByte() == 1 ? true : false;
 
       if (isCustom == 1) {
-         final Object eventData = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status, whitelist);
+         final Object eventData = MarshallerUtil.bytes2obj(marshaller, ByteBufUtil.readArray(buf), status, whitelist);
          return createCustomEvent(eventData, eventType, isRetried);
       } else if (isCustom == 2) { // New in 2.1, dealing with raw custom events
-         return createCustomEvent(transport.readArray(), eventType, isRetried); // Raw data
+         return createCustomEvent(ByteBufUtil.readArray(buf), eventType, isRetried); // Raw data
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
-               Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status, whitelist);
-               long createdDataVersion = transport.readLong();
+               Object createdKey = MarshallerUtil.bytes2obj(marshaller, ByteBufUtil.readArray(buf), status, whitelist);
+               long createdDataVersion = buf.readLong();
                return createCreatedEvent(createdKey, createdDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_MODIFIED:
-               Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status, whitelist);
-               long modifiedDataVersion = transport.readLong();
+               Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, ByteBufUtil.readArray(buf), status, whitelist);
+               long modifiedDataVersion = buf.readLong();
                return createModifiedEvent(modifiedKey, modifiedDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_REMOVED:
-               Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status, whitelist);
+               Object removedKey = MarshallerUtil.bytes2obj(marshaller, ByteBufUtil.readArray(buf), status, whitelist);
                return createRemovedEvent(removedKey, isRetried);
             case CLIENT_CACHE_ENTRY_EXPIRED:
-               Object expiredKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status, whitelist);
+               Object expiredKey = MarshallerUtil.bytes2obj(marshaller, ByteBufUtil.readArray(buf), status, whitelist);
                return createExpiredEvent(expiredKey);
             default:
                throw getLog().unknownEvent(eventTypeId);

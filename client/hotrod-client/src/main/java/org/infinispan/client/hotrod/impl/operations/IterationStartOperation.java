@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.operations;
 
 import static java.util.Arrays.stream;
 
-import java.net.SocketAddress;
 import java.util.BitSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,8 +10,11 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * @author gustavonalle
@@ -24,57 +26,60 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    private final byte[][] filterParameters;
    private final Set<Integer> segments;
    private final int batchSize;
-   private final TransportFactory transportFactory;
+   private final ChannelFactory channelFactory;
    private final boolean metadata;
+   private Channel channel;
 
    IterationStartOperation(Codec codec, int flags, Configuration cfg, byte[] cacheName, AtomicInteger topologyId,
                            String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments,
-                           int batchSize, TransportFactory transportFactory, boolean metadata) {
-      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
+                           int batchSize, ChannelFactory channelFactory, boolean metadata) {
+      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.filterConverterFactory = filterConverterFactory;
       this.filterParameters = filterParameters;
       this.segments = segments;
       this.batchSize = batchSize;
-      this.transportFactory = transportFactory;
+      this.channelFactory = channelFactory;
       this.metadata = metadata;
    }
 
    @Override
-   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(failedServers, cacheName);
-   }
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(ITERATION_START_REQUEST);
+      this.channel = channel;
+      scheduleRead(channel, header);
 
-   @Override
-   protected IterationStartResponse executeOperation(Transport transport) {
-      HeaderParams params = writeHeader(transport, ITERATION_START_REQUEST);
+      ByteBuf buf = channel.alloc().buffer();
+
+      codec.writeHeader(buf, header);
       if (segments == null) {
-         transport.writeSignedVInt(-1);
+         ByteBufUtil.writeSignedVInt(buf, -1);
       } else {
          // TODO use a more compact BitSet implementation, like http://roaringbitmap.org/
          BitSet bitSet = new BitSet();
          segments.stream().forEach(bitSet::set);
-         transport.writeOptionalArray(bitSet.toByteArray());
+         ByteBufUtil.writeOptionalArray(buf, bitSet.toByteArray());
       }
-      transport.writeOptionalString(filterConverterFactory);
+      ByteBufUtil.writeOptionalString(buf, filterConverterFactory);
       if (filterConverterFactory != null) {
          if (filterParameters != null && filterParameters.length > 0) {
-            transport.writeByte((short) filterParameters.length);
-            stream(filterParameters).forEach(transport::writeArray);
+            buf.writeByte(filterParameters.length);
+            stream(filterParameters).forEach(param -> ByteBufUtil.writeArray(buf, param));
          } else {
-            transport.writeByte((short) 0);
+            buf.writeByte(0);
          }
       }
-      transport.writeVInt(batchSize);
-      transport.writeByte((short) (metadata ? 1 : 0));
+      ByteBufUtil.writeVInt(buf, batchSize);
+      buf.writeByte(metadata ? 1 : 0);
+      channel.writeAndFlush(buf);
+   }
 
-      transport.flush();
-
-      readHeaderAndValidate(transport, params);
-
-      return new IterationStartResponse(transport.readString(), (SegmentConsistentHash) transportFactory.getConsistentHash(cacheName), topologyId.get(), transport);
+   public void releaseChannel(Channel channel) {
    }
 
    @Override
-   protected void releaseTransport(Transport transport) {
+   public IterationStartResponse decodePayload(ByteBuf buf, short status) {
+      SegmentConsistentHash consistentHash = (SegmentConsistentHash) channelFactory.getConsistentHash(cacheName);
+      IterationStartResponse response = new IterationStartResponse(ByteBufUtil.readArray(buf), consistentHash, topologyId.get(), channel);
+      return response;
    }
 }

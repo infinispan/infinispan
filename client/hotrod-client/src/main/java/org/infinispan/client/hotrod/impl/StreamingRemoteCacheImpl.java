@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
+import static org.infinispan.client.hotrod.impl.Util.await;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +28,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
    @Override
    public <T extends InputStream & VersionedMetadata> T get(K key) {
       GetStreamOperation op = cache.operationsFactory.newGetStreamOperation(cache.compatKeyIfNeeded(key), cache.obj2bytes(key, true), 0);
-      return (T)op.execute();
+      return (T) await(op.execute());
    }
 
    @Override
@@ -42,7 +44,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
    @Override
    public OutputStream put(K key, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       PutStreamOperation op = cache.operationsFactory.newPutStreamOperation(cache.compatKeyIfNeeded(key), cache.obj2bytes(key, true), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-      return op.execute();
+      return await(op.execute());
    }
 
    @Override
@@ -58,7 +60,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
    @Override
    public OutputStream putIfAbsent(K key, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       PutStreamOperation op = cache.operationsFactory.newPutIfAbsentStreamOperation(cache.compatKeyIfNeeded(key), cache.obj2bytes(key, true), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-      return op.execute();
+      return await(op.execute());
    }
 
    @Override
@@ -74,6 +76,6 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
    @Override
    public OutputStream replaceWithVersion(K key, long version, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       PutStreamOperation op = cache.operationsFactory.newPutStreamOperation(cache.compatKeyIfNeeded(key), cache.obj2bytes(key, true), version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
-      return op.execute();
+      return await(op.execute());
    }
 }

@@ -213,7 +213,7 @@
                             <groupId>org.hibernate</groupId>
                             <artifactId>hibernate-orm-modules</artifactId>
                             <version>${version.hibernate.core}</version>
-                            <classifier>wildfly-10-dist</classifier>
+                            <classifier>wildfly-11-dist</classifier>
                             <type>zip</type>
                             <overWrite>false</overWrite>
                             <outputDirectory>${project.build.directory}/node1/wildfly-${version.org.wildfly}/modules</outputDirectory>
@@ -222,7 +222,7 @@
                             <groupId>org.hibernate</groupId>
                             <artifactId>hibernate-orm-modules</artifactId>
                             <version>${version.hibernate.core}</version>
-                            <classifier>wildfly-10-dist</classifier>
+                            <classifier>wildfly-11-dist</classifier>
                             <type>zip</type>
                             <overWrite>false</overWrite>
                             <outputDirectory>${project.build.directory}/node2/wildfly-${version.org.wildfly}/modules</outputDirectory>

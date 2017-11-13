@@ -67,6 +67,7 @@ public final class TopologyInfo {
    }
 
    public Collection<SocketAddress> getServers() {
+      // Note: the returned list contains duplicities as the server is there once per each cache
       return servers.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
    }
 
@@ -125,11 +126,15 @@ public final class TopologyInfo {
    }
 
    public void updateServers(byte[] cacheName, Collection<SocketAddress> updatedServers) {
+      // We must not update servers for other caches than cacheName because the list of servers
+      // here would get out of sync with balancer.
+      WrappedByteArray wrappedCacheName;
       if (cacheName == null || cacheName.length == 0) {
-         servers.keySet().forEach(k -> servers.put(k, updatedServers));
+         wrappedCacheName = EMPTY_BYTES;
       } else {
-         servers.put(new WrappedByteArray(cacheName), updatedServers);
+         wrappedCacheName = new WrappedByteArray(cacheName);
       }
+      servers.put(wrappedCacheName, updatedServers);
    }
 
 
@@ -142,13 +147,11 @@ public final class TopologyInfo {
    }
 
    public AtomicInteger createTopologyId(byte[] cacheName, int topologyId) {
-      AtomicInteger id = new AtomicInteger(topologyId);
-      this.topologyIds.put(new WrappedByteArray(cacheName), id);
-      return id;
+      return topologyIds.computeIfAbsent(new WrappedByteArray(cacheName), c -> new AtomicInteger(topologyId));
    }
 
    public void setTopologyId(byte[] cacheName, int topologyId) {
-      AtomicInteger id = this.topologyIds.get(new WrappedByteArray(cacheName));
+      AtomicInteger id = topologyIds.get(new WrappedByteArray(cacheName));
       id.set(topologyId);
    }
 

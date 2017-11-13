@@ -85,7 +85,9 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
             ts0.advance(1001);
             ts1.advance(1001);
             findServerAndKill(newClient, servers, cacheManagers);
-            c.put(key21, "four");
+            // The failover is asynchronous, triggered by closing the channels. If we did an operation right
+            // now we could get this event.
+            // c.put(key21, "four");
             // Failover expectations
             statelessListener.expectNoEvents();
             statefulListener.expectFailoverEvent();
@@ -94,7 +96,7 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
             statelessListener.expectNoEvents();
             failoverListener.expectNoEvents();
             //we should receive CLIENT_CACHE_ENTRY_CREATED only for entries that did not expire
-            statefulListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, key00, key11, key21);
+            statefulListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, key00, key11);
             //now there should be no events for key10 and key41 as they expired
             statefulListener.expectNoEvents();
             c.put(key31, "five");

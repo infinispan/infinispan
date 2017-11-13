@@ -24,7 +24,7 @@
       <bundle>mvn:org.hibernate/hibernate-osgi/${version.hibernate.osgi}</bundle>
       <bundle>mvn:org.hibernate.javax.persistence/hibernate-jpa-2.1-api/${version.hibernate.javax.persistence}</bundle>
       <!-- hibernate's dependencies -->
-      <bundle>mvn:org.jboss.logging/jboss-logging/${version.jboss.logging}</bundle>
+      <!-- jboss logging not included as it conflicts with pax-logging-api in Karaf -->
       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.antlr/${version.hibernate_dep.antlr}</bundle>
       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.dom4j/${version.hibernate_dep.dom4j}</bundle>
       <bundle>mvn:com.fasterxml/classmate/${version.hibernate_dep.classmate}</bundle>

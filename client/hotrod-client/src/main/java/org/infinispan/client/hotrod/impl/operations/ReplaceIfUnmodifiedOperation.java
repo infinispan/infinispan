@@ -7,8 +7,11 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * Implement "replaceIfUnmodified" as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod
@@ -20,25 +23,32 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<VersionedOperationResponse> {
    private final long version;
 
-   public ReplaceIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes, byte[] cacheName,
+   public ReplaceIfUnmodifiedOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName,
                                        AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
                                        long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       this.version = version;
    }
 
    @Override
-   protected VersionedOperationResponse executeOperation(Transport transport) {
-      // 1) write header
-      HeaderParams params = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST);
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(REPLACE_IF_UNMODIFIED_REQUEST);
+      scheduleRead(channel, header);
 
-      //2) write message body
-      transport.writeArray(keyBytes);
-      codec.writeExpirationParams(transport, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
-      transport.writeLong(version);
-      transport.writeArray(value);
-      transport.flush();
+      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateArraySize(keyBytes) +
+            codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) + 8 +
+            ByteBufUtil.estimateArraySize(value));
 
-      return returnVersionedOperationResponse(transport, params);
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeArray(buf, keyBytes);
+      codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      buf.writeLong(version);
+      ByteBufUtil.writeArray(buf, value);
+      channel.writeAndFlush(buf);
+   }
+
+   @Override
+   public VersionedOperationResponse decodePayload(ByteBuf buf, short status) {
+      return returnVersionedOperationResponse(buf, status);
    }
 }

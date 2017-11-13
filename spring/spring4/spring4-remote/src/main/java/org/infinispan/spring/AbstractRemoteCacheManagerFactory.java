@@ -125,6 +125,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
     * @param TransportFactory
     * @see org.infinispan.spring.ConfigurationPropertiesOverrides#setTransportFactory(java.lang.String)
     */
+   @Deprecated
    public void setTransportFactory(final String TransportFactory) {
       this.configurationPropertiesOverrides.setTransportFactory(TransportFactory);
    }

@@ -23,7 +23,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_CONT
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_PROTOCOL;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRUST_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.USE_AUTH;
@@ -54,9 +53,7 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV2;
 import org.infinispan.client.hotrod.SomeRequestBalancingStrategy;
-import org.infinispan.client.hotrod.SomeTransportfactory;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.transport.tcp.SaslTransportObjectFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.CacheConfigurationException;
@@ -72,7 +69,6 @@ public class ConfigurationTest {
    static {
       OPTIONS.put(ASYNC_EXECUTOR_FACTORY, c -> c.asyncExecutorFactory().factoryClass());
       OPTIONS.put(REQUEST_BALANCING_STRATEGY, Configuration::balancingStrategyClass);
-      OPTIONS.put(TRANSPORT_FACTORY, Configuration::transportFactory);
       OPTIONS.put("maxActive", c -> c.connectionPool().maxActive());
       OPTIONS.put("maxTotal", c -> c.connectionPool().maxTotal());
       OPTIONS.put("maxWait", c -> c.connectionPool().maxWait());
@@ -180,7 +176,6 @@ public class ConfigurationTest {
          .valueSizeEstimate(1024)
          .maxRetries(0)
          .tcpKeepAlive(true)
-         .transportFactory(SomeTransportfactory.class)
          .security()
             .ssl()
                .enable()
@@ -215,7 +210,6 @@ public class ConfigurationTest {
       p.setProperty(SERVER_LIST, "host1:11222; host2:11222");
       p.setProperty(ASYNC_EXECUTOR_FACTORY, "org.infinispan.client.hotrod.SomeAsyncExecutorFactory");
       p.setProperty(REQUEST_BALANCING_STRATEGY, "org.infinispan.client.hotrod.SomeRequestBalancingStrategy");
-      p.setProperty(TRANSPORT_FACTORY, "org.infinispan.client.hotrod.SomeTransportfactory");
       p.setProperty(HASH_FUNCTION_PREFIX + "." + 2, "org.infinispan.client.hotrod.SomeCustomConsistentHashV2");
       p.setProperty("maxActive", "100");
       p.setProperty("maxTotal", "150");
@@ -449,7 +443,7 @@ public class ConfigurationTest {
 
    public void testValidAuthenticationCBHNoSubject() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.security().authentication().enable().saslMechanism("PLAIN").callbackHandler(SaslTransportObjectFactory.NoOpCallbackHandler.INSTANCE);
+      builder.security().authentication().enable().saslMechanism("PLAIN").callbackHandler(callbacks -> {});
       builder.build();
    }
 
@@ -478,7 +472,6 @@ public class ConfigurationTest {
       }
       assertEqualsConfig(SomeAsyncExecutorFactory.class, ASYNC_EXECUTOR_FACTORY, configuration);
       assertEqualsConfig(SomeRequestBalancingStrategy.class, REQUEST_BALANCING_STRATEGY, configuration);
-      assertEqualsConfig(SomeTransportfactory.class, TRANSPORT_FACTORY, configuration);
       assertEquals(null, configuration.consistentHashImpl(1));
       assertEquals(SomeCustomConsistentHashV2.class, configuration.consistentHashImpl(2));
       assertEqualsConfig(100, "maxActive", configuration);

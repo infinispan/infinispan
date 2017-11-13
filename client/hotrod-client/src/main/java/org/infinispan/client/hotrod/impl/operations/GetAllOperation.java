@@ -9,9 +9,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -23,37 +27,62 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
-   public GetAllOperation(Codec codec, TransportFactory transportFactory,
+   private HeaderDecoder<Map<K, V>> decoder;
+   private Map<K, V> result;
+   private int size = -1;
+
+   public GetAllOperation(Codec codec, ChannelFactory channelFactory,
                           Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
                           int flags, Configuration cfg) {
-      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
+      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.keys = keys;
    }
 
    protected final Set<byte[]> keys;
 
    @Override
-   protected Map<K, V> executeOperation(Transport transport) {
-      HeaderParams params = writeHeader(transport, GET_ALL_REQUEST);
-      transport.writeVInt(keys.size());
-      for (byte[] key : keys) {
-         transport.writeArray(key);
-      }
-      transport.flush();
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(HotRodConstants.GET_ALL_REQUEST);
+      decoder = scheduleRead(channel, header);
 
-      short status = readHeaderAndValidate(transport, params);
-      int size = transport.readVInt();
-      Map<K, V> result = new HashMap<K, V>(size);
-      for (int i = 0; i < size; ++i) {
-         K key = codec.readUnmarshallByteArray(transport, status, cfg.serialWhitelist());
-         V value = codec.readUnmarshallByteArray(transport, status, cfg.serialWhitelist());
-         result.put(key, value);
+      int bufSize = codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(keys.size());
+      for (byte[] key : keys) {
+         bufSize += ByteBufUtil.estimateArraySize(key);
       }
-      return result;
+      ByteBuf buf = channel.alloc().buffer(bufSize);
+
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeVInt(buf, keys.size());
+      for (byte[] key : keys) {
+         ByteBufUtil.writeArray(buf, key);
+      }
+      channel.writeAndFlush(buf);
    }
 
    @Override
-   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(keys.iterator().next(), failedServers, cacheName);
+   protected void reset() {
+      result = null;
+      size = -1;
+   }
+
+   @Override
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      channelFactory.fetchChannelAndInvoke(keys.iterator().next(), failedServers, cacheName, this);
+   }
+
+   @Override
+   public Map<K, V> decodePayload(ByteBuf buf, short status) {
+      if (size < 0) {
+         size = ByteBufUtil.readVInt(buf);
+         result = new HashMap<>(size);
+         decoder.checkpoint();
+      }
+      while (result.size() < size) {
+         K key = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+         V value = codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
+         result.put(key, value);
+         decoder.checkpoint();
+      }
+      return result;
    }
 }

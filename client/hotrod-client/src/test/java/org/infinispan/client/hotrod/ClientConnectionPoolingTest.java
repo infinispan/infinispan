@@ -4,17 +4,14 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.commands.VisitableCommand;
@@ -44,10 +41,9 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
    RemoteCache<String, String> remoteCache;
    private RemoteCacheManager remoteCacheManager;
-   private GenericKeyedObjectPool<?, ?> connectionPool;
+   private ChannelFactory channelFactory;
    private InetSocketAddress hrServ1Addr;
    private InetSocketAddress hrServ2Addr;
-
 
    private WorkerThread workerThread1;
    private WorkerThread workerThread2;
@@ -76,23 +72,15 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       clientBuilder
          .connectionPool()
             .maxActive(2)
-            .maxTotal(8)
-            .maxIdle(6)
             .exhaustedAction(ExhaustedAction.WAIT)
-            .testOnBorrow(false)
-            .testOnReturn(false)
-            .timeBetweenEvictionRuns(-2)
-            .minEvictableIdleTime(7)
-            .testWhileIdle(true)
+            .minEvictableIdleTime(7000)
             .minIdle(-5)
-            .lifo(true)
          .addServers(servers);
 
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
-      connectionPool = tcpConnectionFactory.getConnectionPool();
+      channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
       workerThread1 = new WorkerThread(remoteCache);
       workerThread2 = new WorkerThread(remoteCache);
       workerThread3 = new WorkerThread(remoteCache);
@@ -125,21 +113,6 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       killRemoteCacheManager(remoteCacheManager);
    }
 
-   @Test
-   public void testPropsCorrectlySet() {
-      assertEquals(2, connectionPool.getMaxActive());
-      assertEquals(8, connectionPool.getMaxTotal());
-      assertEquals(6, connectionPool.getMaxIdle());
-      assertEquals(1, connectionPool.getWhenExhaustedAction());
-      assertFalse(connectionPool.getTestOnBorrow());
-      assertFalse(connectionPool.getTestOnReturn());
-      assertEquals(-2, connectionPool.getTimeBetweenEvictionRunsMillis());
-      assertEquals(7, connectionPool.getMinEvictableIdleTimeMillis());
-      assertTrue(connectionPool.getTestWhileIdle());
-      assertEquals(-5, connectionPool.getMinIdle());
-      assertTrue(connectionPool.getLifo());
-   }
-
    public void testMaxActiveReached() throws Exception {
       workerThread1.put("k1", "v1");
       workerThread1.put("k2", "v2");
@@ -154,10 +127,10 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       assertEquals(1, c2.size());
 
       // there should be no active connections to any server
-      assertEquals(0, connectionPool.getNumActive(hrServ1Addr));
-      assertEquals(0, connectionPool.getNumActive(hrServ2Addr));
-      assertEquals(1, connectionPool.getNumIdle(hrServ1Addr));
-      assertEquals(1, connectionPool.getNumIdle(hrServ2Addr));
+      assertEquals(0, channelFactory.getNumActive(hrServ1Addr));
+      assertEquals(0, channelFactory.getNumActive(hrServ2Addr));
+      assertEquals(1, channelFactory.getNumIdle(hrServ1Addr));
+      assertEquals(1, channelFactory.getNumIdle(hrServ2Addr));
 
       // install an interceptor that will block all requests on the server until the allow() call
       DelayTransportInterceptor dt1 = new DelayTransportInterceptor(true);
@@ -172,29 +145,29 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
          workerThread2.putAsync("k4", "v4");
          log.info("Async calls for k3 and k4 is done.");
 
-         eventually(() -> 1 == connectionPool.getNumActive(hrServ1Addr) &&
-         1 == connectionPool.getNumActive(hrServ2Addr) &&
-         0 == connectionPool.getNumIdle(hrServ1Addr) &&
-         0 == connectionPool.getNumIdle(hrServ2Addr));
+         eventually(() -> 1 == channelFactory.getNumActive(hrServ1Addr) &&
+         1 == channelFactory.getNumActive(hrServ2Addr) &&
+         0 == channelFactory.getNumIdle(hrServ1Addr) &&
+         0 == channelFactory.getNumIdle(hrServ2Addr));
 
 
          // another operation for each server, creating new connections
          workerThread3.putAsync("k5", "v5");
          workerThread4.putAsync("k6", "v6");
-         eventually(() -> 2 == connectionPool.getNumActive(hrServ1Addr) &&
-               2 == connectionPool.getNumActive(hrServ2Addr) &&
-               0 == connectionPool.getNumIdle(hrServ1Addr) &&
-               0 == connectionPool.getNumIdle(hrServ2Addr));
+         eventually(() -> 2 == channelFactory.getNumActive(hrServ1Addr) &&
+               2 == channelFactory.getNumActive(hrServ2Addr) &&
+               0 == channelFactory.getNumIdle(hrServ1Addr) &&
+               0 == channelFactory.getNumIdle(hrServ2Addr));
 
          // we've reached the connection pool limit, the new operations will block
          // until a connection is released
          workerThread5.putAsync("k7", "v7");
          workerThread6.putAsync("k8", "v8");
          Thread.sleep(2000); //sleep a bit longer to make sure the async threads do their job
-         assertEquals(2, connectionPool.getNumActive(hrServ1Addr));
-         assertEquals(2, connectionPool.getNumActive(hrServ2Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));
-         assertEquals(0, connectionPool.getNumIdle(hrServ2Addr));
+         assertEquals(2, channelFactory.getNumActive(hrServ1Addr));
+         assertEquals(2, channelFactory.getNumActive(hrServ2Addr));
+         assertEquals(0, channelFactory.getNumIdle(hrServ1Addr));
+         assertEquals(0, channelFactory.getNumIdle(hrServ2Addr));
       }
       catch (Exception e) {
          log.error(e);
@@ -205,7 +178,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       }
 
       // give the servers some time to process the operations
-      eventually(() -> connectionPool.getNumActive() == 0, 1000);
+      eventually(() -> channelFactory.getNumActive() == 0, 1000);
 
       assertExistKeyValue("k3", "v3");
       assertExistKeyValue("k4", "v4");
@@ -215,10 +188,10 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       assertExistKeyValue("k8", "v8");
 
       // all the connections have been released to the pool, but haven't been closed
-      assertEquals(0, connectionPool.getNumActive(hrServ1Addr));
-      assertEquals(0, connectionPool.getNumActive(hrServ2Addr));
-      assertEquals(2, connectionPool.getNumIdle(hrServ1Addr));
-      assertEquals(2, connectionPool.getNumIdle(hrServ2Addr));
+      assertEquals(0, channelFactory.getNumActive(hrServ1Addr));
+      assertEquals(0, channelFactory.getNumActive(hrServ2Addr));
+      assertEquals(2, channelFactory.getNumIdle(hrServ1Addr));
+      assertEquals(2, channelFactory.getNumIdle(hrServ2Addr));
    }
 
    private void assertExistKeyValue(String key, String value) throws InterruptedException {

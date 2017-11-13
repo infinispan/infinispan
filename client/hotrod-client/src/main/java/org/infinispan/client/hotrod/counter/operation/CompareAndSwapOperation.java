@@ -4,14 +4,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A compare-and-set operation for {@link StrongCounter#compareAndSwap(long, long)} and {@link
@@ -28,25 +29,28 @@ public class CompareAndSwapOperation extends BaseCounterOperation<Long> {
    private final long update;
    private final CounterConfiguration counterConfiguration;
 
-   public CompareAndSwapOperation(Codec codec, TransportFactory transportFactory, AtomicInteger topologyId,
-         Configuration cfg, String counterName, long expect, long update, CounterConfiguration counterConfiguration) {
-      super(codec, transportFactory, topologyId, cfg, counterName);
+   public CompareAndSwapOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
+                                  Configuration cfg, String counterName, long expect, long update, CounterConfiguration counterConfiguration) {
+      super(codec, channelFactory, topologyId, cfg, counterName);
       this.expect = expect;
       this.update = update;
       this.counterConfiguration = counterConfiguration;
    }
 
    @Override
-   protected Long executeOperation(Transport transport) {
-      HeaderParams header = writeHeaderAndCounterName(transport, COUNTER_CAS_REQUEST);
-      transport.writeLong(expect);
-      transport.writeLong(update);
-      transport.flush();
+   protected void executeOperation(Channel channel) {
+      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, COUNTER_CAS_REQUEST, 16);
+      buf.writeLong(expect);
+      buf.writeLong(update);
+      channel.writeAndFlush(buf);
+   }
 
-      short status = readHeaderAndValidateCounter(transport, header);
+   @Override
+   public Long decodePayload(ByteBuf buf, short status) {
+      checkStatus(status);
       assertBoundaries(status);
       assert status == NO_ERROR_STATUS;
-      return transport.readLong();
+      return buf.readLong();
    }
 
    private void assertBoundaries(short status) {

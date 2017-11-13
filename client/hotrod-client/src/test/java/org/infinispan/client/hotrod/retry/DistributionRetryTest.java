@@ -15,15 +15,17 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.KeyGenerator;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.client.hotrod.test.NoopChannelOperation;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.marshall.core.JBossMarshaller;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
+
+import io.netty.channel.Channel;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -114,14 +116,14 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
       remoteCache.put(key, "v");
       assertOnlyServerHit(getAddress(hotRodServer2));
-      TcpTransportFactory tcpTp = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
+      ChannelFactory channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
 
       Marshaller sm = new JBossMarshaller();
-      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.objectToByteBuffer(key, 64), null, RemoteCacheManager.cacheNameBytes());
+      Channel channel = channelFactory.fetchChannelAndInvoke(sm.objectToByteBuffer(key, 64), null, RemoteCacheManager.cacheNameBytes(), new NoopChannelOperation()).join();
       try {
-      assertEquals(transport.getServerAddress(), InetSocketAddress.createUnresolved(hotRodServer2.getHost(), hotRodServer2.getPort()));
+         assertEquals(channel.remoteAddress(), new InetSocketAddress(hotRodServer2.getHost(), hotRodServer2.getPort()));
       } finally {
-         tcpTp.releaseTransport(transport);
+         channelFactory.releaseChannel(channel);
       }
 
 

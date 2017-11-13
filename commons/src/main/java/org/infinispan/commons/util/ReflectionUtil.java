@@ -388,4 +388,12 @@ public class ReflectionUtil {
       throw log.unableToUnwrapAny(Arrays.toString(objs), clazz);
    }
 
+   public static int getIntAccessibly(Field f, Object instance) {
+      try {
+         f.setAccessible(true);
+         return f.getInt(instance);
+      } catch (IllegalAccessException e) {
+         throw new RuntimeException(e);
+      }
+   }
 }

@@ -1,10 +1,9 @@
 package org.infinispan.client.hotrod;
 
-import static java.util.Arrays.asList;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +16,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
-import org.infinispan.client.hotrod.event.ClientListenerNotifier;
+import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
@@ -27,8 +26,7 @@ import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
@@ -74,8 +72,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    private Codec codec;
 
    private Marshaller marshaller;
-   protected TransportFactory transportFactory;
-   private ExecutorService asyncExecutorService;
+   protected ChannelFactory channelFactory;
    protected ClientListenerNotifier listenerNotifier;
    private final Runnable start = this::start;
    private final Runnable stop = this::stop;
@@ -186,18 +183,17 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    }
 
    public CompletableFuture<Void> startAsync() {
-      createExecutorService();
-      return CompletableFuture.runAsync(start, asyncExecutorService);
+      // The default async executor service is dedicated for Netty, therefore here we'll use common FJP.
+      return CompletableFuture.runAsync(start);
    }
 
    public CompletableFuture<Void> stopAsync() {
-      createExecutorService();
-      return CompletableFuture.runAsync(stop, asyncExecutorService);
+      return CompletableFuture.runAsync(stop);
    }
 
    @Override
    public void start() {
-      transportFactory = Util.getInstance(configuration.transportFactory());
+      channelFactory = new ChannelFactory();
 
       if (marshaller == null) {
          marshaller = configuration.marshaller();
@@ -212,12 +208,15 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
       codec = CodecFactory.getCodec(configuration.version());
 
-      createExecutorService();
-
-      listenerNotifier = ClientListenerNotifier.create(codec, marshaller, transportFactory, configuration.serialWhitelist());
-      transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier,
-            asList(listenerNotifier::failoverClientListeners, counterManager));
-      counterManager.start(transportFactory, codec, configuration, asyncExecutorService);
+      listenerNotifier = new ClientListenerNotifier(codec, marshaller, channelFactory, configuration.serialWhitelist());
+      ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
+      if (executorFactory == null) {
+         executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
+      }
+      ExecutorService asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
+      channelFactory.start(codec, configuration, defaultCacheTopologyId, marshaller, asyncExecutorService,
+            Collections.singletonList(listenerNotifier::failoverListeners));
+      counterManager.start(channelFactory, codec, configuration, listenerNotifier);
 
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
@@ -233,17 +232,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       started = true;
    }
 
-   private void createExecutorService() {
-      if (asyncExecutorService == null) {
-         ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();
-         if (executorFactory == null) {
-            executorFactory = Util.getInstance(configuration.asyncExecutorFactory().factoryClass());
-         }
-         asyncExecutorService = executorFactory.getExecutor(configuration.asyncExecutorFactory().properties());
-      }
-   }
-
-   private void warnAboutUberJarDuplicates() {
+   private final void warnAboutUberJarDuplicates() {
       UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
       scanner.isClasspathCorrectAsync()
               .thenAcceptAsync(isClasspathCorrect -> {
@@ -262,8 +251,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       if (isStarted()) {
          listenerNotifier.stop();
          counterManager.stop();
-         transportFactory.destroy();
-         asyncExecutorService.shutdownNow();
+         channelFactory.destroy();
       }
       started = false;
    }
@@ -275,12 +263,12 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
 
    @Override
    public boolean switchToCluster(String clusterName) {
-      return transportFactory.switchToCluster(clusterName);
+      return channelFactory.switchToCluster(clusterName);
    }
 
    @Override
    public boolean switchToDefaultCluster() {
-      return transportFactory.switchToCluster(TcpTransportFactory.DEFAULT_CLUSTER_NAME);
+      return channelFactory.switchToCluster(ChannelFactory.DEFAULT_CLUSTER_NAME);
    }
 
    private Properties loadFromStream(InputStream stream) {
@@ -338,10 +326,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    private void startRemoteCache(RemoteCacheHolder remoteCacheHolder) {
       RemoteCacheImpl<?, ?> remoteCache = remoteCacheHolder.remoteCache;
       OperationsFactory operationsFactory = new OperationsFactory(
-              transportFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue, codec, listenerNotifier,
-            asyncExecutorService, configuration);
-      remoteCache.init(marshaller, asyncExecutorService, operationsFactory, configuration.keySizeEstimate(),
-            configuration.valueSizeEstimate(), configuration.batchSize());
+            channelFactory, remoteCache.getName(), remoteCacheHolder.forceReturnValue, codec, listenerNotifier,
+            configuration);
+      remoteCache.init(marshaller, operationsFactory,
+            configuration.keySizeEstimate(), configuration.valueSizeEstimate(), configuration.batchSize());
    }
 
    @Override
@@ -360,7 +348,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    }
 
    public RemoteCacheManagerAdmin administration() {
-      OperationsFactory operationsFactory = new OperationsFactory(transportFactory, codec, asyncExecutorService, configuration);
+      OperationsFactory operationsFactory = new OperationsFactory(channelFactory, codec, configuration);
       return new RemoteCacheManagerAdminImpl(this, operationsFactory, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
             name -> {
                synchronized (cacheName2RemoteCache) {
@@ -380,12 +368,18 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       return counterManager;
    }
 
-   public TransportFactory getTransportFactory() {
-      return transportFactory;
-   }
-
+   /**
+    * This method is not a part of the public API. It is exposed for internal purposes only.
+    */
    public Codec getCodec() {
       return codec;
+   }
+
+   /**
+    * This method is not a part of the public API. It is exposed for internal purposes only.
+    */
+   public ChannelFactory getChannelFactory() {
+      return channelFactory;
    }
 
    private static class RemoteCacheKey {

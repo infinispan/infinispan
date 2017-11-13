@@ -11,8 +11,8 @@ import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -33,7 +33,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
    RemoteCacheImpl<Object, Object> remoteCache;
    protected RemoteCacheManager remoteCacheManager;
-   protected TcpTransportFactory tcpTransportFactory;
+   protected ChannelFactory channelFactory;
    protected ConfigurationBuilder config;
    protected RoundRobinBalancingStrategy strategy;
 
@@ -62,7 +62,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
       remoteCacheManager = createRemoteCacheManager(hotRodServer1.getPort());
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
-      tcpTransportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
+      channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
       strategy = getLoadBalancer(remoteCacheManager);
       addInterceptors();
 
@@ -97,7 +97,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected abstract ConfigurationBuilder getCacheConfig();
 
    protected AdvancedCache<?, ?> cacheToHit(Object key) {
-      ConsistentHash consistentHash = tcpTransportFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
+      ConsistentHash consistentHash = channelFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
       SocketAddress expectedServer = consistentHash.getServer(marshall(key));
       return addr2hrServer.get(expectedServer).getCacheManager().getCache().getAdvancedCache();
    }

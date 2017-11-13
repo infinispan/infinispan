@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
+import static org.infinispan.client.hotrod.impl.Util.await;
+
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -43,7 +45,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (template != null) params.put(CACHE_TEMPLATE, string(template));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationsFactory.newExecuteOperation("@@cache@create", params).execute();
+      await(operationsFactory.newExecuteOperation("@@cache@create", params).execute());
       return cacheManager.getCache(name);
    }
 
@@ -63,7 +65,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (template != null) params.put(CACHE_TEMPLATE, string(template));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationsFactory.newExecuteOperation("@@cache@getorcreate", params).execute();
+      await(operationsFactory.newExecuteOperation("@@cache@getorcreate", params).execute());
       return cacheManager.getCache(name);
    }
 
@@ -73,7 +75,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toXMLString()));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationsFactory.newExecuteOperation("@@cache@getorcreate", params).execute();
+      await(operationsFactory.newExecuteOperation("@@cache@getorcreate", params).execute());
       return cacheManager.getCache(name);
    }
 
@@ -90,7 +92,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationsFactory.newExecuteOperation("@@cache@remove", params).execute();
+      await(operationsFactory.newExecuteOperation("@@cache@remove", params).execute());
    }
 
    @Override
@@ -110,7 +112,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
 
    @Override
    public void reindexCache(String name) throws HotRodClientException {
-      operationsFactory.newExecuteOperation("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name))).execute();
+      await(operationsFactory.newExecuteOperation("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name))).execute());
    }
 
    private static byte[] flags(EnumSet<AdminFlag> flags) {

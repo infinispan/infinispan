@@ -7,11 +7,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.commons.util.Util;
 
+import io.netty.buffer.ByteBuf;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -25,52 +25,43 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    protected final Object key;
    protected final byte[] keyBytes;
 
-   protected AbstractKeyOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
+   protected AbstractKeyOperation(Codec codec, ChannelFactory channelFactory,
+                                  Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.key = key;
       this.keyBytes = keyBytes;
    }
 
    @Override
-   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
       if (retryCount == 0) {
-         return transportFactory.getTransport(key == null ? keyBytes : key, failedServers, cacheName);
+         channelFactory.fetchChannelAndInvoke(key == null ? keyBytes : key, failedServers, cacheName, this);
       } else {
-         return transportFactory.getTransport(failedServers, cacheName);
+         channelFactory.fetchChannelAndInvoke(failedServers, cacheName, this);
       }
    }
 
-   protected short sendKeyOperation(byte[] key, Transport transport, short opCode, short opRespCode) {
-      // 1) write [header][key length][key]
-      HeaderParams params = writeHeader(transport, opCode);
-      transport.writeArray(key);
-      transport.flush();
-
-      // 2) now read the header
-      return readHeaderAndValidate(transport, params);
+   protected T returnPossiblePrevValue(ByteBuf buf, short status) {
+      return (T) codec.returnPossiblePrevValue(buf, status, flags, cfg.serialWhitelist(), channelFactory.getMarshaller());
    }
 
-   protected T returnPossiblePrevValue(Transport transport, short status) {
-      return (T) codec.returnPossiblePrevValue(transport, status, flags, cfg.serialWhitelist());
-   }
-
-   protected VersionedOperationResponse returnVersionedOperationResponse(Transport transport, HeaderParams params) {
-      //3) ...
-      short respStatus = readHeaderAndValidate(transport, params);
-
-      //4 ...
+   protected VersionedOperationResponse returnVersionedOperationResponse(ByteBuf buf, short status) {
       VersionedOperationResponse.RspCode code;
-      if (HotRodConstants.isSuccess(respStatus)) {
+      if (HotRodConstants.isSuccess(status)) {
          code = VersionedOperationResponse.RspCode.SUCCESS;
-      } else if (HotRodConstants.isNotExecuted(respStatus)) {
+      } else if (HotRodConstants.isNotExecuted(status)) {
          code = VersionedOperationResponse.RspCode.MODIFIED_KEY;
-      } else if (HotRodConstants.isNotExist(respStatus)) {
+      } else if (HotRodConstants.isNotExist(status)) {
          code = VersionedOperationResponse.RspCode.NO_SUCH_KEY;
       } else {
-         throw new IllegalStateException("Unknown response status: " + Integer.toHexString(respStatus));
+         throw new IllegalStateException("Unknown response status: " + Integer.toHexString(status));
       }
-      Object prevValue = returnPossiblePrevValue(transport, respStatus);
+      Object prevValue = returnPossiblePrevValue(buf, status);
       return new VersionedOperationResponse(prevValue, code);
+   }
+
+   @Override
+   protected void addParams(StringBuilder sb) {
+      sb.append(", key=").append(key == null ? Util.printArray(keyBytes) : key);
    }
 }

@@ -4,10 +4,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -19,23 +21,25 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class GetOperation<V> extends AbstractKeyOperation<V> {
 
-   public GetOperation(Codec codec, TransportFactory transportFactory,
+   public GetOperation(Codec codec, ChannelFactory channelFactory,
                        Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags,
                        Configuration cfg) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
-   public V executeOperation(Transport transport) {
-      V result = null;
-      short status = sendKeyOperation(keyBytes, transport, GET_REQUEST, GET_RESPONSE);
-      if (HotRodConstants.isNotExist(status)) {
-         result = null;
+   public void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(GET_REQUEST);
+      scheduleRead(channel, header);
+      sendArrayOperation(channel, header, keyBytes);
+   }
+
+   @Override
+   public V decodePayload(ByteBuf buf, short status) {
+      if (!HotRodConstants.isNotExist(status) && HotRodConstants.isSuccess(status)) {
+         return codec.readUnmarshallByteArray(buf, status, cfg.serialWhitelist(), channelFactory.getMarshaller());
       } else {
-         if (HotRodConstants.isSuccess(status)) {
-            result = codec.readUnmarshallByteArray(transport, status, cfg.serialWhitelist());
-         }
+         return null;
       }
-      return result;
    }
 }

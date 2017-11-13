@@ -6,7 +6,6 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
 import java.util.Collection;
@@ -16,8 +15,7 @@ import java.util.Set;
 
 import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
@@ -26,6 +24,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Param;
 
 /**
  * Log abstraction for the hot rod client. For this module, message ids
@@ -58,30 +57,23 @@ public interface Log extends BasicLogger {
    void errorFromServer(String message);
 
    @LogMessage(level = INFO)
-   @Message(value = "%s sent new topology view (id=%d, age=%d) containing %d addresses: %s", id = 4006)
-   void newTopology(SocketAddress address, int viewId, int age, int topologySize, Set<SocketAddress> topology);
+   @Message(value = "Server sent new topology view (id=%d, age=%d) containing %d addresses: %s", id = 4006)
+   void newTopology(int viewId, int age, int topologySize, Set<SocketAddress> topology);
 
    @LogMessage(level = ERROR)
    @Message(value = "Exception encountered. Retry %d out of %d", id = 4007)
-   void exceptionAndNoRetriesLeft(int retry, int maxRetries, @Cause HotRodClientException te);
+   void exceptionAndNoRetriesLeft(int retry, int maxRetries, @Cause Throwable te);
 
    //  id = 4008 is now logged to TRACE(ISPN-1794)
 
-   @LogMessage(level = WARN)
-   @Message(value = "Issues closing socket for %s: %s", id = 4009)
-   void errorClosingSocket(TcpTransport transport, IOException e);
+   // id = 4009 removed: errorClosingSocket
 
    @LogMessage(level = WARN)
    @Message(value = "No hash function configured for version: %d", id = 4011)
    void noHasHFunctionConfigured(int hashFunctionVersion);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Could not invalidate connection: %s", id = 4012)
-   void couldNoInvalidateConnection(TcpTransport transport, @Cause Exception e);
-
-   @LogMessage(level = WARN)
-   @Message(value = "Could not release connection: %s", id = 4013)
-   void couldNotReleaseConnection(TcpTransport transport, @Cause Exception e);
+   // id = 4012 removed: couldNoInvalidateConnection
+   // id = 4013 removed: couldNotReleaseConnection
 
    @LogMessage(level = INFO)
    @Message(value = "New server added(%s), adding to the pool.", id = 4014)
@@ -89,7 +81,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Failed adding new server %s", id = 4015)
-   void failedAddingNewServer(SocketAddress server, @Cause Exception e);
+   void failedAddingNewServer(SocketAddress server, @Cause Throwable e);
 
    @LogMessage(level = INFO)
    @Message(value = "Server not in cluster anymore(%s), removing from the pool.", id = 4016)
@@ -172,8 +164,8 @@ public interface Log extends BasicLogger {
    void unableToSetAccesible(Method m, @Cause Exception e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Unrecoverable error reading event from server %s, exiting event reader thread", id = 4043)
-   void unrecoverableErrorReadingEvent(@Cause Throwable t, SocketAddress server);
+   @Message(value = "Unrecoverable error reading event from server %s, exiting listener %s", id = 4043)
+   void unrecoverableErrorReadingEvent(@Cause Throwable t, SocketAddress server, String listenerId);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unable to read %s bytes %s", id = 4044)
@@ -235,8 +227,8 @@ public interface Log extends BasicLogger {
    void startedIteration(String iterationId);
 
    @LogMessage(level = DEBUG)
-   @Message(value = "Transport '%s' obtained for iteration '%s'", id = 4063)
-   void iterationTransportObtained(Transport transport, String iterationId);
+   @Message(value = "Channel to %s obtained for iteration '%s'", id = 4063)
+   void iterationTransportObtained(SocketAddress address, String iterationId);
 
    @LogMessage(level = TRACE)
    @Message(value = "Tracking key %s belonging to segment %d, already tracked? = %b", id = 4064)
@@ -256,4 +248,24 @@ public interface Log extends BasicLogger {
    @Message(value = "Class '%s' blocked by Java standard deserialization white list. Adjust the client configuration java serialization white list regular expression to include this class.", id = 4068)
    CacheException classNotInWhitelist(String className);
 
+   @Message(value = "Connection to %s is not active.", id = 4069)
+   TransportException channelInactive(@Param SocketAddress address1, SocketAddress address2);
+
+   @Message(value = "Failed to add client listener %s, server responded with status %d", id = 4070)
+   HotRodClientException failedToAddListener(Object listener, short status);
+
+   @Message(value = "Connection to %s was closed while waiting for response.", id = 4071)
+   TransportException connectionClosed(@Param SocketAddress address1, SocketAddress address2);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Cannot create another async thread. Please increase 'infinispan.client.hotrod.default_executor_factory.pool_size' (current value is %d).", id = 4072)
+   void cannotCreateAsyncThread(int maxPoolSize);
+
+   @LogMessage(level = WARN)
+   @Message(value = "TransportFactory is deprecated, this setting is not used anymore.", id = 4073)
+   void transportFactoryDeprecated();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Native Epoll transport not available, using NIO instead: %s", id = 4074)
+   void epollNotAvailable(String cause);
 }

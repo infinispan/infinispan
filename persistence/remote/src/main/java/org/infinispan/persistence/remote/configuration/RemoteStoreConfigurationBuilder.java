@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -154,7 +154,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    }
 
    @Override
-   public RemoteStoreConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory) {
+   public RemoteStoreConfigurationBuilder transportFactory(Class<? extends ChannelFactory> transportFactory) {
       transportFactory(transportFactory.getName());
       return this;
    }

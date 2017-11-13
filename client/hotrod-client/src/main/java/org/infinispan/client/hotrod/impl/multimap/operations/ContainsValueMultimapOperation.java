@@ -1,9 +1,7 @@
 package org.infinispan.client.hotrod.impl.multimap.operations;
 
 import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.CONTAINS_VALUE_MULTIMAP_REQUEST;
-import static org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHotRodConstants.CONTAINS_VALUE_MULTIMAP_RESPONSE;
 
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -13,8 +11,11 @@ import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * Implements "contains value" for multimap cache as defined by  <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot
@@ -31,10 +32,10 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    private final TimeUnit lifespanTimeUnit;
    private final TimeUnit maxIdleTimeUnit;
 
-   protected ContainsValueMultimapOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName,
+   protected ContainsValueMultimapOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName,
                                             AtomicInteger topologyId, int flags, Configuration cfg, byte[] value,
                                             long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
+      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.value = value;
       this.lifespan = lifespan;
       this.maxIdle = maxIdle;
@@ -48,31 +49,28 @@ public class ContainsValueMultimapOperation extends RetryOnFailureOperation<Bool
    }
 
    @Override
-   protected Transport getTransport(int retryCount, Set failedServers) {
-      return transportFactory.getTransport(failedServers, cacheName);
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(CONTAINS_VALUE_MULTIMAP_REQUEST);
+      scheduleRead(channel, header);
+      sendValueOperation(channel, header);
    }
 
    @Override
-   protected Boolean executeOperation(Transport transport) {
-      short status = sendValueOperation(transport, CONTAINS_VALUE_MULTIMAP_REQUEST, CONTAINS_VALUE_MULTIMAP_RESPONSE);
+   public Boolean decodePayload(ByteBuf buf, short status) {
       if (HotRodConstants.isNotExist(status)) {
          return Boolean.FALSE;
       }
 
-      return transport.readByte() == 1 ? Boolean.TRUE : Boolean.FALSE;
+      return buf.readByte() == 1 ? Boolean.TRUE : Boolean.FALSE;
    }
 
-   //[header][key][lifespan][max idle][value length][value]
-   protected short sendValueOperation(Transport transport, short opCode, short opRespCode) {
-      // 1) write header
-      HeaderParams params = writeHeader(transport, opCode);
-
-      // 2) write value
-      codec.writeExpirationParams(transport, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
-      transport.writeArray(value);
-      transport.flush();
-
-      // 3) now read header
-      return readHeaderAndValidate(transport, params);
+   protected void sendValueOperation(Channel channel, HeaderParams header) {
+      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) +
+            codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit) +
+            ByteBufUtil.estimateArraySize(value));
+      codec.writeHeader(buf, header);
+      codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      ByteBufUtil.writeArray(buf, value);
+      channel.writeAndFlush(buf);
    }
 }
