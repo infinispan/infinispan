@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;

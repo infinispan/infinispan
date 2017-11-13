@@ -5,7 +5,7 @@ import java.net.SocketAddress;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -37,8 +37,8 @@ public class ClientConsistentHashPerfTest extends MultiHotRodServersTest {
       // This will initialize the consistent hash
       cache.put("k", "v");
 
-      TcpTransportFactory transportFactory = TestingUtil.extractField(rcm, "transportFactory");
-      ConsistentHash ch = transportFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
+      ChannelFactory channelFactory = TestingUtil.extractField(rcm, "channelFactory");
+      ConsistentHash ch = channelFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
       byte[][] keys = new byte[NUM_KEYS][];
 
       for (int i = 0; i < NUM_KEYS; i++) {

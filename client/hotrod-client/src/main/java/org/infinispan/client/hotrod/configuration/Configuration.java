@@ -43,7 +43,6 @@ public class Configuration {
    private final SecurityConfiguration security;
    private final boolean tcpNoDelay;
    private final boolean tcpKeepAlive;
-   private final Class<? extends TransportFactory> transportFactory;
    private final int valueSizeEstimate;
    private final int maxRetries;
    private final NearCacheConfiguration nearCache;
@@ -52,11 +51,11 @@ public class Configuration {
    private final int batchSize;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends FailoverRequestBalancingStrategy> balancingStrategyClass, FailoverRequestBalancingStrategy balancingStrategy, ClassLoader classLoader,
-         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
-         Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
-         ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
-         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
-         List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize) {
+                 ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate,
+                 Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
+                 ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
+                 int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache,
+                 List<ClusterConfiguration> clusters, List<String> serialWhitelist, int batchSize) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyClass = balancingStrategyClass;
       this.balancingStrategy = balancingStrategy;
@@ -76,7 +75,6 @@ public class Configuration {
       this.security = security;
       this.tcpNoDelay = tcpNoDelay;
       this.tcpKeepAlive = tcpKeepAlive;
-      this.transportFactory = transportFactory;
       this.valueSizeEstimate = valueSizeEstimate;
       this.nearCache = nearCache;
       this.clusters = clusters;
@@ -177,8 +175,9 @@ public class Configuration {
       return tcpKeepAlive;
    }
 
+   @Deprecated
    public Class<? extends TransportFactory> transportFactory() {
-      return transportFactory;
+      return TransportFactory.class;
    }
 
    public int valueSizeEstimate() {
@@ -204,7 +203,7 @@ public class Configuration {
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", protocolVersion="
             + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay + ", tcpKeepAlive=" + tcpKeepAlive
-            + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
+            + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
             + ", serialWhiteList=" + serialWhitelist
             + ", batchSize=" + batchSize
             + "nearCache=" + nearCache + "]";
@@ -238,7 +237,6 @@ public class Configuration {
       properties.setProperty(ConfigurationProperties.SO_TIMEOUT, Integer.toString(socketTimeout()));
       properties.setProperty(ConfigurationProperties.TCP_NO_DELAY, Boolean.toString(tcpNoDelay()));
       properties.setProperty(ConfigurationProperties.TCP_KEEP_ALIVE, Boolean.toString(tcpKeepAlive()));
-      properties.setProperty(ConfigurationProperties.TRANSPORT_FACTORY, transportFactory().getName());
       properties.setProperty(ConfigurationProperties.VALUE_SIZE_ESTIMATE, Integer.toString(valueSizeEstimate()));
       properties.setProperty(ConfigurationProperties.MAX_RETRIES, Integer.toString(maxRetries()));
 

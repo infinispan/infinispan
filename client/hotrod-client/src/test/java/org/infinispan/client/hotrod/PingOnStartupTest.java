@@ -6,7 +6,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
@@ -43,16 +43,15 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
             new InternalRemoteCacheManager(clientBuilder.build())) {
          @Override
          public void call() {
-            TcpTransportFactory tcpTransportFactory =
-                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
+            ChannelFactory channelFactory = ((InternalRemoteCacheManager) rcm).getChannelFactory();
             for (int i = 0; i < 10; i++) {
-               if (tcpTransportFactory.getServers().size() == 1) {
+               if (channelFactory.getServers().size() == 1) {
                   TestingUtil.sleepThread(1000);
                } else {
                   break;
                }
             }
-            assertEquals(2, tcpTransportFactory.getServers().size());
+            assertEquals(2, channelFactory.getServers().size());
          }
       });
    }
@@ -67,9 +66,8 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
          @Override
          public void call() {
             rcm.getCache();
-            TcpTransportFactory tcpTransportFactory =
-                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
-            assertEquals(1, tcpTransportFactory.getServers().size());
+            ChannelFactory channelFactory = ((InternalRemoteCacheManager) rcm).getChannelFactory();
+            assertEquals(1, channelFactory.getServers().size());
          }
       });
    }
@@ -84,9 +82,8 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
          @Override
          public void call() {
             rcm.getCache();
-            TcpTransportFactory tcpTransportFactory =
-                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
-            assertEquals(2, tcpTransportFactory.getServers().size());
+            ChannelFactory channelFactory = ((InternalRemoteCacheManager) rcm).getChannelFactory();
+            assertEquals(2, channelFactory.getServers().size());
          }
       });
    }
@@ -101,9 +98,8 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
          @Override
          public void call() {
             rcm.getCache();
-            TcpTransportFactory tcpTransportFactory =
-                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
-            assertEquals(2, tcpTransportFactory.getServers().size());
+            ChannelFactory channelFactory = ((InternalRemoteCacheManager) rcm).getChannelFactory();
+            assertEquals(2, channelFactory.getServers().size());
          }
       });
    }

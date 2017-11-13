@@ -17,10 +17,11 @@ import java.util.List;
 import java.util.Random;
 
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.client.hotrod.test.NoopChannelOperation;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
@@ -35,6 +36,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import io.netty.channel.Channel;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -47,7 +50,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    private HotRodServer hotRodServer3;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Object, Object> remoteCache;
-   private TcpTransportFactory tcpTransportFactory;
+   private ChannelFactory channelFactory;
 
    private static final Log log = LogFactory.getLog(CSAIntegrationTest.class);
 
@@ -90,7 +93,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
 
-      tcpTransportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
+      channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
    }
 
    protected void setHotRodProtocolVersion(org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder) {
@@ -106,14 +109,14 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    }
 
    public void testHashInfoRetrieved() throws InterruptedException {
-      assertEquals(3, tcpTransportFactory.getServers().size());
+      assertEquals(3, channelFactory.getServers().size());
       for (int i = 0; i < 10; i++) {
          remoteCache.put("k", "v");
-         if (tcpTransportFactory.getServers().size() == 3) break;
+         if (channelFactory.getServers().size() == 3) break;
          Thread.sleep(1000);
       }
-      assertEquals(3, tcpTransportFactory.getServers().size());
-      assertNotNull(tcpTransportFactory.getConsistentHash(HotRodConstants.DEFAULT_CACHE_NAME_BYTES));
+      assertEquals(3, channelFactory.getServers().size());
+      assertNotNull(channelFactory.getConsistentHash(HotRodConstants.DEFAULT_CACHE_NAME_BYTES));
    }
 
    @Test(dependsOnMethods = "testHashInfoRetrieved")
@@ -123,11 +126,11 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    }
 
    @Test(dependsOnMethods = "testCorrectSetup")
-   public void testHashFunctionReturnsSameValues() {
+   public void testHashFunctionReturnsSameValues() throws InterruptedException {
       for (int i = 0; i < 1000; i++) {
          byte[] key = generateKey(i);
-         TcpTransport transport = (TcpTransport) tcpTransportFactory.getTransport(key, null, HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
-         SocketAddress serverAddress = transport.getServerAddress();
+         Channel channel = channelFactory.fetchChannelAndInvoke(key, null, HotRodConstants.DEFAULT_CACHE_NAME_BYTES, new NoopChannelOperation()).join();
+         SocketAddress serverAddress = ChannelRecord.of(channel).getUnresolvedAddress();
          CacheContainer cacheContainer = addr2hrServer.get(serverAddress).getCacheManager();
          assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + addr2hrServer, cacheContainer);
          DistributionManager distributionManager = cacheContainer.getCache().getAdvancedCache().getDistributionManager();
@@ -139,7 +142,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          Address serverOwner = serverCh.locatePrimaryOwnerForSegment(keySegment);
          Address serverPreviousOwner = serverCh.locatePrimaryOwnerForSegment((keySegment - 1 + numSegments) % numSegments);
          assert clusterAddress.equals(serverOwner) || clusterAddress.equals(serverPreviousOwner);
-         tcpTransportFactory.releaseTransport(transport);
+         channelFactory.releaseChannel(channel);
       }
    }
 
@@ -152,9 +155,9 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          keys.add(key);
          String keyStr = new String(key);
          remoteCache.put(keyStr, "value");
-         TcpTransport transport = (TcpTransport) tcpTransportFactory.getTransport(marshall(keyStr), null, RemoteCacheManager.cacheNameBytes());
-         assertHotRodEquals(addr2hrServer.get(transport.getServerAddress()).getCacheManager(), keyStr, "value");
-         tcpTransportFactory.releaseTransport(transport);
+         Channel channel = channelFactory.fetchChannelAndInvoke(marshall(keyStr), null, RemoteCacheManager.cacheNameBytes(), new NoopChannelOperation()).join();
+         assertHotRodEquals(addr2hrServer.get(ChannelRecord.of(channel).getUnresolvedAddress()).getCacheManager(), keyStr, "value");
+         channelFactory.releaseChannel(channel);
       }
 
       log.info("Right before first get.");
@@ -163,9 +166,9 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          resetStats();
          String keyStr = new String(key);
          assert remoteCache.get(keyStr).equals("value");
-         TcpTransport transport = (TcpTransport) tcpTransportFactory.getTransport(marshall(keyStr), null, HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
-         assertOnlyServerHit(transport.getServerAddress());
-         tcpTransportFactory.releaseTransport(transport);
+         Channel channel = channelFactory.fetchChannelAndInvoke(marshall(keyStr), null, HotRodConstants.DEFAULT_CACHE_NAME_BYTES, new NoopChannelOperation()).join();
+         assertOnlyServerHit(ChannelRecord.of(channel).getUnresolvedAddress());
+         channelFactory.releaseChannel(channel);
       }
    }
 

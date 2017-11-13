@@ -1,6 +1,11 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import java.lang.reflect.Field;
 import java.nio.charset.Charset;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import org.infinispan.commons.util.ReflectionUtil;
 
 /**
  * Defines constants defined by Hot Rod specifications.
@@ -164,24 +169,24 @@ public interface HotRodConstants {
    int DEFAULT_CACHE_TOPOLOGY = -1;
    int SWITCH_CLUSTER_TOPOLOGY = -2;
 
-   static boolean isSuccess(short status) {
+   static boolean isSuccess(int status) {
       return status == NO_ERROR_STATUS
          || status == NO_ERROR_STATUS_COMPAT
          || status == SUCCESS_WITH_PREVIOUS
          || status == SUCCESS_WITH_PREVIOUS_COMPAT;
    }
 
-   static boolean isNotExecuted(short status) {
+   static boolean isNotExecuted(int status) {
       return status == NOT_PUT_REMOVED_REPLACED_STATUS
          || status == NOT_EXECUTED_WITH_PREVIOUS
          || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
    }
 
-   static boolean isNotExist(short status) {
+   static boolean isNotExist(int status) {
       return status == KEY_DOES_NOT_EXIST_STATUS;
    }
 
-   static boolean hasPrevious(short status) {
+   static boolean hasPrevious(int status) {
       return status == SUCCESS_WITH_PREVIOUS
          || status == SUCCESS_WITH_PREVIOUS_COMPAT
          || status == NOT_EXECUTED_WITH_PREVIOUS
@@ -198,4 +203,31 @@ public interface HotRodConstants {
       return status == INVALID_ITERATION;
    }
 
+   final class Names {
+      static final String[] NAMES;
+
+      private Names() {}
+
+      static {
+         Predicate<Field> filterRequestsResponses =
+               f -> f.getName().endsWith("_REQUEST") || f.getName().endsWith("_RESPONSE");
+         int maxId = Stream.of(HotRodConstants.class.getFields())
+               .filter(filterRequestsResponses)
+               .mapToInt(f -> ReflectionUtil.getIntAccessibly(f, null)).max().orElse(0);
+         NAMES = new String[maxId + 1];
+         Stream.of(HotRodConstants.class.getFields()).filter(filterRequestsResponses).forEach(f -> {
+            int id = ReflectionUtil.getIntAccessibly(f, null);
+            assert NAMES[id] == null;
+            NAMES[id] = f.getName();
+         });
+         for (int i = 0; i < NAMES.length; ++i) {
+            if (NAMES[i] == null)
+               NAMES[i] = "UNKNOWN";
+         }
+      }
+
+      public static String of(short opCode) {
+         return NAMES[opCode];
+      }
+   }
 }

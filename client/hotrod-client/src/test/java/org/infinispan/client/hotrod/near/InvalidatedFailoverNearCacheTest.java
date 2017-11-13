@@ -62,14 +62,12 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
          stickyClient.put(3, "v1").expectNearRemove(3, headClient(), tailClient());
          stickyClient.get(3, "v1").expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
          findServerAndKill(stickyClient.manager, servers, cacheManagers);
-         // Since each client is separate remote cache manager, you need to get
-         // each client to do an operation to receive the near cache clear.
-         // These gets should return non-null, but the get should be resolved remotely!
-         stickyClient.get(1, "v1").expectNearClear().expectNearPutIfAbsent(1, "v1");
+         // The clear will be executed when the connection to the server is closed from the listener.
+         stickyClient.get(1, "v1").expectNearClear().expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
          stickyClient.expectNoNearEvents();
-         headClient().get(2, "v1").expectNearClear().expectNearPutIfAbsent(2, "v1");
+         headClient().get(2, "v1").expectNearClear().expectNearGetNull(2).expectNearPutIfAbsent(2, "v1");
          headClient().expectNoNearEvents();
-         tailClient().get(3, "v1").expectNearClear().expectNearPutIfAbsent(3, "v1");
+         tailClient().get(3, "v1").expectNearClear().expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
          tailClient().expectNoNearEvents();
       } finally {
          stickyClient.stop();

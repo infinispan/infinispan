@@ -5,8 +5,15 @@
 
    <feature name="infinispan-client-hotrod" version="${project.version}">
       <feature version="${project.version}">infinispan-commons</feature>
+      <feature prerequisite="true">wrap</feature>
       <bundle>mvn:org.infinispan/infinispan-client-hotrod/${project.version}</bundle>
-      <bundle>mvn:commons-pool/commons-pool/${version.commons.pool}</bundle>
+      <bundle>wrap:mvn:io.netty/netty-buffer/${version.netty}</bundle>
+      <bundle>wrap:mvn:io.netty/netty-codec/${version.netty}</bundle>
+      <bundle>wrap:mvn:io.netty/netty-common/${version.netty}</bundle>
+      <bundle>wrap:mvn:io.netty/netty-handler/${version.netty}</bundle>
+      <bundle>wrap:mvn:io.netty/netty-resolver/${version.netty}</bundle>
+      <bundle>wrap:mvn:io.netty/netty-transport/${version.netty}</bundle>
+      <bundle>wrap:mvn:io.netty/netty-transport-native-epoll/${version.netty}</bundle>
    </feature>
 
    <feature name="infinispan-client-hotrod-with-query" version="${project.version}">

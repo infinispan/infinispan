@@ -82,6 +82,9 @@ class HotRodEncoder extends MessageToByteEncoder<Object> {
          }
       } catch (Throwable t) {
          log.errorEncodingMessage(msg, t);
+         // When the exception is thrown when trying to encode an error response, all we can do
+         // is to close the channel to signalize clients that the server has trouble responding.
+         ctx.close();
          throw t;
       }
    }

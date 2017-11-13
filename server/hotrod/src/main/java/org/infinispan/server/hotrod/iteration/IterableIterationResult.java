@@ -52,4 +52,15 @@ public class IterableIterationResult {
       if(value == null) return null;
       return compatInfo.valueEncoder.fromStorage(value);
    }
+
+   @Override
+   public String toString() {
+      return "IterableIterationResult{" +
+            "finishedSegments=" + finishedSegments +
+            ", statusCode=" + statusCode +
+            ", entries=" + entries +
+            ", compatInfo=" + compatInfo +
+            ", metadata=" + metadata +
+            '}';
+   }
 }

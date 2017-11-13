@@ -104,7 +104,7 @@ public class ReplicationRetryTest extends AbstractRetryTest {
    }
 
    private void validateSequenceAndStopServer() {
-      ConsistentHash consistentHash = tcpTransportFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
+      ConsistentHash consistentHash = channelFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
       SocketAddress expectedServer;
 
       resetStats();

@@ -8,8 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
@@ -32,7 +31,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<Object, Object> remoteCache;
-   private GenericKeyedObjectPool<?,?> connectionPool;
+   private ChannelFactory channelFactory;
 
    @AfterMethod
    @Override
@@ -56,13 +55,13 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
                .timeBetweenEvictionRuns(500)
                .minEvictableIdleTime(100)
                .numTestsPerEvictionRun(10)
+               .minIdle(0)
             .addServer().host("localhost").port(hotRodServer.getPort());
 
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      connectionPool = (GenericKeyedObjectPool<?, ?>) TestingUtil.extractField(tcpConnectionFactory, "connectionPool");
+      channelFactory = TestingUtil.extractField(remoteCacheManager, "channelFactory");
 
       return cacheManager;
    }
@@ -84,7 +83,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
          workers.add(workerThread);
          workerThread.stress();
       }
-      while (connectionPool.getNumActive() <= 15) {
+      while (channelFactory.getNumActive() <= 15) {
          Thread.sleep(10);
       }
 
@@ -101,8 +100,8 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            int numIdle = connectionPool.getNumIdle();
-            int numActive = connectionPool.getNumActive();
+            int numIdle = channelFactory.getNumIdle();
+            int numActive = channelFactory.getNumActive();
             return numIdle == 0 && numActive == 0;
          }
       });

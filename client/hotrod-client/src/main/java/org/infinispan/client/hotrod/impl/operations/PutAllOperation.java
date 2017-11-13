@@ -12,9 +12,11 @@ import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -26,11 +28,11 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class PutAllOperation extends RetryOnFailureOperation<Void> {
 
-   public PutAllOperation(Codec codec, TransportFactory transportFactory,
+   public PutAllOperation(Codec codec, ChannelFactory channelFactory,
                           Map<byte[], byte[]> map, byte[] cacheName, AtomicInteger topologyId,
                           int flags, Configuration cfg,
                           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
+      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.map = map;
       this.lifespan = lifespan;
       this.lifespanTimeUnit = lifespanTimeUnit;
@@ -45,25 +47,38 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
    private final TimeUnit maxIdleTimeUnit;
 
    @Override
-   protected Void executeOperation(Transport transport) {
-      HeaderParams params = writeHeader(transport, PUT_ALL_REQUEST);
-      codec.writeExpirationParams(transport, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
-      transport.writeVInt(map.size());
-      for (Entry<byte[], byte[]> entry : map.entrySet()) {
-         transport.writeArray(entry.getKey());
-         transport.writeArray(entry.getValue());
-      }
-      transport.flush();
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(PUT_ALL_REQUEST);
+      scheduleRead(channel, header);
 
-      short status = readHeaderAndValidate(transport, params);
-      if (!HotRodConstants.isSuccess(status)) {
-         throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
+      int bufSize = codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(map.size()) +
+            codec.estimateExpirationSize(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      for (Entry<byte[], byte[]> entry : map.entrySet()) {
+         bufSize += ByteBufUtil.estimateArraySize(entry.getKey());
+         bufSize += ByteBufUtil.estimateArraySize(entry.getValue());
       }
-      return null;
+      ByteBuf buf = channel.alloc().buffer(bufSize);
+
+      codec.writeHeader(buf, header);
+      codec.writeExpirationParams(buf, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      ByteBufUtil.writeVInt(buf, map.size());
+      for (Entry<byte[], byte[]> entry : map.entrySet()) {
+         ByteBufUtil.writeArray(buf, entry.getKey());
+         ByteBufUtil.writeArray(buf, entry.getValue());
+      }
+      channel.writeAndFlush(buf);
    }
 
    @Override
-   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(map.keySet().iterator().next(), failedServers, cacheName);
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      channelFactory.fetchChannelAndInvoke(map.keySet().iterator().next(), failedServers, cacheName, this);
+   }
+
+   @Override
+   public Void decodePayload(ByteBuf buf, short status) {
+      if (HotRodConstants.isSuccess(status)) {
+         return null;
+      }
+      throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
    }
 }

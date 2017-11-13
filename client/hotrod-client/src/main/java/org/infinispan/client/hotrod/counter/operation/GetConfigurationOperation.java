@@ -6,11 +6,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A counter configuration for {@link CounterManager#getConfiguration(String)}.
@@ -20,23 +22,22 @@ import org.infinispan.counter.api.CounterManager;
  */
 public class GetConfigurationOperation extends BaseCounterOperation<CounterConfiguration> {
 
-   public GetConfigurationOperation(Codec codec, TransportFactory transportFactory, AtomicInteger topologyId,
-         Configuration cfg, String counterName) {
-      super(codec, transportFactory, topologyId, cfg, counterName);
+   public GetConfigurationOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId,
+                                    Configuration cfg, String counterName) {
+      super(codec, channelFactory, topologyId, cfg, counterName);
    }
 
    @Override
-   protected CounterConfiguration executeOperation(Transport transport) {
-      HeaderParams header = writeHeaderAndCounterName(transport, COUNTER_GET_CONFIGURATION_REQUEST);
-      transport.flush();
+   protected void executeOperation(Channel channel) {
+      sendHeaderAndCounterNameAndRead(channel, COUNTER_GET_CONFIGURATION_REQUEST);
+   }
 
-      //don't use readHeaderAndValidateCounter since we don't want an exception if the counter doesn't exist.
-      setCacheName(header);
-      int status = readHeaderAndValidate(transport, header);
+   @Override
+   public CounterConfiguration decodePayload(ByteBuf buf, short status) {
       if (status != NO_ERROR_STATUS) {
          return null;
       }
 
-      return decodeConfiguration(() -> (byte) transport.readByte(), transport::readLong, transport::readVInt);
+      return decodeConfiguration(buf::readByte, buf::readLong, () -> ByteBufUtil.readVInt(buf));
    }
 }

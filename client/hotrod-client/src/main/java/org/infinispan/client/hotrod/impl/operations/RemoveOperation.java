@@ -4,10 +4,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -20,15 +22,21 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class RemoveOperation<V> extends AbstractKeyOperation<V> {
 
-   public RemoveOperation(Codec codec, TransportFactory transportFactory,
-         Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+   public RemoveOperation(Codec codec, ChannelFactory channelFactory,
+                          Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override
-   public V executeOperation(Transport transport) {
-      short status = sendKeyOperation(keyBytes, transport, REMOVE_REQUEST, REMOVE_RESPONSE);
-      V result = returnPossiblePrevValue(transport, status);
+   public void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(REMOVE_REQUEST);
+      scheduleRead(channel, header);
+      sendArrayOperation(channel, header, keyBytes);
+   }
+
+   @Override
+   public V decodePayload(ByteBuf buf, short status) {
+      V result = returnPossiblePrevValue(buf, status);
       if (HotRodConstants.isNotExist(status))
          return null;
 

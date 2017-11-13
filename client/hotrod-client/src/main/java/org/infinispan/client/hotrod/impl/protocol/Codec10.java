@@ -1,9 +1,5 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import static org.infinispan.commons.util.Util.hexDump;
-
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -17,20 +13,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
-import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
-import org.infinispan.commons.util.Util;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * A Hot Rod encoder/decoder for version 1.0 of the protocol.
@@ -46,18 +42,18 @@ public class Codec10 implements Codec {
    static final AtomicLong MSG_ID = new AtomicLong();
 
    @Override
-   public HeaderParams writeHeader(Transport transport, HeaderParams params) {
-      return writeHeader(transport, params, HotRodConstants.VERSION_10);
+   public HeaderParams writeHeader(ByteBuf buf, HeaderParams params) {
+      return writeHeader(buf, params, HotRodConstants.VERSION_10);
    }
 
    @Override
-   public void writeClientListenerParams(Transport transport, ClientListener clientListener,
-         byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+   public void writeClientListenerParams(ByteBuf buf, ClientListener clientListener,
+                                         byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
       // No-op
    }
 
    @Override
-   public void writeExpirationParams(Transport transport, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+   public void writeExpirationParams(ByteBuf buf, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       if (!CodecUtils.isIntCompatible(lifespan)) {
          getLog().warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
       }
@@ -66,65 +62,80 @@ public class Codec10 implements Codec {
       }
       int lifespanSeconds = CodecUtils.toSeconds(lifespan, lifespanTimeUnit);
       int maxIdleSeconds = CodecUtils.toSeconds(maxIdle, maxIdleTimeUnit);
-      transport.writeVInt(lifespanSeconds);
-      transport.writeVInt(maxIdleSeconds);
+      ByteBufUtil.writeVInt(buf, lifespanSeconds);
+      ByteBufUtil.writeVInt(buf, maxIdleSeconds);
+   }
+
+   @Override
+   public int estimateExpirationSize(long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      int lifespanSeconds = CodecUtils.toSeconds(lifespan, lifespanTimeUnit);
+      int maxIdleSeconds = CodecUtils.toSeconds(maxIdle, maxIdleTimeUnit);
+      return ByteBufUtil.estimateVIntSize(lifespanSeconds) + ByteBufUtil.estimateVIntSize(maxIdleSeconds);
    }
 
    protected HeaderParams writeHeader(
-            Transport transport, HeaderParams params, byte version) {
-      transport.writeByte(HotRodConstants.REQUEST_MAGIC);
-      transport.writeVLong(params.messageId(MSG_ID.incrementAndGet()).messageId);
-      transport.writeByte(version);
-      transport.writeByte(params.opCode);
-      transport.writeArray(params.cacheName);
+         ByteBuf buf, HeaderParams params, byte version) {
+      buf.writeByte(HotRodConstants.REQUEST_MAGIC);
+      ByteBufUtil.writeVLong(buf, params.messageId(MSG_ID.incrementAndGet()).messageId);
+      buf.writeByte(version);
+      buf.writeByte(params.opCode);
+      ByteBufUtil.writeArray(buf, params.cacheName);
 
       int flagInt = params.flags & Flag.FORCE_RETURN_VALUE.getFlagInt(); // 1.0 / 1.1 servers only understand this flag
-      transport.writeVInt(flagInt);
-      transport.writeByte(params.clientIntel);
-      transport.writeVInt(params.topologyId.get());
+      ByteBufUtil.writeVInt(buf, flagInt);
+      buf.writeByte(params.clientIntel);
+      ByteBufUtil.writeVInt(buf, params.topologyId.get());
       //todo change once TX support is added
-      transport.writeByte(params.txMarker);
+      buf.writeByte(params.txMarker);
       if (trace) getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
          params.messageId, params.opCode, flagInt);
       return params;
    }
 
    @Override
-   public short readHeader(Transport transport, HeaderParams params) {
-      short magic = transport.readByte();
+   public int estimateHeaderSize(HeaderParams headerParams) {
+      return 1 + ByteBufUtil.estimateVLongSize(headerParams.messageId) + 1 + 1 +
+            ByteBufUtil.estimateArraySize(headerParams.cacheName) +
+            ByteBufUtil.estimateVIntSize(headerParams.flags) + 1 +
+            ByteBufUtil.estimateVIntSize(headerParams.topologyId.get()) + 1;
+   }
+
+   @Override
+   public short readHeader(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress) {
+      short magic = buf.readUnsignedByte();
       final Log localLog = getLog();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          String message = "Invalid magic number. Expected %#x and received %#x";
          localLog.invalidMagicNumber(HotRodConstants.RESPONSE_MAGIC, magic);
          if (trace)
-            localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
+            localLog.tracef("Socket dump: %s", ByteBufUtil.hexDump(buf));
          throw new InvalidResponseException(String.format(message, HotRodConstants.RESPONSE_MAGIC, magic));
       }
-      long receivedMessageId = transport.readVLong();
+      long receivedMessageId = ByteBufUtil.readVLong(buf);
       // If received id is 0, it could be that a failure was noted before the
       // message id was detected, so don't consider it to a message id error
       if (receivedMessageId != params.messageId && receivedMessageId != 0) {
          String message = "Invalid message id. Expected %d and received %d";
          localLog.invalidMessageId(params.messageId, receivedMessageId);
          if (trace)
-            localLog.tracef("Socket dump: %s", hexDump(transport.dumpStream()));
+            localLog.tracef("Socket dump: %s", ByteBufUtil.hexDump(buf));
          throw new InvalidResponseException(String.format(message, params.messageId, receivedMessageId));
       }
       if (trace)
          localLog.tracef("Received response for message id: %d", receivedMessageId);
 
-      short receivedOpCode = transport.readByte();
+      short receivedOpCode = buf.readUnsignedByte();
       // Read both the status and new topology (if present),
       // before deciding how to react to error situations.
-      short status = transport.readByte();
-      readNewTopologyIfPresent(transport, params);
+      short status = buf.readUnsignedByte();
+      readNewTopologyIfPresent(buf, params, channelFactory);
 
       // Now that all headers values have been read, check the error responses.
       // This avoids situatiations where an exceptional return ends up with
       // the socket containing data from previous request responses.
       if (receivedOpCode != params.opRespCode) {
          if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
-            checkForErrorsInResponseStatus(transport, params, status);
+            checkForErrorsInResponseStatus(buf, params, status);
          }
          throw new InvalidResponseException(String.format(
                "Invalid response operation. Expected %#x and received %#x",
@@ -135,29 +146,31 @@ public class Codec10 implements Codec {
       return status;
    }
 
+   //   @Override
+//   public int estimateResponseHeaderSize(HeaderParams params) {
+//      return 1 /* magic */ + ByteBufUtil.estimateVLongSize(params.messageId) +
+//            1 /* opcode */ + 1 /* status */ + 1 /* topology change */;
+//   }
+
    @Override
-   public ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist) {
+   public ClientEvent readEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, SocketAddress serverAddress) {
       return null;  // No events sent in Hot Rod 1.x protocol
    }
 
    @Override
-   public Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist) {
+   public Either<Short, ClientEvent> readHeaderOrEvent(ByteBuf buf, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, ChannelFactory channelFactory, SocketAddress serverAddress) {
       return null;  // No events sent in Hot Rod 1.x protocol
    }
 
    @Override
-   public HotRodCounterEvent readCounterEvent(Transport transport, byte[] listenerId) {
+   public HotRodCounterEvent readCounterEvent(ByteBuf buf, byte[] listenerId) {
       return null;  // No events sent in Hot Rod 1.x protocol
    }
 
    @Override
-   public Object returnPossiblePrevValue(Transport transport, short status, int flags, List<String> whitelist) {
-      Marshaller marshaller = transport.getTransportFactory().getMarshaller();
+   public Object returnPossiblePrevValue(ByteBuf buf, short status, int flags, List<String> whitelist, Marshaller marshaller) {
       if (hasForceReturn(flags)) {
-         byte[] bytes = transport.readArray();
-         if (trace) getLog().tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
-         //0-length response means null
-         return bytes.length == 0 ? null : MarshallerUtil.bytes2obj(marshaller, bytes, status, whitelist);
+         return CodecUtils.readUnmarshallByteArray(buf, status, whitelist, marshaller);
       } else {
          return null;
       }
@@ -173,25 +186,15 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public <T> T readUnmarshallByteArray(Transport transport, short status, List<String> whitelist) {
-      return CodecUtils.readUnmarshallByteArray(transport, status, whitelist);
+   public <T> T readUnmarshallByteArray(ByteBuf buf, short status, List<String> whitelist, Marshaller marshaller) {
+      return CodecUtils.readUnmarshallByteArray(buf, status, whitelist, marshaller);
    }
 
-   @Override
-   public <T extends InputStream & VersionedMetadata> T readAsStream(Transport transport, VersionedMetadata versionedMetadata, Runnable afterClose) {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public OutputStream writeAsStream(Transport transport, Runnable afterClose) {
-      throw new UnsupportedOperationException();
-   }
-
-   public void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes) {
+   public void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes) {
       // No-op
    }
 
-   protected void checkForErrorsInResponseStatus(Transport transport, HeaderParams params, short status) {
+   protected void checkForErrorsInResponseStatus(ByteBuf buf, HeaderParams params, short status) {
       final Log localLog = getLog();
       if (trace) localLog.tracef("Received operation status: %#x", status);
 
@@ -204,7 +207,7 @@ public class Codec10 implements Codec {
             case HotRodConstants.COMMAND_TIMEOUT_STATUS:
             case HotRodConstants.UNKNOWN_VERSION_STATUS: {
                // If error, the body of the message just contains a message
-               String msgFromServer = transport.readString();
+               String msgFromServer = ByteBufUtil.readString(buf);
                if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && trace) {
                   localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
                } if (msgFromServer.contains("SuspectException")
@@ -234,51 +237,52 @@ public class Codec10 implements Codec {
             case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
             case HotRodConstants.UNKNOWN_COMMAND_STATUS:
             case HotRodConstants.UNKNOWN_VERSION_STATUS: {
-               transport.invalidate();
+               // the channel will be invalidated in operation upon exception thrown above
             }
          }
       }
    }
 
-   protected void readNewTopologyIfPresent(Transport transport, HeaderParams params) {
-      short topologyChangeByte = transport.readByte();
+   protected void readNewTopologyIfPresent(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory) {
+      short topologyChangeByte = buf.readUnsignedByte();
       if (topologyChangeByte == 1)
-         readNewTopologyAndHash(transport, params.topologyId, params.cacheName);
+         readNewTopologyAndHash(buf, params.topologyId, params.cacheName, channelFactory);
    }
 
-   protected void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId, byte[] cacheName) {
+   protected void readNewTopologyAndHash(ByteBuf buf, AtomicInteger topologyId, byte[] cacheName,
+                                         ChannelFactory channelFactory) {
       final Log localLog = getLog();
-      int newTopologyId = transport.readVInt();
+      int newTopologyId = ByteBufUtil.readVInt(buf);
       topologyId.set(newTopologyId);
-      int numKeyOwners = transport.readUnsignedShort();
-      short hashFunctionVersion = transport.readByte();
-      int hashSpace = transport.readVInt();
-      int clusterSize = transport.readVInt();
+      int numKeyOwners = buf.readUnsignedShort();
+      short hashFunctionVersion = buf.readUnsignedByte();
+      int hashSpace = ByteBufUtil.readVInt(buf);
+      int clusterSize = ByteBufUtil.readVInt(buf);
 
       Map<SocketAddress, Set<Integer>> servers2Hash = computeNewHashes(
-            transport, localLog, newTopologyId, numKeyOwners,
+            buf, channelFactory, localLog, newTopologyId, numKeyOwners,
             hashFunctionVersion, hashSpace, clusterSize);
 
       Set<SocketAddress> socketAddresses = servers2Hash.keySet();
-      int topologyAge = transport.getTransportFactory().getTopologyAge();
+      int topologyAge = channelFactory.getTopologyAge();
       if (localLog.isInfoEnabled()) {
-         localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId, topologyAge,
+         localLog.newTopology(newTopologyId, topologyAge,
                socketAddresses.size(), socketAddresses);
       }
-      transport.getTransportFactory().updateServers(socketAddresses, cacheName, false);
+      channelFactory.updateServers(socketAddresses, cacheName, false);
       if (hashFunctionVersion == 0) {
          localLog.trace("Not using a consistent hash function (version 0).");
       } else if (hashFunctionVersion == 1) {
          localLog.trace("Ignoring obsoleted consistent hash function (version 1)");
       } else {
-         transport.getTransportFactory().updateHashFunction(
+         channelFactory.updateHashFunction(
                servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName, topologyId);
       }
    }
 
-   protected Map<SocketAddress, Set<Integer>> computeNewHashes(Transport transport,
-         Log localLog, int newTopologyId, int numKeyOwners,
-         short hashFunctionVersion, int hashSpace, int clusterSize) {
+   protected Map<SocketAddress, Set<Integer>> computeNewHashes(ByteBuf buf, ChannelFactory channelFactory,
+                                                               Log localLog, int newTopologyId, int numKeyOwners,
+                                                               short hashFunctionVersion, int hashSpace, int clusterSize) {
       if (trace) {
          localLog.tracef("Topology change request: newTopologyId=%d, numKeyOwners=%d, " +
                        "hashFunctionVersion=%d, hashSpaceSize=%d, clusterSize=%d",
@@ -288,14 +292,14 @@ public class Codec10 implements Codec {
       Map<SocketAddress, Set<Integer>> servers2Hash = new LinkedHashMap<SocketAddress, Set<Integer>>();
 
       for (int i = 0; i < clusterSize; i++) {
-         String host = transport.readString();
-         int port = transport.readUnsignedShort();
-         int hashCode = transport.read4ByteInt();
+         String host = ByteBufUtil.readString(buf);
+         int port = buf.readUnsignedShort();
+         int hashCode = buf.readIntLE();
          if (trace) localLog.tracef("Server read: %s:%d - hash code is %d", host, port, hashCode);
          SocketAddress address = InetSocketAddress.createUnresolved(host, port);
          Set<Integer> hashes = servers2Hash.get(address);
          if (hashes == null) {
-            hashes = new HashSet<Integer>();
+            hashes = new HashSet<>();
             servers2Hash.put(address, hashes);
          }
          hashes.add(hashCode);

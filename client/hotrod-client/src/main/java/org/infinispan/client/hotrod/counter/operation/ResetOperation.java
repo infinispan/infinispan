@@ -4,11 +4,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A counter operation for {@link StrongCounter#reset()} and {@link WeakCounter#reset()}.
@@ -18,16 +19,19 @@ import org.infinispan.counter.api.WeakCounter;
  */
 public class ResetOperation extends BaseCounterOperation<Void> {
 
-   public ResetOperation(Codec codec, TransportFactory transportFactory, AtomicInteger topologyId, Configuration cfg,
-         String counterName) {
-      super(codec, transportFactory, topologyId, cfg, counterName);
+   public ResetOperation(Codec codec, ChannelFactory channelFactory, AtomicInteger topologyId, Configuration cfg,
+                         String counterName) {
+      super(codec, channelFactory, topologyId, cfg, counterName);
    }
 
    @Override
-   protected Void executeOperation(Transport transport) {
-      HeaderParams header = writeHeaderAndCounterName(transport, COUNTER_RESET_REQUEST);
-      transport.flush();
-      readHeaderAndValidateCounter(transport, header);
+   protected void executeOperation(Channel channel) {
+      sendHeaderAndCounterNameAndRead(channel, COUNTER_RESET_REQUEST);
+   }
+
+   @Override
+   public Void decodePayload(ByteBuf buf, short status) {
+      checkStatus(status);
       return null;
    }
 }

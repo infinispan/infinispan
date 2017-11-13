@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.impl.multimap.protocol.MultimapHeaderParams;
 import org.infinispan.client.hotrod.impl.operations.AbstractKeyOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
 /**
  * Base class for multimap operations that manipulate keys.
@@ -17,8 +17,8 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
  */
 public abstract class AbstractMultimapKeyOperation<V> extends AbstractKeyOperation<V> {
 
-   protected AbstractMultimapKeyOperation(Codec codec, TransportFactory transportFactory, Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
+   protected AbstractMultimapKeyOperation(Codec codec, ChannelFactory channelFactory, Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId, int flags, Configuration cfg) {
+      super(codec, channelFactory, key, keyBytes, cacheName, topologyId, flags, cfg);
    }
 
    @Override

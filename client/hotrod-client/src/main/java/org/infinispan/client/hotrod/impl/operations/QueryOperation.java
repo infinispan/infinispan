@@ -1,13 +1,11 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -15,14 +13,18 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.EnumMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 
 /**
  * @author anistor@redhat.com
@@ -32,20 +34,14 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
 
    private final RemoteQuery remoteQuery;
 
-   public QueryOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId,
+   public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicInteger topologyId,
                          int flags, Configuration cfg, RemoteQuery remoteQuery) {
-      super(codec, transportFactory, cacheName, topologyId, flags, cfg);
+      super(codec, channelFactory, cacheName, topologyId, flags, cfg);
       this.remoteQuery = remoteQuery;
    }
 
    @Override
-   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return transportFactory.getTransport(failedServers, cacheName);
-   }
-
-   @Override
-   protected QueryResponse executeOperation(Transport transport) {
-      HeaderParams params = writeHeader(transport, QUERY_REQUEST);
+   protected void executeOperation(Channel channel) {
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setQueryString(remoteQuery.getQueryString());
       if (remoteQuery.getStartOffset() > 0) {
@@ -78,28 +74,17 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
             throw new HotRodClientException(e);
          }
       }
-      transport.writeArray(requestBytes);
-      transport.flush();
 
-      // read the response and unmarshall it
-      readHeaderAndValidate(transport, params);
-      byte[] responseBytes = transport.readArray();
-      QueryResponse queryResponse;
-      if (serCtx != null) {
-         try {
-            queryResponse = ProtobufUtil.fromByteArray(serCtx, responseBytes, QueryResponse.class);
-         } catch (IOException e) {
-            throw new HotRodClientException(e);
-         }
-      } else {
-         try {
-            queryResponse = (QueryResponse) marshaller.objectFromByteBuffer(responseBytes);
-         } catch (IOException | ClassNotFoundException e) {
-            throw new HotRodClientException(e);
-         }
-      }
+      HeaderParams header = headerParams(QUERY_REQUEST);
+      scheduleRead(channel, header);
 
-      return queryResponse;
+      // Here we'll rather just serialize the header + payload length than copying the requestBytes around
+      ByteBuf buf = channel.alloc().buffer(codec.estimateHeaderSize(header) + ByteBufUtil.estimateVIntSize(requestBytes.length));
+
+      codec.writeHeader(buf, header);
+      ByteBufUtil.writeVInt(buf, requestBytes.length);
+      channel.write(buf);
+      channel.writeAndFlush(Unpooled.wrappedBuffer(requestBytes));
    }
 
    private List<QueryRequest.NamedParameter> getNamedParameters() {
@@ -128,5 +113,24 @@ public final class QueryOperation extends RetryOnFailureOperation<QueryResponse>
          params.add(new QueryRequest.NamedParameter(e.getKey(), value));
       }
       return params;
+   }
+
+   @Override
+   public QueryResponse decodePayload(ByteBuf buf, short status) {
+      byte[] responseBytes = ByteBufUtil.readArray(buf);
+      SerializationContext serCtx = remoteQuery.getSerializationContext();
+      if (serCtx != null) {
+         try {
+            return ProtobufUtil.fromByteArray(serCtx, responseBytes, QueryResponse.class);
+         } catch (IOException e) {
+            throw new HotRodClientException(e);
+         }
+      } else {
+         try {
+            return (QueryResponse) channelFactory.getMarshaller().objectFromByteBuffer(responseBytes);
+         } catch (IOException | ClassNotFoundException e) {
+            throw new HotRodClientException(e);
+         }
+      }
    }
 }

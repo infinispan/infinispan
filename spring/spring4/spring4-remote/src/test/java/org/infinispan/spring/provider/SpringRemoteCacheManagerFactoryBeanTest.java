@@ -8,7 +8,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_LIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_NO_DELAY;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TRANSPORT_FACTORY;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.VALUE_SIZE_ESTIMATE;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -25,7 +24,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.factories.TransportFactory;
 import org.infinispan.spring.AssertionUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -238,31 +236,6 @@ public class SpringRemoteCacheManagerFactoryBeanTest {
             "SpringRemoteCacheManagerFactoryBean should have produced a SpringRemoteCacheManager that is initially in state stopped "
                   + "since property 'startAutomatically' has been set to false. However, the produced SpringRemoteCacheManager is already started.",
             remoteCacheManagerExpectedToBeInStateStopped.getNativeCacheManager().isStarted());
-      objectUnderTest.destroy();
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean#setTransportFactory(java.lang.String)}
-    * .
-    *
-    * @throws Exception
-    */
-   @Test
-   public final void setTransportFactoryShouldOverrideDefaultTransportFactory() throws Exception {
-      final String expectedTransportFactory = TransportFactory.class.getName();
-      final SpringRemoteCacheManagerFactoryBean objectUnderTest = new SpringRemoteCacheManagerFactoryBean();
-      objectUnderTest.setTransportFactory(expectedTransportFactory);
-      objectUnderTest.setStartAutomatically(false); // Otherwise, SpringRemoteCacheManager will try
-      // to actually use our DummyTransportFactory
-      objectUnderTest.afterPropertiesSet();
-
-      final SpringRemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
-
-      assertEquals("setTransportFactory(" + expectedTransportFactory
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   expectedTransportFactory, remoteCacheManager.getNativeCacheManager().getConfiguration().properties()
-                  .get(TRANSPORT_FACTORY));
       objectUnderTest.destroy();
    }
 

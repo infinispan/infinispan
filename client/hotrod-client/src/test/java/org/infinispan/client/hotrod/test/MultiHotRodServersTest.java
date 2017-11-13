@@ -76,6 +76,9 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
+      for (RemoteCacheManager client : clients) {
+         client.stop();
+      }
       // Correct order is to stop servers first
       try {
          for (HotRodServer server : servers)

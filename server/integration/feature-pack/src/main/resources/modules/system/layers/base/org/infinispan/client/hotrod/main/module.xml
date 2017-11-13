@@ -11,7 +11,7 @@
 
     <dependencies>
         <module name="javax.api"/>
-        <module name="org.apache.commons.pool"/>
+        <module name="io.netty"/>
         <module name="org.infinispan"/>
         <module name="org.infinispan.protostream"/>
         <module name="org.infinispan.remote-query.client"/>

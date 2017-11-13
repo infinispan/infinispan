@@ -7,9 +7,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.counter.api.CounterManager;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A counter operation for {@link CounterManager#getCounterNames()}.
@@ -18,24 +22,33 @@ import org.infinispan.counter.api.CounterManager;
  * @since 9.2
  */
 public class GetCounterNamesOperation extends BaseCounterOperation<Collection<String>> {
+   private int size;
+   private Collection<String> names;
+   private HeaderDecoder<?> decoder;
 
-   public GetCounterNamesOperation(Codec codec, TransportFactory transportFactory, AtomicInteger topologyId,
-         Configuration cfg) {
+   public GetCounterNamesOperation(Codec codec, ChannelFactory transportFactory, AtomicInteger topologyId,
+                                   Configuration cfg) {
       super(codec, transportFactory, topologyId, cfg, "");
    }
 
    @Override
-   protected Collection<String> executeOperation(Transport transport) {
-      HeaderParams params = writeHeader(transport, COUNTER_GET_NAMES_REQUEST);
-      transport.flush();
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(COUNTER_GET_NAMES_REQUEST);
+      decoder = scheduleRead(channel, header);
+      sendHeader(channel, header);
+      setCacheName(header);
+   }
 
-      setCacheName(params);
-      short status = readHeaderAndValidate(transport, params);
+   @Override
+   public Collection<String> decodePayload(ByteBuf buf, short status) {
       assert status == NO_ERROR_STATUS;
-      int size = transport.readVInt();
-      Collection<String> names = new ArrayList<>(size);
-      for (int i = 0; i < size; ++i) {
-         names.add(transport.readString());
+      if (names == null) {
+         size = ByteBufUtil.readVInt(buf);
+         names = new ArrayList<>(size);
+      }
+      while (names.size() < size) {
+         names.add(ByteBufUtil.readString(buf));
+         decoder.checkpoint();
       }
       return names;
    }

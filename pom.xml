@@ -199,7 +199,6 @@
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.caffeine>2.4.0</version.caffeine>
       <version.cdi>1.2</version.cdi>
-      <version.commons.pool>1.6</version.commons.pool>
       <version.groovy>2.4.8</version.groovy>
       <version.hibernate.core>5.2.11.Final</version.hibernate.core>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
@@ -213,6 +212,7 @@
       <version.lucene>5.5.5</version.lucene>
       <version.maven-compiler-plugin>3.6.1</version.maven-compiler-plugin>
       <version.maven.source>3.0.1</version.maven.source>
+      <version.netty>4.1.9.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.protostream>4.2.0.Alpha6</version.protostream>
       <version.reactivestreams>1.0.1</version.reactivestreams>
@@ -239,7 +239,6 @@
       <version.geronimo.tm>3.1.1</version.geronimo.tm>
       <version.h2.driver-within-wildfly>1.3.173</version.h2.driver-within-wildfly>
       <version.h2.driver>1.4.180</version.h2.driver>
-      <version.hibernate.core>5.2.7.Final</version.hibernate.core>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate.search>5.8.0.Final</version.hibernate.search>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
@@ -1140,6 +1139,12 @@
             <version>${version.hibernate.search}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-epoll</artifactId>
+            <version>${version.netty}</version>
+            <classifier>linux-x86_64</classifier>
          </dependency>
       </dependencies>
    </dependencyManagement>

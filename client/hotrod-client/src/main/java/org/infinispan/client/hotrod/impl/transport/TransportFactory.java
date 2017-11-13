@@ -23,7 +23,9 @@ import org.infinispan.commons.marshall.Marshaller;
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
+ * @deprecated since 9.2, implemenations not called anymore
  */
+@Deprecated
 public interface TransportFactory {
 
    Transport getTransport(Set<SocketAddress> failedServers, byte[] cacheName);

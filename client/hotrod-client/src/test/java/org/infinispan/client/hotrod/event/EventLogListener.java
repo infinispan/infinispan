@@ -98,16 +98,16 @@ public class EventLogListener<K> implements RemoteCacheSupplier<K> {
    public void expectNoEvents(ClientEvent.Type type) {
       switch (type) {
          case CLIENT_CACHE_ENTRY_CREATED:
-            assertEquals(0, createdEvents.size());
+            assertEquals(createdEvents.toString(), 0, createdEvents.size());
             break;
          case CLIENT_CACHE_ENTRY_MODIFIED:
-            assertEquals(0, modifiedEvents.size());
+            assertEquals(modifiedEvents.toString(), 0, modifiedEvents.size());
             break;
          case CLIENT_CACHE_ENTRY_REMOVED:
-            assertEquals(0, removedEvents.size());
+            assertEquals(removedEvents.toString(), 0, removedEvents.size());
             break;
          case CLIENT_CACHE_ENTRY_EXPIRED:
-            assertEquals(0, expiredEvents.size());
+            assertEquals(expiredEvents.toString(), 0, expiredEvents.size());
             break;
       }
    }

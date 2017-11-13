@@ -1,26 +1,27 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.Transport;
+
+import io.netty.channel.Channel;
 
 /**
  * @author gustavonalle
  * @since 8.0
  */
 public class IterationStartResponse {
-   private final String iterationId;
+   private final byte[] iterationId;
    private final SegmentConsistentHash segmentConsistentHash;
    private final int topologyId;
-   private final Transport transport;
+   private final Channel channel;
 
-   IterationStartResponse(String iterationId, SegmentConsistentHash segmentConsistentHash, int topologyId, Transport transport) {
+   IterationStartResponse(byte[] iterationId, SegmentConsistentHash segmentConsistentHash, int topologyId, Channel channel) {
       this.iterationId = iterationId;
       this.segmentConsistentHash = segmentConsistentHash;
       this.topologyId = topologyId;
-      this.transport = transport;
+      this.channel = channel;
    }
 
-   public String getIterationId() {
+   public byte[] getIterationId() {
       return iterationId;
    }
 
@@ -28,8 +29,8 @@ public class IterationStartResponse {
       return segmentConsistentHash;
    }
 
-   public Transport getTransport() {
-      return transport;
+   public Channel getChannel() {
+      return channel;
    }
 
    public int getTopologyId() {

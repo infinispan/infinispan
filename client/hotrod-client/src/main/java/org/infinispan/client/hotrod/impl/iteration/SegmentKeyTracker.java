@@ -23,6 +23,7 @@ import org.infinispan.commons.util.Util;
 class SegmentKeyTracker implements KeyTracker {
 
    private static final Log log = LogFactory.getLog(SegmentKeyTracker.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final AtomicReferenceArray<Set<WrappedByteArray>> keysPerSegment;
    private final SegmentConsistentHash segmentConsistentHash;
@@ -32,7 +33,8 @@ class SegmentKeyTracker implements KeyTracker {
       this.marshaller = marshaller;
       int numSegments = segmentConsistentHash.getNumSegments();
       keysPerSegment = new AtomicReferenceArray<>(numSegments);
-      if (log.isDebugEnabled()) log.debugf("Created SegmentKeyTracker with %d segments", numSegments);
+      if (trace)
+         log.tracef("Created SegmentKeyTracker with %d segments, filter %s", numSegments, segments);
       this.segmentConsistentHash = segmentConsistentHash;
       IntStream segmentStream = segments == null ?
               IntStream.range(0, segmentConsistentHash.getNumSegments()) : segments.stream().mapToInt(i -> i);
@@ -43,8 +45,11 @@ class SegmentKeyTracker implements KeyTracker {
       int segment = HotRodConstants.hasCompatibility(status) ?
               segmentConsistentHash.getSegment(MarshallerUtil.bytes2obj(marshaller, key, status, whitelist)) :
               segmentConsistentHash.getSegment(key);
-      boolean result = keysPerSegment.get(segment).add(new WrappedByteArray(key));
-      if (log.isTraceEnabled())
+      Set<WrappedByteArray> keys = keysPerSegment.get(segment);
+      // TODO: this assertion may fail due to ISPN
+      assert keys != null : "Segment " + segment + " not initialized, tracking key " + Util.toStr(key);
+      boolean result = keys.add(new WrappedByteArray(key));
+      if (trace)
          log.trackingSegmentKey(Util.printArray(key), segment, !result);
       return result;
    }
@@ -64,7 +69,8 @@ class SegmentKeyTracker implements KeyTracker {
    public void segmentsFinished(byte[] finishedSegments) {
       if (finishedSegments != null) {
          BitSet bitSet = BitSet.valueOf(finishedSegments);
-         if (log.isDebugEnabled()) log.debugf("Removing completed segments %s", bitSet);
+         if (trace)
+            log.tracef("Removing completed segments %s", bitSet);
          bitSet.stream().forEach(seg -> keysPerSegment.set(seg, null));
       }
    }

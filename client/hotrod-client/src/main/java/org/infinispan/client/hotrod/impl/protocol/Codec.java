@@ -1,20 +1,20 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.annotation.Annotation;
+import java.net.SocketAddress;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
-import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
+
+import io.netty.buffer.ByteBuf;
 
 /**
  * A Hot Rod protocol encoder/decoder.
@@ -24,34 +24,40 @@ import org.infinispan.commons.util.Either;
  */
 public interface Codec {
 
+   int estimateHeaderSize(HeaderParams headerParams);
+
    /**
     * Writes a request header with the given parameters to the transport and
     * returns an updated header parameters.
     */
-   HeaderParams writeHeader(Transport transport, HeaderParams params);
+   HeaderParams writeHeader(ByteBuf buf, HeaderParams params);
 
    /**
     * Writes client listener parameters
     */
-   void writeClientListenerParams(Transport transport, ClientListener clientListener,
-         byte[][] filterFactoryParams, byte[][] converterFactoryParams);
+   void writeClientListenerParams(ByteBuf buf, ClientListener clientListener,
+                                  byte[][] filterFactoryParams, byte[][] converterFactoryParams);
 
    /**
     * Write lifespan/maxidle parameters.
     */
-   void writeExpirationParams(Transport transport, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit);
+   void writeExpirationParams(ByteBuf buf, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit);
+
+   int estimateExpirationSize(long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit);
 
    /**
     * Reads a response header from the transport and returns the status
     * of the response.
     */
-   short readHeader(Transport transport, HeaderParams params);
+   short readHeader(ByteBuf buf, HeaderParams params, ChannelFactory channelFactory, SocketAddress serverAddress);
 
-   ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist);
+//   int estimateResponseHeaderSize(HeaderParams params);
 
-   Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist);
+   ClientEvent readEvent(ByteBuf buf, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, SocketAddress serverAddress);
 
-   Object returnPossiblePrevValue(Transport transport, short status, int flags, List<String> whitelist);
+   Either<Short, ClientEvent> readHeaderOrEvent(ByteBuf buf, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist, ChannelFactory channelFactory, SocketAddress serverAddress);
+
+   Object returnPossiblePrevValue(ByteBuf buf, short status, int flags, List<String> whitelist, Marshaller marshaller);
 
    /**
     * Logger for Hot Rod client codec
@@ -61,22 +67,12 @@ public interface Codec {
    /**
     * Read and unmarshall byte array.
     */
-   <T> T readUnmarshallByteArray(Transport transport, short status, List<String> whitelist);
+   <T> T readUnmarshallByteArray(ByteBuf buf, short status, List<String> whitelist, Marshaller marshaller);
 
-   /**
-    * Reads a stream of data
-    */
-   <T extends InputStream & VersionedMetadata> T readAsStream(Transport transport, VersionedMetadata versionedMetadata, Runnable afterClose);
-
-   /**
-    * Writes a stream of data
-    */
-   OutputStream writeAsStream(Transport transport, Runnable afterClose);
-
-   void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes);
+   void writeClientListenerInterests(ByteBuf buf, Set<Class<? extends Annotation>> classes);
 
    /**
     * Reads a {@link HotRodCounterEvent} with the {@code listener-id}.
     */
-   HotRodCounterEvent readCounterEvent(Transport transport, byte[] listenerId);
+   HotRodCounterEvent readCounterEvent(ByteBuf buf, byte[] listenerId);
 }

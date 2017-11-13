@@ -6,10 +6,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -21,20 +23,26 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class PutOperation<V> extends AbstractKeyValueOperation<V> {
 
-   public PutOperation(Codec codec, TransportFactory transportFactory,
+   public PutOperation(Codec codec, ChannelFactory channelFactory,
                        Object key, byte[] keyBytes, byte[] cacheName, AtomicInteger topologyId,
                        int flags, Configuration cfg, byte[] value, long lifespan, TimeUnit lifespanTimeUnit,
                        long maxIdle, TimeUnit maxIdleTimeUnit) {
-      super(codec, transportFactory, key, keyBytes, cacheName, topologyId,
+      super(codec, channelFactory, key, keyBytes, cacheName, topologyId,
          flags, cfg, value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    @Override
-   protected V executeOperation(Transport transport) {
-      short status = sendKeyValueOperation(transport, PUT_REQUEST, PUT_RESPONSE);
-      if (!HotRodConstants.isSuccess(status)) {
-         throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
+   protected void executeOperation(Channel channel) {
+      HeaderParams header = headerParams(PUT_REQUEST);
+      scheduleRead(channel, header);
+      sendKeyValueOperation(channel, header);
+   }
+
+   @Override
+   public V decodePayload(ByteBuf buf, short status) {
+      if (HotRodConstants.isSuccess(status)) {
+         return returnPossiblePrevValue(buf, status);
       }
-      return returnPossiblePrevValue(transport, status);
+      throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
    }
 }

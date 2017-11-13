@@ -6,10 +6,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
-import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.counter.api.Handle;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A remove listener operation for {@link Handle#remove()}.
@@ -22,8 +24,8 @@ public class RemoveListenerOperation extends BaseCounterOperation<Boolean> {
    private final byte[] listenerId;
    private final SocketAddress server;
 
-   public RemoveListenerOperation(Codec codec, TransportFactory transportFactory, AtomicInteger topologyId,
-         Configuration cfg, String counterName, byte[] listenerId, SocketAddress server) {
+   public RemoveListenerOperation(Codec codec, ChannelFactory transportFactory, AtomicInteger topologyId,
+                                  Configuration cfg, String counterName, byte[] listenerId, SocketAddress server) {
       super(codec, transportFactory, topologyId, cfg, counterName);
       this.listenerId = listenerId;
       this.server = server;
@@ -31,19 +33,25 @@ public class RemoveListenerOperation extends BaseCounterOperation<Boolean> {
 
 
    @Override
-   protected Boolean executeOperation(Transport transport) {
-      HeaderParams header = writeHeaderAndCounterName(transport, COUNTER_ADD_LISTENER_REQUEST);
-      transport.writeArray(listenerId);
-      transport.flush();
+   protected void executeOperation(Channel channel) {
+      ByteBuf buf = getHeaderAndCounterNameBufferAndRead(channel, COUNTER_ADD_LISTENER_REQUEST,
+            ByteBufUtil.estimateArraySize(listenerId));
+      ByteBufUtil.writeArray(buf, listenerId);
+      channel.writeAndFlush(buf);
+   }
 
-      short status = readHeaderAndValidateCounter(transport, header);
+   @Override
+   public Boolean decodePayload(ByteBuf buf, short status) {
+      checkStatus(status);
       return status == NO_ERROR_STATUS;
    }
 
    @Override
-   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      return server == null ?
-             super.getTransport(retryCount, failedServers) :
-             transportFactory.getAddressTransport(server);
+   protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
+      if (server == null) {
+         super.fetchChannelAndInvoke(retryCount, failedServers);
+      } else {
+         channelFactory.fetchChannelAndInvoke(server, this);
+      }
    }
 }

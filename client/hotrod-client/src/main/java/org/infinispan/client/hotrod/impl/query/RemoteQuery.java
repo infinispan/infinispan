@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.query;
 
+import static org.infinispan.client.hotrod.impl.Util.await;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -70,7 +72,7 @@ public final class RemoteQuery extends BaseQuery {
          validateNamedParameters();
 
          QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
-         QueryResponse response = op.execute();
+         QueryResponse response = await(op.execute());
          totalResults = (int) response.getTotalResults();
          results = unwrapResults(response.getProjectionSize(), response.getResults());
       }

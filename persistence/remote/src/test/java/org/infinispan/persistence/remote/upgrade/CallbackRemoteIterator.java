@@ -16,11 +16,10 @@ import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 class CallbackRemoteIterator<E> extends RemoteCloseableIterator<E> {
 
    private Set<Object> callBackKeys = new HashSet<>();
-   private GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
    private IterationCallBack callback;
 
    CallbackRemoteIterator(OperationsFactory operationsFactory, int batchSize, Set<Integer> segments, boolean metadata) {
-      super(operationsFactory, batchSize, segments, metadata);
+      super(operationsFactory, new GenericJBossMarshaller(), batchSize, segments, metadata);
    }
 
    @Override

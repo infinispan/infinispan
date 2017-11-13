@@ -295,6 +295,15 @@
                            !org.wildfly.*,
                            !org.xml.*,
                            !org.apache.logging.log4j.*,
+                           !com.jcraft.jzlib,
+                           !com.ning.compress.*,
+                           !io.netty.internal.tcnative.*,
+                           !lzma.*,
+                           !net.jpountz.*,
+                           !org.apache.log4j.*,
+                           !org.bouncycastle.*,
+                           !org.eclipse.jetty.*,
+                           !sun.security.*,
                            *
                         </Import-Package>
                         <DynamicImport-Package>*</DynamicImport-Package>

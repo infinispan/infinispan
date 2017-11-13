@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.test;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 
 /**
  * RemoteCacheManager that exposes internal components such as transportFactory.
@@ -29,7 +29,7 @@ public class InternalRemoteCacheManager extends RemoteCacheManager {
       this(true);
    }
 
-   public TransportFactory getTransportFactory() {
-      return transportFactory;
+   public ChannelFactory getChannelFactory() {
+      return channelFactory;
    }
 }

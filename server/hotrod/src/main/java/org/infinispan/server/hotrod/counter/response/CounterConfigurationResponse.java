@@ -32,4 +32,18 @@ public class CounterConfigurationResponse extends Response implements CounterRes
       encodeConfiguration(configuration, buffer::writeByte, buffer::writeLong,
             value -> ExtendedByteBuf.writeUnsignedInt(value, buffer));
    }
+
+   @Override
+   public String toString() {
+      return "CounterConfigurationResponse{" +
+            "version=" + version +
+            ", messageId=" + messageId +
+            ", cacheName='" + cacheName + '\'' +
+            ", clientIntel=" + clientIntel +
+            ", operation=" + operation +
+            ", status=" + status +
+            ", topologyId=" + topologyId +
+            ", configuration=" + configuration +
+            '}';
+   }
 }

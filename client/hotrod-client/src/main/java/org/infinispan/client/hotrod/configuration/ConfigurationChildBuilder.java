@@ -161,13 +161,19 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder tcpKeepAlive(boolean keepAlive);
 
    /**
-    * Controls which transport to use. Currently only the TcpTransport is supported.
+    * Controls which transport to use.
+    *
+    * @deprecated Ignored.
     */
+   @Deprecated
    ConfigurationBuilder transportFactory(String transportFactory);
 
    /**
-    * Controls which transport to use. Currently only the TcpTransport is supported.
+    * Controls which transport to use.
+    *
+    * @deprecated Ignored.
     */
+   @Deprecated
    ConfigurationBuilder transportFactory(Class<? extends TransportFactory> transportFactory);
 
    /**

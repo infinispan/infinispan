@@ -43,7 +43,8 @@ public class ClientListenerRemoveOnStopTest extends SingleHotRodServerTest {
       int port = this.hotrodServer.getPort();
       HotRodClientTestingUtil.killServers(this.hotrodServer);
       listeners = rcache.getListeners();
-      assertEquals(1, listeners.size());
+      // The listener is removed as soon as the channel is closed
+      assertEquals(0, listeners.size());
       hotrodServer = HotRodClientTestingUtil.startHotRodServer(this.cacheManager, port, new HotRodServerConfigurationBuilder());
       rcache.removeClientListener(eventListener1);
       listeners = rcache.getListeners();

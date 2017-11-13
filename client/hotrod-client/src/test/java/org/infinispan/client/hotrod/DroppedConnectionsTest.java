@@ -2,20 +2,23 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotSame;
 
 import java.net.InetSocketAddress;
 
-import org.apache.commons.pool.impl.GenericKeyedObjectPool;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.client.hotrod.test.NoopChannelOperation;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
+
+import io.netty.channel.Channel;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -26,7 +29,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache rc;
-   private TcpTransportFactory transportFactory;
+   private ChannelFactory channelFactory;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -34,8 +37,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
             hotRodCacheConfiguration(getDefaultStandaloneCacheConfig(false)));
       hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
-      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
-            new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder
             .connectionPool()
                .testWhileIdle(false)
@@ -46,7 +48,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
 
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       rc = remoteCacheManager.getCache();
-      transportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
+      channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
       return cacheManager;
    }
 
@@ -61,24 +63,23 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
    public void testClosedConnection() throws Exception {
       rc.put("k","v"); //make sure a connection is created
 
-      GenericKeyedObjectPool keyedObjectPool = transportFactory.getConnectionPool();
       InetSocketAddress address = InetSocketAddress.createUnresolved("127.0.0.1", hotRodServer.getPort());
 
-      assertEquals(0, keyedObjectPool.getNumActive(address));
-      assertEquals(1, keyedObjectPool.getNumIdle(address));
+      assertEquals(0, channelFactory.getNumActive(address));
+      assertEquals(1, channelFactory.getNumIdle(address));
 
-      TcpTransport tcpConnection = (TcpTransport) keyedObjectPool.borrowObject(address);
-      keyedObjectPool.returnObject(address, tcpConnection);//now we have a reference to the single connection in pool
+      Channel channel = channelFactory.fetchChannelAndInvoke(address, new NoopChannelOperation()).join();
+      channelFactory.releaseChannel(channel);//now we have a reference to the single connection in pool
 
-      tcpConnection.release();
+      channel.close();
 
       assertEquals("v", rc.get("k"));
-      assertEquals(0, keyedObjectPool.getNumActive(address));
-      assertEquals(1, keyedObjectPool.getNumIdle(address));
+      assertEquals(0, channelFactory.getNumActive(address));
+      assertEquals(1, channelFactory.getNumIdle(address));
 
-      TcpTransport tcpConnection2 = (TcpTransport) keyedObjectPool.borrowObject(address);
+      Channel channel2 = channelFactory.fetchChannelAndInvoke(address, new NoopChannelOperation()).join();
 
-      assert tcpConnection2.getId() != tcpConnection.getId();
+      assertNotSame(channel.id(), channel2.id());
    }
 
 }

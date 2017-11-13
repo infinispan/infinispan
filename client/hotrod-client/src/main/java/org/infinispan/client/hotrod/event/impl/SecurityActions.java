@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.event;
+package org.infinispan.client.hotrod.event.impl;
 
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 
 /**
- * SecurityActions for the org.infinispan.client.hotrod.event package.
+ * SecurityActions for the org.infinispan.client.hotrod.event.impl package.
  *
  * Do not move. Do not change class and method visibility to avoid being called from other
  * {@link java.security.CodeSource}s, thus granting privilege escalation to external code.

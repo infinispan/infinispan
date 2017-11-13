@@ -484,7 +484,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
       try {
          // no more elements expected here
-         Object o = queue.poll(5, TimeUnit.SECONDS);
+         Object o = queue.poll(100, TimeUnit.MILLISECONDS);
          assertNull("No more elements expected in queue!", o);
       } catch (InterruptedException e) {
          throw new AssertionError("Interrupted while waiting for condition", e);
