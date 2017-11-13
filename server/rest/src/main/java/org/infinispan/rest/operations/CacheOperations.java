@@ -1,12 +1,14 @@
 package org.infinispan.rest.operations;
 
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.OptionalInt;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheSet;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -17,6 +19,7 @@ import org.infinispan.rest.InfinispanCacheResponse;
 import org.infinispan.rest.InfinispanErrorResponse;
 import org.infinispan.rest.InfinispanRequest;
 import org.infinispan.rest.InfinispanResponse;
+import org.infinispan.rest.JSONConstants;
 import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -26,6 +29,7 @@ import org.infinispan.rest.operations.mediatypes.Charset;
 import org.infinispan.rest.operations.mediatypes.EntrySetFormatter;
 import org.infinispan.rest.operations.mediatypes.OutputPrinter;
 
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -210,23 +214,29 @@ public class CacheOperations extends AbstractOperations {
     * Implementation of HTTP DELETE request invoked on root context.
     *
     * @param request {@link InfinispanRequest} to be processed.
+    * @param depth
     * @return InfinispanResponse which shall be sent to the client.
     * @throws RestResponseException Thrown in case of any non-critical processing errors.
     */
-   public InfinispanResponse clearEntireCache(InfinispanCacheAPIRequest request) throws RestResponseException {
+   public InfinispanResponse clearOrRemoveEntireCache(InfinispanCacheAPIRequest request, String depth) throws RestResponseException {
       try {
          String cacheName = request.getCacheName().get();
          Optional<Boolean> useAsync = request.getUseAsync();
-
          InfinispanResponse response = InfinispanCacheResponse.inReplyTo(request);
-         response.status(HttpResponseStatus.OK);
+         if (depth == null || JSONConstants.INFINITY_NOROOT.equals(depth)) {
+            response.status(HttpResponseStatus.OK);
+            if (useAsync.isPresent() && useAsync.get()) {
+               restCacheManager.getCache(cacheName, null).clearAsync();
+            } else {
+               restCacheManager.getCache(cacheName, null).clear();
+            }
+         } else if (JSONConstants.INFINITY.equals(depth)) {
 
-         if (useAsync.isPresent() && useAsync.get()) {
-            restCacheManager.getCache(cacheName, null).clearAsync();
+            restCacheManager.getInstance().administration().withFlags(adminFlags(request.getRawRequest())).removeCache(cacheName);
+            response.status(HttpResponseStatus.NO_CONTENT);
          } else {
-            restCacheManager.getCache(cacheName, null).clear();
+            response.status(HttpResponseStatus.BAD_REQUEST);
          }
-
          return response;
       } catch (CacheException cacheException) {
          throw createResponseException(cacheException);
@@ -303,4 +313,19 @@ public class CacheOperations extends AbstractOperations {
       return response;
    }
 
+   public InfinispanResponse createCache(InfinispanCacheAPIRequest request, String template) {
+      String cacheName = request.getCacheName().get();
+      InfinispanResponse response = InfinispanCacheResponse.inReplyTo(request);
+      if (restCacheManager.getInstance().cacheExists(cacheName)) {
+         response.status(HttpResponseStatus.METHOD_NOT_ALLOWED);
+      } else {
+         restCacheManager.getInstance().administration().withFlags(adminFlags(request.getRawRequest())).createCache(cacheName, template);
+      }
+
+      return response;
+   }
+
+   private EnumSet<CacheContainerAdmin.AdminFlag> adminFlags(FullHttpRequest request) {
+      return CacheContainerAdmin.AdminFlag.fromString(request.headers().get("Admin-Flags"));
+   }
 }

@@ -114,6 +114,11 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion isNotAllowed() {
+      Assertions.assertThat(response.getStatus()).isEqualTo(405);
+      return this;
+   }
+
    public ResponseAssertion isBadRequest() {
       Assertions.assertThat(response.getStatus()).isEqualTo(400);
       return this;

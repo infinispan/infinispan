@@ -34,7 +34,7 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin> {
          EnumSet<AdminFlag> flags = EnumSet.noneOf(AdminFlag.class);
          if (s != null) {
             for (String name : s.split(",")) {
-               flags.add(AdminFlag.valueOf(name));
+               flags.add(AdminFlag.valueOf(name.toUpperCase()));
             }
          }
          return flags;

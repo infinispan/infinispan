@@ -80,10 +80,26 @@ Data can be removed at the cache key/element level, or via a whole cache name us
 Removes the given key name from the cache.
 
 ====== `DELETE /{cacheName}`
-Removes ALL the entries in the given cache name (i.e., everything from that path down). If the operation is successful, it returns 200 code.
+This method's behaviour is affected by the presence and value of the `Depth` header.
+The header can have the following values:
+
+* infinity,noroot: deletes the contents of the cache. This is the default behaviour (for backwards compatibility this does not respect the behaviour described in link:https://tools.ietf.org/html/rfc4918#section-9.6.1[WebDAV RFC] regarding removal of collections). If successful this operation returns a status of 200.
+* infinity: removes the cache from the system. If security is enabled, you will need ADMIN permissions. If successful, this operation returns a status of 204 (No Content). This method also understands <<rest:adminflags>>
 
 .Make it quicker!
 TIP: Set the header performAsync to true to return immediately and let the removal happen in the background.
+
+===== Creating caches
+
+Aside from deleting caches, as described above, you can obviously also create them on the remote system using the `MKCOL` method:
+
+====== `MKCOL /{cacheName}[?template={template}]`
+This will create the named cache, using the optionally supplied template name for configuration. If a template is not specified, then the configuration of the default cache defined on the cache container will be used.
+
+
+===== Admin flags [[rest:adminflags]]
+Operations which manipulate the server configuration, such as `MKCOL`, support an `Admin-Flags` header which affect their behaviour.
+For example, adding the 'Admin-Flags: PERSISTENT' to a `MKCOL` operation, will make the configuration persistent, if supported by the server. Refer to the link:{javadocroot}/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[CacheContainerAdmin.AdminFlag] javadocs.
 
 ==== Client side code
 Part of the point of a RESTful service is that you don't need to have tightly coupled client libraries/bindings. All you need is a HTTP client library. For Java, Apache HTTP Commons Client works just fine (and is used in the integration tests), or you can use java.net API.

@@ -422,17 +422,26 @@ public abstract class BaseRestOperationsTest {
 
    @Test
    public void shouldDeleteEntireCache() throws Exception {
+      ResponseAssertion.assertThat(cacheClear(null)).isOk();
+      Assertions.assertThat(restServer.getCacheManager().getCache("default")).isEmpty();
+
+      ResponseAssertion.assertThat(cacheClear("infinity,noroot")).isOk();
+      Assertions.assertThat(restServer.getCacheManager().getCache("default")).isEmpty();
+
+      ResponseAssertion.assertThat(cacheClear("blah")).isBadRequest();
+   }
+
+   private ContentResponse cacheClear(String depth) throws Exception {
       putStringValueInCache("default", "test", "test");
 
       //when
-      ContentResponse response = client
+      Request request = client
             .newRequest(String.format("http://localhost:%d/rest/%s", restServer.getPort(), "default"))
-            .method(HttpMethod.DELETE)
-            .send();
-
-      //then
-      ResponseAssertion.assertThat(response).isOk();
-      Assertions.assertThat(restServer.getCacheManager().getCache("default")).isEmpty();
+            .method(HttpMethod.DELETE);
+      if (depth != null) {
+         request.header("Depth", depth);
+      }
+      return request.send();
    }
 
    @Test

@@ -11,7 +11,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.HttpConversionUtil;
 
 /**
- * Representation of a HTTP request tailed for Infinispan-specific requests.
+ * Representation of a HTTP request tailored for Infinispan-specific requests.
  *
  * @author Sebastian Łaskawiec
  */

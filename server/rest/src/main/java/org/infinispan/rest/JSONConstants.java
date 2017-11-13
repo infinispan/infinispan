@@ -14,4 +14,7 @@ public interface JSONConstants {
    String QUERY_STRING = "query";
    String TOTAL_RESULTS = "total_results";
    String TYPE = "_type";
+   String TEMPLATE = "template";
+   String INFINITY = "infinity";
+   String INFINITY_NOROOT = "infinity,noroot";
 }

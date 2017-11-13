@@ -12,11 +12,11 @@ import org.infinispan.commons.dataconversion.Transcoder;
 /**
  * Passthrough transcoder for objects represented as byte[].
  */
-public class OctedStreamToObject implements Transcoder{
+public class OctetStreamToObject implements Transcoder {
 
    private static final Set<MediaType> supportedTypes = new HashSet<>();
 
-   public OctedStreamToObject() {
+   public OctetStreamToObject() {
       supportedTypes.add(APPLICATION_OBJECT);
       supportedTypes.add(APPLICATION_OCTET_STREAM);
    }
