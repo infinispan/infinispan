@@ -8,6 +8,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.factories.annotations.Inject;
@@ -357,6 +358,78 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       }
 
       return true;
+   }
+
+   /**
+    * Returns whether entry is expired.
+    * @param address the address of the entry to check
+    * @return {@code true} if the entry is expired, {@code false} otherwise
+    */
+   @Override
+   public boolean isExpired(long address) {
+      // 16 bytes for eviction if needed (optional)
+      // 8 bytes for linked pointer
+      int offset = evictionEnabled ? 24 : 8;
+
+      byte metadataType = MEMORY.getByte(address, offset);
+      if ((metadataType & IMMORTAL) != 0) {
+         return false;
+      }
+      // type
+      offset += 1;
+      // hashCode
+      offset += 4;
+      // key length
+      int keyLength = MEMORY.getInt(address, offset);
+      offset += 4;
+
+      long now = timeService.wallClockTime();
+
+      byte[] metadataBytes;
+      if ((metadataType & CUSTOM) == CUSTOM) {
+         // TODO: this needs to be fixed in ISPN-8539
+         return false;
+//         int metadataLength = MEMORY.getInt(address, offset);
+//         metadataBytes = new byte[metadataLength];
+//
+//         // value and keyLength
+//         offset += 4 + keyLength;
+//
+//         MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
+//
+//         Metadata metadata;
+//         try {
+//            metadata = (Metadata) marshaller.objectFromByteBuffer(metadataBytes);
+//            // TODO: custom metadata is not implemented properly for expiration
+//            return false;
+//         } catch (IOException | ClassNotFoundException e) {
+//            throw new CacheException(e);
+//         }
+      } else {
+         // value and keyLength
+         offset += 4 + keyLength;
+
+         switch (metadataType & 0xFC) {
+            case MORTAL:
+               metadataBytes = new byte[16];
+               MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
+               return ExpiryHelper.isExpiredMortal(Bits.getLong(metadataBytes, 0), Bits.getLong(metadataBytes, 8), now);
+            case TRANSIENT:
+               metadataBytes = new byte[16];
+               MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
+               return ExpiryHelper.isExpiredTransient(Bits.getLong(metadataBytes, 0), Bits.getLong(metadataBytes, 8), now);
+            case TRANSIENT_MORTAL:
+               metadataBytes = new byte[32];
+               MEMORY.getBytes(address, offset, metadataBytes, 0, metadataBytes.length);
+               long lifespan = Bits.getLong(metadataBytes, 0);
+               long maxIdle = Bits.getLong(metadataBytes, 8);
+               long created = Bits.getLong(metadataBytes, 16);
+               long lastUsed = Bits.getLong(metadataBytes, 24);
+               return ExpiryHelper.isExpiredTransientMortal(maxIdle, lastUsed, lifespan, created, now);
+            default:
+               return false;
+         }
+      }
    }
 
    static private boolean requiresMetadataSize(byte type) {
