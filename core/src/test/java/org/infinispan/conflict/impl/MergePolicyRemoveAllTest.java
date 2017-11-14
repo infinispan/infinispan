@@ -1,6 +1,6 @@
 package org.infinispan.conflict.impl;
 
-import org.infinispan.conflict.MergePolicies;
+import org.infinispan.conflict.MergePolicy;
 import org.testng.annotations.Test;
 
 /**
@@ -21,7 +21,7 @@ public class MergePolicyRemoveAllTest extends BaseMergePolicyTest {
 
    public MergePolicyRemoveAllTest() {
       super();
-      this.mergePolicy = MergePolicies.REMOVE_ALL;
+      this.mergePolicy = MergePolicy.REMOVE_ALL;
       this.valueAfterMerge = null;
    }
 }

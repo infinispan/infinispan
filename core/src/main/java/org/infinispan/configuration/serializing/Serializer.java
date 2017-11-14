@@ -56,10 +56,9 @@ import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.configuration.parsing.Element;
-import org.infinispan.configuration.parsing.Parser;
-import org.infinispan.configuration.parsing.Parser.MergePolicy;
 import org.infinispan.configuration.parsing.Parser.TransactionMode;
 import org.infinispan.conflict.EntryMergePolicy;
+import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.security.PrincipalRoleMapper;
@@ -475,7 +474,7 @@ public class Serializer extends AbstractStoreSerializer implements Configuration
          attributes.write(writer, PartitionHandlingConfiguration.WHEN_SPLIT, Attribute.WHEN_SPLIT);
          EntryMergePolicy policyImpl = partitionHandling.mergePolicy();
          MergePolicy policy = MergePolicy.fromConfiguration(policyImpl);
-         String output = policy == Parser.MergePolicy.CUSTOM ? policyImpl.getClass().getName() : policy.toString();
+         String output = policy == MergePolicy.CUSTOM ? policyImpl.getClass().getName() : policy.toString();
          writer.writeAttribute(Attribute.MERGE_POLICY, output);
          writer.writeEndElement();
       }

@@ -13,7 +13,6 @@ import static org.infinispan.factories.KnownComponentNames.shortened;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +62,7 @@ import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.conflict.EntryMergePolicy;
-import org.infinispan.conflict.MergePolicies;
+import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -1286,7 +1285,7 @@ public class Parser implements ConfigurationParser {
             }
             case MERGE_POLICY: {
                MergePolicy mp = MergePolicy.fromString(value);
-               EntryMergePolicy mergePolicy = mp == MergePolicy.CUSTOM ? Util.getInstance(value, holder.getClassLoader()) : mp.impl;
+               EntryMergePolicy mergePolicy = mp == MergePolicy.CUSTOM ? Util.getInstance(value, holder.getClassLoader()) : mp;
                ph.mergePolicy(mergePolicy);
                break;
             }
@@ -2647,39 +2646,6 @@ public class Parser implements ConfigurationParser {
          }
       }
       return properties;
-   }
-
-   public enum MergePolicy {
-      CUSTOM(null),
-      NONE(null),
-      PREFERRED_ALWAYS(MergePolicies.PREFERRED_ALWAYS),
-      PREFERRED_NON_NULL(MergePolicies.PREFERRED_NON_NULL),
-      REMOVE_ALL(MergePolicies.REMOVE_ALL);
-
-      private final EntryMergePolicy impl;
-      MergePolicy(EntryMergePolicy policy) {
-         this.impl = policy;
-      }
-
-      public EntryMergePolicy getImpl() {
-         return impl;
-      }
-
-      public static MergePolicy fromString(String str) {
-         for (MergePolicy mp : MergePolicy.values())
-            if (mp.name().equalsIgnoreCase(str))
-               return mp;
-         return CUSTOM;
-      }
-
-      public static MergePolicy fromConfiguration(EntryMergePolicy policy) {
-         if (policy == null) return NONE;
-
-         for (MergePolicy mp : MergePolicy.values())
-            if (mp.impl != null && Objects.equals(mp.impl.getClass(), policy.getClass()))
-               return mp;
-         return CUSTOM;
-      }
    }
 
    public enum TransactionMode {

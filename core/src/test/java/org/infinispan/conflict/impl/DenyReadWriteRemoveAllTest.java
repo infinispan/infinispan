@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.conflict.MergePolicies;
+import org.infinispan.conflict.MergePolicy;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -36,7 +36,7 @@ public class DenyReadWriteRemoveAllTest extends BaseMergePolicyTest {
 
    public DenyReadWriteRemoveAllTest() {
       super();
-      this.mergePolicy = MergePolicies.REMOVE_ALL;
+      this.mergePolicy = MergePolicy.REMOVE_ALL;
       this.partitionHandling = PartitionHandling.DENY_READ_WRITES;
       this.valueAfterMerge = null;
    }

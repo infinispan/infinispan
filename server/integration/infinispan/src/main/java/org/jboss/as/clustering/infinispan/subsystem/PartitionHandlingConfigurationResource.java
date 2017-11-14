@@ -23,7 +23,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
-import org.infinispan.configuration.parsing.Parser;
+import org.infinispan.conflict.MergePolicy;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -66,7 +66,7 @@ public class PartitionHandlingConfigurationResource extends CacheConfigurationCh
                 .setXmlName(Attribute.ENABLED.getLocalName())
                 .setAllowExpression(true)
                 .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                .setDefaultValue(new ModelNode().set(Parser.MergePolicy.NONE.toString()))
+                .setDefaultValue(new ModelNode().set(MergePolicy.NONE.toString()))
                 .build();
 
     static final AttributeDefinition[] ATTRIBUTES = {ENABLED, WHEN_SPLIT, MERGE_POLICY};

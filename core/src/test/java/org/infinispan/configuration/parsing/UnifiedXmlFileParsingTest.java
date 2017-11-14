@@ -36,7 +36,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
-import org.infinispan.conflict.MergePolicies;
+import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -109,12 +109,12 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       PartitionHandlingConfiguration ph = cm.getCacheConfiguration("dist").clustering().partitionHandling();
       assertTrue(ph.enabled());
       assertEquals(PartitionHandling.ALLOW_READS, ph.whenSplit());
-      assertEquals(MergePolicies.PREFERRED_NON_NULL, ph.mergePolicy());
+      assertEquals(MergePolicy.PREFERRED_NON_NULL, ph.mergePolicy());
 
       ph = cm.getCacheConfiguration("repl").clustering().partitionHandling();
       assertFalse(ph.enabled());
       assertEquals(PartitionHandling.ALLOW_READ_WRITES, ph.whenSplit());
-      assertEquals(MergePolicies.PREFERRED_ALWAYS, ph.mergePolicy());
+      assertEquals(MergePolicy.PREFERRED_ALWAYS, ph.mergePolicy());
    }
 
    private static void configurationCheck90(EmbeddedCacheManager cm) {

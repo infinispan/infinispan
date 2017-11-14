@@ -27,8 +27,8 @@ import java.util.List;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
-import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.conflict.EntryMergePolicy;
+import org.infinispan.conflict.MergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.jboss.as.clustering.infinispan.conflict.DeployedMergePolicy;
 import org.jboss.as.controller.OperationContext;
@@ -78,8 +78,8 @@ public abstract class SharedStateCacheConfigurationAdd extends ClusteredCacheCon
             phBuilder.whenSplit(PartitionHandling.valueOf(phType));
 
           String policyClassName = PartitionHandlingConfigurationResource.MERGE_POLICY.resolveModelAttribute(context, partitionHandling).asString();
-          Parser.MergePolicy mergePolicy = Parser.MergePolicy.fromString(policyClassName);
-          EntryMergePolicy policy = mergePolicy != Parser.MergePolicy.CUSTOM ? mergePolicy.getImpl() : new DeployedMergePolicy(policyClassName);
+          MergePolicy mergePolicy = MergePolicy.fromString(policyClassName);
+          EntryMergePolicy policy = mergePolicy != MergePolicy.CUSTOM ? mergePolicy : new DeployedMergePolicy(policyClassName);
           phBuilder.mergePolicy(policy);
        }
     }
