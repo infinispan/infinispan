@@ -63,4 +63,12 @@ public interface OffHeapEntryFactory {
     * @return whether or not the keys are equal
     */
    boolean equalsKey(long address, WrappedBytes wrappedBytes);
+
+
+   /**
+    * Returns whether entry is expired or not.
+    * @param address the address of the entry's key to check
+    * @return {@code true} if the entry is expired, {@code false} otherwise
+    */
+   boolean isExpired(long address);
 }

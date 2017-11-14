@@ -52,6 +52,11 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       };
    }
 
+   @Override
+   protected String parameters() {
+      return "[" + storage + "]";
+   }
+
    private ConfigurationBuilder buildCfg() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg
