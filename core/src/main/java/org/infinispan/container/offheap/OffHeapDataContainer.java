@@ -161,7 +161,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    }
 
    /**
-    * Gets the actual address for the given key in the given bucket or 0 if it isn't present
+    * Gets the actual address for the given key in the given bucket or 0 if it isn't present or expired
     * @param bucketHeadAddress the starting address of the address hash
     * @param k the key to retrieve the address for it if matches
     * @return the address matching the key or 0
@@ -172,12 +172,15 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       while (address != 0) {
          long nextAddress = offHeapEntryFactory.getNext(address);
          if (offHeapEntryFactory.equalsKey(address, wrappedKey)) {
-            return address;
+            if (offHeapEntryFactory.isExpired(address)) {
+               address = 0;
+            }
+            break;
          } else {
             address = nextAddress;
          }
       }
-      return 0;
+      return address;
    }
 
    @Override
@@ -309,7 +312,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          while (address != 0) {
             long nextAddress = offHeapEntryFactory.getNext(address);
             if (offHeapEntryFactory.equalsKey(address, wba)) {
-               return true;
+               return !offHeapEntryFactory.isExpired(address);
             }
             address = nextAddress;
          }
@@ -372,7 +375,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          // If the actualAddress was not known, check key equality otherwise just compare with the address
          removeThisAddress = actualAddress == 0 ? offHeapEntryFactory.equalsKey(address, wba) : actualAddress == address;
          if (removeThisAddress) {
-            if (requireReturn) {
+            if (requireReturn && !offHeapEntryFactory.isExpired(address)) {
                ice = offHeapEntryFactory.fromMemory(address);
             }
             entryRemoved(address);
@@ -583,12 +586,15 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          lock.lock();
          try {
             checkDeallocation();
+            long now = timeService.wallClockTime();
             for (int j = i; j < memoryAddressCount; j += lockCount) {
                long address = memoryLookup.getMemoryAddressOffset(j);
                while (address != 0) {
                   long nextAddress = offHeapEntryFactory.getNext(address);
                   InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
-                  consumer.accept(ice);
+                  if (!ice.isExpired(now)) {
+                     consumer.accept(ice);
+                  }
                   address = nextAddress;
                }
             }
@@ -618,7 +624,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       });
    }
 
-   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStream() {
+   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStreamIncludingExpired() {
       return IntStream.range(0, memoryAddressCount)
             .mapToObj(a -> {
                Lock lock = locks.getLockWithOffset(a % lockCount).readLock();
@@ -642,14 +648,18 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             }).flatMap(Function.identity());
    }
 
+   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStream() {
+      long now = timeService.wallClockTime();
+      return entryStreamIncludingExpired().filter(e -> !e.isExpired(now));
+   }
+
    @Override
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iterator() {
-      long time = timeService.wallClockTime();
-      return entryStream().filter(e -> !e.isExpired(time)).iterator();
+      return entryStream().iterator();
    }
 
    @Override
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iteratorIncludingExpired() {
-      return entryStream().iterator();
+      return entryStreamIncludingExpired().iterator();
    }
 }
