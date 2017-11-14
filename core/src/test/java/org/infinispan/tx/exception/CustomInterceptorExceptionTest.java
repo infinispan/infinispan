@@ -18,19 +18,20 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @since 4.2
  */
-@Test(groups = "functional", testName = "tx.exception.CustomInterceptorException")
-public class CustomInterceptorException extends SingleCacheManagerTest {
+@Test(groups = "functional", testName = "tx.exception.CustomInterceptorExceptionTest")
+public class CustomInterceptorExceptionTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager eCm =
             TestCacheManagerFactory.createCacheManager(getDefaultClusteredCacheConfig(CacheMode.LOCAL, true));
+      // Custom interceptor must be after TxInterceptor
       eCm.getCache().getAdvancedCache().addInterceptor(new CustomInterceptorConfigTest.DummyInterceptor() {
          @Override
          public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
             throw new IllegalStateException("Induce failure!");
          }
-      }, 1);
+      }, 4);
       return eCm;
    }
 

@@ -1,10 +1,11 @@
 package org.infinispan.tx.synchronisation;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.XaTransactionTable;
-import org.infinispan.tx.TransactionsSpanningCaches;
+import org.infinispan.tx.TransactionsSpanningCachesTest;
 import org.testng.annotations.Test;
 
 /**
@@ -12,7 +13,14 @@ import org.testng.annotations.Test;
  * @since 5.0
  */
 @Test(groups = "functional", testName = "tx.synchronisation.TransactionsSpanningCachesSyncTest")
-public class TransactionsSpanningCachesSyncTest extends TransactionsSpanningCaches {
+public class TransactionsSpanningCachesSyncTest extends TransactionsSpanningCachesTest {
+   public Object[] factory() {
+      return new Object[] {
+            new TransactionsSpanningCachesSyncTest().withStorage(StorageType.OBJECT, StorageType.OBJECT),
+            new TransactionsSpanningCachesSyncTest().withStorage(StorageType.OFF_HEAP, StorageType.OFF_HEAP),
+            new TransactionsSpanningCachesSyncTest().withStorage(StorageType.OBJECT, StorageType.OFF_HEAP)
+      };
+   }
 
    @Override
    protected void amendConfig(ConfigurationBuilder defaultCacheConfig) {
