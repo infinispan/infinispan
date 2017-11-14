@@ -10,21 +10,19 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningCaches")
-public class TransactionsSpanningCaches extends MultipleCacheManagersTest {
+@Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningCachesTestTest")
+public class TransactionsSpanningCachesTest extends MultipleCacheManagersTest {
 
    protected StorageType storage1;
    protected StorageType storage2;
 
-   @Factory
    public Object[] factory() {
       return new Object[] {
-            new TransactionsSpanningCaches().withStorage(StorageType.OBJECT, StorageType.OBJECT),
-            new TransactionsSpanningCaches().withStorage(StorageType.OFF_HEAP, StorageType.OFF_HEAP),
-            new TransactionsSpanningCaches().withStorage(StorageType.OBJECT, StorageType.OFF_HEAP)
+            new TransactionsSpanningCachesTest().withStorage(StorageType.OBJECT, StorageType.OBJECT),
+            new TransactionsSpanningCachesTest().withStorage(StorageType.OFF_HEAP, StorageType.OFF_HEAP),
+            new TransactionsSpanningCachesTest().withStorage(StorageType.OBJECT, StorageType.OFF_HEAP)
       };
    }
 
@@ -47,10 +45,15 @@ public class TransactionsSpanningCaches extends MultipleCacheManagersTest {
       //ignore
    }
 
-   public TransactionsSpanningCaches withStorage(StorageType storage1, StorageType storage2) {
+   public TransactionsSpanningCachesTest withStorage(StorageType storage1, StorageType storage2) {
       this.storage1 = storage1;
       this.storage2 = storage2;
       return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[storage1=" + storage1 + ", storage2=" + storage2 + "]";
    }
 
    public void testCommitSpanningCaches() throws Exception {

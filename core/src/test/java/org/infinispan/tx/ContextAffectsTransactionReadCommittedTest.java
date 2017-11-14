@@ -8,7 +8,6 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-
 import javax.transaction.Transaction;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -18,7 +17,6 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -32,7 +30,6 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
    protected StorageType storage;
 
-   @Factory
    public Object[] factory() {
       return new Object[] {
             new ContextAffectsTransactionReadCommittedTest().withStorage(StorageType.BINARY),
@@ -44,6 +41,11 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
    public ContextAffectsTransactionReadCommittedTest withStorage(StorageType storage) {
       this.storage = storage;
       return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[storage=" + storage + "]";
    }
 
    @Override
@@ -61,51 +63,61 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
    public void testSizeAfterClearInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       tm().begin();
-      assertEquals("v1", cache.get(1));
+      try {
+         assertEquals("v1", cache.get(1));
 
-      //clear is non transactional
-      cache.clear();
+         //clear is non transactional
+         cache.clear();
 
-      assertEquals(1, cache.size());
-      assertEquals("v1", cache.get(1));
-      safeCommit(false);
+         assertEquals(1, cache.size());
+         assertEquals("v1", cache.get(1));
+      } finally {
+         safeCommit(false);
+      }
    }
 
    public void testEntrySetAfterClearInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       tm().begin();
-      assertEquals("v1", cache.get(1));
+      try {
+         assertEquals("v1", cache.get(1));
 
-      //clear is non transactional
-      cache.clear();
+         //clear is non transactional
+         cache.clear();
 
-      Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
-      assertEquals(1, entrySet.size());
+         Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
+         assertEquals(1, entrySet.size());
 
-      Map.Entry<Object, Object> entry = entrySet.iterator().next();
-      assertEquals(1, entry.getKey());
-      assertEquals("v1", entry.getValue());
-      assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v1")));
-      safeCommit(false);
+         Map.Entry<Object, Object> entry = entrySet.iterator().next();
+         assertEquals(1, entry.getKey());
+         assertEquals("v1", entry.getValue());
+         assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v1")));
+      } finally {
+         safeCommit(false);
+      }
    }
 
    public void testKeySetAfterClearInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       tm().begin();
-      assertEquals("v1", cache.get(1));
+      try {
+         assertEquals("v1", cache.get(1));
 
-      //clear is non transactional
-      cache.clear();
+         //clear is non transactional
+         cache.clear();
 
-      Set<Object> keySet = cache.keySet();
-      assertEquals(1, keySet.size());
-      assertTrue(keySet.contains(1));
-      safeCommit(false);
+         Set<Object> keySet = cache.keySet();
+         assertEquals(1, keySet.size());
+         assertTrue(keySet.contains(1));
+      } finally {
+         safeCommit(false);
+      }
    }
 
    public void testValuesAfterClearInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       tm().begin();
+      try {
       assertEquals("v1", cache.get(1));
 
       //clear is non transactional
@@ -114,12 +126,15 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       Collection<Object> values = cache.values();
       assertEquals(1, values.size());
       assertTrue(values.contains("v1"));
-      safeCommit(false);
+      } finally {
+         safeCommit(false);
+      }
    }
 
    public void testSizeAfterClearInBranchedTransactionOnWrite() throws Exception {
       cache.put(1, "v1");
       tm().begin();
+      try {
       assertEquals("v1", cache.put(1, "v2"));
 
       //clear is non transactional
@@ -127,12 +142,15 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
       assertEquals(1, cache.size());
       assertEquals("v2", cache.get(1));
-      safeCommit(true);
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testEntrySetAfterClearInBranchedTransactionOnWrite() throws Exception {
       cache.put(1, "v1");
       tm().begin();
+      try {
       assertEquals("v1", cache.put(1, "v2"));
 
       //clear is non transactional
@@ -145,12 +163,15 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       assertEquals(1, entry.getKey());
       assertEquals("v2", entry.getValue());
       assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v2")));
-      safeCommit(true);
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testKeySetAfterClearInBranchedTransactionOnWrite() throws Exception {
       cache.put(1, "v1");
       tm().begin();
+      try {
       assertEquals("v1", cache.put(1, "v2"));
 
       //clear is non transactional
@@ -159,12 +180,15 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       Set<Object> keySet = cache.keySet();
       assertEquals(1, keySet.size());
       assertTrue(keySet.contains(1));
-      safeCommit(true);
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testValuesAfterClearInBranchedTransactionOnWrite() throws Exception {
       cache.put(1, "v1");
       tm().begin();
+      try {
       assertEquals("v1", cache.put(1, "v2"));
 
       //clear is non transactional
@@ -174,13 +198,16 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
       assertEquals(1, values.size());
 
       assertTrue(values.contains("v2"));
-      safeCommit(true);
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testSizeAfterRemoveInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       cache.put(2, "v2");
       tm().begin();
+      try {
       assertEquals("v1", cache.get(1));
 
       Transaction suspended = tm().suspend();
@@ -191,13 +218,16 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
       assertEquals("v1", cache.get(1));
       assertEquals("v2", cache.get(2));
-      safeCommit(false);
+      } finally {
+         safeCommit(false);
+      }
    }
 
    public void testEntrySetAfterRemoveInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       cache.put(2, "v2");
       tm().begin();
+      try {
       assertEquals("v1", cache.get(1));
 
       Transaction suspended = tm().suspend();
@@ -221,13 +251,16 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
       assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v1")));
       assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(2, "v2")));
-      safeCommit(false);
+      } finally {
+         safeCommit(false);
+      }
    }
 
    public void testKeySetAfterRemoveInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       cache.put(2, "v2");
       tm().begin();
+      try {
       assertEquals("v1", cache.get(1));
 
       Transaction suspended = tm().suspend();
@@ -239,13 +272,16 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
       assertTrue(keySet.contains(1));
       assertTrue(keySet.contains(2));
-      safeCommit(false);
+      } finally {
+         safeCommit(false);
+      }
    }
 
    public void testValuesAfterRemoveInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       cache.put(2, "v2");
       tm().begin();
+      try {
       assertEquals("v1", cache.get(1));
 
       Transaction suspended = tm().suspend();
@@ -257,13 +293,16 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
       assertTrue(values.contains("v1"));
       assertTrue(values.contains("v2"));
-      safeCommit(false);
+      } finally {
+         safeCommit(false);
+      }
    }
 
    public void testSizeAfterDoubleRemoveInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       cache.put(2, "v2");
       tm().begin();
+      try {
       assertEquals("v1", cache.remove(1));
 
       Transaction suspended = tm().suspend();
@@ -272,120 +311,143 @@ public class ContextAffectsTransactionReadCommittedTest extends SingleCacheManag
 
       assertEquals(1, cache.size());
       assertEquals("v2", cache.get(2));
-      safeCommit(true);
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testEntrySetAfterDoubleRemoveInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       cache.put(2, "v2");
       tm().begin();
-      assertEquals("v1", cache.remove(1));
+      try {
+         assertEquals("v1", cache.remove(1));
 
-      Transaction suspended = tm().suspend();
-      assertEquals("v1", cache.remove(1));
-      tm().resume(suspended);
+         Transaction suspended = tm().suspend();
+         assertEquals("v1", cache.remove(1));
+         tm().resume(suspended);
 
-      Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
-      assertEquals(1, entrySet.size());
+         Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
+         assertEquals(1, entrySet.size());
 
-      Map.Entry<Object, Object> entry = entrySet.iterator().next();
-      assertEquals(2, entry.getKey());
-      assertEquals("v2", entry.getValue());
-      assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(2, "v2")));
-      safeCommit(true);
+         Map.Entry<Object, Object> entry = entrySet.iterator().next();
+         assertEquals(2, entry.getKey());
+         assertEquals("v2", entry.getValue());
+         assertTrue(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(2, "v2")));
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testKeySetAfterDoubleRemoveInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       cache.put(2, "v2");
       tm().begin();
-      assertEquals("v1", cache.remove(1));
+      try {
+         assertEquals("v1", cache.remove(1));
 
-      Transaction suspended = tm().suspend();
-      assertEquals("v1", cache.remove(1));
-      tm().resume(suspended);
+         Transaction suspended = tm().suspend();
+         assertEquals("v1", cache.remove(1));
+         tm().resume(suspended);
 
-      Set<Object> keySet = cache.keySet();
-      assertEquals(1, keySet.size());
-      assertTrue(keySet.contains(2));
-      safeCommit(true);
+         Set<Object> keySet = cache.keySet();
+         assertEquals(1, keySet.size());
+         assertTrue(keySet.contains(2));
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testValuesAfterDoubleRemoveInBranchedTransaction() throws Exception {
       cache.put(1, "v1");
       cache.put(2, "v2");
       tm().begin();
-      assertEquals("v1", cache.remove(1));
+      try {
+         assertEquals("v1", cache.remove(1));
 
-      Transaction suspended = tm().suspend();
-      assertEquals("v1", cache.remove(1));
-      tm().resume(suspended);
+         Transaction suspended = tm().suspend();
+         assertEquals("v1", cache.remove(1));
+         tm().resume(suspended);
 
-      Collection<Object> values = cache.values();
-      assertEquals(1, values.size());
-      assertTrue(values.contains("v2"));
-      safeCommit(true);
+         Collection<Object> values = cache.values();
+         assertEquals(1, values.size());
+         assertTrue(values.contains("v2"));
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testSizeAfterPutInBranchedTransactionButRemove() throws Exception {
       cache.put(1, "v1");
       tm().begin();
-      assertEquals("v1", cache.remove(1));
+      try {
+         assertEquals("v1", cache.remove(1));
 
-      Transaction suspended = tm().suspend();
-      assertEquals("v1", cache.put(1, "v2"));
-      tm().resume(suspended);
+         Transaction suspended = tm().suspend();
+         assertEquals("v1", cache.put(1, "v2"));
+         tm().resume(suspended);
 
-      assertEquals(0, cache.size());
-      safeCommit(true);
+         assertEquals(0, cache.size());
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testEntrySetAfterPutInBranchedTransactionButRemove() throws Exception {
       cache.put(1, "v1");
       tm().begin();
-      assertEquals("v1", cache.remove(1));
+      try {
+         assertEquals("v1", cache.remove(1));
 
-      Transaction suspended = tm().suspend();
-      assertEquals("v1", cache.put(1, "v2"));
-      tm().resume(suspended);
+         Transaction suspended = tm().suspend();
+         assertEquals("v1", cache.put(1, "v2"));
+         tm().resume(suspended);
 
-      Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
-      assertEquals(0, entrySet.size());
-      assertFalse(entrySet.iterator().hasNext());
-      assertFalse(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v2")));
-      safeCommit(true);
+         Set<Map.Entry<Object, Object>> entrySet = cache.entrySet();
+         assertEquals(0, entrySet.size());
+         assertFalse(entrySet.iterator().hasNext());
+         assertFalse(entrySet.contains(TestingUtil.<Object, Object>createMapEntry(1, "v2")));
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testKeySetAfterPutInBranchedTransactionButRemove() throws Exception {
       cache.put(1, "v1");
       tm().begin();
-      assertEquals("v1", cache.remove(1));
+      try {
+         assertEquals("v1", cache.remove(1));
 
-      Transaction suspended = tm().suspend();
-      assertEquals("v1", cache.put(1, "v2"));
-      tm().resume(suspended);
+         Transaction suspended = tm().suspend();
+         assertEquals("v1", cache.put(1, "v2"));
+         tm().resume(suspended);
 
-      Set<Object> keySet = cache.keySet();
-      assertEquals(0, keySet.size());
-      assertFalse(keySet.iterator().hasNext());
-      assertFalse(keySet.contains(1));
-      safeCommit(true);
+         Set<Object> keySet = cache.keySet();
+         assertEquals(0, keySet.size());
+         assertFalse(keySet.iterator().hasNext());
+         assertFalse(keySet.contains(1));
+      } finally {
+         safeCommit(true);
+      }
    }
 
    public void testValuesAfterPutInBranchedTransactionButRemove() throws Exception {
       cache.put(1, "v1");
       tm().begin();
-      assertEquals("v1", cache.remove(1));
+      try {
+         assertEquals("v1", cache.remove(1));
 
-      Transaction suspended = tm().suspend();
-      assertEquals("v1", cache.put(1, "v2"));
-      tm().resume(suspended);
+         Transaction suspended = tm().suspend();
+         assertEquals("v1", cache.put(1, "v2"));
+         tm().resume(suspended);
 
-      Collection<Object> values = cache.values();
-      assertEquals(0, values.size());
-      assertFalse(values.iterator().hasNext());
-      assertFalse(values.contains("v2"));
-      safeCommit(true);
+         Collection<Object> values = cache.values();
+         assertEquals(0, values.size());
+         assertFalse(values.iterator().hasNext());
+         assertFalse(values.contains("v2"));
+      } finally {
+         safeCommit(true);
+      }
    }
 
    protected void safeCommit(boolean throwWriteSkew) throws Exception {

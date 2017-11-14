@@ -103,6 +103,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    @BeforeClass(alwaysRun = true)
    public void createBeforeClass() throws Throwable {
+      checkFactoryAnnotation();
       if (cleanupAfterTest()) callCreateCacheManagers();
    }
 
@@ -479,7 +480,15 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       try {
          Method factory = getClass().getMethod("factory");
          if (factory.getDeclaringClass() == getClass()) {
-            return factory();
+            Object[] instances = factory();
+            for (int i = 0; i < instances.length; i++) {
+               if (instances[i].getClass() != getClass()) {
+                  instances[i] = new IllegalFactoryMethod(getClass().getName() + ".factory() creates instances of " + instances[i].getClass());
+               }
+            }
+            return instances;
+         } else if (factory.getDeclaringClass() != MultipleCacheManagersTest.class) {
+            return new Object[]{new IllegalFactoryMethod(getClass().getName() + ".factory() override is missing, inherited factory() creates instances of " + factory.getDeclaringClass())};
          }
       } catch (NoSuchMethodException e) {
          throw new IllegalStateException("Every class should have factory method, at least inherited", e);
@@ -511,6 +520,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          stride *= modifiers.length;
       }
       return tests;
+   }
+
+   private void checkFactoryAnnotation() {
+      for (Method m : getClass().getMethods()) {
+         if (m.getAnnotation(Factory.class) != null && m.getDeclaringClass() != MultipleCacheManagersTest.class) {
+            throw new IllegalStateException("Test " + getClass().getName() +
+                                                  " extends MultipleCacheManagersTest and declares its own @Factory method: " +
+                                                  m.getName());
+         }
+      }
    }
 
    private void applyModifiers(Object[] tests, Consumer<MultipleCacheManagersTest>[] modifiers, int stride) {
@@ -960,6 +979,18 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    public static class IsolationLevelFilter extends FilterByProperty<IsolationLevel> {
       public IsolationLevelFilter() {
          super("test.infinispan.isolationLevel", test -> test.isolationLevel);
+      }
+   }
+
+   public static class IllegalFactoryMethod {
+      private final String message;
+
+      public IllegalFactoryMethod(String message) {
+         this.message = message;
+      }
+
+      public void fail() {
+         throw new IllegalStateException(message);
       }
    }
 }

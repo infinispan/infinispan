@@ -46,6 +46,11 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       return this;
    }
 
+   @Override
+   protected String parameters() {
+      return "[storage=" + storage + "]";
+   }
+
    public void testTxCommit1() throws Exception {
       TransactionManager tm = TestingUtil.getTransactionManager(cache);
       tm.begin();

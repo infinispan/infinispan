@@ -64,6 +64,11 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
       return this;
    }
 
+   @Override
+   protected String parameters() {
+      return "[storage=" + storage + "]";
+   }
+
    /**
     * The aim of this test is to make sure that invocations not belonging to
     * on-going transactions or non-transactional invocations are not allowed
