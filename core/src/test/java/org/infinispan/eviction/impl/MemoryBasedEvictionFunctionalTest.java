@@ -8,10 +8,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.MemoryConfiguration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "eviction.MemoryBasedEvictionFunctionalTest")
@@ -19,16 +22,41 @@ public class MemoryBasedEvictionFunctionalTest extends SingleCacheManagerTest {
 
    protected static final long CACHE_SIZE = 2000;
 
+   protected StorageType storageType;
+
+   public MemoryBasedEvictionFunctionalTest storageType(StorageType storageType) {
+      this.storageType = storageType;
+      return this;
+   }
+
    protected void configure(ConfigurationBuilder cb) { }
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      builder.memory().size(CACHE_SIZE).evictionType(EvictionType.MEMORY);
+      builder.memory().evictionType(EvictionType.MEMORY).storageType(storageType);
+      if (storageType == StorageType.BINARY) {
+         builder.memory().size(CACHE_SIZE);
+      } else {
+         builder.memory().size(CACHE_SIZE + MemoryConfiguration.ADDRESS_COUNT.getDefaultValue() * 8);
+      }
       configure(builder);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
       cache = cm.getCache();
       return cm;
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new MemoryBasedEvictionFunctionalTest().storageType(StorageType.BINARY),
+            new MemoryBasedEvictionFunctionalTest().storageType(StorageType.OFF_HEAP)
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "storageType=" + storageType;
    }
 
    public void testByteArray() throws Exception {

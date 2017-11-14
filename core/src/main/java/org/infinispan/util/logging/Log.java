@@ -34,6 +34,7 @@ import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.jmx.JmxDomainConflictException;
@@ -1554,7 +1555,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException configAlreadyDefined(String cacheName);
 
    @LogMessage(level = WARN)
-   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke defineConfiguration first and then getCache. Cache name was %s", id = 454)
+   @Message(value = "Calling getCache with a cache override is no longer supported. Please invoke createCache first and then getCache. Cache name was %s", id = 454)
    void warnAttemptToOverrideExistingConfiguration(String cacheName);
 
    @LogMessage(level = ERROR)
@@ -1653,4 +1654,15 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Class %s not found", id = 483)
    CacheConfigurationException classNotFound(String name);
+
+   @Message(value = "Compatibility mode requires OBJECT storage type but was: %s", id = 503)
+   CacheConfigurationException compatibilityModeOnlyCompatibleWithObjectStorage(StorageType storageType);
+
+   @Message(value = "MEMORY based eviction is not supported with OBJECT storage", id = 504)
+   CacheConfigurationException offHeapMemoryEvictionNotSupportedWithObject();
+
+   @Message(value = "MEMORY based OFF_HEAP eviction configured size %d must be larger than %d to store configured " +
+         "address count of %d", id = 505)
+   CacheConfigurationException offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(long configuredSize,
+         long addressMemorySize, int addressCount);
 }
