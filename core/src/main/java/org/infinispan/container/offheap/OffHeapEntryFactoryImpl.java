@@ -187,7 +187,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       int valueLength = MEMORY.getInt(entryAddress, headerOffset);
       headerOffset += 4;
 
-      return headerOffset + keyLength + metadataLength + valueLength;
+      return UnpooledOffHeapMemoryAllocator.roundUpTo8(headerOffset + keyLength + metadataLength + valueLength);
    }
 
    @Override

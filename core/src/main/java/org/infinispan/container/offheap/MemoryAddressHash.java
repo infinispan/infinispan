@@ -16,11 +16,13 @@ public class MemoryAddressHash {
 
    private final long memory;
    private final int pointerCount;
+   private final OffHeapMemoryAllocator allocator;
 
-   public MemoryAddressHash(int pointers) {
+   public MemoryAddressHash(int pointers, OffHeapMemoryAllocator allocator) {
       this.pointerCount = nextPowerOfTwo(pointers);
       long bytes = ((long) pointerCount) << 3;
-      memory = MEMORY.allocate(bytes);
+      this.allocator = allocator;
+      memory = allocator.allocate(bytes);
       // Have to clear out bytes to make sure no bad stuff was read in
       UNSAFE.setMemory(memory, bytes, (byte) 0);
    }
@@ -45,7 +47,7 @@ public class MemoryAddressHash {
    }
 
    public void deallocate() {
-      MEMORY.free(memory);
+      allocator.deallocate(memory, pointerCount << 3);
    }
 
    /**

@@ -41,6 +41,8 @@ public abstract class BaseRestOperationsTest {
 
    protected abstract ConfigurationBuilder getDefaultCacheBuilder();
 
+   protected abstract boolean enableCompatibility();
+
    @BeforeClass
    public void beforeSuite() throws Exception {
       restServer = RestServerHelper.defaultRestServer(getDefaultCacheBuilder(), "default");
@@ -75,7 +77,7 @@ public abstract class BaseRestOperationsTest {
 
       ConfigurationBuilder compat = getDefaultCacheBuilder();
 //      compat.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
-      compat.compatibility().enable();
+      compat.compatibility().enabled(enableCompatibility());
 
       restServer.defineCache("expiration", expirationConfiguration);
       restServer.defineCache("xml", xmlCacheConfiguration);

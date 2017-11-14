@@ -19,6 +19,11 @@ public class RestOperationsTest extends BaseRestOperationsTest {
    }
 
    @Override
+   protected boolean enableCompatibility() {
+      return true;
+   }
+
+   @Override
    protected void defineCaches() {
       super.defineCaches();
       ConfigurationBuilder object = getDefaultCacheBuilder();

@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.marshall.CustomClass;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.jgroups.util.UUID;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "eviction.MemoryBasedEvictionFunctionalStoreAsBinaryTest")
@@ -17,7 +18,14 @@ public class MemoryBasedEvictionFunctionalStoreAsBinaryTest extends MemoryBasedE
    @Override
    protected void configure(ConfigurationBuilder cb) {
       super.configure(cb);
-      cb.memory().storageType(StorageType.BINARY);
+      cb.memory().storageType(storageType);
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new MemoryBasedEvictionFunctionalStoreAsBinaryTest().storageType(StorageType.BINARY),
+      };
    }
 
    public void testCustomClass() throws Exception {
