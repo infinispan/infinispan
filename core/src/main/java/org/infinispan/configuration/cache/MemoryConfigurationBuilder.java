@@ -5,11 +5,13 @@ import static org.infinispan.configuration.cache.MemoryConfiguration.EVICTION_TY
 import static org.infinispan.configuration.cache.MemoryConfiguration.SIZE;
 import static org.infinispan.configuration.cache.MemoryConfiguration.STORAGE_TYPE;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.container.offheap.OffHeapDataContainer;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.util.logging.Log;
 
 /**
  * Controls the data container for the cache.
@@ -17,6 +19,8 @@ import org.infinispan.eviction.EvictionType;
  * @author William Burns
  */
 public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<MemoryConfiguration> {
+
+   private static final Log log = LogFactory.getLog(MemoryConfigurationBuilder.class, Log.class);
 
    private AttributeSet attributes;
 
@@ -81,13 +85,24 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    public void validate() {
       StorageType type = attributes.attribute(STORAGE_TYPE).get();
       if (type != StorageType.OBJECT && getBuilder().compatibility().isEnabled()) {
-         throw new CacheConfigurationException("Compatibility mode requires OBJECT storage type but was: " + type);
+         throw log.compatibilityModeOnlyCompatibleWithObjectStorage(type);
       }
       long size = attributes.attribute(SIZE).get();
       if (size > 0) {
          EvictionType evictionType = attributes.attribute(EVICTION_TYPE).get();
-         if (evictionType == EvictionType.MEMORY && type != StorageType.BINARY) {
-            throw new CacheConfigurationException("MEMORY based eviction requires binary but was : " + type);
+         if (evictionType == EvictionType.MEMORY) {
+            switch (type) {
+               case OBJECT:
+                  throw log.offHeapMemoryEvictionNotSupportedWithObject();
+               case OFF_HEAP:
+                  int addressCount = attributes.attribute(ADDRESS_COUNT).get();
+                  // Note this is cast to long as we have to multiply by 8 below which could overflow
+                  long actualAddressCount = OffHeapDataContainer.getActualAddressCount(addressCount);
+                  actualAddressCount *= 8;
+                  if (size < actualAddressCount) {
+                     throw log.offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(size, actualAddressCount, addressCount);
+                  }
+            }
          }
       }
    }

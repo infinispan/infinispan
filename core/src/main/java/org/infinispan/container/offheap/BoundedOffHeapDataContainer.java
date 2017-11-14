@@ -28,6 +28,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
    protected final long maxSize;
    protected final Lock lruLock;
    protected final LongUnaryOperator sizeCalculator;
+   protected final long initialSize;
 
    protected long currentSize;
    protected long firstAddress;
@@ -38,9 +39,13 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       this.maxSize = maxSize;
       if (type == EvictionType.COUNT) {
          sizeCalculator = i -> 1;
+         initialSize = 0;
       } else {
          // Use size of entry plus 16 for our LRU pointers
          sizeCalculator = i -> offHeapEntryFactory.getSize(i);
+         // We have to make sure to count the address hash as part of our size
+         initialSize = memoryAddressCount << 3;
+         currentSize = initialSize;
       }
       this.lruLock = new ReentrantLock();
       firstAddress = 0;
@@ -178,7 +183,7 @@ public class BoundedOffHeapDataContainer extends OffHeapDataContainer {
       // Technically we don't need to do lruLock since clear obtains all write locks first
       lruLock.lock();
       try {
-         currentSize = 0;
+         currentSize = initialSize;
          firstAddress = 0;
          lastAddress = 0;
       } finally {
