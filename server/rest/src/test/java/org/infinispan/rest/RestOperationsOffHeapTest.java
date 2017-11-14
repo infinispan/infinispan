@@ -17,6 +17,11 @@ public class RestOperationsOffHeapTest extends BaseRestOperationsTest {
    }
 
    @Override
+   protected boolean enableCompatibility() {
+      return false;
+   }
+
+   @Override
    protected Class<? extends Encoder> getKeyEncoding() {
       return UTF8Encoder.class;
    }

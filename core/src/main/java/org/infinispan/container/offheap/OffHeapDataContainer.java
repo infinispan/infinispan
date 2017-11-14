@@ -24,6 +24,7 @@ import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
@@ -45,7 +46,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    protected final int lockCount;
    protected final int memoryAddressCount;
    protected final StripedLock locks;
-   protected final MemoryAddressHash memoryLookup;
+   protected MemoryAddressHash memoryLookup;
    protected OffHeapMemoryAllocator allocator;
    protected OffHeapEntryFactory offHeapEntryFactory;
    protected InternalEntryFactory internalEntryFactory;
@@ -72,14 +73,21 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    public OffHeapDataContainer(int desiredSize) {
       lockCount = nextPowerOfTwo(Runtime.getRuntime().availableProcessors()) << 1;
+      memoryAddressCount = getActualAddressCount(desiredSize, lockCount);
+      // Unfortunately desired size directly correlates to lock size
+      locks = new StripedLock(lockCount);
+   }
+
+   public static int getActualAddressCount(int desiredSize) {
+      return getActualAddressCount(desiredSize, nextPowerOfTwo(Runtime.getRuntime().availableProcessors()) << 1);
+   }
+
+   private static int getActualAddressCount(int desiredSize, int lockCount) {
       int memoryAddresses = desiredSize >= MAX_LOCK_COUNT ? MAX_LOCK_COUNT : lockCount;
       while (memoryAddresses < desiredSize) {
          memoryAddresses <<= 1;
       }
-      memoryAddressCount = memoryAddresses;
-      memoryLookup = new MemoryAddressHash(memoryAddressCount);
-      // Unfortunately desired size directly correlates to lock size
-      locks = new StripedLock(lockCount);
+      return memoryAddresses;
    }
 
    @Inject
@@ -92,6 +100,11 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       this.allocator = allocator;
       this.offHeapEntryFactory = offHeapEntryFactory;
       this.timeService = timeService;
+   }
+
+   @Start
+   public void start() {
+      memoryLookup = new MemoryAddressHash(memoryAddressCount, allocator);
    }
 
    /**

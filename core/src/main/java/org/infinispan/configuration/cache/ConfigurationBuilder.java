@@ -228,7 +228,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       for (Builder<?> validatable:
             asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
-                   versioning, unsafe, sites, compatibility)) {
+                   versioning, unsafe, sites, compatibility, memory)) {
          try {
             validatable.validate();
          } catch (RuntimeException e) {
@@ -264,7 +264,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       for (ConfigurationChildBuilder validatable:
             asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
-                   versioning, unsafe, sites, compatibility, security)) {
+                   versioning, unsafe, sites, compatibility, security, memory)) {
          try {
             validatable.validate(globalConfig);
          } catch (RuntimeException e) {

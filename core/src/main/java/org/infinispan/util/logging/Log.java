@@ -37,6 +37,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.jmx.JmxDomainConflictException;
@@ -1715,4 +1716,15 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Error while persisting global configuration state", id = 502)
    CacheConfigurationException errorPersistingGlobalConfiguration(@Cause Throwable cause);
+
+   @Message(value = "Compatibility mode requires OBJECT storage type but was: %s", id = 503)
+   CacheConfigurationException compatibilityModeOnlyCompatibleWithObjectStorage(StorageType storageType);
+
+   @Message(value = "MEMORY based eviction is not supported with OBJECT storage", id = 504)
+   CacheConfigurationException offHeapMemoryEvictionNotSupportedWithObject();
+
+   @Message(value = "MEMORY based OFF_HEAP eviction configured size %d must be larger than %d to store configured " +
+         "address count of %d", id = 505)
+   CacheConfigurationException offHeapMemoryEvictionSizeNotLargeEnoughForAddresses(long configuredSize,
+         long addressMemorySize, int addressCount);
 }

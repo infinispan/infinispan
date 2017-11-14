@@ -21,7 +21,8 @@ public interface OffHeapEntryFactory {
    long create(WrappedBytes key, WrappedBytes value, Metadata metadata);
 
    /**
-    * Returns how many bytes in memory this address location uses assuming it is an {@link InternalCacheEntry}
+    * Returns how many bytes in memory this address location uses assuming it is an {@link InternalCacheEntry}.
+    * This will be rounded up to the nearest number divisible by 8.
     * @param address the address of the entry
     * @return how many bytes this address was allocated as
     */
