@@ -4,7 +4,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.Matchable;
 import org.infinispan.conflict.EntryMergePolicy;
-import org.infinispan.conflict.MergePolicies;
+import org.infinispan.conflict.MergePolicy;
 import org.infinispan.partitionhandling.PartitionHandling;
 
 /**
@@ -20,7 +20,7 @@ public class PartitionHandlingConfiguration implements Matchable<PartitionHandli
          .build();
    public static final AttributeDefinition<PartitionHandling> WHEN_SPLIT = AttributeDefinition.builder("whenSplit", PartitionHandling.ALLOW_READ_WRITES)
          .immutable().build();
-   public static final AttributeDefinition<EntryMergePolicy> MERGE_POLICY = AttributeDefinition.builder("mergePolicy", MergePolicies.PREFERRED_ALWAYS).immutable().build();
+   public static final AttributeDefinition<EntryMergePolicy> MERGE_POLICY = AttributeDefinition.builder("mergePolicy", MergePolicy.PREFERRED_ALWAYS, EntryMergePolicy.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(PartitionHandlingConfiguration.class, ENABLED, WHEN_SPLIT, MERGE_POLICY);
@@ -50,7 +50,11 @@ public class PartitionHandlingConfiguration implements Matchable<PartitionHandli
    }
 
    public boolean resolveConflictsOnMerge() {
-      return mergePolicy() != null;
+      EntryMergePolicy policy = mergePolicy();
+      if (policy == MergePolicy.NONE)
+         return false;
+
+      return policy != null;
    }
 
    @Override

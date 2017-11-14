@@ -1,7 +1,7 @@
 package org.infinispan.conflict.impl;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.conflict.MergePolicies;
+import org.infinispan.conflict.MergePolicy;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "partitionhandling.MergePolicyPreferredNonNullTest")
@@ -18,7 +18,7 @@ public class MergePolicyPreferredNonNullTest extends BaseMergePolicyTest {
 
    public MergePolicyPreferredNonNullTest() {
       super();
-      this.mergePolicy = MergePolicies.PREFERRED_NON_NULL;
+      this.mergePolicy = MergePolicy.PREFERRED_NON_NULL;
    }
 
    @Override
