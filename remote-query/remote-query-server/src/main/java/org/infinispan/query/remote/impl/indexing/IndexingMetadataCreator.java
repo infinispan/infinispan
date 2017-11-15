@@ -117,7 +117,7 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                      indexNullAs,
                      fieldLevelBoost, 1.0f);
 
-               FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions, fd);
+               FieldMapping fieldMapping = new FieldMapping(fieldName, isIndexed, fieldLevelBoost, isAnalyzed, isStored, isSortable, fieldLevelAnalyzer, indexNullAs, luceneOptions, fd, false);
                fields.put(fieldName, fieldMapping);
                if (log.isEnabled(Logger.Level.DEBUG)) {
                   log.debugf("fieldName=%s fieldMapping=%s" , fieldName, fieldMapping);
@@ -156,7 +156,7 @@ final class IndexingMetadataCreator implements AnnotationMetadataCreator<Indexin
                      indexNullAs,
                      1.0f, 1.0f);
 
-               FieldMapping fieldMapping = new FieldMapping(fd.getName(), isIndexed, 1.0f, false, isStored, false, null, indexNullAs, luceneOptions, fd);
+               FieldMapping fieldMapping = new FieldMapping(fd.getName(), isIndexed, 1.0f, false, isStored, false, null, indexNullAs, luceneOptions, fd, true);
                fields.put(fd.getName(), fieldMapping);
                if (log.isEnabled(Logger.Level.DEBUG)) {
                   log.debugf("fieldName=%s fieldMapping=%s" , fd.getName(), fieldMapping);
