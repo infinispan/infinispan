@@ -18,6 +18,7 @@ import org.hibernate.search.engine.nulls.codec.impl.LuceneStringNullMarkerCodec;
 import org.hibernate.search.engine.nulls.codec.impl.NullMarkerCodec;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Type;
 
 /**
  * A mapping from an object field to an index field and the flags that enable indexing, storage and analysis.
@@ -48,6 +49,20 @@ public final class FieldMapping {
          return field == null;
       }
    };
+
+   private static final LuceneStringNullMarkerCodec STRING_NULL_MARKER_CODEC = new LuceneStringNullMarkerCodec(new ToStringNullMarker(IndexingMetadata.DEFAULT_NULL_TOKEN));
+
+   private static final FieldBridge DOUBLE_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.DOUBLE_FIELD_BRIDGE, STRING_NULL_MARKER_CODEC);
+
+   private static final FieldBridge FLOAT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.FLOAT_FIELD_BRIDGE, STRING_NULL_MARKER_CODEC);
+
+   private static final FieldBridge LONG_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.LONG_FIELD_BRIDGE, STRING_NULL_MARKER_CODEC);
+
+   private static final FieldBridge INT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.INT_FIELD_BRIDGE, STRING_NULL_MARKER_CODEC);
+
+   private static final FieldBridge STRING_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), STRING_NULL_MARKER_CODEC);
+
+   private static final FieldBridge BOOL_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(new BooleanBridge()), STRING_NULL_MARKER_CODEC);
 
    /**
     * The name of the field in the index.
@@ -84,6 +99,8 @@ public final class FieldMapping {
 
    private final FieldDescriptor fieldDescriptor;
 
+   private final boolean isLegacy;
+
    /**
     * Indicates if lazy initialization of {@link #indexNullAsObj} and {@link #fieldBridge} fields was performed or not.
     */
@@ -96,7 +113,8 @@ public final class FieldMapping {
    FieldMapping(String name, boolean index, float boost, boolean analyze, boolean store, boolean sortable, String analyzer,
                 String indexNullAs,
                 LuceneOptions luceneOptions,
-                FieldDescriptor fieldDescriptor) {
+                FieldDescriptor fieldDescriptor,
+                boolean isLegacy) {
       if (name == null) {
          throw new IllegalArgumentException("name argument cannot be null");
       }
@@ -114,8 +132,9 @@ public final class FieldMapping {
       this.sortable = sortable;
       this.analyzer = analyzer;
       this.indexNullAs = indexNullAs;
-      this.luceneOptions = luceneOptions;
       this.fieldDescriptor = fieldDescriptor;
+      this.luceneOptions = luceneOptions;
+      this.isLegacy = isLegacy;
    }
 
    public String name() {
@@ -160,6 +179,10 @@ public final class FieldMapping {
       return fieldBridge;
    }
 
+   public boolean isLegacy() {
+      return isLegacy;
+   }
+
    private void init() {
       if (!isInitialized) {
          if (fieldDescriptor.getType() == null) {
@@ -173,7 +196,8 @@ public final class FieldMapping {
    }
 
    private Object parseIndexNullAs() {
-      if (indexNullAs != null) {
+      // a legacy @IndexedField is handled differently to maintain backward compatibility: the value is never parsed so only string null tokens are supported.
+      if (indexNullAs != null && !isLegacy) {
          switch (fieldDescriptor.getType()) {
             case DOUBLE:
                return Double.parseDouble(indexNullAs);
@@ -205,6 +229,10 @@ public final class FieldMapping {
    }
 
    private FieldBridge makeFieldBridge() {
+      if (isLegacy) {
+         return getDefaultFieldBridge(fieldDescriptor.getType());
+      }
+
       switch (fieldDescriptor.getType()) {
          case DOUBLE:
             return indexNullAsObj == null ?
@@ -242,6 +270,36 @@ public final class FieldMapping {
       }
    }
 
+   public static FieldBridge getDefaultFieldBridge(Type type) {
+      switch (type) {
+         case DOUBLE:
+            return DOUBLE_FIELD_BRIDGE;
+         case FLOAT:
+            return FLOAT_FIELD_BRIDGE;
+         case INT64:
+         case UINT64:
+         case FIXED64:
+         case SFIXED64:
+         case SINT64:
+            return LONG_FIELD_BRIDGE;
+         case INT32:
+         case FIXED32:
+         case UINT32:
+         case SFIXED32:
+         case SINT32:
+         case ENUM:
+            return INT_FIELD_BRIDGE;
+         case BOOL:
+            return BOOL_FIELD_BRIDGE;
+         case STRING:
+         case BYTES:
+         case GROUP:
+         case MESSAGE:
+            return STRING_FIELD_BRIDGE;
+      }
+      return null;
+   }
+
    @Override
    public String toString() {
       return "FieldMapping{" +
@@ -254,6 +312,7 @@ public final class FieldMapping {
             ", analyzer='" + analyzer + '\'' +
             ", indexNullAs=" + indexNullAs +
             ", luceneOptions=" + luceneOptions +
+            ", isLegacy=" + isLegacy +
             '}';
    }
 }
