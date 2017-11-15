@@ -97,6 +97,11 @@ final class IndexingTagHandler implements TagHandler {
                return;
             }
             value = fieldMapping.indexNullAs();
+            if (fieldMapping.isLegacy()) {
+               // ignore actual type and go with string for backward compatibility
+               type = Type.STRING;
+               luceneOptions = NOT_STORED_NOT_ANALYZED;
+            }
          }
       }
 
