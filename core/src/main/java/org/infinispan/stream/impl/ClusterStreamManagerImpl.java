@@ -452,8 +452,8 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
       }
 
       @Override
-      public void subscribe(Subscriber<? super V> s, Consumer<? super Supplier<PrimitiveIterator.OfInt>> onLostSegments,
-            Consumer<? super Supplier<PrimitiveIterator.OfInt>> onSegmentsComplete) {
+      public void subscribe(Subscriber<? super V> s, Consumer<? super Supplier<PrimitiveIterator.OfInt>> onSegmentsComplete,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> onLostSegments) {
          Map.Entry<Address, IntSet> target = targets.get();
          if (target == null) {
             EmptySubscription.complete(s);
@@ -463,7 +463,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                log.tracef("Starting request: %s", id);
             }
             iteratorsRunning.add(s);
-            s.onSubscribe(new ClusterStreamSubscription<V>(s, this, onLostSegments, onSegmentsComplete, id, target));
+            s.onSubscribe(new ClusterStreamSubscription<V>(s, this, onSegmentsComplete, onLostSegments, id, target));
          }
       }
    }

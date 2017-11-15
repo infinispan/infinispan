@@ -208,15 +208,15 @@ public interface ClusterStreamManager<K> {
        * it is possible that a key returned could be mapped to a segment that was found to be suspected or completed.
        * @see Publisher#subscribe(Subscriber)
        * @param s the subscriber to subscribe
-       * @param lostSegments the consumer to be notified of lost segments
        * @param completedSegments the consumer to  be notified of completed segments
+       * @param lostSegments the consumer to be notified of lost segments
        */
-      void subscribe(Subscriber<? super K> s, Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments,
-            Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments);
+      void subscribe(Subscriber<? super K> s, Consumer<? super Supplier<PrimitiveIterator.OfInt>> completedSegments,
+            Consumer<? super Supplier<PrimitiveIterator.OfInt>> lostSegments);
 
       @Override
       default void subscribe(Subscriber<? super K> s) {
-         subscribe(s, lostSegments -> { }, completedSegments -> { });
+         subscribe(s, completedSegments -> { }, lostSegments -> { });
       }
    }
 }
