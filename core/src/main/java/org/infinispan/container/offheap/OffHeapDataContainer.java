@@ -33,6 +33,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Data Container implementation that stores entries in native memory (off-heap).
+ *
  * @author wburns
  * @since 9.0
  */
@@ -151,10 +152,11 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    protected InternalCacheEntry<WrappedBytes, WrappedBytes> performGet(long address, Object k, boolean peek) {
       WrappedBytes wrappedKey = toWrapper(k);
+      long now = timeService.wallClockTime();
       while (address != 0) {
          long nextAddress = offHeapEntryFactory.getNext(address);
          InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
-         if (wrappedKey.equalsWrappedBytes(ice.getKey())) {
+         if (wrappedKey.equalsWrappedBytes(ice.getKey()) && !ice.isExpired(now)) {
             if (!peek) {
                entryRetrieved(address);
             }
@@ -183,9 +185,10 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    /**
     * Performs the actual put operation putting the new address into the memory lookups.  The write lock for the given
     * key <b>must</b> be held before calling this method.
-    * @param address the entry address of the first element in the lookup
+    *
+    * @param address    the entry address of the first element in the lookup
     * @param newAddress the address of the new entry
-    * @param key the key of the entry
+    * @param key        the key of the entry
     */
    protected void performPut(long address, long newAddress, WrappedBytes key) {
       // Have to start new linked node list
@@ -244,8 +247,9 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    }
 
    /**
-    * Invoked when an entry is about to be created.  The new address is fully addressable,
-    * The write lock will already be acquired for the given segment the key mapped to.
+    * Invoked when an entry is about to be created.  The new address is fully addressable, The write lock will already
+    * be acquired for the given segment the key mapped to.
+    *
     * @param newAddress the address just created that will be the new entry
     */
    protected void entryCreated(long newAddress) {
@@ -256,6 +260,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
     * Invoked when an entry is about to be replaced with a new one.  The old and new address are both addressable,
     * however oldAddress may be freed after this method returns.  The write lock will already be acquired for the given
     * segment the key mapped to.
+    *
     * @param newAddress the address just created that will be the new entry
     * @param oldAddress the old address for this entry that will be soon removed
     */
@@ -265,7 +270,9 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    /**
     * Invoked when an entry is about to be removed.  You can read values from this but after this method is completed
-    * this memory address may be freed. The write lock will already be acquired for the given segment the key mapped to.
+    * this memory address may be freed. The write lock will already be acquired for the given segment the key mapped
+    * to.
+    *
     * @param removedAddress the address about to be removed
     */
    protected void entryRemoved(long removedAddress) {
@@ -286,7 +293,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
          while (address != 0) {
             long nextAddress = offHeapEntryFactory.getNext(address);
-            if (offHeapEntryFactory.equalsKey(address, wba)) {
+            if (offHeapEntryFactory.equalsKey(address, wba) && !offHeapEntryFactory.isExpired(address)) {
                return true;
             }
             address = nextAddress;
@@ -298,8 +305,9 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
    }
 
    /**
-    * Invoked when an entry is successfully retrieved.  The read lock will already
-    * be acquired for the given segment the key mapped to.
+    * Invoked when an entry is successfully retrieved.  The read lock will already be acquired for the given segment the
+    * key mapped to.
+    *
     * @param entryAddress
     */
    protected void entryRetrieved(long entryAddress) {
@@ -340,6 +348,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       long address = bucketHeadAddress;
       InternalCacheEntry<WrappedBytes, WrappedBytes> ice = null;
 
+      long now = timeService.wallClockTime();
       while (address != 0) {
          long nextAddress = offHeapEntryFactory.getNext(address);
          boolean removeThisAddress;
@@ -361,13 +370,12 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          prevAddress = address;
          address = nextAddress;
       }
-      return ice;
+      return (requireReturn && ice != null && ice.isExpired(now)) ? ice : null;
    }
 
    @Override
    public int size() {
-      long time = timeService.wallClockTime();
-      long count = entryStream().filter(e -> !e.isExpired(time)).count();
+      long count = entryStream().count();
       return (int) Math.min(count, Integer.MAX_VALUE);
    }
 
@@ -519,7 +527,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    @Override
    public InternalCacheEntry<WrappedBytes, WrappedBytes> compute(WrappedBytes key,
-         ComputeAction<WrappedBytes, WrappedBytes> action) {
+                                                                 ComputeAction<WrappedBytes, WrappedBytes> action) {
       Lock lock = locks.getLock(key).writeLock();
       lock.lock();
       try {
@@ -547,12 +555,15 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
          lock.lock();
          try {
             checkDeallocation();
+            long now = timeService.wallClockTime();
             for (int j = i; j < memoryAddressCount; j += lockCount) {
                long address = memoryLookup.getMemoryAddressOffset(j);
                while (address != 0) {
                   long nextAddress = offHeapEntryFactory.getNext(address);
                   InternalCacheEntry<WrappedBytes, WrappedBytes> ice = offHeapEntryFactory.fromMemory(address);
-                  consumer.accept(ice);
+                  if (!ice.isExpired(now)) {
+                     consumer.accept(ice);
+                  }
                   address = nextAddress;
                }
             }
@@ -564,7 +575,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    @Override
    public void executeTask(KeyFilter<? super WrappedBytes> filter,
-         BiConsumer<? super WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>> action) throws InterruptedException {
+                           BiConsumer<? super WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>> action) throws InterruptedException {
       executeTask(ice -> {
          if (filter.accept(ice.getKey())) {
             action.accept(ice.getKey(), ice);
@@ -574,7 +585,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
 
    @Override
    public void executeTask(KeyValueFilter<? super WrappedBytes, ? super WrappedBytes> filter,
-         BiConsumer<? super WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>> action) throws InterruptedException {
+                           BiConsumer<? super WrappedBytes, InternalCacheEntry<WrappedBytes, WrappedBytes>> action) throws InterruptedException {
       executeTask(ice -> {
          if (filter.accept(ice.getKey(), ice.getValue(), ice.getMetadata())) {
             action.accept(ice.getKey(), ice);
@@ -582,7 +593,7 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
       });
    }
 
-   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStream() {
+   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStreamIncludingExpired() {
       return IntStream.range(0, memoryAddressCount)
             .mapToObj(a -> {
                Lock lock = locks.getLockWithOffset(a % lockCount).readLock();
@@ -606,14 +617,18 @@ public class OffHeapDataContainer implements DataContainer<WrappedBytes, Wrapped
             }).flatMap(Function.identity());
    }
 
+   private Stream<InternalCacheEntry<WrappedBytes, WrappedBytes>> entryStream() {
+      long now = timeService.wallClockTime();
+      return entryStreamIncludingExpired().filter(e -> !e.isExpired(now));
+   }
+
    @Override
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iterator() {
-      long time = timeService.wallClockTime();
-      return entryStream().filter(e -> !e.isExpired(time)).iterator();
+      return entryStream().iterator();
    }
 
    @Override
    public Iterator<InternalCacheEntry<WrappedBytes, WrappedBytes>> iteratorIncludingExpired() {
-      return entryStream().iterator();
+      return entryStreamIncludingExpired().iterator();
    }
 }
