@@ -21,7 +21,6 @@ import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiConsumer;
@@ -42,7 +41,6 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
@@ -463,7 +461,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
          Iterable<IntermediateOperation> ops = iteratorOperation.prepareForIteration(intermediateOperations);
          CloseableIterator<R> closeableIterator;
          if (segmentCompletionListener != null && iteratorOperation != IteratorOperation.FLAT_MAP) {
-            closeableIterator = new CompletionListenerRehashIterator<R>(ops, segmentCompletionListener);
+            closeableIterator = new CompletionListenerRehashIterator<>(ops, segmentCompletionListener);
          } else {
             closeableIterator = new RehashIterator<>(ops);
          }
@@ -720,14 +718,11 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
       public void valueIterated(Object key) {
          pendingSegments.compute(key, iteratorMapping);
-         if (ref.get() != null) {
-            completionListener.accept(ref.get());
+         Supplier<PrimitiveIterator.OfInt> segments = ref.get();
+         if (segments != null) {
+            ref.set(null);
+            completionListener.accept(segments);
          }
-      }
-
-      private IntStream toStream(PrimitiveIterator.OfInt iter) {
-         return StreamSupport.intStream(Spliterators.spliteratorUnknownSize(iter,
-               Spliterator.DISTINCT | Spliterator.NONNULL), false);
       }
 
       public void segmentsEncountered(Supplier<PrimitiveIterator.OfInt> segments) {
@@ -735,26 +730,25 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
          // added for a response before the segments are completed.
          // The valueIterated method can be invoked at any point however.
          // See ClusterStreamManagerImpl$ClusterStreamSubscription.sendRequest where the added and segments are called into
-         AtomicBoolean shouldNotify = new AtomicBoolean(true);
+         ByRef<Supplier<PrimitiveIterator.OfInt>> segmentsToNotify = new ByRef<>(segments);
          Object key = currentKey.get();
          if (key != null) {
             pendingSegments.compute(key, (k, v) -> {
-               // This check is if iterator caught up to us
+               // The iterator has consumed all the keys, so there is no reason to wait: just notify of segment
+               // completion immediately
                if (currentKey.get() == null) {
                   return null;
                }
-               shouldNotify.set(false);
-               if (v == null) {
-                  return segments;
-               } else {
-                  // This is ugly, but we shouldn't hit this often (need a response with no entries and completed
-                  // segments and iterator that hasn't caught up)
-                  return () -> Stream.of(segments, v).flatMapToInt(s -> toStream(s.get())).iterator();
-               }
+               // This means we didn't iterate on a key before segments were completed - means it was empty. The
+               // valueIterated notifies the completion of non-empty segments, but we need to notify the completion of
+               // empty segments here
+               segmentsToNotify.set(v);
+               return segments;
             });
          }
-         if (shouldNotify.get()) {
-            completionListener.accept(segments);
+         Supplier<PrimitiveIterator.OfInt> notifyThese = segmentsToNotify.get();
+         if (notifyThese != null) {
+            completionListener.accept(notifyThese);
          }
       }
 

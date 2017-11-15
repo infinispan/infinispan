@@ -77,12 +77,15 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    @Override
    public void transferComplete() {
-      justCompletedSegments.forEach(completeSegment);
+      // Complete any segments that are still open - means we just didn't receive the completion yet
+      // Iterator is guaranteed to not complete until all segments are complete.
+      for (int i = 0; i < queues.length(); ++i) {
+         if (queues.get(i) != null) {
+            completeSegment(i);
+         }
+      }
       completed.set(true);
       notifiedKeys.clear();
-      for (int i = 0; i < queues.length(); ++i) {
-         queues.set(i, null);
-      }
    }
 
    public Object markKeyAsProcessing(K key) {
@@ -99,7 +102,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    }
 
    private void completeSegment(int segment) {
-      Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue = queues.get(segment);
+      Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue = queues.getAndSet(segment, null);
       if (queue != null) {
          if (trace) {
             log.tracef("Completed segment %s", segment);
@@ -108,7 +111,6 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
             // The InitialTransferInvocation already did the converter if needed
             event.getValue().invoke(event.getKey());
          }
-         queues.set(segment, null);
       }
    }
 

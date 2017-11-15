@@ -17,9 +17,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PrimitiveIterator;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -243,7 +245,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             return null;
          });
 
-         checkPoint.awaitStrict("pre_retrieve_entry_invoked", 10000, TimeUnit.SECONDS);
+         checkPoint.awaitStrict("pre_retrieve_entry_invoked", 10, TimeUnit.SECONDS);
 
          operation.perform(cache, keyToChange, value);
 
@@ -485,7 +487,8 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       int segmentToUse = cache.getAdvancedCache().getDistributionManager().getCacheTopology().getSegment(keyToChange);
 
       // do the operation, which should put it in the queue.
-      ClusterCacheNotifier notifier = waitUntilClosingSegment(cache, segmentToUse, checkPoint);
+      ClusterCacheNotifier notifier = waitUntilClosingSegment(cache, segmentToUse, checkPoint, keyToChange,
+            operation == Operation.CREATE);
 
       Future<Void> future = fork(() -> {
          cache.addListener(listener);
@@ -680,8 +683,22 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
    }
 
+   private void segmentCompletionWaiter(AtomicBoolean shouldFire, CheckPoint checkPoint)
+         throws TimeoutException, InterruptedException {
+      // Only 2 callers should come in here, so first will always succeed and second will always fail
+      if (shouldFire.compareAndSet(false, true)) {
+         log.tracef("We were first to check segment completion");
+      } else {
+         log.tracef("We were last to check segment completion, so notifying main thread");
+         // Wait for main thread to sync up
+         checkPoint.trigger("pre_complete_segment_invoked");
+         // Now wait until main thread lets us through
+         checkPoint.awaitStrict("pre_complete_segment_released", 10, TimeUnit.SECONDS);
+      }
+   }
 
-   protected ClusterCacheNotifier waitUntilClosingSegment(final Cache<?, ?> cache, final int segment, final CheckPoint checkPoint) {
+   protected ClusterCacheNotifier waitUntilClosingSegment(final Cache<?, ?> cache, int segment, CheckPoint checkPoint,
+         Object keyToWaitFor, boolean isCreation) {
       ClusterCacheNotifier realNotifier = TestingUtil.extractComponent(cache, ClusterCacheNotifier.class);
       ConcurrentMap<UUID, QueueingSegmentListener> listeningMap = new ConcurrentHashMap<UUID, QueueingSegmentListener>() {
          @Override
@@ -689,33 +706,42 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             log.tracef("Adding segment listener %s : %s", key, value);
             final Answer<Object> listenerAnswer = AdditionalAnswers.delegatesTo(value);
 
-            final AtomicBoolean wasLastSegment = new AtomicBoolean(false);
             QueueingSegmentListener mockListener = mock(QueueingSegmentListener.class,
                                                        withSettings().defaultAnswer(listenerAnswer));
 
+            // If it was creation then we just wait until segment is about to be completed
+            AtomicBoolean foundOther = new AtomicBoolean(isCreation);
+            // We are guaranteed that we have returned an entry from iterator before segment is completed - however
+            // there is no guarantee that the iterator has marked it as processing yet
             doAnswer(i -> {
                Supplier<PrimitiveIterator.OfInt> segments = i.getArgument(0);
-               log.tracef("Completed segments %s", segments.get());
+               if (log.isTraceEnabled()) {
+                  Set<Integer> segmentsCompleted = new HashSet<>();
+                  segments.get().forEachRemaining((Integer segment) -> segmentsCompleted.add(segment));
+                  log.tracef("Completed segments %s", segmentsCompleted);
+               }
                PrimitiveIterator.OfInt iter = segments.get();
                while (iter.hasNext()) {
                   if (iter.nextInt() == segment) {
-                     wasLastSegment.set(true);
+                     // This will fire checkpoint if the segment completion ran after the iterator marked the value
+                     segmentCompletionWaiter(foundOther, checkPoint);
                   }
                }
                return listenerAnswer.answer(i);
             }).when(mockListener).accept(Mockito.any(Supplier.class));
 
-            doAnswer(i -> {
-               Object k = i.getArgument(0);
-               log.tracef("Notified for key %s", k);
-               if (wasLastSegment.compareAndSet(true, false)) {
-                  // Wait for main thread to sync up
-                  checkPoint.trigger("pre_complete_segment_invoked");
-                  // Now wait until main thread lets us through
-                  checkPoint.awaitStrict("pre_complete_segment_released", 10, TimeUnit.SECONDS);
-               }
-               return listenerAnswer.answer(i);
-            }).when(mockListener).notifiedKey(any());
+            // No reason to wrap listener if we won't hear the key
+            if (!isCreation) {
+               doAnswer(i -> {
+                  Object k = i.getArgument(0);
+                  log.tracef("Notified for key %s", k);
+                  if (keyToWaitFor.equals(k)) {
+                     // This will fire checkpoint if the segment completion ran before our iterator marked the value
+                     segmentCompletionWaiter(foundOther, checkPoint);
+                  }
+                  return listenerAnswer.answer(i);
+               }).when(mockListener).notifiedKey(any());
+            }
             return super.putIfAbsent(key, mockListener);
          }
       };

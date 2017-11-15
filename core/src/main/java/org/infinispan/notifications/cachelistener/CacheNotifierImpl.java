@@ -954,11 +954,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             raiseEventForInitialTransfer(generatedId, entry, l.clustered());
          }
 
+         handler.transferComplete();
+
          if (trace) {
             log.tracef("Listener %s initial state for cache completed", generatedId);
          }
-
-         handler.transferComplete();
       }
 
    }
@@ -1226,11 +1226,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             raiseEventForInitialTransfer(generatedId, entry, l.clustered());
          }
 
+         handler.transferComplete();
+
          if (trace) {
             log.tracef("Listener %s initial state for cache completed", generatedId);
          }
-
-         handler.transferComplete();
       }
 
    }
