@@ -84,8 +84,10 @@ public final class FieldMapping {
 
    private final FieldDescriptor fieldDescriptor;
 
-   // indexNullAsObj and fieldBridge are lazily initialised
-   private boolean isInitialized = false;
+   /**
+    * Indicates if lazy initialization of {@link #indexNullAsObj} and {@link #fieldBridge} fields was performed or not.
+    */
+   private volatile boolean isInitialized = false;
 
    private Object indexNullAsObj;
 
@@ -112,8 +114,8 @@ public final class FieldMapping {
       this.sortable = sortable;
       this.analyzer = analyzer;
       this.indexNullAs = indexNullAs;
-      this.fieldDescriptor = fieldDescriptor;
       this.luceneOptions = luceneOptions;
+      this.fieldDescriptor = fieldDescriptor;
    }
 
    public String name() {
@@ -161,6 +163,7 @@ public final class FieldMapping {
    private void init() {
       if (!isInitialized) {
          if (fieldDescriptor.getType() == null) {
+            // this could only happen due to a programming error
             throw new IllegalStateException("FieldDescriptors are not fully initialised!");
          }
          indexNullAsObj = parseIndexNullAs();
