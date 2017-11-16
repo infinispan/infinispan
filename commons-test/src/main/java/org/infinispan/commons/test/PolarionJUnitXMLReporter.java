@@ -328,7 +328,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
                }
             }
          } else {
-            System.out.println(
+            System.err.println(
                   "[" + this.getClass().getSimpleName() + "] Test suite '" + name + "' results have no test methods");
          }
       }
@@ -406,16 +406,19 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
 
    private void checkDuplicatesAndAdd(ITestResult tr) {
       // Need fully qualified name to guarantee uniqueness in the results map
-      String key = tr.getTestClass().getRealClass().getName() + "." + testName(tr);
+      String instanceName = tr.getInstanceName();
+      String key = instanceName + "." + testName(tr);
       if (m_allTests.containsKey(key)) {
          if (tr.getMethod().getCurrentInvocationCount() == 1) {
-            System.out.println("[" + this.getClass().getSimpleName() + "] Test case '" + testName(tr)
+            System.err.println("[" + this.getClass().getSimpleName() + "] Test case '" + key
                   + "' already exists in the results");
-         } else {
-            List<ITestResult> itrList = m_allTests.get(key);
-            itrList.add(tr);
-            m_allTests.put(key, itrList);
+            tr.setStatus(ITestResult.FAILURE);
+            tr.setThrowable(new IllegalStateException("Duplicate test: " + key));
          }
+
+         List<ITestResult> itrList = m_allTests.get(key);
+         itrList.add(tr);
+         m_allTests.put(key, itrList);
       } else {
          ArrayList<ITestResult> itrList = new ArrayList<ITestResult>();
          itrList.add(tr);

@@ -10,7 +10,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,11 +50,11 @@ import org.jgroups.stack.Protocol;
 import org.testng.IMethodInstance;
 import org.testng.IMethodInterceptor;
 import org.testng.ITestContext;
+import org.testng.TestNGException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
-import org.testng.annotations.Test;
 import org.testng.internal.MethodInstance;
 
 
@@ -67,7 +67,7 @@ import org.testng.internal.MethodInstance;
  */
 @Listeners({ChainMethodInterceptor.class, TestNGLongTestsHook.class})
 @TestSelector(interceptors = AbstractInfinispanTest.OrderByInstance.class)
-public class AbstractInfinispanTest {
+public abstract class AbstractInfinispanTest {
    protected interface Condition {
       boolean isSatisfied() throws Exception;
    }
@@ -86,6 +86,7 @@ public class AbstractInfinispanTest {
       @Override
       public List<IMethodInstance> intercept(List<IMethodInstance> methods, ITestContext context) {
          Map<Object, List<IMethodInstance>> methodsByInstance = new IdentityHashMap<>();
+         Map<String, Object> instancesByName = new HashMap<>();
          for (IMethodInstance method : methods) {
             methodsByInstance.computeIfAbsent(method.getInstance(), k -> new ArrayList<>()).add(method);
          }
@@ -93,6 +94,13 @@ public class AbstractInfinispanTest {
          for (Map.Entry<Object, List<IMethodInstance>> instanceAndMethods : methodsByInstance.entrySet()) {
             Object instance = instanceAndMethods.getKey();
             if (instance instanceof AbstractInfinispanTest) {
+               String instanceName = ((AbstractInfinispanTest) instance).getTestName();
+               Object otherInstance = instancesByName.putIfAbsent(instanceName, instance);
+               if (otherInstance != null) {
+                  throw new TestNGException(
+                        "Duplicate test name: " + instanceName + ", classes " + instance.getClass().getName() +
+                              " and " + otherInstance.getClass().getName());
+               }
                String parameters = ((AbstractInfinispanTest) instance).parameters();
                if (parameters != null) {
                   for (IMethodInstance method : instanceAndMethods.getValue()) {
@@ -118,20 +126,11 @@ public class AbstractInfinispanTest {
 
    @BeforeClass(alwaysRun = true)
    protected final void testClassStarted(ITestContext context) {
-      String fullName = context.getName();
-      String simpleName = fullName.substring(fullName.lastIndexOf('.') + 1);
-      Class testClass = context.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
-      if (!simpleName.equals(testClass.getSimpleName()) && !Thread.currentThread().getName().equals("main")) {
-         log.warnf("Wrong test name %s for class %s", simpleName, testClass.getSimpleName());
-      }
-
       TestResourceTracker.testStarted(getTestName());
-
-      skipInstancesInExcludedGroups(context);
    }
 
    @AfterClass(alwaysRun = true)
-   protected final void testClassFinished() {
+   protected final void testClassFinished(ITestContext context) {
       killSpawnedThreads();
       nullOutFields();
       TestResourceTracker.testFinished(getTestName());
@@ -139,11 +138,16 @@ public class AbstractInfinispanTest {
 
    public String getTestName() {
       // will qualified test name and parameters, thread names can be quite long when debugging
-      if (Boolean.getBoolean("test.infinispan.shortTestName")) {
-         return "test";
+      boolean shortTestName = Boolean.getBoolean("test.infinispan.shortTestName");
+      String className;
+      if (shortTestName) {
+         className = "Test";
+      } else {
+         className = getClass().getName();
       }
+
       String parameters = parameters();
-      return parameters == null ? getClass().getName() : getClass().getName() + parameters;
+      return parameters == null ? className : className + parameters;
    }
 
 
@@ -460,23 +464,6 @@ public class AbstractInfinispanTest {
                       ref);
             ref.interrupt();
          }
-      }
-   }
-
-   /**
-    * Some stress tests extend a functional test and change some parameters (e.g. number of operations)
-    * If the author forgets to override the test methods, they inherit the group from the base class
-    */
-   private void skipInstancesInExcludedGroups(ITestContext context) {
-      List<String> excludedGroups = context.getCurrentXmlTest().getExcludedGroups();
-      Test classAnnotation = getClass().getAnnotation(Test.class);
-      List<String> groups = new ArrayList<>(classAnnotation != null ?
-                                            Arrays.asList(classAnnotation.groups()) :
-                                            Collections.emptyList());
-      groups.retainAll(excludedGroups);
-      if (!groups.isEmpty()) {
-         throw new AssertionError("Class " + getClass().getName() + " has an excluded group " + groups +
-                                        " but doesn't override all inherited test methods.");
       }
    }
 

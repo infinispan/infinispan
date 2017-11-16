@@ -19,7 +19,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -500,12 +499,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
             Object[] instances = factory();
             for (int i = 0; i < instances.length; i++) {
                if (instances[i].getClass() != getClass()) {
-                  instances[i] = new IllegalFactoryMethod(getClass().getName() + ".factory() creates instances of " + instances[i].getClass());
+                  instances[i] = new FactoryError(getClass().getName() + ".factory() creates instances of " + instances[i].getClass());
                }
             }
             return instances;
          } else if (factory.getDeclaringClass() != MultipleCacheManagersTest.class) {
-            return new Object[]{new IllegalFactoryMethod(getClass().getName() + ".factory() override is missing, inherited factory() creates instances of " + factory.getDeclaringClass())};
+            return new Object[]{new FactoryError(getClass().getName() + ".factory() override is missing, inherited factory() creates instances of " + factory.getDeclaringClass())};
          }
       } catch (NoSuchMethodException e) {
          throw new IllegalStateException("Every class should have factory method, at least inherited", e);
@@ -519,7 +518,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
                          (t, m) -> t.transactional(m.isTransactional()));
          allModifiers = asList(cacheModeModifiers, transactionModifiers);
       } catch (Exception e) {
-         return new Object[]{new IllegalFactoryMethod(e.getMessage())};
+         return new Object[]{new FactoryError(e.getMessage())};
       }
 
       int numTests = allModifiers.stream().mapToInt(m -> m.length).reduce(1, (m1, m2) -> m1 * m2);
@@ -529,13 +528,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       try {
          ctor = getClass().getConstructor();
       } catch (NoSuchMethodException e) {
-         return new Object[]{new IllegalFactoryMethod("Missing no-arg constructor in " + getClass())};
+         return new Object[]{new FactoryError("Missing no-arg constructor in " + getClass())};
       }
       for (int i = 1; i < tests.length; ++i) {
          try {
             tests[i] = ctor.newInstance();
          } catch (Exception e) {
-            return new Object[]{new IllegalFactoryMethod("Cannot create test instances")};
+            return new Object[]{new FactoryError("Cannot create test instances")};
          }
       }
       int stride = 1;
@@ -1007,15 +1006,4 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   public static class IllegalFactoryMethod {
-      private final String message;
-
-      public IllegalFactoryMethod(String message) {
-         this.message = message;
-      }
-
-      public void fail() {
-         throw new IllegalStateException(message);
-      }
-   }
 }
