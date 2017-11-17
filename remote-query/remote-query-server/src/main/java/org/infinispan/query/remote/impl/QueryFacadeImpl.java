@@ -16,8 +16,8 @@ import org.infinispan.server.core.QueryFacade;
 import org.kohsuke.MetaInfServices;
 
 /**
- * A query facade implementation for both Lucene based queries and non-indexed in-memory queries.
- * All work is delegated to {@link RemoteQueryEngine}.
+ * A query facade implementation for both Lucene based queries and non-indexed in-memory queries. All work is delegated
+ * to {@link RemoteQueryEngine}.
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -35,25 +35,33 @@ public final class QueryFacadeImpl implements QueryFacade {
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
       AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
-      if (authorizationManager != null)
+      if (authorizationManager != null) {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
-      RemoteQueryManager remoteQueryManager = SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryManager.class);
+      }
+      RemoteQueryManager remoteQueryManager = SecurityActions.getRemoteQueryManager(cache);
       BaseRemoteQueryEngine queryEngine = remoteQueryManager.getQueryEngine();
       if (queryEngine == null) {
          throw log.queryingNotEnabled(cache.getName());
       }
 
-      QueryRequest request = remoteQueryManager.decodeQueryRequest(query);
+      try {
+         QueryRequest request = remoteQueryManager.decodeQueryRequest(query);
 
-      long startOffset = request.getStartOffset() == null ? -1 : request.getStartOffset();
-      int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
+         long startOffset = request.getStartOffset() == null ? -1 : request.getStartOffset();
+         int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
 
-      // create the query
-      BaseQuery q = queryEngine.makeQuery(request.getQueryString(), request.getNamedParametersMap(), startOffset, maxResults);
+         // create the query
+         BaseQuery q = queryEngine.makeQuery(request.getQueryString(), request.getNamedParametersMap(), startOffset, maxResults);
 
-      // execute query and make the response object
-      QueryResponse response = makeResponse(q);
-      return remoteQueryManager.encodeQueryResponse(response);
+         // execute query and make the response object
+         QueryResponse response = makeResponse(q);
+         return remoteQueryManager.encodeQueryResponse(response);
+      } catch (Exception e) {
+         if (log.isDebugEnabled()) {
+            log.debugf(e, "Error executing remote query : %s", e.getMessage());
+         }
+         throw e;
+      }
    }
 
    private QueryResponse makeResponse(BaseQuery query) {
