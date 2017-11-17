@@ -73,8 +73,6 @@ class GenericCompatRemoteQueryManager extends AbstractCompatRemoteQueryManager {
 
    @Override
    public byte[] encodeQueryResponse(QueryResponse queryResponse) {
-      Object o = this.getValueEncoder().fromStorage(queryResponse);
-      return (byte[]) o;
+      return (byte[]) getValueEncoder().fromStorage(queryResponse);
    }
-
 }

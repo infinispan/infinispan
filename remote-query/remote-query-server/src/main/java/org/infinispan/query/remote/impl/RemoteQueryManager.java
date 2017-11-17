@@ -72,7 +72,5 @@ public interface RemoteQueryManager {
       } else {
          return new RemoteQueryResult(projection, totalResults, results);
       }
-
    }
-
 }
