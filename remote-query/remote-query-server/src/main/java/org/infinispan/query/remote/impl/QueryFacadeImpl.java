@@ -21,8 +21,8 @@ import org.infinispan.server.core.QueryFacade;
 import org.kohsuke.MetaInfServices;
 
 /**
- * A query facade implementation for both Lucene based queries and non-indexed in-memory queries.
- * All work is delegated to {@link RemoteQueryEngine}.
+ * A query facade implementation for both Lucene based queries and non-indexed in-memory queries. All work is delegated
+ * to {@link RemoteQueryEngine}.
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -40,8 +40,9 @@ public final class QueryFacadeImpl implements QueryFacade {
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
       AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
-      if (authorizationManager != null)
+      if (authorizationManager != null) {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
+      }
       BaseRemoteQueryEngine queryEngine = SecurityActions.getCacheComponentRegistry(cache).getComponent(BaseRemoteQueryEngine.class);
       if (queryEngine == null) {
          throw log.queryingNotEnabled(cache.getName());
@@ -58,6 +59,7 @@ public final class QueryFacadeImpl implements QueryFacade {
       }
 
       try {
+         // decode the query request object
          QueryRequest request;
 
          if (compatMarshaller != null) {
@@ -94,7 +96,15 @@ public final class QueryFacadeImpl implements QueryFacade {
 
          return responseBytes;
       } catch (IOException e) {
+         if (log.isDebugEnabled()) {
+            log.debug(e.getMessage(), e);
+         }
          throw log.errorExecutingQuery(e);
+      } catch (Exception e) {
+         if (log.isDebugEnabled()) {
+            log.debugf(e, "Error executing remote query : %s", e.getMessage());
+         }
+         throw e;
       }
    }
 
