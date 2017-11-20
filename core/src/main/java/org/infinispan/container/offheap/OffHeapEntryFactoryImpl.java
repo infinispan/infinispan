@@ -180,7 +180,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
       int metadataLength;
       if ((type & (CUSTOM | HAS_VERSION)) != 0) {
          metadataLength = MEMORY.getInt(entryAddress, headerOffset);
-         metadataLength += 4;
+         headerOffset += 4;
       } else {
          metadataLength = 0;
       }
