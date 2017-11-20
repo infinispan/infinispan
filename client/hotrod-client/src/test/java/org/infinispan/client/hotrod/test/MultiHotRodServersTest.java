@@ -29,8 +29,8 @@ import org.testng.annotations.AfterMethod;
  */
 public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
 
-   protected List<HotRodServer> servers = new ArrayList<HotRodServer>();
-   protected List<RemoteCacheManager> clients = new ArrayList<RemoteCacheManager>();
+   protected final List<HotRodServer> servers = new ArrayList<>();
+   protected final List<RemoteCacheManager> clients = new ArrayList<>();
 
    protected void createHotRodServers(int num, ConfigurationBuilder defaultBuilder) {
       // Start Hot Rod servers
@@ -88,7 +88,7 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       GlobalConfigurationBuilder globalConfigurationBuilder = getServerModeGlobalConfigurationBuilder();
-
+      modifyGlobalConfiguration(globalConfigurationBuilder);
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(globalConfigurationBuilder, builder);
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);
       servers.add(server);
@@ -132,5 +132,9 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
          server.getCacheManager().defineConfiguration(cacheName, builder.build());
          server.getCacheManager().getCache(cacheName);
       }
+   }
+
+   protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
+
    }
 }

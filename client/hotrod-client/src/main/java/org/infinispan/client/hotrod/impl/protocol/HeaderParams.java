@@ -124,6 +124,28 @@ public class HeaderParams {
             return HotRodConstants.GET_STREAM_RESPONSE;
          case HotRodConstants.PUT_STREAM_REQUEST:
             return HotRodConstants.PUT_STREAM_RESPONSE;
+         case HotRodConstants.COUNTER_CREATE_REQUEST:
+            return HotRodConstants.COUNTER_CREATE_RESPONSE;
+         case HotRodConstants.COUNTER_GET_CONFIGURATION_REQUEST:
+            return HotRodConstants.COUNTER_GET_CONFIGURATION_RESPONSE;
+         case HotRodConstants.COUNTER_IS_DEFINED_REQUEST:
+            return HotRodConstants.COUNTER_IS_DEFINED_RESPONSE;
+         case HotRodConstants.COUNTER_REMOVE_REQUEST:
+            return HotRodConstants.COUNTER_REMOVE_RESPONSE;
+         case HotRodConstants.COUNTER_ADD_AND_GET_REQUEST:
+            return HotRodConstants.COUNTER_ADD_AND_GET_RESPONSE;
+         case HotRodConstants.COUNTER_GET_REQUEST:
+            return HotRodConstants.COUNTER_GET_RESPONSE;
+         case HotRodConstants.COUNTER_RESET_REQUEST:
+            return HotRodConstants.COUNTER_RESET_RESPONSE;
+         case HotRodConstants.COUNTER_CAS_REQUEST:
+            return HotRodConstants.COUNTER_CAS_RESPONSE;
+         case HotRodConstants.COUNTER_GET_NAMES_REQUEST:
+            return HotRodConstants.COUNTER_GET_NAMES_RESPONSE;
+         case HotRodConstants.COUNTER_ADD_LISTENER_REQUEST:
+            return HotRodConstants.COUNTER_ADD_LISTENER_RESPONSE;
+         case HotRodConstants.COUNTER_REMOVE_LISTENER_REQUEST:
+            return HotRodConstants.COUNTER_REMOVE_LISTENER_RESPONSE;
          default:
             throw new IllegalStateException("Unknown operation code: " + opCode);
       }

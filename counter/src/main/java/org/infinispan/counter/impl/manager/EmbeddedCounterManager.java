@@ -6,6 +6,7 @@ import static org.infinispan.counter.util.Utils.isValid;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,6 +36,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * A {@link CounterManager} implementation for embedded cache manager.
@@ -125,22 +127,17 @@ public class EmbeddedCounterManager implements CounterManager {
 
    @Override
    public boolean defineCounter(String name, CounterConfiguration configuration) {
-      validateConfiguration(configuration);
-      CacheHolder holder = extractCacheHolder(future);
-      //all the defined counters' configuration are persisted (if enabled)
-      return holder != null && holder.addConfiguration(name, configuration);
+      return awaitCounterOperation(defineCounterAsync(name, configuration));
    }
 
    @Override
    public boolean isDefined(String name) {
-      CacheHolder holder = extractCacheHolder(future);
-      return holder != null && holder.getConfiguration(name) != null;
+      return awaitCounterOperation(isDefinedAsync(name));
    }
 
    @Override
    public CounterConfiguration getConfiguration(String counterName) {
-      CacheHolder holder = extractCacheHolder(future);
-      return holder == null ? null : holder.getConfiguration(counterName);
+      return awaitCounterOperation(getConfigurationAsync(counterName));
    }
 
    @ManagedOperation(
@@ -154,7 +151,7 @@ public class EmbeddedCounterManager implements CounterManager {
       if (holder == null) {
          throw log.unableToFetchCaches();
       }
-      CounterConfiguration configuration = holder.getConfiguration(counterName);
+      CounterConfiguration configuration = awaitCounterOperation(holder.getConfigurationAsync(counterName));
       if (configuration == null) {
          //counter not defined (cluster-wide). do nothing :)
          return;
@@ -225,6 +222,25 @@ public class EmbeddedCounterManager implements CounterManager {
       return PropertyFormatter.getInstance().format(configuration);
    }
 
+   public CompletableFuture<Boolean> defineCounterAsync(String name, CounterConfiguration configuration) {
+      validateConfiguration(configuration);
+      CacheHolder holder = extractCacheHolder(future);
+      return holder == null ?
+             CompletableFuture.completedFuture(false) :
+             holder.addConfigurationAsync(name, configuration);
+   }
+
+   public CompletableFuture<CounterConfiguration> getConfigurationAsync(String name) {
+      CacheHolder holder = extractCacheHolder(future);
+      return holder == null ?
+             CompletableFutures.completedNull() :
+             holder.getConfigurationAsync(name);
+   }
+
+   public CompletableFuture<Boolean> isDefinedAsync(String name) {
+      return getConfigurationAsync(name).thenApply(Objects::nonNull);
+   }
+
    private void removeCounter(String name, Object counter, CounterConfiguration configuration,
          CacheHolder holder) {
       if (configuration.type() == CounterType.WEAK) {
@@ -249,7 +265,7 @@ public class EmbeddedCounterManager implements CounterManager {
       if (holder == null) {
          throw log.unableToFetchCaches();
       }
-      CounterConfiguration configuration = holder.getConfiguration(counterName);
+      CounterConfiguration configuration = awaitCounterOperation(holder.getConfigurationAsync(counterName));
       if (configuration == null) {
          throw log.undefinedCounter(counterName);
       }

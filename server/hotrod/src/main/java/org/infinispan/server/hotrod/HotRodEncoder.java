@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
 import org.infinispan.server.hotrod.logging.Log;
 
 import io.netty.buffer.ByteBuf;
@@ -73,6 +74,9 @@ class HotRodEncoder extends MessageToByteEncoder<Object> {
             Events.Event e = (Events.Event) msg;
             VersionedEncoder encoder = getEncoder(e.version);
             encoder.writeEvent(e, buf);
+         } else if (msg instanceof ClientCounterEvent) {
+            VersionedEncoder encoder = getEncoder(((ClientCounterEvent) msg).getVersion());
+            encoder.writeCounterEvent((ClientCounterEvent) msg, buf);
          } else if (msg != null) {
             log.errorUnexpectedMessage(msg);
          }

@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.IncorrectClientListenerException;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -156,7 +155,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Unexpected error consuming event %s", id = 4038)
-   void unexpectedErrorConsumingEvent(ClientEvent clientEvent, @Cause Throwable t);
+   void unexpectedErrorConsumingEvent(Object event, @Cause Throwable t);
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to complete reading event from server %s", id = 4039)

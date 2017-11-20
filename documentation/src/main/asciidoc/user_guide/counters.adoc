@@ -162,6 +162,19 @@ EmbeddedCacheManager manager = ...;
 CounterManager counterManager = EmbeddedCounterManagerFactory.asCounterManager(manager);
 ----
 
+For Hot Rod client, the `CounterManager` is registered in the RemoteCacheManager and it can be retrieved like:
+
+[source,java]
+----
+// create or obtain your RemoteCacheManager
+RemoteCacheManager manager = ...;
+
+// retrieve the CounterManager
+CounterManager counterManager = RemoteCounterManagerFactory.asCounterManager(manager);
+----
+
+NOTE: Hot Rod messages format can be found in link:#_hot_rod_protocol_2_7[Hot Rod Protocol 2.7]
+
 ==== Remove a counter via CounterManager
 
 WARNING: use with caution.

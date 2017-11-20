@@ -21,6 +21,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.Events.Event;
+import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.util.KeyValuePair;
@@ -40,6 +41,11 @@ public abstract class AbstractEncoder1x implements VersionedEncoder {
 
    @Override
    public void writeEvent(Event e, ByteBuf buf) {
+      // Not implemented in this version of the protocol
+   }
+
+   @Override
+   public void writeCounterEvent(ClientCounterEvent event, ByteBuf buffer) {
       // Not implemented in this version of the protocol
    }
 

@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import javax.net.ssl.SSLContext;
 
@@ -13,7 +14,6 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
-import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory.ClusterSwitchStatus;
 import org.infinispan.commons.marshall.Marshaller;
@@ -34,7 +34,8 @@ public interface TransportFactory {
 
    void releaseTransport(Transport transport);
 
-   void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ClientListenerNotifier listenerNotifier);
+   void start(Codec codec, Configuration configuration, AtomicInteger topologyId,
+         ClientListenerNotifier listenerNotifier, Collection<Consumer<Set<SocketAddress>>> failedServerNotifier);
 
    void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet);
 
@@ -90,5 +91,5 @@ public interface TransportFactory {
 
    String getSniHostName();
 
-   void addDisconnectedListener(AddClientListenerOperation listener) throws InterruptedException;
+   void addDisconnectedListener(Runnable reconnectionRunnable) throws InterruptedException;
 }

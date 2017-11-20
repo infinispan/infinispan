@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -65,6 +67,7 @@ import org.infinispan.server.core.QueryFacade;
 import org.infinispan.server.core.security.SaslUtils;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
+import org.infinispan.server.hotrod.counter.listener.ClientCounterManagerNotificationManager;
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory;
 import org.infinispan.server.hotrod.iteration.DefaultIterationManager;
 import org.infinispan.server.hotrod.iteration.IterationManager;
@@ -115,6 +118,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    protected ExecutorService executor;
    private IterationManager iterationManager;
    private RemoveCacheListener removeCacheListener;
+   private ClientCounterManagerNotificationManager clientCounterNotificationManager;
 
    public ServerAddress getAddress() {
       return address;
@@ -130,6 +134,10 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
    public ClientListenerRegistry getClientListenerRegistry() {
       return clientListenerRegistry;
+   }
+
+   public ClientCounterManagerNotificationManager getClientCounterNotificationManager() {
+      return clientCounterNotificationManager;
    }
 
    @Override
@@ -202,6 +210,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       List<QueryFacade> queryFacades = loadQueryFacades();
       queryFacade = queryFacades.size() > 0 ? queryFacades.get(0) : null;
       clientListenerRegistry = new ClientListenerRegistry(configuration);
+      clientCounterNotificationManager = new ClientCounterManagerNotificationManager(asCounterManager(cacheManager));
 
       addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());
 
@@ -480,6 +489,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       }
 
       if (clientListenerRegistry != null) clientListenerRegistry.stop();
+      if (clientCounterNotificationManager != null) clientCounterNotificationManager.stop();
       if (executor != null) executor.shutdownNow();
       super.stop();
    }

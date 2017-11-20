@@ -126,9 +126,14 @@ public abstract class AbstractStrongCounter implements StrongCounter, CounterEve
       CounterValue newValue = value == null ?
             CounterValue.newCounterValue(configuration) :
             value;
-      CounterEvent event = CounterEventImpl.create(weakCounter, newValue);
-      weakCounter = newValue;
-      return event;
+      if (weakCounter == null || weakCounter.equals(newValue)) {
+         weakCounter = newValue;
+         return null;
+      } else {
+         CounterEvent event = CounterEventImpl.create(weakCounter, newValue);
+         weakCounter = newValue;
+         return event;
+      }
    }
 
    public CompletableFuture<Void> remove() {

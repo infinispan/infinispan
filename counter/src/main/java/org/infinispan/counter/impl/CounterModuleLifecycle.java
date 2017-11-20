@@ -36,6 +36,7 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.metadata.ConfigurationMetadata;
 import org.infinispan.counter.impl.strong.StrongCounterKey;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
+import org.infinispan.counter.logging.Log;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -44,6 +45,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -55,6 +57,7 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(value = ModuleLifecycle.class)
 public class CounterModuleLifecycle implements ModuleLifecycle {
 
+   private static final Log log = LogFactory.getLog(CounterModuleLifecycle.class, Log.class);
    public static final String COUNTER_CACHE_NAME = "___counters";
    public static final String COUNTER_CONFIGURATION_CACHE_NAME = "___counter_configuration";
 
@@ -165,10 +168,17 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       final InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
       final CounterManagerConfiguration counterManagerConfiguration = extractConfiguration(gcr);
 
-      registerCounterCache(internalCacheRegistry, counterManagerConfiguration);
-      registerConfigurationCache(internalCacheRegistry);
-
-      CompletableFuture<CacheHolder> future = startCaches(cacheManager, counterManagerConfiguration.counters());
+      CompletableFuture<CacheHolder> future;
+      if (gcr.getGlobalConfiguration().transport().transport() != null) {
+         //only attempts to create the caches if the cache manager is clustered.
+         registerCounterCache(internalCacheRegistry, counterManagerConfiguration);
+         registerConfigurationCache(internalCacheRegistry);
+         future = startCaches(cacheManager, counterManagerConfiguration.counters());
+      } else {
+         //local only cache manager. unable to create replicated or distributed caches!
+         future = new CompletableFuture<>();
+         future.completeExceptionally(log.expectedClusteredEnvironment());
+      }
       registerCounterManager(gcr, future);
    }
 

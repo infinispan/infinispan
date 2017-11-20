@@ -59,12 +59,27 @@ public enum HotRodOperation {
    COMMIT_TX(0x3D, 0x3E, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
    ROLLBACK_TX(0x3F, 0x40, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
 
+   // Counter's operation [0x4B - 0x5F]
+   COUNTER_CREATE(0x4B, 0x4C, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_GET_CONFIGURATION(0x4D, 0x4E, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_IS_DEFINED(0x4F, 0x51, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   //skip 0x50 => ERROR
+   COUNTER_ADD_AND_GET(0x52, 0x53, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_RESET(0x54, 0x55, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_GET(0x56, 0x57, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_CAS(0x58, 0x59, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_ADD_LISTENER(0x5A, 0x5B, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_REMOVE_LISTENER(0x5C, 0x5D, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_REMOVE(0x5E, 0x5F, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+   COUNTER_GET_NAMES(0x64, 0x65, EnumSet.of(OpReqs.REQUIRES_AUTH), DecoderRequirements.HEADER_CUSTOM),
+
    // Responses
    ERROR(0x50),
    CACHE_ENTRY_CREATED_EVENT(0x60),
    CACHE_ENTRY_MODIFIED_EVENT(0x61),
    CACHE_ENTRY_REMOVED_EVENT(0x62),
-   CACHE_ENTRY_EXPIRED_EVENT(0x63);
+   CACHE_ENTRY_EXPIRED_EVENT(0x63),
+   COUNTER_EVENT(0x66);
 
    private final int requestOpCode;
    private final int responseOpCode;
@@ -94,6 +109,10 @@ public enum HotRodOperation {
 
    HotRodOperation(int responseOpCode) {
       this(0, responseOpCode, EnumSet.noneOf(OpReqs.class), DecoderRequirements.HEADER);
+   }
+
+   public int getRequestOpCode() {
+      return requestOpCode;
    }
 
    public int getResponseOpCode() {
