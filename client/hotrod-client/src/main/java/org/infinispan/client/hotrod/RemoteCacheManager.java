@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod;
 
+import static java.util.Arrays.asList;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
+import org.infinispan.client.hotrod.counter.impl.RemoteCounterManager;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
@@ -36,6 +39,7 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.uberjar.ManifestUberJarDuplicatedJarsWarner;
 import org.infinispan.commons.util.uberjar.UberJarDuplicatedJarsWarner;
+import org.infinispan.counter.api.CounterManager;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
@@ -74,6 +78,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    protected ClientListenerNotifier listenerNotifier;
    private final Runnable start = this::start;
    private final Runnable stop = this::stop;
+   private final RemoteCounterManager counterManager;
 
    /**
     *
@@ -98,6 +103,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
     */
    public RemoteCacheManager(Configuration configuration, boolean start) {
       this.configuration = configuration;
+      this.counterManager = new RemoteCounterManager();
       if (start) start();
    }
 
@@ -132,6 +138,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
          }
       }
       this.configuration = builder.build();
+      this.counterManager = new RemoteCounterManager();
       if (start) start();
    }
 
@@ -203,7 +210,9 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       createExecutorService();
 
       listenerNotifier = ClientListenerNotifier.create(codec, marshaller, transportFactory, configuration.serialWhitelist());
-      transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier);
+      transportFactory.start(codec, configuration, defaultCacheTopologyId, listenerNotifier,
+            asList(listenerNotifier::failoverClientListeners, counterManager));
+      counterManager.start(transportFactory, codec, configuration, asyncExecutorService);
 
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheHolder rcc : cacheName2RemoteCache.values()) {
@@ -229,7 +238,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
       }
    }
 
-   private final void warnAboutUberJarDuplicates() {
+   private void warnAboutUberJarDuplicates() {
       UberJarDuplicatedJarsWarner scanner = new ManifestUberJarDuplicatedJarsWarner();
       scanner.isClasspathCorrectAsync()
               .thenAcceptAsync(isClasspathCorrect -> {
@@ -247,6 +256,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    public void stop() {
       if (isStarted()) {
          listenerNotifier.stop();
+         counterManager.stop();
          transportFactory.destroy();
          asyncExecutorService.shutdownNow();
       }
@@ -284,7 +294,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
          RemoteCacheKey key = new RemoteCacheKey(cacheName, forceReturnValueOverride);
          if (!cacheName2RemoteCache.containsKey(key)) {
             RemoteCacheImpl<K, V> result = createRemoteCache(cacheName);
-            RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? configuration.forceReturnValues() : forceReturnValueOverride);
+            RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride);
             startRemoteCache(rcc);
 
             PingResult pingResult = result.resolveCompatibility();
@@ -359,6 +369,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable {
    @Override
    public void close() throws IOException {
       stop();
+   }
+
+   CounterManager getCounterManager() {
+      return counterManager;
    }
 
    private static class RemoteCacheKey {

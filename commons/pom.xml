@@ -107,7 +107,8 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.commons.*;version=${project.version};-split-package:=error
+                     ${project.groupId}.commons.*;version=${project.version};-split-package:=error,
+                     ${project.groupId}.counter.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <!-- Relax the versioning rule for osgi packages as a specific version is provided by the container and
                        it might not match the one used to build. -->

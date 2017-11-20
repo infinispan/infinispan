@@ -7,6 +7,8 @@ import java.io.IOException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.EncodingException;
+import org.infinispan.counter.exception.CounterException;
+import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -163,5 +165,21 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unsupported content '%s'", id = 934)
    EncodingException unsupportedContent(Object content);
+
+   //----- counters exceptions ------
+
+   @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 28001)
+   CounterOutOfBoundsException counterOurOfBounds(String bound);
+
+   @Message(value = "Invalid counter type. Expected=%s but got %s", id = 28014)
+   CounterException invalidCounterType(String expected, String actual);
+
+   @Message(value = "Counter '%s' is not defined.", id = 28016)
+   CounterException undefinedCounter(String name);
+
+   @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 28022)
+   CounterException invalidCounterTypeEncoded();
+
+   //----- counters exceptions ------
 
 }

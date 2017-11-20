@@ -1,5 +1,11 @@
 package org.infinispan.counter.api;
 
+import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
+import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
+import static org.infinispan.counter.util.EncodeUtil.decodeStorage;
+import static org.infinispan.counter.util.EncodeUtil.decodeType;
+import static org.infinispan.counter.util.EncodeUtil.encodeTypeAndStorage;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -7,10 +13,8 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.MarshallUtil;
 
 /**
  * A counter configuration used to define counters cluster wide via {@link CounterManager#defineCounter(String,
@@ -223,8 +227,7 @@ public class CounterConfiguration {
 
       @Override
       public void writeObject(ObjectOutput output, CounterConfiguration object) throws IOException {
-         MarshallUtil.marshallEnum(object.type, output);
-         MarshallUtil.marshallEnum(object.storage, output);
+         output.writeByte(encodeTypeAndStorage(object));
          output.writeLong(object.initialValue);
          switch (object.type) {
             case BOUNDED_STRONG:
@@ -232,7 +235,7 @@ public class CounterConfiguration {
                output.writeLong(object.upperBound);
                break;
             case WEAK:
-               UnsignedNumeric.writeUnsignedInt(output, object.concurrencyLevel);
+               writeUnsignedInt(output, object.concurrencyLevel);
                break;
             default:
          }
@@ -240,24 +243,22 @@ public class CounterConfiguration {
 
       @Override
       public CounterConfiguration readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         CounterType type = MarshallUtil.unmarshallEnum(input, CounterType::valueOf);
-         Storage storage = MarshallUtil.unmarshallEnum(input, Storage::valueOf);
-         long initialValue = input.readLong();
-         long lowerBound = Long.MIN_VALUE;
-         long upperBound = Long.MAX_VALUE;
-         int concurrencyLevel = 16;
-         //noinspection ConstantConditions
+         byte flags = input.readByte();
+         CounterType type = decodeType(flags);
+         Builder builder = builder(type);
+         builder.storage(decodeStorage(flags));
+         builder.initialValue(input.readLong());
          switch (type) {
             case BOUNDED_STRONG:
-               lowerBound = input.readLong();
-               upperBound = input.readLong();
+               builder.lowerBound(input.readLong());
+               builder.upperBound(input.readLong());
                break;
             case WEAK:
-               concurrencyLevel = UnsignedNumeric.readUnsignedInt(input);
+               builder.concurrencyLevel(readUnsignedInt(input));
                break;
             default:
          }
-         return new CounterConfiguration(initialValue, lowerBound, upperBound, concurrencyLevel, type, storage);
+         return builder.build();
       }
    }
 

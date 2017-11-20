@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
@@ -74,4 +75,8 @@ public interface Codec {
 
    void writeClientListenerInterests(Transport transport, Set<Class<? extends Annotation>> classes);
 
+   /**
+    * Reads a {@link HotRodCounterEvent} with the {@code listener-id}.
+    */
+   HotRodCounterEvent readCounterEvent(Transport transport, byte[] listenerId);
 }

@@ -81,7 +81,7 @@ public class ClientListenerNotifier {
       return new ClientListenerNotifier(executor, codec, marshaller, transportFactory, whitelist);
    }
 
-   private static ThreadFactory getRestoreThreadNameThreadFactory() {
+   public static ThreadFactory getRestoreThreadNameThreadFactory() {
       return r -> new Thread(() -> {
          final String originalName = Thread.currentThread().getName();
          try {
@@ -328,7 +328,12 @@ public class ClientListenerNotifier {
          } catch (TransportException e) {
             log.debug("Unable to failover client listener, so ignore connection reset");
             try {
-               transportFactory.addDisconnectedListener(op);
+               transportFactory.addDisconnectedListener(() -> {
+                  if (trace) {
+                     log.tracef("Reconnecting client listener with id %s", Util.printArray(op.listenerId));
+                  }
+                  op.execute();
+               });
             } catch (InterruptedException e1) {
                Thread.currentThread().interrupt();
             }

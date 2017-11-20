@@ -4,7 +4,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -18,6 +20,7 @@ import org.infinispan.counter.configuration.WeakCounterConfiguration;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
 import org.infinispan.counter.impl.listener.CounterManagerNotificationManager;
+import org.infinispan.util.concurrent.CompletableFutures;
 
 /**
  * It holds the caches used by {@link EmbeddedCounterManager}.
@@ -56,15 +59,16 @@ public class CacheHolder {
       notificationManager.listenOn(counterCache);
    }
 
-   boolean addConfiguration(String name, CounterConfiguration configuration) {
-      CounterConfiguration existing = checkAndStoreConfiguredCounterConfiguration(name);
-      if (existing != null) {
-         return false;
-      }
-      Cache<String, CounterConfiguration> cache = configuration.storage() == Storage.VOLATILE ?
-            configurationCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD) :
-            configurationCache;
-      return cache.putIfAbsent(name, configuration) == null;
+   CompletableFuture<Boolean> addConfigurationAsync(String name, CounterConfiguration configuration) {
+      return checkAndStoreConfiguredCounterConfigurationAsync(name)
+            .thenCompose(fileConfig -> {
+               if (fileConfig != null) {
+                  //counter configuration exists in configuration file!
+                  return CompletableFuture.completedFuture(fileConfig);
+               }
+               //put configuration in cache
+               return configCacheWithFlags(configuration).putIfAbsentAsync(name, configuration);
+            }).thenApply(Objects::isNull);
    }
 
    <K extends CounterKey> AdvancedCache<K, CounterValue> getCounterCache(CounterConfiguration configuration) {
@@ -74,20 +78,31 @@ public class CacheHolder {
             counterCache);
    }
 
-   CounterConfiguration getConfiguration(String counterName) {
-      CounterConfiguration config = configurationCache.get(counterName);
-      return config == null ? checkAndStoreConfiguredCounterConfiguration(counterName) : config;
+   CompletableFuture<CounterConfiguration> getConfigurationAsync(String counterName) {
+      return configurationCache.getAsync(counterName).thenCompose(existingConfiguration -> {
+         if (existingConfiguration == null) {
+            return checkAndStoreConfiguredCounterConfigurationAsync(counterName);
+         } else {
+            return CompletableFuture.completedFuture(existingConfiguration);
+         }
+      });
    }
 
-   private CounterConfiguration checkAndStoreConfiguredCounterConfiguration(String counterName) {
+   private Cache<String, CounterConfiguration> configCacheWithFlags(CounterConfiguration config) {
+      return config.storage() == Storage.VOLATILE ?
+             configurationCache.withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD) :
+             configurationCache;
+   }
+
+   private CompletableFuture<CounterConfiguration> checkAndStoreConfiguredCounterConfigurationAsync(String name) {
       for (AbstractCounterConfiguration config : defaultCounters) {
-         if (config.name().equals(counterName)) {
+         if (config.name().equals(name)) {
             CounterConfiguration counterConfiguration = createConfigurationEntry(config);
-            CounterConfiguration existing = configurationCache.putIfAbsent(counterName, counterConfiguration);
-            return existing == null ? counterConfiguration : existing;
+            return configurationCache.putIfAbsentAsync(name, counterConfiguration)
+                  .thenApply(configuration -> configuration == null ? counterConfiguration : configuration);
          }
       }
-      return null;
+      return CompletableFutures.completedNull();
    }
 
    private static CounterConfiguration createConfigurationEntry(AbstractCounterConfiguration configuration) {

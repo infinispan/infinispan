@@ -25,6 +25,11 @@ public abstract class Response {
    protected final OperationStatus status;
    protected final int topologyId;
 
+   static EmptyResponse createEmptyResponse(HotRodHeader header, OperationStatus status) {
+      return new EmptyResponse(header.version, header.messageId, header.cacheName, header.clientIntel, header.op,
+            status, header.topologyId);
+   }
+
    protected Response(byte version, long messageId, String cacheName, short clientIntel, HotRodOperation operation, OperationStatus status, int topologyId) {
       this.version = version;
       this.messageId = messageId;

@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
@@ -141,6 +142,11 @@ public class Codec10 implements Codec {
 
    @Override
    public Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller, List<String> whitelist) {
+      return null;  // No events sent in Hot Rod 1.x protocol
+   }
+
+   @Override
+   public HotRodCounterEvent readCounterEvent(Transport transport, byte[] listenerId) {
       return null;  // No events sent in Hot Rod 1.x protocol
    }
 

@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.Events.Event;
+import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
 
 import io.netty.buffer.ByteBuf;
 
@@ -30,4 +31,8 @@ interface VersionedEncoder {
     */
    void writeEvent(Event e, ByteBuf buf);
 
+   /**
+    * Writes a {@link ClientCounterEvent}, including its header, using a giver channel buffer.
+    */
+   void writeCounterEvent(ClientCounterEvent event, ByteBuf buffer);
 }

@@ -215,7 +215,11 @@ public class CounterManagerNotificationManager {
          if (holder == null) {
             return;
          }
-         triggerUserListener(holder.userListeners, holder.generator.generate(key, event.getValue()));
+         synchronized (holder.generator) {
+            //weak counter events execute the updateState method in parallel.
+            //if we don't synchronize, we can have events reordered.
+            triggerUserListener(holder.userListeners, holder.generator.generate(key, event.getValue()));
+         }
       }
 
       private void triggerUserListener(List<CounterListenerResponse<?>> userListeners, CounterEvent event) {

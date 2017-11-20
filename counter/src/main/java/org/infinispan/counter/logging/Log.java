@@ -6,7 +6,6 @@ import static org.jboss.logging.Logger.Level.WARN;
 import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.exception.CounterException;
-import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.util.ByteString;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -20,13 +19,12 @@ import org.jboss.logging.annotations.MessageLogger;
  * @since 9.0
  */
 @MessageLogger(projectCode = "ISPN")
-public interface Log extends org.infinispan.util.logging.Log {
+public interface Log extends org.infinispan.commons.logging.Log {
 
-   @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 28001)
-   CounterOutOfBoundsException counterOurOfBounds(String bound);
+   //28001 is in commons log
 
-   @Message(value = "The counter was deleted.", id = 28002)
-   CounterException counterDeleted();
+//   @Message(value = "The counter was deleted.", id = 28002)
+//   CounterException counterDeleted();
 
    @Message(value = "The counter name is missing.", id = 28003)
    CounterConfigurationException missingCounterName();
@@ -49,13 +47,13 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Invalid concurrency-level. It must be higher than zero but it was %s", id = 28009)
    CounterConfigurationException invalidConcurrencyLevel(int value);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to add(%s) to non-existing counter '%s'.", id = 28010)
-   void noSuchCounterAdd(long value, ByteString counterName);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to add(%s) to non-existing counter '%s'.", id = 28010)
+//   void noSuchCounterAdd(long value, ByteString counterName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to reset non-existing counter '%s'.", id = 28011)
-   void noSuchCounterReset(ByteString counterName);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to reset non-existing counter '%s'.", id = 28011)
+//   void noSuchCounterReset(ByteString counterName);
 
    @LogMessage(level = WARN)
    @Message(value = "Interrupted while waiting for the counter manager caches.", id = 28012)
@@ -65,14 +63,12 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Exception while waiting for counter manager caches.", id = 28013)
    void exceptionWhileWaitingForCached(@Cause Throwable cause);
 
-   @Message(value = "Invalid counter type. Expected=%s but got %s", id = 28014)
-   CounterException invalidCounterType(String expected, String actual);
+   //28014 is in commons log
 
    @Message(value = "Unable to fetch counter manager caches.", id = 28015)
    CounterException unableToFetchCaches();
 
-   @Message(value = "Counter '%s' is not defined.", id = 28016)
-   CounterException undefinedCounter(String name);
+   //28016 is in commons log
 
    @Message(value = "Duplicated counter name found. Counter '%s' already exists.", id = 28017)
    CounterConfigurationException duplicatedCounterName(String counter);
@@ -80,10 +76,17 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Metadata not found but counter exists. Counter=%s", id = 28018)
    IllegalStateException metadataIsMissing(ByteString counterName);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Unable to compare-and-set(%d, %d) non-existing counter '%s'.", id = 28019)
-   void noSuchCounterCAS(long expected, long value, ByteString counterName);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Unable to compare-and-set(%d, %d) non-existing counter '%s'.", id = 28019)
+//   void noSuchCounterCAS(long expected, long value, ByteString counterName);
 
    @Message(value = "Invalid scope for tag <counter>. Expected CACHE_CONTAINER but was %s", id = 28020)
    CounterConfigurationException invalidScope(ParserScope scope);
+
+   @Message(value = "Clustered counters only available with clustered cache manager.", id = 28021)
+   CounterException expectedClusteredEnvironment();
+
+   //28022 is in commons log
+
+   //28023 is in hot rod log
 }

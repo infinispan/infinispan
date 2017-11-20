@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,10 +16,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
+import org.infinispan.server.hotrod.counter.response.CounterResponse;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 import org.infinispan.topology.CacheTopology;
@@ -35,12 +40,7 @@ class Encoder2x implements VersionedEncoder {
    public void writeEvent(Events.Event e, ByteBuf buf) {
       if (isTrace)
          log.tracef("Write event %s", e);
-
-      buf.writeByte(Constants.MAGIC_RES);
-      ExtendedByteBuf.writeUnsignedLong(e.messageId, buf);
-      buf.writeByte(e.op.getResponseOpCode());
-      buf.writeByte(OperationStatus.Success.getCode());
-      buf.writeByte(0); // no topology change
+      writeHeaderNoTopology(buf, e.messageId, e.op);
       ExtendedByteBuf.writeRangedBytes(e.listenerId, buf);
       e.writeEvent(buf);
    }
@@ -50,18 +50,30 @@ class Encoder2x implements VersionedEncoder {
       // Sometimes an error happens before we have added the cache to the knownCaches/knownCacheConfigurations map
       // If that happens, we pretend the cache is LOCAL and we skip the topology update
       String cacheName = r.cacheName.isEmpty() ? server.getConfiguration().defaultCacheName() : r.cacheName;
-      ComponentRegistry cr = server.getCacheRegistry(cacheName);
-      Configuration configuration = server.getCacheConfiguration(cacheName);
-      CacheMode cacheMode = configuration == null ? CacheMode.LOCAL : configuration.clustering().cacheMode();
 
-      CacheTopology cacheTopology = cacheMode.isClustered() ? cr.getStateTransferManager().getCacheTopology() : null;
-      Optional<AbstractTopologyResponse> newTopology = getTopologyResponse(r, addressCache, cacheMode, cacheTopology);
+      Optional<AbstractTopologyResponse> newTopology;
+      boolean compatibilityEnabled;
+      CacheTopology cacheTopology;
+
+      if (CounterModuleLifecycle.COUNTER_CACHE_NAME.equals(cacheName)) {
+         cacheTopology = getCounterCacheTopology(addressCache.getCacheManager());
+         newTopology = getTopologyResponse(r, addressCache, CacheMode.DIST_SYNC, cacheTopology);
+         compatibilityEnabled = false;
+      } else {
+         ComponentRegistry cr = server.getCacheRegistry(cacheName);
+         Configuration configuration = server.getCacheConfiguration(cacheName);
+         CacheMode cacheMode = configuration == null ? CacheMode.LOCAL : configuration.clustering().cacheMode();
+
+         cacheTopology = cacheMode.isClustered() ? cr.getStateTransferManager().getCacheTopology() : null;
+         newTopology = getTopologyResponse(r, addressCache, cacheMode, cacheTopology);
+         compatibilityEnabled = configuration != null && configuration.compatibility().enabled();
+      }
 
 
       buf.writeByte(Constants.MAGIC_RES);
-      ExtendedByteBuf.writeUnsignedLong(r.messageId, buf);
+      writeUnsignedLong(r.messageId, buf);
       buf.writeByte(r.operation.getResponseOpCode());
-      writeStatus(r, buf, server, configuration);
+      writeStatus(r, buf, server, compatibilityEnabled);
       if (newTopology.isPresent()) {
          AbstractTopologyResponse topology = newTopology.get();
          if (topology instanceof TopologyAwareResponse) {
@@ -79,11 +91,32 @@ class Encoder2x implements VersionedEncoder {
       }
    }
 
-   private void writeStatus(Response r, ByteBuf buf, HotRodServer server, Configuration cfg) {
+   @Override
+   public void writeCounterEvent(ClientCounterEvent event, ByteBuf buffer) {
+      writeHeaderNoTopology(buffer, event.getMessageId(), HotRodOperation.COUNTER_EVENT);
+      event.writeTo(buffer);
+   }
+
+   private CacheTopology getCounterCacheTopology(EmbeddedCacheManager cacheManager) {
+      return cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).getAdvancedCache()
+            .getComponentRegistry()
+            .getStateTransferManager()
+            .getCacheTopology();
+   }
+
+   private void writeHeaderNoTopology(ByteBuf buffer, long messageId, HotRodOperation operation) {
+      buffer.writeByte(Constants.MAGIC_RES);
+      writeUnsignedLong(messageId, buffer);
+      buffer.writeByte(operation.getResponseOpCode());
+      buffer.writeByte(OperationStatus.Success.getCode());
+      buffer.writeByte(0); // no topology change
+   }
+
+   private void writeStatus(Response r, ByteBuf buf, HotRodServer server, boolean compatibilityEnabled) {
       if (server == null || Constants.isVersionPre24(r.version))
          buf.writeByte(r.status.getCode());
       else {
-         OperationStatus st = OperationStatus.withCompatibility(r.status, cfg.compatibility().enabled());
+         OperationStatus st = OperationStatus.withCompatibility(r.status, compatibilityEnabled);
          buf.writeByte(st.getCode());
       }
    }
@@ -298,11 +331,26 @@ class Encoder2x implements VersionedEncoder {
          case ITERATION_END:
          case ADD_CLIENT_LISTENER:
          case REMOVE_CLIENT_LISTENER:
+         case COUNTER_CREATE:
+         case COUNTER_REMOVE:
+         case COUNTER_IS_DEFINED:
+         case COUNTER_RESET:
+         case COUNTER_ADD_LISTENER:
+         case COUNTER_REMOVE_LISTENER:
             // Empty response
+            break;
+         case COUNTER_ADD_AND_GET:
+         case COUNTER_GET:
+         case COUNTER_GET_CONFIGURATION:
+         case COUNTER_CAS:
+         case COUNTER_GET_NAMES:
+            if (response.status == OperationStatus.Success) {
+               ((CounterResponse) response).writeTo(buf);
+            }
             break;
          case SIZE: {
             SizeResponse r = (SizeResponse) response;
-            ExtendedByteBuf.writeUnsignedLong(r.size, buf);
+            writeUnsignedLong(r.size, buf);
             break;
          }
          case AUTH_MECH_LIST: {

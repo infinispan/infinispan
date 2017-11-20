@@ -21,6 +21,7 @@
       <module name="org.infinispan.remote-query.client"/>
       <module name="org.infinispan.objectfilter" />
       <module name="org.infinispan.query" />
+      <module name="org.infinispan.counter" services="import"/>
       <module name="org.jboss.logging" />
       <module name="org.jboss.marshalling" services="import"/>
       <module name="org.jboss.sasl" services="import" />
