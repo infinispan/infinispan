@@ -11,8 +11,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -53,10 +55,37 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
             .storageType(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
       AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
+
       cache.put(1, 2);
+
       OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
             OffHeapMemoryAllocator.class);
       BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
+      assertEquals(allocator.getAllocatedAmount(), container.currentSize);
+
+      cache.clear();
+
+      assertEquals(allocator.getAllocatedAmount(), container.currentSize);
+   }
+
+   public void testAllocatedAmountEqualWithVersion() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.memory()
+            .size(MemoryUnit.MEGABYTES.toBytes(20))
+            .evictionType(EvictionType.MEMORY)
+            .storageType(StorageType.OFF_HEAP);
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
+      AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
+
+      cache.put(1, 2, new EmbeddedMetadata.Builder().version(new NumericVersion(23)).build());
+
+      OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
+            OffHeapMemoryAllocator.class);
+      BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
+      assertEquals(allocator.getAllocatedAmount(), container.currentSize);
+
+      cache.clear();
+
       assertEquals(allocator.getAllocatedAmount(), container.currentSize);
    }
 
